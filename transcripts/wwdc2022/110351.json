@@ -1,0 +1,2298 @@
+[
+  {
+    "text": "♪ Mellow instrumental hip-hop music ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=0"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=3"
+  },
+  {
+    "text": "Hello.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=9"
+  },
+  {
+    "text": "I'm Doug from the Swift team, and I'm here to talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=10"
+  },
+  {
+    "text": "Swift Concurrency's approach to eliminating data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=13"
+  },
+  {
+    "text": "We introduced Swift Concurrency as a set of language features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=17"
+  },
+  {
+    "text": "that make it easier to write concurrent programs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=20"
+  },
+  {
+    "text": "For the mechanics of these individual language features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=23"
+  },
+  {
+    "text": "we refer you to the 2021 WWDC talks covering each of them.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=27"
+  },
+  {
+    "text": "This talk takes a different, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=32"
+  },
+  {
+    "text": "more holistic view of Swift Concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=33"
+  },
+  {
+    "text": "as a way of structuring your program to make ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=36"
+  },
+  {
+    "text": "efficient use of concurrency without introducing data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=38"
+  },
+  {
+    "text": "But to do so, we need a great analogy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=42"
+  },
+  {
+    "text": "so we invite you to sail with us on the high seas of concurrency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=45"
+  },
+  {
+    "text": "The sea of concurrency is unpredictable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=50"
+  },
+  {
+    "text": "with many things going on at once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=53"
+  },
+  {
+    "text": "but with you at the helm and Swift helping you navigate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=55"
+  },
+  {
+    "text": "the waters, it can produce amazing things.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=58"
+  },
+  {
+    "text": "Let's dive in! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=61"
+  },
+  {
+    "text": "We'll start by talking about isolation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=62"
+  },
+  {
+    "text": "which is one of the key ideas of Swift's concurrency model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=65"
+  },
+  {
+    "text": "ensuring that data is not shared in a manner ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=69"
+  },
+  {
+    "text": "that can introduce data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=71"
+  },
+  {
+    "text": "Let's start with task isolation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=74"
+  },
+  {
+    "text": "In our sea of concurrency, tasks are represented by boats.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=77"
+  },
+  {
+    "text": "Boats are our main workers -- they have a job to do, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=82"
+  },
+  {
+    "text": "which they perform sequentially from start to finish.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=85"
+  },
+  {
+    "text": "They are asynchronous, and their work can be suspended ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=89"
+  },
+  {
+    "text": "any number of times at \"await\" operations in the code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=92"
+  },
+  {
+    "text": "Finally, they are self-contained: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=97"
+  },
+  {
+    "text": "each task has its own resources, so it can operate by itself, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=100"
+  },
+  {
+    "text": "independently of all of the other boats in the sea.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=104"
+  },
+  {
+    "text": "If our boats are completely independent, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=108"
+  },
+  {
+    "text": "we have concurrency without data races, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=111"
+  },
+  {
+    "text": "but it's not very useful without some way to communicate.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=114"
+  },
+  {
+    "text": "Let's add some communication! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=119"
+  },
+  {
+    "text": "For example, one boat might have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=121"
+  },
+  {
+    "text": "a pineapple that it wants to share with another boat.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=123"
+  },
+  {
+    "text": "So the boats meet on the open sea, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=127"
+  },
+  {
+    "text": "and we transfer the pineapple from one boat to the other.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=129"
+  },
+  {
+    "text": "Now, this is where the physical analogy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=133"
+  },
+  {
+    "text": "breaks down a little bit, because this pineapple ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=135"
+  },
+  {
+    "text": "is not a physical item that moves from one boat to the next.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=138"
+  },
+  {
+    "text": "It's data, and in Swift we have a couple of different ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=142"
+  },
+  {
+    "text": "we could represent that data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=145"
+  },
+  {
+    "text": "How do we define our pineapple type? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=149"
+  },
+  {
+    "text": "We like value types in Swift, so let's make the pineapple ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=151"
+  },
+  {
+    "text": "a struct that's defined by its weight and ripeness.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=154"
+  },
+  {
+    "text": "Let's see how this works.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=159"
+  },
+  {
+    "text": "When the boats meet on the open sea, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=161"
+  },
+  {
+    "text": "we're really passing a copy of the pineapple instance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=163"
+  },
+  {
+    "text": "from one boat to the next, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=166"
+  },
+  {
+    "text": "and each boat goes away with its own copy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=168"
+  },
+  {
+    "text": "If you were to mutate the copies, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=172"
+  },
+  {
+    "text": "such as by calling the slice() and ripen() methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=175"
+  },
+  {
+    "text": "it won't have any effect on the other one.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=178"
+  },
+  {
+    "text": "Swift has always preferred value types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=181"
+  },
+  {
+    "text": "for exactly this reason -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=183"
+  },
+  {
+    "text": "mutations have only local effects.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=185"
+  },
+  {
+    "text": "That principle helps value types maintain isolation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=189"
+  },
+  {
+    "text": "Now, let's extend our data model a bit and add chickens! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=194"
+  },
+  {
+    "text": "Unlike pineapples, which are pretty much ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=198"
+  },
+  {
+    "text": "only good for eating, chickens are beautiful creatures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=200"
+  },
+  {
+    "text": "with their own unique personalities.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=203"
+  },
+  {
+    "text": "So, we're going to model them with a class, like this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=206"
+  },
+  {
+    "text": "Let's have our intrepid seafarers exchange a chicken.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=210"
+  },
+  {
+    "text": "When our boats meet, we share the chicken, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=214"
+  },
+  {
+    "text": "except that copying a reference type like chicken ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=217"
+  },
+  {
+    "text": "doesn't give you another full copy of the chicken, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=220"
+  },
+  {
+    "text": "it gives you a reference to that specific object.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=223"
+  },
+  {
+    "text": "So once our boats have gone their separate ways, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=227"
+  },
+  {
+    "text": "we can see that we have a problem: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=229"
+  },
+  {
+    "text": "both boats are doing their work concurrently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=232"
+  },
+  {
+    "text": "but they are not independent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=235"
+  },
+  {
+    "text": "because they both reference the same chicken object.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=237"
+  },
+  {
+    "text": "That shared mutable data is prone to data races, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=240"
+  },
+  {
+    "text": "such as when one boat is trying to feed the chicken ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=244"
+  },
+  {
+    "text": "and the other wants to play with it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=246"
+  },
+  {
+    "text": "leading to one very confused chicken.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=248"
+  },
+  {
+    "text": "We need a way to know that it was safe to share pineapples ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=252"
+  },
+  {
+    "text": "amongst boats, but not chickens.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=255"
+  },
+  {
+    "text": "And then we need some checking in place in the Swift compiler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=258"
+  },
+  {
+    "text": "to ensure that chickens aren't accidentally passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=261"
+  },
+  {
+    "text": "from one boat to another.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=264"
+  },
+  {
+    "text": "Swift protocols are a great way of categorizing types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=267"
+  },
+  {
+    "text": "so you can reason about their behavior.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=270"
+  },
+  {
+    "text": "The Sendable protocol is used to describe types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=273"
+  },
+  {
+    "text": "that can safely be shared across different isolation domains, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=276"
+  },
+  {
+    "text": "without creating data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=280"
+  },
+  {
+    "text": "A type can be made Sendable by writing a conformance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=283"
+  },
+  {
+    "text": "The Pineapple struct conforms to Sendable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=287"
+  },
+  {
+    "text": "because it's a value type, but the Chicken class cannot ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=289"
+  },
+  {
+    "text": "because it's an unsynchronized reference type.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=293"
+  },
+  {
+    "text": "Modeling Sendable as a protocol allows us to describe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=298"
+  },
+  {
+    "text": "the places where data is going to be shared ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=301"
+  },
+  {
+    "text": "across isolation domains.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=303"
+  },
+  {
+    "text": "For example, when a task returns a value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=306"
+  },
+  {
+    "text": "this value is provided to any of the tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=309"
+  },
+  {
+    "text": "that are waiting for that value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=312"
+  },
+  {
+    "text": "Here, we are trying to return a Chicken from our Task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=315"
+  },
+  {
+    "text": "and we get an error stating that this is unsafe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=318"
+  },
+  {
+    "text": "because Chicken is not Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=321"
+  },
+  {
+    "text": "The actual Sendable constraint comes from the definition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=325"
+  },
+  {
+    "text": "of the Task struct itself, which specifies that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=328"
+  },
+  {
+    "text": "the result type of a Task, called Success, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=331"
+  },
+  {
+    "text": "must conform to the Sendable protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=335"
+  },
+  {
+    "text": "You should use Sendable constraints ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=337"
+  },
+  {
+    "text": "where you have generic parameters whose values ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=339"
+  },
+  {
+    "text": "will be passed across different isolation domains.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=341"
+  },
+  {
+    "text": "Now, let's revisit the idea of sharing data among boats.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=345"
+  },
+  {
+    "text": "When two boats meet on the high seas and want to share data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=350"
+  },
+  {
+    "text": "we need someone to consistently check all of the goods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=354"
+  },
+  {
+    "text": "to make sure they're safe to share.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=357"
+  },
+  {
+    "text": "That's the role of our friendly customs inspector -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=360"
+  },
+  {
+    "text": "played here by the Swift compiler -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=362"
+  },
+  {
+    "text": "to make sure that only Sendable types are exchanged.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=365"
+  },
+  {
+    "text": "The pineapple is fine and can be exchanged freely, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=369"
+  },
+  {
+    "text": "because it's Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=372"
+  },
+  {
+    "text": "However, the chicken cannot be exchanged, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=374"
+  },
+  {
+    "text": "and our friendly customs inspector will prevent us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=376"
+  },
+  {
+    "text": "from making that mistake.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=379"
+  },
+  {
+    "text": "The compiler is involved in checking Sendable correctness ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=383"
+  },
+  {
+    "text": "at many different points.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=385"
+  },
+  {
+    "text": "Sendable types must be correct by construction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=388"
+  },
+  {
+    "text": "and cannot allow any shared data to be smuggled through them.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=391"
+  },
+  {
+    "text": "Enums and structs generally define value types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=395"
+  },
+  {
+    "text": "which copy all of their instance data along with them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=399"
+  },
+  {
+    "text": "to produce independent values.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=401"
+  },
+  {
+    "text": "Therefore, they can be Sendable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=404"
+  },
+  {
+    "text": "so long as all of their instance data is also Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=406"
+  },
+  {
+    "text": "Sendable can be propagated through collections ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=411"
+  },
+  {
+    "text": "and other generic types using conditional conformance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=414"
+  },
+  {
+    "text": "An array of Sendable types is Sendable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=417"
+  },
+  {
+    "text": "so a Crate full of pineapples is also Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=420"
+  },
+  {
+    "text": "All of these Sendable conformances can even be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=424"
+  },
+  {
+    "text": "inferred by the Swift compiler for non-public types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=427"
+  },
+  {
+    "text": "so Ripeness, Pineapple, and Crate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=430"
+  },
+  {
+    "text": "are all implicitly Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=432"
+  },
+  {
+    "text": "But let's say we create a coop to house our flock of chickens.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=435"
+  },
+  {
+    "text": "This type cannot be marked as Sendable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=439"
+  },
+  {
+    "text": "because it contains non-Sendable state: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=442"
+  },
+  {
+    "text": "Chicken isn't Sendable, so the array of chickens ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=444"
+  },
+  {
+    "text": "isn't Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=447"
+  },
+  {
+    "text": "We'll get an error message from our compiler to indicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=449"
+  },
+  {
+    "text": "that this type cannot safely be shared.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=451"
+  },
+  {
+    "text": "Classes are reference types, so they can only be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=455"
+  },
+  {
+    "text": "made Sendable under very narrow circumstances, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=458"
+  },
+  {
+    "text": "such as when a final class only has immutable storage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=462"
+  },
+  {
+    "text": "Our attempt to make the Chicken class Sendable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=466"
+  },
+  {
+    "text": "will produce an error because it contains mutable state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=468"
+  },
+  {
+    "text": "Now, it is possible to implement reference types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=473"
+  },
+  {
+    "text": "that do their own internal synchronization, for example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=475"
+  },
+  {
+    "text": "by using a lock consistently.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=479"
+  },
+  {
+    "text": "These types are conceptually Sendable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=481"
+  },
+  {
+    "text": "but there is no way for Swift to reason about that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=484"
+  },
+  {
+    "text": "Use unchecked Sendable to disable the compiler's checking.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=487"
+  },
+  {
+    "text": "Be careful with this, because smuggling mutable state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=492"
+  },
+  {
+    "text": "through @unchecked Sendable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=494"
+  },
+  {
+    "text": "undermines the data race safety guarantees Swift is providing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=496"
+  },
+  {
+    "text": "Task creation involves executing a closure in a new, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=501"
+  },
+  {
+    "text": "independent task, like sending off a rowboat from your boat.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=505"
+  },
+  {
+    "text": "When we do this, we can capture values from the original task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=510"
+  },
+  {
+    "text": "and pass them into the new task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=513"
+  },
+  {
+    "text": "so we need Sendable checking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=516"
+  },
+  {
+    "text": "to ensure we don't introduce data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=518"
+  },
+  {
+    "text": "If we do try to share a non-Sendable type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=521"
+  },
+  {
+    "text": "across this boundary, the Swift compiler has us covered, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=524"
+  },
+  {
+    "text": "producing an error message like this one.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=527"
+  },
+  {
+    "text": "This isn't magic for task creation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=531"
+  },
+  {
+    "text": "The closure is being inferred to be a Sendable closure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=533"
+  },
+  {
+    "text": "which could have been written explicitly with At-Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=537"
+  },
+  {
+    "text": "Sendable closures are values of Sendable function type.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=541"
+  },
+  {
+    "text": "At-Sendable can be written on a function type to indicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=547"
+  },
+  {
+    "text": "that the function type conforms to the Sendable protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=550"
+  },
+  {
+    "text": "That implies that values of that function type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=553"
+  },
+  {
+    "text": "can be passed to other isolation domains and called there ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=556"
+  },
+  {
+    "text": "without introducing data races on their captured state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=559"
+  },
+  {
+    "text": "Normally, function types cannot conform to protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=563"
+  },
+  {
+    "text": "but Sendable is special because the compiler validates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=566"
+  },
+  {
+    "text": "the semantic requirements for it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=569"
+  },
+  {
+    "text": "There is similar support for tuples of Sendable types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=571"
+  },
+  {
+    "text": "conforming to the Sendable protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=574"
+  },
+  {
+    "text": "which allows Sendable to be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=576"
+  },
+  {
+    "text": "throughout the entire language.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=578"
+  },
+  {
+    "text": "The system we've described has many concurrently executing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=581"
+  },
+  {
+    "text": "tasks that are isolated from each other.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=584"
+  },
+  {
+    "text": "The Sendable protocol describes types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=588"
+  },
+  {
+    "text": "that can be safely shared among tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=590"
+  },
+  {
+    "text": "and the Swift compiler checks Sendable conformances ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=592"
+  },
+  {
+    "text": "at every level to maintain isolation of the tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=595"
+  },
+  {
+    "text": "However, without any notion of shared mutable data anywhere, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=599"
+  },
+  {
+    "text": "it's hard for the tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=603"
+  },
+  {
+    "text": "to coordinate in a meaningful manner.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=604"
+  },
+  {
+    "text": "So we need some way to share data amongst our tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=607"
+  },
+  {
+    "text": "that doesn't re-introduce data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=610"
+  },
+  {
+    "text": "This is where actors come in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=613"
+  },
+  {
+    "text": "Actors provide a way to isolate state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=616"
+  },
+  {
+    "text": "that can be accessed by different tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=619"
+  },
+  {
+    "text": "but in a coordinated manner that eliminates data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=621"
+  },
+  {
+    "text": "Actors are the islands in our sea of concurrency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=626"
+  },
+  {
+    "text": "Like boats, each island is self-contained, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=630"
+  },
+  {
+    "text": "with its own state that is isolated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=633"
+  },
+  {
+    "text": "from everything else in the sea.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=636"
+  },
+  {
+    "text": "To access that state, your code needs to be running ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=638"
+  },
+  {
+    "text": "on the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=641"
+  },
+  {
+    "text": "For example, the advanceTime method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=643"
+  },
+  {
+    "text": "is isolated to this island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=645"
+  },
+  {
+    "text": "It lives on the island and has access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=647"
+  },
+  {
+    "text": "to all of the island's state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=649"
+  },
+  {
+    "text": "To actually run code on an island, you need a boat.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=651"
+  },
+  {
+    "text": "A boat can visit the island to run code on the island, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=656"
+  },
+  {
+    "text": "at which point it has access to that state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=659"
+  },
+  {
+    "text": "Only one boat can visit the island to run code at a time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=662"
+  },
+  {
+    "text": "which ensures that there is no concurrent access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=667"
+  },
+  {
+    "text": "to the island's state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=669"
+  },
+  {
+    "text": "If other boats show up, they must await their turn ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=671"
+  },
+  {
+    "text": "to visit the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=674"
+  },
+  {
+    "text": "And because it might be a long time before a given boat ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=676"
+  },
+  {
+    "text": "gets a chance to visit the island, entering into an actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=679"
+  },
+  {
+    "text": "is a potential suspension point marked by the “await” keyword.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=682"
+  },
+  {
+    "text": "Once the island frees up -- again, at a suspension point -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=687"
+  },
+  {
+    "text": "another boat can visit.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=690"
+  },
+  {
+    "text": "Just like with two boats meeting on the open sea, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=694"
+  },
+  {
+    "text": "interactions between a boat and an island need to maintain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=696"
+  },
+  {
+    "text": "isolation of both, by making sure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=700"
+  },
+  {
+    "text": "that non-Sendable types don't pass between the two.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=703"
+  },
+  {
+    "text": "For example, perhaps we try to add a chicken from our boat ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=707"
+  },
+  {
+    "text": "to the flock on the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=710"
+  },
+  {
+    "text": "This would create two references to the same chicken object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=712"
+  },
+  {
+    "text": "from different isolation domains, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=715"
+  },
+  {
+    "text": "so the Swift compiler rejects it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=717"
+  },
+  {
+    "text": "Similarly, if we try to adopt a pet chicken from the island ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=720"
+  },
+  {
+    "text": "and take it away on our boat, Sendable checking ensures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=723"
+  },
+  {
+    "text": "that we cannot create this data race.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=726"
+  },
+  {
+    "text": "Actors are reference types, but unlike classes, they isolate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=731"
+  },
+  {
+    "text": "all of their properties and code to prevent concurrent access.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=735"
+  },
+  {
+    "text": "Therefore, having a reference to an actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=739"
+  },
+  {
+    "text": "from a different isolation domain is safe.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=741"
+  },
+  {
+    "text": "It's like having a map to an island: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=745"
+  },
+  {
+    "text": "you can use the map to go visit the island, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=748"
+  },
+  {
+    "text": "but you still need to go through the docking procedure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=750"
+  },
+  {
+    "text": "to access its state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=752"
+  },
+  {
+    "text": "Therefore, all actor types are implicitly Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=754"
+  },
+  {
+    "text": "You might be wondering how to know ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=760"
+  },
+  {
+    "text": "what code is isolated to the actor and what code isn't.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=762"
+  },
+  {
+    "text": "Actor isolation is determined by the context you're in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=766"
+  },
+  {
+    "text": "The instance properties of an actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=770"
+  },
+  {
+    "text": "are isolated to that actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=772"
+  },
+  {
+    "text": "Instance methods on the actor or an extension of the actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=774"
+  },
+  {
+    "text": "are also isolated by default, like this advanceTime method.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=778"
+  },
+  {
+    "text": "Closures that are not Sendable, such as the closure passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=783"
+  },
+  {
+    "text": "to the reduce algorithm, stay on the actor and are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=786"
+  },
+  {
+    "text": "actor-isolated when they are in an actor-isolated context.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=789"
+  },
+  {
+    "text": "The task initializer also inherits actor isolation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=794"
+  },
+  {
+    "text": "from its context, so the created task will be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=797"
+  },
+  {
+    "text": "scheduled on the same actor as it was initiated from.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=800"
+  },
+  {
+    "text": "Here, that grants access to the flock.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=803"
+  },
+  {
+    "text": "On the other hand, a detached task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=807"
+  },
+  {
+    "text": "does not inherit actor isolation from its context, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=809"
+  },
+  {
+    "text": "because it is completely independent of the context ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=813"
+  },
+  {
+    "text": "where it was created.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=815"
+  },
+  {
+    "text": "We can see that the code in the closure here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=817"
+  },
+  {
+    "text": "is considered to be outside the actor because it needs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=818"
+  },
+  {
+    "text": "to use “await” to refer to the isolated “food” property.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=822"
+  },
+  {
+    "text": "We have a term for this closure: it's non-isolated code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=826"
+  },
+  {
+    "text": "No-isolated code is code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=832"
+  },
+  {
+    "text": "that does not run on any actor at all.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=833"
+  },
+  {
+    "text": "You can explicitly make a function that's within ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=836"
+  },
+  {
+    "text": "an actor non-isolated by using the non-isolated keyword, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=838"
+  },
+  {
+    "text": "putting it outside of the actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=842"
+  },
+  {
+    "text": "Just like what happened implicitly with the closure used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=845"
+  },
+  {
+    "text": "for the detached task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=847"
+  },
+  {
+    "text": "That means if we want to read some of the state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=850"
+  },
+  {
+    "text": "that's isolated to the actor, we'll need to use “await” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=852"
+  },
+  {
+    "text": "to visit the island and grab a copy of the state we need.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=856"
+  },
+  {
+    "text": "Non-isolated async code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=860"
+  },
+  {
+    "text": "always runs on the global cooperative pool.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=862"
+  },
+  {
+    "text": "Think of it as only running when a boat is out on the open sea, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=866"
+  },
+  {
+    "text": "so you have to leave the island you're visiting to do the work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=869"
+  },
+  {
+    "text": "That means checking to ensure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=873"
+  },
+  {
+    "text": "that you aren't taking any non-Sendable data with you! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=875"
+  },
+  {
+    "text": "Here, the compiler detects the potential data race, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=879"
+  },
+  {
+    "text": "where an instance of the non-Sendable Chicken ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=882"
+  },
+  {
+    "text": "is trying to leave the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=884"
+  },
+  {
+    "text": "Let's consider one more case of non-isolated code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=887"
+  },
+  {
+    "text": "The “greet” operation is non-isolated, synchronous code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=892"
+  },
+  {
+    "text": "It knows nothing about boats or islands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=896"
+  },
+  {
+    "text": "or concurrency in general.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=898"
+  },
+  {
+    "text": "And here, we're calling it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=900"
+  },
+  {
+    "text": "from the actor-isolated greetOne function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=901"
+  },
+  {
+    "text": "and that's okay! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=904"
+  },
+  {
+    "text": "This synchronous code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=905"
+  },
+  {
+    "text": "when called from the island, will stay on the island, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=907"
+  },
+  {
+    "text": "so it's free to operate on the chicken from the flock.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=910"
+  },
+  {
+    "text": "If instead we had a non-isolated async operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=914"
+  },
+  {
+    "text": "that calls “greet,” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=917"
+  },
+  {
+    "text": "then “greet” will run there, on a boat, in the open sea.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=918"
+  },
+  {
+    "text": "Most Swift code is like this: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=923"
+  },
+  {
+    "text": "synchronous, non-isolated to any actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=925"
+  },
+  {
+    "text": "and only operates on the parameters it's been given, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=927"
+  },
+  {
+    "text": "so it stays in the isolation domain where it is called.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=930"
+  },
+  {
+    "text": "Actors hold state that is isolated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=935"
+  },
+  {
+    "text": "from the rest of the program.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=937"
+  },
+  {
+    "text": "Only one task can run on an actor at a time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=940"
+  },
+  {
+    "text": "so there is no concurrent access to that state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=943"
+  },
+  {
+    "text": "Sendable checking applies any time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=947"
+  },
+  {
+    "text": "a task enters or exits an actor to ensure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=949"
+  },
+  {
+    "text": "that no unsynchronized mutable state escapes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=952"
+  },
+  {
+    "text": "Altogether, this makes actors one of the building blocks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=956"
+  },
+  {
+    "text": "for a concurrent program in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=959"
+  },
+  {
+    "text": "There's another special actor we often talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=964"
+  },
+  {
+    "text": "called the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=966"
+  },
+  {
+    "text": "Think of the main actor as a big island ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=969"
+  },
+  {
+    "text": "in the middle of the sea.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=971"
+  },
+  {
+    "text": "It represents the main thread, where all of the drawing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=973"
+  },
+  {
+    "text": "and interaction for your user interface occurs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=976"
+  },
+  {
+    "text": "So if you want to draw something, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=979"
+  },
+  {
+    "text": "you need to run the code on the main actor's island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=980"
+  },
+  {
+    "text": "It's so important for your UI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=984"
+  },
+  {
+    "text": "that maybe we should even call it the “U-I-land.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=986"
+  },
+  {
+    "text": "When we say that the main actor is “big,” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=992"
+  },
+  {
+    "text": "what we mean is that it contains a lot of state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=994"
+  },
+  {
+    "text": "related to the program's user interface.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=997"
+  },
+  {
+    "text": "There's a lot of code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=999"
+  },
+  {
+    "text": "both in the UI frameworks and in your apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1000"
+  },
+  {
+    "text": "that needs to run on it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1003"
+  },
+  {
+    "text": "However, it's still an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1005"
+  },
+  {
+    "text": "so it only runs one job at a time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1007"
+  },
+  {
+    "text": "So you have to be careful not to put too much ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1011"
+  },
+  {
+    "text": "or long-running work on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1013"
+  },
+  {
+    "text": "because it can make your UI unresponsive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1015"
+  },
+  {
+    "text": "Isolation to the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1020"
+  },
+  {
+    "text": "is expressed with the MainActor attribute.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1021"
+  },
+  {
+    "text": "This attribute can be applied to a function or closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1024"
+  },
+  {
+    "text": "to indicate that the code must run on the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1027"
+  },
+  {
+    "text": "Then, we say that this code is isolated to the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1032"
+  },
+  {
+    "text": "The Swift compiler will guarantee ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1036"
+  },
+  {
+    "text": "that main-actor-isolated code will only be executed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1038"
+  },
+  {
+    "text": "on the main thread, using the same mechanism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1041"
+  },
+  {
+    "text": "that ensures mutually exclusive access to other actors.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1044"
+  },
+  {
+    "text": "If one calls updateView ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1048"
+  },
+  {
+    "text": "from a context that isn't isolated to the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1049"
+  },
+  {
+    "text": "it will need to introduce an “await” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1052"
+  },
+  {
+    "text": "to account for the switch over to the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1054"
+  },
+  {
+    "text": "The main actor attribute can also be applied to types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1059"
+  },
+  {
+    "text": "in which case the instances of those types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1062"
+  },
+  {
+    "text": "will be isolated to the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1065"
+  },
+  {
+    "text": "Again, this is just like any other actor -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1067"
+  },
+  {
+    "text": "the properties are only accessible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1070"
+  },
+  {
+    "text": "while on the main actor, and the methods are isolated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1072"
+  },
+  {
+    "text": "to the main actor unless they explicitly opt out.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1075"
+  },
+  {
+    "text": "Like normal actors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1078"
+  },
+  {
+    "text": "references to main-actor classes are themselves Sendable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1079"
+  },
+  {
+    "text": "because their data is isolated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1083"
+  },
+  {
+    "text": "This makes the main actor annotation suitable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1087"
+  },
+  {
+    "text": "for your UI views and view controllers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1089"
+  },
+  {
+    "text": "which are necessarily tied to the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1092"
+  },
+  {
+    "text": "by the frameworks themselves.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1094"
+  },
+  {
+    "text": "You can share a reference to your view controller ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1096"
+  },
+  {
+    "text": "with other tasks and actors in your program, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1098"
+  },
+  {
+    "text": "and they can asynchronously call back into the view controller ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1101"
+  },
+  {
+    "text": "to post results.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1104"
+  },
+  {
+    "text": "This has a direct effect on your app's architecture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1106"
+  },
+  {
+    "text": "In your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1110"
+  },
+  {
+    "text": "your views and view controllers will be on the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1111"
+  },
+  {
+    "text": "Other program logic should be separated from that main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1115"
+  },
+  {
+    "text": "using other actors to safely model shared state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1119"
+  },
+  {
+    "text": "and tasks to describe independent work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1122"
+  },
+  {
+    "text": "And those tasks can shuttle between the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1125"
+  },
+  {
+    "text": "and other actors as necessary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1128"
+  },
+  {
+    "text": "There's a lot going on in a concurrent app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1131"
+  },
+  {
+    "text": "so we've built some great tools to help you make sense of it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1133"
+  },
+  {
+    "text": "I invite you to check out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1137"
+  },
+  {
+    "text": "the \"Visualize and Optimize Swift Concurrency\" talk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1138"
+  },
+  {
+    "text": "to learn more.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1141"
+  },
+  {
+    "text": "Let's dive into some deeper waters to talk about atomicity.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1143"
+  },
+  {
+    "text": "The goal of the Swift Concurrency model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1148"
+  },
+  {
+    "text": "is to eliminate data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1150"
+  },
+  {
+    "text": "What that really means is that it eliminates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1152"
+  },
+  {
+    "text": "low-level data races, which involve data corruption.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1155"
+  },
+  {
+    "text": "You still need to reason about atomicity at a high level.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1158"
+  },
+  {
+    "text": "As we've talked about before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1163"
+  },
+  {
+    "text": "actors only run one task at a time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1164"
+  },
+  {
+    "text": "However, when you stop running on an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1168"
+  },
+  {
+    "text": "the actor can run other tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1170"
+  },
+  {
+    "text": "This ensures that the program makes progress, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1172"
+  },
+  {
+    "text": "eliminating the potential for deadlocks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1175"
+  },
+  {
+    "text": "However, it requires you to consider your actor's invariants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1178"
+  },
+  {
+    "text": "carefully around await statements.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1181"
+  },
+  {
+    "text": "Otherwise, you can end up with a high-level data race ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1183"
+  },
+  {
+    "text": "where the program is in an unexpected state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1187"
+  },
+  {
+    "text": "even though no data is actually corrupted.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1189"
+  },
+  {
+    "text": "Let's break down an example of this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1192"
+  },
+  {
+    "text": "Here we have a function that intends to deposit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1196"
+  },
+  {
+    "text": "some additional pineapples on an island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1198"
+  },
+  {
+    "text": "It's outside of an actor, so it's non-isolated async code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1201"
+  },
+  {
+    "text": "That means it runs out here in the open sea.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1206"
+  },
+  {
+    "text": "It's been given some pineapples and a map to the island ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1210"
+  },
+  {
+    "text": "where it should deposit those pineapples.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1213"
+  },
+  {
+    "text": "The first interesting operation here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1216"
+  },
+  {
+    "text": "gets a copy of the food array from the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1218"
+  },
+  {
+    "text": "To do that, the boat needs to visit the island, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1222"
+  },
+  {
+    "text": "signaled by the “await” keyword.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1224"
+  },
+  {
+    "text": "As soon as it has a copy of the food, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1227"
+  },
+  {
+    "text": "the boat heads back out to the open sea ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1229"
+  },
+  {
+    "text": "to continue its work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1231"
+  },
+  {
+    "text": "That means adding the pineapple from the pineapples parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1233"
+  },
+  {
+    "text": "to the two it got from the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1236"
+  },
+  {
+    "text": "Now, we can move along to the last line of the function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1239"
+  },
+  {
+    "text": "Our boat now needs to visit the island again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1243"
+  },
+  {
+    "text": "to set the island's food array to those three pineapples.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1246"
+  },
+  {
+    "text": "Here, everything worked out fine, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1250"
+  },
+  {
+    "text": "and we have the three pineapples on the island! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1252"
+  },
+  {
+    "text": "But things could have gone a bit differently.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1255"
+  },
+  {
+    "text": "Let's say a pirate ship snuck in and stole all of the pineapples ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1258"
+  },
+  {
+    "text": "while our first boat was waiting its turn to visit the island.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1263"
+  },
+  {
+    "text": "Now, our original ship deposits its three pineapples ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1267"
+  },
+  {
+    "text": "on the island, and we notice a problem.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1270"
+  },
+  {
+    "text": "The three pineapples have suddenly turned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1273"
+  },
+  {
+    "text": "into five pineapples! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1275"
+  },
+  {
+    "text": "What happened here? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1277"
+  },
+  {
+    "text": "Well, notice that we have two awaits ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1279"
+  },
+  {
+    "text": "for access to state on the same actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1282"
+  },
+  {
+    "text": "and we're making an assumption here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1285"
+  },
+  {
+    "text": "that the food array on the island ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1287"
+  },
+  {
+    "text": "doesn't change between those two awaits.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1289"
+  },
+  {
+    "text": "But these are awaits, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1292"
+  },
+  {
+    "text": "meaning that our task could get suspended here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1294"
+  },
+  {
+    "text": "and the actor could do other higher-priority work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1296"
+  },
+  {
+    "text": "like battling pirates.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1299"
+  },
+  {
+    "text": "In this specific case, the Swift compiler will reject ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1302"
+  },
+  {
+    "text": "an attempt to outright modify the state on another actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1305"
+  },
+  {
+    "text": "However, we should really rewrite our deposit operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1309"
+  },
+  {
+    "text": "as synchronous code on the actor, like this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1312"
+  },
+  {
+    "text": "Because this is synchronous code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1316"
+  },
+  {
+    "text": "it will run on the actor without interruption.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1318"
+  },
+  {
+    "text": "So we can be sure that the state of the island ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1321"
+  },
+  {
+    "text": "will be unchanged by anyone else throughout the entire function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1323"
+  },
+  {
+    "text": "When you are writing your actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1329"
+  },
+  {
+    "text": "think in terms of synchronous, transactional operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1331"
+  },
+  {
+    "text": "that can be interleaved in any way.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1334"
+  },
+  {
+    "text": "Every one of them should ensure that the actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1337"
+  },
+  {
+    "text": "is in a good state when it exits.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1339"
+  },
+  {
+    "text": "For async actor operations, keep them simple, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1343"
+  },
+  {
+    "text": "forming them primarily from your synchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1346"
+  },
+  {
+    "text": "transactional operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1348"
+  },
+  {
+    "text": "and take care that your actor is in a good state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1351"
+  },
+  {
+    "text": "at each await operation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1353"
+  },
+  {
+    "text": "This way, you can make full use of actors to eliminate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1355"
+  },
+  {
+    "text": "both low-level and high-level data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1358"
+  },
+  {
+    "text": "In a concurrent program, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1362"
+  },
+  {
+    "text": "many things are happening at once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1364"
+  },
+  {
+    "text": "so the order in which those things happen ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1366"
+  },
+  {
+    "text": "can vary from one execution to the next.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1368"
+  },
+  {
+    "text": "And yet programs often rely on handling events ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1371"
+  },
+  {
+    "text": "in a consistent order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1375"
+  },
+  {
+    "text": "For example, the stream of events ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1376"
+  },
+  {
+    "text": "that come in from user input or messages from a server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1378"
+  },
+  {
+    "text": "When these event streams come in, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1382"
+  },
+  {
+    "text": "we expect their effects to happen in order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1384"
+  },
+  {
+    "text": "Swift Concurrency provides tools for ordering operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1387"
+  },
+  {
+    "text": "however, actors are not the tool for doing so.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1391"
+  },
+  {
+    "text": "Actors execute the highest-priority work first, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1394"
+  },
+  {
+    "text": "to help the overall system stay responsive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1397"
+  },
+  {
+    "text": "This eliminates priority inversions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1400"
+  },
+  {
+    "text": "where lower-priority work ends up happening ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1402"
+  },
+  {
+    "text": "before higher-priority work on the same actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1404"
+  },
+  {
+    "text": "Note that this is a significant difference ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1408"
+  },
+  {
+    "text": "from serial Dispatch queues, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1411"
+  },
+  {
+    "text": "which execute in a strictly First-In, First-Out order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1413"
+  },
+  {
+    "text": "Swift Concurrency has several tools for ordering work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1418"
+  },
+  {
+    "text": "The first we've been talking about a lot already -- tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1421"
+  },
+  {
+    "text": "Tasks execute from beginning to end, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1425"
+  },
+  {
+    "text": "with the normal control flow you're used to, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1428"
+  },
+  {
+    "text": "so they naturally order work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1430"
+  },
+  {
+    "text": "AsyncStream can be used to model an actual stream of events.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1434"
+  },
+  {
+    "text": "One task can iterate over the stream of events ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1438"
+  },
+  {
+    "text": "with a for-await-in loop, processing each event in turn.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1441"
+  },
+  {
+    "text": "An AsyncStream can be shared ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1445"
+  },
+  {
+    "text": "with any number of event producers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1447"
+  },
+  {
+    "text": "which can add elements to the stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1449"
+  },
+  {
+    "text": "while maintaining order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1451"
+  },
+  {
+    "text": "We've talked a lot about how Swift's concurrency model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1454"
+  },
+  {
+    "text": "is designed to eliminate data races ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1457"
+  },
+  {
+    "text": "using the notion of isolation, which is maintained ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1460"
+  },
+  {
+    "text": "by Sendable checking at task and actor boundaries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1463"
+  },
+  {
+    "text": "However, we cannot all just stop what we are doing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1466"
+  },
+  {
+    "text": "to go mark all of the Sendable types everywhere.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1469"
+  },
+  {
+    "text": "Instead, we need an incremental approach.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1472"
+  },
+  {
+    "text": "Swift 5.7 introduces a build setting to specify ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1476"
+  },
+  {
+    "text": "how strictly the Swift compiler should check for Sendability.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1479"
+  },
+  {
+    "text": "The default setting is Minimal ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1484"
+  },
+  {
+    "text": "meaning that the compiler will only diagnose places ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1486"
+  },
+  {
+    "text": "where one has explicitly tried to mark something as Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1489"
+  },
+  {
+    "text": "This is similar to how Swift 5.5 and 5.6 behaved, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1493"
+  },
+  {
+    "text": "and for the above, there won't be any warnings or errors.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1496"
+  },
+  {
+    "text": "Now, if you add a Sendable conformance, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1500"
+  },
+  {
+    "text": "the compiler will complain that the Coop type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1503"
+  },
+  {
+    "text": "cannot be Sendable because Chicken isn't Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1506"
+  },
+  {
+    "text": "However, this -- and other Sendable-related problems -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1509"
+  },
+  {
+    "text": "will be presented as warnings in Swift 5, not errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1513"
+  },
+  {
+    "text": "to make it easier to work through the problems one by one.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1517"
+  },
+  {
+    "text": "To move further toward data race safety, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1522"
+  },
+  {
+    "text": "enable the “targeted” strict concurrency setting.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1524"
+  },
+  {
+    "text": "This setting enables Sendable checking for code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1528"
+  },
+  {
+    "text": "that has already adopted Swift Concurrency features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1530"
+  },
+  {
+    "text": "like async/await, tasks, or actors.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1533"
+  },
+  {
+    "text": "This will identify, for example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1537"
+  },
+  {
+    "text": "attempts to capture values of non-Sendable type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1538"
+  },
+  {
+    "text": "in a newly created task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1541"
+  },
+  {
+    "text": "Sometimes the non-Sendable types come from another module.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1545"
+  },
+  {
+    "text": "Perhaps it's some package that hasn't been updated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1550"
+  },
+  {
+    "text": "for Sendable yet, or even your own module ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1552"
+  },
+  {
+    "text": "that you just haven't gotten around to.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1555"
+  },
+  {
+    "text": "For those, you can temporarily disable the Sendable warnings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1557"
+  },
+  {
+    "text": "for types that come from that module ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1561"
+  },
+  {
+    "text": "using the @preconcurrency attribute.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1563"
+  },
+  {
+    "text": "This will silence Sendable warnings for the Chicken type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1567"
+  },
+  {
+    "text": "within this source file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1570"
+  },
+  {
+    "text": "At some point, the FarmAnimals module ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1572"
+  },
+  {
+    "text": "will get updated with Sendable conformances.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1574"
+  },
+  {
+    "text": "Then, one of two things will happen: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1577"
+  },
+  {
+    "text": "either Chicken becomes Sendable somehow, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1579"
+  },
+  {
+    "text": "in which case the preconcurrency attribute can be removed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1582"
+  },
+  {
+    "text": "from the import.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1585"
+  },
+  {
+    "text": "Or Chicken will be known to be non-Sendable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1587"
+  },
+  {
+    "text": "in which case the warning will come back, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1590"
+  },
+  {
+    "text": "indicating that your assumptions about Chicken being Sendable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1593"
+  },
+  {
+    "text": "are, in fact, not correct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1595"
+  },
+  {
+    "text": "The targeted strictness setting tries to strike a balance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1598"
+  },
+  {
+    "text": "between compatibility with existing code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1602"
+  },
+  {
+    "text": "and identifying potential data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1604"
+  },
+  {
+    "text": "However, if you'd like to see ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1607"
+  },
+  {
+    "text": "everywhere that races could occur, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1609"
+  },
+  {
+    "text": "there is one more option: complete checking.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1611"
+  },
+  {
+    "text": "Complete checking approximates the intended Swift 6 semantics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1615"
+  },
+  {
+    "text": "to completely eliminate data races.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1619"
+  },
+  {
+    "text": "It checks everything that the earlier two modes check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1621"
+  },
+  {
+    "text": "but does so for all code in the module.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1624"
+  },
+  {
+    "text": "Here, we're not actually making use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1627"
+  },
+  {
+    "text": "of Swift's concurrency features at all.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1629"
+  },
+  {
+    "text": "Rather, it's performing work on a dispatch queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1631"
+  },
+  {
+    "text": "which will execute that code concurrently.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1634"
+  },
+  {
+    "text": "The async operation on a dispatch queue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1637"
+  },
+  {
+    "text": "is actually known to take a Sendable closure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1640"
+  },
+  {
+    "text": "so the compiler produces a warning indicating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1642"
+  },
+  {
+    "text": "that there is a data race when the non-Sendable body ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1645"
+  },
+  {
+    "text": "is captured by the code running on the dispatch queue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1647"
+  },
+  {
+    "text": "We can fix this by making the body parameter Sendable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1651"
+  },
+  {
+    "text": "That change eliminates this warning, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1656"
+  },
+  {
+    "text": "and now all of the callers of doWork know ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1658"
+  },
+  {
+    "text": "that they need to provide a Sendable closure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1661"
+  },
+  {
+    "text": "That means we get better checking for data races, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1665"
+  },
+  {
+    "text": "and we can see that the visit function now ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1668"
+  },
+  {
+    "text": "is the source of a data race.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1670"
+  },
+  {
+    "text": "Complete checking will help flush out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1673"
+  },
+  {
+    "text": "the potential data races in your program.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1675"
+  },
+  {
+    "text": "To achieve Swift's goal of eliminating data races, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1680"
+  },
+  {
+    "text": "we'll eventually need to get to complete checking.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1683"
+  },
+  {
+    "text": "We encourage you to work incrementally toward that goal: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1686"
+  },
+  {
+    "text": "adopt Swift's concurrency model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1690"
+  },
+  {
+    "text": "to architect your app for data race safety, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1692"
+  },
+  {
+    "text": "then enable progressively stricter concurrency checking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1695"
+  },
+  {
+    "text": "to eliminate classes of errors from your code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1698"
+  },
+  {
+    "text": "And don't fret over marking your imports with @preconcurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1701"
+  },
+  {
+    "text": "to suppress warnings for imported types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1704"
+  },
+  {
+    "text": "As those modules adopt stricter concurrency checking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1707"
+  },
+  {
+    "text": "the compiler will recheck your assumptions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1710"
+  },
+  {
+    "text": "At the end of this road, your code will benefit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1713"
+  },
+  {
+    "text": "from both memory safety and data race safety, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1716"
+  },
+  {
+    "text": "helping you focus on building great apps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1719"
+  },
+  {
+    "text": "And thank you for sailing with me on the sea of concurrency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1722"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110351/?time=1727"
+  }
+]

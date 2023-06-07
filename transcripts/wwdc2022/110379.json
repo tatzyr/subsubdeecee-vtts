@@ -1,0 +1,746 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=0"
+  },
+  {
+    "text": "Jeremy: Hi. I'm Jeremy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=9"
+  },
+  {
+    "text": "and I'm here to show you how to create a more responsive media app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=10"
+  },
+  {
+    "text": "using AVFoundation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=13"
+  },
+  {
+    "text": "When using media assets in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=15"
+  },
+  {
+    "text": "you might like to do more than just play them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=17"
+  },
+  {
+    "text": "You might like to show thumbnails, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=19"
+  },
+  {
+    "text": "combine media into new compositions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=22"
+  },
+  {
+    "text": "or get information about your assets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=25"
+  },
+  {
+    "text": "These tasks require loading data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=28"
+  },
+  {
+    "text": "and with big files like video, that might take some time to complete. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=31"
+  },
+  {
+    "text": "Unfortunately, it can be easy to introduce latency issues in your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=35"
+  },
+  {
+    "text": "if this work is done synchronously on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=38"
+  },
+  {
+    "text": "A great way to keep your app responsive is to load data asynchronously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=42"
+  },
+  {
+    "text": "and update your UI when it's finished. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=45"
+  },
+  {
+    "text": "AVFoundation has tools to make this easy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=48"
+  },
+  {
+    "text": "So here's what we'll talk about today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=51"
+  },
+  {
+    "text": "First, I'll introduce you to some new async APIs in AVFoundation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=53"
+  },
+  {
+    "text": "Then, I'll give you an update on asset inspection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=58"
+  },
+  {
+    "text": "using the async load(_:) method we introduced last year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=60"
+  },
+  {
+    "text": "And I'll show you how to optimize custom data loading for local ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=64"
+  },
+  {
+    "text": "and cached media using AVAssetResourceLoader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=67"
+  },
+  {
+    "text": "But first, let's jump into the new async API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=70"
+  },
+  {
+    "text": "Grabbing still images from a video with AVAssetImageGenerator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=74"
+  },
+  {
+    "text": "is a great way to create thumbnails. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=78"
+  },
+  {
+    "text": "But image generation isn't instantaneous.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=80"
+  },
+  {
+    "text": "To generate an image, image generator needs to load frame data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=84"
+  },
+  {
+    "text": "from your video file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=87"
+  },
+  {
+    "text": "And for media stored on a remote server, or on the internet, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=89"
+  },
+  {
+    "text": "that loading will be much slower. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=92"
+  },
+  {
+    "text": "That's why it's important how you generate your images. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=95"
+  },
+  {
+    "text": "Using a method that loads data synchronously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=99"
+  },
+  {
+    "text": "like copyCGImage, on the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=101"
+  },
+  {
+    "text": "can cause your UI to freeze as it waits for video to be loaded. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=104"
+  },
+  {
+    "text": "This year, we've added the image(at: time) async method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=108"
+  },
+  {
+    "text": "which uses async/await to free up the calling thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=111"
+  },
+  {
+    "text": "while image generator loads data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=113"
+  },
+  {
+    "text": "Image generator returns a tuple with the image ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=116"
+  },
+  {
+    "text": "and its actual time in the asset. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=119"
+  },
+  {
+    "text": "There are a few reasons the actual time may vary from the time you requested, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=121"
+  },
+  {
+    "text": "but if you only want the image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=125"
+  },
+  {
+    "text": "you can directly access it with the .image property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=126"
+  },
+  {
+    "text": "Some frames in compressed video are easier to load than others. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=130"
+  },
+  {
+    "text": "iFrames can be decoded independently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=134"
+  },
+  {
+    "text": "while other frames rely on nearby frames to be decoded. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=136"
+  },
+  {
+    "text": "For your requested time, image generator by default ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=140"
+  },
+  {
+    "text": "will use the nearest iFrame to generate your image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=143"
+  },
+  {
+    "text": "It might be tempting to set the tolerances to zero ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=146"
+  },
+  {
+    "text": "to get the exact frame for your requested time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=149"
+  },
+  {
+    "text": "But keep in mind that that frame will likely be dependent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=151"
+  },
+  {
+    "text": "on other nearby frames that image generator will also need to load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=154"
+  },
+  {
+    "text": "Instead, consider setting wide tolerances ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=159"
+  },
+  {
+    "text": "that will still give you the result you're looking for. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=162"
+  },
+  {
+    "text": "Wide tolerances help image generator to minimize data loading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=164"
+  },
+  {
+    "text": "by giving it more frames to pick from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=167"
+  },
+  {
+    "text": "The fewer frames it needs to load, the faster it can return an image.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=169"
+  },
+  {
+    "text": "To get a series of images at several times in an asset, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=174"
+  },
+  {
+    "text": "image generator has had generateCGImagesAsynchronously(forTimes:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=177"
+  },
+  {
+    "text": "However in Swift, there is some nuance to watch out for to use it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=182"
+  },
+  {
+    "text": "New this year we've added the images(for: times) method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=186"
+  },
+  {
+    "text": "It now takes an array of CMTimes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=190"
+  },
+  {
+    "text": "so you don't need to map them to NSValues first. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=192"
+  },
+  {
+    "text": "It also provides its results using an Async Sequence. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=195"
+  },
+  {
+    "text": "In Swift, sequences let you iterate over their items using a for in loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=198"
+  },
+  {
+    "text": "For a sequence of items that aren't ready all at once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=203"
+  },
+  {
+    "text": "an async sequence lets you await the next element after each iteration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=206"
+  },
+  {
+    "text": "For each successfully generated image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=211"
+  },
+  {
+    "text": "the result includes the originally requested time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=214"
+  },
+  {
+    "text": "and the actual time alongside the image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=216"
+  },
+  {
+    "text": "If it fails, the result has an error to explain why.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=219"
+  },
+  {
+    "text": "And if you are only interested in the image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=224"
+  },
+  {
+    "text": "the result has properties to directly access its values, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=226"
+  },
+  {
+    "text": "which can also throw errors if generation fails. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=230"
+  },
+  {
+    "text": "To learn more about async sequences, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=234"
+  },
+  {
+    "text": "I recommend checking out the \"meet async sequence\" session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=235"
+  },
+  {
+    "text": "For a task like image generation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=239"
+  },
+  {
+    "text": "it's a little easier to see how it involves loading data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=241"
+  },
+  {
+    "text": "But there are some other synchronous areas of AVFoundation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=243"
+  },
+  {
+    "text": "that are harder to pick out as problem spots.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=246"
+  },
+  {
+    "text": "AVMutableComposition is one of these areas. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=249"
+  },
+  {
+    "text": "Insert time range for asset needs information about the asset's tracks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=253"
+  },
+  {
+    "text": "to add references to them in the composition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=256"
+  },
+  {
+    "text": "It synchronously inspects the tracks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=259"
+  },
+  {
+    "text": "so if the tracks aren't already loaded, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=261"
+  },
+  {
+    "text": "they'll be synchronously loaded to create the new composition tracks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=264"
+  },
+  {
+    "text": "Previously, the solution would've been to await loading the asset's tracks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=269"
+  },
+  {
+    "text": "before inserting them into the composition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=273"
+  },
+  {
+    "text": "However, this year, we're introducing an async version of insertTimeRange, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=276"
+  },
+  {
+    "text": "which will async load the tracks for you, as needed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=281"
+  },
+  {
+    "text": "Video composition and mutable video composition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=286"
+  },
+  {
+    "text": "have additional methods that require loading the asset's properties too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=289"
+  },
+  {
+    "text": "New this year, the \"propertiesOf asset\" constructor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=293"
+  },
+  {
+    "text": "and isValid(for:timeRange:) method now also have async counterparts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=296"
+  },
+  {
+    "text": "These new methods will asynchronously load the tracks and duration of the asset, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=301"
+  },
+  {
+    "text": "so there's no need for you to pre-load them either. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=305"
+  },
+  {
+    "text": "These new async methods make it easier to interact with assets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=308"
+  },
+  {
+    "text": "by loading the properties they need asynchronously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=311"
+  },
+  {
+    "text": "But for when you need to load the properties of an asset yourself, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=314"
+  },
+  {
+    "text": "let's get a refresher of async asset inspection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=318"
+  },
+  {
+    "text": "You may have noticed there are two ways to inspect an asset's properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=321"
+  },
+  {
+    "text": "When AVFoundation was introduced, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=325"
+  },
+  {
+    "text": "the best way to inspect properties was with async key value loading. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=327"
+  },
+  {
+    "text": "Last year, we introduced async load(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=331"
+  },
+  {
+    "text": "It uses type safe keys to identify the properties to load, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=334"
+  },
+  {
+    "text": "where the old async key value loading technique used hard coded strings as keys. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=337"
+  },
+  {
+    "text": "Typos in these string keys are difficult to catch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=343"
+  },
+  {
+    "text": "Misspelling a key prevents it from being loaded asynchronously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=346"
+  },
+  {
+    "text": "and when the property is later used, it'll block while it loads.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=350"
+  },
+  {
+    "text": "It's also very easy to forget to add new properties to the keys to load ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=354"
+  },
+  {
+    "text": "or to forget async loading them entirely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=359"
+  },
+  {
+    "text": "For these reasons, this year, we're deprecating async key value loading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=363"
+  },
+  {
+    "text": "and the synchronous properties in Swift, in favor for async load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=367"
+  },
+  {
+    "text": "Async load uses type safe identifiers to prevent typos. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=371"
+  },
+  {
+    "text": "It directly returns property values as requested ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=375"
+  },
+  {
+    "text": "to avoid accessing unloaded properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=378"
+  },
+  {
+    "text": "And since all of this is checked at compile time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=381"
+  },
+  {
+    "text": "you'll prevent introducing any new IO bound performance issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=384"
+  },
+  {
+    "text": "Async load is now the only recommended way to asynchronously inspect properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=388"
+  },
+  {
+    "text": "on AVAsset, AVAssetTrack, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=392"
+  },
+  {
+    "text": "AVMetadataItem, and their sub classes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=395"
+  },
+  {
+    "text": "However, a handful of these classes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=398"
+  },
+  {
+    "text": "will still offer synchronous property inspection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=400"
+  },
+  {
+    "text": "That's because the data for their properties is already available in memory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=403"
+  },
+  {
+    "text": "Let's take another look at mutable composition to see why.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=408"
+  },
+  {
+    "text": "We'll use a mutable composition to splice together segments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=412"
+  },
+  {
+    "text": "of two existing video tracks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=415"
+  },
+  {
+    "text": "We'll start by creating an empty composition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=418"
+  },
+  {
+    "text": "and adding an empty video track. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=421"
+  },
+  {
+    "text": "Then, we can synchronously insert part of the first video track ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=423"
+  },
+  {
+    "text": "into the composition track. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=427"
+  },
+  {
+    "text": "Behind the scenes, this step isn't loading any data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=429"
+  },
+  {
+    "text": "Instead, it adds a new track segment that points to the desired track.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=432"
+  },
+  {
+    "text": "Then we can append part of the second track in the same way.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=438"
+  },
+  {
+    "text": "Since the composition itself is backed by an in memory structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=443"
+  },
+  {
+    "text": "and not a file, we can safely inspect its properties synchronously ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=446"
+  },
+  {
+    "text": "without needing to load them first. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=450"
+  },
+  {
+    "text": "Again, for this reason, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=453"
+  },
+  {
+    "text": "synchronous property inspection will remain available on these classes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=455"
+  },
+  {
+    "text": "and all classes will use async load for asynchronous inspection.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=459"
+  },
+  {
+    "text": "All of these new async methods in AVFoundation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=464"
+  },
+  {
+    "text": "will make it easier to prevent blocking while loading media data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=467"
+  },
+  {
+    "text": "But, introducing concurrency into your app for the first time can be tricky. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=471"
+  },
+  {
+    "text": "Check out these sessions from WWDC 21 for help getting started ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=475"
+  },
+  {
+    "text": "with Swift concurrency and for migrating to AVFoundation's async load in your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=478"
+  },
+  {
+    "text": "For our last topic, let's talk about optimizing custom data loading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=484"
+  },
+  {
+    "text": "for your assets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=487"
+  },
+  {
+    "text": "To start, lets take a look at how AVAsset loads data by default. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=489"
+  },
+  {
+    "text": "When you create an AVAsset with a URL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=493"
+  },
+  {
+    "text": "the media can either be on the network, or stored locally on device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=495"
+  },
+  {
+    "text": "If it's on the network, AVAsset will dynamically cache ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=500"
+  },
+  {
+    "text": "a certain amount of data to ensure smooth playback. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=503"
+  },
+  {
+    "text": "If the media is local, AVAsset can bypass the cache ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=507"
+  },
+  {
+    "text": "and load data as needed to play. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=510"
+  },
+  {
+    "text": "In some cases, you might not be able to give ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=512"
+  },
+  {
+    "text": "AVAsset a direct pointer to your media. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=514"
+  },
+  {
+    "text": "Maybe you store the raw bytes of an mp4 inside of a custom project file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=517"
+  },
+  {
+    "text": "For situations like this, AVAsset can use an AVAssetResourceLoader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=522"
+  },
+  {
+    "text": "Resource loader provides the asset with a way to request arbitrary bytes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=527"
+  },
+  {
+    "text": "from your media that you have a special way to load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=530"
+  },
+  {
+    "text": "But since the asset is no longer handling reading in data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=534"
+  },
+  {
+    "text": "it can't predict how long it'll take each chunk to load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=537"
+  },
+  {
+    "text": "So it assumes that accessing the media involves network communication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=541"
+  },
+  {
+    "text": "and waits until it caches data before it becomes ready to play. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=544"
+  },
+  {
+    "text": "This year, if your media is locally available, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=549"
+  },
+  {
+    "text": "you can enable entireLengthAvailableOnDemand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=551"
+  },
+  {
+    "text": "for your resource loader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=554"
+  },
+  {
+    "text": "Setting this flag tells the asset that it can expect to receive data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=556"
+  },
+  {
+    "text": "as it's requested, so it can skip caching.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=559"
+  },
+  {
+    "text": "For local media, entireLengthAvailableOnDemand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=565"
+  },
+  {
+    "text": "can help reduce your app's memory usage during playback, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=568"
+  },
+  {
+    "text": "since it won't need to cache extra data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=570"
+  },
+  {
+    "text": "It can also decrease the time it takes to start playback, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=573"
+  },
+  {
+    "text": "since the asset won't have to wait for the cache to fill up first. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=575"
+  },
+  {
+    "text": "Use caution when enabling this flag, though. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=579"
+  },
+  {
+    "text": "If loading requires any network operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=582"
+  },
+  {
+    "text": "including network file storage, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=584"
+  },
+  {
+    "text": "it's likely playback will be unreliable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=586"
+  },
+  {
+    "text": "That's the new enhancement for resource loader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=590"
+  },
+  {
+    "text": "Now lets wrap things up with some next steps for your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=592"
+  },
+  {
+    "text": "When working with media, use async/await to keep your app responsive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=596"
+  },
+  {
+    "text": "while it loads in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=600"
+  },
+  {
+    "text": "Consider increasing tolerances when using image generator for faster results. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=602"
+  },
+  {
+    "text": "And if you are using resource loader for locally available media, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=607"
+  },
+  {
+    "text": "enable entire length available on demand to help increase performance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=610"
+  },
+  {
+    "text": "That's everything I have for today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=615"
+  },
+  {
+    "text": "Thanks for watching, and enjoy WWDC 22.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110379/?time=616"
+  }
+]

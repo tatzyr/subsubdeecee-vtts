@@ -1,0 +1,1250 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=0"
+  },
+  {
+    "text": "David Stites: Hi, and welcome to \"Evolve Your Core Data Schema.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=9"
+  },
+  {
+    "text": "My name is David Stites and I am an engineer on the Core Data team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=13"
+  },
+  {
+    "text": "In this session, I am excited to talk to you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=17"
+  },
+  {
+    "text": "about how to update and migrate the Core Data schema in your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=20"
+  },
+  {
+    "text": "The agenda for this session is to learn what schema migration is ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=24"
+  },
+  {
+    "text": "and why your app has to perform it after updating its data model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=29"
+  },
+  {
+    "text": "how to migrate the existing schema, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=33"
+  },
+  {
+    "text": "and how CloudKit and schema migration interact. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=37"
+  },
+  {
+    "text": "First up, what is schema migration and why your app must migrate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=41"
+  },
+  {
+    "text": "when you update your data model.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=45"
+  },
+  {
+    "text": "As your application evolves, it may become necessary to change your data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=49"
+  },
+  {
+    "text": "Updating the data model requires that those changes are materialized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=54"
+  },
+  {
+    "text": "in the underlying storage schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=58"
+  },
+  {
+    "text": "Consider this data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=60"
+  },
+  {
+    "text": "It has an Aircraft entity with two attributes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=62"
+  },
+  {
+    "text": "type and number of engines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=66"
+  },
+  {
+    "text": "These attributes are reflected in the underlying storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=69"
+  },
+  {
+    "text": "If I add a number of passengers attribute, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=73"
+  },
+  {
+    "text": "I need to add the corresponding storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=76"
+  },
+  {
+    "text": "After migration, the changes are fully reflected in the underlying storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=80"
+  },
+  {
+    "text": "Without migrating the changes in the underlying storage, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=85"
+  },
+  {
+    "text": "Core Data will refuse to open your persistent store ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=88"
+  },
+  {
+    "text": "as the freshly-changed model doesn't match the model used for storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=91"
+  },
+  {
+    "text": "Attempting to open an incompatible store will result in an error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=96"
+  },
+  {
+    "text": "with the code NSPersistentStore- IncompatibleVersionHashError. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=100"
+  },
+  {
+    "text": "If you receive this error, it should be an indication to you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=105"
+  },
+  {
+    "text": "that a migration is required. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=108"
+  },
+  {
+    "text": "Now that I've explained what schema migration is ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=111"
+  },
+  {
+    "text": "and why it's essential to evolving your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=114"
+  },
+  {
+    "text": "let me tell you how migration is accomplished. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=116"
+  },
+  {
+    "text": "Core Data has built-in data migration tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=119"
+  },
+  {
+    "text": "to help keep your app's data storage up-to-date with the current data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=122"
+  },
+  {
+    "text": "Collectively, these tools are referred to as \"lightweight migration.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=128"
+  },
+  {
+    "text": "Lightweight migration is the preferred method of migration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=134"
+  },
+  {
+    "text": "Lightweight migration automatically analyzes and infers the migration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=137"
+  },
+  {
+    "text": "from the differences between the source and destination managed object models. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=142"
+  },
+  {
+    "text": "At runtime, Core Data looks for the models in the bundles returned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=147"
+  },
+  {
+    "text": "by .allBundles and .allFrameworks methods of the NSBundle class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=151"
+  },
+  {
+    "text": "Lightweight migration then generates a mapping model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=156"
+  },
+  {
+    "text": "to materialize the changes you've made in your app in your database schema.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=159"
+  },
+  {
+    "text": "Using lightweight migration requires the changes to the data model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=165"
+  },
+  {
+    "text": "to fit an obvious migration pattern.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=169"
+  },
+  {
+    "text": "Lightweight operations involving attributes include ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=174"
+  },
+  {
+    "text": "adding an attribute, removing an attribute, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=177"
+  },
+  {
+    "text": "making a non-optional attribute optional, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=180"
+  },
+  {
+    "text": "making an optional attribute non-optional ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=184"
+  },
+  {
+    "text": "and defining a default value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=187"
+  },
+  {
+    "text": "and renaming an attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=189"
+  },
+  {
+    "text": "If you want to rename an attribute, set the renaming identifier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=191"
+  },
+  {
+    "text": "in the destination model to the name ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=195"
+  },
+  {
+    "text": "of the corresponding attribute in the source model.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=196"
+  },
+  {
+    "text": "The renaming identifier is found ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=200"
+  },
+  {
+    "text": "in the Xcode Data Model Editor's property inspector. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=202"
+  },
+  {
+    "text": "For example, you can rename ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=206"
+  },
+  {
+    "text": "the Aircraft entity color attribute to paintColor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=208"
+  },
+  {
+    "text": "The renaming identifier creates a canonical name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=212"
+  },
+  {
+    "text": "so set the renaming identifier to the name of the attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=215"
+  },
+  {
+    "text": "in the source model, unless that attribute already has a renaming identifier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=218"
+  },
+  {
+    "text": "This means you can rename an attribute in version 2 of a model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=223"
+  },
+  {
+    "text": "and then rename it again in version 3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=227"
+  },
+  {
+    "text": "The renaming will work correctly going from version 2 to version 3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=230"
+  },
+  {
+    "text": "or from version 1 to version 3.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=235"
+  },
+  {
+    "text": "Lightweight migration can also handle changes to the relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=240"
+  },
+  {
+    "text": "without breaking a sweat. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=243"
+  },
+  {
+    "text": "You can add a new relationship or delete an existing relationship. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=245"
+  },
+  {
+    "text": "You can also rename a relationship by using a renaming identifier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=250"
+  },
+  {
+    "text": "just like an attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=253"
+  },
+  {
+    "text": "In addition, you can change relationship cardinality, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=256"
+  },
+  {
+    "text": "for example, migrating from a to-one to a to-many, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=259"
+  },
+  {
+    "text": "or a non-ordered to-many to an ordered to-many, and vice versa.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=263"
+  },
+  {
+    "text": "If you guessed that entities are also eligible for lightweight migration, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=269"
+  },
+  {
+    "text": "you're right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=272"
+  },
+  {
+    "text": "You can add a new entity, remove an existing entity, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=274"
+  },
+  {
+    "text": "and rename entities. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=278"
+  },
+  {
+    "text": "You can also create a new parent or child entity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=280"
+  },
+  {
+    "text": "and move attributes up and down within the entity hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=283"
+  },
+  {
+    "text": "You can move entities into or out of a hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=288"
+  },
+  {
+    "text": "You cannot, however, merge entity hierarchies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=293"
+  },
+  {
+    "text": "if two existing entities do not share a common parent in the source, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=296"
+  },
+  {
+    "text": "they cannot share a common parent in the destination. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=300"
+  },
+  {
+    "text": "Lightweight migration is controlled by two options keys: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=303"
+  },
+  {
+    "text": "NSMigratePersistent- StoresAutomaticallyOption ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=307"
+  },
+  {
+    "text": "and NSInferMappingModelAutomaticallyOption. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=311"
+  },
+  {
+    "text": "The presence of these two keys set to a true value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=316"
+  },
+  {
+    "text": "when the store is added to the persistent coordinator will cause Core Data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=319"
+  },
+  {
+    "text": "to perform lightweight migration automatically if it detects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=323"
+  },
+  {
+    "text": "the persistent store no longer matches the current model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=326"
+  },
+  {
+    "text": "If you're using NSPersistentContainer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=331"
+  },
+  {
+    "text": "or NSPersistentStoreDescription, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=333"
+  },
+  {
+    "text": "these options are set automatically for you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=336"
+  },
+  {
+    "text": "and you don't need to do anything. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=338"
+  },
+  {
+    "text": "If you're using an alternative API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=341"
+  },
+  {
+    "text": "such as NSPersistentStoreCoordinator .addPersistentStore ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=343"
+  },
+  {
+    "text": "(type:configuration:at:options:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=347"
+  },
+  {
+    "text": "lightweight migration can be requested by setting and passing an options dictionary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=350"
+  },
+  {
+    "text": "with the keys set NSMigratePersistent- StoresAutomaticallyOption ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=356"
+  },
+  {
+    "text": "and NSInferMappingModelAutomaticallyOption to a value of YES. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=362"
+  },
+  {
+    "text": "Core Data will perform lightweight migration automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=368"
+  },
+  {
+    "text": "if it detects the persistent store no longer matches the current model.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=371"
+  },
+  {
+    "text": "Here’s how this works in code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=376"
+  },
+  {
+    "text": "First, I'll import CoreData and create a managed object model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=379"
+  },
+  {
+    "text": "Then, I'll create a persistent store coordinator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=383"
+  },
+  {
+    "text": "by using the model I just created. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=387"
+  },
+  {
+    "text": "Note the options dictionary I created and that I'll pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=389"
+  },
+  {
+    "text": "when I add the store to the persistent coordinator. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=393"
+  },
+  {
+    "text": "Lastly, I'll add the store to the coordinator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=396"
+  },
+  {
+    "text": "where migration will occur automatically if necessary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=399"
+  },
+  {
+    "text": "Regardless of whatever API you use, the changes to your data model can be made ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=403"
+  },
+  {
+    "text": "directly in the same model that is shipping with the application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=408"
+  },
+  {
+    "text": "There is no need to create a new version of the model to make changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=412"
+  },
+  {
+    "text": "If you want to determine in advance whether Core Data can ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=416"
+  },
+  {
+    "text": "infer the mapping model between the source and destination models ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=420"
+  },
+  {
+    "text": "without actually doing the work of migration, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=424"
+  },
+  {
+    "text": "you can use NSMappingModel .inferredMappingModel method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=426"
+  },
+  {
+    "text": "The method returns the inferred model if Core Data was able to create it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=431"
+  },
+  {
+    "text": "Otherwise, it returns nil.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=436"
+  },
+  {
+    "text": "Sometimes, combined changes to the schema ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=439"
+  },
+  {
+    "text": "may exceed the capabilities of lightweight migration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=442"
+  },
+  {
+    "text": "I’m going to describe to you how to deal with that problem ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=445"
+  },
+  {
+    "text": "and still use lightweight migration.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=448"
+  },
+  {
+    "text": "Returning to our previous example model, suppose that we've previously added ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=451"
+  },
+  {
+    "text": "an attribute called “flightData” that uses external storage for binary data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=456"
+  },
+  {
+    "text": "indicated by the file path stored in FLIGHT_DATA. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=462"
+  },
+  {
+    "text": "Further, suppose there is a need to change that attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=466"
+  },
+  {
+    "text": "to store data internally and remove the external storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=469"
+  },
+  {
+    "text": "Checking to see if this migration fits any of the capabilities ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=473"
+  },
+  {
+    "text": "of lightweight migration, it is discovered that it doesn't. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=477"
+  },
+  {
+    "text": "On the face of it, it appears that we're stuck, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=480"
+  },
+  {
+    "text": "unable to make this change. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=483"
+  },
+  {
+    "text": "However, fear not! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=485"
+  },
+  {
+    "text": "Lightweight migration can still be used to perform more complex, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=486"
+  },
+  {
+    "text": "non-conforming migrations, albeit in multiple steps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=490"
+  },
+  {
+    "text": "The goal becomes to decompose the migration tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=496"
+  },
+  {
+    "text": "that aren't eligible for lightweight migration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=500"
+  },
+  {
+    "text": "into a minimum series of migrations that are eligible for lightweight migration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=503"
+  },
+  {
+    "text": "Generally, if the original model is A and the objective model is B, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=508"
+  },
+  {
+    "text": "but model B has changes that aren't eligible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=514"
+  },
+  {
+    "text": "for lightweight migration, a bridge can be created by introducing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=516"
+  },
+  {
+    "text": "one or more model versions that decompose those changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=520"
+  },
+  {
+    "text": "Each of the models introduced will have one or more operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=526"
+  },
+  {
+    "text": "that is within the capabilities that compose the non-conforming changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=531"
+  },
+  {
+    "text": "This results in a series of migrations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=535"
+  },
+  {
+    "text": "where each model is now lightweight migrateable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=538"
+  },
+  {
+    "text": "but equivalent to the non-conforming migration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=541"
+  },
+  {
+    "text": "Returning to my example that wasn't eligible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=545"
+  },
+  {
+    "text": "for lightweight migration, our original model is model A. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=547"
+  },
+  {
+    "text": "I will start decomposing the task by introducing a new model version, A prime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=551"
+  },
+  {
+    "text": "and add a new attribute \"tmpStorage\" that will be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=556"
+  },
+  {
+    "text": "temporarily to store data that is imported from the external files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=560"
+  },
+  {
+    "text": "Next, I will import the data from the external files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=566"
+  },
+  {
+    "text": "into our new attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=569"
+  },
+  {
+    "text": "The code to import this data is separate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=571"
+  },
+  {
+    "text": "from the functionality provided by Core Data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=573"
+  },
+  {
+    "text": "The execution of this import is interposed between migrations.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=577"
+  },
+  {
+    "text": "Once the data has been safely imported, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=582"
+  },
+  {
+    "text": "I'll create another new version of the model A double-prime from A prime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=585"
+  },
+  {
+    "text": "In A double-prime, I will delete the old external storage attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=590"
+  },
+  {
+    "text": "while simultaneously renaming the new attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=595"
+  },
+  {
+    "text": "Each of these steps described is within the capabilities of lightweight migration.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=598"
+  },
+  {
+    "text": "Intuitively, an event loop could be built that opens the persistent store ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=604"
+  },
+  {
+    "text": "with the lightweight migration options set ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=609"
+  },
+  {
+    "text": "and iteratively steps through each unprocessed model in a serial order, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=611"
+  },
+  {
+    "text": "and Core Data will migrate the store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=616"
+  },
+  {
+    "text": "If you perform app-specific logic during your migrations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=619"
+  },
+  {
+    "text": "such as how I imported data from external files in the previous example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=622"
+  },
+  {
+    "text": "that logic must be \"restartable\" in the event the migration is interrupted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=626"
+  },
+  {
+    "text": "due to the process terminating.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=631"
+  },
+  {
+    "text": "If your app uses Core Data and CloudKit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=634"
+  },
+  {
+    "text": "there are some important points you should keep in mind ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=636"
+  },
+  {
+    "text": "when designing your data model in Core Data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=639"
+  },
+  {
+    "text": "To pass records between a Core Data store and a CloudKit database, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=642"
+  },
+  {
+    "text": "they require a shared understanding of the data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=646"
+  },
+  {
+    "text": "You define this model in the Core Data model editor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=651"
+  },
+  {
+    "text": "That model is subsequently used to generate the CloudKit schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=655"
+  },
+  {
+    "text": "The generated schema is created initially in the Development environment, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=659"
+  },
+  {
+    "text": "and then promoted to Production. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=664"
+  },
+  {
+    "text": "You should be aware that CloudKit doesn't support all the features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=667"
+  },
+  {
+    "text": "of a Core Data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=670"
+  },
+  {
+    "text": "As you design your model, be aware of the following limitations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=672"
+  },
+  {
+    "text": "and create a compatible data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=676"
+  },
+  {
+    "text": "For example, unique constraints on entities aren't supported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=678"
+  },
+  {
+    "text": "Undefined and objectID attribute type aren't supported as attribute types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=683"
+  },
+  {
+    "text": "And relationships must be optional and have an inverse relationship. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=688"
+  },
+  {
+    "text": "In addition, CloudKit does not support the deny deletion rule. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=694"
+  },
+  {
+    "text": "As you're developing your app, you'll be using the Development environment. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=698"
+  },
+  {
+    "text": "The CloudKit schema can be modified freely in this environment. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=703"
+  },
+  {
+    "text": "However, after you promote your schema to Production, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=708"
+  },
+  {
+    "text": "the record types and their fields are immutable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=711"
+  },
+  {
+    "text": "While lightweight migration handles many different scenarios, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=714"
+  },
+  {
+    "text": "CloudKit is more restricted in what it supports. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=718"
+  },
+  {
+    "text": "Many of the lightweight operations I described earlier are unsupported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=722"
+  },
+  {
+    "text": "Specifically, what is supported in CloudKit is ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=727"
+  },
+  {
+    "text": "adding new fields to existing record types and adding new record types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=731"
+  },
+  {
+    "text": "You cannot modify or delete existing record types or fields. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=736"
+  },
+  {
+    "text": "Consider these restrictions when modifying the model schema.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=741"
+  },
+  {
+    "text": "When it comes time to update your data model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=746"
+  },
+  {
+    "text": "keep in mind that lightweight migration only materializes schema changes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=748"
+  },
+  {
+    "text": "in the local store file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=753"
+  },
+  {
+    "text": "Regardless of whether a particular store is used with CloudKit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=755"
+  },
+  {
+    "text": "migration will only change the store on disk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=758"
+  },
+  {
+    "text": "and does not make changes to the CloudKit schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=762"
+  },
+  {
+    "text": "You still need to materialize those changes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=765"
+  },
+  {
+    "text": "in the Development database by running the schema initializer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=768"
+  },
+  {
+    "text": "and then promoting those changes in Development ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=772"
+  },
+  {
+    "text": "to Production using the CloudKit Console. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=775"
+  },
+  {
+    "text": "Keep in mind that users of your app will be using old versions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=778"
+  },
+  {
+    "text": "as well as new versions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=782"
+  },
+  {
+    "text": "The latest version of the app will of course know ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=784"
+  },
+  {
+    "text": "about any new additions to the schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=786"
+  },
+  {
+    "text": "Old versions of the app won't know about the new fields or record types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=789"
+  },
+  {
+    "text": "Since CloudKit schema is essentially additive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=795"
+  },
+  {
+    "text": "give consideration to the effects of schema migration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=798"
+  },
+  {
+    "text": "to devices running older versions of your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=802"
+  },
+  {
+    "text": "For example, one common pitfall is forgetting to update old fields ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=804"
+  },
+  {
+    "text": "that the older versions of your app use but newer versions don't. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=809"
+  },
+  {
+    "text": "Here are some strategies to migrate CloudKit schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=813"
+  },
+  {
+    "text": "The first option is to incrementally add new fields to existing record types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=817"
+  },
+  {
+    "text": "If you adopt this approach, older versions of your app will have access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=823"
+  },
+  {
+    "text": "to every record a user creates, but not every field.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=827"
+  },
+  {
+    "text": "A second option is to version your entities ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=832"
+  },
+  {
+    "text": "by including a version attribute, and then use a fetch request to select ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=835"
+  },
+  {
+    "text": "only the records that are compatible with the current version of the app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=839"
+  },
+  {
+    "text": "If you adopt this approach, older versions of your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=844"
+  },
+  {
+    "text": "won't fetch records that a user creates with a more recent version, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=847"
+  },
+  {
+    "text": "effectively hiding them on that device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=851"
+  },
+  {
+    "text": "The last strategy is to create a completely new container, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=855"
+  },
+  {
+    "text": "using NSPersistentCloudKitContainerOptions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=858"
+  },
+  {
+    "text": "to associate the new store with a new container. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=861"
+  },
+  {
+    "text": "Be aware that if the user has a large data set, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=865"
+  },
+  {
+    "text": "uploading the data set to iCloud could take an extended period of time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=868"
+  },
+  {
+    "text": "Whatever method you use, take care in designing your data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=873"
+  },
+  {
+    "text": "Be sure to consider cross-version compatibility issues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=877"
+  },
+  {
+    "text": "and test different versions of your data model together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=880"
+  },
+  {
+    "text": "Now that we've thoroughly discussed data models, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=884"
+  },
+  {
+    "text": "migration, and CloudKit, I am going to demonstrate this in action. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=887"
+  },
+  {
+    "text": "As you may have guessed, I'm a pilot. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=891"
+  },
+  {
+    "text": "I've created a small app to log my flight time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=894"
+  },
+  {
+    "text": "Here is the data model for that app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=897"
+  },
+  {
+    "text": "I have a single entity called “LogEntry” and have added a number of attributes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=899"
+  },
+  {
+    "text": "such as aircraft type, flight duration, origin, destination, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=904"
+  },
+  {
+    "text": "and tail number to allow me to log the required experience information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=909"
+  },
+  {
+    "text": "When I run this application for the first time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=914"
+  },
+  {
+    "text": "Core Data will create the store and materialize the schema in that store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=916"
+  },
+  {
+    "text": "Before I run the application, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=921"
+  },
+  {
+    "text": "I am going to turn on the com.apple.CoreData.SQLDebug ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=923"
+  },
+  {
+    "text": "and the com.apple.CoreData.MigrationDebug environment variables. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=928"
+  },
+  {
+    "text": "This will cause Core Data to log the steps it is taking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=934"
+  },
+  {
+    "text": "With these arguments in place, I will run the app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=937"
+  },
+  {
+    "text": "As the app launches, Core Data is logging the steps that it is taking: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=942"
+  },
+  {
+    "text": "creating the file, creating the metadata for the store, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=946"
+  },
+  {
+    "text": "and materializing the schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=949"
+  },
+  {
+    "text": "SQLite created the table ZLOGENTRY with our schema in it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=952"
+  },
+  {
+    "text": "This can also be confirmed by looking at the store file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=956"
+  },
+  {
+    "text": "using the sqlite3 command line tool. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=959"
+  },
+  {
+    "text": "Here, I have the LogEntry table, and it has the corresponding columns ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=962"
+  },
+  {
+    "text": "to the attributes I created in the data model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=967"
+  },
+  {
+    "text": "Now I'm going to make some lightweight changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=970"
+  },
+  {
+    "text": "I'm adding some new entities, Aircraft, Pilot, and Airport. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=974"
+  },
+  {
+    "text": "This will help me normalize the schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=978"
+  },
+  {
+    "text": "I am changing some of the attributes in the LogEntry entity to be relationships. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=981"
+  },
+  {
+    "text": "For example, destination and origin move from being string attributes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=986"
+  },
+  {
+    "text": "to being an Airport to-one relationship. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=990"
+  },
+  {
+    "text": "The Airport entity also has two new attributes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=994"
+  },
+  {
+    "text": "icaoIdentifier and faaIdentifier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=997"
+  },
+  {
+    "text": "The type attribute is promoted to a new entity; Aircraft ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1000"
+  },
+  {
+    "text": "and I am adding two new attributes, tailNumber and registrationNumber. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1004"
+  },
+  {
+    "text": "On LogEntry, I am creating a to-one relationship to an Aircraft from LogEntry.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1009"
+  },
+  {
+    "text": "Lastly, I added a Pilot entity that has name and certificate ID.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1016"
+  },
+  {
+    "text": "Each log entry will be related to a Pilot entity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1022"
+  },
+  {
+    "text": "Now that I've completed my changes to the data model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1026"
+  },
+  {
+    "text": "I'm going to run the app again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1029"
+  },
+  {
+    "text": "Oop! I received an error running the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1035"
+  },
+  {
+    "text": "Inspecting the code, it is ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1039"
+  },
+  {
+    "text": "NSPersistentStore- IncompatibleVersionHashError. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1040"
+  },
+  {
+    "text": "That error means that my current model no longer matches the schema ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1044"
+  },
+  {
+    "text": "for the model in the store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1048"
+  },
+  {
+    "text": "I need to migrate the store schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1050"
+  },
+  {
+    "text": "I can do that in one of three ways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1052"
+  },
+  {
+    "text": "Using the first method, I can convert my code to use an NSPersistentContainer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1055"
+  },
+  {
+    "text": "as the lightweight migration options are automatically set for me. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1060"
+  },
+  {
+    "text": "Using the second method, I can use NSPersistentStoreDescription, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1065"
+  },
+  {
+    "text": "as, again, the lightweight migrations options are automatically set for me. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1070"
+  },
+  {
+    "text": "Lastly, using the third method, I can manually set ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1075"
+  },
+  {
+    "text": "the lightweight migration options on an options dictionary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1078"
+  },
+  {
+    "text": "and pass that dictionary to the coordinator when opening the store.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1082"
+  },
+  {
+    "text": "I think I'll go with the first option, using an NSPersistentContainer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1086"
+  },
+  {
+    "text": "Now that I have converted the code to use an NSPersistentContainer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1091"
+  },
+  {
+    "text": "I will launch the app and again observe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1095"
+  },
+  {
+    "text": "that Core Data is migrating the schema in the store file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1097"
+  },
+  {
+    "text": "Again, this can be confirmed using the sqlite3 command line tool. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1112"
+  },
+  {
+    "text": "Note the new schema was materialized by Core Data automatically, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1116"
+  },
+  {
+    "text": "using lightweight migration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1120"
+  },
+  {
+    "text": "What could be easier? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1122"
+  },
+  {
+    "text": "Before ending my demo, I wanted to show option number 3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1124"
+  },
+  {
+    "text": "Recall in this option, I am manually setting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1128"
+  },
+  {
+    "text": "the lightweight migration options on an options dictionary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1130"
+  },
+  {
+    "text": "and then passing that dictionary to the coordinator when opening the store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1134"
+  },
+  {
+    "text": "The end result is the same ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1138"
+  },
+  {
+    "text": "in that the store is migrated to the new schema. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1140"
+  },
+  {
+    "text": "When you make changes to your data model, use lightweight migration to help you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1143"
+  },
+  {
+    "text": "Lightweight migration is very flexible and easy to use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1147"
+  },
+  {
+    "text": "for the vast majority of data model changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1151"
+  },
+  {
+    "text": "If you have more complex data models, break that model down ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1154"
+  },
+  {
+    "text": "into ones that are composed of lightweight changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1158"
+  },
+  {
+    "text": "Lastly, if you use CloudKit with your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1162"
+  },
+  {
+    "text": "carefully consider the implications of the data model changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1164"
+  },
+  {
+    "text": "Thoroughly test any data model changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1169"
+  },
+  {
+    "text": "I hope you've found this information useful ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1172"
+  },
+  {
+    "text": "and that you'll consider updating the model in your project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1174"
+  },
+  {
+    "text": "to build some awesome new features. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1177"
+  },
+  {
+    "text": "Thanks for flying with me, and have a great WWDC.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10120/?time=1180"
+  }
+]

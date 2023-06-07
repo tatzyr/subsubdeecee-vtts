@@ -1,0 +1,910 @@
+[
+  {
+    "text": "In this presentation we will focus on tile shading, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=1"
+  },
+  {
+    "text": "the new programmable stage in Apple's A11 GPU ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=3"
+  },
+  {
+    "text": "that provides compute capabilities ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=6"
+  },
+  {
+    "text": "inline within render passes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=8"
+  },
+  {
+    "text": "Tile shading enables a whole new level of performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=11"
+  },
+  {
+    "text": "and efficiency in Metal 2. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=13"
+  },
+  {
+    "text": "Rendering and compute operations can now share data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=15"
+  },
+  {
+    "text": "through the higher bandwidth and lower power tile memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=18"
+  },
+  {
+    "text": "Tile shading is deeply integrated with imageblocks. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=22"
+  },
+  {
+    "text": "You'll be able to analyze imageblock contents, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=25"
+  },
+  {
+    "text": "summarize that content, store imageblocks mid-scene, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=28"
+  },
+  {
+    "text": "or even change imageblock layouts. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=31"
+  },
+  {
+    "text": "Tile shading is also tightly integrated ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=34"
+  },
+  {
+    "text": "with threadgroup memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=36"
+  },
+  {
+    "text": "and can be used to cache tile constant data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=37"
+  },
+  {
+    "text": "for the later tile or fragment stages. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=39"
+  },
+  {
+    "text": "Let's start by motivating the need for tile shading.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=43"
+  },
+  {
+    "text": "Performing compute between render passes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=47"
+  },
+  {
+    "text": "has become more common in recent years. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=49"
+  },
+  {
+    "text": "For example, tiled deferred and forward rendering algorithms ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=51"
+  },
+  {
+    "text": "intersect lights against screen-aligned tiles ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=54"
+  },
+  {
+    "text": "in order to reduce shading cost. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=57"
+  },
+  {
+    "text": "The idea behind these algorithms ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=59"
+  },
+  {
+    "text": "is that not all lights affect all pixels, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=61"
+  },
+  {
+    "text": "but culling per pixel may be too expensive, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=64"
+  },
+  {
+    "text": "so we amortize the cost over tile regions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=67"
+  },
+  {
+    "text": "Previously in Metal for A Series GPUs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=71"
+  },
+  {
+    "text": "performing compute mid-render ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=73"
+  },
+  {
+    "text": "required storing render target data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=75"
+  },
+  {
+    "text": "that was cached in tile memory back out to device memory, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=76"
+  },
+  {
+    "text": "so that a compute pass could then consume it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=80"
+  },
+  {
+    "text": "Compute would then have to also store its results ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=83"
+  },
+  {
+    "text": "back to device memory before rendering would resume. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=86"
+  },
+  {
+    "text": "This repeated data movement between local ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=89"
+  },
+  {
+    "text": "and external memories is bandwidth intensive.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=91"
+  },
+  {
+    "text": "With Metal 2 and the A11 GPU, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=96"
+  },
+  {
+    "text": "such algorithms can now operate exclusively ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=98"
+  },
+  {
+    "text": "within the exposed tile memory using tile shading, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=100"
+  },
+  {
+    "text": "which takes the place of the compute pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=104"
+  },
+  {
+    "text": "Render target contents are now cached in tile memory once. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=106"
+  },
+  {
+    "text": "Tile shading then operates directly on the imageblock ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=110"
+  },
+  {
+    "text": "and can even its results to threadgroup memory, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=113"
+  },
+  {
+    "text": "which is also backed by tile memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=116"
+  },
+  {
+    "text": "for later use by rendering.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=118"
+  },
+  {
+    "text": "Now that we've seen how tile shaders ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=121"
+  },
+  {
+    "text": "allow you to operate within tile memory more often, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=122"
+  },
+  {
+    "text": "let's take a closer look at ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=125"
+  },
+  {
+    "text": "how tile shading interacts with draws. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=126"
+  },
+  {
+    "text": "Launching threads within a compute pass ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=130"
+  },
+  {
+    "text": "is called a dispatch, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=132"
+  },
+  {
+    "text": "and Metal adopts the same name for tile shading operations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=133"
+  },
+  {
+    "text": "within a render pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=136"
+  },
+  {
+    "text": "Tile dispatches may be freely interleaved with draws ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=138"
+  },
+  {
+    "text": "and are executed in API submission order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=141"
+  },
+  {
+    "text": "Metal guarantees that the results of draws ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=144"
+  },
+  {
+    "text": "issued before the dispatch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=146"
+  },
+  {
+    "text": "are visible when that dispatch is executed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=147"
+  },
+  {
+    "text": "Likewise, Metal guarantees that the results of each dispatch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=151"
+  },
+  {
+    "text": "are visible when the next draw or dispatch is executed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=153"
+  },
+  {
+    "text": "This synchronization guarantee allows race-free access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=158"
+  },
+  {
+    "text": "to tile memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=160"
+  },
+  {
+    "text": "No such guarantee is made between draws though.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=162"
+  },
+  {
+    "text": "Another important concept in tile shading ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=166"
+  },
+  {
+    "text": "is how threads are organized into threadgroups and grids. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=168"
+  },
+  {
+    "text": "With traditional compute dispatches, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=172"
+  },
+  {
+    "text": "threadgroups are organized into tightly packed grids. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=174"
+  },
+  {
+    "text": "Within a render pass, however, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=178"
+  },
+  {
+    "text": "the tile grid is constant across the entire pass, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=179"
+  },
+  {
+    "text": "but the threadgroup size can differ for each dispatch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=182"
+  },
+  {
+    "text": "If we zoom in on a tile, we see that this allows you ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=186"
+  },
+  {
+    "text": "to map each thread to a unique pixel ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=189"
+  },
+  {
+    "text": "or map each thread to multiple pixels. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=192"
+  },
+  {
+    "text": "The mapping of threads to resources ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=196"
+  },
+  {
+    "text": "has no special meaning to Metal though. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=198"
+  },
+  {
+    "text": "You can launch threads that have no mapping to pixels whatsoever, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=200"
+  },
+  {
+    "text": "as would be the case for the light culling example ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=204"
+  },
+  {
+    "text": "we previously discussed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=206"
+  },
+  {
+    "text": "In that example, your threadgroup size ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=208"
+  },
+  {
+    "text": "might match the number of lights that need intersection testing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=210"
+  },
+  {
+    "text": "Tile shading threadgroups are launched for each tile ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=215"
+  },
+  {
+    "text": "regardless of any geometry present. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=217"
+  },
+  {
+    "text": "For example, a triangle affecting a subset of tiles, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=220"
+  },
+  {
+    "text": "need only be processed by those tiles. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=223"
+  },
+  {
+    "text": "A subsequent tile dispatch, however, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=226"
+  },
+  {
+    "text": "will be processed by every tile of the screen. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=228"
+  },
+  {
+    "text": "Doing so is important because that dispatch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=231"
+  },
+  {
+    "text": "may be initializing tile memory for later geometry ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=233"
+  },
+  {
+    "text": "that can land in those tiles. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=236"
+  },
+  {
+    "text": "Viewport and scissor states ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=239"
+  },
+  {
+    "text": "do not restrict tile shading either. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=240"
+  },
+  {
+    "text": "In general, tile shading is unaffected ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=242"
+  },
+  {
+    "text": "by traditional render states. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=244"
+  },
+  {
+    "text": "OK, so now let's turn to the API changes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=246"
+  },
+  {
+    "text": "that support tile shading. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=249"
+  },
+  {
+    "text": "A render pass can be configured with one of three tile sizes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=252"
+  },
+  {
+    "text": "which will determine your imageblock dimensions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=255"
+  },
+  {
+    "text": "You most often want to choose the largest tile size ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=258"
+  },
+  {
+    "text": "that fits your imageblock -- which is 32 KB on A11 GPUs -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=260"
+  },
+  {
+    "text": "to minimize any overhead ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=265"
+  },
+  {
+    "text": "of the GPU's primitive processing stage. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=266"
+  },
+  {
+    "text": "Some algorithms may, however, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=269"
+  },
+  {
+    "text": "benefit from choosing a smaller tile size ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=270"
+  },
+  {
+    "text": "when fragment or tile processing is particularly complex, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=272"
+  },
+  {
+    "text": "to increase the amount of tile parallelism ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=276"
+  },
+  {
+    "text": "in the shader cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=277"
+  },
+  {
+    "text": "As we've already seen, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=280"
+  },
+  {
+    "text": "threadgroup memory is also sourced from tile memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=281"
+  },
+  {
+    "text": "so it's size may also constrain your choice of tile size.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=283"
+  },
+  {
+    "text": "Creating a tile shading pipeline ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=289"
+  },
+  {
+    "text": "is similar to creating a traditional pipeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=291"
+  },
+  {
+    "text": "You attach functions to a pipeline descriptor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=293"
+  },
+  {
+    "text": "to create a pipeline state. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=295"
+  },
+  {
+    "text": "For tile shading, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=298"
+  },
+  {
+    "text": "Metal introduces a new pipeline descriptor type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=299"
+  },
+  {
+    "text": "It's similar to the existing render pipeline descriptor, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=302"
+  },
+  {
+    "text": "but removes render state properties ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=304"
+  },
+  {
+    "text": "such as blending. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=306"
+  },
+  {
+    "text": "It's also similar to the existing ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=308"
+  },
+  {
+    "text": "compute pipeline descriptor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=309"
+  },
+  {
+    "text": "because only one function can be bound. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=311"
+  },
+  {
+    "text": "That function, however, can either be ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=314"
+  },
+  {
+    "text": "a compute kernel or a fragment function. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=316"
+  },
+  {
+    "text": "Compute kernels provide access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=319"
+  },
+  {
+    "text": "to all the tile shading and imageblock features ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=320"
+  },
+  {
+    "text": "we've discussed so far. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=322"
+  },
+  {
+    "text": "Fragment-based tile shading is more limited ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=324"
+  },
+  {
+    "text": "but plays a specific and important role ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=326"
+  },
+  {
+    "text": "that I'll talk about later on.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=328"
+  },
+  {
+    "text": "First, I'd like to touch on imageblock capabilities ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=331"
+  },
+  {
+    "text": "in tile pipelines. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=333"
+  },
+  {
+    "text": "Since tile shading executes compute dispatches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=336"
+  },
+  {
+    "text": "inline with rendering, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=338"
+  },
+  {
+    "text": "it has access to both implicit and explicit imageblocks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=339"
+  },
+  {
+    "text": "just like fragment functions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=343"
+  },
+  {
+    "text": "Unlike fragment functions, however, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=345"
+  },
+  {
+    "text": "kernel-based tile shaders can access the entire imageblock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=347"
+  },
+  {
+    "text": "Let's take a look at the syntax.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=351"
+  },
+  {
+    "text": "We disambiguate between the implicit and explicit forms ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=354"
+  },
+  {
+    "text": "of the templated imageblock type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=356"
+  },
+  {
+    "text": "using a second template argument. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=358"
+  },
+  {
+    "text": "We must disambiguate ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=361"
+  },
+  {
+    "text": "because each has different access semantics. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=362"
+  },
+  {
+    "text": "The implicit form has value semantics, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=365"
+  },
+  {
+    "text": "meaning that we copy pixels into and out of the imageblock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=367"
+  },
+  {
+    "text": "The explicit form has the reference semantics ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=372"
+  },
+  {
+    "text": "discussed in the previous presentation.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=374"
+  },
+  {
+    "text": "We've already seen how imageblocks within a render pass ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=379"
+  },
+  {
+    "text": "persist for the lifetime of the tile ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=381"
+  },
+  {
+    "text": "and how we leverage this ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=383"
+  },
+  {
+    "text": "to communicate across draws and dispatches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=384"
+  },
+  {
+    "text": "In our opening example I also mentioned ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=387"
+  },
+  {
+    "text": "that the same is true for threadgroup memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=389"
+  },
+  {
+    "text": "Persistent threadgroup memory is unique to tile shading ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=392"
+  },
+  {
+    "text": "and is well-suited for storing data that's constant ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=394"
+  },
+  {
+    "text": "across the tile, such as culled light lists. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=397"
+  },
+  {
+    "text": "Let's take a look at how we leverage this ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=400"
+  },
+  {
+    "text": "in the shading language. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=402"
+  },
+  {
+    "text": "In this example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=404"
+  },
+  {
+    "text": "our kernel-based tile function is provided the full light list ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=405"
+  },
+  {
+    "text": "for culling against its tile bounds. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=408"
+  },
+  {
+    "text": "It's also given minimum and maximum depth ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=411"
+  },
+  {
+    "text": "of the tile from an earlier tile dispatch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=413"
+  },
+  {
+    "text": "It then places the culled result in threadgroup memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=417"
+  },
+  {
+    "text": "so that later fragment shaders have access to it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=420"
+  },
+  {
+    "text": "Both tile dispatch and fragment draws ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=424"
+  },
+  {
+    "text": "must agree on the threadgroup bind point.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=426"
+  },
+  {
+    "text": "Let's finally consider the role ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=431"
+  },
+  {
+    "text": "fragment-based tile pipelines play. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=433"
+  },
+  {
+    "text": "Tile shading encourages you to leverage tile memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=435"
+  },
+  {
+    "text": "by merging what would previously have been multiple passes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=438"
+  },
+  {
+    "text": "Tile memory is a precious resource, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=441"
+  },
+  {
+    "text": "so we need explicit imageblocks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=443"
+  },
+  {
+    "text": "to pack more data into that space. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=444"
+  },
+  {
+    "text": "But a static tile memory layout for an entire pass ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=447"
+  },
+  {
+    "text": "is still unlikely to fit, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=450"
+  },
+  {
+    "text": "so we need to flexibly transition tile memory layouts ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=451"
+  },
+  {
+    "text": "as we move through the different phases of our computation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=454"
+  },
+  {
+    "text": "Fragment-based tile pipelines enable this transitioning. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=458"
+  },
+  {
+    "text": "The barrier semantics I described earlier ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=461"
+  },
+  {
+    "text": "ensure that all tile memory access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=463"
+  },
+  {
+    "text": "is complete before the transition begins. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=465"
+  },
+  {
+    "text": "And since fragment shaders copy data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=468"
+  },
+  {
+    "text": "to and from imageblocks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=470"
+  },
+  {
+    "text": "we can ensure that each pixel is transitioned atomically. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=472"
+  },
+  {
+    "text": "Let's look at an example. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=475"
+  },
+  {
+    "text": "In this example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=478"
+  },
+  {
+    "text": "we finished with our deferred rendering phase ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=479"
+  },
+  {
+    "text": "and would like to reconfigure the imageblock to implement ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=481"
+  },
+  {
+    "text": "an approximate order-independent transparency technique called ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=483"
+  },
+  {
+    "text": "Multi-Layer Alpha Blending. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=487"
+  },
+  {
+    "text": "We do so using a fragment-based tile function ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=489"
+  },
+  {
+    "text": "that takes the old layout as input ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=492"
+  },
+  {
+    "text": "and returns the new layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=494"
+  },
+  {
+    "text": "And as is often the case, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=497"
+  },
+  {
+    "text": "you often need to initialize the new layout ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=498"
+  },
+  {
+    "text": "using data from the old layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=499"
+  },
+  {
+    "text": "Here we bring over the final lit value ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=503"
+  },
+  {
+    "text": "from the deferred rendering phase. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=506"
+  },
+  {
+    "text": "To better understand tile shading, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=509"
+  },
+  {
+    "text": "please be sure to check out our sample code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=511"
+  },
+  {
+    "text": "It demonstrates how to efficiently forward shade ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=513"
+  },
+  {
+    "text": "with many lights in a single pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=515"
+  },
+  {
+    "text": "Tile shading is used to cull lights ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=517"
+  },
+  {
+    "text": "that do not affect the tile. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=519"
+  },
+  {
+    "text": "Finally, the GPU Debugger in Xcode ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=522"
+  },
+  {
+    "text": "makes inspecting threadgroup memory easy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=524"
+  },
+  {
+    "text": "by formatting the data based on how you use it in your shader. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=526"
+  },
+  {
+    "text": "After taking a capture with Xcode's GPU Debugger, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=530"
+  },
+  {
+    "text": "you can see each threadgroup memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=533"
+  },
+  {
+    "text": "as buffers in the tile section of the bound resources view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=535"
+  },
+  {
+    "text": "From there, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=539"
+  },
+  {
+    "text": "you can use the buffer viewer to inspect the data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=540"
+  },
+  {
+    "text": "formatted in same way that your shader uses it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=542"
+  },
+  {
+    "text": "In this presentation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=547"
+  },
+  {
+    "text": "we saw how tile shading enables developers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=548"
+  },
+  {
+    "text": "to analyze and manipulate whole tile contents, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=550"
+  },
+  {
+    "text": "communicate across draws, and repurpose tile memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=553"
+  },
+  {
+    "text": "through different phases of computation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=556"
+  },
+  {
+    "text": "Taken together, tile shaders enable developers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=558"
+  },
+  {
+    "text": "to merge multiple render and compute passes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=561"
+  },
+  {
+    "text": "in order to better leverage the higher bandwidth ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=563"
+  },
+  {
+    "text": "and lower power tile memory of the A11 GPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=566"
+  },
+  {
+    "text": "For more information about Metal 2 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=569"
+  },
+  {
+    "text": "and links to the sample code ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=571"
+  },
+  {
+    "text": "please visit the Developer website ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=572"
+  },
+  {
+    "text": "at developer.apple.com/metal. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=574"
+  },
+  {
+    "text": "Thank you for watching!",
+    "link": "https://developer.apple.com/videos/play/tech-talks-604/?time=578"
+  }
+]

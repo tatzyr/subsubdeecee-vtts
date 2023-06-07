@@ -1,0 +1,1882 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=0"
+  },
+  {
+    "text": "Hello, and welcome to WWDC 2022. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=9"
+  },
+  {
+    "text": "My name is Ben, and I'm an engineer on the Xcode build system team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=12"
+  },
+  {
+    "text": "Hi, my name is Artem, and I'm an engineer on the Swift Compiler team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=15"
+  },
+  {
+    "text": "In this talk we're gonna give you a deep dive into Xcode's build process ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=19"
+  },
+  {
+    "text": "to demystify parallelization inside builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=22"
+  },
+  {
+    "text": "Ben is going to start with an introduction of the core concepts about builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=25"
+  },
+  {
+    "text": "and look at the available tools that Xcode offers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=29"
+  },
+  {
+    "text": "to help investigate build performance issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=31"
+  },
+  {
+    "text": "He will then explain how Xcode increases parallelization while building a target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=34"
+  },
+  {
+    "text": "Building on top of that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=39"
+  },
+  {
+    "text": "I will explain how Xcode parallelizes a build holistically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=40"
+  },
+  {
+    "text": "while building projects consisting of many targets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=43"
+  },
+  {
+    "text": "and summarize the takeaways in the end. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=46"
+  },
+  {
+    "text": "Ben? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=48"
+  },
+  {
+    "text": "Let's re-iterate on what happens when pressing CMD+B in Xcode to build an app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=50"
+  },
+  {
+    "text": "The build system, as part of Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=55"
+  },
+  {
+    "text": "gets invoked with a representation of the whole project, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=57"
+  },
+  {
+    "text": "including all source files, assets, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=60"
+  },
+  {
+    "text": "build settings, and other configurations like the run destination. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=63"
+  },
+  {
+    "text": "The build system is the single source of truth about how an app should be built. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=67"
+  },
+  {
+    "text": "It knows which tools to invoke using which settings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=71"
+  },
+  {
+    "text": "and which intermediate files to produce to eventually create an app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=74"
+  },
+  {
+    "text": "In the next step, the build system invokes the tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=78"
+  },
+  {
+    "text": "to process the project's input files, for example, the compilers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=80"
+  },
+  {
+    "text": "Both compilers, Clang and Swift, will produce object files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=86"
+  },
+  {
+    "text": "that the linker needs to link the executable program ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=89"
+  },
+  {
+    "text": "that represents the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=92"
+  },
+  {
+    "text": "While this order makes sense, it's not obvious where it comes from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=94"
+  },
+  {
+    "text": "So let's take a look at one example of that process ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=97"
+  },
+  {
+    "text": "and how the build system decides in which order to execute all tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=100"
+  },
+  {
+    "text": "Using the input source-files, the Swift compiler captures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=106"
+  },
+  {
+    "text": "the programmer's intent and translates it into a machine-executable binary, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=109"
+  },
+  {
+    "text": "checking the source code for errors along the way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=113"
+  },
+  {
+    "text": "This process can fail, which would cancel the build, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=115"
+  },
+  {
+    "text": "but if it succeeds, it creates an object file for each input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=118"
+  },
+  {
+    "text": "Those object files are used to invoke the linker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=122"
+  },
+  {
+    "text": "which combines them and adds references to externally linked libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=125"
+  },
+  {
+    "text": "to produce the executable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=128"
+  },
+  {
+    "text": "The two tasks have a dependency based on what they consume and produce. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=131"
+  },
+  {
+    "text": "The object files produced by the compiler get consumed by the linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=135"
+  },
+  {
+    "text": "This creates a dependency on the build system graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=139"
+  },
+  {
+    "text": "The file contents itself are not of interest to the build system, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=142"
+  },
+  {
+    "text": "but the dependency between the tasks is. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=145"
+  },
+  {
+    "text": "While executing the build, it needs to make sure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=148"
+  },
+  {
+    "text": "that a task that produces another task's input finishes before said task can start. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=150"
+  },
+  {
+    "text": "And since this core concept is valid for all kind of tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=155"
+  },
+  {
+    "text": "let's switch to a more generic visualization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=159"
+  },
+  {
+    "text": "that shows a dependency between Task A and Task B. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=161"
+  },
+  {
+    "text": "In this case, A produces some or all of B's inputs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=164"
+  },
+  {
+    "text": "Compiling and Linking are only a few of many different task types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=169"
+  },
+  {
+    "text": "that need to be executed to build a whole target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=173"
+  },
+  {
+    "text": "so let's add some more generic tasks to the graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=176"
+  },
+  {
+    "text": "that represent other types like compiling assets, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=178"
+  },
+  {
+    "text": "copying files or codesigning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=180"
+  },
+  {
+    "text": "Together, they represent building a Framework target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=183"
+  },
+  {
+    "text": "Again, those tasks have defined dependencies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=187"
+  },
+  {
+    "text": "based on their inputs and outputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=190"
+  },
+  {
+    "text": "So completing executing task A unblocks running task B and C, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=192"
+  },
+  {
+    "text": "while finishing task B unblocks task D and E. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=196"
+  },
+  {
+    "text": "Tasks that get unblocked are called 'downstream' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=201"
+  },
+  {
+    "text": "and tasks that block 'upstream'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=204"
+  },
+  {
+    "text": "Many projects contain more than one framework target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=207"
+  },
+  {
+    "text": "so let's add two more targets representing an app and an app extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=210"
+  },
+  {
+    "text": "Targets define dependencies between each other in the project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=214"
+  },
+  {
+    "text": "via explicit or implicit dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=217"
+  },
+  {
+    "text": "For example, by getting added to the 'Link Binary with Libraries' build phase.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=219"
+  },
+  {
+    "text": "In this case, the app embeds the app extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=225"
+  },
+  {
+    "text": "and links against the Framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=228"
+  },
+  {
+    "text": "The app extension is not using the Framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=230"
+  },
+  {
+    "text": "so they don't have a dependency relationship.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=232"
+  },
+  {
+    "text": "When executing the build graph, different tasks take a different amount of time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=236"
+  },
+  {
+    "text": "This comes down to the level of complexity that is necessary to complete the work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=240"
+  },
+  {
+    "text": "depending on the computation that's needed as well as the size of the input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=245"
+  },
+  {
+    "text": "Compiling many files takes usually much more time than copying a few header files, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=250"
+  },
+  {
+    "text": "and taking this into consideration will end up with something like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=255"
+  },
+  {
+    "text": "When the build system executes this build, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=259"
+  },
+  {
+    "text": "it starts by running tasks that don't have dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=261"
+  },
+  {
+    "text": "And once those completed, they unblock downstream tasks and so on, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=265"
+  },
+  {
+    "text": "following this process until all planned tasks finished.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=269"
+  },
+  {
+    "text": "On following builds, the build system is able to skip tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=275"
+  },
+  {
+    "text": "for which inputs haven't changed while the output is still up to date. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=278"
+  },
+  {
+    "text": "If a task needs to re-run due to a changed input, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=283"
+  },
+  {
+    "text": "like B of the App target in this case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=286"
+  },
+  {
+    "text": "downstream tasks have to re-run too if its output changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=288"
+  },
+  {
+    "text": "Skipping all other tasks allows for very fast turnaround times ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=292"
+  },
+  {
+    "text": "when iteratively working on the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=295"
+  },
+  {
+    "text": "This is called an incremental build, but let's stick to full builds for now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=298"
+  },
+  {
+    "text": "The dependencies and duration of the task execution ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=303"
+  },
+  {
+    "text": "defines the first possible time a downstream task can start. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=306"
+  },
+  {
+    "text": "With this information it's possible to calculate the critical path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=310"
+  },
+  {
+    "text": "which is the shortest time the build needs to run ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=313"
+  },
+  {
+    "text": "with theoretical unlimited resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=316"
+  },
+  {
+    "text": "A common pattern throughout this talk will be to shorten this path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=318"
+  },
+  {
+    "text": "to create a highly parallelizable and scalable build graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=322"
+  },
+  {
+    "text": "A shorter critical path does not necessarily result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=325"
+  },
+  {
+    "text": "in a shorter overall build time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=329"
+  },
+  {
+    "text": "but it ensures that the build scales with the hardware. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=330"
+  },
+  {
+    "text": "The critical build path defines the limiting factor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=334"
+  },
+  {
+    "text": "of how fast a build can be– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=336"
+  },
+  {
+    "text": "it cannot complete faster, even if the hardware would allow it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=338"
+  },
+  {
+    "text": "Shortening the critical path is done by breaking up dependencies within it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=343"
+  },
+  {
+    "text": "When looking at how a build performed and to understand more about its execution, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=347"
+  },
+  {
+    "text": "the data needs to be plotted based on the time they executed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=351"
+  },
+  {
+    "text": "The width still indicates the length of tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=355"
+  },
+  {
+    "text": "Wide elements like these two indicate a long running task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=358"
+  },
+  {
+    "text": "while narrow elements like these represent fast finishing tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=361"
+  },
+  {
+    "text": "The height of the graph shows the number of parallel executing tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=367"
+  },
+  {
+    "text": "at a given time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=371"
+  },
+  {
+    "text": "Be aware that this does not directly map to CPU or memory utilization.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=372"
+  },
+  {
+    "text": "Empty space originates by tasks blocking its downstream tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=378"
+  },
+  {
+    "text": "like in those two scenarios. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=382"
+  },
+  {
+    "text": "And finally, the color of the elements represent their associated target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=384"
+  },
+  {
+    "text": "I'm very excited to announce that this visualization is new in Xcode 14 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=389"
+  },
+  {
+    "text": "and will help understand a build's performance after it finished. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=393"
+  },
+  {
+    "text": "The Xcode Build Timeline is a great new addition to the build log. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=397"
+  },
+  {
+    "text": "It visualizes based on parallelization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=400"
+  },
+  {
+    "text": "rather than hierarchy to understand the build's performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=402"
+  },
+  {
+    "text": "The number of rows at given time represents the level of parallelism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=406"
+  },
+  {
+    "text": "during that time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=409"
+  },
+  {
+    "text": "The horizontal length of individual tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=411"
+  },
+  {
+    "text": "represent the duration they needed to finish their work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=414"
+  },
+  {
+    "text": "Empty space in the graph shows where unfinished tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=417"
+  },
+  {
+    "text": "blocked downstream tasks from starting to execute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=420"
+  },
+  {
+    "text": "Different colors applied to the timeline elements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=424"
+  },
+  {
+    "text": "help distinguish the different targets that were part of the build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=426"
+  },
+  {
+    "text": "And on incremental builds, the timeline will only contain tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=430"
+  },
+  {
+    "text": "that got actually executed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=433"
+  },
+  {
+    "text": "allowing to spot long-running tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=435"
+  },
+  {
+    "text": "especially ones which might not have been expected to run during this build.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=437"
+  },
+  {
+    "text": "Here's a demo of the Build Timeline in Xcode 14. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=442"
+  },
+  {
+    "text": "In this window I opened a copy of the swift-docc project from Github ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=445"
+  },
+  {
+    "text": "which builds the documentation compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=449"
+  },
+  {
+    "text": "To get an overview about the targets that are built for the scheme, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=451"
+  },
+  {
+    "text": "let's check out the scheme editor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=454"
+  },
+  {
+    "text": "To open that I click on the scheme and select \"Edit scheme\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=456"
+  },
+  {
+    "text": "The 'build' tab contains a list of all targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=460"
+  },
+  {
+    "text": "Targets can explicitly get added to the scheme ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=463"
+  },
+  {
+    "text": "or implicitly by being a dependency of a target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=465"
+  },
+  {
+    "text": "that is already part of the scheme. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=468"
+  },
+  {
+    "text": "In this case I'm using a Swift package with an automatically generated scheme ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=470"
+  },
+  {
+    "text": "for the package, so all targets from the manifest are explicitly defined.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=474"
+  },
+  {
+    "text": "This log represents a build of that scheme that I executed earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=480"
+  },
+  {
+    "text": "In contains entries for all tasks that the build system executed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=484"
+  },
+  {
+    "text": "The entries are organized in a hierarchy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=488"
+  },
+  {
+    "text": "based on the targets they belong to, like the 'docc' target here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=490"
+  },
+  {
+    "text": "To successfully build the executable of that target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=494"
+  },
+  {
+    "text": "Xcode ran all tasks that are represented by the children of this node. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=497"
+  },
+  {
+    "text": "Since the build log is currently in its 'All' state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=501"
+  },
+  {
+    "text": "it also shows tasks from previous builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=503"
+  },
+  {
+    "text": "that didn't need to re-run in an incremental build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=506"
+  },
+  {
+    "text": "Selecting 'Recent' only shows tasks that got actually executed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=508"
+  },
+  {
+    "text": "hiding all skipped tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=512"
+  },
+  {
+    "text": "In addition to that, the build log also supports filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=514"
+  },
+  {
+    "text": "to only show tasks that had issues or even failed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=517"
+  },
+  {
+    "text": "To open the build timeline for this build, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=523"
+  },
+  {
+    "text": "I go to the editor options and open the assistant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=525"
+  },
+  {
+    "text": "The build timeline opens next to the build log. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=529"
+  },
+  {
+    "text": "Like usual, the editor options provide settings to show the assistant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=532"
+  },
+  {
+    "text": "on the right or bottom. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=535"
+  },
+  {
+    "text": "I'll stay with bottom for now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=537"
+  },
+  {
+    "text": "The timeline visualizes the same data as the 'recent' build log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=539"
+  },
+  {
+    "text": "based on the parallelization of the build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=542"
+  },
+  {
+    "text": "Selecting an element in one also selects it in the other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=545"
+  },
+  {
+    "text": "This enables to see a task's execution in context. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=548"
+  },
+  {
+    "text": "The timeline here gives a sense about the tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=552"
+  },
+  {
+    "text": "that executed in parallel to the selected task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=555"
+  },
+  {
+    "text": "I'm using a pinch gesture on the trackpad to zoom out again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=558"
+  },
+  {
+    "text": "Selecting an element in the timeline shows it in the build log. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=566"
+  },
+  {
+    "text": "And since the build log visualizes based on the hierarchical structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=570"
+  },
+  {
+    "text": "it enables to view which files were compiled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=574"
+  },
+  {
+    "text": "as part of this compiler invocation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=576"
+  },
+  {
+    "text": "It also enables to view the whole command line of that invocation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=578"
+  },
+  {
+    "text": "Holding down Option while selecting an area in the build timeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=586"
+  },
+  {
+    "text": "adjusts the view port to fit this timeframe. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=589"
+  },
+  {
+    "text": "Here we can verify that linking of the target ArgumentParser ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=592"
+  },
+  {
+    "text": "is in fact waiting for compilation of the same target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=596"
+  },
+  {
+    "text": "Holding Option while scrolling up allows me to zoom out quickly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=599"
+  },
+  {
+    "text": "The number of rows in the timeline represents the number of tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=603"
+  },
+  {
+    "text": "that ran in parallel at that time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=606"
+  },
+  {
+    "text": "An empty space like this indicates tasks waiting for un-produced inputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=608"
+  },
+  {
+    "text": "Ideally, the timeline is vertically filled and has as little empty space as possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=614"
+  },
+  {
+    "text": "This scales the build graph the best and makes builds faster, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=618"
+  },
+  {
+    "text": "the faster the hardware. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=621"
+  },
+  {
+    "text": "To achieve this, Xcode comes with many improvements this year ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=623"
+  },
+  {
+    "text": "to shorten the critical path. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=626"
+  },
+  {
+    "text": "Next, let's check out how Xcode defines and builds individual targets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=628"
+  },
+  {
+    "text": "as well as how it can increase parallelization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=632"
+  },
+  {
+    "text": "When configuring a target, build phases describe the work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=635"
+  },
+  {
+    "text": "that needs to be done to produce that target's product. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=638"
+  },
+  {
+    "text": "They are defined in the project editor and can contain a set of source code files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=641"
+  },
+  {
+    "text": "and assets to compile, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=645"
+  },
+  {
+    "text": "files that need to be copied like headers or resources, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=646"
+  },
+  {
+    "text": "as well as libraries that should be linked or scripts that should be executed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=649"
+  },
+  {
+    "text": "Many build phases describe tasks with inputs or outputs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=654"
+  },
+  {
+    "text": "from other build phases, creating dependencies between them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=657"
+  },
+  {
+    "text": "For example, a target's source files must be compiled before it is linked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=660"
+  },
+  {
+    "text": "However, this doesn't apply to all build phases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=664"
+  },
+  {
+    "text": "Instead of running tasks from each build phase in a linear order, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=668"
+  },
+  {
+    "text": "the build system will consider the inputs and outputs of build phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=671"
+  },
+  {
+    "text": "to determine if they can run in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=675"
+  },
+  {
+    "text": "For example, Compilation and Resource copying can run in parallel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=677"
+  },
+  {
+    "text": "because neither depends on any outputs of the other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=681"
+  },
+  {
+    "text": "However, linking must still follow compilation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=684"
+  },
+  {
+    "text": "because it depends on the object files produced by that phase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=687"
+  },
+  {
+    "text": "Now, let's consider a different target which contains 'Run Script' build phases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=690"
+  },
+  {
+    "text": "Unlike other build phases, the inputs and outputs of script phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=695"
+  },
+  {
+    "text": "must be manually configured in the target editor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=698"
+  },
+  {
+    "text": "As a result, the build system will run consecutive script phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=701"
+  },
+  {
+    "text": "one at a time to avoid introducing a data race in the build process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=705"
+  },
+  {
+    "text": "If the scripts in a target are configured to run ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=709"
+  },
+  {
+    "text": "based on dependency analysis ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=711"
+  },
+  {
+    "text": "and specify their complete list of inputs and outputs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=713"
+  },
+  {
+    "text": "then the build setting FUSE_BUILD_SCRIPT_PHASES ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=716"
+  },
+  {
+    "text": "can be set to YES ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=718"
+  },
+  {
+    "text": "to indicate the build system should attempt to run them in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=719"
+  },
+  {
+    "text": "However, when running script phases in parallel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=723"
+  },
+  {
+    "text": "the build system has to rely on the specified inputs and outputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=726"
+  },
+  {
+    "text": "So be aware that an incomplete list of the inputs or outputs of a script phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=729"
+  },
+  {
+    "text": "can lead to data races which are very hard to debug. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=734"
+  },
+  {
+    "text": "To mitigate this, Xcode supports user script sandboxing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=737"
+  },
+  {
+    "text": "to precisely declare the dependencies of each script phase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=740"
+  },
+  {
+    "text": "Sandboxing is an opt-in feature that blocks shell scripts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=744"
+  },
+  {
+    "text": "from accidentally accessing source files and intermediate build objects, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=747"
+  },
+  {
+    "text": "unless those are explicitly declared as an input or output for the phase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=750"
+  },
+  {
+    "text": "In this example, neither input nor output.txt ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=755"
+  },
+  {
+    "text": "are declared as a dependency for that script phase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=758"
+  },
+  {
+    "text": "The sandbox will block the script from reading and writing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=761"
+  },
+  {
+    "text": "to both files when building the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=763"
+  },
+  {
+    "text": "When the script violates the sandbox, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=766"
+  },
+  {
+    "text": "it will fail with a non-zero exit code causing the build to fail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=768"
+  },
+  {
+    "text": "In addition to that, Xcode will list all the paths ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=772"
+  },
+  {
+    "text": "that the script phase was trying to access without properly declaring them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=775"
+  },
+  {
+    "text": "Adding both files as dependency information to this script phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=780"
+  },
+  {
+    "text": "fixes this issue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=783"
+  },
+  {
+    "text": "This way the sandbox ensures that the script is not mistakenly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=784"
+  },
+  {
+    "text": "accessing any file other than its declared inputs and outputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=788"
+  },
+  {
+    "text": "Now, let's explore an example with more than one script phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=792"
+  },
+  {
+    "text": "and see how sandboxing prevents data races and incorrect builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=795"
+  },
+  {
+    "text": "There are two script phases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=799"
+  },
+  {
+    "text": "The first one reads a text file, calculates a checksum of its content, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=801"
+  },
+  {
+    "text": "and writes that value to an intermediate file in DERIVED_FILE_DIR. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=805"
+  },
+  {
+    "text": "The other script reads the same text file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=810"
+  },
+  {
+    "text": "as well as the produced checksum ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=812"
+  },
+  {
+    "text": "and injects them into an html file for later display in the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=814"
+  },
+  {
+    "text": "If the precise set of input and output dependencies for these phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=818"
+  },
+  {
+    "text": "is not declared, Xcode will run the two scripts in parallel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=822"
+  },
+  {
+    "text": "when FUSE_BUILD_SCRIPT_PHASES is on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=825"
+  },
+  {
+    "text": "Let's inspect this problematic scenario in detail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=828"
+  },
+  {
+    "text": "Let's assume \"Generate HTML\" is missing the input declaration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=831"
+  },
+  {
+    "text": "of \"checksum.txt\", but all other inputs and outputs of both scripts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=835"
+  },
+  {
+    "text": "have been correctly declared. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=839"
+  },
+  {
+    "text": "Without sandboxing, this misconfiguration might stay unnoticed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=841"
+  },
+  {
+    "text": "causing problems in the build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=844"
+  },
+  {
+    "text": "It means Xcode will fail to infer the dependency relation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=847"
+  },
+  {
+    "text": "between both phases, and schedule to run them in parallel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=850"
+  },
+  {
+    "text": "when FUSE_BUILD_SCRIPT_PHASES is switched on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=853"
+  },
+  {
+    "text": "There are a few hazards here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=856"
+  },
+  {
+    "text": "Since checksum.txt is not listed as an input dependency for \"Generate HTML\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=858"
+  },
+  {
+    "text": "during a clean build the script will attempt to read the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=863"
+  },
+  {
+    "text": "without it being available on the filesystem. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=866"
+  },
+  {
+    "text": "The other hazard is if checksum.txt is available on disk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=869"
+  },
+  {
+    "text": "because of previous runs of \"Calculate Checksum\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=872"
+  },
+  {
+    "text": "\"Generate HTML\" may pick up the outdated file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=874"
+  },
+  {
+    "text": "when the two scripts run in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=877"
+  },
+  {
+    "text": "This is a user error, and executing the scripts in a sandbox ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=880"
+  },
+  {
+    "text": "helps preventing this issue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=883"
+  },
+  {
+    "text": "With sandboxing switched on, \"Generate HTML\" will fail immediately ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=885"
+  },
+  {
+    "text": "when it attempts to read \"checksum.txt\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=889"
+  },
+  {
+    "text": "The error message will guide adding the missing input for that build phase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=891"
+  },
+  {
+    "text": "Having the inputs and outputs correctly defined ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=896"
+  },
+  {
+    "text": "guides Xcode to respect the dependency relation between both phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=898"
+  },
+  {
+    "text": "so that \"calculate checksum\" runs before \"Generate HTML\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=902"
+  },
+  {
+    "text": "While unrelated build phases can still execute in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=905"
+  },
+  {
+    "text": "To enable Sandboxed Shell Scripts for a target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=909"
+  },
+  {
+    "text": "set ENABLE_USER_SCRIPT_SANDBOXING to YES in the build settings editor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=912"
+  },
+  {
+    "text": "or an xcconfig file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=915"
+  },
+  {
+    "text": "In summary, sandboxed shell scripts allow having correct dependency information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=917"
+  },
+  {
+    "text": "to enable faster and more robust incremental builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=922"
+  },
+  {
+    "text": "since the build system has the confidence to skip script phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=925"
+  },
+  {
+    "text": "if the inputs haven't changed and the outputs are still valid, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=928"
+  },
+  {
+    "text": "while re-running the script otherwise. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=931"
+  },
+  {
+    "text": "Enabling the build setting for a script's target blocks access to files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=934"
+  },
+  {
+    "text": "inside the source root of the project as well as the derived data directory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=937"
+  },
+  {
+    "text": "if they are not explicitly defined as inputs or outputs of the script ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=941"
+  },
+  {
+    "text": "in the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=944"
+  },
+  {
+    "text": "The sandbox will not prevent unauthorized access to any other directory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=946"
+  },
+  {
+    "text": "so don't consider this a security feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=949"
+  },
+  {
+    "text": "Using this feature helps to debug missing inputs or outputs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=952"
+  },
+  {
+    "text": "of existing script phases to ensure a valid configuration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=955"
+  },
+  {
+    "text": "And in combination with the previously explained build setting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=959"
+  },
+  {
+    "text": "FUSE_BUILD_SCRIPT_PHASES, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=962"
+  },
+  {
+    "text": "script phases with correctly defined dependency edges through sandboxing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=963"
+  },
+  {
+    "text": "can execute in parallel to reduce the critical path of the build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=967"
+  },
+  {
+    "text": "That's it for parallelizing the steps of building a target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=971"
+  },
+  {
+    "text": "Now Artem is going to demystify parallelization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=974"
+  },
+  {
+    "text": "hen building many targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=977"
+  },
+  {
+    "text": "Artem: Thanks, Ben. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=978"
+  },
+  {
+    "text": "Now that we've covered the basics of build system tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=980"
+  },
+  {
+    "text": "and phases that may go into building a target in your project, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=982"
+  },
+  {
+    "text": "let's take a more global view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=985"
+  },
+  {
+    "text": "and explore how Xcode uses dependencies between Swift targets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=987"
+  },
+  {
+    "text": "to extract the maximum amount of parallelism out of your builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=990"
+  },
+  {
+    "text": "and how the structure and organization of your project can affect build times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=993"
+  },
+  {
+    "text": "There are likely to be several levels of hierarchy composing your project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=998"
+  },
+  {
+    "text": "For example, an App target depending on a collection of local libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1001"
+  },
+  {
+    "text": "broken up into targets along semantic boundaries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1005"
+  },
+  {
+    "text": "and in several frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1008"
+  },
+  {
+    "text": "Each target containing many different build phases and steps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1009"
+  },
+  {
+    "text": "producing and consuming file dependencies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1012"
+  },
+  {
+    "text": "to and from build phases in other targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1015"
+  },
+  {
+    "text": "As the size of your project grows, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1017"
+  },
+  {
+    "text": "these task graphs tend to increase in size and complexity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1019"
+  },
+  {
+    "text": "While the Xcode Build System flattens these hierarchies, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1024"
+  },
+  {
+    "text": "breaking down the build into a sea of tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1026"
+  },
+  {
+    "text": "that correspond to build phases of all targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1028"
+  },
+  {
+    "text": "One kind of task that is special for a Swift target is compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1031"
+  },
+  {
+    "text": "Building a Swift target's source code into binary product's ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1035"
+  },
+  {
+    "text": "is a complex operation that typically consists of many sub-tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1038"
+  },
+  {
+    "text": "for build planning, compilation, and linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1042"
+  },
+  {
+    "text": "Coordination of these tasks is delegated to a specialized tool ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1046"
+  },
+  {
+    "text": "in the Xcode toolchain– the Swift Driver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1049"
+  },
+  {
+    "text": "The Driver has specialized knowledge on when and how to construct ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1052"
+  },
+  {
+    "text": "the required compiler and linker invocations for the target's source code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1055"
+  },
+  {
+    "text": "Any target that includes Swift code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1059"
+  },
+  {
+    "text": "also corresponds to a unit of code distribution: a module. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1061"
+  },
+  {
+    "text": "A binary module file capturing the public interface of this target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1065"
+  },
+  {
+    "text": "is a build product that is required for downstream targets to begin a compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1068"
+  },
+  {
+    "text": "Let's take a closer look at an example of what Swift Driver does ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1072"
+  },
+  {
+    "text": "to build one of the targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1075"
+  },
+  {
+    "text": "Your target probably consists of a collection of several source files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1078"
+  },
+  {
+    "text": "In release or optimized builds the driver will schedule one compiler task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1082"
+  },
+  {
+    "text": "including all source files to maximize opportunities for optimization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1085"
+  },
+  {
+    "text": "This single compile task will also produce the target's Swift module. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1090"
+  },
+  {
+    "text": "In debug or incremental compilation modes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1095"
+  },
+  {
+    "text": "the Swift Driver breaks down the required compilation effort ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1097"
+  },
+  {
+    "text": "into smaller sub-tasks which can run in parallel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1100"
+  },
+  {
+    "text": "some of which may not need to re-run on an incremental build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1103"
+  },
+  {
+    "text": "Producing a Swift module then requires an additional step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1106"
+  },
+  {
+    "text": "to merge together partial intermediate products of each compile task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1109"
+  },
+  {
+    "text": "If, like in this example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1113"
+  },
+  {
+    "text": "the number of source files in your target is high, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1115"
+  },
+  {
+    "text": "individual files may also be assigned to batch compilation sub-tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1118"
+  },
+  {
+    "text": "according to the build-system's heuristics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1122"
+  },
+  {
+    "text": "The build log highlights which source files get assigned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1125"
+  },
+  {
+    "text": "to batch compilation jobs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1127"
+  },
+  {
+    "text": "with a separate entry for each file's diagnostics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1129"
+  },
+  {
+    "text": "Being able to parallelize a target's build across different source files is crucial ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1132"
+  },
+  {
+    "text": "for both faster and smaller incremental builds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1136"
+  },
+  {
+    "text": "so make sure your Debug builds are using the Incremental Compilation Mode setting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1139"
+  },
+  {
+    "text": "Before Xcode 14, because of the boundary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1144"
+  },
+  {
+    "text": "between the Xcode Build System and Swift Driver, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1146"
+  },
+  {
+    "text": "orchestration of target build phases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1149"
+  },
+  {
+    "text": "and compilation sub-tasks spawned by each target's instance of the Driver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1151"
+  },
+  {
+    "text": "happened independently of each other, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1155"
+  },
+  {
+    "text": "with each component doing its best ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1157"
+  },
+  {
+    "text": "to make the most of available system resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1159"
+  },
+  {
+    "text": "Let's take this example build graph and dive deeper ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1162"
+  },
+  {
+    "text": "into what goes into scheduling its compilation phases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1165"
+  },
+  {
+    "text": "with respect to each other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1167"
+  },
+  {
+    "text": "As we've learned earlier, Swift target dependencies are resolved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1170"
+  },
+  {
+    "text": "by having their dependents provide a binary module file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1173"
+  },
+  {
+    "text": "that captures the dependent's public interface. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1176"
+  },
+  {
+    "text": "Resolving these dependency relationships leads us to the following ordering, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1179"
+  },
+  {
+    "text": "captured in a timeline showing the top-level Swift Driver tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1183"
+  },
+  {
+    "text": "for each target, as well as their individual sub-tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1186"
+  },
+  {
+    "text": "With Xcode 14, thanks to an entirely new implementation of Swift Driver– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1190"
+  },
+  {
+    "text": "itself now written in Swift– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1193"
+  },
+  {
+    "text": "the build system and the compiler are fully integrated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1195"
+  },
+  {
+    "text": "The Xcode Build System acts as the central scheduler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1198"
+  },
+  {
+    "text": "for all tasks that must be performed to compile your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1201"
+  },
+  {
+    "text": "This central planning mechanism allows Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1205"
+  },
+  {
+    "text": "to make fine-grained scheduling decisions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1207"
+  },
+  {
+    "text": "providing better guarantees that building your project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1209"
+  },
+  {
+    "text": "will use only as much resources as available, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1212"
+  },
+  {
+    "text": "without oversubscribing your CPU and reducing overall system performance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1215"
+  },
+  {
+    "text": "And what was previously a collection of islands of sub-tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1220"
+  },
+  {
+    "text": "outside of Xcode Build System's purview ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1223"
+  },
+  {
+    "text": "are now fully in a domain of the build-system's scheduler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1225"
+  },
+  {
+    "text": "With all the individual sub-tasks in a central task pool, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1230"
+  },
+  {
+    "text": "it is important to consider the trade-offs made by the build scheduler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1233"
+  },
+  {
+    "text": "For example, on an 8-core machine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1237"
+  },
+  {
+    "text": "the scheduler's default is to assign available tasks– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1240"
+  },
+  {
+    "text": "those tasks whose dependencies have been satisfied and are ready to go– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1243"
+  },
+  {
+    "text": "to one of eight available execution slots. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1246"
+  },
+  {
+    "text": "As soon as one of the slots frees up, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1249"
+  },
+  {
+    "text": "the Build System attempts to fill it with more outstanding work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1251"
+  },
+  {
+    "text": "On a higher-core-count machine, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1255"
+  },
+  {
+    "text": "we're able to perform more concurrent work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1257"
+  },
+  {
+    "text": "But that means we're also more likely to have idle cores ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1259"
+  },
+  {
+    "text": "which are available to perform more work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1262"
+  },
+  {
+    "text": "but all of the outstanding tasks are still awaiting their inputs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1264"
+  },
+  {
+    "text": "as produced by other tasks that are currently in-flight or waiting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1268"
+  },
+  {
+    "text": "The new integrated build system allows the scheduler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1271"
+  },
+  {
+    "text": "to significantly reduce this idle time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1274"
+  },
+  {
+    "text": "To see how, let's revisit how a target's dependencies for compilation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1277"
+  },
+  {
+    "text": "binary module files, are resolved.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1280"
+  },
+  {
+    "text": "As we've covered earlier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1285"
+  },
+  {
+    "text": "the partial results of compilation sub-tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1286"
+  },
+  {
+    "text": "are merged into a target's final module product. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1289"
+  },
+  {
+    "text": "Once this product is available, downstream targets may begin compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1292"
+  },
+  {
+    "text": "New in Xcode 14 and Swift 5.7, construction of a target's module ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1296"
+  },
+  {
+    "text": "is done in a separate emit-module task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1301"
+  },
+  {
+    "text": "directly from all program source files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1303"
+  },
+  {
+    "text": "This means a target's dependencies can begin compilation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1306"
+  },
+  {
+    "text": "as soon as the emit-module task is complete ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1308"
+  },
+  {
+    "text": "without waiting for all of the other compiler tasks of the dependency target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1310"
+  },
+  {
+    "text": "Being able to unblock downstream target compilation this much sooner ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1315"
+  },
+  {
+    "text": "cuts down on the time spent waiting for available work with idle CPU cores– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1319"
+  },
+  {
+    "text": "that empty space in between spurs of activity in the build timeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1323"
+  },
+  {
+    "text": "Extending this to the rest of our project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1328"
+  },
+  {
+    "text": "shows that although we are performing a similar amount of overall work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1330"
+  },
+  {
+    "text": "the build system is able to use the computer's resources more efficiently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1334"
+  },
+  {
+    "text": "often completing the build significantly faster.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1338"
+  },
+  {
+    "text": "Now, let's take a look at a second cross-target optimization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1342"
+  },
+  {
+    "text": "the build system can perform when building Swift– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1344"
+  },
+  {
+    "text": "Eager Linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1347"
+  },
+  {
+    "text": "Building on the previous example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1348"
+  },
+  {
+    "text": "we've added the linker tasks for each target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1350"
+  },
+  {
+    "text": "which are both on the build's critical path. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1352"
+  },
+  {
+    "text": "In this case, because Target B links Target A, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1354"
+  },
+  {
+    "text": "Target B's link task must wait for Target A's linked output to be produced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1358"
+  },
+  {
+    "text": "and its own compilation tasks to complete before it can run. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1362"
+  },
+  {
+    "text": "However, with eager linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1366"
+  },
+  {
+    "text": "Target B's link task can depend on Target A's emit-module task instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1368"
+  },
+  {
+    "text": "As a result, Target B can begin linking earlier in the build, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1373"
+  },
+  {
+    "text": "running in parallel with linking Target A and shortening the critical path. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1377"
+  },
+  {
+    "text": "How does this work? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1381"
+  },
+  {
+    "text": "Normally, the dependency graph of two targets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1383"
+  },
+  {
+    "text": "with a linked product dependency looks something like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1385"
+  },
+  {
+    "text": "Linking the dependent target requires the linked product of its dependencies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1389"
+  },
+  {
+    "text": "in addition to the target's own compilation outputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1393"
+  },
+  {
+    "text": "When linking eagerly, this dependency is broken, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1396"
+  },
+  {
+    "text": "allowing the dependent target to start linking earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1399"
+  },
+  {
+    "text": "Instead of depending on a linked product of the dependency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1403"
+  },
+  {
+    "text": "it now depends on a text-based dynamic library stub ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1406"
+  },
+  {
+    "text": "produced earlier in the build process by the emit-module task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1409"
+  },
+  {
+    "text": "This stub contains a list of symbols which will appear ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1413"
+  },
+  {
+    "text": "in the linked product for use by dependents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1415"
+  },
+  {
+    "text": "You can enable this optimization using the Xcode build setting shown on screen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1418"
+  },
+  {
+    "text": "Eager Linking applies to all pure Swift targets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1422"
+  },
+  {
+    "text": "that are dynamically linked by their dependents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1424"
+  },
+  {
+    "text": "To summarize, the Xcode Build System is a sophisticated scheduling engine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1427"
+  },
+  {
+    "text": "that seeks to extract as much parallelism as possible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1432"
+  },
+  {
+    "text": "by running build phases in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1434"
+  },
+  {
+    "text": "And features like Script Sandboxing allow you to ensure your builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1437"
+  },
+  {
+    "text": "are both maximally parallel and reliable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1439"
+  },
+  {
+    "text": "Xcode and Swift are more integrated than ever. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1443"
+  },
+  {
+    "text": "And project structure: its modularization, the overall shape of the graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1446"
+  },
+  {
+    "text": "made up of dependencies between target products ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1450"
+  },
+  {
+    "text": "and the number and complexity of build phases within them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1452"
+  },
+  {
+    "text": "combined with the available computational resources of your machine– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1455"
+  },
+  {
+    "text": "all these are contributing factors to the degree Xcode is able to parallelize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1459"
+  },
+  {
+    "text": "and speed up your builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1463"
+  },
+  {
+    "text": "With this knowledge, and powerful new tools like the build timeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1465"
+  },
+  {
+    "text": "you are well equipped to examine your project and gain insight into your builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1469"
+  },
+  {
+    "text": "And if you're curious to learn even more ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1473"
+  },
+  {
+    "text": "of the behind-the-scenes technical details, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1474"
+  },
+  {
+    "text": "many of the technologies we described that are used by Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1476"
+  },
+  {
+    "text": "are developed in the open-source. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1479"
+  },
+  {
+    "text": "You can find the repository for Swift Driver on GitHub at the link below. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1481"
+  },
+  {
+    "text": "For more great sessions about Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1486"
+  },
+  {
+    "text": "check out all new features and improvements from this year ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1487"
+  },
+  {
+    "text": "in \"What's new in Xcode\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1490"
+  },
+  {
+    "text": "And learn how Xcode 14's linker improves link times up to two times ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1491"
+  },
+  {
+    "text": "in the session \"Link fast: Improve build and launch times\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1495"
+  },
+  {
+    "text": "Thanks for following along. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1499"
+  },
+  {
+    "text": "We hope you learned some new insights about Xcode builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1500"
+  },
+  {
+    "text": "We can't wait to see what you're going to create. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1503"
+  },
+  {
+    "text": "Have a great rest of the conference.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110364/?time=1506"
+  }
+]

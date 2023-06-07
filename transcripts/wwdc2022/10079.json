@@ -1,0 +1,954 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=0"
+  },
+  {
+    "text": "Qiaoyu Deng: Hello. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=9"
+  },
+  {
+    "text": "Welcome to “Improve DNS security for apps and servers.” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=11"
+  },
+  {
+    "text": "My name is Qiaoyu Deng. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=17"
+  },
+  {
+    "text": "In this video, we are going to talk about why DNS is often not secure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=20"
+  },
+  {
+    "text": "and how to protect it using DNSSEC ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=27"
+  },
+  {
+    "text": "and encrypted DNS with DDR. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=32"
+  },
+  {
+    "text": "First, let’s talk about why DNS is not secure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=37"
+  },
+  {
+    "text": "DNS is the phone book of the internet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=44"
+  },
+  {
+    "text": "It translates domain names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=49"
+  },
+  {
+    "text": "which are human readable and easy to remember, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=53"
+  },
+  {
+    "text": "to IP addresses, which are made for machines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=57"
+  },
+  {
+    "text": "Other internet protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=62"
+  },
+  {
+    "text": "such as TCP, TLS, and QUIC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=64"
+  },
+  {
+    "text": "rely on having an IP address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=69"
+  },
+  {
+    "text": "so everything starts with DNS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=73"
+  },
+  {
+    "text": "Today, TLS is widely used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=77"
+  },
+  {
+    "text": "to secure internet communication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=80"
+  },
+  {
+    "text": "That’s great, but DNS, the foundational layer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=84"
+  },
+  {
+    "text": "has some security issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=89"
+  },
+  {
+    "text": "DNS is historically not secure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=91"
+  },
+  {
+    "text": "It was designed back in 1983 with few security considerations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=95"
+  },
+  {
+    "text": "In the years since, many DNS attacks have been created. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=101"
+  },
+  {
+    "text": "One example is DNS cache poisoning, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=106"
+  },
+  {
+    "text": "where the attacker exploits flaws of DNS resolvers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=112"
+  },
+  {
+    "text": "and make them cache incorrect IP addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=117"
+  },
+  {
+    "text": "causing clients to connect to malicious hosts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=121"
+  },
+  {
+    "text": "This reveals one vulnerability of DNS: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=125"
+  },
+  {
+    "text": "it is unauthenticated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=129"
+  },
+  {
+    "text": "Traditional DNS clients today have no way to validate answers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=132"
+  },
+  {
+    "text": "so they can easily be spoofed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=138"
+  },
+  {
+    "text": "Another common attack is DNS sniffing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=141"
+  },
+  {
+    "text": "where the attacker watches DNS traffic between a client and a DNS server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=145"
+  },
+  {
+    "text": "collecting the client's history. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=152"
+  },
+  {
+    "text": "This is a serious problem for user privacy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=155"
+  },
+  {
+    "text": "The reason this attack is possible is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=159"
+  },
+  {
+    "text": "DNS traffic was originally unencrypted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=163"
+  },
+  {
+    "text": "In order to be a secure starting point for the protocols that build on top of it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=169"
+  },
+  {
+    "text": "DNS needs to be both authenticated and encrypted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=175"
+  },
+  {
+    "text": "When we use DNSSEC to sign DNS response, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=181"
+  },
+  {
+    "text": "it provides authentication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=185"
+  },
+  {
+    "text": "When we use TLS and HTTPS to encrypt DNS resolution, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=189"
+  },
+  {
+    "text": "it ensures privacy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=195"
+  },
+  {
+    "text": "Next, let’s talk about DNSSEC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=198"
+  },
+  {
+    "text": "DNSSEC is a suite of extension specifications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=203"
+  },
+  {
+    "text": "created by IETF. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=207"
+  },
+  {
+    "text": "Many DNS service providers already support it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=210"
+  },
+  {
+    "text": "but client support is still ramping up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=215"
+  },
+  {
+    "text": "iOS 16 and macOS Ventura ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=219"
+  },
+  {
+    "text": "now support client side DNSSEC validation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=222"
+  },
+  {
+    "text": "DNSSEC ensures the authentication of data by adding digital signatures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=227"
+  },
+  {
+    "text": "It protects data integrity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=234"
+  },
+  {
+    "text": "It authenticates denial of existence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=237"
+  },
+  {
+    "text": "when answers do not exist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=240"
+  },
+  {
+    "text": "It also provides cryptographic authentication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=244"
+  },
+  {
+    "text": "DNSSEC protects data integrity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=249"
+  },
+  {
+    "text": "by attaching signatures in responses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=252"
+  },
+  {
+    "text": "If a response is altered by an attacker, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=257"
+  },
+  {
+    "text": "the signature of the altered data will not match the original one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=260"
+  },
+  {
+    "text": "In that case, the client can detect the altered response and discard it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=266"
+  },
+  {
+    "text": "DNSSEC also asserts the existence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=273"
+  },
+  {
+    "text": "and nonexistence of records in a zone, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=277"
+  },
+  {
+    "text": "by using special types of DNS records ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=280"
+  },
+  {
+    "text": "such as the NSEC record. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=284"
+  },
+  {
+    "text": "The NSEC record tells you what the next record name is, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=287"
+  },
+  {
+    "text": "securely, in alphabetical order. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=292"
+  },
+  {
+    "text": "The names listed by it are the ones that exist, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=296"
+  },
+  {
+    "text": "and any name not listed does not exist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=301"
+  },
+  {
+    "text": "For example, we have three NSEC records here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=306"
+  },
+  {
+    "text": "The record set reveals that zone org only has three record names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=310"
+  },
+  {
+    "text": "A.org, C.org, and E.org. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=317"
+  },
+  {
+    "text": "Now, if there is an attacker that says A.org does not exist, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=320"
+  },
+  {
+    "text": "the client can detect this attack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=327"
+  },
+  {
+    "text": "A.org does exist ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=331"
+  },
+  {
+    "text": "because it is listed in the first NSEC record. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=333"
+  },
+  {
+    "text": "Likewise, if an attacker says that D.org exists, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=339"
+  },
+  {
+    "text": "the client can also detect that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=345"
+  },
+  {
+    "text": "because according to the second NSEC record, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=349"
+  },
+  {
+    "text": "D.org is in between C.org and E.org ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=353"
+  },
+  {
+    "text": "and no name should exist in between the two names. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=357"
+  },
+  {
+    "text": "DNSSEC authenticates records by establishing a chain of trust. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=363"
+  },
+  {
+    "text": "Here is an example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=369"
+  },
+  {
+    "text": "A device wants to resolve www.example.org ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=372"
+  },
+  {
+    "text": "with DNSSEC validation enabled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=377"
+  },
+  {
+    "text": "It sends queries asking for the IP addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=381"
+  },
+  {
+    "text": "signatures, and keys. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=385"
+  },
+  {
+    "text": "With the responses, the trust relationship can be built ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=388"
+  },
+  {
+    "text": "from the IP addresses to key number 1. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=392"
+  },
+  {
+    "text": "Then the client sends queries to the parent zone, org, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=397"
+  },
+  {
+    "text": "asking for the records that can be used to authenticate key number 1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=402"
+  },
+  {
+    "text": "so it can build the trust relationship from key number 1 to key number 2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=407"
+  },
+  {
+    "text": "So the device repeats this process recursively, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=413"
+  },
+  {
+    "text": "until it has reached the root. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=418"
+  },
+  {
+    "text": "Now, if the root key, which is key number 3 in the diagram, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=421"
+  },
+  {
+    "text": "can be trusted, the trust relationship from the IP addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=426"
+  },
+  {
+    "text": "to key number 3 can be authenticated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=432"
+  },
+  {
+    "text": "The hash of the root key is always stored in the device securely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=436"
+  },
+  {
+    "text": "In DNSSEC, it is called the root trust anchor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=441"
+  },
+  {
+    "text": "If the hash of key number 3 matches the pre-installed anchor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=446"
+  },
+  {
+    "text": "a trust chain can be established securely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=451"
+  },
+  {
+    "text": "With the trust chain, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=455"
+  },
+  {
+    "text": "the IP addresses of www.example.org are now authenticated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=457"
+  },
+  {
+    "text": "If you want to require DNSSEC validation in your apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=465"
+  },
+  {
+    "text": "here are the things you need to do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=470"
+  },
+  {
+    "text": "Support IPv6 for your domains. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=474"
+  },
+  {
+    "text": "In an IPv6-only environment, IPv4-only addresses are translated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=478"
+  },
+  {
+    "text": "into synthetic IPv6 addresses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=484"
+  },
+  {
+    "text": "If domains are signed, synthesized addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=488"
+  },
+  {
+    "text": "cannot pass DNSSEC validation; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=492"
+  },
+  {
+    "text": "they are unreachable with DNSSEC enabled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=496"
+  },
+  {
+    "text": "So make sure that your domains support IPv6. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=500"
+  },
+  {
+    "text": "Make sure your DNS service provider signs your domain with DNSSEC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=506"
+  },
+  {
+    "text": "If you enable DNSSEC in your app without signing your domain, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=513"
+  },
+  {
+    "text": "you will get no benefit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=518"
+  },
+  {
+    "text": "but you will get additional DNS traffic and extended resolution time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=520"
+  },
+  {
+    "text": "to attempt authentication for your unsigned domain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=526"
+  },
+  {
+    "text": "Once you have the corresponding infrastructure support, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=531"
+  },
+  {
+    "text": "here is the code needed to adopt DNSSEC for your apps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=535"
+  },
+  {
+    "text": "If you are an NSURLSession client, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=541"
+  },
+  {
+    "text": "you can require DNSSEC validation for your URL request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=544"
+  },
+  {
+    "text": "Here is an example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=550"
+  },
+  {
+    "text": "You will first create a default session configuration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=553"
+  },
+  {
+    "text": "Then you will require DNSSEC validation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=557"
+  },
+  {
+    "text": "Next, you will create the session with the modified configuration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=563"
+  },
+  {
+    "text": "It enables DNSSEC for all URL requests ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=569"
+  },
+  {
+    "text": "created from this session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=573"
+  },
+  {
+    "text": "If you do not want to enable DNSSEC for the entire session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=577"
+  },
+  {
+    "text": "you can also do this at the request level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=582"
+  },
+  {
+    "text": "First, create a session with the default configuration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=586"
+  },
+  {
+    "text": "where DNSSEC validation is disabled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=590"
+  },
+  {
+    "text": "Then enable it in the request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=594"
+  },
+  {
+    "text": "Now, this session task will only be started ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=597"
+  },
+  {
+    "text": "when DNSSEC validation is completed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=601"
+  },
+  {
+    "text": "If you are a Network.framework client, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=606"
+  },
+  {
+    "text": "you can also require DNSSEC validation for your connections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=610"
+  },
+  {
+    "text": "First, when you create a parameters object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=615"
+  },
+  {
+    "text": "require DNSSEC validation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=620"
+  },
+  {
+    "text": "Then create the NWConnection with the parameters object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=624"
+  },
+  {
+    "text": "Now, when you start your connection, it will only move into the ready state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=630"
+  },
+  {
+    "text": "when the DNSSEC validation has completed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=636"
+  },
+  {
+    "text": "and a connection to the validated IP address has been established. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=639"
+  },
+  {
+    "text": "When DNSSEC is enabled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=646"
+  },
+  {
+    "text": "only the validated addresses will be used to establish a connection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=648"
+  },
+  {
+    "text": "In HTTPS, errors are reported through the APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=655"
+  },
+  {
+    "text": "In DNSSEC, no error is returned for the validation failure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=661"
+  },
+  {
+    "text": "Receiving a response that fails validation is equal to not receiving any response. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=666"
+  },
+  {
+    "text": "If there is a DNS provider that tampers with the response, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=673"
+  },
+  {
+    "text": "the addresses will not pass the authentication check, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=678"
+  },
+  {
+    "text": "so they will be discarded directly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=682"
+  },
+  {
+    "text": "When the device joins a new network where the DNS provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=685"
+  },
+  {
+    "text": "is not tampering with responses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=690"
+  },
+  {
+    "text": "the validation will make progress again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=693"
+  },
+  {
+    "text": "and the resolution will be back to normal automatically.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=696"
+  },
+  {
+    "text": "Here are a few cases that can cause DNSSEC failure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=701"
+  },
+  {
+    "text": "When the original DNS response is altered, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=707"
+  },
+  {
+    "text": "the mismatched signature will not pass the DNSSEC check, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=711"
+  },
+  {
+    "text": "causing a validation failure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=717"
+  },
+  {
+    "text": "When the device is unable to reach any pre-installed trust anchor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=720"
+  },
+  {
+    "text": "and unable to establish a trust chain from it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=725"
+  },
+  {
+    "text": "When the network does not support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=731"
+  },
+  {
+    "text": "the necessary protocols required by DNSSEC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=733"
+  },
+  {
+    "text": "such as DNS over TCP and EDNS0 option, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=738"
+  },
+  {
+    "text": "that carries the DNSSEC enablement bit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=744"
+  },
+  {
+    "text": "When the signed domain does not support IPv6, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=750"
+  },
+  {
+    "text": "the synthesized IPv6 addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=755"
+  },
+  {
+    "text": "provided by the internet service provider will fail the validation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=758"
+  },
+  {
+    "text": "So that’s how to authenticate DNS responses with DNSSEC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=765"
+  },
+  {
+    "text": "but if they are still unencrypted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=772"
+  },
+  {
+    "text": "anyone on the network can see them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=775"
+  },
+  {
+    "text": "Next, we will talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=779"
+  },
+  {
+    "text": "how to enable DNS encryption automatically with DDR.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=782"
+  },
+  {
+    "text": "In iOS 14 and macOS Big Sur, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=789"
+  },
+  {
+    "text": "we introduced encrypted DNS to help preserve privacy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=792"
+  },
+  {
+    "text": "You can use NEDNSSettingsManager in an app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=799"
+  },
+  {
+    "text": "or DNSSettings in a profile ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=804"
+  },
+  {
+    "text": "to manually configure encrypted DNS system-wide. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=807"
+  },
+  {
+    "text": "You can also opt into encrypted DNS for your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=812"
+  },
+  {
+    "text": "using the PrivacyContext on NWParameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=816"
+  },
+  {
+    "text": "For more information, please watch \"Enable encrypted DNS.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=821"
+  },
+  {
+    "text": "New in iOS 16 and macOS Ventura, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=827"
+  },
+  {
+    "text": "encrypted DNS can be used automatically. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=831"
+  },
+  {
+    "text": "If your network supports Discovery of Designated Resolvers, also called DDR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=836"
+  },
+  {
+    "text": "DNS queries will automatically use TLS or HTTPS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=843"
+  },
+  {
+    "text": "To use encrypted DNS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=850"
+  },
+  {
+    "text": "your device needs to know that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=852"
+  },
+  {
+    "text": "a resolver supports TLS or HTTPS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=855"
+  },
+  {
+    "text": "and it may need to learn a port or URL path as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=861"
+  },
+  {
+    "text": "Common mechanisms such as DHCP or Router Advertisements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=868"
+  },
+  {
+    "text": "only provide a plain IP address. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=875"
+  },
+  {
+    "text": "DDR is a new protocol developed in the IETF by Apple ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=880"
+  },
+  {
+    "text": "working with other industry partners. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=886"
+  },
+  {
+    "text": "It provides a way for DNS clients to learn this necessary information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=889"
+  },
+  {
+    "text": "by using a special DNS query. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=895"
+  },
+  {
+    "text": "When your device joins a new network, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=899"
+  },
+  {
+    "text": "it will issue a Service Binding query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=903"
+  },
+  {
+    "text": "for “_dns.resolver.arpa”. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=905"
+  },
+  {
+    "text": "If the DNS server supports DDR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=910"
+  },
+  {
+    "text": "it will reply with one or more configurations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=913"
+  },
+  {
+    "text": "Then, the device uses this information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=918"
+  },
+  {
+    "text": "to set up an encrypted connection to the designated resolver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=922"
+  },
+  {
+    "text": "It verifies that the IP address of the unencrypted resolver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=928"
+  },
+  {
+    "text": "is included in the TLS certificate of the designated resolver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=933"
+  },
+  {
+    "text": "This is done to ensure that the unencrypted resolver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=938"
+  },
+  {
+    "text": "and the encrypted one belong to the same entity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=943"
+  },
+  {
+    "text": "If everything looks good, the device now uses encrypted DNS by default.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=947"
+  },
+  {
+    "text": "DDR applies to a single network at a time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=955"
+  },
+  {
+    "text": "Your device will use encrypted DNS automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=959"
+  },
+  {
+    "text": "only if the current network supports it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=964"
+  },
+  {
+    "text": "It's also important to note that DDR does not work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=969"
+  },
+  {
+    "text": "if your DNS server's IP address is a private IP address. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=974"
+  },
+  {
+    "text": "This is because such IP addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=980"
+  },
+  {
+    "text": "are not allowed in TLS certificates, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=983"
+  },
+  {
+    "text": "since their ownership cannot be verified. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=987"
+  },
+  {
+    "text": "In iOS 16 and macOS Ventura, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=992"
+  },
+  {
+    "text": "we also support the ability to specify client authentication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=996"
+  },
+  {
+    "text": "when using encrypted DNS for a configuration setup, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1001"
+  },
+  {
+    "text": "using NEDNSSettingsManager or the DNSSettings profile.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1005"
+  },
+  {
+    "text": "Client authentication allows encrypted DNS servers to be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1013"
+  },
+  {
+    "text": "in enterprise environments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1018"
+  },
+  {
+    "text": "where servers need to validate clients before allowing access. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1020"
+  },
+  {
+    "text": "You can now configure a client certificate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1026"
+  },
+  {
+    "text": "using the identityReference property of NEDNSSettings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1030"
+  },
+  {
+    "text": "This behaves just like client certificates for VPNs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1036"
+  },
+  {
+    "text": "These can apply to both DNS over TLS ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1042"
+  },
+  {
+    "text": "and DNS over HTTPS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1046"
+  },
+  {
+    "text": "This is the path to securing DNS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1050"
+  },
+  {
+    "text": "Sign your domain with DNSSEC ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1055"
+  },
+  {
+    "text": "and require DNSSEC validation in your apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1058"
+  },
+  {
+    "text": "to authenticate your IP addresses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1063"
+  },
+  {
+    "text": "Enable DDR on your network ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1067"
+  },
+  {
+    "text": "so that the clients can switch to encrypted DNS automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1070"
+  },
+  {
+    "text": "for better user privacy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1075"
+  },
+  {
+    "text": "Adopt client authentication in enterprises ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1078"
+  },
+  {
+    "text": "where better access control is needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1082"
+  },
+  {
+    "text": "I am looking forward to a more secure DNS foundation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1086"
+  },
+  {
+    "text": "that you help to build in the future. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1090"
+  },
+  {
+    "text": "Thanks for watching! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1094"
+  },
+  {
+    "text": "",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10079/?time=1096"
+  }
+]

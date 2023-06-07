@@ -1,0 +1,1102 @@
+[
+  {
+    "text": "Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=1"
+  },
+  {
+    "text": "is a new feature in Metal 2 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=2"
+  },
+  {
+    "text": "and we're further extended it ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=3"
+  },
+  {
+    "text": "specifically for the new A11 GPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=4"
+  },
+  {
+    "text": "This video is one of five ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=8"
+  },
+  {
+    "text": "that describe the new GPU capabilities of A11. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=9"
+  },
+  {
+    "text": "To get the most out of it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=12"
+  },
+  {
+    "text": "you'll want to have previously watched videos ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=13"
+  },
+  {
+    "text": "on Imageblocks and Tile Shaders.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=15"
+  },
+  {
+    "text": "I'll start with a brief review of Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=18"
+  },
+  {
+    "text": "as already available in Metal 2, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=20"
+  },
+  {
+    "text": "before moving on to new A11's new capabilities. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=22"
+  },
+  {
+    "text": "Raster Order Groups is a feature that requires ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=25"
+  },
+  {
+    "text": "that the GPU execute part of your fragment shader threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=27"
+  },
+  {
+    "text": "in order with other threads that overlap it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=30"
+  },
+  {
+    "text": "This ordering comes from the submission order ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=33"
+  },
+  {
+    "text": "of your draw calls within a renderpass, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=35"
+  },
+  {
+    "text": "and the order of each triangle within that draw call. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=37"
+  },
+  {
+    "text": "The overlap is determined by the Rasterizer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=41"
+  },
+  {
+    "text": "Two fragment threads are determined to overlap ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=44"
+  },
+  {
+    "text": "if they target the same framebuffer X and Y location, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=47"
+  },
+  {
+    "text": "the same sample, and the same layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=50"
+  },
+  {
+    "text": "For example, two fragments would be considered to overlap ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=53"
+  },
+  {
+    "text": "if they would both depth test ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=57"
+  },
+  {
+    "text": "against the same depth buffer sample. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=58"
+  },
+  {
+    "text": "This is a typical case of two triangles, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=61"
+  },
+  {
+    "text": "with the blue triangle first and the green triangle second. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=64"
+  },
+  {
+    "text": "For access to classic graphics framebuffers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=68"
+  },
+  {
+    "text": "blending is always something the GPU executes in order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=70"
+  },
+  {
+    "text": "GPUs are not going to suddenly blend ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=74"
+  },
+  {
+    "text": "the green triangle in back, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=76"
+  },
+  {
+    "text": "because of scheduling variations from frame to frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=77"
+  },
+  {
+    "text": "But fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=80"
+  },
+  {
+    "text": "are going to execute concurrently and out of order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=81"
+  },
+  {
+    "text": "Without raster order groups, work is only serialized ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=84"
+  },
+  {
+    "text": "after fragment shading completes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=87"
+  },
+  {
+    "text": "but before blending. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=89"
+  },
+  {
+    "text": "But what if you're not blending into the framebuffer? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=92"
+  },
+  {
+    "text": "Many recent developments in graphics algorithms ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=94"
+  },
+  {
+    "text": "attempt to build more interesting data structures ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=96"
+  },
+  {
+    "text": "from your fragment shaders. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=98"
+  },
+  {
+    "text": "There are multi-layer encodings for better post-processing ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=100"
+  },
+  {
+    "text": "or order independent transparency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=103"
+  },
+  {
+    "text": "There's voxelization, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=105"
+  },
+  {
+    "text": "and special purpose blend functions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=106"
+  },
+  {
+    "text": "All of these are built on the fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=109"
+  },
+  {
+    "text": "that are storing data into custom data structures ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=110"
+  },
+  {
+    "text": "in memory, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=112"
+  },
+  {
+    "text": "rather than merely blending a color into an output texture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=113"
+  },
+  {
+    "text": "But if direct access to memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=117"
+  },
+  {
+    "text": "from the body of your fragment shader ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=119"
+  },
+  {
+    "text": "can happen in any order, at any time, and concurrently, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=120"
+  },
+  {
+    "text": "that's severely limiting. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=123"
+  },
+  {
+    "text": "Dealing with those data races has caused ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=125"
+  },
+  {
+    "text": "existing implementations of those algorithms ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=127"
+  },
+  {
+    "text": "to be far more expensive ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=129"
+  },
+  {
+    "text": "than they otherwise would have been.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=130"
+  },
+  {
+    "text": "What we really want ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=133"
+  },
+  {
+    "text": "is to get that blending-like ordered behavior, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=134"
+  },
+  {
+    "text": "but not after the end of our fragment shader, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=136"
+  },
+  {
+    "text": "but within it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=138"
+  },
+  {
+    "text": "We effectively want the illusion ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=139"
+  },
+  {
+    "text": "that our memory accesses are happening serially in order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=141"
+  },
+  {
+    "text": "That's what Raster Order Groups does. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=144"
+  },
+  {
+    "text": "It lets you annotate your pointers to memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=147"
+  },
+  {
+    "text": "with a Raster Order Group. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=149"
+  },
+  {
+    "text": "Accesses through those pointers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=151"
+  },
+  {
+    "text": "are then done in a per-pixel submission order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=152"
+  },
+  {
+    "text": "The hardware will wait ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=155"
+  },
+  {
+    "text": "for any older Fragment Shader Threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=156"
+  },
+  {
+    "text": "that overlap with the current thread ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=158"
+  },
+  {
+    "text": "to finish before the current thread is allowed to proceed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=160"
+  },
+  {
+    "text": "This effectively gives you mutual exclusion, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=164"
+  },
+  {
+    "text": "but better. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=166"
+  },
+  {
+    "text": "It provides ordered mutual exclusion, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=167"
+  },
+  {
+    "text": "where you know which thread is going to enter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=170"
+  },
+  {
+    "text": "the critical section first, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=172"
+  },
+  {
+    "text": "and which will do so second. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=174"
+  },
+  {
+    "text": "This feature was presented in greater detail at WWDC 2017 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=176"
+  },
+  {
+    "text": "in the session Introducing Metal 2, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=180"
+  },
+  {
+    "text": "so if you'd like a deeper dive, you can watch that video. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=183"
+  },
+  {
+    "text": "So with the basics covered, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=187"
+  },
+  {
+    "text": "let's move on to what's new in the A11 GPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=188"
+  },
+  {
+    "text": "Raster Order Groups are more useful, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=192"
+  },
+  {
+    "text": "more powerful, and higher performing on A11. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=194"
+  },
+  {
+    "text": "First, A11 exposes the GPU's internal tile memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=197"
+  },
+  {
+    "text": "Just like device and texture access, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=202"
+  },
+  {
+    "text": "tile memory is a lot more useful ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=205"
+  },
+  {
+    "text": "if you can access it in a predictable order, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=207"
+  },
+  {
+    "text": "and so Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=209"
+  },
+  {
+    "text": "can now apply to tile memory too. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=210"
+  },
+  {
+    "text": "Second, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=213"
+  },
+  {
+    "text": "where Raster Order Groups on other GPUs ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=214"
+  },
+  {
+    "text": "are limited to only one mutex per pixel, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=216"
+  },
+  {
+    "text": "A11 can go finer-grained than that, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=218"
+  },
+  {
+    "text": "allowing an even lighter touch, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=221"
+  },
+  {
+    "text": "and minimizing how often your threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=223"
+  },
+  {
+    "text": "are waiting for access. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=224"
+  },
+  {
+    "text": "I'd like to show you a pair of examples ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=226"
+  },
+  {
+    "text": "demonstrating how to use these capabilities ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=228"
+  },
+  {
+    "text": "to unlock new performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=230"
+  },
+  {
+    "text": "in some common graphics algorithms.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=231"
+  },
+  {
+    "text": "The first example is classic deferred shading. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=235"
+  },
+  {
+    "text": "On traditional GPUs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=238"
+  },
+  {
+    "text": "deferred shading is done in two passes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=240"
+  },
+  {
+    "text": "First filling a G-Buffer and outputting multiple textures, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=243"
+  },
+  {
+    "text": "and then a second renderpass that reads from those textures, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=246"
+  },
+  {
+    "text": "rendering light volumes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=249"
+  },
+  {
+    "text": "and calculating the shading results. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=251"
+  },
+  {
+    "text": "But deferred shading tends to burns a lot of memory bandwidth. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=254"
+  },
+  {
+    "text": "One great ability of our A-series GPUs ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=257"
+  },
+  {
+    "text": "is keeping as much bandwidth as possible on chip, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=260"
+  },
+  {
+    "text": "eliminating these intermediate textures ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=263"
+  },
+  {
+    "text": "by coalescing both passes into one, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=265"
+  },
+  {
+    "text": "keeping the G-Buffer in tile-sized chunks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=267"
+  },
+  {
+    "text": "entirely with an imageblock within the GPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=269"
+  },
+  {
+    "text": "Both of these tasks become phases of one renderpass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=273"
+  },
+  {
+    "text": "You can see a much deeper dive ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=277"
+  },
+  {
+    "text": "of how to build these coalesced RenderRasses ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=279"
+  },
+  {
+    "text": "in the A11 Imageblock and Tile Shading videos, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=281"
+  },
+  {
+    "text": "while this video is going to focus on ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=284"
+  },
+  {
+    "text": "just the synchronization aspects. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=286"
+  },
+  {
+    "text": "The performance of single pass deferred shading ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=289"
+  },
+  {
+    "text": "gets even better ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=291"
+  },
+  {
+    "text": "by leveraging multiple Raster Order Groups. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=292"
+  },
+  {
+    "text": "To take look at that, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=294"
+  },
+  {
+    "text": "lets dig into some of the details of Phase number two: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=295"
+  },
+  {
+    "text": "Lighting. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=297"
+  },
+  {
+    "text": "Our basic lighting process starts by drawing a volume ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=299"
+  },
+  {
+    "text": "that encompasses a light's influence, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=302"
+  },
+  {
+    "text": "spawning fragment shader threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=304"
+  },
+  {
+    "text": "Each thread is effectively applying ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=306"
+  },
+  {
+    "text": "one light to one pixel. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=308"
+  },
+  {
+    "text": "Our Lighting thread starts by reading the G-Buffer fields. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=310"
+  },
+  {
+    "text": "On A-series GPUs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=313"
+  },
+  {
+    "text": "you'll want to read this directly from an imageblock, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=314"
+  },
+  {
+    "text": "which is the fastest memory available. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=316"
+  },
+  {
+    "text": "Then you'll execute your chosen shading model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=319"
+  },
+  {
+    "text": "which is typically quite a bit of math, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=321"
+  },
+  {
+    "text": "and can take some time to execute. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=323"
+  },
+  {
+    "text": "Finally, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=325"
+  },
+  {
+    "text": "you'll sum the contribution of this light ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=326"
+  },
+  {
+    "text": "back into the imageblock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=328"
+  },
+  {
+    "text": "A very quick step. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=329"
+  },
+  {
+    "text": "Then we have a second light ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=331"
+  },
+  {
+    "text": "being applied by a second thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=333"
+  },
+  {
+    "text": "For a single-pass deferred shading implementation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=335"
+  },
+  {
+    "text": "before A11, it would look something like this. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=337"
+  },
+  {
+    "text": "You can see the ordering ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=341"
+  },
+  {
+    "text": "is imposed on the very first read ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=342"
+  },
+  {
+    "text": "from the imageblock, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=343"
+  },
+  {
+    "text": "forcing the entire execution of these two lights ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=344"
+  },
+  {
+    "text": "to run serially. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=347"
+  },
+  {
+    "text": "This is because a GPU ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=348"
+  },
+  {
+    "text": "that supports only a single Raster Order Group ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=350"
+  },
+  {
+    "text": "must wait on all accesses from prior threads to complete ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=352"
+  },
+  {
+    "text": "before any accesses from later threads can begin. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=355"
+  },
+  {
+    "text": "This applies even if both accesses are reads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=359"
+  },
+  {
+    "text": "that do not actually conflict with each other. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=362"
+  },
+  {
+    "text": "A11's support for multiple Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=365"
+  },
+  {
+    "text": "eliminates this over-synchronization. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=367"
+  },
+  {
+    "text": "Multiple groups allow you to run ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=370"
+  },
+  {
+    "text": "these non-conflicting reads concurrently, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=371"
+  },
+  {
+    "text": "and synchronizing only on the very brief end of the shader ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=373"
+  },
+  {
+    "text": "that accumulates the result.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=377"
+  },
+  {
+    "text": "You can achieve this ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=380"
+  },
+  {
+    "text": "by declaring our three G-Buffer fields to be in one group ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=382"
+  },
+  {
+    "text": "and our accumulated lighting result to be in a second group. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=385"
+  },
+  {
+    "text": "The hardware may now order them separately. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=389"
+  },
+  {
+    "text": "Outstanding writes into one group ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=391"
+  },
+  {
+    "text": "do not require that reads in another group have to wait. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=393"
+  },
+  {
+    "text": "Multiple readers within a single group ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=397"
+  },
+  {
+    "text": "do not have to wait on each other. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=398"
+  },
+  {
+    "text": "This means that more threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=401"
+  },
+  {
+    "text": "can be eligible to run at any given time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=402"
+  },
+  {
+    "text": "allowing for more parallelism and improved performance, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=404"
+  },
+  {
+    "text": "above and beyond what you get ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=407"
+  },
+  {
+    "text": "by keeping your G-Buffers on-chip in the first place. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=408"
+  },
+  {
+    "text": "The code is just as simple. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=412"
+  },
+  {
+    "text": "My three G-Buffer fields are read and written together ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=415"
+  },
+  {
+    "text": "at the same time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=417"
+  },
+  {
+    "text": "and so I will annotate them all to put them into group zero. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=418"
+  },
+  {
+    "text": "The accumulator is read and written at a different time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=422"
+  },
+  {
+    "text": "and so I'll annotate it into group one. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=424"
+  },
+  {
+    "text": "As far as adoption goes, that's really about it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=427"
+  },
+  {
+    "text": "Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=430"
+  },
+  {
+    "text": "is an extremely easy capability to start using. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=431"
+  },
+  {
+    "text": "On to the second example. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=435"
+  },
+  {
+    "text": "I'm going to make our deferred shading example more complex ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=437"
+  },
+  {
+    "text": "by adding another phase. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=440"
+  },
+  {
+    "text": "After I have a lit version of my opaque content, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=442"
+  },
+  {
+    "text": "I'm going to add a transparency phase to the mix, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=444"
+  },
+  {
+    "text": "forward shaded, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=447"
+  },
+  {
+    "text": "and approximating back-to-front blending order. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=448"
+  },
+  {
+    "text": "One way to do that, which A11 is really good at, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=452"
+  },
+  {
+    "text": "is to declare our imageblock ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=455"
+  },
+  {
+    "text": "to store an array of color and depth pairs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=456"
+  },
+  {
+    "text": "Each forward-shading fragment adds an entry to this array ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=459"
+  },
+  {
+    "text": "with some handling of overflow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=462"
+  },
+  {
+    "text": "And at the end of my tile, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=465"
+  },
+  {
+    "text": "I'll sort and blend back to front, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=466"
+  },
+  {
+    "text": "using the saved depths, enabling back-to-front blending. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=467"
+  },
+  {
+    "text": "So this is a timeline showing off the life of one tile ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=472"
+  },
+  {
+    "text": "and its imageblock from left to right. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=475"
+  },
+  {
+    "text": "I start with A11's imageblock laid out for deferred shading, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=478"
+  },
+  {
+    "text": "and I end up with my shade opaque color. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=481"
+  },
+  {
+    "text": "At the end, I have my transparency phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=484"
+  },
+  {
+    "text": "where I'm building and then sorting my arrays of colors and depths. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=487"
+  },
+  {
+    "text": "Within each of these passes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=491"
+  },
+  {
+    "text": "Raster Order Groups will control ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=493"
+  },
+  {
+    "text": "how much parallelism is possible between fragment threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=494"
+  },
+  {
+    "text": "For performance reasons, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=499"
+  },
+  {
+    "text": "I really want these two operations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=500"
+  },
+  {
+    "text": "to be one renderpass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=501"
+  },
+  {
+    "text": "I do not want to save anything out to device memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=504"
+  },
+  {
+    "text": "just to reload it at a later pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=506"
+  },
+  {
+    "text": "But the imageblock declaration is wildly different ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=509"
+  },
+  {
+    "text": "between the first and second parts of my scene, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=512"
+  },
+  {
+    "text": "both in data type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=514"
+  },
+  {
+    "text": "and Raster Order Group assignments. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=515"
+  },
+  {
+    "text": "A11 can do this transition with one step on your part. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=518"
+  },
+  {
+    "text": "To bridge the gap between these phases, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=523"
+  },
+  {
+    "text": "you need to put a tile shader in between. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=524"
+  },
+  {
+    "text": "A tile shader is a compute threadgroup ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=527"
+  },
+  {
+    "text": "that can access the entire tile memory and imageblock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=529"
+  },
+  {
+    "text": "Tile shaders have the behavior that they do not launch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=533"
+  },
+  {
+    "text": "until all fragment shader threads prior have completed, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=535"
+  },
+  {
+    "text": "regardless of Raster Order Group declarations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=538"
+  },
+  {
+    "text": "This lets you be assured ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=542"
+  },
+  {
+    "text": "that this tile shading threadgroup ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=543"
+  },
+  {
+    "text": "has exclusive access to this memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=544"
+  },
+  {
+    "text": "With the tile shader, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=547"
+  },
+  {
+    "text": "you can read and write the entire tile, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=548"
+  },
+  {
+    "text": "reformatting it as you wish, and in particular, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=550"
+  },
+  {
+    "text": "reading from the imageblock via its old outgoing type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=553"
+  },
+  {
+    "text": "and reinitializing the contents of imageblocks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=556"
+  },
+  {
+    "text": "using its new type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=558"
+  },
+  {
+    "text": "Just like tile shaders have a full barrier ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=560"
+  },
+  {
+    "text": "before they execute, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=563"
+  },
+  {
+    "text": "they also have a full barrier after they execute. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=564"
+  },
+  {
+    "text": "No subsequent fragment shader threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=568"
+  },
+  {
+    "text": "will access memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=569"
+  },
+  {
+    "text": "until after the tile shader has fully completed, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=570"
+  },
+  {
+    "text": "regardless of how you've set up Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=573"
+  },
+  {
+    "text": "in the later phase. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=576"
+  },
+  {
+    "text": "This means that you can rely on this initialization ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=578"
+  },
+  {
+    "text": "being completed before the transparency work begins.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=580"
+  },
+  {
+    "text": "The requirement here is pretty simple. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=585"
+  },
+  {
+    "text": "If you want to rearrange your imageblock contents ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=587"
+  },
+  {
+    "text": "or change which fields a Raster Order Group protects, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=589"
+  },
+  {
+    "text": "you need to put a tile shader in the middle ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=592"
+  },
+  {
+    "text": "to make that transition well-ordered and safe. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=594"
+  },
+  {
+    "text": "Several of the pieces of sample code we're publishing for A11 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=598"
+  },
+  {
+    "text": "shows this sequence in practice.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=601"
+  },
+  {
+    "text": "So that's really all there is to making use ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=604"
+  },
+  {
+    "text": "of Raster Order Groups' expanded capabilities on A11. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=606"
+  },
+  {
+    "text": "You've seen how Raster Order Groups ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=609"
+  },
+  {
+    "text": "are even more flexible on A11 than on any other GPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=611"
+  },
+  {
+    "text": "The hardware supports multiple groups, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=615"
+  },
+  {
+    "text": "which can eliminate over-synchronization ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=616"
+  },
+  {
+    "text": "and improve performance. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=618"
+  },
+  {
+    "text": "They work hand-in-hand ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=620"
+  },
+  {
+    "text": "with A11's fragment shader's access to tile memory ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=622"
+  },
+  {
+    "text": "and you can use tile shaders to entirely change ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=625"
+  },
+  {
+    "text": "the character of your imageblocks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=628"
+  },
+  {
+    "text": "including Raster Order Group configuration, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=629"
+  },
+  {
+    "text": "right in the middle of your render pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=631"
+  },
+  {
+    "text": "Putting it all together, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=634"
+  },
+  {
+    "text": "this lets you build workloads on A11 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=636"
+  },
+  {
+    "text": "that are incredibly light on bandwidth, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=637"
+  },
+  {
+    "text": "and very well-performing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=639"
+  },
+  {
+    "text": "For more information about Metal 2 and A11, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=643"
+  },
+  {
+    "text": "and links to the sample code, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=646"
+  },
+  {
+    "text": "please visit the Metal developer website. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=647"
+  },
+  {
+    "text": "Thank you for watching.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-605/?time=649"
+  }
+]

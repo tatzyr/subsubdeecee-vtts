@@ -1,0 +1,2218 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=0"
+  },
+  {
+    "text": "Hi, my name is Yi. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=9"
+  },
+  {
+    "text": "Hi, my name is Dominik. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=11"
+  },
+  {
+    "text": "And we are GPU software engineers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=13"
+  },
+  {
+    "text": "Today, Dominik and I are going to talk about the performance enhancements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=16"
+  },
+  {
+    "text": "and features we've added to the Metal Ray Tracing API this year ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=20"
+  },
+  {
+    "text": "to help you maximize the performance of your ray tracing applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=23"
+  },
+  {
+    "text": "Ray tracing applications simulate individual rays of light ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=27"
+  },
+  {
+    "text": "bouncing around a scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=30"
+  },
+  {
+    "text": "This is used in games and offline rendering to produce ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=33"
+  },
+  {
+    "text": "photorealistic reflections, shadows, global illumination, and more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=36"
+  },
+  {
+    "text": "This requires simulating a lot of rays, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=42"
+  },
+  {
+    "text": "so performance is critical for these applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=44"
+  },
+  {
+    "text": "Fortunately, Metal has built-in support for ray tracing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=47"
+  },
+  {
+    "text": "optimized for all Apple devices. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=51"
+  },
+  {
+    "text": "Let's briefly review how ray tracing works in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=54"
+  },
+  {
+    "text": "The Metal ray tracing API is available from within shader functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=57"
+  },
+  {
+    "text": "such as compute or fragment functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=61"
+  },
+  {
+    "text": "We start by generating some rays which are emitted into the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=65"
+  },
+  {
+    "text": "Next, we create an intersector object and use it to check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=69"
+  },
+  {
+    "text": "for intersections between our rays and the geometry in the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=73"
+  },
+  {
+    "text": "A bit later, I will describe some of the new features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=78"
+  },
+  {
+    "text": "we've added this year to speed up the intersection search. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=81"
+  },
+  {
+    "text": "This process depends on a special data structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=84"
+  },
+  {
+    "text": "called an acceleration structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=86"
+  },
+  {
+    "text": "which also represents the geometry in the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=89"
+  },
+  {
+    "text": "I will also talk about several new features and performance improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=92"
+  },
+  {
+    "text": "focused on acceleration structures today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=96"
+  },
+  {
+    "text": "The intersector returns an intersection result object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=98"
+  },
+  {
+    "text": "describing the primitive each ray hit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=101"
+  },
+  {
+    "text": "The intersection result is used to produce a color to write into the output image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=105"
+  },
+  {
+    "text": "It can also be used to produce additional rays ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=110"
+  },
+  {
+    "text": "which go through the process again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=113"
+  },
+  {
+    "text": "We can repeat this process as many times as we'd like ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=115"
+  },
+  {
+    "text": "to simulate light bouncing around the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=118"
+  },
+  {
+    "text": "If you want to learn more about the basics of the Metal ray tracing API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=121"
+  },
+  {
+    "text": "I recommend you review our previous WWDC sessions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=125"
+  },
+  {
+    "text": "We first introduced the Metal ray tracing API at WWDC20, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=129"
+  },
+  {
+    "text": "and last year, we introduced new features including support for motion blur. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=134"
+  },
+  {
+    "text": "Today, I'm going to talk about three things. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=139"
+  },
+  {
+    "text": "First, I will tell you about new features which enable you to improve ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=142"
+  },
+  {
+    "text": "ray tracing performance in your applications.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=146"
+  },
+  {
+    "text": "Next, I will talk about improvements and features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=150"
+  },
+  {
+    "text": "we've added to the acceleration structure API.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=153"
+  },
+  {
+    "text": "Finally, Dominik will tell you about improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=158"
+  },
+  {
+    "text": "to our GPU tools for ray tracing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=161"
+  },
+  {
+    "text": "This year, we've added three new features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=163"
+  },
+  {
+    "text": "aimed at either improving ray tracing performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=166"
+  },
+  {
+    "text": "or simplifying your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=168"
+  },
+  {
+    "text": "They are per-primitive data, the ability to retrieve buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=171"
+  },
+  {
+    "text": "from intersection function tables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=174"
+  },
+  {
+    "text": "and support for ray tracing from indirect command buffers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=176"
+  },
+  {
+    "text": "Let's start with per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=181"
+  },
+  {
+    "text": "Applications usually have data associated with the primitive in their scene ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=184"
+  },
+  {
+    "text": "such as vertex colors, normals, and texture coordinates.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=188"
+  },
+  {
+    "text": "This year, we've added the ability to store ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=193"
+  },
+  {
+    "text": "small amounts of data for each primitive directly in the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=196"
+  },
+  {
+    "text": "This data can be accessed with fewer memory indirections and cache misses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=201"
+  },
+  {
+    "text": "improving performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=205"
+  },
+  {
+    "text": "This also reduces the need to store complicated auxiliary data structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=207"
+  },
+  {
+    "text": "which are typically required to look up the data associated with your primitives.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=211"
+  },
+  {
+    "text": "Let's look at an example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=217"
+  },
+  {
+    "text": "Alpha testing is a technique used to add complexity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=219"
+  },
+  {
+    "text": "to transparent geometry without increasing the triangle count. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=222"
+  },
+  {
+    "text": "In this technique, the alpha channel of a texture mapped onto a triangle ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=227"
+  },
+  {
+    "text": "is used to determine if the ray should hit the triangle or continue further.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=231"
+  },
+  {
+    "text": "To achieve this, you need to configure the intersector ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=236"
+  },
+  {
+    "text": "to call your custom intersection function when a triangle is hit by the ray.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=239"
+  },
+  {
+    "text": "The ultimate goal is to sample from the texture associated with the triangle ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=244"
+  },
+  {
+    "text": "and test if the alpha value allows the ray to continue through the primitive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=249"
+  },
+  {
+    "text": "To get there, you need two pieces of information: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=253"
+  },
+  {
+    "text": "the texture object and the UV coordinates. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=256"
+  },
+  {
+    "text": "In a typical implementation of alpha testing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=260"
+  },
+  {
+    "text": "you would need to access a number of intermediate buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=262"
+  },
+  {
+    "text": "in Metal device memory in order to get this information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=265"
+  },
+  {
+    "text": "First, you would store the texture associated with the primitive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=270"
+  },
+  {
+    "text": "in some kind of material structure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=274"
+  },
+  {
+    "text": "Several materials would be packed into a buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=277"
+  },
+  {
+    "text": "It would be impractical to store material structure for every primitive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=281"
+  },
+  {
+    "text": "as they may be pretty big and there may be a lot of primitives. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=285"
+  },
+  {
+    "text": "Instead, you would want to store just the material IDs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=288"
+  },
+  {
+    "text": "for each primitive in a buffer and use them to look up the materials. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=292"
+  },
+  {
+    "text": "Next, to calculate UVs, you need to load the UVs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=296"
+  },
+  {
+    "text": "for each vertex from another buffer and interpolate them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=300"
+  },
+  {
+    "text": "Finally, let's say you are using instanced geometry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=304"
+  },
+  {
+    "text": "You may want each instance to have its own materials and UV mappings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=307"
+  },
+  {
+    "text": "To support that, you would store pointers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=312"
+  },
+  {
+    "text": "to UV and Material ID buffers in an Instance Data buffer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=314"
+  },
+  {
+    "text": "adding yet another level of indirection to your function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=319"
+  },
+  {
+    "text": "This approach requires you to maintain a fairly complex buffer setup ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=322"
+  },
+  {
+    "text": "and involves many layers of indirection to get to the data that you need. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=326"
+  },
+  {
+    "text": "This may also lead to cache misses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=331"
+  },
+  {
+    "text": "that would negatively affect the performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=333"
+  },
+  {
+    "text": "Let's look at the code needed to implement this diagram. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=337"
+  },
+  {
+    "text": "Then I will show you how you can simplify it step-by-step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=340"
+  },
+  {
+    "text": "using per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=344"
+  },
+  {
+    "text": "This is the original implementation of the alpha testing intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=346"
+  },
+  {
+    "text": "This function is invoked when the ray hits an alpha tested triangle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=350"
+  },
+  {
+    "text": "The function starts by loading the instance data from the memory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=354"
+  },
+  {
+    "text": "This is the buffer that contains pointers to UV and material buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=358"
+  },
+  {
+    "text": "used by the instance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=362"
+  },
+  {
+    "text": "Next, the function loads the UV coordinates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=364"
+  },
+  {
+    "text": "from the UV buffer and interpolates them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=367"
+  },
+  {
+    "text": "This is another memory load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=370"
+  },
+  {
+    "text": "Then, the function loads the material index from another buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=372"
+  },
+  {
+    "text": "And finally, the function loads the material ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=376"
+  },
+  {
+    "text": "and samples the corresponding texture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=378"
+  },
+  {
+    "text": "At this point, the function has the alpha value it needs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=380"
+  },
+  {
+    "text": "and can compare it to the threshold. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=384"
+  },
+  {
+    "text": "Now, I will show you how you can simplify this code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=386"
+  },
+  {
+    "text": "and improve its performance using per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=389"
+  },
+  {
+    "text": "Instead of using a complicated buffer setup ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=393"
+  },
+  {
+    "text": "with multiple layers of indirection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=395"
+  },
+  {
+    "text": "you can simply store only the data the intersection function will need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=398"
+  },
+  {
+    "text": "for each primitive directly in the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=401"
+  },
+  {
+    "text": "In this example, you can create a struct ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=405"
+  },
+  {
+    "text": "containing the texture and UV coordinates for each primitive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=407"
+  },
+  {
+    "text": "You provide this data when building the acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=411"
+  },
+  {
+    "text": "and the intersection function simply receives a pointer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=414"
+  },
+  {
+    "text": "to that data when a ray hits the primitive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=417"
+  },
+  {
+    "text": "You can store anything you like in the per-primitive data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=420"
+  },
+  {
+    "text": "but keeping the size small will help achieve the best performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=423"
+  },
+  {
+    "text": "I will start with the inputs to the intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=427"
+  },
+  {
+    "text": "Having access to all of them gives you a lot of flexibility ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=430"
+  },
+  {
+    "text": "when it comes to the implementation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=433"
+  },
+  {
+    "text": "but it can also increase the register usage on the GPU. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=435"
+  },
+  {
+    "text": "With per-primitive data, instead of all the buffers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=439"
+  },
+  {
+    "text": "you only need to access the primitive data pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=442"
+  },
+  {
+    "text": "This is the data you store directly in the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=446"
+  },
+  {
+    "text": "In this case, each primitive has its own texture object and UVs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=450"
+  },
+  {
+    "text": "for all of its vertices. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=454"
+  },
+  {
+    "text": "Next up are the loads from the global material buffer and instance data buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=456"
+  },
+  {
+    "text": "You won't need either of them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=461"
+  },
+  {
+    "text": "Instead, you can do one load from the per-primitive data pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=463"
+  },
+  {
+    "text": "This is the only device memory access needed in this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=467"
+  },
+  {
+    "text": "Next up are the UVs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=471"
+  },
+  {
+    "text": "Instead of dereferencing a pointer retrieved from the instance data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=472"
+  },
+  {
+    "text": "you can simply access the data embedded in the per-primitive data structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=476"
+  },
+  {
+    "text": "The change in the code is subtle, but is important for performance, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=481"
+  },
+  {
+    "text": "as no additional memory loads are involved. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=484"
+  },
+  {
+    "text": "Finally, there are the material properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=487"
+  },
+  {
+    "text": "Since the only part of the material needed is the texture, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=490"
+  },
+  {
+    "text": "you can encode the primitive's texture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=493"
+  },
+  {
+    "text": "directly in the per-primitive data structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=495"
+  },
+  {
+    "text": "This means you don't need to access the material ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=498"
+  },
+  {
+    "text": "and material index buffers anymore. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=500"
+  },
+  {
+    "text": "You can simply use the texture directly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=502"
+  },
+  {
+    "text": "without paying the cost of additional memory dereferences. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=505"
+  },
+  {
+    "text": "This is how much simpler your intersection code can be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=508"
+  },
+  {
+    "text": "when using per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=511"
+  },
+  {
+    "text": "All the costly memory accesses are replaced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=513"
+  },
+  {
+    "text": "with just one load from the primitive data pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=515"
+  },
+  {
+    "text": "On top of that, the code is much simpler and easier to follow.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=519"
+  },
+  {
+    "text": "Next, I will show you how to store the primitive data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=524"
+  },
+  {
+    "text": "in the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=527"
+  },
+  {
+    "text": "You will need to do this before you can access it from an intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=529"
+  },
+  {
+    "text": "You will need to set a few fields ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=533"
+  },
+  {
+    "text": "in the acceleration structure geometry descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=535"
+  },
+  {
+    "text": "First, set the Metal buffer where all the data is stored. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=537"
+  },
+  {
+    "text": "Next, specify the size of the data that will be stored for each primitive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=541"
+  },
+  {
+    "text": "If your data is not tightly packed in the buffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=545"
+  },
+  {
+    "text": "or doesn't start at the beginning of the buffer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=547"
+  },
+  {
+    "text": "you can also specify the stride and the offset. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=550"
+  },
+  {
+    "text": "Otherwise, these values default to 0 so you don't need to set them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=553"
+  },
+  {
+    "text": "You have already seen how you can use per-primitive data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=557"
+  },
+  {
+    "text": "in an intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=560"
+  },
+  {
+    "text": "It's simply passed into the function as a pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=561"
+  },
+  {
+    "text": "But that's not all–you have access to this data wherever you need it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=564"
+  },
+  {
+    "text": "That includes the final intersection result returned by the intersector. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=568"
+  },
+  {
+    "text": "And if you are using intersection query, the primitive data is also available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=572"
+  },
+  {
+    "text": "for both candidate and committed intersections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=576"
+  },
+  {
+    "text": "This means you can use per-primitive data for shading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=579"
+  },
+  {
+    "text": "in addition to intersection testing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=583"
+  },
+  {
+    "text": "Per-primitive data can improve the performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=585"
+  },
+  {
+    "text": "of both your intersection code and your shading code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=588"
+  },
+  {
+    "text": "by reducing the number of memory accesses and indirections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=590"
+  },
+  {
+    "text": "In fact, we found in one of our own test applications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=594"
+  },
+  {
+    "text": "that using per-primitive data resulted in a 10% to 16% performance improvement. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=598"
+  },
+  {
+    "text": "We can't wait for you to try it out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=603"
+  },
+  {
+    "text": "and see what kinds of improvements you can get ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=605"
+  },
+  {
+    "text": "in performance and code quality. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=608"
+  },
+  {
+    "text": "This year, we've also added another convenience feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=611"
+  },
+  {
+    "text": "to the Metal shading language to help you simplify your ray tracing kernels. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=614"
+  },
+  {
+    "text": "Applications often pass the same set of bindings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=618"
+  },
+  {
+    "text": "to both their intersection functions and their main ray tracing kernel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=622"
+  },
+  {
+    "text": "For example, our ray tracing sample code uses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=626"
+  },
+  {
+    "text": "an intersection function to render spheres. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=629"
+  },
+  {
+    "text": "This intersection function accesses a resource buffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=632"
+  },
+  {
+    "text": "containing information about each sphere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=635"
+  },
+  {
+    "text": "In order to pass this buffer into the intersection function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=637"
+  },
+  {
+    "text": "the app binds the buffer to the intersection function table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=640"
+  },
+  {
+    "text": "However, the main ray tracing kernel also needs access to the resource buffer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=643"
+  },
+  {
+    "text": "so the app binds the buffer there as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=648"
+  },
+  {
+    "text": "This year, the Metal shading language allows you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=650"
+  },
+  {
+    "text": "to access the buffers bound to intersection function tables. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=653"
+  },
+  {
+    "text": "With this new feature, you can save the effort ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=657"
+  },
+  {
+    "text": "of binding the buffer for the kernel, and instead access it directly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=659"
+  },
+  {
+    "text": "from the intersection function table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=663"
+  },
+  {
+    "text": "You can do this by calling the get_buffer method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=665"
+  },
+  {
+    "text": "on the intersection function table, providing its pointer type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=668"
+  },
+  {
+    "text": "You can also access visible function tables by their function type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=671"
+  },
+  {
+    "text": "Indirect command buffers allow you to encode GPU work independently on the GPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=675"
+  },
+  {
+    "text": "and represent a fundamental element of GPU driven pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=680"
+  },
+  {
+    "text": "To learn more about indirect command buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=684"
+  },
+  {
+    "text": "and GPU-driven rendering, we recommend you review ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=686"
+  },
+  {
+    "text": "the \"Modern rendering with Metal\" session from WWDC 2019. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=689"
+  },
+  {
+    "text": "Enabling ray tracing support in an indirect command buffer is easy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=693"
+  },
+  {
+    "text": "All you have to do is to set the supportRayTracing flag ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=697"
+  },
+  {
+    "text": "on the descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=700"
+  },
+  {
+    "text": "Indirect command buffers dispatch graphics and compute functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=702"
+  },
+  {
+    "text": "so you can simply use ray tracing from those functions as usual. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=706"
+  },
+  {
+    "text": "That's a rundown of all the new features we've added this year ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=710"
+  },
+  {
+    "text": "to help you get improved ray tracing performance in your applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=713"
+  },
+  {
+    "text": "Next, let's talk about acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=718"
+  },
+  {
+    "text": "We've implemented several performance improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=721"
+  },
+  {
+    "text": "and added features focused on building acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=724"
+  },
+  {
+    "text": "Let's recap what they are used for. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=728"
+  },
+  {
+    "text": "Acceleration structures are data structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=730"
+  },
+  {
+    "text": "which accelerate the ray tracing process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=733"
+  },
+  {
+    "text": "They do this by recursively partitioning space ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=735"
+  },
+  {
+    "text": "so we can quickly find which triangles are likely to intersect a ray. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=738"
+  },
+  {
+    "text": "To support building complex scenes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=743"
+  },
+  {
+    "text": "Metal supports two types of acceleration structures: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=745"
+  },
+  {
+    "text": "primitive and instance acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=748"
+  },
+  {
+    "text": "Individual pieces of geometry are represented ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=751"
+  },
+  {
+    "text": "using primitive acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=754"
+  },
+  {
+    "text": "They can be something simple like a plane or a cube, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=756"
+  },
+  {
+    "text": "or something more complex like a sphere or a triangle mesh. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=760"
+  },
+  {
+    "text": "You can create more complex scenes using an instance acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=764"
+  },
+  {
+    "text": "Instance acceleration structures create copies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=768"
+  },
+  {
+    "text": "of primitive acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=771"
+  },
+  {
+    "text": "First, define transformation matrices for each object in your scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=773"
+  },
+  {
+    "text": "Then, use the array of transformation matrices ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=778"
+  },
+  {
+    "text": "and primitive acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=781"
+  },
+  {
+    "text": "to build an instance acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=782"
+  },
+  {
+    "text": "That's how you can build a static scene using acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=785"
+  },
+  {
+    "text": "Next, let's see how dynamic applications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=789"
+  },
+  {
+    "text": "like a game would use acceleration structures.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=792"
+  },
+  {
+    "text": "Let's start at the beginning: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=796"
+  },
+  {
+    "text": "there are several tasks you need to do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=798"
+  },
+  {
+    "text": "when first launching a game or loading a new level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=799"
+  },
+  {
+    "text": "This includes the normal tasks like loading models and textures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=803"
+  },
+  {
+    "text": "With ray tracing, you also need to build primitive acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=807"
+  },
+  {
+    "text": "for all of the models which will be used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=811"
+  },
+  {
+    "text": "We recommend that you build as many of your primitive acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=814"
+  },
+  {
+    "text": "as possible at load time to save time in your main rendering loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=817"
+  },
+  {
+    "text": "You can use an instance acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=822"
+  },
+  {
+    "text": "to add or remove these objects from the scene as needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=824"
+  },
+  {
+    "text": "Once your app is done loading, it enters the main loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=828"
+  },
+  {
+    "text": "Every frame, it renders the scene using a combination ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=831"
+  },
+  {
+    "text": "of rasterization, ray tracing, and post-processing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=834"
+  },
+  {
+    "text": "However, since games are very dynamic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=838"
+  },
+  {
+    "text": "you will probably need to update some of the acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=841"
+  },
+  {
+    "text": "This typically includes refitting a handful of deforming ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=845"
+  },
+  {
+    "text": "or animated models such as skinned characters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=848"
+  },
+  {
+    "text": "Refitting an existing acceleration structure is much faster ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=851"
+  },
+  {
+    "text": "than a full rebuild, so we recommend using it for cases like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=854"
+  },
+  {
+    "text": "You should also do a full rebuild of the instance acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=858"
+  },
+  {
+    "text": "This is necessary since objects may have been added or removed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=862"
+  },
+  {
+    "text": "from the scene since the last frame, or they may have moved significantly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=866"
+  },
+  {
+    "text": "Doing a full rebuild is fine in this case since there's only one ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=870"
+  },
+  {
+    "text": "instance acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=874"
+  },
+  {
+    "text": "and it usually only contains at most a few thousand objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=875"
+  },
+  {
+    "text": "This year, we've improved performance for all of these cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=879"
+  },
+  {
+    "text": "First, acceleration structure builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=883"
+  },
+  {
+    "text": "are now up to 2.3 times faster on Apple Silicon. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=886"
+  },
+  {
+    "text": "Second, refitting is also up to 38% faster.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=889"
+  },
+  {
+    "text": "This means that both load times and per-frame overhead are reduced. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=894"
+  },
+  {
+    "text": "But it gets even better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=898"
+  },
+  {
+    "text": "Some applications build hundreds or even thousands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=900"
+  },
+  {
+    "text": "of small primitive acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=903"
+  },
+  {
+    "text": "These small builds don't do enough work individually ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=905"
+  },
+  {
+    "text": "to fill up the GPU, resulting in long periods of low GPU utilization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=908"
+  },
+  {
+    "text": "Therefore, multiple builds are now automatically performed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=913"
+  },
+  {
+    "text": "in parallel whenever possible on Apple Silicon. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=916"
+  },
+  {
+    "text": "This results in up to 2.8 times faster builds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=919"
+  },
+  {
+    "text": "when they run in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=922"
+  },
+  {
+    "text": "This further reduces load times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=924"
+  },
+  {
+    "text": "And this doesn't just apply to builds: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=926"
+  },
+  {
+    "text": "it applies to all of the acceleration structure operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=928"
+  },
+  {
+    "text": "including compacting and refitting, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=931"
+  },
+  {
+    "text": "so your per-frame overhead is reduced as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=934"
+  },
+  {
+    "text": "There are a few guidelines you will need to follow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=937"
+  },
+  {
+    "text": "to ensure that you can benefit from this optimization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=939"
+  },
+  {
+    "text": "Here is an example that builds an array of acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=943"
+  },
+  {
+    "text": "To build them in parallel, you will need to ensure that you use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=946"
+  },
+  {
+    "text": "the same acceleration structure command encoder for many builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=949"
+  },
+  {
+    "text": "Additionally, builds which use the same scratch buffer can't run in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=953"
+  },
+  {
+    "text": "Therefore, you will want to ensure that you are looping through a small pool ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=958"
+  },
+  {
+    "text": "of scratch buffers rather than using the same scratch buffer for each build.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=962"
+  },
+  {
+    "text": "Those are all the performance improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=967"
+  },
+  {
+    "text": "we've made to building acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=969"
+  },
+  {
+    "text": "We've also added three new features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=972"
+  },
+  {
+    "text": "to make building acceleration structures easier and more efficient.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=974"
+  },
+  {
+    "text": "They are support for additional vertex formats, transformation matrices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=979"
+  },
+  {
+    "text": "and acceleration structure allocation from heaps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=984"
+  },
+  {
+    "text": "Let's start with vertex formats. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=989"
+  },
+  {
+    "text": "A common performance optimization is to use quantized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=992"
+  },
+  {
+    "text": "or reduced precision formats for vertex data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=995"
+  },
+  {
+    "text": "resulting in lower memory usage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=999"
+  },
+  {
+    "text": "This year, you can build acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1001"
+  },
+  {
+    "text": "from a wide range of vertex formats. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1004"
+  },
+  {
+    "text": "This includes half precision floating point formats, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1006"
+  },
+  {
+    "text": "two component vertex formats for planar geometry, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1010"
+  },
+  {
+    "text": "and all the usual normalized integer formats. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1014"
+  },
+  {
+    "text": "Previously, acceleration structures have required ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1017"
+  },
+  {
+    "text": "three component, full-precision floating point vertex data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1020"
+  },
+  {
+    "text": "In this example, the application has vertex data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1024"
+  },
+  {
+    "text": "in a half precision vertex format. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1027"
+  },
+  {
+    "text": "This data needs to be unpacked and copied into a temporary buffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1030"
+  },
+  {
+    "text": "just to build the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1034"
+  },
+  {
+    "text": "With the new vertex formats feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1036"
+  },
+  {
+    "text": "acceleration structure builds can now consume vertex data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1038"
+  },
+  {
+    "text": "in any of the supported formats, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1041"
+  },
+  {
+    "text": "eliminating the need to create a temporary copy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1044"
+  },
+  {
+    "text": "Setting the vertex format couldn't be simpler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1047"
+  },
+  {
+    "text": "All you need to do is set the property on your geometry descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1049"
+  },
+  {
+    "text": "Next, let's talk about transformation matrices. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1054"
+  },
+  {
+    "text": "This feature complements the new vertex formats, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1057"
+  },
+  {
+    "text": "so that you can pre-transform your vertex data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1060"
+  },
+  {
+    "text": "before building the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1062"
+  },
+  {
+    "text": "For example, you might want to use them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1065"
+  },
+  {
+    "text": "to unpack complex meshes stored in a normalized format. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1067"
+  },
+  {
+    "text": "Let's consider the Red Panda model in this scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1071"
+  },
+  {
+    "text": "To normalize the geometry to use one of our compressed formats, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1074"
+  },
+  {
+    "text": "you take the mesh, calculate its bounds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1078"
+  },
+  {
+    "text": "and then scale them to a zero to one range. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1081"
+  },
+  {
+    "text": "You can then use one of the normalized integer vertex formats to store the mesh, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1084"
+  },
+  {
+    "text": "reducing the amount of space it takes up on disk and in memory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1089"
+  },
+  {
+    "text": "At runtime, you provide a matrix that will scale ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1093"
+  },
+  {
+    "text": "and offset each vertex to the final position. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1097"
+  },
+  {
+    "text": "Applying that matrix retrieves the original model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1101"
+  },
+  {
+    "text": "Now let's walk through how to set up acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1105"
+  },
+  {
+    "text": "passing a transformation matrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1108"
+  },
+  {
+    "text": "You start by creating the transform buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1110"
+  },
+  {
+    "text": "One way of doing this is to create an MTLPackedFloat4x3 object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1113"
+  },
+  {
+    "text": "containing the scale and offset transformation matrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1118"
+  },
+  {
+    "text": "Then, create a Metal Buffer big enough to hold the matrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1121"
+  },
+  {
+    "text": "And finally, copy the matrix to the Buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1126"
+  },
+  {
+    "text": "Next, set up the acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1129"
+  },
+  {
+    "text": "First, create a triangle geometry descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1132"
+  },
+  {
+    "text": "Then, specify the transformation Matrix Buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1135"
+  },
+  {
+    "text": "And finally the Buffer Offset. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1138"
+  },
+  {
+    "text": "That's all you need to do to set up the transformation matrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1141"
+  },
+  {
+    "text": "These matrices can also be used to combine simple acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1145"
+  },
+  {
+    "text": "to improve ray tracing performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1149"
+  },
+  {
+    "text": "Let's see an example scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1152"
+  },
+  {
+    "text": "Here, the boxes and the spheres are all relatively simple meshes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1154"
+  },
+  {
+    "text": "This presents an opportunity to optimize the acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1159"
+  },
+  {
+    "text": "for this group at the front of the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1162"
+  },
+  {
+    "text": "Focusing on the instance acceleration structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1165"
+  },
+  {
+    "text": "there is an overhead for each instance that your rays hit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1168"
+  },
+  {
+    "text": "There is a cost for transforming the ray ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1172"
+  },
+  {
+    "text": "and then switching from the instance to the primitive acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1174"
+  },
+  {
+    "text": "This occurs more often with overlapping instances. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1178"
+  },
+  {
+    "text": "To reduce the instance count, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1182"
+  },
+  {
+    "text": "you can generate a single primitive acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1184"
+  },
+  {
+    "text": "that contains both the boxes and the sphere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1186"
+  },
+  {
+    "text": "To do this, you can create a geometry descriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1190"
+  },
+  {
+    "text": "for each object, each with its own transformation matrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1193"
+  },
+  {
+    "text": "The resulting primitive acceleration structure is a single instance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1197"
+  },
+  {
+    "text": "in the instance acceleration structure and contains the boxes and sphere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1200"
+  },
+  {
+    "text": "This should result in a better performing acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1205"
+  },
+  {
+    "text": "Let's see how to set this up in code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1209"
+  },
+  {
+    "text": "You start with the descriptor that defines the sphere geometry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1212"
+  },
+  {
+    "text": "Next, set the vertex buffer, index buffer, and other properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1216"
+  },
+  {
+    "text": "as usual for a primitive acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1220"
+  },
+  {
+    "text": "The difference is, you also specify the transform buffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1224"
+  },
+  {
+    "text": "that contains the transformation matrix used for the copy of the sphere.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1226"
+  },
+  {
+    "text": "For the boxes, you have multiple geometry descriptors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1232"
+  },
+  {
+    "text": "sharing a vertex and index buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1235"
+  },
+  {
+    "text": "You just need to specify different transform buffers for each copy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1238"
+  },
+  {
+    "text": "Finally, when creating the descriptor for the primitive acceleration structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1242"
+  },
+  {
+    "text": "add all the geometry descriptors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1247"
+  },
+  {
+    "text": "This will result in a primitive acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1249"
+  },
+  {
+    "text": "that you can instance into the scene with an identity transform. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1252"
+  },
+  {
+    "text": "This primitive acceleration structure will take less time to build ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1256"
+  },
+  {
+    "text": "than separate acceleration structures and will be faster to intersect.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1259"
+  },
+  {
+    "text": "Finally, heap allocation of acceleration structures has been ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1264"
+  },
+  {
+    "text": "one of our most requested features. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1268"
+  },
+  {
+    "text": "With this feature, you now have more control ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1271"
+  },
+  {
+    "text": "over acceleration structure allocation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1274"
+  },
+  {
+    "text": "It also allows you to reuse heap memory between allocations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1276"
+  },
+  {
+    "text": "avoiding expensive buffer allocations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1280"
+  },
+  {
+    "text": "Heaps can also help improve performance by reducing calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1283"
+  },
+  {
+    "text": "to the useResource: method when using instance acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1287"
+  },
+  {
+    "text": "Going back to the example scene, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1291"
+  },
+  {
+    "text": "the instance acceleration structure references ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1293"
+  },
+  {
+    "text": "primitive acceleration structures indirectly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1296"
+  },
+  {
+    "text": "This means that each time you want to use an instance acceleration structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1299"
+  },
+  {
+    "text": "with a command encoder, you need to call useResource: method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1302"
+  },
+  {
+    "text": "for each primitive acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1306"
+  },
+  {
+    "text": "For large scenes, this could require thousands of calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1309"
+  },
+  {
+    "text": "to useResource: each time you use the instance acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1312"
+  },
+  {
+    "text": "Knowing that you have so many useResource: calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1316"
+  },
+  {
+    "text": "you could call useResources: to reduce the number of API calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1318"
+  },
+  {
+    "text": "but you still need to maintain an array of your acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1322"
+  },
+  {
+    "text": "and Metal still needs to loop through the array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1326"
+  },
+  {
+    "text": "Instead, you can allocate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1329"
+  },
+  {
+    "text": "all of these primitive acceleration structures from the same heap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1331"
+  },
+  {
+    "text": "When you want to use the instance acceleration structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1334"
+  },
+  {
+    "text": "you can simply make a single call to the useHeap: method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1337"
+  },
+  {
+    "text": "to reference all of the primitive acceleration structures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1340"
+  },
+  {
+    "text": "We saw a small performance improvement in one application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1344"
+  },
+  {
+    "text": "simply by replacing the calls to useResource: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1347"
+  },
+  {
+    "text": "with a single call to useHeap:. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1349"
+  },
+  {
+    "text": "Let's see how you can allocate an acceleration structure from a heap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1352"
+  },
+  {
+    "text": "You can directly allocate an acceleration structure by calling a method on the heap ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1355"
+  },
+  {
+    "text": "that takes the acceleration structure descriptor as the input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1359"
+  },
+  {
+    "text": "If you are not allocating using the descriptor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1363"
+  },
+  {
+    "text": "the Metal device determines the size and alignment requirement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1366"
+  },
+  {
+    "text": "for allocating the acceleration structure from a heap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1369"
+  },
+  {
+    "text": "You can get this information from the Metal device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1372"
+  },
+  {
+    "text": "by providing the descriptor or acceleration structure size. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1375"
+  },
+  {
+    "text": "Once the final size is determined, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1379"
+  },
+  {
+    "text": "you can allocate the acceleration structure from the heap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1381"
+  },
+  {
+    "text": "There are a few things to remember when using heaps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1384"
+  },
+  {
+    "text": "First, remember to call useHeap: to make all of the acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1387"
+  },
+  {
+    "text": "in the heap resident for the duration of the ray tracing pass. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1392"
+  },
+  {
+    "text": "Second, by default, Metal doesn't track resources you allocate from a heap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1395"
+  },
+  {
+    "text": "You can either opt-in to resource hazard tracking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1400"
+  },
+  {
+    "text": "or you can manually manage your own synchronization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1403"
+  },
+  {
+    "text": "You can use MTLFences to synchronize across command encoders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1407"
+  },
+  {
+    "text": "and MTLEvents to synchronize across command buffers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1411"
+  },
+  {
+    "text": "Those are the new features and performance improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1415"
+  },
+  {
+    "text": "in the Metal ray tracing API this year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1418"
+  },
+  {
+    "text": "Next, Dominik will talk about improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1420"
+  },
+  {
+    "text": "to Xcode's Metal tools that will boost your productivity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1424"
+  },
+  {
+    "text": "when developing ray tracing applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1427"
+  },
+  {
+    "text": "Dominik: Thanks, Yi. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1429"
+  },
+  {
+    "text": "There are a lot of enhancements to the Metal tools in Xcode 14, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1430"
+  },
+  {
+    "text": "but here, I would like to highlight just a few ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1434"
+  },
+  {
+    "text": "that are especially useful when developing ray tracing applications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1437"
+  },
+  {
+    "text": "Starting with the Metal debugger, I'll talk about improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1441"
+  },
+  {
+    "text": "to the Acceleration Structure Viewer, Shader Profiler, and Shader Debugger.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1444"
+  },
+  {
+    "text": "Then I'll round it up with the runtime Shader Validation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1450"
+  },
+  {
+    "text": "First, let's take a look at the Acceleration Structure Viewer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1456"
+  },
+  {
+    "text": "The Acceleration Structure Viewer in the Metal Debugger enables you to inspect, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1461"
+  },
+  {
+    "text": "in great detail, all of the geometries and instances ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1466"
+  },
+  {
+    "text": "of all the meshes that make up your acceleration structure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1469"
+  },
+  {
+    "text": "Xcode 14 now supports debugging acceleration structures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1474"
+  },
+  {
+    "text": "with primitive or instanced motion and a new highlight mode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1477"
+  },
+  {
+    "text": "for visualizing primitives with an inspector for per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1482"
+  },
+  {
+    "text": "Let's see them in action.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1486"
+  },
+  {
+    "text": "If you are using acceleration structures with motion, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1489"
+  },
+  {
+    "text": "you now have a scrubber in the bottom bar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1492"
+  },
+  {
+    "text": "for viewing your acceleration structure at different points in time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1495"
+  },
+  {
+    "text": "On the right of the scrubber is a \"play\" button. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1498"
+  },
+  {
+    "text": "You can use it to play the animation back and forth in a loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1502"
+  },
+  {
+    "text": "Now let me show you how to inspect individual primitives ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1505"
+  },
+  {
+    "text": "in your acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1509"
+  },
+  {
+    "text": "This is especially useful if you are using the new per-primitive data API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1511"
+  },
+  {
+    "text": "And so there's a new highlight mode just for this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1515"
+  },
+  {
+    "text": "Primitive highlight mode gives you access to all primitive data...",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1519"
+  },
+  {
+    "text": "And allows you to select specific primitives for detailed inspection.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1525"
+  },
+  {
+    "text": "In the left sidebar, you can find arrows next to the data rows.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1530"
+  },
+  {
+    "text": "Clicking on an arrow will reveal a popover ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1535"
+  },
+  {
+    "text": "that displays the corresponding data for the primitive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1538"
+  },
+  {
+    "text": "These additions to the acceleration structure viewer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1541"
+  },
+  {
+    "text": "ensure you have full access, down to each primitive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1544"
+  },
+  {
+    "text": "to all of the components that make up your acceleration structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1547"
+  },
+  {
+    "text": "Next, let's talk about improvements to the Shader Profiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1551"
+  },
+  {
+    "text": "The Shader Profiler gives you insights into the performance of your shader, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1555"
+  },
+  {
+    "text": "providing per-pipeline execution timing costs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1560"
+  },
+  {
+    "text": "and on Apple GPUs, it provides more granularity at the source level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1563"
+  },
+  {
+    "text": "showing the execution costs per-line distributed across instruction categories. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1568"
+  },
+  {
+    "text": "In Xcode 14, profiling GPU captures has been updated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1573"
+  },
+  {
+    "text": "to support intersection functions, visible functions, and dynamic libraries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1577"
+  },
+  {
+    "text": "Here we have a ray tracing kernel using an intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1583"
+  },
+  {
+    "text": "You can now view the per-line profiling results ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1588"
+  },
+  {
+    "text": "inside of the intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1591"
+  },
+  {
+    "text": "This includes a breakdown of the instruction categories ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1593"
+  },
+  {
+    "text": "that contribute to the cost.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1596"
+  },
+  {
+    "text": "Profiling visible functions works the same way.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1601"
+  },
+  {
+    "text": "And similarly, detailed profiling information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1606"
+  },
+  {
+    "text": "is now available for shader code from linked dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1609"
+  },
+  {
+    "text": "With these additions, you now have the full breakdown ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1613"
+  },
+  {
+    "text": "of the performance of your pipeline, down to each line of code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1616"
+  },
+  {
+    "text": "Moving on to the Shader Debugger. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1622"
+  },
+  {
+    "text": "The Shader Debugger provides ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1624"
+  },
+  {
+    "text": "a unique and incredibly productive workflow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1625"
+  },
+  {
+    "text": "for debugging the correctness of your shader code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1627"
+  },
+  {
+    "text": "Just like with the Shader Profiler, we've also extended support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1630"
+  },
+  {
+    "text": "to enable debugging of Linked functions and Dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1633"
+  },
+  {
+    "text": "Here we have a ray tracing kernel that calls out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1637"
+  },
+  {
+    "text": "to a linked visible function passed in through a visible function table.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1639"
+  },
+  {
+    "text": "You are now able to follow the execution of a kernel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1647"
+  },
+  {
+    "text": "all the way into your visible function code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1650"
+  },
+  {
+    "text": "to verify that the code behaves as you expect it to.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1652"
+  },
+  {
+    "text": "Again, the same applies to debugging dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1657"
+  },
+  {
+    "text": "You are also able to jump into and out of any executed dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1661"
+  },
+  {
+    "text": "that are linked to your pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1665"
+  },
+  {
+    "text": "With these additions, you now have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1667"
+  },
+  {
+    "text": "a complete picture of your shader execution ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1668"
+  },
+  {
+    "text": "across linked functions and libraries in your pipeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1671"
+  },
+  {
+    "text": "Now, before you capture and jump into the Shader Debugger, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1675"
+  },
+  {
+    "text": "it is often a good idea to enable Shader Validation at runtime.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1679"
+  },
+  {
+    "text": "Shader validation is a great way to diagnose runtime errors on the GPU, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1685"
+  },
+  {
+    "text": "catching issues such as out-of-bound memory accesses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1690"
+  },
+  {
+    "text": "null texture reads, and more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1694"
+  },
+  {
+    "text": "To enable Shader Validation in Xcode, all you need to do is to go ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1696"
+  },
+  {
+    "text": "to the \"Edit Scheme\" dialog, select the \"Run\" action, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1700"
+  },
+  {
+    "text": "and under the \"diagnostics\" tab tick the \"Shader Validation\" checkbox. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1704"
+  },
+  {
+    "text": "And you are all set to go. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1708"
+  },
+  {
+    "text": "In Metal 3, we have added Stack Overflow detection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1711"
+  },
+  {
+    "text": "which will help you quickly find issues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1714"
+  },
+  {
+    "text": "that would otherwise result in undefined behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1716"
+  },
+  {
+    "text": "I'll quickly elaborate on the function stack in Metal shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1720"
+  },
+  {
+    "text": "and the problem of Stack Overflow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1723"
+  },
+  {
+    "text": "The call stack is a region in device memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1725"
+  },
+  {
+    "text": "where Metal stores the values of local data used in your shader functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1728"
+  },
+  {
+    "text": "If the called function is not known at compile time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1733"
+  },
+  {
+    "text": "Metal needs your help in estimating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1736"
+  },
+  {
+    "text": "the amount of memory required for the stack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1738"
+  },
+  {
+    "text": "An example of a call to a function that is unknown at compile time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1741"
+  },
+  {
+    "text": "may be a ray tracing intersection function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1745"
+  },
+  {
+    "text": "If you are using custom intersection functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1748"
+  },
+  {
+    "text": "maximum call stack depth should be set to 1, to allocate space for it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1751"
+  },
+  {
+    "text": "This is the default value, so there is nothing more that you need to do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1756"
+  },
+  {
+    "text": "However, if you are using Function Tables to call into a Visible function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1759"
+  },
+  {
+    "text": "this is another example of a function call unknown at compile time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1764"
+  },
+  {
+    "text": "If you perform such a call from an intersection function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1768"
+  },
+  {
+    "text": "like in this example, your call stack will be two levels deep.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1771"
+  },
+  {
+    "text": "Another example are calls to dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1776"
+  },
+  {
+    "text": "and calling a local function using a function pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1779"
+  },
+  {
+    "text": "In this example, our call stack has four levels with nested calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1783"
+  },
+  {
+    "text": "to different types of functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1787"
+  },
+  {
+    "text": "that cannot be resolved when the shader is compiled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1788"
+  },
+  {
+    "text": "To properly configure Metal to allocate the right amount of memory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1791"
+  },
+  {
+    "text": "you need to specify a maximum call stack depth of 4 yourself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1795"
+  },
+  {
+    "text": "The important thing to remember is that when the value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1799"
+  },
+  {
+    "text": "of the max Call Stack Depth is set too low for your program, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1802"
+  },
+  {
+    "text": "Stack Overflow can happen, resulting in undefined behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1805"
+  },
+  {
+    "text": "But if you are running with Shader Validation enabled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1809"
+  },
+  {
+    "text": "such situations will be caught early, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1813"
+  },
+  {
+    "text": "and you will see information in Xcode about where the Stack Overflow occurred. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1815"
+  },
+  {
+    "text": "You can then go and fix your shader code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1820"
+  },
+  {
+    "text": "or adjust your maximum call stack depth in the pipeline descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1822"
+  },
+  {
+    "text": "All of these new improvements to the Metal tools in Xcode 14 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1826"
+  },
+  {
+    "text": "ensure you have an even more complete picture and insight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1830"
+  },
+  {
+    "text": "into the performance and correctness of your ray tracing applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1833"
+  },
+  {
+    "text": "For more on how to get the most out of the Metal tools for debugging ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1837"
+  },
+  {
+    "text": "and profiling, check out these other sessions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1840"
+  },
+  {
+    "text": "This session has been all about maximizing Metal ray tracing performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1845"
+  },
+  {
+    "text": "for your applications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1848"
+  },
+  {
+    "text": "We talked about how you can squeeze out more performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1850"
+  },
+  {
+    "text": "and simplify your code using new features such as per-primitive data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1852"
+  },
+  {
+    "text": "We also described optimization techniques and features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1857"
+  },
+  {
+    "text": "that make building accelerations structures faster and more convenient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1860"
+  },
+  {
+    "text": "than ever before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1864"
+  },
+  {
+    "text": "Finally, we covered all the new enhancements to the Metal tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1865"
+  },
+  {
+    "text": "in Xcode 14 that will provide you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1869"
+  },
+  {
+    "text": "with deeper insight during your development. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1871"
+  },
+  {
+    "text": "Thanks for watching.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10105/?time=1874"
+  }
+]

@@ -1,0 +1,1218 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=0"
+  },
+  {
+    "text": "Sophia: Hello, and welcome to \"Generalize APIs with parameter packs.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=10"
+  },
+  {
+    "text": "My name is Sophia, and I work on the Swift compiler team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=14"
+  },
+  {
+    "text": "Today I will be talking to you about Swift parameter packs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=18"
+  },
+  {
+    "text": "and how they provide a new dimension of flexibility with generic programming.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=20"
+  },
+  {
+    "text": "This is an advanced talk, and it builds upon the existing generics system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=26"
+  },
+  {
+    "text": "If you are unfamiliar with the topic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=30"
+  },
+  {
+    "text": "I encourage you to watch \"Embrace Swift generics\" from WWDC22. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=32"
+  },
+  {
+    "text": "Today, I will walk you through the types of problems ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=37"
+  },
+  {
+    "text": "that parameter packs can solve, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=39"
+  },
+  {
+    "text": "how to think about parameter packs when you encounter them in libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=42"
+  },
+  {
+    "text": "and finally, I will dive into how to implement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=45"
+  },
+  {
+    "text": "your own code that utilizes parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=47"
+  },
+  {
+    "text": "Before I jump into parameter packs, it is important to know why they exist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=51"
+  },
+  {
+    "text": "So I will begin by talking a little bit about generics and then variadics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=55"
+  },
+  {
+    "text": "The code you write is fundamentally composed of two categories: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=60"
+  },
+  {
+    "text": "values and types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=64"
+  },
+  {
+    "text": "You can abstract over values by writing functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=67"
+  },
+  {
+    "text": "that accept different values as parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=70"
+  },
+  {
+    "text": "An example could be a radians(from:) function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=73"
+  },
+  {
+    "text": "that as input will accept any Double value representing degrees ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=76"
+  },
+  {
+    "text": "and for output will return a new Double value representing radians. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=80"
+  },
+  {
+    "text": "You can abstract over types by writing generic code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=85"
+  },
+  {
+    "text": "that accepts varying types for its parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=88"
+  },
+  {
+    "text": "For example, the standard library Array type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=91"
+  },
+  {
+    "text": "is designed to hold any form of data that you might wish to fill it with. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=94"
+  },
+  {
+    "text": "It has an Element type parameter which is a placeholder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=99"
+  },
+  {
+    "text": "for the concrete type that you will use for a given instance of an Array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=102"
+  },
+  {
+    "text": "In both cases, concrete values or concrete types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=107"
+  },
+  {
+    "text": "are passed as arguments to the abstraction. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=111"
+  },
+  {
+    "text": "Most generic code abstracts over both types and values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=113"
+  },
+  {
+    "text": "To explore this, I am going to write some code to send queries to a server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=119"
+  },
+  {
+    "text": "Its basic implementation will receive a Request of some Payload type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=124"
+  },
+  {
+    "text": "then it will pass that as a query to the server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=129"
+  },
+  {
+    "text": "and finally return a server response of type Payload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=132"
+  },
+  {
+    "text": "The function has one parameter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=136"
+  },
+  {
+    "text": "but I want to support querying multiple requests in the same call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=138"
+  },
+  {
+    "text": "For the ability to have a variable number of arguments, we have variadic parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=141"
+  },
+  {
+    "text": "Variadic parameters allow for a function to flexibly accept ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=147"
+  },
+  {
+    "text": "any number of arguments of a single type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=151"
+  },
+  {
+    "text": "But variadic parameters have limitations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=154"
+  },
+  {
+    "text": "For example, you might want to map the given arguments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=157"
+  },
+  {
+    "text": "to a tuple whose length is the same as the number of arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=160"
+  },
+  {
+    "text": "However, with variadic parameters, there is no way to declare ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=165"
+  },
+  {
+    "text": "a return type that is based on the argument length. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=168"
+  },
+  {
+    "text": "There also is no way for variadic parameters to accept varying types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=172"
+  },
+  {
+    "text": "without using type erasure, and therefore no way to preserve ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=176"
+  },
+  {
+    "text": "the specific static type information of each argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=180"
+  },
+  {
+    "text": "What we lack with the generics system and variadic parameters is the ability ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=184"
+  },
+  {
+    "text": "to both preserve type information and vary the number of arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=189"
+  },
+  {
+    "text": "Today, the only way to do this is with overloading, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=194"
+  },
+  {
+    "text": "which forces you to choose an upper bound of the number of arguments you support. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=198"
+  },
+  {
+    "text": "I wonder, will two parameters be enough? Probably not. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=202"
+  },
+  {
+    "text": "Handling up to three parameters is better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=206"
+  },
+  {
+    "text": "But what if we want four? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=209"
+  },
+  {
+    "text": "This overloading pattern, as well as its limitations, are pervasive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=211"
+  },
+  {
+    "text": "across APIs that conceptually handle varying numbers of type parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=215"
+  },
+  {
+    "text": "This approach has the downside of redundancy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=220"
+  },
+  {
+    "text": "but more importantly, it forces choosing an arbitrary upper limit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=222"
+  },
+  {
+    "text": "to the number of arguments that will be supported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=227"
+  },
+  {
+    "text": "Exceeding whatever limit was chosen will result in a compiler error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=230"
+  },
+  {
+    "text": "about extra arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=234"
+  },
+  {
+    "text": "This is the kind of problem that parameter packs solve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=236"
+  },
+  {
+    "text": "If you find yourself falling into this overloading pattern, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=240"
+  },
+  {
+    "text": "then that is a strong sign that you want to use parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=244"
+  },
+  {
+    "text": "In Swift 5.9, the generics system is gaining first class support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=248"
+  },
+  {
+    "text": "for abstraction over argument length ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=252"
+  },
+  {
+    "text": "with a new construct called \"parameter packs.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=254"
+  },
+  {
+    "text": "I'm now going to talk about what parameter packs mean ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=258"
+  },
+  {
+    "text": "when you see them in APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=261"
+  },
+  {
+    "text": "In code, most of the time, you work with a single type or value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=264"
+  },
+  {
+    "text": "A parameter pack can hold any quantity of types or values ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=268"
+  },
+  {
+    "text": "and pack them together to pass them as an argument to a function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=272"
+  },
+  {
+    "text": "A pack that holds individual types is called a type pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=277"
+  },
+  {
+    "text": "For example, you could have a type pack that holds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=281"
+  },
+  {
+    "text": "three individual types: Bool, Int, and String. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=284"
+  },
+  {
+    "text": "A pack that holds individual values is called a value pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=289"
+  },
+  {
+    "text": "For example, you could have a value pack that holds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=294"
+  },
+  {
+    "text": "three individual values: true, the number 10, and an empty string. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=297"
+  },
+  {
+    "text": "Type packs and value packs are used together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=302"
+  },
+  {
+    "text": "A type pack provides each individual type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=305"
+  },
+  {
+    "text": "for each individual value in a value pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=308"
+  },
+  {
+    "text": "The corresponding type and value are at the same position ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=312"
+  },
+  {
+    "text": "in their respective packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=315"
+  },
+  {
+    "text": "At position 0, the type of the value true is Bool. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=317"
+  },
+  {
+    "text": "At position 1, the type of the integer literal 10 is Int. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=322"
+  },
+  {
+    "text": "And at position 2, the type of the empty string literal is String. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=327"
+  },
+  {
+    "text": "Parameter packs allow you to write one piece of generic code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=332"
+  },
+  {
+    "text": "that works with every individual element in a pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=335"
+  },
+  {
+    "text": "This concept might sound familiar because you're already used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=339"
+  },
+  {
+    "text": "to writing one piece of code that works with different, individual elements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=342"
+  },
+  {
+    "text": "when you use Collections in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=346"
+  },
+  {
+    "text": "The way that you write such code is through iteration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=348"
+  },
+  {
+    "text": "For example, the body of a for-in loop ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=351"
+  },
+  {
+    "text": "operates on each individual element of an array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=354"
+  },
+  {
+    "text": "What makes parameter packs different from collections is that each element ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=358"
+  },
+  {
+    "text": "in the pack has a different static type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=363"
+  },
+  {
+    "text": "and you can work with packs at the type-level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=366"
+  },
+  {
+    "text": "Normally, you write generic code that works ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=368"
+  },
+  {
+    "text": "with different concrete types by declaring a type parameter inside angle brackets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=371"
+  },
+  {
+    "text": "In Swift 5.9, you can declare a pack of type parameters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=376"
+  },
+  {
+    "text": "with the keyword \"each\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=381"
+  },
+  {
+    "text": "Instead of having a single type parameter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=384"
+  },
+  {
+    "text": "the function accepts each Payload type that you want to query. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=386"
+  },
+  {
+    "text": "This is called a type parameter pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=391"
+  },
+  {
+    "text": "In order for the names of type packs and value packs to read naturally, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=394"
+  },
+  {
+    "text": "use a singular naming convention, such as \"each Payload\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=399"
+  },
+  {
+    "text": "rather than \"each Payloads\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=403"
+  },
+  {
+    "text": "Generic code that uses parameter packs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=405"
+  },
+  {
+    "text": "can operate on each Payload individually using repetition patterns. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=408"
+  },
+  {
+    "text": "A repetition pattern is expressed using the 'repeat' keyword, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=413"
+  },
+  {
+    "text": "followed by a type called the pattern type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=417"
+  },
+  {
+    "text": "The pattern will contain one or more references to pack elements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=420"
+  },
+  {
+    "text": "'repeat' indicates that the pattern type will be repeated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=425"
+  },
+  {
+    "text": "for every element in the given argument pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=429"
+  },
+  {
+    "text": "'each' acts as a placeholder that is replaced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=432"
+  },
+  {
+    "text": "with individual pack elements at every iteration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=435"
+  },
+  {
+    "text": "Let's see how this replacement works with a concrete type pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=439"
+  },
+  {
+    "text": "containing Bool, Int, and String. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=442"
+  },
+  {
+    "text": "The pattern will be repeated three times ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=444"
+  },
+  {
+    "text": "and the placeholder 'each Payload' is replaced with the concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=447"
+  },
+  {
+    "text": "in the pack during each repetition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=451"
+  },
+  {
+    "text": "The result is a comma-separated list of types: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=454"
+  },
+  {
+    "text": "Request of Bool, Request of Int, and Request of String. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=457"
+  },
+  {
+    "text": "Because repetition patterns produce comma-separated lists of types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=462"
+  },
+  {
+    "text": "they can only be used in positions that naturally accept comma-separated lists. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=467"
+  },
+  {
+    "text": "This includes types wrapped in parentheses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=472"
+  },
+  {
+    "text": "which are either a tuple type or a single type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=476"
+  },
+  {
+    "text": "Additionally, they can be used in function parameter lists, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=479"
+  },
+  {
+    "text": "and repetition patterns can be used in generic argument lists. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=483"
+  },
+  {
+    "text": "Using a repetition pattern as the type of a function parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=487"
+  },
+  {
+    "text": "turns that function parameter into a value parameter pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=491"
+  },
+  {
+    "text": "This enables the caller to pass in an arbitrary number of Request instances, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=496"
+  },
+  {
+    "text": "and the argument values will be collected into a pack and passed to the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=501"
+  },
+  {
+    "text": "That covers the fundamental concept of parameter packs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=507"
+  },
+  {
+    "text": "and the syntax that is used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=510"
+  },
+  {
+    "text": "Next, to demonstrate how they can simplify as well as extend ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=512"
+  },
+  {
+    "text": "the functionality of APIs, let's return to our query API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=516"
+  },
+  {
+    "text": "I had added multiple generic overloads in order to provide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=520"
+  },
+  {
+    "text": "variable request arguments and corresponding return types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=523"
+  },
+  {
+    "text": "The declaration of each overload follows a predictable pattern. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=527"
+  },
+  {
+    "text": "Each overload has 1, 2, 3, and 4 type parameters, respectively. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=532"
+  },
+  {
+    "text": "Each overload maps each type parameter to a Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=538"
+  },
+  {
+    "text": "over that type in the parameter list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=541"
+  },
+  {
+    "text": "And each overload contains a list of each type parameter in the return type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=544"
+  },
+  {
+    "text": "Using parameter packs, these 4 overloads can be collapsed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=549"
+  },
+  {
+    "text": "down into a single function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=553"
+  },
+  {
+    "text": "Let's first consider the type parameter declarations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=555"
+  },
+  {
+    "text": "then the function parameter list, and finally the return type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=558"
+  },
+  {
+    "text": "Each type parameter can be collapsed down into a type parameter pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=562"
+  },
+  {
+    "text": "Each individual Request parameter can be collapsed down to a value parameter pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=567"
+  },
+  {
+    "text": "And the return type can be collapsed down into a tuple ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=573"
+  },
+  {
+    "text": "constructed by repeating each Payload type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=576"
+  },
+  {
+    "text": "Now you have one query function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=580"
+  },
+  {
+    "text": "that can handle any number of request arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=582"
+  },
+  {
+    "text": "Because the function parameter and return type are both dependent types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=584"
+  },
+  {
+    "text": "of the type parameter pack 'each Payload,' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=589"
+  },
+  {
+    "text": "you know that the length of the function's value parameter pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=592"
+  },
+  {
+    "text": "will always match the number of elements in the tuple that is returned. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=596"
+  },
+  {
+    "text": "Now that I have adopted parameter packs in this API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=600"
+  },
+  {
+    "text": "you can call this single query function with one argument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=603"
+  },
+  {
+    "text": "or with three arguments or any amount you wish. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=607"
+  },
+  {
+    "text": "Parameter packs handle all argument lengths the same way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=610"
+  },
+  {
+    "text": "Let's focus on the call with three arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=613"
+  },
+  {
+    "text": "The concrete argument pack is inferred from the arguments at the call-site. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=617"
+  },
+  {
+    "text": "Every concrete type for the placeholders 'each Payload' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=621"
+  },
+  {
+    "text": "is collected from the argument list into a type pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=624"
+  },
+  {
+    "text": "And the concrete type pack is substituted in to produce the return type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=628"
+  },
+  {
+    "text": "'each Payload' appears in the parameter list and the return type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=633"
+  },
+  {
+    "text": "The concrete type pack \"Int, String, Bool\" is substituted in both places, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=638"
+  },
+  {
+    "text": "causing the pattern to be repeated three times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=644"
+  },
+  {
+    "text": "In the end, the code that is run is equivalent to an iteration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=648"
+  },
+  {
+    "text": "over all three types of the type pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=652"
+  },
+  {
+    "text": "Now let's go back to our query API to see how to add constraints to parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=655"
+  },
+  {
+    "text": "Suppose that our query payloads should be Equatable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=660"
+  },
+  {
+    "text": "By adding a colon and the protocol name Equatable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=664"
+  },
+  {
+    "text": "following the type parameter pack, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=668"
+  },
+  {
+    "text": "every element in the Payload pack is required to conform to Equatable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=670"
+  },
+  {
+    "text": "More general requirements can be declared with a 'where' clause, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=675"
+  },
+  {
+    "text": "just like ordinary generics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=678"
+  },
+  {
+    "text": "Remembering that parameter packs can contain zero or more arguments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=680"
+  },
+  {
+    "text": "you may be thinking that this server query API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=685"
+  },
+  {
+    "text": "has no particular reason to accept zero arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=688"
+  },
+  {
+    "text": "Fortunately, there is a simple technique to require a minimum argument length. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=692"
+  },
+  {
+    "text": "In this case, I want to require at least one argument, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=696"
+  },
+  {
+    "text": "to give the function something to do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=700"
+  },
+  {
+    "text": "To achieve this, I add a regular type parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=703"
+  },
+  {
+    "text": "preceding the type parameter pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=706"
+  },
+  {
+    "text": "and a corresponding value parameter preceding the value parameter pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=708"
+  },
+  {
+    "text": "Any constraints on the type parameter pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=713"
+  },
+  {
+    "text": "should be applied to the new type parameter as well, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=715"
+  },
+  {
+    "text": "which, in this example, is conformance to Equatable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=718"
+  },
+  {
+    "text": "Now callers to your function must provide at least one argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=721"
+  },
+  {
+    "text": "At this point, we have covered the foundation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=725"
+  },
+  {
+    "text": "of what parameter packs solve and how to read them in an API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=727"
+  },
+  {
+    "text": "Next, let's go over how to implement code that uses parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=732"
+  },
+  {
+    "text": "We're going to build out the implementation of the server query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=736"
+  },
+  {
+    "text": "using parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=740"
+  },
+  {
+    "text": "The query function accepts a value pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=741"
+  },
+  {
+    "text": "where every individual element is a Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=745"
+  },
+  {
+    "text": "over every element in the type pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=747"
+  },
+  {
+    "text": "The Request struct has a single type parameter called Payload ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=750"
+  },
+  {
+    "text": "and an evaluate method that returns an instance of Payload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=755"
+  },
+  {
+    "text": "The body of the query function will operate on the 'item' value pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=759"
+  },
+  {
+    "text": "Inside the body of query, I want to call the evaluate method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=764"
+  },
+  {
+    "text": "for every item in the value pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=768"
+  },
+  {
+    "text": "You can express this using repetition patterns. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=771"
+  },
+  {
+    "text": "Repetition patterns are expressed using the same syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=774"
+  },
+  {
+    "text": "at the type-level and at the value-level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=778"
+  },
+  {
+    "text": "At the value level, the 'repeat' keyword is followed by the pattern expression. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=781"
+  },
+  {
+    "text": "The pattern expression will contain one or more value packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=786"
+  },
+  {
+    "text": "The pack is iterated through every value it contains, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=791"
+  },
+  {
+    "text": "and the expression is evaluated once per value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=794"
+  },
+  {
+    "text": "To produce a list of all evaluation results contained within a tuple, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=797"
+  },
+  {
+    "text": "you can wrap the pattern expression in parentheses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=801"
+  },
+  {
+    "text": "If the value pack that is passed to the function is empty, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=805"
+  },
+  {
+    "text": "the result will be the empty tuple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=808"
+  },
+  {
+    "text": "If the value pack has a single element, the result will be another single value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=811"
+  },
+  {
+    "text": "If the value pack has multiple elements, the result will be a tuple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=816"
+  },
+  {
+    "text": "And that's it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=820"
+  },
+  {
+    "text": "Now, we have a query function that accepts a value pack of results, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=821"
+  },
+  {
+    "text": "evaluates every individual request, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=825"
+  },
+  {
+    "text": "and returns the result of every request together in a tuple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=828"
+  },
+  {
+    "text": "This is the foundation of how you make use of parameter packs in your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=832"
+  },
+  {
+    "text": "This continues to be far less code than the earlier example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=837"
+  },
+  {
+    "text": "that used multiple overloads rather than parameter packs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=841"
+  },
+  {
+    "text": "and that version didn't even have an implementation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=845"
+  },
+  {
+    "text": "Maintenance is easier, and errors that often arise ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=848"
+  },
+  {
+    "text": "from repetitive code patterns are gone. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=851"
+  },
+  {
+    "text": "Now let's add a little more flexibility. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=854"
+  },
+  {
+    "text": "I'm going to refactor my example to: enable the query API to store state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=856"
+  },
+  {
+    "text": "allow each request evaluation to have different input and output types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=862"
+  },
+  {
+    "text": "and manage control flow during parameter pack iteration.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=867"
+  },
+  {
+    "text": "I will move the query function inside an Evaluator struct ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=871"
+  },
+  {
+    "text": "and lift the type parameter pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=875"
+  },
+  {
+    "text": "from the query method to the Evaluator type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=877"
+  },
+  {
+    "text": "The Evaluator struct can store the request pack in a stored property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=880"
+  },
+  {
+    "text": "by wrapping it in parentheses to make it a tuple value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=884"
+  },
+  {
+    "text": "Given a concrete Payload type argument pack, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=887"
+  },
+  {
+    "text": "the 'item' variable will either be a single request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=890"
+  },
+  {
+    "text": "or a tuple of every request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=894"
+  },
+  {
+    "text": "Next, I'll change Request from a struct to a protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=897"
+  },
+  {
+    "text": "that has an associated type named Output. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=900"
+  },
+  {
+    "text": "And I will add another associated type to the Request protocol named Input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=904"
+  },
+  {
+    "text": "I will then update the evaluate method in Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=909"
+  },
+  {
+    "text": "to make its argument the protocol's Input type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=912"
+  },
+  {
+    "text": "This enables the method's return type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=915"
+  },
+  {
+    "text": "to differ from that of the argument's type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=917"
+  },
+  {
+    "text": "After this, I update the Evaluator to require ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=920"
+  },
+  {
+    "text": "all Payload types to conform to Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=923"
+  },
+  {
+    "text": "and correspondingly update the 'item' stored property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=926"
+  },
+  {
+    "text": "to now be simply of type 'each Payload.' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=930"
+  },
+  {
+    "text": "However, at this point, the name \"Payload\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=933"
+  },
+  {
+    "text": "for Evaluator's type parameter pack doesn't really fit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=936"
+  },
+  {
+    "text": "Payload is no longer what is contained within a Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=940"
+  },
+  {
+    "text": "but instead conforms to the entirety of Request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=943"
+  },
+  {
+    "text": "Therefore, we will change the name of Payload to be Request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=946"
+  },
+  {
+    "text": "and the name of the protocol to be RequestProtocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=950"
+  },
+  {
+    "text": "The query method can now accept a pack of each Request's Input type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=953"
+  },
+  {
+    "text": "and it will return a list of each Request's Output type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=958"
+  },
+  {
+    "text": "Finally, the new parameter 'input' to the query method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=962"
+  },
+  {
+    "text": "simply needs to be passed along to the calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=966"
+  },
+  {
+    "text": "to every item's evaluate method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=968"
+  },
+  {
+    "text": "Now we are able to have a different type returned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=971"
+  },
+  {
+    "text": "from the server's response than the type of data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=974"
+  },
+  {
+    "text": "that we include inside our query. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=977"
+  },
+  {
+    "text": "You can know that the length of the method's value argument pack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=979"
+  },
+  {
+    "text": "will match the length of the value pack that is returned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=982"
+  },
+  {
+    "text": "because their types are both based upon the Evaluator's type pack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=986"
+  },
+  {
+    "text": "The same goes for the length of arguments in the stored property 'item'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=990"
+  },
+  {
+    "text": "Given that using parameter packs is a form of iteration, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=995"
+  },
+  {
+    "text": "you might wonder about control flow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=998"
+  },
+  {
+    "text": "if you were to want to exit early from the iteration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1000"
+  },
+  {
+    "text": "Perhaps it is the case that the consequences ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1003"
+  },
+  {
+    "text": "of a collection of queries should only take effect ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1005"
+  },
+  {
+    "text": "if every query is successful. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1008"
+  },
+  {
+    "text": "Throwing errors can be used for this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1010"
+  },
+  {
+    "text": "In our example, you could update RequestProtocol's evaluate method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1013"
+  },
+  {
+    "text": "to be a throwing function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1017"
+  },
+  {
+    "text": "and modify the return type of Evaluator's query method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1018"
+  },
+  {
+    "text": "to be optional. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1022"
+  },
+  {
+    "text": "You can move the body of the query method into a do-catch statement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1023"
+  },
+  {
+    "text": "placing the return statement within the do clause ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1027"
+  },
+  {
+    "text": "and returning nil from the catch clause. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1030"
+  },
+  {
+    "text": "Now any individual query's evaluation is able to halt iteration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1032"
+  },
+  {
+    "text": "over all of the queries, if that might be needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1037"
+  },
+  {
+    "text": "In this session, we have talked about how parameter packs allow you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1040"
+  },
+  {
+    "text": "to abstract over types as well as the number of arguments in generic code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1044"
+  },
+  {
+    "text": "We walked through how you can use parameter packs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1049"
+  },
+  {
+    "text": "to both simplify and remove limitations in your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1052"
+  },
+  {
+    "text": "by writing a single generic implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1055"
+  },
+  {
+    "text": "that previously would have required numerous overloads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1058"
+  },
+  {
+    "text": "Finally, we wrote code to implement sending queries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1061"
+  },
+  {
+    "text": "to a server while utilizing parameter packs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1064"
+  },
+  {
+    "text": "To learn more about generics, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1068"
+  },
+  {
+    "text": "check out the session \"Embrace Swift generics\" from WWDC22. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1069"
+  },
+  {
+    "text": "And to learn more about protocols and type erasure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1074"
+  },
+  {
+    "text": "check out the session \"Design protocol interfaces in Swift\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1077"
+  },
+  {
+    "text": "from WWDC22. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1081"
+  },
+  {
+    "text": "Swift parameter packs are a powerful tool to expand what is possible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1083"
+  },
+  {
+    "text": "in your generic code while also enabling you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1087"
+  },
+  {
+    "text": "to simplify common generic patterns. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1090"
+  },
+  {
+    "text": "We can't wait to see what you build with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1093"
+  },
+  {
+    "text": "Thank you for watching.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10168/?time=1095"
+  }
+]

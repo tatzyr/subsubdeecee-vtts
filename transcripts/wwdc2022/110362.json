@@ -1,0 +1,2118 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=0"
+  },
+  {
+    "text": "Nick Kledzik: Hi, I'm Nick Kledzik, lead Engineer on Apple's Linker team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=9"
+  },
+  {
+    "text": "Today, I'd like to share with you how to link fast. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=13"
+  },
+  {
+    "text": "I'll tell you what Apple has done to improve linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=16"
+  },
+  {
+    "text": "as well as help you understand what actually happens during linking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=18"
+  },
+  {
+    "text": "so that you can improve your app's link performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=21"
+  },
+  {
+    "text": "So what is linking? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=25"
+  },
+  {
+    "text": "You've written code, but you also use code that someone else wrote ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=27"
+  },
+  {
+    "text": "in the form of a library or a framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=31"
+  },
+  {
+    "text": "In order for your code to use those libraries, a linker is needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=33"
+  },
+  {
+    "text": "Now, there are actually two types of linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=38"
+  },
+  {
+    "text": "There is \"static linking\", which happens when you build your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=41"
+  },
+  {
+    "text": "This can impact how long it takes for your app to build ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=44"
+  },
+  {
+    "text": "and how big your app ends up being. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=47"
+  },
+  {
+    "text": "And there is \"dynamic linking\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=50"
+  },
+  {
+    "text": "This happens when your app is launched. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=52"
+  },
+  {
+    "text": "This can impact how long your customers have to wait for your app to launch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=54"
+  },
+  {
+    "text": "In this session I'll be talking about both static and dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=59"
+  },
+  {
+    "text": "First, I'll define what static linking is and where it came from, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=64"
+  },
+  {
+    "text": "with some examples. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=68"
+  },
+  {
+    "text": "Next, I'll unveil what is new in ld64, Apple's static linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=70"
+  },
+  {
+    "text": "Then, with this background on static linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=76"
+  },
+  {
+    "text": "I'll detail best practices for static linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=78"
+  },
+  {
+    "text": "The second half of this talk will cover dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=82"
+  },
+  {
+    "text": "I'll show what dynamic linking is and where it came from, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=86"
+  },
+  {
+    "text": "and what happens during dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=89"
+  },
+  {
+    "text": "Next, I'll reveal what is new in dyld this year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=92"
+  },
+  {
+    "text": "Then, I'll talk about what you can do to improve your app's ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=98"
+  },
+  {
+    "text": "dynamic link time performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=101"
+  },
+  {
+    "text": "And lastly, we'll wrap up with two new tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=104"
+  },
+  {
+    "text": "that will help you peek behind the curtains. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=107"
+  },
+  {
+    "text": "You'll be able to see what is in your binaries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=110"
+  },
+  {
+    "text": "and what is happening during dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=113"
+  },
+  {
+    "text": "To understand static linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=117"
+  },
+  {
+    "text": "let's go way back to when it all started. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=119"
+  },
+  {
+    "text": "In the beginning, programs were simple and there was just one source file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=122"
+  },
+  {
+    "text": "Building was easy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=126"
+  },
+  {
+    "text": "You just ran the compiler on your one source file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=128"
+  },
+  {
+    "text": "and it produced the executable program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=130"
+  },
+  {
+    "text": "But having all your source code in one file did not scale. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=133"
+  },
+  {
+    "text": "How do you build with multiple source files? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=138"
+  },
+  {
+    "text": "And this is not just because you don't want to edit a large text file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=141"
+  },
+  {
+    "text": "The real savings is not re-compiling every function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=144"
+  },
+  {
+    "text": "every time you build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=147"
+  },
+  {
+    "text": "What they did was to split the compiler into two parts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=149"
+  },
+  {
+    "text": "The first part compiles source code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=153"
+  },
+  {
+    "text": "to a new intermediate \"relocatable object\" file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=155"
+  },
+  {
+    "text": "The second part reads the relocatable .o file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=159"
+  },
+  {
+    "text": "and produces an executable program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=162"
+  },
+  {
+    "text": "We now call the second part 'ld', the static linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=165"
+  },
+  {
+    "text": "So now you know where static linking came from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=169"
+  },
+  {
+    "text": "As software evolved, soon people were passing around .o files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=172"
+  },
+  {
+    "text": "But that got cumbersome. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=176"
+  },
+  {
+    "text": "Someone thought, \"Wouldn't it be great if we could package up ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=178"
+  },
+  {
+    "text": "a set of .o files into a 'library'?\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=181"
+  },
+  {
+    "text": "At the time the standard way to bundle files together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=184"
+  },
+  {
+    "text": "was with the archiving tool 'ar'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=187"
+  },
+  {
+    "text": "It was used for backups and distributions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=189"
+  },
+  {
+    "text": "So the workflow became this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=192"
+  },
+  {
+    "text": "You could 'ar' up multiple .o files into an archive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=195"
+  },
+  {
+    "text": "and the linker was enhanced to know how to read .o files directly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=199"
+  },
+  {
+    "text": "out of an archive file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=202"
+  },
+  {
+    "text": "This was a great improvement for sharing common code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=205"
+  },
+  {
+    "text": "At the time it was just called a library or an archive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=208"
+  },
+  {
+    "text": "Today, we call it a static library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=212"
+  },
+  {
+    "text": "But now the final program was getting big because thousands of functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=215"
+  },
+  {
+    "text": "from these libraries were copied into it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=219"
+  },
+  {
+    "text": "even if only a few of those functions were used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=221"
+  },
+  {
+    "text": "So a clever optimization was added. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=224"
+  },
+  {
+    "text": "Instead of having the linker use all the .o files from the static library, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=226"
+  },
+  {
+    "text": "the linker would only pull .o files from a static library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=231"
+  },
+  {
+    "text": "if doing so would resolve some undefined symbol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=234"
+  },
+  {
+    "text": "That meant someone could build a big libc.a static library, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=237"
+  },
+  {
+    "text": "which contained all the C standard library functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=241"
+  },
+  {
+    "text": "Every program could link with the one libc.a, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=245"
+  },
+  {
+    "text": "but each program only got the parts of libc that the program actually needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=248"
+  },
+  {
+    "text": "And we still have that model today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=252"
+  },
+  {
+    "text": "But the selective loading from static libraries is not obvious ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=255"
+  },
+  {
+    "text": "and trips up many programmers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=258"
+  },
+  {
+    "text": "To make the selective loading of static libraries a little clearer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=260"
+  },
+  {
+    "text": "I have a simple scenario. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=264"
+  },
+  {
+    "text": "In main.c, there's a function called \"main\" that calls a function \"foo\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=266"
+  },
+  {
+    "text": "In foo.c, there is foo which calls bar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=272"
+  },
+  {
+    "text": "In bar.c, there is the implementation of bar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=276"
+  },
+  {
+    "text": "but also an implementation of another function which happens to be unused. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=279"
+  },
+  {
+    "text": "Lastly, in baz.c, there is a function baz which calls a function named undef. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=285"
+  },
+  {
+    "text": "Now we compile each to its own .o file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=291"
+  },
+  {
+    "text": "You'll see foo, bar, and undef don't have gray boxes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=296"
+  },
+  {
+    "text": "because they are undefined. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=300"
+  },
+  {
+    "text": "That is, a use of a symbol and not a definition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=302"
+  },
+  {
+    "text": "Now, let's say you decide to combine bar.o and baz.o into a static library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=306"
+  },
+  {
+    "text": "Next, you link the two .o files and the static library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=312"
+  },
+  {
+    "text": "Let's step through what actually happens.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=316"
+  },
+  {
+    "text": "First, the linker works through the files in command line order. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=320"
+  },
+  {
+    "text": "The first it finds is main.o. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=323"
+  },
+  {
+    "text": "It loads main.o and finds a definition for \"main\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=326"
+  },
+  {
+    "text": "shown here in the symbol table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=329"
+  },
+  {
+    "text": "But also finds that main has an undefined \"foo\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=331"
+  },
+  {
+    "text": "The linker then parses the next file on the command line which is foo.o. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=336"
+  },
+  {
+    "text": "This file adds a definition of \"foo\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=341"
+  },
+  {
+    "text": "That means foo is no longer undefined. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=344"
+  },
+  {
+    "text": "But loading foo.o also adds a new undefined symbol for \"bar\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=347"
+  },
+  {
+    "text": "Now that all the .o files on the command line have been loaded, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=352"
+  },
+  {
+    "text": "the linker checks if there are any remaining undefined symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=356"
+  },
+  {
+    "text": "In this case \"bar\" remains undefined, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=359"
+  },
+  {
+    "text": "so the linker starts looking at libraries on the command line ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=362"
+  },
+  {
+    "text": "to see if a library will satisfy that missing undefined symbol \"bar\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=366"
+  },
+  {
+    "text": "The linker finds that bar.o in the static library defines the symbol \"bar\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=370"
+  },
+  {
+    "text": "So the linker loads bar.o out of the archive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=376"
+  },
+  {
+    "text": "At that point there are no longer any undefined symbols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=380"
+  },
+  {
+    "text": "so the linker stops processing libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=383"
+  },
+  {
+    "text": "The linker moves on to its next phase, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=386"
+  },
+  {
+    "text": "and assigns addresses to all the functions and data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=389"
+  },
+  {
+    "text": "that will be in the program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=391"
+  },
+  {
+    "text": "Then it copies all the functions and data to the output file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=393"
+  },
+  {
+    "text": "Et voila! You have your output program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=398"
+  },
+  {
+    "text": "Notice that baz.o was in the static library but not loaded into the program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=400"
+  },
+  {
+    "text": "It was not loaded because the way the linker selectively loads ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=406"
+  },
+  {
+    "text": "from static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=410"
+  },
+  {
+    "text": "This is non-obvious, but the key aspect of static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=412"
+  },
+  {
+    "text": "Now you understand the basics of static linking and static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=416"
+  },
+  {
+    "text": "Let's move on to recent improvements on Apple's static linker, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=420"
+  },
+  {
+    "text": "known as ld64. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=423"
+  },
+  {
+    "text": "By popular demand, we spent some time this year optimizing ld64. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=426"
+  },
+  {
+    "text": "And this year's linker is... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=430"
+  },
+  {
+    "text": "twice as fast for many projects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=432"
+  },
+  {
+    "text": "How did we do this? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=435"
+  },
+  {
+    "text": "We now make better use of the cores on your development machine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=436"
+  },
+  {
+    "text": "We found a number of areas where we could use multiple cores ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=441"
+  },
+  {
+    "text": "to do linker work in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=443"
+  },
+  {
+    "text": "That includes copying content from the input to the output file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=445"
+  },
+  {
+    "text": "building the different parts of LINKEDIT in parallel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=450"
+  },
+  {
+    "text": "and changing the UUID computation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=454"
+  },
+  {
+    "text": "and codesigning hashes to be done in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=457"
+  },
+  {
+    "text": "Next, we improved a number of algorithms. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=460"
+  },
+  {
+    "text": "Turns out the exports-trie builder works really well ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=464"
+  },
+  {
+    "text": "if you switch to use C++ string_view objects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=467"
+  },
+  {
+    "text": "to represent the string slices of each symbol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=469"
+  },
+  {
+    "text": "We also used the latest crypto libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=473"
+  },
+  {
+    "text": "which take advantage of hardware acceleration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=475"
+  },
+  {
+    "text": "when computing the UUID of a binary, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=478"
+  },
+  {
+    "text": "and we improved other algorithms too.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=481"
+  },
+  {
+    "text": "While working on improving linker performance, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=484"
+  },
+  {
+    "text": "we noticed configuration issues in some apps that impacted link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=487"
+  },
+  {
+    "text": "Next, I'll talk about what you can do in your project to improve link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=492"
+  },
+  {
+    "text": "I'll cover five topics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=497"
+  },
+  {
+    "text": "First, whether you should use static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=499"
+  },
+  {
+    "text": "And then three little known options that have a big effect on your link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=502"
+  },
+  {
+    "text": "Finally, I'll discuss some static linking behavior that might surprise you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=507"
+  },
+  {
+    "text": "The first topic is if you are actively working on a source file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=512"
+  },
+  {
+    "text": "that builds into a static library, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=515"
+  },
+  {
+    "text": "you've introduced a slowdown to your build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=517"
+  },
+  {
+    "text": "Because after the file is compiled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=520"
+  },
+  {
+    "text": "the entire static library has to be rebuilt, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=522"
+  },
+  {
+    "text": "including its table of contents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=525"
+  },
+  {
+    "text": "This is just a lot of extra I/O. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=527"
+  },
+  {
+    "text": "Static libraries make the most sense for stable code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=530"
+  },
+  {
+    "text": "That is, code not being actively changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=533"
+  },
+  {
+    "text": "You should consider moving code under active development ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=536"
+  },
+  {
+    "text": "out of a static library to reduce build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=539"
+  },
+  {
+    "text": "Earlier we showed the selective loading from archives. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=543"
+  },
+  {
+    "text": "But a downside of that is that it slows down the linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=546"
+  },
+  {
+    "text": "That is because to make builds reproducible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=550"
+  },
+  {
+    "text": "and follow traditional static library semantics, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=553"
+  },
+  {
+    "text": "the linker has to process static libraries in a fixed, serial order. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=556"
+  },
+  {
+    "text": "That means some of the parallelization wins of ld64 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=561"
+  },
+  {
+    "text": "cannot be used with static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=564"
+  },
+  {
+    "text": "But if you don't really need this historical behavior, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=566"
+  },
+  {
+    "text": "you can use a linker option to speed up your build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=569"
+  },
+  {
+    "text": "That linker option is called \"all load\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=573"
+  },
+  {
+    "text": "It tells the linker to blindly load all .o files from all static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=577"
+  },
+  {
+    "text": "This is helpful if your app is going to wind up selectively loading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=582"
+  },
+  {
+    "text": "most of the content from all the static libraries anyways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=585"
+  },
+  {
+    "text": "Using -all_load will allow the linker to parse all the static libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=589"
+  },
+  {
+    "text": "and their content in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=593"
+  },
+  {
+    "text": "But if your app does clever tricks where it has multiple static libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=595"
+  },
+  {
+    "text": "implementing the same symbols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=599"
+  },
+  {
+    "text": "and depends on the command line order of the static libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=602"
+  },
+  {
+    "text": "to drive which implementation is used, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=605"
+  },
+  {
+    "text": "then this option is not for you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=608"
+  },
+  {
+    "text": "Because the linker will load all the implementations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=610"
+  },
+  {
+    "text": "and not necessarily get the symbol semantics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=612"
+  },
+  {
+    "text": "that were found in regular static linking mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=615"
+  },
+  {
+    "text": "The other downside of -all_load is that it may make your program bigger ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=618"
+  },
+  {
+    "text": "because \"unused\" code is now being added in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=623"
+  },
+  {
+    "text": "To compensate for that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=626"
+  },
+  {
+    "text": "you can use the linker option -dead_strip. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=628"
+  },
+  {
+    "text": "That option will cause the linker to remove unreachable code and data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=631"
+  },
+  {
+    "text": "Now, the dead stripping algorithm is fast and usually pays for itself ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=636"
+  },
+  {
+    "text": "by reducing the size of the output file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=640"
+  },
+  {
+    "text": "But if you are interested in using -all_load and -dead_strip, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=642"
+  },
+  {
+    "text": "you should time the linker with and without those options ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=647"
+  },
+  {
+    "text": "to see if it is a win for your particular case. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=650"
+  },
+  {
+    "text": "The next linker option is -no_exported_symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=654"
+  },
+  {
+    "text": "A little background here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=658"
+  },
+  {
+    "text": "One part of the LINKEDIT segment that the linker generates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=660"
+  },
+  {
+    "text": "is an exports trie, which is a prefix tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=663"
+  },
+  {
+    "text": "that encodes all the exported symbol names, addresses, and flags. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=666"
+  },
+  {
+    "text": "Whereas all dylibs need to have exported symbols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=670"
+  },
+  {
+    "text": "a main app binary usually does not need any exported symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=673"
+  },
+  {
+    "text": "That is, usually nothing ever looks up symbols in the main executable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=678"
+  },
+  {
+    "text": "If that is the case, you can use -no_exported_symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=683"
+  },
+  {
+    "text": "for the app target to skip the creation of the trie data structure in LINKEDIT, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=686"
+  },
+  {
+    "text": "which will improve link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=691"
+  },
+  {
+    "text": "But if your app loads plugins which link back to the main executable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=693"
+  },
+  {
+    "text": "or you use xctest with your app as the host environment to run xctest bundles, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=697"
+  },
+  {
+    "text": "your app must have all its exports, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=703"
+  },
+  {
+    "text": "which means you cannot use -no_exported_symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=706"
+  },
+  {
+    "text": "for that configuration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=708"
+  },
+  {
+    "text": "Now, it only makes sense to try to suppress the exports trie if it is large. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=711"
+  },
+  {
+    "text": "You can run the dyld_info command shown here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=715"
+  },
+  {
+    "text": "to count the number of exported symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=718"
+  },
+  {
+    "text": "One large app we saw had about one million exported symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=720"
+  },
+  {
+    "text": "And the linker took two to three seconds to build the exports trie ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=724"
+  },
+  {
+    "text": "for that many symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=727"
+  },
+  {
+    "text": "So adding -no_exported_symbols shaved two to three seconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=729"
+  },
+  {
+    "text": "off the link time of that app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=732"
+  },
+  {
+    "text": "I'll tell you more about the dyld_info tool later in this talk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=734"
+  },
+  {
+    "text": "The next option is: -no_deduplicate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=738"
+  },
+  {
+    "text": "A few years back we added a new pass to the linker to merge functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=743"
+  },
+  {
+    "text": "that have the same instructions but different names. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=746"
+  },
+  {
+    "text": "It turns out, with C++ template expansions, you can get a lot of those. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=749"
+  },
+  {
+    "text": "But this is an expensive algorithm. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=753"
+  },
+  {
+    "text": "The linker has to recursively hash the instructions of every function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=756"
+  },
+  {
+    "text": "to help look for duplicates. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=760"
+  },
+  {
+    "text": "Because of the expense, we limited the algorithm ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=762"
+  },
+  {
+    "text": "so the linker only looks at weak-def symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=764"
+  },
+  {
+    "text": "Those are the ones the C++ compiler emits for template expansions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=768"
+  },
+  {
+    "text": "that were not inlined. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=771"
+  },
+  {
+    "text": "Now, de-dup is a size optimization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=774"
+  },
+  {
+    "text": "and Debug builds are about fast builds, and not about size. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=777"
+  },
+  {
+    "text": "So by default, Xcode disables the de-dup optimization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=781"
+  },
+  {
+    "text": "by passing -no_deduplicate to the linker for Debug configurations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=785"
+  },
+  {
+    "text": "And clang will also pass the no-dedup option to the linker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=791"
+  },
+  {
+    "text": "if you run clang link line with -O0. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=795"
+  },
+  {
+    "text": "In summary, if you use C++ and have a custom build, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=799"
+  },
+  {
+    "text": "that is, either you use a non-standard configuration in Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=804"
+  },
+  {
+    "text": "or you use some other build system, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=808"
+  },
+  {
+    "text": "you should ensure your debug builds add -no_deduplicate to improve link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=810"
+  },
+  {
+    "text": "The options I just talked about are the actual command line arguments to ld. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=816"
+  },
+  {
+    "text": "When using Xcode, you need to change your product build settings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=820"
+  },
+  {
+    "text": "Inside build settings, look for \"Other Linker Flags\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=824"
+  },
+  {
+    "text": "Here's what you would set for -all_load. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=829"
+  },
+  {
+    "text": "And notice the \"Dead Code Stripping\" option is here as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=832"
+  },
+  {
+    "text": "And there's -no_exported_symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=836"
+  },
+  {
+    "text": "And here's -no_deduplicate.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=838"
+  },
+  {
+    "text": "Now let's talk about some surprises you may experience ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=843"
+  },
+  {
+    "text": "when using static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=845"
+  },
+  {
+    "text": "The first surprise is when you have source code that builds into a static library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=847"
+  },
+  {
+    "text": "which your app links with, and that code does not end up in the final app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=851"
+  },
+  {
+    "text": "For instance, you added \"attribute used\" to some function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=856"
+  },
+  {
+    "text": "or you have an Objective-C category. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=859"
+  },
+  {
+    "text": "Because of the selective loading the linker does, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=862"
+  },
+  {
+    "text": "if those object files in the static library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=864"
+  },
+  {
+    "text": "don't also define some symbol that is needed during the link, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=867"
+  },
+  {
+    "text": "those object files won't get loaded by the linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=870"
+  },
+  {
+    "text": "Another interesting interaction is static libraries and dead stripping. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=875"
+  },
+  {
+    "text": "It turns out dead stripping can hide many static library issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=880"
+  },
+  {
+    "text": "Normally, missing symbols or duplicate symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=884"
+  },
+  {
+    "text": "will cause the linker to error out. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=887"
+  },
+  {
+    "text": "But dead stripping causes the linker to run a reachability pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=890"
+  },
+  {
+    "text": "across all the code and data, starting from main, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=894"
+  },
+  {
+    "text": "and if it turns out the missing symbol is from an unreachable code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=897"
+  },
+  {
+    "text": "the linker will suppress the missing symbol error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=902"
+  },
+  {
+    "text": "Similarly, if there are duplicate symbols from static libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=905"
+  },
+  {
+    "text": "the linker will pick the first and not error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=909"
+  },
+  {
+    "text": "The last big surprise with using static libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=913"
+  },
+  {
+    "text": "is when a static library is incorporated into multiple frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=916"
+  },
+  {
+    "text": "Each of those frameworks runs fine in isolation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=920"
+  },
+  {
+    "text": "but then at some point, some app uses both frameworks, and boom, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=923"
+  },
+  {
+    "text": "you get weird runtime issues because of the multiple definitions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=927"
+  },
+  {
+    "text": "The most common case you will see is the Objective-C runtime ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=932"
+  },
+  {
+    "text": "warning about multiple instances of the same class name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=935"
+  },
+  {
+    "text": "Overall, static libraries are powerful, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=939"
+  },
+  {
+    "text": "but you need to understand them to avoid the pitfalls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=941"
+  },
+  {
+    "text": "That wraps up static linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=945"
+  },
+  {
+    "text": "Now, let's move on to dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=947"
+  },
+  {
+    "text": "First, let's look at the original diagram for static linking with a static library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=951"
+  },
+  {
+    "text": "Now think about how this will scale over time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=956"
+  },
+  {
+    "text": "as there is more and more source code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=959"
+  },
+  {
+    "text": "It should be clear that as more and more libraries are made available, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=962"
+  },
+  {
+    "text": "the end program may grow in size. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=966"
+  },
+  {
+    "text": "That means the static link time to build that program will also increase over time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=969"
+  },
+  {
+    "text": "Now let's look at how these libraries are made. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=974"
+  },
+  {
+    "text": "What if we did this switch? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=978"
+  },
+  {
+    "text": "We change 'ar' to 'ld' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=981"
+  },
+  {
+    "text": "and the output library is now an executable binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=984"
+  },
+  {
+    "text": "This was the start of dynamic libraries in the '90s. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=987"
+  },
+  {
+    "text": "As a shorthand, we call dynamic libraries \"dylibs\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=991"
+  },
+  {
+    "text": "On other platforms they are known as DSOs or DLLs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=994"
+  },
+  {
+    "text": "So what exactly is going on here? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=998"
+  },
+  {
+    "text": "And how does that help the scalability? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1001"
+  },
+  {
+    "text": "The key is that the static linker treats linking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1004"
+  },
+  {
+    "text": "with a dynamic library differently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1007"
+  },
+  {
+    "text": "Instead of copying code out of the library into the final program, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1009"
+  },
+  {
+    "text": "the linker just records a kind of promise. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1013"
+  },
+  {
+    "text": "That is, it records the symbol name used from the dynamic library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1016"
+  },
+  {
+    "text": "and what the library's path will be at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1020"
+  },
+  {
+    "text": "How is this an advantage? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1023"
+  },
+  {
+    "text": "It means your program file size is under your control. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1025"
+  },
+  {
+    "text": "It just contains your code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1028"
+  },
+  {
+    "text": "and a list of dynamic libraries it needs at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1030"
+  },
+  {
+    "text": "You no longer get copies of library code in your program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1033"
+  },
+  {
+    "text": "Your program's static link time is now proportional to the size of your code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1036"
+  },
+  {
+    "text": "and independent of the number of dylibs you link with. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1040"
+  },
+  {
+    "text": "Also, the Virtual Memory system can now shine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1044"
+  },
+  {
+    "text": "When it sees the same dynamic library used in multiple processes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1047"
+  },
+  {
+    "text": "the Virtual Memory system will re-use the same physical pages of RAM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1051"
+  },
+  {
+    "text": "for that dylib in all processes that use that dylib. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1054"
+  },
+  {
+    "text": "I've shown you how dynamic libraries started and what problem they solve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1057"
+  },
+  {
+    "text": "But what are the \"costs\" for those \"benefits\"? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1062"
+  },
+  {
+    "text": "First, a benefit of using dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1066"
+  },
+  {
+    "text": "is that we have sped up build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1068"
+  },
+  {
+    "text": "But the cost is that launching your app is now slower. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1071"
+  },
+  {
+    "text": "This is because launching is no longer just loading one program file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1074"
+  },
+  {
+    "text": "Now all the dylibs also need to be loaded and connected together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1079"
+  },
+  {
+    "text": "In other words, you just deferred some of the linking costs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1083"
+  },
+  {
+    "text": "from build time to launch time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1085"
+  },
+  {
+    "text": "Second, a dynamic library based program will have more dirty pages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1088"
+  },
+  {
+    "text": "In the static library case, the linker would co-locate all globals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1093"
+  },
+  {
+    "text": "from all static libraries into the same DATA pages in the main executable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1097"
+  },
+  {
+    "text": "But with dylibs, each library has its DATA page. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1102"
+  },
+  {
+    "text": "Lastly, another cost of dynamic linking is that it introduces the need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1106"
+  },
+  {
+    "text": "for something new: a dynamic linker! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1110"
+  },
+  {
+    "text": "Remember that promise that was recorded in the executable at build time? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1113"
+  },
+  {
+    "text": "Now we need something at runtime that will fulfill that promise to load our library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1117"
+  },
+  {
+    "text": "That's what dyld, the dynamic linker, is for. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1124"
+  },
+  {
+    "text": "Let's dive into how dynamic linking works at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1128"
+  },
+  {
+    "text": "An executable binary is divided up into segments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1132"
+  },
+  {
+    "text": "usually at least TEXT, DATA, and LINKEDIT. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1135"
+  },
+  {
+    "text": "Segments are always a multiple of the page size for the OS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1139"
+  },
+  {
+    "text": "Each segment has a different permission. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1143"
+  },
+  {
+    "text": "For example, the TEXT segment has \"execute\" permissions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1145"
+  },
+  {
+    "text": "That means the CPU may treat the bytes on the page as machine code instructions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1149"
+  },
+  {
+    "text": "At runtime, dyld has to mmap() the executables into memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1154"
+  },
+  {
+    "text": "with each segments' permissions, as show here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1159"
+  },
+  {
+    "text": "Because the segments are page sized and page aligned, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1162"
+  },
+  {
+    "text": "that makes it straightforward for the virtual memory system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1165"
+  },
+  {
+    "text": "to just set up the program or dylib file as backing store for a VM range. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1168"
+  },
+  {
+    "text": "That means nothing is loaded into RAM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1173"
+  },
+  {
+    "text": "until there is some memory access on those pages, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1176"
+  },
+  {
+    "text": "which triggers a page fault, which causes the VM system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1179"
+  },
+  {
+    "text": "to read the proper subrange of the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1182"
+  },
+  {
+    "text": "and fill in the needed RAM page with its content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1184"
+  },
+  {
+    "text": "But just mapping is not enough. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1188"
+  },
+  {
+    "text": "Somehow the program needs to be \"wired up\" or bound to the dylib. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1190"
+  },
+  {
+    "text": "For that we have a concept called \"fix ups\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1195"
+  },
+  {
+    "text": "In the diagram, we see the program got pointers set up ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1198"
+  },
+  {
+    "text": "that point to the parts of the dylib it uses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1201"
+  },
+  {
+    "text": "Let's dive into what fix-ups are. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1204"
+  },
+  {
+    "text": "Here is our friend, the mach-o file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1207"
+  },
+  {
+    "text": "Now, TEXT is immutable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1210"
+  },
+  {
+    "text": "And in fact, it has to be in a system based on code signing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1211"
+  },
+  {
+    "text": "So what if there is a function that calls malloc()? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1215"
+  },
+  {
+    "text": "How can that work? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1218"
+  },
+  {
+    "text": "The relative address of _malloc can't be known when the program was built. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1220"
+  },
+  {
+    "text": "Well, what happens is, the static linker saw ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1224"
+  },
+  {
+    "text": "that malloc was in a dylib and transformed the call site. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1227"
+  },
+  {
+    "text": "The call site becomes a call to a stub synthesized by the linker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1231"
+  },
+  {
+    "text": "in the same TEXT segment, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1235"
+  },
+  {
+    "text": "so the relative address is known at build time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1237"
+  },
+  {
+    "text": "which means the BL instruction can be correctly formed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1240"
+  },
+  {
+    "text": "How that helps is that the stub loads a pointer from DATA ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1245"
+  },
+  {
+    "text": "and jumps to that location. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1249"
+  },
+  {
+    "text": "Now, no changes to TEXT are needed at runtime– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1251"
+  },
+  {
+    "text": "just DATA is changed by dyld. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1254"
+  },
+  {
+    "text": "In fact, the secret to understanding dyld ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1257"
+  },
+  {
+    "text": "is that all fixups done by dyld are just dyld setting a pointer in DATA.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1261"
+  },
+  {
+    "text": "So let's dig more into the fixups that dyld does. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1267"
+  },
+  {
+    "text": "Somewhere in LINKEDIT is the information dyld needs to drive what fixups are done. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1270"
+  },
+  {
+    "text": "There are two kinds of fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1276"
+  },
+  {
+    "text": "The first are called rebases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1279"
+  },
+  {
+    "text": "and they are when a dylib or app has a pointer that points within itself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1280"
+  },
+  {
+    "text": "Now there is a security feature called ASLR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1285"
+  },
+  {
+    "text": "which causes dyld to load dylibs at random addresses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1289"
+  },
+  {
+    "text": "And that means those interior pointers cannot just be set at build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1293"
+  },
+  {
+    "text": "Instead, dyld needs to adjust or \"rebase\" those pointers at launch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1298"
+  },
+  {
+    "text": "On disk, those pointers contain their target address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1304"
+  },
+  {
+    "text": "if the dylib were to be loaded at address zero. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1307"
+  },
+  {
+    "text": "That way, all the LINKEDIT needs to record is the location of each rebase location. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1311"
+  },
+  {
+    "text": "Dyld can then just add the actual load address of the dylib ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1316"
+  },
+  {
+    "text": "to each of the rebase locations to correctly fix them up.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1321"
+  },
+  {
+    "text": "The second kind of fixups are binds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1326"
+  },
+  {
+    "text": "Binds are symbolic references. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1328"
+  },
+  {
+    "text": "That is, their target is a symbol name and not a number. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1331"
+  },
+  {
+    "text": "For instance, a pointer to the function \"malloc\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1335"
+  },
+  {
+    "text": "The string \"_malloc\" is actually stored in LINKEDIT, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1338"
+  },
+  {
+    "text": "and dyld uses that string to look up the actual address of malloc ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1344"
+  },
+  {
+    "text": "in the exports trie of libSystem.dylib. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1348"
+  },
+  {
+    "text": "Then, dyld stores that value in the location specified by the bind. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1351"
+  },
+  {
+    "text": "This year we are announcing a new way to encode fixups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1357"
+  },
+  {
+    "text": "that we call \"chained fixups\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1360"
+  },
+  {
+    "text": "The first advantage is that is makes LINKEDIT smaller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1364"
+  },
+  {
+    "text": "The LINKEDIT is smaller because instead of storing all the fixup locations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1367"
+  },
+  {
+    "text": "the new format just stores where the first fixup location is in each DATA page, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1372"
+  },
+  {
+    "text": "as well as a list of the imported symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1377"
+  },
+  {
+    "text": "Then the rest of the information is encoded in the DATA segment itself, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1380"
+  },
+  {
+    "text": "in the place where the fixups will ultimately be set. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1384"
+  },
+  {
+    "text": "This new format gets its name, chained fixups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1388"
+  },
+  {
+    "text": "from the fact that the fixup locations are \"chained\" together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1392"
+  },
+  {
+    "text": "The LINKEDIT just says where the first fixup was, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1396"
+  },
+  {
+    "text": "then in the 64-bit pointer location in DATA, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1399"
+  },
+  {
+    "text": "some of the bits contain the offset to the next fixup location. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1403"
+  },
+  {
+    "text": "Also packed in there is a bit that says if the fixup is a bind or a rebase. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1408"
+  },
+  {
+    "text": "If it is a bind, the rest of the bits are the index of the symbol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1413"
+  },
+  {
+    "text": "If it's a rebase, the rest of the bits are the offset of the target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1417"
+  },
+  {
+    "text": "within the image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1421"
+  },
+  {
+    "text": "Lastly, runtime support for chained fixups already exists in iOS 13.4 and later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1424"
+  },
+  {
+    "text": "Which means you can start using this new format today, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1429"
+  },
+  {
+    "text": "as long as your deployment target is iOS 13.4 or later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1432"
+  },
+  {
+    "text": "And the chained fixup format enables a new OS feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1437"
+  },
+  {
+    "text": "we are announcing this year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1440"
+  },
+  {
+    "text": "But to understand that, I need to talk about how dyld works.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1442"
+  },
+  {
+    "text": "Dyld starts with the main executable– say your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1448"
+  },
+  {
+    "text": "Parses that mach-o to find the dependent dylibs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1451"
+  },
+  {
+    "text": "that is, what promised dynamic libraries it needs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1454"
+  },
+  {
+    "text": "It finds those dylibs and mmap()s them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1458"
+  },
+  {
+    "text": "Then for each of those, it recurses and parses their mach-o structures, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1461"
+  },
+  {
+    "text": "loading any additional dylibs as needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1465"
+  },
+  {
+    "text": "Once everything is loaded, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1470"
+  },
+  {
+    "text": "dyld looks up all the bind symbols needed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1471"
+  },
+  {
+    "text": "and uses those addresses when doing fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1474"
+  },
+  {
+    "text": "Lastly, once all the fixups are done, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1477"
+  },
+  {
+    "text": "dyld runs initializers, bottom up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1480"
+  },
+  {
+    "text": "Five years ago we announced a new dyld technology. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1484"
+  },
+  {
+    "text": "We realized the steps in green above were the same every time your app was launched. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1487"
+  },
+  {
+    "text": "So as long as the program and dylibs did not change, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1493"
+  },
+  {
+    "text": "all the steps in green could be cached on first launch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1496"
+  },
+  {
+    "text": "and re-used on subsequent launches. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1499"
+  },
+  {
+    "text": "This year we are announcing additional dyld performance improvements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1502"
+  },
+  {
+    "text": "We are announcing a new dyld feature called \"page-in linking\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1507"
+  },
+  {
+    "text": "Instead of dyld applying all the fixups to all dylibs at launch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1512"
+  },
+  {
+    "text": "the kernel can now apply fixups to your DATA pages lazily, on page-in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1517"
+  },
+  {
+    "text": "It has always been the case that the first use of some address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1523"
+  },
+  {
+    "text": "in some page of an mmap()ed region triggered the kernel to read in that page. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1526"
+  },
+  {
+    "text": "But now, if it is a DATA page, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1531"
+  },
+  {
+    "text": "the kernel will also apply the fixup that page needs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1534"
+  },
+  {
+    "text": "We have had a special case of page-in linking for over a decade ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1538"
+  },
+  {
+    "text": "for OS dylibs in the dyld shared cache. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1542"
+  },
+  {
+    "text": "This year we generalized it and made it available to everyone. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1545"
+  },
+  {
+    "text": "This mechanism reduces dirty memory and launch time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1549"
+  },
+  {
+    "text": "It also means DATA_CONST pages are clean, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1553"
+  },
+  {
+    "text": "which means they can be evicted and recreated just like TEXT pages, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1556"
+  },
+  {
+    "text": "which reduces memory pressure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1560"
+  },
+  {
+    "text": "This page-in linking feature will be in the upcoming release of iOS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1562"
+  },
+  {
+    "text": "macOS, and watchOS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1566"
+  },
+  {
+    "text": "But page-in linking only works for binaries built with chained fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1569"
+  },
+  {
+    "text": "That is because with chained fixups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1573"
+  },
+  {
+    "text": "most of the fixup information will be encoded in the DATA segment on disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1575"
+  },
+  {
+    "text": "which means it is available to the kernel during page-in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1580"
+  },
+  {
+    "text": "One caveat is that dyld only uses this mechanism during launch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1583"
+  },
+  {
+    "text": "Any dylibs dlopen()ed later do not get page-in linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1588"
+  },
+  {
+    "text": "In that case, dyld takes the traditional path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1592"
+  },
+  {
+    "text": "and applies the fixups during the dlopen call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1595"
+  },
+  {
+    "text": "With that in mind, let's go back to the dyld workflow diagram. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1598"
+  },
+  {
+    "text": "For five years now, dyld has been optimizing the steps above in green ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1603"
+  },
+  {
+    "text": "by caching that work on first launch and reusing it on later launches. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1606"
+  },
+  {
+    "text": "Now, dyld can optimize the \"apply fixup\" step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1612"
+  },
+  {
+    "text": "by not actually doing the fixups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1617"
+  },
+  {
+    "text": "and letting the kernel do them lazily on page-in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1619"
+  },
+  {
+    "text": "Now that you have seen what's new in dyld, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1623"
+  },
+  {
+    "text": "let's talk about best practices for dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1626"
+  },
+  {
+    "text": "What can you do to help improve dynamic link performance? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1631"
+  },
+  {
+    "text": "As I just showed, dyld has already accelerated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1634"
+  },
+  {
+    "text": "most of the steps in dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1637"
+  },
+  {
+    "text": "One thing you can control is how many dylibs you have. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1640"
+  },
+  {
+    "text": "The more dylibs there are, the more work dyld has to do to load them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1644"
+  },
+  {
+    "text": "Conversely, the fewer dylibs, the less work dyld has to perform. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1648"
+  },
+  {
+    "text": "The next thing you can look at are static initializers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1653"
+  },
+  {
+    "text": "which is code that always runs, pre-main. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1656"
+  },
+  {
+    "text": "For instance, don't do I/O or networking in a static initializer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1659"
+  },
+  {
+    "text": "Anything that can take more than a few milliseconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1664"
+  },
+  {
+    "text": "should never be done in an initializer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1666"
+  },
+  {
+    "text": "As we know, the world is getting more complicated, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1669"
+  },
+  {
+    "text": "and your users want more functionality. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1672"
+  },
+  {
+    "text": "So it makes sense to use libraries to manage all that functionality. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1674"
+  },
+  {
+    "text": "Your goal is to find your sweet spot between dynamic and static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1679"
+  },
+  {
+    "text": "Too many static libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1684"
+  },
+  {
+    "text": "and your iterative build/debug cycle is slowed down. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1686"
+  },
+  {
+    "text": "On the other hand, too many dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1689"
+  },
+  {
+    "text": "and your launch time is slow and your customers notice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1692"
+  },
+  {
+    "text": "But we sped up ld64 this year, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1695"
+  },
+  {
+    "text": "so your sweet spot may have changed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1698"
+  },
+  {
+    "text": "as you can now use more static libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1700"
+  },
+  {
+    "text": "or more source files directly in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1703"
+  },
+  {
+    "text": "and still build in the same amount of time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1705"
+  },
+  {
+    "text": "Lastly, if it works for your installed base, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1708"
+  },
+  {
+    "text": "updating to a newer deployment target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1711"
+  },
+  {
+    "text": "can enable the tools to generate chained fixups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1714"
+  },
+  {
+    "text": "making your binaries smaller, and improving launch time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1716"
+  },
+  {
+    "text": "The last thing I'd like you all to be aware of ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1719"
+  },
+  {
+    "text": "is two new tools that will help you peek inside the linking process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1722"
+  },
+  {
+    "text": "The first tool is dyld_usage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1727"
+  },
+  {
+    "text": "You can use it to get a trace of what dyld is doing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1729"
+  },
+  {
+    "text": "The tool is only on macOS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1733"
+  },
+  {
+    "text": "but you can use it to trace your app launching in the simulator, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1735"
+  },
+  {
+    "text": "or if your app built for Mac Catalyst. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1739"
+  },
+  {
+    "text": "Here is an example run against TextEdit on macOS.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1743"
+  },
+  {
+    "text": "As you can tell by the top few lines, the launch took 15ms overall, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1748"
+  },
+  {
+    "text": "but only 1ms for fixups, thanks to page-in linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1753"
+  },
+  {
+    "text": "The vast majority of time is now spent in static initializers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1758"
+  },
+  {
+    "text": "The next tool is dyld_info. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1763"
+  },
+  {
+    "text": "You can use it to inspect binaries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1766"
+  },
+  {
+    "text": "both on disk and in the current dyld cache. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1768"
+  },
+  {
+    "text": "The tool has many options, but I'll show you how to view exports and fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1771"
+  },
+  {
+    "text": "Here the -fixup option shows all the fixup locations dyld will process ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1776"
+  },
+  {
+    "text": "and their targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1781"
+  },
+  {
+    "text": "The output is the same regardless of if the file is old style fixups ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1783"
+  },
+  {
+    "text": "or new chained fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1787"
+  },
+  {
+    "text": "Here the -exports option will show all the exported symbols in the dylib, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1790"
+  },
+  {
+    "text": "and the offset of each symbol from the start of the dylib. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1796"
+  },
+  {
+    "text": "In this case, it is showing information about Foundation.framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1800"
+  },
+  {
+    "text": "which is the dylib in the dyld cache. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1804"
+  },
+  {
+    "text": "There is no file on disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1807"
+  },
+  {
+    "text": "but the dyld_info tool uses the same code as dyld and can thus find it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1808"
+  },
+  {
+    "text": "Now that you understand the history and tradeoffs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1815"
+  },
+  {
+    "text": "of static versus dynamic libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1817"
+  },
+  {
+    "text": "you should review what you app does ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1819"
+  },
+  {
+    "text": "and determine if you have found your sweet spot. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1822"
+  },
+  {
+    "text": "Next, if you have a large app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1825"
+  },
+  {
+    "text": "and have noticed the build takes a while to link, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1827"
+  },
+  {
+    "text": "try out Xcode 14 which has the new faster linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1830"
+  },
+  {
+    "text": "If you still want to speed up your static link more, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1835"
+  },
+  {
+    "text": "look into the three linker options I detailed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1838"
+  },
+  {
+    "text": "and see if they make sense in your build, and improve your link time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1840"
+  },
+  {
+    "text": "Lastly, you can also try building your app, and any embedded frameworks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1845"
+  },
+  {
+    "text": "for iOS 13.4 or later to enable chained fixups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1849"
+  },
+  {
+    "text": "Then see if your app is smaller and launches faster on iOS 16. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1854"
+  },
+  {
+    "text": "Thanks for watching, and have a great WWDC.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110362/?time=1858"
+  }
+]

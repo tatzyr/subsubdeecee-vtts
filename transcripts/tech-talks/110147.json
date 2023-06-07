@@ -1,0 +1,2470 @@
+[
+  {
+    "text": "Pierre Morf: Welcome to the session on how to tune ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2"
+  },
+  {
+    "text": "CPU job scheduling for Apple silicon games. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=4"
+  },
+  {
+    "text": "I'm Pierre Morf, working in the Metal Ecosystem team. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=8"
+  },
+  {
+    "text": "I've been helping several third-party developers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=12"
+  },
+  {
+    "text": "to optimize their GPU and CPU workloads on Apple platforms. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=15"
+  },
+  {
+    "text": "With the help of the CoreOS team, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=21"
+  },
+  {
+    "text": "I gathered here information and guidelines ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=23"
+  },
+  {
+    "text": "to achieve better CPU performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=25"
+  },
+  {
+    "text": "and efficiency in games. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=28"
+  },
+  {
+    "text": "We are focusing on games, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=31"
+  },
+  {
+    "text": "because they are usually highly demanding ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=33"
+  },
+  {
+    "text": "in terms of hardware resources. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=35"
+  },
+  {
+    "text": "Also, their typical workload requires hundreds, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=39"
+  },
+  {
+    "text": "if not thousands, of CPU jobs to be processed ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=42"
+  },
+  {
+    "text": "every frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=45"
+  },
+  {
+    "text": "To get those done in 16 milliseconds or less, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=47"
+  },
+  {
+    "text": "jobs must be tailored for maximum CPU throughput, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=50"
+  },
+  {
+    "text": "and their submission overhead must be minimized. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=54"
+  },
+  {
+    "text": "First, I'll go through an overview ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=58"
+  },
+  {
+    "text": "of the Apple silicon CPU and its unique architecture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=60"
+  },
+  {
+    "text": "Then, I'll provide you with fundamental guidance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=65"
+  },
+  {
+    "text": "on how to organize your work to maximize the CPU efficiency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=68"
+  },
+  {
+    "text": "Finally, we'll discuss useful APIs to leverage, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=73"
+  },
+  {
+    "text": "once those guidelines are implemented. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=76"
+  },
+  {
+    "text": "Let's get started with the Apple CPU architecture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=81"
+  },
+  {
+    "text": "Apple has been designing its own chips ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=85"
+  },
+  {
+    "text": "for more than a decade. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=87"
+  },
+  {
+    "text": "They are at the core of Apple devices. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=89"
+  },
+  {
+    "text": "Apple silicon offers high performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=92"
+  },
+  {
+    "text": "and unmatched efficiency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=94"
+  },
+  {
+    "text": "Last year, Apple introduced the M1 chip. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=97"
+  },
+  {
+    "text": "That was the first Apple silicon chip ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=100"
+  },
+  {
+    "text": "to be made available to Mac computers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=102"
+  },
+  {
+    "text": "And this year... ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=104"
+  },
+  {
+    "text": "...we introduced M1 Pro, and M1 Max. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=107"
+  },
+  {
+    "text": "Their new design is a huge leap for Apple silicon ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=110"
+  },
+  {
+    "text": "and makes them able to efficiently tackle ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=113"
+  },
+  {
+    "text": "very demanding workloads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=116"
+  },
+  {
+    "text": "The M1 chip gathers in a single package many components.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=119"
+  },
+  {
+    "text": "It contains a CPU, a GPU, Neural Engine, and many more. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=126"
+  },
+  {
+    "text": "It also has a high-bandwidth, low-latency unified memory; ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=132"
+  },
+  {
+    "text": "it is accessible to all the chip's components ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=137"
+  },
+  {
+    "text": "through Apple Fabric. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=139"
+  },
+  {
+    "text": "That means the CPU and GPU may work on the same data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=141"
+  },
+  {
+    "text": "without copying it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=145"
+  },
+  {
+    "text": "Let's zoom into the CPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=147"
+  },
+  {
+    "text": "On M1, the CPU contains cores of two different types: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=151"
+  },
+  {
+    "text": "the performance cores and the efficiency cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=156"
+  },
+  {
+    "text": "Those are physically different, the E cores being smaller. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=160"
+  },
+  {
+    "text": "The efficiency cores are meant to process work ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=165"
+  },
+  {
+    "text": "with a very low energy consumption. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=168"
+  },
+  {
+    "text": "There is a very important takeaway point: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=172"
+  },
+  {
+    "text": "the P and E cores use a similar microarchitecture, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=174"
+  },
+  {
+    "text": "which is really their inner working. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=179"
+  },
+  {
+    "text": "They've been designed so that developers don't need to care ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=182"
+  },
+  {
+    "text": "whether a thread runs on a P or E core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=185"
+  },
+  {
+    "text": "If a program is optimized to perform well on a type of core, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=189"
+  },
+  {
+    "text": "it is expected to perform well on the other. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=193"
+  },
+  {
+    "text": "Those cores are physically grouped together into clusters, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=198"
+  },
+  {
+    "text": "at least according to their type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=202"
+  },
+  {
+    "text": "On M1, each cluster has a last level cache -- a L2 -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=205"
+  },
+  {
+    "text": "shared by all of its cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=210"
+  },
+  {
+    "text": "Cross-cluster communication goes through Apple Fabric. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=212"
+  },
+  {
+    "text": "The CPU topology shown here is specific to the M1 chip. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=216"
+  },
+  {
+    "text": "Other devices may have a different CPU layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=222"
+  },
+  {
+    "text": "For example, an iPhone XS has one cluster of two P cores, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=224"
+  },
+  {
+    "text": "and one cluster of four E cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=230"
+  },
+  {
+    "text": "This architecture allows the system to optimize ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=234"
+  },
+  {
+    "text": "for performance when needed or to optimize for efficiency ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=237"
+  },
+  {
+    "text": "instead, improving the battery life, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=241"
+  },
+  {
+    "text": "when performance is not a priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=244"
+  },
+  {
+    "text": "Each cluster may be independently activated ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=246"
+  },
+  {
+    "text": "or have its frequency adjusted by the kernel's scheduler -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=249"
+  },
+  {
+    "text": "depending on the current workload, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=253"
+  },
+  {
+    "text": "the current thermal pressure for that cluster, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=255"
+  },
+  {
+    "text": "and other factors. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=258"
+  },
+  {
+    "text": "Finally, note the availability of P cores is not guaranteed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=260"
+  },
+  {
+    "text": "The system reserves the right to make them unavailable ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=265"
+  },
+  {
+    "text": "under critical thermal scenarios. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=268"
+  },
+  {
+    "text": "Here is an overview of the different API layers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=272"
+  },
+  {
+    "text": "interacting with the CPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=275"
+  },
+  {
+    "text": "First we have XNU -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=278"
+  },
+  {
+    "text": "the kernel running macOS and iOS. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=281"
+  },
+  {
+    "text": "That is where the scheduler lives, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=284"
+  },
+  {
+    "text": "deciding what runs on the CPU and when. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=286"
+  },
+  {
+    "text": "On top of it, we have two libraries: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=290"
+  },
+  {
+    "text": "POSIX with pthreads and Mach objects. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=293"
+  },
+  {
+    "text": "They both provide fundamental threading ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=297"
+  },
+  {
+    "text": "and synchronization primitives to the application. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=299"
+  },
+  {
+    "text": "On top of that we have higher-level libraries. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=303"
+  },
+  {
+    "text": "Thread-related NSObjects encapsulate POSIX handles. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=307"
+  },
+  {
+    "text": "In example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=311"
+  },
+  {
+    "text": "an NSLock encapsulates a pthread_mutex_lock, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=312"
+  },
+  {
+    "text": "a NSThread encapsulates a pthread, among other things. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=317"
+  },
+  {
+    "text": "That is also where GCD sits. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=321"
+  },
+  {
+    "text": "GCD is an advanced job manager. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=324"
+  },
+  {
+    "text": "We will cover it later. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=326"
+  },
+  {
+    "text": "In this session, we will work our way up ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=328"
+  },
+  {
+    "text": "starting from the low level, finishing with API features. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=331"
+  },
+  {
+    "text": "Let's start by focusing on what works best for the CPU, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=336"
+  },
+  {
+    "text": "and how to lighten the workload put on the scheduler. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=340"
+  },
+  {
+    "text": "This will be our fundamental efficiency guidelines. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=344"
+  },
+  {
+    "text": "They apply to any job manager implementation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=348"
+  },
+  {
+    "text": "are API-agnostic, and apply to many platforms -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=351"
+  },
+  {
+    "text": "including both Apple silicon and Intel-based Macs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=355"
+  },
+  {
+    "text": "Let's imagine we are in an ideal world ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=361"
+  },
+  {
+    "text": "and we have this job. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=363"
+  },
+  {
+    "text": "If we spread it over four cores, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=366"
+  },
+  {
+    "text": "it should be processed exactly four times quicker, right? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=370"
+  },
+  {
+    "text": "Unfortunately, that's not as straightforward in a real CPU. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=374"
+  },
+  {
+    "text": "There are many bookkeeping operations going on, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=378"
+  },
+  {
+    "text": "each costing some execution time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=381"
+  },
+  {
+    "text": "There should be three costs to keep in mind for efficiency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=384"
+  },
+  {
+    "text": "Look at the cores 1, 2, and 3. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=389"
+  },
+  {
+    "text": "They were not doing anything before processing our job. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=392"
+  },
+  {
+    "text": "Well, when a CPU core has nothing to do ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=395"
+  },
+  {
+    "text": "for quite some time, it goes idle to save energy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=398"
+  },
+  {
+    "text": "And reactivating an idle core takes a little bit of time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=403"
+  },
+  {
+    "text": "That is our first cost, the core wake-up cost. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=408"
+  },
+  {
+    "text": "Here is another one. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=413"
+  },
+  {
+    "text": "CPU work is first initiated by the OS scheduler. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=415"
+  },
+  {
+    "text": "It decides which process and thread should be running next, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=419"
+  },
+  {
+    "text": "and on which core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=422"
+  },
+  {
+    "text": "The CPU core then switches to that execution context. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=423"
+  },
+  {
+    "text": "We'll call that the scheduling cost. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=428"
+  },
+  {
+    "text": "Now, the third and last type of cost. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=431"
+  },
+  {
+    "text": "Let's consider the thread running on Core 0 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=435"
+  },
+  {
+    "text": "signals the ones on cores 1, 2, and 3. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=439"
+  },
+  {
+    "text": "For example, with a semaphore. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=442"
+  },
+  {
+    "text": "That signaling is not instantaneous. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=446"
+  },
+  {
+    "text": "During this interval, the kernel has to identify ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=448"
+  },
+  {
+    "text": "which thread is waiting on the primitive; ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=452"
+  },
+  {
+    "text": "and in case the thread was not active, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=455"
+  },
+  {
+    "text": "it needs to schedule it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=456"
+  },
+  {
+    "text": "This delay is called the synchronization latency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=460"
+  },
+  {
+    "text": "Those costs appear, in one form or another, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=464"
+  },
+  {
+    "text": "in most CPU architectures. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=468"
+  },
+  {
+    "text": "They are not an issue by themselves, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=470"
+  },
+  {
+    "text": "as they are very, very short. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=472"
+  },
+  {
+    "text": "But they may become a performance hit ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=474"
+  },
+  {
+    "text": "if they accumulate, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=476"
+  },
+  {
+    "text": "appearing repeatedly and frequently. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=478"
+  },
+  {
+    "text": "What do those costs look like in real life? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=481"
+  },
+  {
+    "text": "This is an instruments trace of a game running on M1. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=486"
+  },
+  {
+    "text": "That game exhibits a problematic pattern, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=490"
+  },
+  {
+    "text": "repeated most of its frames. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=492"
+  },
+  {
+    "text": "It tries to parallelize jobs at an extremely fine granularity. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=495"
+  },
+  {
+    "text": "We already zoomed a lot into its timeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=500"
+  },
+  {
+    "text": "To give you an idea, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=504"
+  },
+  {
+    "text": "that section only takes 18 microseconds. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=506"
+  },
+  {
+    "text": "Let's focus on that CPU core, and those two threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=510"
+  },
+  {
+    "text": "Those two threads could have been running in parallel, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=514"
+  },
+  {
+    "text": "but they ended up running serially on that same core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=517"
+  },
+  {
+    "text": "Let's see why. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=521"
+  },
+  {
+    "text": "They synchronize with each other very often. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=523"
+  },
+  {
+    "text": "The first one signals the second one to start ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=527"
+  },
+  {
+    "text": "and very quickly waits for its peer to be done. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=531"
+  },
+  {
+    "text": "The second starts working, quickly signals the first one, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=536"
+  },
+  {
+    "text": "and waits very shortly after. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=540"
+  },
+  {
+    "text": "This pattern repeats over and over. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=543"
+  },
+  {
+    "text": "We can see two issues here: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=547"
+  },
+  {
+    "text": "first, synchronization primitives are used ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=550"
+  },
+  {
+    "text": "at an extremely high frequency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=553"
+  },
+  {
+    "text": "That interrupts work and introduces overhead. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=555"
+  },
+  {
+    "text": "We can see that overhead with the red sections. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=559"
+  },
+  {
+    "text": "Second, the active work -- the blue sections -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=562"
+  },
+  {
+    "text": "is extremely brief. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=566"
+  },
+  {
+    "text": "it only lasts between four and 20 microseconds. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=567"
+  },
+  {
+    "text": "This duration is so small, it is barely shorter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=572"
+  },
+  {
+    "text": "than the time it takes to wake up a CPU core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=576"
+  },
+  {
+    "text": "During those red sections, the OS scheduler ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=580"
+  },
+  {
+    "text": "was mostly waiting for a CPU core to wake up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=583"
+  },
+  {
+    "text": "But right before that happens, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=587"
+  },
+  {
+    "text": "a thread blocks and frees up the core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=589"
+  },
+  {
+    "text": "The second thread then runs on that same core ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=592"
+  },
+  {
+    "text": "instead of waiting a little bit longer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=595"
+  },
+  {
+    "text": "for another one to wake up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=597"
+  },
+  {
+    "text": "That's how those two threads lost a tiny opportunity ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=600"
+  },
+  {
+    "text": "to run in parallel. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=603"
+  },
+  {
+    "text": "Just from this observation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=605"
+  },
+  {
+    "text": "we can already define two guidelines. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=607"
+  },
+  {
+    "text": "First, choose the right job granularity. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=610"
+  },
+  {
+    "text": "We can achieve it by merging tiny jobs into larger ones. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=613"
+  },
+  {
+    "text": "Scheduling a thread takes a little bit of time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=619"
+  },
+  {
+    "text": "no matter what. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=621"
+  },
+  {
+    "text": "If a job becomes tiny, the scheduling cost ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=624"
+  },
+  {
+    "text": "will take a relatively larger part of the thread's timeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=626"
+  },
+  {
+    "text": "The CPU will be underutilized. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=630"
+  },
+  {
+    "text": "On the contrary, larger jobs amortize the scheduling cost ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=634"
+  },
+  {
+    "text": "by running for longer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=637"
+  },
+  {
+    "text": "We have seen a professional application -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=639"
+  },
+  {
+    "text": "submitting lots of 30-microseconds work items -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=642"
+  },
+  {
+    "text": "drastically increasing their performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=646"
+  },
+  {
+    "text": "when they merged them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=648"
+  },
+  {
+    "text": "Second, line up enough work before leveraging threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=651"
+  },
+  {
+    "text": "This can be done every frame, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=656"
+  },
+  {
+    "text": "by getting most jobs ready at once. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=658"
+  },
+  {
+    "text": "When you signal and wait for threads, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=662"
+  },
+  {
+    "text": "that generally means some will be scheduled ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=664"
+  },
+  {
+    "text": "on the CPU core and some will be blocked ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=667"
+  },
+  {
+    "text": "and moved off core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=669"
+  },
+  {
+    "text": "Doing that many times is a performance pitfall. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=672"
+  },
+  {
+    "text": "Waking and pausing threads repeatedly ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=676"
+  },
+  {
+    "text": "adds more of the costs we just talked about. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=678"
+  },
+  {
+    "text": "Conversely, making threads process more jobs ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=681"
+  },
+  {
+    "text": "without interruption removes synchronization points. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=685"
+  },
+  {
+    "text": "As an example, when dealing with nested for-loops, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=690"
+  },
+  {
+    "text": "it is a much better idea to parallelize the outer for ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=694"
+  },
+  {
+    "text": "at a coarser granularity. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=698"
+  },
+  {
+    "text": "That leaves the inner loops uninterrupted. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=700"
+  },
+  {
+    "text": "That gives them a better coherency, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=703"
+  },
+  {
+    "text": "a better cache utilization, and overall, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=706"
+  },
+  {
+    "text": "fewer of those synchronization points. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=709"
+  },
+  {
+    "text": "Before leveraging more threads, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=713"
+  },
+  {
+    "text": "determine if it is worth the cost. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=715"
+  },
+  {
+    "text": "Let's now have a look at another game trace. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=718"
+  },
+  {
+    "text": "That one was running on an iPhone XS. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=722"
+  },
+  {
+    "text": "We'll focus on those helper threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=725"
+  },
+  {
+    "text": "We can see the synchronization latency here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=729"
+  },
+  {
+    "text": "This is the time it took the kernel ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=733"
+  },
+  {
+    "text": "to signal those different helpers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=735"
+  },
+  {
+    "text": "There are two issues here: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=739"
+  },
+  {
+    "text": "first, the actual work is extremely small again -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=741"
+  },
+  {
+    "text": "roughly 11 microseconds -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=746"
+  },
+  {
+    "text": "especially in comparison to the entire overhead. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=749"
+  },
+  {
+    "text": "Merging those jobs together ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=752"
+  },
+  {
+    "text": "would have been more energy efficient. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=754"
+  },
+  {
+    "text": "Second issue: in that timespan, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=757"
+  },
+  {
+    "text": "80 different threads were scheduled on three cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=761"
+  },
+  {
+    "text": "We can see context switches here, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=765"
+  },
+  {
+    "text": "those tiny gaps between active work. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=767"
+  },
+  {
+    "text": "In this example, it isn't a problem yet -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=770"
+  },
+  {
+    "text": "but with more threads, context switching time ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=773"
+  },
+  {
+    "text": "may accumulate and hinder the CPU performance. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=776"
+  },
+  {
+    "text": "How can we minimize all those different kinds of overhead ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=781"
+  },
+  {
+    "text": "when a typical game has at least hundreds of jobs every frame? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=784"
+  },
+  {
+    "text": "The best way of doing so is by using a job pool. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=790"
+  },
+  {
+    "text": "Worker threads consume them through job stealing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=794"
+  },
+  {
+    "text": "Scheduling a thread is done by the kernel; ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=799"
+  },
+  {
+    "text": "we saw it takes some time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=802"
+  },
+  {
+    "text": "And the CPU also has to do some work, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=804"
+  },
+  {
+    "text": "like context switching. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=806"
+  },
+  {
+    "text": "On the other hand, starting a new job in user-space ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=808"
+  },
+  {
+    "text": "is much cheaper. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=811"
+  },
+  {
+    "text": "Generally, a worker just has to decrement an atomic counter, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=813"
+  },
+  {
+    "text": "and grab a pointer to a job. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=817"
+  },
+  {
+    "text": "Second point: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=820"
+  },
+  {
+    "text": "avoid interacting with predetermined threads, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=822"
+  },
+  {
+    "text": "since using workers will reduce the amount of context switches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=825"
+  },
+  {
+    "text": "And as they grab more jobs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=829"
+  },
+  {
+    "text": "you leverage an already active thread ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=832"
+  },
+  {
+    "text": "on an already active core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=834"
+  },
+  {
+    "text": "Finally, use your pool wisely. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=837"
+  },
+  {
+    "text": "Wake up just enough workers for the work being queued up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=840"
+  },
+  {
+    "text": "And the previous rule applies here too: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=844"
+  },
+  {
+    "text": "ensure enough work is lined up ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=848"
+  },
+  {
+    "text": "to justify waking a worker thread, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=850"
+  },
+  {
+    "text": "and keeping it busy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=853"
+  },
+  {
+    "text": "We reduced our overhead; ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=856"
+  },
+  {
+    "text": "now, we must make the most out of our CPU cycles. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=858"
+  },
+  {
+    "text": "Here are some patterns to avoid. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=862"
+  },
+  {
+    "text": "Avoid busy waits. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=866"
+  },
+  {
+    "text": "They potentially lock a P core, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=867"
+  },
+  {
+    "text": "instead of doing something useful with it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=869"
+  },
+  {
+    "text": "They also prevents the scheduler from promoting a thread ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=872"
+  },
+  {
+    "text": "from and E to a P core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=876"
+  },
+  {
+    "text": "You are also wasting energy and producing unnecessary heat, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=879"
+  },
+  {
+    "text": "eating away your thermal headroom. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=883"
+  },
+  {
+    "text": "Second, the definition of the yield function is loose ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=888"
+  },
+  {
+    "text": "across platforms and even OSes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=891"
+  },
+  {
+    "text": "On Apple platforms, it means, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=894"
+  },
+  {
+    "text": "\"try to cede the core I'm running on ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=896"
+  },
+  {
+    "text": "to any other thread on the system, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=898"
+  },
+  {
+    "text": "anything else, whatever their priority is.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=900"
+  },
+  {
+    "text": "It effectively tanks the current thread priority to zero. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=904"
+  },
+  {
+    "text": "A yield also has a system-defined duration. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=908"
+  },
+  {
+    "text": "It may be very long -- up to 10 milliseconds. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=911"
+  },
+  {
+    "text": "Third, calls to sleep are discouraged as well. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=916"
+  },
+  {
+    "text": "Waiting for a specific event is much more efficient. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=920"
+  },
+  {
+    "text": "Also, note on Apple platforms, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=924"
+  },
+  {
+    "text": "sleep(0) has a no meaning and that call is even discarded. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=926"
+  },
+  {
+    "text": "Those patterns are generally a sign ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=931"
+  },
+  {
+    "text": "a fundamental scheduling error happened in the first place. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=933"
+  },
+  {
+    "text": "Instead, wait on explicit signals ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=938"
+  },
+  {
+    "text": "with a semaphore or a conditional variable. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=940"
+  },
+  {
+    "text": "Final guideline: scale the thread count ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=945"
+  },
+  {
+    "text": "to match the CPU core count. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=948"
+  },
+  {
+    "text": "Avoid recreating new thread pools in each framework ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=951"
+  },
+  {
+    "text": "or middleware you are using. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=954"
+  },
+  {
+    "text": "Do not scale your thread count based on your workload either. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=957"
+  },
+  {
+    "text": "If your workload increases dramatically, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=961"
+  },
+  {
+    "text": "so will your thread count. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=963"
+  },
+  {
+    "text": "Instead, query CPU information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=966"
+  },
+  {
+    "text": "to size your thread pool appropriately, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=969"
+  },
+  {
+    "text": "and maximize parallelization opportunities ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=971"
+  },
+  {
+    "text": "for the current system. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=973"
+  },
+  {
+    "text": "Let's see how to query this information. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=976"
+  },
+  {
+    "text": "Starting with macOS Monterey and iOS 15, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=980"
+  },
+  {
+    "text": "you can query advanced details about the CPU layout ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=983"
+  },
+  {
+    "text": "with the sysctl interface. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=986"
+  },
+  {
+    "text": "In addition to get an overall count of all CPU cores, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=989"
+  },
+  {
+    "text": "you can now query how many types of cores a machine has ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=993"
+  },
+  {
+    "text": "with nperflevels. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=998"
+  },
+  {
+    "text": "On M1, we have two types of cores: P and E. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1000"
+  },
+  {
+    "text": "Use this range to query data per core type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1004"
+  },
+  {
+    "text": "zero being the most performant. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1008"
+  },
+  {
+    "text": "For example, perflevel{N}.logicalcpu ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1011"
+  },
+  {
+    "text": "tells how many P cores the current CPU has. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1016"
+  },
+  {
+    "text": "This is just an overview. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1020"
+  },
+  {
+    "text": "You can also query many other details, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1022"
+  },
+  {
+    "text": "like how many cores share the same L2. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1024"
+  },
+  {
+    "text": "For more details, refer to the sysctl man page, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1028"
+  },
+  {
+    "text": "or the documentation webpage. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1032"
+  },
+  {
+    "text": "When profiling your CPU usage, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1036"
+  },
+  {
+    "text": "two instruments tracks are very useful. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1038"
+  },
+  {
+    "text": "They are available in the Game Performance template. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1041"
+  },
+  {
+    "text": "The first one, System Load, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1045"
+  },
+  {
+    "text": "gives the number of active threads per CPU core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1048"
+  },
+  {
+    "text": "The second one is Thread State Trace. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1052"
+  },
+  {
+    "text": "By default, the detail pane shows the amount ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1056"
+  },
+  {
+    "text": "of thread state changes and their duration per process. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1059"
+  },
+  {
+    "text": "It can be changed to the Context Switches view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1064"
+  },
+  {
+    "text": "This will give you a count of context switches per process ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1069"
+  },
+  {
+    "text": "in the selected time range. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1073"
+  },
+  {
+    "text": "Context switches count is a useful metric to measure ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1075"
+  },
+  {
+    "text": "an app's scheduling efficiency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1079"
+  },
+  {
+    "text": "Let's close on this section. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1083"
+  },
+  {
+    "text": "By following those guidelines, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1086"
+  },
+  {
+    "text": "you will make the most out of the CPU ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1088"
+  },
+  {
+    "text": "and streamline what the scheduler has to do. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1090"
+  },
+  {
+    "text": "Compacting tiny, tiny jobs into longer running ones ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1094"
+  },
+  {
+    "text": "increases the benefits of microarchitectural features, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1098"
+  },
+  {
+    "text": "like caches, prefetchers, and predictors. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1101"
+  },
+  {
+    "text": "Processing more jobs at once means less interrupt latency ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1105"
+  },
+  {
+    "text": "and context switches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1109"
+  },
+  {
+    "text": "An appropriately scaled thread pool makes it easier ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1111"
+  },
+  {
+    "text": "for the scheduler to rebalance work between E and P cores. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1114"
+  },
+  {
+    "text": "A key take-away for efficiency and performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1119"
+  },
+  {
+    "text": "is to minimize the frequency ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1122"
+  },
+  {
+    "text": "at which your workload is going wide and narrow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1123"
+  },
+  {
+    "text": "Let's now dive into which API blocks you can leverage ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1129"
+  },
+  {
+    "text": "while applying those guidelines. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1132"
+  },
+  {
+    "text": "In this section, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1135"
+  },
+  {
+    "text": "we'll cover prioritization and scheduling policies, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1136"
+  },
+  {
+    "text": "synchronization primitives, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1140"
+  },
+  {
+    "text": "and memory considerations when multithreading. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1142"
+  },
+  {
+    "text": "But first, let's start by having a sneak peek at GCD. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1148"
+  },
+  {
+    "text": "If you don't have a job manager, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1153"
+  },
+  {
+    "text": "or if it doesn't reach the high performance you are aiming for, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1155"
+  },
+  {
+    "text": "GCD is a fantastic choice. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1159"
+  },
+  {
+    "text": "It is a general-purpose job manager using job stealing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1163"
+  },
+  {
+    "text": "It is available on all Apple platforms and Linux, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1168"
+  },
+  {
+    "text": "and it is open source. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1172"
+  },
+  {
+    "text": "This API is highly optimized. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1175"
+  },
+  {
+    "text": "First, it already follows all the best practices for you. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1178"
+  },
+  {
+    "text": "Second, it is integrated in the XNU kernel. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1182"
+  },
+  {
+    "text": "That means GCD may keep track of internal details for you, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1187"
+  },
+  {
+    "text": "like the heat dissipation capacity of the current machine, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1191"
+  },
+  {
+    "text": "its P/E core ratio, the current thermal pressure ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1194"
+  },
+  {
+    "text": "and so on. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1198"
+  },
+  {
+    "text": "Its interface relies on serial and concurrent dispatch queues. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1201"
+  },
+  {
+    "text": "You can enqueue jobs in them with varying priorities. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1205"
+  },
+  {
+    "text": "Internally, each dispatch queue leverages a variable amount ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1211"
+  },
+  {
+    "text": "of threads from a private thread pool. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1214"
+  },
+  {
+    "text": "That number depends on the type of queue and job properties. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1218"
+  },
+  {
+    "text": "This internal thread pool is shared for the entire process. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1224"
+  },
+  {
+    "text": "That means in a given process, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1229"
+  },
+  {
+    "text": "multiple libraries may use GCD without recreating a new pool. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1231"
+  },
+  {
+    "text": "GCD offers many features. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1236"
+  },
+  {
+    "text": "Here we'll quickly review just two functions ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1239"
+  },
+  {
+    "text": "from the concurrent dispatch queues, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1242"
+  },
+  {
+    "text": "just to get a sense of how it works. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1244"
+  },
+  {
+    "text": "The first one, dispatch_async, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1247"
+  },
+  {
+    "text": "allows you to enqueue a job made of a function pointer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1250"
+  },
+  {
+    "text": "and a data pointer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1253"
+  },
+  {
+    "text": "When starting a job, the concurrent queue ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1255"
+  },
+  {
+    "text": "may leverage an additional thread if the next job in line ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1257"
+  },
+  {
+    "text": "is also ready to be processed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1261"
+  },
+  {
+    "text": "That is a great option ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1264"
+  },
+  {
+    "text": "for typical asynchronous independent jobs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1265"
+  },
+  {
+    "text": "But not so much for massively parallel problems. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1269"
+  },
+  {
+    "text": "In that case, there is dispatch_apply. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1273"
+  },
+  {
+    "text": "That one will leverage many threads right from the start, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1278"
+  },
+  {
+    "text": "without overloading GCD's thread manager. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1282"
+  },
+  {
+    "text": "We have seen several pro apps increasing their performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1285"
+  },
+  {
+    "text": "by migrating a parallel for to using dispatch_apply. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1289"
+  },
+  {
+    "text": "That was just a quick overview of GCD. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1296"
+  },
+  {
+    "text": "To learn more about it and which patterns to avoid, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1299"
+  },
+  {
+    "text": "refer to those two WWDC sessions.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1302"
+  },
+  {
+    "text": "Let's now switch to custom job managers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1309"
+  },
+  {
+    "text": "We'll cover the most important points ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1313"
+  },
+  {
+    "text": "when manipulating threads directly ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1315"
+  },
+  {
+    "text": "and synchronizing them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1317"
+  },
+  {
+    "text": "Let's begin with prioritization. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1320"
+  },
+  {
+    "text": "In the previous section, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1323"
+  },
+  {
+    "text": "we reviewed how to increase the CPU efficiency ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1325"
+  },
+  {
+    "text": "when submitting jobs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1328"
+  },
+  {
+    "text": "But so far, we had not mentioned that all jobs are not equal. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1330"
+  },
+  {
+    "text": "Some are time-critical, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1336"
+  },
+  {
+    "text": "their result is needed as soon as possible. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1338"
+  },
+  {
+    "text": "And some other will only be required ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1341"
+  },
+  {
+    "text": "in the next frame or two. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1343"
+  },
+  {
+    "text": "So it is necessary to convey a sense of importance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1345"
+  },
+  {
+    "text": "when processing your jobs to give more resources ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1349"
+  },
+  {
+    "text": "to the more important ones. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1352"
+  },
+  {
+    "text": "That can be done by prioritizing your threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1356"
+  },
+  {
+    "text": "Setting the right thread priorities also informs ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1360"
+  },
+  {
+    "text": "the system your game is more important ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1363"
+  },
+  {
+    "text": "than background activity. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1365"
+  },
+  {
+    "text": "This can be achieved by setting a thread ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1368"
+  },
+  {
+    "text": "with either a raw CPU priority value or a QoS class. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1370"
+  },
+  {
+    "text": "Both concepts are related, yet slightly different. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1377"
+  },
+  {
+    "text": "A raw CPU priority is an integer value ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1382"
+  },
+  {
+    "text": "telling how important computational throughput is. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1385"
+  },
+  {
+    "text": "On Apple platforms, contrary to Linux, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1389"
+  },
+  {
+    "text": "this is an ascending value -- the higher, the more important. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1392"
+  },
+  {
+    "text": "This CPU priority also hints -- among other factors -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1397"
+  },
+  {
+    "text": "at whether a thread should run on a P or E core. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1401"
+  },
+  {
+    "text": "Now, this CPU priority doesn't affect ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1407"
+  },
+  {
+    "text": "the rest of system resources ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1410"
+  },
+  {
+    "text": "since it doesn't give any intention ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1412"
+  },
+  {
+    "text": "about what the thread is doing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1414"
+  },
+  {
+    "text": "Threads can instead be prioritized ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1417"
+  },
+  {
+    "text": "with Quality of Service -- QoS for short. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1420"
+  },
+  {
+    "text": "QoS has been designed to attach semantics to threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1425"
+  },
+  {
+    "text": "This intention greatly helps the scheduler ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1429"
+  },
+  {
+    "text": "to make intelligent decisions about when to execute tasks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1432"
+  },
+  {
+    "text": "and makes the OS more responsive. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1436"
+  },
+  {
+    "text": "For example, a lower importance task ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1439"
+  },
+  {
+    "text": "may be slightly deferred in time in order to save energy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1442"
+  },
+  {
+    "text": "It also allows to prioritize system resources access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1446"
+  },
+  {
+    "text": "like network, disk access. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1450"
+  },
+  {
+    "text": "It also provides thresholds for timer coalescing -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1453"
+  },
+  {
+    "text": "an energy-saving feature. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1456"
+  },
+  {
+    "text": "QoS classes also include a CPU priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1459"
+  },
+  {
+    "text": "There are five QoS classes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1465"
+  },
+  {
+    "text": "going from QOS_CLASS_BACKGROUND, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1467"
+  },
+  {
+    "text": "the least important one, to QOS_CLASS_USER_INTERACTIVE, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1470"
+  },
+  {
+    "text": "the highest one. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1474"
+  },
+  {
+    "text": "Each includes a default CPU priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1476"
+  },
+  {
+    "text": "Optionally, you may slightly downgrade it ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1480"
+  },
+  {
+    "text": "within a limited range. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1483"
+  },
+  {
+    "text": "This is useful if you want to finely tweak the CPU priority ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1486"
+  },
+  {
+    "text": "for several threads opting into the same QoS class. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1489"
+  },
+  {
+    "text": "Note to be very careful with the Background class -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1494"
+  },
+  {
+    "text": "threads using it may not run at all for a very long time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1498"
+  },
+  {
+    "text": "So overall, games use CPU priorities ranging from 5 to 47. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1503"
+  },
+  {
+    "text": "Let's see how that's done in practice. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1510"
+  },
+  {
+    "text": "First, you need to allocate and initialize ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1516"
+  },
+  {
+    "text": "the pthread attributes with default values. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1518"
+  },
+  {
+    "text": "You then set the required QoS class ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1523"
+  },
+  {
+    "text": "and then pass those attributes to the pthread_create function. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1527"
+  },
+  {
+    "text": "Finish by destroying the attributes structure. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1532"
+  },
+  {
+    "text": "You can also set a QoS class to an already existing thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1536"
+  },
+  {
+    "text": "As an example, that function affects the calling thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1540"
+  },
+  {
+    "text": "Note here, we used an offset of -5, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1545"
+  },
+  {
+    "text": "downgrading the class CPU priority from 47 to 42. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1549"
+  },
+  {
+    "text": "Note you can see the np suffix in the function names. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1554"
+  },
+  {
+    "text": "That stands for \"nonportable\"; it's a naming convention ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1557"
+  },
+  {
+    "text": "used for functions exclusive to Apple platforms. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1561"
+  },
+  {
+    "text": "Finally, beware that if instead of using those functions, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1565"
+  },
+  {
+    "text": "you directly set a raw CPU priority value, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1570"
+  },
+  {
+    "text": "you opt out of QoS for that thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1574"
+  },
+  {
+    "text": "That is permanent, and you cannot opt back in QoS ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1577"
+  },
+  {
+    "text": "for that thread afterwards. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1581"
+  },
+  {
+    "text": "iOS and macOS deal with many processes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1585"
+  },
+  {
+    "text": "user-facing or running in the background. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1589"
+  },
+  {
+    "text": "In some cases, the system may become overloaded. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1592"
+  },
+  {
+    "text": "If that happens, the kernel needs a way ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1596"
+  },
+  {
+    "text": "to ensure all threads get a chance to run at some point. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1600"
+  },
+  {
+    "text": "That is done with priority decay. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1604"
+  },
+  {
+    "text": "In this special case, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1607"
+  },
+  {
+    "text": "the kernel slowly lowers thread priorities over time; ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1609"
+  },
+  {
+    "text": "all threads then have a chance to run. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1614"
+  },
+  {
+    "text": "Priority decay may be problematic ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1618"
+  },
+  {
+    "text": "in very special cases. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1621"
+  },
+  {
+    "text": "Typically, games have a couple of highly critical threads, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1623"
+  },
+  {
+    "text": "like the main thread and the render thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1626"
+  },
+  {
+    "text": "If the render thread gets preempted, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1629"
+  },
+  {
+    "text": "you may miss a presentation window, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1632"
+  },
+  {
+    "text": "and the game will stutter. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1634"
+  },
+  {
+    "text": "In those cases, you can opt out of priority decay ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1636"
+  },
+  {
+    "text": "with scheduling policies. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1640"
+  },
+  {
+    "text": "By default, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1642"
+  },
+  {
+    "text": "threads a created with the SCHED_OTHER policy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1644"
+  },
+  {
+    "text": "This is a time-sharing policy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1649"
+  },
+  {
+    "text": "Threads using it may be subject to priority decay. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1651"
+  },
+  {
+    "text": "It is also compatible with QoS classes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1656"
+  },
+  {
+    "text": "we presented before. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1658"
+  },
+  {
+    "text": "On the other hand, we have the optional SCHED_RR policy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1660"
+  },
+  {
+    "text": "RR stands for \"round-robin\". ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1666"
+  },
+  {
+    "text": "Threads opting into it have a fixed priority ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1669"
+  },
+  {
+    "text": "unaffected by priority decay. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1672"
+  },
+  {
+    "text": "It offers a better consistency in execution latency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1675"
+  },
+  {
+    "text": "Note it is exclusively designed for consistent, periodic, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1680"
+  },
+  {
+    "text": "and high-priority work, for example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1685"
+  },
+  {
+    "text": "a dedicated render thread or per-frame worker threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1689"
+  },
+  {
+    "text": "Threads opting into it must work on a very specific time window, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1694"
+  },
+  {
+    "text": "and not continuously busy the CPU 100 percent of the time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1698"
+  },
+  {
+    "text": "Using this policy may also lead to starvation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1704"
+  },
+  {
+    "text": "in your other threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1706"
+  },
+  {
+    "text": "Finally, this policy is incompatible with QoS classes -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1709"
+  },
+  {
+    "text": "threads will need to use a raw CPU priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1712"
+  },
+  {
+    "text": "Here is a recommended layout for game threads. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1718"
+  },
+  {
+    "text": "First, define within your game ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1721"
+  },
+  {
+    "text": "what is high-, medium- and low-priority ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1725"
+  },
+  {
+    "text": "and what is critical to the user experience. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1728"
+  },
+  {
+    "text": "Splitting work by priority lets the system know ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1731"
+  },
+  {
+    "text": "which parts of your application are the most important. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1734"
+  },
+  {
+    "text": "Use instruments to profile your game, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1739"
+  },
+  {
+    "text": "and only opt into SCHED_RR for the threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1742"
+  },
+  {
+    "text": "which actually need it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1745"
+  },
+  {
+    "text": "Also, never use SCHED_RR for a long duration work, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1747"
+  },
+  {
+    "text": "extending multiple frames. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1751"
+  },
+  {
+    "text": "Rely on QoS in those cases to help the system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1753"
+  },
+  {
+    "text": "balance performance with other processes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1756"
+  },
+  {
+    "text": "Another reason to favor opting into QoS ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1760"
+  },
+  {
+    "text": "is when a thread interacts with Apple frameworks like GCD ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1763"
+  },
+  {
+    "text": "or NSOperationQueues. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1767"
+  },
+  {
+    "text": "Those frameworks try to propagate the QoS class ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1769"
+  },
+  {
+    "text": "from the job issuer into the job itself. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1772"
+  },
+  {
+    "text": "That is obviously ignored if the issuing thread ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1776"
+  },
+  {
+    "text": "has abandoned QoS. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1779"
+  },
+  {
+    "text": "Let's cover one last point related to priorities: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1782"
+  },
+  {
+    "text": "priority inversion. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1786"
+  },
+  {
+    "text": "Priority inversion happens when a high-priority thread stalls, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1790"
+  },
+  {
+    "text": "being blocking by a low-priority thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1794"
+  },
+  {
+    "text": "This typically happens with mutual exclusions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1799"
+  },
+  {
+    "text": "Two threads try to access the same resource, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1802"
+  },
+  {
+    "text": "fighting to get the same lock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1805"
+  },
+  {
+    "text": "In some cases, the system may be able to resolve this inversion ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1807"
+  },
+  {
+    "text": "by boosting the low-priority thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1812"
+  },
+  {
+    "text": "Let's see how that works. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1815"
+  },
+  {
+    "text": "Let's consider two threads -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1817"
+  },
+  {
+    "text": "here are their execution timeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1819"
+  },
+  {
+    "text": "In this example, the blue thread is low priority, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1822"
+  },
+  {
+    "text": "the green one is high priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1825"
+  },
+  {
+    "text": "In the middle, we have the lock timeline, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1829"
+  },
+  {
+    "text": "showing which of the two threads will own that lock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1831"
+  },
+  {
+    "text": "The blue thread starts executing, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1837"
+  },
+  {
+    "text": "and acquires the lock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1839"
+  },
+  {
+    "text": "The green thread also starts. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1841"
+  },
+  {
+    "text": "At this point, the green thread tries to acquire that lock, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1844"
+  },
+  {
+    "text": "currently owned by the blue thread. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1848"
+  },
+  {
+    "text": "The green thread blocks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1851"
+  },
+  {
+    "text": "and waits for that lock to be available again. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1853"
+  },
+  {
+    "text": "In this case, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1857"
+  },
+  {
+    "text": "the runtime can tell which thread owns that lock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1859"
+  },
+  {
+    "text": "Therefore, it can resolve the priority inversion, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1864"
+  },
+  {
+    "text": "by boosting the blue thread's low priority. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1867"
+  },
+  {
+    "text": "Which primitives have the ability to resolve ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1871"
+  },
+  {
+    "text": "priority inversion and which ones don't? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1874"
+  },
+  {
+    "text": "Symmetric primitives with a single known owner can do that, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1879"
+  },
+  {
+    "text": "like pthread_mutex_t or the most efficient, os_unfair_lock. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1883"
+  },
+  {
+    "text": "Asymmetric primitives like pthread conditional variables ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1890"
+  },
+  {
+    "text": "or dispatch_semaphore don't have this ability, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1894"
+  },
+  {
+    "text": "because the runtime doesn't know which thread will signal it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1898"
+  },
+  {
+    "text": "Keep this feature in mind ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1903"
+  },
+  {
+    "text": "when choosing a synchronization primitive, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1905"
+  },
+  {
+    "text": "and favor symmetric primitives for mutually exclusive access. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1907"
+  },
+  {
+    "text": "To finish this section, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1913"
+  },
+  {
+    "text": "let's discuss a couple of recommendations about memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1915"
+  },
+  {
+    "text": "When interacting with Objective-C frameworks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1920"
+  },
+  {
+    "text": "some objects are created as autorelease. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1923"
+  },
+  {
+    "text": "That means they are added to a list, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1927"
+  },
+  {
+    "text": "so that their deallocation only happens at a later time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1930"
+  },
+  {
+    "text": "Autorelease pool blocks are scopes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1936"
+  },
+  {
+    "text": "limiting how long such objects can be kept around. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1938"
+  },
+  {
+    "text": "They effectively help reducing the peak memory footprint ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1942"
+  },
+  {
+    "text": "of your app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1946"
+  },
+  {
+    "text": "It is important to have at least one autorelease pool, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1948"
+  },
+  {
+    "text": "in every thread entry point. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1951"
+  },
+  {
+    "text": "If any thread manipulates autoreleased objects -- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1954"
+  },
+  {
+    "text": "for example, through Metal -- without one, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1957"
+  },
+  {
+    "text": "that will lead to memory leaks. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1960"
+  },
+  {
+    "text": "Autorelease pool blocks can be nested, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1964"
+  },
+  {
+    "text": "to better control when memory is recycled. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1966"
+  },
+  {
+    "text": "The render thread should ideally create a second one ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1970"
+  },
+  {
+    "text": "around the repeated frame rendering routine. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1974"
+  },
+  {
+    "text": "Worker threads should have a second one ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1977"
+  },
+  {
+    "text": "starting on activation and closed as the worker ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1980"
+  },
+  {
+    "text": "gets parked, waiting for more work. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1984"
+  },
+  {
+    "text": "Let's see an example. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1988"
+  },
+  {
+    "text": "This is a worker thread entry point. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1990"
+  },
+  {
+    "text": "It starts right away with an autorelease pool block. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1993"
+  },
+  {
+    "text": "It then waits for jobs to be available. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=1998"
+  },
+  {
+    "text": "When the worker gets activated, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2002"
+  },
+  {
+    "text": "we add a new autorelease pool block, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2004"
+  },
+  {
+    "text": "and keep it around as we process jobs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2007"
+  },
+  {
+    "text": "When the thread is about to wait and be parked, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2010"
+  },
+  {
+    "text": "we exit the nested pool. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2013"
+  },
+  {
+    "text": "To conclude, one quick tip about memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2016"
+  },
+  {
+    "text": "To improve performance, avoid having multiple threads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2020"
+  },
+  {
+    "text": "simultaneously write data located in the same cache line. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2025"
+  },
+  {
+    "text": "That is known as \"false sharing\". ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2029"
+  },
+  {
+    "text": "Multiple reads from the same data structure is fine, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2032"
+  },
+  {
+    "text": "but such competing writes lead to ping-ponging that cache line ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2035"
+  },
+  {
+    "text": "between different hardware caches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2040"
+  },
+  {
+    "text": "On Apple silicon, a cache line is 128 bytes long. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2043"
+  },
+  {
+    "text": "One solution to this is inserting padding ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2048"
+  },
+  {
+    "text": "within your data structure to reduce memory conflicts. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2051"
+  },
+  {
+    "text": "We are done with this last section. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2056"
+  },
+  {
+    "text": "Let's wrap up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2060"
+  },
+  {
+    "text": "We first got an overview of the Apple CPU architecture, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2061"
+  },
+  {
+    "text": "and how its groundbreaking design ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2065"
+  },
+  {
+    "text": "makes it much more efficient. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2067"
+  },
+  {
+    "text": "Then, we got into how to feed the CPU efficiently ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2071"
+  },
+  {
+    "text": "and make it run smoothly ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2075"
+  },
+  {
+    "text": "while reducing the load put on the OS scheduler. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2077"
+  },
+  {
+    "text": "We finally reviewed important API concepts, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2081"
+  },
+  {
+    "text": "such as thread prioritization, scheduling policies, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2084"
+  },
+  {
+    "text": "priority inversion, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2088"
+  },
+  {
+    "text": "finishing with tips about memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2090"
+  },
+  {
+    "text": "Don't forget to regularly profile your game ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2093"
+  },
+  {
+    "text": "with instruments to keep an eye on its workload, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2095"
+  },
+  {
+    "text": "so you can spot performance issues early. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2098"
+  },
+  {
+    "text": "Thank you for your attention.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-110147/?time=2103"
+  }
+]

@@ -1,0 +1,794 @@
+[
+  {
+    "text": "Hi. My name is Charles Circlaeys, and in this talk, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=1"
+  },
+  {
+    "text": "we will dive into scrolling in animation hitches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=5"
+  },
+  {
+    "text": "in the commit phase of the Render Loop.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=8"
+  },
+  {
+    "text": "iOS uses the Render Loop to display your views. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=11"
+  },
+  {
+    "text": "Touch events are sent to your app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=14"
+  },
+  {
+    "text": "it responds by changing its views, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=17"
+  },
+  {
+    "text": "and those views are rendered onto the display by iOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=19"
+  },
+  {
+    "text": "We will focus on finding and fixing animation hitches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=24"
+  },
+  {
+    "text": "in the commit phase of the Render Loop.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=27"
+  },
+  {
+    "text": "To learn about the entire Render Loop and what is a hitch, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=30"
+  },
+  {
+    "text": "please watch the video \"Explore UI Animation Hitches and The Render Loop.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=34"
+  },
+  {
+    "text": "We will first look into what defines a commit transaction...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=40"
+  },
+  {
+    "text": "use Instruments to find hitches...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=44"
+  },
+  {
+    "text": "and we will share our recommendations to avoid commit hitches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=48"
+  },
+  {
+    "text": "Let's start by defining a commit transaction. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=52"
+  },
+  {
+    "text": "Here, we have an example of an apps view hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=54"
+  },
+  {
+    "text": "that is currently waiting for events. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=58"
+  },
+  {
+    "text": "After it receives a touch event, a view responds to it ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=61"
+  },
+  {
+    "text": "and processes the event by changing the background color ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=64"
+  },
+  {
+    "text": "or the frame for some of its subviews.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=67"
+  },
+  {
+    "text": "The system records that these subviews will require a layout or display ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=70"
+  },
+  {
+    "text": "during the next commit transaction.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=74"
+  },
+  {
+    "text": "During the commit transaction, the views that need a display or a layout ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=78"
+  },
+  {
+    "text": "will be updated accordingly by calling drawRect or layoutSubviews.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=82"
+  },
+  {
+    "text": "Let's take a look at the different phases involved during a commit transaction. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=88"
+  },
+  {
+    "text": "There are four steps: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=92"
+  },
+  {
+    "text": "the layout phase, the display phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=94"
+  },
+  {
+    "text": "the prepare phase and, finally, the commit phase.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=96"
+  },
+  {
+    "text": "During the layout phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=101"
+  },
+  {
+    "text": "layoutSubviews will be called for every view that requires layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=102"
+  },
+  {
+    "text": "You can mark a layout needed by changing a views position, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=106"
+  },
+  {
+    "text": "adding or removing views ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=110"
+  },
+  {
+    "text": "or explicitly call setNeedsLayout on the view.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=112"
+  },
+  {
+    "text": "During the display phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=116"
+  },
+  {
+    "text": "drawRect will be called for every view that requires display. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=118"
+  },
+  {
+    "text": "You can indicate that display is needed by adding views to the view hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=121"
+  },
+  {
+    "text": "that override drawRect ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=126"
+  },
+  {
+    "text": "or by calling setNeedsDisplay explicitly. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=128"
+  },
+  {
+    "text": "During the prepare phase, images that haven't been decoded yet ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=131"
+  },
+  {
+    "text": "will be decoded during this step. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=135"
+  },
+  {
+    "text": "This kind of operation can take considerable time ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=138"
+  },
+  {
+    "text": "for large images.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=141"
+  },
+  {
+    "text": "Also, if an image is in a color format that the GPU cannot directly work with, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=143"
+  },
+  {
+    "text": "it will be converted during this step. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=149"
+  },
+  {
+    "text": "This will require the image to be copied ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=151"
+  },
+  {
+    "text": "instead of sending a pointer to the original, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=153"
+  },
+  {
+    "text": "which will cost additional time and memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=156"
+  },
+  {
+    "text": "To learn more about optimizing the images in your app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=160"
+  },
+  {
+    "text": "watch the \"Image and Graphics Best Practices\" video.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=163"
+  },
+  {
+    "text": "Finally, during the commit phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=168"
+  },
+  {
+    "text": "the view hierarchy will be packaged up recursively ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=170"
+  },
+  {
+    "text": "and sent to the render server. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=174"
+  },
+  {
+    "text": "Note that deep view hierarchies will take longer to be packaged up.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=176"
+  },
+  {
+    "text": "Now that we have described the details of a commit transaction, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=181"
+  },
+  {
+    "text": "let's move to our second topic: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=185"
+  },
+  {
+    "text": "find hitches with Instruments. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=187"
+  },
+  {
+    "text": "In Xcode 12, we released a new Instrument template ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=190"
+  },
+  {
+    "text": "to profile hitches in your apps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=193"
+  },
+  {
+    "text": "This will help you to visualize and investigate ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=196"
+  },
+  {
+    "text": "the Render Loop for the hitching frames detected.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=199"
+  },
+  {
+    "text": "Let's look at some hitches in our example app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=203"
+  },
+  {
+    "text": "We will record a trace in Instruments as we scroll in our application.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=206"
+  },
+  {
+    "text": "So here we have a recorded trace of our scrolling performance, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=211"
+  },
+  {
+    "text": "and we can see all the hitches detected.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=214"
+  },
+  {
+    "text": "Let's take a closer look at the hitch 16.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=223"
+  },
+  {
+    "text": "We can see on the left all the tracks corresponding to the Render Loop phases ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=228"
+  },
+  {
+    "text": "required to compose the frames.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=232"
+  },
+  {
+    "text": "The Hitches track shows the hitches and their durations.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=236"
+  },
+  {
+    "text": "The User Events track shows the user events ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=241"
+  },
+  {
+    "text": "as receipted with the hitching frame.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=243"
+  },
+  {
+    "text": "The Commits track shows the commit phases ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=248"
+  },
+  {
+    "text": "and the processes that committed during this phase.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=250"
+  },
+  {
+    "text": "Patrick will talk more about the Renders and GPU tracks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=254"
+  },
+  {
+    "text": "in \"Demystify and Eliminate Hitches in the Render Phase.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=258"
+  },
+  {
+    "text": "The Frame Lifetimes track shows the entire duration ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=262"
+  },
+  {
+    "text": "to compose the hitching frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=265"
+  },
+  {
+    "text": "The Built-in Display track shows all the frames that appeared on display ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=268"
+  },
+  {
+    "text": "along with the VSYNC events.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=272"
+  },
+  {
+    "text": "You can compare the frame lifetime with the beginning of the hitch duration ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=276"
+  },
+  {
+    "text": "to visualize the expected interval ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=279"
+  },
+  {
+    "text": "that the frames should have been ready for display.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=282"
+  },
+  {
+    "text": "This interval is called the Acceptable Latency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=286"
+  },
+  {
+    "text": "All time after that is the hitch duration.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=289"
+  },
+  {
+    "text": "Below the tracks we can see detailed metrics for the hitch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=293"
+  },
+  {
+    "text": "when the Hitches track is selected. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=297"
+  },
+  {
+    "text": "There are many hitches in our demo app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=299"
+  },
+  {
+    "text": "but we have been focusing on the hitch 16 here.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=302"
+  },
+  {
+    "text": "We can see the hitch duration...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=306"
+  },
+  {
+    "text": "the acceptable latency...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=309"
+  },
+  {
+    "text": "and the hitch type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=312"
+  },
+  {
+    "text": "Hitch type is useful to get a hint during which phase the frame was delayed ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=315"
+  },
+  {
+    "text": "and where to start investigating.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=319"
+  },
+  {
+    "text": "For this example, we can see that the selected hitching frame ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=322"
+  },
+  {
+    "text": "was caused by the commit and the GPU phase.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=326"
+  },
+  {
+    "text": "I'd like to find what code is taking too long in the commit phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=331"
+  },
+  {
+    "text": "and thankfully, the animation hitches template ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=334"
+  },
+  {
+    "text": "includes Time Profiler, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=337"
+  },
+  {
+    "text": "so we can see what code is running when this hitch is occurring. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=339"
+  },
+  {
+    "text": "From here, I can select the interval I want to investigate ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=343"
+  },
+  {
+    "text": "and search for the process that was committing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=347"
+  },
+  {
+    "text": "I can select the main thread of this process...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=350"
+  },
+  {
+    "text": "and display its call tree.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=354"
+  },
+  {
+    "text": "Now we are able to analyze which calls might be expensive. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=358"
+  },
+  {
+    "text": "We can see that this call tree is originated from a commit transaction, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=362"
+  },
+  {
+    "text": "and it shows that we spent about ten milliseconds ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=366"
+  },
+  {
+    "text": "inside a method called updateTags ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=368"
+  },
+  {
+    "text": "in our QSTEM CollectionViewCell.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=371"
+  },
+  {
+    "text": "Let's look at what's in this app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=374"
+  },
+  {
+    "text": "It is composed of a common CollectionView, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=377"
+  },
+  {
+    "text": "and each cell shows a photo thumbnail using a UIImageView, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=380"
+  },
+  {
+    "text": "some text using UILabel ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=385"
+  },
+  {
+    "text": "and some tags using a custom TagLabel view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=388"
+  },
+  {
+    "text": "Let's look at the implementation of our QSTEM CollectionViewCell class ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=392"
+  },
+  {
+    "text": "and, more particularly, where this method is being called. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=395"
+  },
+  {
+    "text": "Here we see that we have a property observer on the menuItem.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=400"
+  },
+  {
+    "text": "This property observer will call updateTags in two scenarios: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=405"
+  },
+  {
+    "text": "A valid menuItem was set, or it was set to nil.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=409"
+  },
+  {
+    "text": "In the first scenario, we parse an array of tags that we want to display. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=414"
+  },
+  {
+    "text": "In the second scenario, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=418"
+  },
+  {
+    "text": "we parse an empty array to remove any remaining tags. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=420"
+  },
+  {
+    "text": "Let's take a look inside the updateTags method implementation now. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=423"
+  },
+  {
+    "text": "As expected, we remove all the views from the view hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=428"
+  },
+  {
+    "text": "in case of an empty array of tags. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=432"
+  },
+  {
+    "text": "Otherwise, we create a StackView if needed.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=435"
+  },
+  {
+    "text": "Then we create or reuse existing TagLabels for each tag.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=439"
+  },
+  {
+    "text": "After that, we remove any existing unused TagLabels ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=444"
+  },
+  {
+    "text": "in case that the previous usage of this cell ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=448"
+  },
+  {
+    "text": "had more tags than the new one. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=451"
+  },
+  {
+    "text": "Let's go back to our calling scope and let's look at potential problems ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=453"
+  },
+  {
+    "text": "now that we have a better knowledge of how things are implemented. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=457"
+  },
+  {
+    "text": "The QSTEM CollectionViewCell overrides the prepareForReuse method ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=461"
+  },
+  {
+    "text": "that is called when a cell is dequeued for reuse. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=465"
+  },
+  {
+    "text": "And inside this method, we set the menuItem to nil. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=468"
+  },
+  {
+    "text": "Doing so will cause a second scenario to happen, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=472"
+  },
+  {
+    "text": "which removes all the previous TagLabels from the cell view hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=476"
+  },
+  {
+    "text": "without taking advantage of our reuse implementation logic.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=479"
+  },
+  {
+    "text": "This means that for every dequeued cell, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=484"
+  },
+  {
+    "text": "we will remove all the previous label subviews ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=486"
+  },
+  {
+    "text": "and reinstantiate every single view needed to display all labels.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=489"
+  },
+  {
+    "text": "This is not optimal, and this might be causing the hitch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=495"
+  },
+  {
+    "text": "The solution for this is quite simple. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=499"
+  },
+  {
+    "text": "We don't need to clear our menuItem, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=502"
+  },
+  {
+    "text": "and we can simply remove the prepareForReuse method ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=504"
+  },
+  {
+    "text": "from the implementation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=506"
+  },
+  {
+    "text": "Now when we set the new cells menuItem, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=508"
+  },
+  {
+    "text": "we can take advantage of the reusable logic ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=511"
+  },
+  {
+    "text": "and avoid expensive view hierarchy operations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=514"
+  },
+  {
+    "text": "If we record a new trace after our fix, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=517"
+  },
+  {
+    "text": "we notice that we drastically improve the number of hitches detected ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=520"
+  },
+  {
+    "text": "compared to the first trace. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=523"
+  },
+  {
+    "text": "The Time Profiler in Instruments was very helpful ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=526"
+  },
+  {
+    "text": "for finding what code was taking too long and causing a hitch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=529"
+  },
+  {
+    "text": "To find out more about Time Profiler, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=533"
+  },
+  {
+    "text": "watch the \"Using Time Profiler in Instruments\" video.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=535"
+  },
+  {
+    "text": "After learning how to profile applications with Instruments, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=539"
+  },
+  {
+    "text": "let's discuss some recommendations to avoid hitches in the commit phase.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=542"
+  },
+  {
+    "text": "Rule number one is to keep your views lightweight. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=547"
+  },
+  {
+    "text": "To do so, try to take advantage as much as you can ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=550"
+  },
+  {
+    "text": "from the properties available on CALayer that are GPU accelerated ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=553"
+  },
+  {
+    "text": "and avoid CPU custom drawing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=558"
+  },
+  {
+    "text": "In case that it is justified, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=561"
+  },
+  {
+    "text": "make sure to measure the performance of it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=563"
+  },
+  {
+    "text": "Avoid any empty implementations of drawRect ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=565"
+  },
+  {
+    "text": "as the system must do extra work, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=568"
+  },
+  {
+    "text": "which will require additional time and memory usage ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=570"
+  },
+  {
+    "text": "during the coming transaction. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=573"
+  },
+  {
+    "text": "Try to reuse views as much as possible ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=575"
+  },
+  {
+    "text": "to avoid expensive view hierarchy operations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=577"
+  },
+  {
+    "text": "as adding and removing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=580"
+  },
+  {
+    "text": "Related to removing views, try to take advantage ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=582"
+  },
+  {
+    "text": "of the view property \"hidden\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=585"
+  },
+  {
+    "text": "if you need to stop showing a specific view during an animation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=587"
+  },
+  {
+    "text": "This is a lot cheaper. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=591"
+  },
+  {
+    "text": "Rule number two is to reduce expensive and redundant layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=593"
+  },
+  {
+    "text": "Try to only rely on setNeedsLayout when you need to update your layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=598"
+  },
+  {
+    "text": "layoutIfNeeded will expend the current transaction lifetime ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=602"
+  },
+  {
+    "text": "and can cause hitches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=605"
+  },
+  {
+    "text": "Most of the time, you can wait for the next run loop ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=607"
+  },
+  {
+    "text": "to update your layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=610"
+  },
+  {
+    "text": "Try to use the minimum number of constraints ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=611"
+  },
+  {
+    "text": "to avoid increasing the complexity for solving this. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=613"
+  },
+  {
+    "text": "Finally, a view shall only invalidate itself or its children, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=617"
+  },
+  {
+    "text": "but not its siblings or its parent view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=621"
+  },
+  {
+    "text": "Otherwise, the view's layout will be recursively invalidated again. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=625"
+  },
+  {
+    "text": "I recommend you to watch the two WWDC talks mentioned below ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=629"
+  },
+  {
+    "text": "to learn more details about performance layout ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=632"
+  },
+  {
+    "text": "and image and graphics best practices.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=635"
+  },
+  {
+    "text": "Now that you understand the commit transaction pipeline, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=638"
+  },
+  {
+    "text": "you can avoid expensive commits, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=641"
+  },
+  {
+    "text": "you can use the new Animation Hitches template in Instruments ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=643"
+  },
+  {
+    "text": "to detect and investigate hitches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=646"
+  },
+  {
+    "text": "You've learned some strategies for preventing commit hitches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=649"
+  },
+  {
+    "text": "such as ensure prepareForReuse does not incur additional work, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=652"
+  },
+  {
+    "text": "keep your view hierarchy shallow and lightweight ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=657"
+  },
+  {
+    "text": "and avoid expensive and redundant layout. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=660"
+  },
+  {
+    "text": "Also, be sure to learn about the next phase of the Render Loop ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=663"
+  },
+  {
+    "text": "in the video \"Demystify and Eliminate Hitches in the Render Phase.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=667"
+  },
+  {
+    "text": "Thank you.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10856/?time=673"
+  }
+]

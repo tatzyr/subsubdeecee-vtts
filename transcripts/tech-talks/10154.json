@@ -1,0 +1,1626 @@
+[
+  {
+    "text": "Hello. My name is Steve, and I’m an engineer at Apple. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1"
+  },
+  {
+    "text": "Hi. I’m Paul. I’m also an engineer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=5"
+  },
+  {
+    "text": "In this video, we are going to walk you through a deep dive ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=9"
+  },
+  {
+    "text": "into one of the new aspects of Core ML, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=12"
+  },
+  {
+    "text": "converting PyTorch models to Core ML.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=15"
+  },
+  {
+    "text": "At WWDC 2020, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=19"
+  },
+  {
+    "text": "we announced an overhaul to Core ML converters ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=22"
+  },
+  {
+    "text": "that improved many aspects of the conversion process.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=26"
+  },
+  {
+    "text": "We’ve expanded support for the libraries ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=31"
+  },
+  {
+    "text": "most commonly used by the deep learning community. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=33"
+  },
+  {
+    "text": "We’ve redesigned the converter architecture ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=37"
+  },
+  {
+    "text": "to improve user experience, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=39"
+  },
+  {
+    "text": "leveraging a new in-memory representation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=41"
+  },
+  {
+    "text": "And we’ve unified the API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=45"
+  },
+  {
+    "text": "so there’s a single call to invoke conversion ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=47"
+  },
+  {
+    "text": "from any model source. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=49"
+  },
+  {
+    "text": "If you haven’t already seen it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=51"
+  },
+  {
+    "text": "I definitely recommend you check out the video ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=53"
+  },
+  {
+    "text": "that goes into the details of this new converter architecture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=55"
+  },
+  {
+    "text": "But in this video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=61"
+  },
+  {
+    "text": "I’m going to focus on model conversion, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=62"
+  },
+  {
+    "text": "starting with a model built in the PyTorch deep learning framework.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=65"
+  },
+  {
+    "text": "So maybe you’re an ML engineer who’s been hard at work ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=70"
+  },
+  {
+    "text": "training a model using PyTorch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=73"
+  },
+  {
+    "text": "Or maybe you’re an app developer who’s found a killer PyTorch model online ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=75"
+  },
+  {
+    "text": "and now you want to drop that model into your app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=80"
+  },
+  {
+    "text": "Now the question is ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=84"
+  },
+  {
+    "text": "how do you convert that PyTorch model into a Core ML model? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=86"
+  },
+  {
+    "text": "Well, the old Core ML converter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=91"
+  },
+  {
+    "text": "required you to export your model to ONNX as a step in the process. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=93"
+  },
+  {
+    "text": "And if you’ve used that converter, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=98"
+  },
+  {
+    "text": "you might have run into some of its limitations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=100"
+  },
+  {
+    "text": "ONNX is an open standard, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=103"
+  },
+  {
+    "text": "and so it can be slow to evolve and introduce new features. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=105"
+  },
+  {
+    "text": "Compounding that, ML frameworks like PyTorch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=109"
+  },
+  {
+    "text": "need time to add support for exporting their latest model features to ONNX. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=112"
+  },
+  {
+    "text": "So with the old converter, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=118"
+  },
+  {
+    "text": "you might have found yourself with a PyTorch model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=120"
+  },
+  {
+    "text": "that you couldn’t export to ONNX, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=122"
+  },
+  {
+    "text": "blocking its conversion to Core ML. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=125"
+  },
+  {
+    "text": "Well, removing this extra dependency ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=128"
+  },
+  {
+    "text": "is just one of the things that’s changed in the new Core ML converter.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=131"
+  },
+  {
+    "text": "So in this video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=137"
+  },
+  {
+    "text": "we’ll dig into the details of the brand-new PyTorch model conversion path. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=138"
+  },
+  {
+    "text": "We’ll walk through the different ways of converting ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=143"
+  },
+  {
+    "text": "a PyTorch model into Core ML, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=146"
+  },
+  {
+    "text": "including some real-world conversion examples. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=149"
+  },
+  {
+    "text": "And finally, I’ll share some helpful tips for you to follow ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=152"
+  },
+  {
+    "text": "if you run into trouble along the way.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=156"
+  },
+  {
+    "text": "So now let’s dive into the new conversion process.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=160"
+  },
+  {
+    "text": "Starting with the PyTorch model you want to convert, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=165"
+  },
+  {
+    "text": "you’ll use PyTorch’s JIT module ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=168"
+  },
+  {
+    "text": "to convert to a representation called TorchScript. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=171"
+  },
+  {
+    "text": "If you’re curious, JIT is an acronym that stands for Just In Time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=174"
+  },
+  {
+    "text": "Then with a TorchScript model in hand, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=180"
+  },
+  {
+    "text": "you’ll invoke the new Core ML converter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=182"
+  },
+  {
+    "text": "to generate an ML model which you can drop into your app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=185"
+  },
+  {
+    "text": "Later in the video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=189"
+  },
+  {
+    "text": "I’ll dig into what that TorchScript conversion process looks like. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=191"
+  },
+  {
+    "text": "But now let’s look at how the new Core ML converter works. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=194"
+  },
+  {
+    "text": "The converter is written in Python, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=200"
+  },
+  {
+    "text": "and invoking it only takes a couple lines of code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=202"
+  },
+  {
+    "text": "You simply provide it with a model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=205"
+  },
+  {
+    "text": "which can either be a TorchScript object ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=208"
+  },
+  {
+    "text": "or the path to one saved on disk, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=210"
+  },
+  {
+    "text": "and a description of the inputs to the model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=213"
+  },
+  {
+    "text": "You can also include some information about the outputs of the model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=216"
+  },
+  {
+    "text": "but that’s optional. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=219"
+  },
+  {
+    "text": "The converter works by iterating over the operations in the TorchScript graph ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=222"
+  },
+  {
+    "text": "and converting them one by one to their Core ML equivalent. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=227"
+  },
+  {
+    "text": "Sometimes one TorchScript operation might get converted ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=231"
+  },
+  {
+    "text": "into multiple Core ML operations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=235"
+  },
+  {
+    "text": "Other times, the graph optimization pass might detect a known pattern ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=237"
+  },
+  {
+    "text": "and fuse several operations into one.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=242"
+  },
+  {
+    "text": "Now, sometimes a model might include a custom operation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=249"
+  },
+  {
+    "text": "that the converter doesn’t understand. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=252"
+  },
+  {
+    "text": "But that’s okay. The converter is designed to be extensible, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=254"
+  },
+  {
+    "text": "so it’s easy to add definitions for new operations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=258"
+  },
+  {
+    "text": "In many cases, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=262"
+  },
+  {
+    "text": "you can express that operation as a combination of existing ones, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=263"
+  },
+  {
+    "text": "which we call a \"composite op.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=267"
+  },
+  {
+    "text": "But if that isn’t sufficient, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=269"
+  },
+  {
+    "text": "you can also write a custom Swift implementation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=271"
+  },
+  {
+    "text": "and target that during conversion. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=274"
+  },
+  {
+    "text": "I won’t get into the details of how to do that in this video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=276"
+  },
+  {
+    "text": "but please check out our online resources for examples and walk-throughs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=280"
+  },
+  {
+    "text": "Now that I’ve given an overview of the whole conversion process, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=285"
+  },
+  {
+    "text": "it’s time to circle back ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=289"
+  },
+  {
+    "text": "and dig into how to get a TorchScript model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=291"
+  },
+  {
+    "text": "from your PyTorch model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=293"
+  },
+  {
+    "text": "There are two ways PyTorch can do this. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=296"
+  },
+  {
+    "text": "The first is called \"tracing,\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=298"
+  },
+  {
+    "text": "and the second is called \"scripting.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=300"
+  },
+  {
+    "text": "Let’s first look at what it means to trace a model.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=305"
+  },
+  {
+    "text": "Tracing is done by invoking the trace method of PyTorch’s JIT module, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=310"
+  },
+  {
+    "text": "as shown in this code snippet. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=315"
+  },
+  {
+    "text": "We pass in a PyTorch model along with an example input, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=317"
+  },
+  {
+    "text": "and it returns the model and TorchScript representation. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=321"
+  },
+  {
+    "text": "So what does this call actually do? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=326"
+  },
+  {
+    "text": "The active tracing runs an example input ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=329"
+  },
+  {
+    "text": "through a forward pass of the model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=332"
+  },
+  {
+    "text": "and captures the operations that are invoked ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=334"
+  },
+  {
+    "text": "as the input makes its way through the model’s layers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=337"
+  },
+  {
+    "text": "The collection of all those operations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=341"
+  },
+  {
+    "text": "then becomes the TorchScript representation of the model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=344"
+  },
+  {
+    "text": "Now when you’re picking an example input to trace with, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=349"
+  },
+  {
+    "text": "the best thing to use is data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=352"
+  },
+  {
+    "text": "similar to what the model will see during normal use. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=353"
+  },
+  {
+    "text": "For instance, you could use one sample of validation data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=357"
+  },
+  {
+    "text": "or data captured the same way your app will present it to the model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=361"
+  },
+  {
+    "text": "You could also use random data. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=366"
+  },
+  {
+    "text": "If you do, make sure that the range of the input values ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=369"
+  },
+  {
+    "text": "and the shape of the tensor is consistent with what the model expects. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=372"
+  },
+  {
+    "text": "Let’s make all of this a little more concrete ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=378"
+  },
+  {
+    "text": "by working through an example. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=380"
+  },
+  {
+    "text": "I’d like to introduce my colleague Paul, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=382"
+  },
+  {
+    "text": "who will take you through the full process of converting a segmentation model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=385"
+  },
+  {
+    "text": "from PyTorch to Core ML. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=389"
+  },
+  {
+    "text": "Thanks, Steve. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=391"
+  },
+  {
+    "text": "Suppose I have a segmentation model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=393"
+  },
+  {
+    "text": "and I would like it to run on-device. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=395"
+  },
+  {
+    "text": "If you aren’t familiar with what a segmentation model does, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=398"
+  },
+  {
+    "text": "it takes an image and assigns a class probability score ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=401"
+  },
+  {
+    "text": "to each pixel of that image. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=405"
+  },
+  {
+    "text": "So how would I get my model running on-device? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=408"
+  },
+  {
+    "text": "I’m going to convert my model into a Core ML model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=411"
+  },
+  {
+    "text": "To do this, I first trace my PyTorch model to turn it into TorchScript form ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=415"
+  },
+  {
+    "text": "using PyTorch’s JIT tracing module. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=420"
+  },
+  {
+    "text": "Then I use the new Core ML converter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=424"
+  },
+  {
+    "text": "to convert the TorchScript model into a Core ML model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=427"
+  },
+  {
+    "text": "Finally, I will show off how the resulting Core ML model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=432"
+  },
+  {
+    "text": "integrates seamlessly into Xcode. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=435"
+  },
+  {
+    "text": "Let’s see what this process looks like in code.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=438"
+  },
+  {
+    "text": "In this Jupyter Notebook, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=443"
+  },
+  {
+    "text": "I will convert my PyTorch segmentation model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=444"
+  },
+  {
+    "text": "mentioned in the slides, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=447"
+  },
+  {
+    "text": "into a Core ML model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=449"
+  },
+  {
+    "text": "If you’d like to try this code for yourself, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=451"
+  },
+  {
+    "text": "it is available in the code snippet associated with this video. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=453"
+  },
+  {
+    "text": "First, I import some dependencies that I will use for this demo.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=458"
+  },
+  {
+    "text": "Next, I load in the ResNet-101 segmentation model from torchvision ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=466"
+  },
+  {
+    "text": "and a sample input: in this case, an image of a dog and cat.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=471"
+  },
+  {
+    "text": "PyTorch models take in tensor objects, not PIL Image objects. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=484"
+  },
+  {
+    "text": "So I convert the image to a tensor with transforms.ToTensor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=490"
+  },
+  {
+    "text": "The model also expects an extra dimension in the tensor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=495"
+  },
+  {
+    "text": "denoting the batch size, so I add that in as well.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=498"
+  },
+  {
+    "text": "As mentioned in the slides, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=506"
+  },
+  {
+    "text": "the Core ML converter accepts a TorchScript model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=508"
+  },
+  {
+    "text": "To obtain this, I use the Torch.JIT module’s trace method, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=512"
+  },
+  {
+    "text": "which converts a PyTorch model to a TorchScript model.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=516"
+  },
+  {
+    "text": "Uh-oh. Tracing has thrown an exception. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=527"
+  },
+  {
+    "text": "As it says in the exception method, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=531"
+  },
+  {
+    "text": "\"Only tensors or tuples of tensors can be output from traced functions.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=533"
+  },
+  {
+    "text": "This is a limitation of PyTorch’s JIT module. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=539"
+  },
+  {
+    "text": "The problem here is that my model is returning a dictionary. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=543"
+  },
+  {
+    "text": "I solve this by wrapping my model in a PyTorch module ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=548"
+  },
+  {
+    "text": "that extracts only the tensor value from the output dictionary. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=552"
+  },
+  {
+    "text": "Here I declare my class wrapper that inherits from PyTorch’s module class.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=558"
+  },
+  {
+    "text": "I define a model attribute which contains ResNet-101, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=566"
+  },
+  {
+    "text": "as used above. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=570"
+  },
+  {
+    "text": "In the forward method of this wrapping class, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=572"
+  },
+  {
+    "text": "I index the returned dictionary with the key named \"out\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=575"
+  },
+  {
+    "text": "and return just the tensor output.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=579"
+  },
+  {
+    "text": "Now that the model returns a tensor and not a dictionary, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=583"
+  },
+  {
+    "text": "it will successfully trace.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=586"
+  },
+  {
+    "text": "It is now time for me to utilize the new Core ML converter. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=597"
+  },
+  {
+    "text": "First, I need to define my input and its preprocessing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=601"
+  },
+  {
+    "text": "I define my input as an ImageType ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=609"
+  },
+  {
+    "text": "with preprocessing that normalizes the image with ImageNet statistics ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=611"
+  },
+  {
+    "text": "and scales its values down to lie between 0 and 1. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=616"
+  },
+  {
+    "text": "This preprocessing is what ResNet-101 expects.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=620"
+  },
+  {
+    "text": "Next, I simply call the Core ML tools convert method, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=626"
+  },
+  {
+    "text": "passing in the TorchScript model and the input definition.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=630"
+  },
+  {
+    "text": "After conversion, I’ll set the metadata of my model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=643"
+  },
+  {
+    "text": "so it can be understood by other programs such as Xcode. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=647"
+  },
+  {
+    "text": "I set the type of my model to segmentation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=651"
+  },
+  {
+    "text": "and enumerate the classes in my model’s order.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=654"
+  },
+  {
+    "text": "So, does my converted model work? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=665"
+  },
+  {
+    "text": "I can easily visualize my model’s output through Xcode. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=669"
+  },
+  {
+    "text": "First, I’ll save my model.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=673"
+  },
+  {
+    "text": "Now all I need to do is click on my saved model in Finder, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=680"
+  },
+  {
+    "text": "and it will be opened by Xcode. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=684"
+  },
+  {
+    "text": "Here I can view its metadata, including input shapes and types.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=687"
+  },
+  {
+    "text": "To visualize the model’s output, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=693"
+  },
+  {
+    "text": "I’ll go to the Preview tab ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=695"
+  },
+  {
+    "text": "and drag in my sample image of a dog and cat.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=698"
+  },
+  {
+    "text": "Looks like my model is successfully segmenting the pets in this image.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=703"
+  },
+  {
+    "text": "ResNet-101 was able to be traced, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=709"
+  },
+  {
+    "text": "but some models cannot just be traced. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=712"
+  },
+  {
+    "text": "To explain how to get these other models to convert, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=715"
+  },
+  {
+    "text": "I’ll kick it back to Steve.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=718"
+  },
+  {
+    "text": "Thanks, Paul. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=722"
+  },
+  {
+    "text": "Okay. I think we have a pretty good handle on how conversion works using tracing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=723"
+  },
+  {
+    "text": "But PyTorch offers a second way to get TorchScript. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=728"
+  },
+  {
+    "text": "So now let’s dig into that one, which is called \"scripting.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=731"
+  },
+  {
+    "text": "Scripting works by taking a PyTorch model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=735"
+  },
+  {
+    "text": "and directly compiling into TorchScript operations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=739"
+  },
+  {
+    "text": "Remember, tracing captured the model as data flowed through it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=742"
+  },
+  {
+    "text": "But like tracing, scripting a model is also really easy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=747"
+  },
+  {
+    "text": "Simply invoke the script method of PyTorch’s JIT module ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=751"
+  },
+  {
+    "text": "and provide it with a model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=756"
+  },
+  {
+    "text": "Okay. I’ve shown you two different ways to get a TorchScript representation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=759"
+  },
+  {
+    "text": "and you might be wondering when to use one versus the other. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=764"
+  },
+  {
+    "text": "One case where you must use scripting is if the model includes control flow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=768"
+  },
+  {
+    "text": "Let’s look at an example to understand why. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=773"
+  },
+  {
+    "text": "Here, this model has branches and loops, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=776"
+  },
+  {
+    "text": "and scripting will capture all of it ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=780"
+  },
+  {
+    "text": "because it is directly compiling the model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=782"
+  },
+  {
+    "text": "If we traced the model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=785"
+  },
+  {
+    "text": "what we get is only the path through the model for the given input, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=787"
+  },
+  {
+    "text": "which you can see doesn’t capture the whole model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=791"
+  },
+  {
+    "text": "If you do need to script a model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=795"
+  },
+  {
+    "text": "you’ll usually get the best results ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=798"
+  },
+  {
+    "text": "if you trace as much of the model as possible ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=800"
+  },
+  {
+    "text": "and script only the parts of the model that need it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=803"
+  },
+  {
+    "text": "This is because tracing usually produces a simpler representation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=807"
+  },
+  {
+    "text": "than scripting does. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=811"
+  },
+  {
+    "text": "Let’s see how to apply this idea by looking at some code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=813"
+  },
+  {
+    "text": "In this example, I’ve got a model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=817"
+  },
+  {
+    "text": "that runs some chunk of code a fixed number of times inside a loop. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=819"
+  },
+  {
+    "text": "I’ve isolated the body of the loop ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=824"
+  },
+  {
+    "text": "into something that can easily be traced on its own, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=826"
+  },
+  {
+    "text": "and then I can apply scripting to the model as a whole. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=829"
+  },
+  {
+    "text": "What we’re basically doing is limiting the scripting ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=833"
+  },
+  {
+    "text": "to just the bits of control flow that need it ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=836"
+  },
+  {
+    "text": "and then tracing everything else. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=839"
+  },
+  {
+    "text": "This mixing of tracing and scripting works ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=842"
+  },
+  {
+    "text": "because they both will skip over code ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=844"
+  },
+  {
+    "text": "that’s already been converted to TorchScript.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=846"
+  },
+  {
+    "text": "Now it’s time to go through a concrete example that uses scripting. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=851"
+  },
+  {
+    "text": "I’ll hand it back over to Paul, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=855"
+  },
+  {
+    "text": "who will walk you through converting a language model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=857"
+  },
+  {
+    "text": "Hey there. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=860"
+  },
+  {
+    "text": "Suppose I have a sentence completion model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=862"
+  },
+  {
+    "text": "that I want to convert into a Core ML model so it can run on-device. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=865"
+  },
+  {
+    "text": "For some context, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=870"
+  },
+  {
+    "text": "sentence completion is a task that involves taking a sentence fragment ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=871"
+  },
+  {
+    "text": "and using a model to predict the words that are likely to come after it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=876"
+  },
+  {
+    "text": "So what does this look like in terms of computation steps? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=881"
+  },
+  {
+    "text": "I’ll start with a few words of a sentence fragment ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=885"
+  },
+  {
+    "text": "and pass them through what’s called an encoder ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=888"
+  },
+  {
+    "text": "that translates those words into a representation my model can understand. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=891"
+  },
+  {
+    "text": "In this case, a sequence of integer tokens. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=896"
+  },
+  {
+    "text": "Next, I’ll pass that sequence of tokens into my model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=899"
+  },
+  {
+    "text": "which will predict the next token in the sequence. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=904"
+  },
+  {
+    "text": "I will continue feeding my model the partially constructed sentence, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=907"
+  },
+  {
+    "text": "appending new tokens to the end ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=911"
+  },
+  {
+    "text": "until my model predicts a special end-of-sentence token, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=913"
+  },
+  {
+    "text": "which means my sentence is completed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=917"
+  },
+  {
+    "text": "Now that I have a complete sentence of tokens, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=921"
+  },
+  {
+    "text": "I’ll pass it through a decoder, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=924"
+  },
+  {
+    "text": "which converts the tokens back into words. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=926"
+  },
+  {
+    "text": "The middle part of this diagram, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=930"
+  },
+  {
+    "text": "completing the list of tokens, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=932"
+  },
+  {
+    "text": "is what I will convert into a Core ML model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=934"
+  },
+  {
+    "text": "The encoder and decoder are handled separately. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=938"
+  },
+  {
+    "text": "Let’s make sure we understand what’s going on ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=942"
+  },
+  {
+    "text": "by looking at some pseudo-code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=944"
+  },
+  {
+    "text": "The core of my model is my next token predictor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=947"
+  },
+  {
+    "text": "For this, I will use Hugging Face’s GPT2 model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=951"
+  },
+  {
+    "text": "The predictor takes a list of tokens as inputs ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=955"
+  },
+  {
+    "text": "and gives me a prediction for the next token. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=958"
+  },
+  {
+    "text": "Next, I’ll wrap some control flow around the predictor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=962"
+  },
+  {
+    "text": "to continue until I see the end-of-sentence token.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=966"
+  },
+  {
+    "text": "Inside the loop, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=970"
+  },
+  {
+    "text": "I append the predicted token to the running list ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=972"
+  },
+  {
+    "text": "and use that as the input to my predictor on every loop. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=975"
+  },
+  {
+    "text": "When my predictor returns the end-of-sentence token, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=979"
+  },
+  {
+    "text": "I’ll return the complete sentence for decoding. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=982"
+  },
+  {
+    "text": "Now to see this whole process encode, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=986"
+  },
+  {
+    "text": "let’s dive into the Jupyter Notebook. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=988"
+  },
+  {
+    "text": "In this notebook, I’ll construct a language model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=991"
+  },
+  {
+    "text": "that takes a sentence fragment and completes the sentence. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=994"
+  },
+  {
+    "text": "Let’s get the imports out of the way.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=998"
+  },
+  {
+    "text": "Here is the code for my model.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1005"
+  },
+  {
+    "text": "My model inherits from torch.Module ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1013"
+  },
+  {
+    "text": "and contains attributes for the end-of-sentence token, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1016"
+  },
+  {
+    "text": "the next_token_predictor model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1019"
+  },
+  {
+    "text": "and the default token denoting the beginning of a sentence. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1022"
+  },
+  {
+    "text": "In its forward method, just like in the slides, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1026"
+  },
+  {
+    "text": "I’ve written a loop body that takes a list of tokens ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1029"
+  },
+  {
+    "text": "and predicts the next one. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1032"
+  },
+  {
+    "text": "The loop continues until the end-of-sentence token is generated. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1034"
+  },
+  {
+    "text": "When this happens, we will return the sentence.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1039"
+  },
+  {
+    "text": "As mentioned, my next token predictor will be GPT2, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1044"
+  },
+  {
+    "text": "which will reside in the loop body.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1048"
+  },
+  {
+    "text": "I’m going to follow the practice of tracing the loop body ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1053"
+  },
+  {
+    "text": "separate from scripting the whole model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1057"
+  },
+  {
+    "text": "So I’ll run the JIT tracer on only my next token predictor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1059"
+  },
+  {
+    "text": "It takes a list of tokens as inputs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1064"
+  },
+  {
+    "text": "so for tracing, I’ll just pass in a list of random tokens.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1066"
+  },
+  {
+    "text": "I can see that the tracer emitted a warning ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1078"
+  },
+  {
+    "text": "telling me this trace might not generalize to other inputs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1081"
+  },
+  {
+    "text": "Note that this warning is from the PyTorch’s JIT tracer and not Core ML. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1084"
+  },
+  {
+    "text": "It will be explained what’s going on here in the troubleshooting section later, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1090"
+  },
+  {
+    "text": "but for now I’ll ignore this warning since there isn’t actually a problem. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1094"
+  },
+  {
+    "text": "With the bulk of the loop body traced, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1099"
+  },
+  {
+    "text": "I can instantiate my sentence finishing model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1102"
+  },
+  {
+    "text": "and apply the JIT scripter to prepare it for conversion to Core ML.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1104"
+  },
+  {
+    "text": "Now with my TorchScript model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1112"
+  },
+  {
+    "text": "I convert it to a Core ML model just like in the segmentation demo.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1114"
+  },
+  {
+    "text": "Now I’ll see if my model can finish a sentence. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1126"
+  },
+  {
+    "text": "I create a sentence fragment: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1130"
+  },
+  {
+    "text": "in this case, \"The Manhattan Bridge is.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1132"
+  },
+  {
+    "text": "Then I run it through GPT2’s included encoder ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1136"
+  },
+  {
+    "text": "to get the fragment’s encoding, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1139"
+  },
+  {
+    "text": "and then convert that list of tokens into a Torch tensor.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1141"
+  },
+  {
+    "text": "Next, I package up the input from my Core ML model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1152"
+  },
+  {
+    "text": "run said model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1156"
+  },
+  {
+    "text": "and decode the outputs with GPT2’s included decoder.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1157"
+  },
+  {
+    "text": "Nice. The Core ML model was able to complete the sentence. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1174"
+  },
+  {
+    "text": "Looks like it generated a statement about the Manhattan Bridge. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1178"
+  },
+  {
+    "text": "You might run into bumps along the road ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1183"
+  },
+  {
+    "text": "as you trace and script your models to get them into a Core ML format. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1185"
+  },
+  {
+    "text": "I’ll hand it back to Steve to help you along the way.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1190"
+  },
+  {
+    "text": "Before we wrap up, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1195"
+  },
+  {
+    "text": "I want to review the snags we hit when converting PyTorch models to Core ML ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1197"
+  },
+  {
+    "text": "and go over some troubleshooting tips and best practices. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1202"
+  },
+  {
+    "text": "Thinking back to the segmentation demo, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1207"
+  },
+  {
+    "text": "remember we encountered an error during tracing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1209"
+  },
+  {
+    "text": "This was because our model returned a dictionary ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1212"
+  },
+  {
+    "text": "and JIT tracing can only handle tensors or tuples of tensors. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1215"
+  },
+  {
+    "text": "The solution we showed in the demo ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1221"
+  },
+  {
+    "text": "was to create a thin wrapper around the model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1223"
+  },
+  {
+    "text": "that unpacks the model’s native outputs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1226"
+  },
+  {
+    "text": "Remember, in this example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1229"
+  },
+  {
+    "text": "the model returned a dictionary, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1231"
+  },
+  {
+    "text": "so here we’re accessing the dictionary key that represents the inference result ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1233"
+  },
+  {
+    "text": "and returning that tensor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1238"
+  },
+  {
+    "text": "Of course, this idea also works ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1240"
+  },
+  {
+    "text": "if we want to access and return multiple items from the dictionary ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1242"
+  },
+  {
+    "text": "or if we need to unpack other types of containers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1247"
+  },
+  {
+    "text": "Now during the language model demo, we encountered a tracer warning ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1252"
+  },
+  {
+    "text": "that said the trace might not generalize to other inputs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1256"
+  },
+  {
+    "text": "And we see the tracer helpfully print the troublesome line of code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1260"
+  },
+  {
+    "text": "So what’s actually going on? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1265"
+  },
+  {
+    "text": "If we look at the model source code to understand the warning, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1267"
+  },
+  {
+    "text": "we see that the model is slicing one tensor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1270"
+  },
+  {
+    "text": "based on the size of another tensor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1273"
+  },
+  {
+    "text": "Getting the size of a tensor results in a bare Python value-- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1276"
+  },
+  {
+    "text": "in other words, not a PyTorch tensor-- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1280"
+  },
+  {
+    "text": "and the tracer is warning that it can’t trace the math operations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1283"
+  },
+  {
+    "text": "being performed on these bare Python values. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1288"
+  },
+  {
+    "text": "However, in this case ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1291"
+  },
+  {
+    "text": "the tracer is a little too aggressive in emitting this warning, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1293"
+  },
+  {
+    "text": "and there isn’t actually a problem.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1296"
+  },
+  {
+    "text": "A good rule of thumb ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1300"
+  },
+  {
+    "text": "when it comes to tracing code that operates on bare Python values ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1301"
+  },
+  {
+    "text": "is that only built-in Python operations will be captured correctly by the tracer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1305"
+  },
+  {
+    "text": "Here are a few examples to help explain this idea. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1311"
+  },
+  {
+    "text": "Let’s think through these and figure out, based on that rule of thumb, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1315"
+  },
+  {
+    "text": "if they will be traced correctly or not. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1319"
+  },
+  {
+    "text": "The first example is very similar to what we saw during the demo ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1323"
+  },
+  {
+    "text": "and will result in a correct trace ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1327"
+  },
+  {
+    "text": "since a built-in operation, in this case addition, is being applied. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1329"
+  },
+  {
+    "text": "The second example also will trace correctly, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1335"
+  },
+  {
+    "text": "in this case using the modulo operator, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1339"
+  },
+  {
+    "text": "which again is a built-in operation.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1341"
+  },
+  {
+    "text": "But the third example won’t trace correctly. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1345"
+  },
+  {
+    "text": "The JIT tracer doesn’t know what the library function math.sqrt does, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1349"
+  },
+  {
+    "text": "and the traced graph will have a constant value recorded ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1355"
+  },
+  {
+    "text": "instead of the operations to compute the tensor size and square root. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1359"
+  },
+  {
+    "text": "But with a simple fix to the model ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1365"
+  },
+  {
+    "text": "to replace math.sqrt with Python’s built-in power operator, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1367"
+  },
+  {
+    "text": "this will result in a correct trace. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1372"
+  },
+  {
+    "text": "Now let’s look at a case where scripting a model can fail. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1375"
+  },
+  {
+    "text": "This model starts with an empty list ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1379"
+  },
+  {
+    "text": "and successively appends a fixed set of integers to it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1381"
+  },
+  {
+    "text": "Keep in mind this isn’t a terribly useful model. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1385"
+  },
+  {
+    "text": "I’m just using it to illustrate a failure condition. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1388"
+  },
+  {
+    "text": "If I script this model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1392"
+  },
+  {
+    "text": "I’ll get a runtime error that hints at a type mismatch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1393"
+  },
+  {
+    "text": "The JIT scripter needs type information to turn a model into TorchScript ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1398"
+  },
+  {
+    "text": "and does a pretty good job inferring object types from context. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1402"
+  },
+  {
+    "text": "However, there are times when that’s not possible, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1406"
+  },
+  {
+    "text": "and if the scripter can’t figure out an object’s type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1409"
+  },
+  {
+    "text": "it assumes the object is a tensor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1412"
+  },
+  {
+    "text": "In this case, it’s assuming this list is a list of tensors ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1415"
+  },
+  {
+    "text": "while it’s actually being built as a list of integers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1420"
+  },
+  {
+    "text": "So what can I do to help the scripter out? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1424"
+  },
+  {
+    "text": "Well, I can either include meaningful initialization of the variable ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1427"
+  },
+  {
+    "text": "or I can use type annotations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1431"
+  },
+  {
+    "text": "Here, I’ve adjusted the model to show examples of both.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1434"
+  },
+  {
+    "text": "There’s one last thing I want to mention. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1439"
+  },
+  {
+    "text": "You always want to make sure ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1442"
+  },
+  {
+    "text": "your model is in evaluation mode before tracing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1444"
+  },
+  {
+    "text": "This ensures that all the layers are configured for inference ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1448"
+  },
+  {
+    "text": "rather than training. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1452"
+  },
+  {
+    "text": "For most layers, this doesn’t matter. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1453"
+  },
+  {
+    "text": "But, for example, if you have a dropout layer in your model, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1456"
+  },
+  {
+    "text": "setting evaluation mode will make sure it’s disabled. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1459"
+  },
+  {
+    "text": "And when the converter encounters operations that have been disabled, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1463"
+  },
+  {
+    "text": "it will treat them as pass-through operations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1467"
+  },
+  {
+    "text": "We’ve covered a lot of material in this video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1471"
+  },
+  {
+    "text": "but you can find even more information in the links associated with the video, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1474"
+  },
+  {
+    "text": "including the Core ML converter documentation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1478"
+  },
+  {
+    "text": "information about custom op conversion ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1482"
+  },
+  {
+    "text": "and many detailed TorchScript examples. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1485"
+  },
+  {
+    "text": "We’re really excited to provide first-class support ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1489"
+  },
+  {
+    "text": "for converting PyTorch models. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1492"
+  },
+  {
+    "text": "I hope you’ll find that the new Core ML converter ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1494"
+  },
+  {
+    "text": "will enable broader support for your PyTorch models, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1497"
+  },
+  {
+    "text": "empower you to have optimized on-device model execution ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1500"
+  },
+  {
+    "text": "and really provide you with maximum support ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1505"
+  },
+  {
+    "text": "to get your model converted easily. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1507"
+  },
+  {
+    "text": "Thanks for watching.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10154/?time=1510"
+  }
+]

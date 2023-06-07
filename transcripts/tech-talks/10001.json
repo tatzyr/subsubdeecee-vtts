@@ -1,0 +1,918 @@
+[
+  {
+    "text": "Hi, I'm Lionel Lemarié from the GPU software team. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=1"
+  },
+  {
+    "text": "In this session, we're going to use the Metal Counter API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=5"
+  },
+  {
+    "text": "to get precise GPU timings at runtime.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=8"
+  },
+  {
+    "text": "We will cover a few topics. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=12"
+  },
+  {
+    "text": "We'll start with a quick intro of the Metal Counter API.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=14"
+  },
+  {
+    "text": "Then we'll take a brief look at the main features of a typical live profiling HUD.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=19"
+  },
+  {
+    "text": "We'll use the API step-by-step to collect the profiling information.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=25"
+  },
+  {
+    "text": "And we'll conclude by looking at how this data fits into the HUD.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=31"
+  },
+  {
+    "text": "So let's start with a quick intro of the API.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=36"
+  },
+  {
+    "text": "The Metal Counter API is new in iOS 14. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=40"
+  },
+  {
+    "text": "It was available in macOS Catalina and has been extended in macOS Big Sur. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=44"
+  },
+  {
+    "text": "On iOS and macOS with Apple Silicon, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=49"
+  },
+  {
+    "text": "it gives you access to stage boundary timings. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=52"
+  },
+  {
+    "text": "That is, precise start and end times for vertex, fragment and compute passes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=55"
+  },
+  {
+    "text": "On Intel and AMD GPUs, you can get draw boundary timings, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=61"
+  },
+  {
+    "text": "precise GPU timestamps even within individual passes.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=66"
+  },
+  {
+    "text": "Next, let's do a quick recap of the main features of a live profiling HUD.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=72"
+  },
+  {
+    "text": "You'd use a live HUD to track your app's performance at runtime. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=78"
+  },
+  {
+    "text": "It can help you find problem areas that need to be investigated off-line ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=82"
+  },
+  {
+    "text": "in Xcode or Instruments.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=86"
+  },
+  {
+    "text": "You can also use them to tune your resolution ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=88"
+  },
+  {
+    "text": "and quality settings per device, for instance.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=91"
+  },
+  {
+    "text": "As an example, a typical live HUD may look something like this.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=94"
+  },
+  {
+    "text": "Frame times, as a scrolling line chart, to help you catch frame hitches, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=99"
+  },
+  {
+    "text": "stats about your memory usage, resolution and more ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=104"
+  },
+  {
+    "text": "and the timeline of CPU events. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=109"
+  },
+  {
+    "text": "And today, we'll add GPU events to the timeline.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=111"
+  },
+  {
+    "text": "Typically, for your CPU markers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=115"
+  },
+  {
+    "text": "you would instrument your most important functions ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=117"
+  },
+  {
+    "text": "using mach_absolute_time to get the start and end timestamps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=120"
+  },
+  {
+    "text": "A good start with CPU markers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=125"
+  },
+  {
+    "text": "is to put them around your command buffer work-- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=127"
+  },
+  {
+    "text": "a start marker when you create it and an end marker when you commit it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=131"
+  },
+  {
+    "text": "That gives you an overview of the CPU costs of your rendering.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=136"
+  },
+  {
+    "text": "Now we want to add equivalent GPU markers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=141"
+  },
+  {
+    "text": "You may be familiar with the GPU events on the Metal System Trace timeline, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=145"
+  },
+  {
+    "text": "as we're seeing here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=149"
+  },
+  {
+    "text": "On iOS in this example, it shows the different stages ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=151"
+  },
+  {
+    "text": "of the tile-based deferred rendering architecture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=154"
+  },
+  {
+    "text": "Here we see the vertex and fragment processing work.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=157"
+  },
+  {
+    "text": "To do this, the GPU firmware logs the start and end of the vertex stage.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=162"
+  },
+  {
+    "text": "Then it logs the start and end of the fragment stage.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=168"
+  },
+  {
+    "text": "And the Metal System Trace displays the stages on the timeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=172"
+  },
+  {
+    "text": "For immediate mode GPUs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=177"
+  },
+  {
+    "text": "you can log events for groups of draw calls. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=178"
+  },
+  {
+    "text": "For example, you would log the start of rendering object one ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=182"
+  },
+  {
+    "text": "before all of its draw calls ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=185"
+  },
+  {
+    "text": "and then log the start of rendering object two. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=187"
+  },
+  {
+    "text": "And finally, the end of object two. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=190"
+  },
+  {
+    "text": "You then have a timeline that shows ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=193"
+  },
+  {
+    "text": "precisely how long the GPU spends rendering each object.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=194"
+  },
+  {
+    "text": "Now let's use the Metal Counter API to achieve that.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=200"
+  },
+  {
+    "text": "We'll start by checking which counter sampling modes are available. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=205"
+  },
+  {
+    "text": "We need to know whether the GPU should record at the stage boundary, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=208"
+  },
+  {
+    "text": "for vertex, fragments or compute stages, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=212"
+  },
+  {
+    "text": "or if it should record at the draw boundary, as we've just seen.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=215"
+  },
+  {
+    "text": "We simply use the supportsCounterSampling API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=219"
+  },
+  {
+    "text": "to check if the current device supports stage boundary, for a TBDR GPU, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=223"
+  },
+  {
+    "text": "or draw boundary for unlimited mode GPU.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=227"
+  },
+  {
+    "text": "Next we check which counter sets are available on the device. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=232"
+  },
+  {
+    "text": "Counter sets include timestamps, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=236"
+  },
+  {
+    "text": "stage utilization and pipeline statistics. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=239"
+  },
+  {
+    "text": "For our GPU markers, we need the counter set that collects timestamps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=242"
+  },
+  {
+    "text": "So we enumerate all available counter sets on the device ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=247"
+  },
+  {
+    "text": "and choose the one for timestamps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=251"
+  },
+  {
+    "text": "Once you have the right counter set, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=254"
+  },
+  {
+    "text": "inspect it to ensure that it does have timestamps, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=256"
+  },
+  {
+    "text": "as some devices may not support them.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=259"
+  },
+  {
+    "text": "We're done with the initial setup. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=263"
+  },
+  {
+    "text": "Now let's see what's needed at runtime during each frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=265"
+  },
+  {
+    "text": "There are just four easy steps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=269"
+  },
+  {
+    "text": "First we'll create a sample buffer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=271"
+  },
+  {
+    "text": "with a size, storage mode and the counter set we just looked up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=273"
+  },
+  {
+    "text": "Then we'll add the sample buffer to the pass descriptor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=278"
+  },
+  {
+    "text": "Note that it means that you need at least one buffer per pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=281"
+  },
+  {
+    "text": "Next, if we're using sampling at draw boundary, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=285"
+  },
+  {
+    "text": "we'll add sampling commands at important points. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=289"
+  },
+  {
+    "text": "Finally, in the completion handler, we'll resolve the counters. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=292"
+  },
+  {
+    "text": "And we'll talk about aligning CPU and GPU timestamps if needed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=296"
+  },
+  {
+    "text": "Let's check out each step in detail.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=301"
+  },
+  {
+    "text": "First, we create a sample buffer using a descriptor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=305"
+  },
+  {
+    "text": "We specify the maximum number of samples it can hold, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=309"
+  },
+  {
+    "text": "so it has the right size. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=313"
+  },
+  {
+    "text": "We'll use six samples here, but you'll typically use more than that.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=315"
+  },
+  {
+    "text": "Then we set the storage mode. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=319"
+  },
+  {
+    "text": "Shared mode is great here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=321"
+  },
+  {
+    "text": "It's not a lot of data, and it makes accessing the counters extra easy.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=324"
+  },
+  {
+    "text": "We specify the counter set to use, the one for timestamps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=329"
+  },
+  {
+    "text": "Finally, we create the sample buffer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=333"
+  },
+  {
+    "text": "So far, so good. Now we have a buffer for six samples.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=336"
+  },
+  {
+    "text": "As an example, let's use it in a render encoder.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=341"
+  },
+  {
+    "text": "You would do it the same for compute and blit encoders. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=345"
+  },
+  {
+    "text": "For this, you use the sample buffer attachment ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=349"
+  },
+  {
+    "text": "from the render pass descriptor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=352"
+  },
+  {
+    "text": "If we are using stage boundary, this is where we set it up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=355"
+  },
+  {
+    "text": "We specify the start and end of the vertex stage. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=358"
+  },
+  {
+    "text": "We're putting them at index zero and one in the sample buffer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=362"
+  },
+  {
+    "text": "That's how the GPU knows where to write each sample ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=366"
+  },
+  {
+    "text": "and how you know where to retrieve them from. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=369"
+  },
+  {
+    "text": "Same for the start and end of the fragment stage.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=372"
+  },
+  {
+    "text": "Finally, we pointed to the sample buffer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=375"
+  },
+  {
+    "text": "that we just created to store those samples.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=378"
+  },
+  {
+    "text": "To sample a draw boundary, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=382"
+  },
+  {
+    "text": "you add sample commands at key points of your command stream.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=384"
+  },
+  {
+    "text": "The first obvious placement for these is before and after all draw calls. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=388"
+  },
+  {
+    "text": "So after you've created a new encoder, you immediately add a sample command. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=394"
+  },
+  {
+    "text": "We'll put it at index four, since we've already reserved the first four slots ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=399"
+  },
+  {
+    "text": "for stage boundary samples.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=404"
+  },
+  {
+    "text": "After all your draw calls, right before ending your encoders, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=406"
+  },
+  {
+    "text": "you add a sample command at index five.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=410"
+  },
+  {
+    "text": "So the GPU will record a timestamp ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=414"
+  },
+  {
+    "text": "before and after all the work for that encoder. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=416"
+  },
+  {
+    "text": "You can add more sample commands between groups of draw calls ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=420"
+  },
+  {
+    "text": "to mark important milestones. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=423"
+  },
+  {
+    "text": "Just make sure your sample buffer is allocated with enough space in advance.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=425"
+  },
+  {
+    "text": "Speaking of which, we've allocated a buffer big enough ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=431"
+  },
+  {
+    "text": "for both stage boundary and draw boundary sampling. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=434"
+  },
+  {
+    "text": "You can easily optimize it by allocating just enough ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=437"
+  },
+  {
+    "text": "for stage or draw boundary sampling in isolation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=441"
+  },
+  {
+    "text": "since they are mutually exclusive.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=444"
+  },
+  {
+    "text": "Right. The GPU has been instructed to sample timestamp counters ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=448"
+  },
+  {
+    "text": "at stage or draw boundary. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=452"
+  },
+  {
+    "text": "Next, we wait for the rendering to complete, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=455"
+  },
+  {
+    "text": "and in the handler, we collect the data.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=457"
+  },
+  {
+    "text": "Remember that we created a sample buffer per encoder. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=460"
+  },
+  {
+    "text": "So in the common buffer completion handler, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=463"
+  },
+  {
+    "text": "we may need to parse multiple sample buffers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=466"
+  },
+  {
+    "text": "For each one, we resolve the counters. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=469"
+  },
+  {
+    "text": "That translates different specific data into the unified Metal struct ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=472"
+  },
+  {
+    "text": "that's super easy to parse. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=476"
+  },
+  {
+    "text": "Simply point to it and use the CounterResult struct. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=479"
+  },
+  {
+    "text": "As we specified that vertexStart should be at index zero, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=483"
+  },
+  {
+    "text": "we read it directly from there. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=487"
+  },
+  {
+    "text": "Then we'll do the same for all other samples.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=489"
+  },
+  {
+    "text": "Note that some error checking is needed here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=493"
+  },
+  {
+    "text": "It's possible that the GPU failed to fill the sample buffer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=496"
+  },
+  {
+    "text": "so you need to check that the result step ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=499"
+  },
+  {
+    "text": "collected the expected number of samples ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=501"
+  },
+  {
+    "text": "and that each sample is valid.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=504"
+  },
+  {
+    "text": "The GPU will use a predefined error value ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=507"
+  },
+  {
+    "text": "if it can't get a specific timestamp.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=510"
+  },
+  {
+    "text": "On iOS and Apple Silicon devices, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=514"
+  },
+  {
+    "text": "the GPU timestamps are aligned to mach_absolute_time ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=516"
+  },
+  {
+    "text": "so you can directly compare them to CPU timestamps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=519"
+  },
+  {
+    "text": "On Intel and AMD GPUs, an extra step is needed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=524"
+  },
+  {
+    "text": "They need to be translated from a vendor specific time domain. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=528"
+  },
+  {
+    "text": "This is because depending on how busy the GPU is, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=531"
+  },
+  {
+    "text": "how much power it consumes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=535"
+  },
+  {
+    "text": "and how hot it's running, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=537"
+  },
+  {
+    "text": "its clock frequency is constantly adjusted over time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=539"
+  },
+  {
+    "text": "which affects the timestamps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=542"
+  },
+  {
+    "text": "To address this on immediate mode GPUs, you use the sample timestamp's API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=545"
+  },
+  {
+    "text": "to query matching CPU and GPU timestamps at a given time.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=550"
+  },
+  {
+    "text": "You do it at regular intervals to avoid drifting ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=555"
+  },
+  {
+    "text": "and keep precise correlation over time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=558"
+  },
+  {
+    "text": "Then you do a simple linear interpolation of the samples collected.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=561"
+  },
+  {
+    "text": "As an example, you may call sample timestamps ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=567"
+  },
+  {
+    "text": "inside the common buffer completion handler ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=569"
+  },
+  {
+    "text": "so you get one correlation per frame.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=572"
+  },
+  {
+    "text": "Let's say you query CPU and GPU timestamps at t0. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=575"
+  },
+  {
+    "text": "And then at the next frame, you query them at t1.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=579"
+  },
+  {
+    "text": "All GPU counters from the sample buffers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=583"
+  },
+  {
+    "text": "can now be scaled and offset back into CPU domain.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=586"
+  },
+  {
+    "text": "And that's all we need. So let's look at how it could all be displayed together.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=590"
+  },
+  {
+    "text": "We're seeing the CPU markers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=597"
+  },
+  {
+    "text": "We captured them with mach_absolute_time. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=599"
+  },
+  {
+    "text": "We're seeing vertex, fragment and compute stages ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=602"
+  },
+  {
+    "text": "all overlapping and aligned with CPU activity. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=605"
+  },
+  {
+    "text": "You can even collect the mach_absolute_time ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=608"
+  },
+  {
+    "text": "inside the presented handler ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=611"
+  },
+  {
+    "text": "to align all the markers to actual glass-to-glass frames ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=613"
+  },
+  {
+    "text": "and precisely display all the events within each frame.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=617"
+  },
+  {
+    "text": "Using this HUD, you get a great view ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=621"
+  },
+  {
+    "text": "of whether you're CPU or GPU bound, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=623"
+  },
+  {
+    "text": "your dependencies and sync points, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=626"
+  },
+  {
+    "text": "the breakdown of vertex, fragment and compute work ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=628"
+  },
+  {
+    "text": "and how they affect each other.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=632"
+  },
+  {
+    "text": "All of that, live, right there inside your app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=634"
+  },
+  {
+    "text": "There are a few things you can watch out for. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=638"
+  },
+  {
+    "text": "Don't update the HUD too often. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=641"
+  },
+  {
+    "text": "Just like an FPS counter, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=643"
+  },
+  {
+    "text": "live data can be hard to read if it's constantly changing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=645"
+  },
+  {
+    "text": "You can collect the timestamps every frame ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=648"
+  },
+  {
+    "text": "but only update the markers on-screen once per second, for example. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=651"
+  },
+  {
+    "text": "It makes it significantly easier to follow.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=655"
+  },
+  {
+    "text": "Secondly, GPU activity depends on its clock rate. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=658"
+  },
+  {
+    "text": "Seeing a high GPU occupancy does not necessarily mean it is maxed out.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=661"
+  },
+  {
+    "text": "As the system only uses as much power as needed, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=667"
+  },
+  {
+    "text": "it will balance power and performance.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=670"
+  },
+  {
+    "text": "As a consequence, you might see the GPU being 80% busy in the HUD. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=673"
+  },
+  {
+    "text": "But if it is running at half the max clock rate, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=677"
+  },
+  {
+    "text": "then it would actually be running at 40% of the peak performance ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=680"
+  },
+  {
+    "text": "and have plenty of headroom.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=684"
+  },
+  {
+    "text": "And as always, you should handle errors, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=687"
+  },
+  {
+    "text": "but you should also watch out for inconsistencies.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=689"
+  },
+  {
+    "text": "For example, counters can overflow, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=692"
+  },
+  {
+    "text": "which would cause a new value to be smaller than the previous one ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=695"
+  },
+  {
+    "text": "and may trigger a negative duration.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=698"
+  },
+  {
+    "text": "Or putting your device to sleep or hibernate while sampling counters ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=701"
+  },
+  {
+    "text": "may also cause large outliers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=705"
+  },
+  {
+    "text": "Those are rare events, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=708"
+  },
+  {
+    "text": "and you should skip them gracefully to avoid glitches in your display or logs.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=709"
+  },
+  {
+    "text": "And so to recap, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=714"
+  },
+  {
+    "text": "we've just gone through the steps ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=716"
+  },
+  {
+    "text": "to use the Metal Counter API to collect GPU timestamps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=717"
+  },
+  {
+    "text": "To do that, we used the device supportsCounterSampling method ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=721"
+  },
+  {
+    "text": "to find out which sampling modes are supported. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=724"
+  },
+  {
+    "text": "We enumerated the counter sets to find the set with the GPU timestamps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=728"
+  },
+  {
+    "text": "We created a new sample buffer using its descriptor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=733"
+  },
+  {
+    "text": "and used it in the render command encoder. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=736"
+  },
+  {
+    "text": "You will want to do the same with a blit and compute encoder too. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=740"
+  },
+  {
+    "text": "We added specific sample commands before and after all the draws. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=743"
+  },
+  {
+    "text": "You can add them between draws, dispatches and blits too ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=748"
+  },
+  {
+    "text": "to get sub past timings.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=751"
+  },
+  {
+    "text": "We resolved the counters into CPU memory. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=753"
+  },
+  {
+    "text": "And finally, we realigned them if needed.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=757"
+  },
+  {
+    "text": "And with that, you have all the data needed ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=760"
+  },
+  {
+    "text": "for a powerful, live GPU profiling HUD to display on top of your app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=762"
+  },
+  {
+    "text": "And this API gives you access to more than just the GPU timestamps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=768"
+  },
+  {
+    "text": "You can get summarized per stage information, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=772"
+  },
+  {
+    "text": "which is easier to process if you are not drawing the events on the timeline. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=774"
+  },
+  {
+    "text": "And importantly, you can get some in-depth statistics, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=778"
+  },
+  {
+    "text": "such as the number of invocations for vertex and fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=781"
+  },
+  {
+    "text": "and compute kernels and much more.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=785"
+  },
+  {
+    "text": "There's enough to explore in the Metal Counter API, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=788"
+  },
+  {
+    "text": "and it gives you access to a lot of information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=791"
+  },
+  {
+    "text": "to profile your GPU performance at runtime.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=793"
+  },
+  {
+    "text": "That's it for this session. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=798"
+  },
+  {
+    "text": "Thanks for watching.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10001/?time=799"
+  }
+]

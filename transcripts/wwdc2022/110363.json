@@ -1,0 +1,1150 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=0"
+  },
+  {
+    "text": "Ahmed: Hi, my name is Ahmed, and I work on the Clang and Swift compilers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=9"
+  },
+  {
+    "text": "In this session we're going to dive deep into changes we've made ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=13"
+  },
+  {
+    "text": "to make common Swift and Objective-C operations faster and more efficient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=17"
+  },
+  {
+    "text": "so that we can improve your app's size and runtime performance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=21"
+  },
+  {
+    "text": "When you write code in Swift or Objective-C, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=25"
+  },
+  {
+    "text": "you're always really interacting with two major components. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=27"
+  },
+  {
+    "text": "First, you build using Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=30"
+  },
+  {
+    "text": "and that uses the Swift and Clang compilers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=32"
+  },
+  {
+    "text": "But when you run your app, a lot of the heavy lifting is done ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=35"
+  },
+  {
+    "text": "in the Swift and Objective-C Runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=38"
+  },
+  {
+    "text": "The runtime is embedded in the operating systems for all of our platforms. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=41"
+  },
+  {
+    "text": "What the compiler cannot do at build time, the runtime does, well, at run time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=45"
+  },
+  {
+    "text": "We're going to look at several improvements we've made ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=50"
+  },
+  {
+    "text": "in both compilers and runtimes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=52"
+  },
+  {
+    "text": "Now, this session is a bit unusual; there are no new APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=54"
+  },
+  {
+    "text": "language changes, or new build settings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=58"
+  },
+  {
+    "text": "You don't have to change your code, so all these improvements are transparent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=60"
+  },
+  {
+    "text": "to you, the developer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=63"
+  },
+  {
+    "text": "Let's dive in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=65"
+  },
+  {
+    "text": "We're going to look at four improvements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=66"
+  },
+  {
+    "text": "We've made protocol checks in Swift more efficient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=68"
+  },
+  {
+    "text": "we've also made Objective-C message send calls smaller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=71"
+  },
+  {
+    "text": "as we did retain and release calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=74"
+  },
+  {
+    "text": "and finally, we've made autorelease elision faster and smaller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=76"
+  },
+  {
+    "text": "Let's take a closer look.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=81"
+  },
+  {
+    "text": "Let's start with protocol checks in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=83"
+  },
+  {
+    "text": "Here we have a CustomLoggable protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=87"
+  },
+  {
+    "text": "It has a read-only computed property customLogString, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=90"
+  },
+  {
+    "text": "and we can use it in our log function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=93"
+  },
+  {
+    "text": "that has special handling for CustomLoggable objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=95"
+  },
+  {
+    "text": "Later, we're defining an Event type with name and date fields. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=98"
+  },
+  {
+    "text": "And we're conforming to the CustomLoggable protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=102"
+  },
+  {
+    "text": "by defining the getter for the customLogString property.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=105"
+  },
+  {
+    "text": "And this lets us pass Event objects to our 'log' function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=109"
+  },
+  {
+    "text": "When we execute this code, the 'log' function needs to check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=113"
+  },
+  {
+    "text": "whether the value we passed conforms to the protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=116"
+  },
+  {
+    "text": "And it does that using the 'as' operator. You may also have seen the 'is' operator.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=119"
+  },
+  {
+    "text": "Whenever possible, this check is optimized away at build time, in the compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=125"
+  },
+  {
+    "text": "However, we don't always have enough information yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=129"
+  },
+  {
+    "text": "So this often needs to happen in the runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=133"
+  },
+  {
+    "text": "with the help of protocol check metadata we compute earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=135"
+  },
+  {
+    "text": "With this metadata, the runtime knows whether this particular object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=140"
+  },
+  {
+    "text": "really does conform to the protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=143"
+  },
+  {
+    "text": "and the check succeeds.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=145"
+  },
+  {
+    "text": "Part of the metadata is built at compile time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=149"
+  },
+  {
+    "text": "but a lot can only be built at launch time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=151"
+  },
+  {
+    "text": "particularly when using Generics.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=153"
+  },
+  {
+    "text": "When you use a lot of protocols, this can add up to hundreds of milliseconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=156"
+  },
+  {
+    "text": "On real-world apps, we've seen this take up to half of the launch time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=160"
+  },
+  {
+    "text": "With the new Swift runtime, we now precompute these ahead of time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=165"
+  },
+  {
+    "text": "as part of the dyld closure for the app executable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=168"
+  },
+  {
+    "text": "and any dylib it uses at launch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=171"
+  },
+  {
+    "text": "Best of all, this is enabled even for existing apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=174"
+  },
+  {
+    "text": "when running on iOS 16, tvOS 16, or watchOS 9. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=176"
+  },
+  {
+    "text": "If you'd like to learn more about dyld and launch closures, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=181"
+  },
+  {
+    "text": "watch the talk \"App Startup Time: Past, Present, and Future.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=183"
+  },
+  {
+    "text": "That was protocol checks in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=187"
+  },
+  {
+    "text": "Let's move on to message send.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=190"
+  },
+  {
+    "text": "With the new compilers and linker in Xcode 14, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=194"
+  },
+  {
+    "text": "we've made message send calls up to 8 bytes smaller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=197"
+  },
+  {
+    "text": "down from 12, on ARM64. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=199"
+  },
+  {
+    "text": "As we'll see in just a moment, message send is really everywhere, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=202"
+  },
+  {
+    "text": "so this adds up, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=205"
+  },
+  {
+    "text": "and we've seen up to 2% code size improvements on binaries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=206"
+  },
+  {
+    "text": "This is enabled automatically when building with Xcode 14, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=210"
+  },
+  {
+    "text": "even if you use an older OS release as deployment target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=213"
+  },
+  {
+    "text": "It defaults to a balance of size win and performance, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=218"
+  },
+  {
+    "text": "but you can opt into optimizing for size only, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=220"
+  },
+  {
+    "text": "using the objc_stubs_small linker flag. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=223"
+  },
+  {
+    "text": "Now let's look into what changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=226"
+  },
+  {
+    "text": "So let's start with an example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=229"
+  },
+  {
+    "text": "Here we're trying to make an NSDate for the start day of the conference. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=230"
+  },
+  {
+    "text": "We start by making an NSCalendar, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=234"
+  },
+  {
+    "text": "then we fill out NSDateComponents, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=236"
+  },
+  {
+    "text": "make a date out of that, and finally return it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=238"
+  },
+  {
+    "text": "Now let's look at the assembly the compiler generates. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=241"
+  },
+  {
+    "text": "Now, the details of the assembly aren't super important. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=245"
+  },
+  {
+    "text": "Us compiler folks stare at it all day so that you don't have to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=247"
+  },
+  {
+    "text": "What's important is that almost every line here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=251"
+  },
+  {
+    "text": "ends up needing an instruction to call objc_msgSend, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=253"
+  },
+  {
+    "text": "even when doing property accesses like we do for the date components. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=256"
+  },
+  {
+    "text": "This is because at compile time, we don't know which method to call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=261"
+  },
+  {
+    "text": "and it's only the objc runtime that does. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=264"
+  },
+  {
+    "text": "So we call into the runtime using objc_msgSend ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=266"
+  },
+  {
+    "text": "to ask it to find the right method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=269"
+  },
+  {
+    "text": "Let's focus on one of these calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=272"
+  },
+  {
+    "text": "We already mentioned the instruction to call objc_msgSend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=274"
+  },
+  {
+    "text": "But there's more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=277"
+  },
+  {
+    "text": "To tell the runtime which method to call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=278"
+  },
+  {
+    "text": "we have to pass a selector to these objc_msgSend calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=280"
+  },
+  {
+    "text": "That needs a couple more instructions to prepare the selector. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=284"
+  },
+  {
+    "text": "When we look at the binary, each of these instructions takes a little bit of space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=288"
+  },
+  {
+    "text": "On ARM64, that's 4 bytes each. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=292"
+  },
+  {
+    "text": "So for each of these objc_msgSend calls, we're using 12 bytes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=295"
+  },
+  {
+    "text": "and we need that for every single one of these calls; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=299"
+  },
+  {
+    "text": "that really adds up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=301"
+  },
+  {
+    "text": "Let's see what we can do to improve that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=304"
+  },
+  {
+    "text": "Now, as we've seen before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=308"
+  },
+  {
+    "text": "8 of those bytes are dedicated to preparing the selector. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=309"
+  },
+  {
+    "text": "Interesting thing is, for any given selector, it's always the same code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=313"
+  },
+  {
+    "text": "And this is where our optimization comes in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=317"
+  },
+  {
+    "text": "Since this is always the same code, we can share it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=321"
+  },
+  {
+    "text": "and only emit it once per selector ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=323"
+  },
+  {
+    "text": "instead of every time we do a message send. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=325"
+  },
+  {
+    "text": "We can take it out and put it into a little helper function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=327"
+  },
+  {
+    "text": "and call that function instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=330"
+  },
+  {
+    "text": "Over many calls using the same selector, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=333"
+  },
+  {
+    "text": "we can save all these instruction bytes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=335"
+  },
+  {
+    "text": "We call this helper function a \"selector stub.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=338"
+  },
+  {
+    "text": "We still need to call the real objc_msgSend function, though, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=342"
+  },
+  {
+    "text": "so we continue onto that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=345"
+  },
+  {
+    "text": "And again, that has another, different, indirection to load the address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=347"
+  },
+  {
+    "text": "of the function itself and call it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=351"
+  },
+  {
+    "text": "The details aren't important, but what's important is that we need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=353"
+  },
+  {
+    "text": "another several bytes of code to do that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=356"
+  },
+  {
+    "text": "And this is where you can choose which mode you want, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=359"
+  },
+  {
+    "text": "as I mentioned earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=361"
+  },
+  {
+    "text": "We can either keep these two little stub functions separate, like we've done here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=363"
+  },
+  {
+    "text": "We get to share the most code, and make these functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=367"
+  },
+  {
+    "text": "as small as possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=369"
+  },
+  {
+    "text": "But unfortunately, this would do two calls back to back, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=371"
+  },
+  {
+    "text": "which is not ideal for performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=374"
+  },
+  {
+    "text": "So we can further improve this with an alternative version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=377"
+  },
+  {
+    "text": "We can take these two stub functions we've created, combine them into one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=380"
+  },
+  {
+    "text": "That way, we keep the code closer together and we don't need as many calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=385"
+  },
+  {
+    "text": "And that's on the right here.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=389"
+  },
+  {
+    "text": "So these are the two options. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=392"
+  },
+  {
+    "text": "You can choose whether to optimize for size alone, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=393"
+  },
+  {
+    "text": "and get the maximum size savings available. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=396"
+  },
+  {
+    "text": "You can enable that using the -objc_stubs_small linker flag, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=398"
+  },
+  {
+    "text": "or you can use the code generation that provides size benefits ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=402"
+  },
+  {
+    "text": "while keeping the best performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=405"
+  },
+  {
+    "text": "And unless you're severely size-constrained, we recommend using this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=408"
+  },
+  {
+    "text": "and that's why it's the default. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=411"
+  },
+  {
+    "text": "And that was smaller message send using stubs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=414"
+  },
+  {
+    "text": "Another improvement we've made is making retain/release cheaper. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=417"
+  },
+  {
+    "text": "With the new compilers in Xcode 14, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=421"
+  },
+  {
+    "text": "retain/release calls are now up to 4 bytes smaller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=423"
+  },
+  {
+    "text": "down from 8 on ARM64. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=425"
+  },
+  {
+    "text": "As we'll see in just a moment, just like message send, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=428"
+  },
+  {
+    "text": "retain/release is also everywhere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=431"
+  },
+  {
+    "text": "So this adds up, and we've seen up to 2% more code size improvements on binaries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=433"
+  },
+  {
+    "text": "Now, unlike message send stubs, this does need runtime support, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=438"
+  },
+  {
+    "text": "so you'll get this automatically as you migrate to a deployment target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=441"
+  },
+  {
+    "text": "of iOS 16, tvOS 16, or watchOS 9. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=444"
+  },
+  {
+    "text": "Now let's look into what changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=448"
+  },
+  {
+    "text": "Let's go back to our example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=451"
+  },
+  {
+    "text": "We talked about msgSend calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=452"
+  },
+  {
+    "text": "but with automatic reference counting, or ARC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=455"
+  },
+  {
+    "text": "we also end up with a lot of retain/release calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=457"
+  },
+  {
+    "text": "inserted by the compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=459"
+  },
+  {
+    "text": "At a very high level, whenever we make a copy of a pointer to an object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=462"
+  },
+  {
+    "text": "we need to increment its retain count to keep it live. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=466"
+  },
+  {
+    "text": "And here, this happens with our variables cal, dateComponent, and theDate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=469"
+  },
+  {
+    "text": "We do that by calling into the runtime, using objc_retain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=473"
+  },
+  {
+    "text": "When the variables go out of scope, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=477"
+  },
+  {
+    "text": "we then need to decrement the retain count using objc_release. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=479"
+  },
+  {
+    "text": "Of course, part of the benefit of ARC is all the compiler magic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=483"
+  },
+  {
+    "text": "that eliminates a lot of these calls, to keep them to a minimum. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=486"
+  },
+  {
+    "text": "And we're going to go into one of these magic tricks a little bit later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=490"
+  },
+  {
+    "text": "But even with all the magic, we still often need these calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=493"
+  },
+  {
+    "text": "In this example, we end up needing to release our local copies of calendar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=497"
+  },
+  {
+    "text": "and dateComponents.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=501"
+  },
+  {
+    "text": "Under the hood, these objc_retain/release functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=504"
+  },
+  {
+    "text": "are just plain C functions; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=507"
+  },
+  {
+    "text": "take a single argument, the object to be released. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=509"
+  },
+  {
+    "text": "So with ARC, the compiler inserts calls to these C functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=512"
+  },
+  {
+    "text": "passing the appropriate object pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=516"
+  },
+  {
+    "text": "Because of that, these calls have to respect the C calling convention, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=518"
+  },
+  {
+    "text": "defined by our platform Application Binary Interface, or ABI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=522"
+  },
+  {
+    "text": "Concretely, what that means is that we need even more code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=526"
+  },
+  {
+    "text": "to do these calls, to pass the pointer in the right register. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=529"
+  },
+  {
+    "text": "So we end up with a few additional 'move' instructions just for that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=533"
+  },
+  {
+    "text": "And that's where our new optimization comes in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=537"
+  },
+  {
+    "text": "By specializing retain/release with a custom calling convention, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=540"
+  },
+  {
+    "text": "we can opportunistically use the right variant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=543"
+  },
+  {
+    "text": "depending on where the object pointer already is, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=546"
+  },
+  {
+    "text": "so that we don't need to move it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=549"
+  },
+  {
+    "text": "Concretely, what this means is, we get rid of a bunch of redundant code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=551"
+  },
+  {
+    "text": "for all these calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=555"
+  },
+  {
+    "text": "And again, while this may not seem like much ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=557"
+  },
+  {
+    "text": "for these puny little instructions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=558"
+  },
+  {
+    "text": "over an entire app, it really adds up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=560"
+  },
+  {
+    "text": "That's how we made retain/release operations cheaper. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=563"
+  },
+  {
+    "text": "Finally, let's talk about autorelease elision. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=566"
+  },
+  {
+    "text": "Now this one is even more interesting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=569"
+  },
+  {
+    "text": "With objc runtime changes, we've made autorelease elision faster. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=572"
+  },
+  {
+    "text": "That happens automatically for existing apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=576"
+  },
+  {
+    "text": "when you run them on the new OS releases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=578"
+  },
+  {
+    "text": "Building on top of that, with additional compiler changes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=581"
+  },
+  {
+    "text": "we also made the code smaller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=584"
+  },
+  {
+    "text": "And you'll get this size benefit automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=587"
+  },
+  {
+    "text": "as you migrate to a deployment target of iOS 16, tvOS 16, or watchOS 9.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=589"
+  },
+  {
+    "text": "Now this is all great, but what's autorelease elision in the first place? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=595"
+  },
+  {
+    "text": "Let's go back to our example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=599"
+  },
+  {
+    "text": "I mentioned earlier that ARC already gives us a lot of compiler magic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=602"
+  },
+  {
+    "text": "to optimize retains and releases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=605"
+  },
+  {
+    "text": "So let's focus on one case here: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=607"
+  },
+  {
+    "text": "autoreleased return values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=608"
+  },
+  {
+    "text": "In this example, we made a temporary object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=611"
+  },
+  {
+    "text": "and we're returning it to our caller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=613"
+  },
+  {
+    "text": "So let's look at how that works. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=615"
+  },
+  {
+    "text": "So we have our temporary theDate, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=617"
+  },
+  {
+    "text": "we return it, the call completes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=619"
+  },
+  {
+    "text": "and the caller saves it to its own variable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=621"
+  },
+  {
+    "text": "So let's see how that works with ARC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=624"
+  },
+  {
+    "text": "ARC inserts a retain in the caller, and a release in the called function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=628"
+  },
+  {
+    "text": "Here, when we return our temporary object, we need to release it first ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=632"
+  },
+  {
+    "text": "in the function, because it's going out of scope. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=636"
+  },
+  {
+    "text": "But we can't do that just yet, because it doesn't have any other references yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=639"
+  },
+  {
+    "text": "If we did release it, it would be destroyed before we even return, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=643"
+  },
+  {
+    "text": "and that's no good. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=646"
+  },
+  {
+    "text": "So a special convention is used to be able to return the temporary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=648"
+  },
+  {
+    "text": "We autorelease it before the return so that the caller can then retain it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=651"
+  },
+  {
+    "text": "You've likely seen autorelease and autoreleasepools before: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=656"
+  },
+  {
+    "text": "it's simply a way to defer a release until some later point. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=659"
+  },
+  {
+    "text": "Runtime doesn't really make any guarantees as to when the release happens, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=662"
+  },
+  {
+    "text": "but as long as it's not right here, right now, it's convenient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=665"
+  },
+  {
+    "text": "because it lets us return this temporary object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=669"
+  },
+  {
+    "text": "Now, this isn't free. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=672"
+  },
+  {
+    "text": "There is some overhead to doing an autorelease. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=673"
+  },
+  {
+    "text": "This is where autorelease elision comes in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=676"
+  },
+  {
+    "text": "So to understand how that works, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=679"
+  },
+  {
+    "text": "let's look at the assembly and retrace this return. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=681"
+  },
+  {
+    "text": "When we call autorelease, that goes into the objc runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=684"
+  },
+  {
+    "text": "and that's where the fun begins. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=687"
+  },
+  {
+    "text": "The runtime tries to recognize what's happening: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=690"
+  },
+  {
+    "text": "that we're returning an autoreleased value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=693"
+  },
+  {
+    "text": "To help it out, the compiler emits a special marker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=695"
+  },
+  {
+    "text": "that we never use otherwise. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=698"
+  },
+  {
+    "text": "It's there to tell the runtime that this is eligible for autorelease elision. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=700"
+  },
+  {
+    "text": "And it's followed by the retain, that we will execute later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=705"
+  },
+  {
+    "text": "But right now, we're still in the autorelease, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=708"
+  },
+  {
+    "text": "and when we do it, the runtime loads the special marker instruction, as data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=710"
+  },
+  {
+    "text": "and compares it to see if it is the special marker value it expects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=714"
+  },
+  {
+    "text": "If it is, that means the compiler told the runtime ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=719"
+  },
+  {
+    "text": "that we're returning a temporary that will immediately be retained. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=722"
+  },
+  {
+    "text": "And this lets us elide, or remove, the matching autorelease and retain calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=725"
+  },
+  {
+    "text": "And that's autorelease elision.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=729"
+  },
+  {
+    "text": "However, this is not free either: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=732"
+  },
+  {
+    "text": "loading code as data isn't something that's super common otherwise, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=735"
+  },
+  {
+    "text": "so it's not optimal on the CPUs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=738"
+  },
+  {
+    "text": "We can do better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=740"
+  },
+  {
+    "text": "So let's retrace the return sequence again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=741"
+  },
+  {
+    "text": "this time using the new way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=744"
+  },
+  {
+    "text": "We started at the autorelease. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=746"
+  },
+  {
+    "text": "That still goes into the Objective-C runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=748"
+  },
+  {
+    "text": "At this point, we actually already have valuable information: the return address. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=750"
+  },
+  {
+    "text": "It tells us where we need to return to after this function completes execution. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=755"
+  },
+  {
+    "text": "So we can keep track of that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=761"
+  },
+  {
+    "text": "Thankfully, getting the return address is very cheap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=762"
+  },
+  {
+    "text": "It's just a pointer, and we can store it on the side. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=765"
+  },
+  {
+    "text": "We then leave the runtime autorelease call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=768"
+  },
+  {
+    "text": "We return to the caller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=771"
+  },
+  {
+    "text": "and we re-enter the runtime when doing the retain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=773"
+  },
+  {
+    "text": "And this is where the new bit of magic happens. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=776"
+  },
+  {
+    "text": "At that point, we can look at where we are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=779"
+  },
+  {
+    "text": "and get a pointer to our current return address. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=782"
+  },
+  {
+    "text": "In the runtime, we can compare this pointer we just got ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=784"
+  },
+  {
+    "text": "while doing the retain with the one we saved earlier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=787"
+  },
+  {
+    "text": "when we were doing the autorelease. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=790"
+  },
+  {
+    "text": "And since we're just comparing two pointers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=792"
+  },
+  {
+    "text": "this is super cheap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=793"
+  },
+  {
+    "text": "We don't need to do expensive memory accesses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=794"
+  },
+  {
+    "text": "If the comparison succeeds, we know we can elide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=797"
+  },
+  {
+    "text": "the autorelease/retain pair, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=800"
+  },
+  {
+    "text": "and we get to improve some performance.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=801"
+  },
+  {
+    "text": "And on top of that, now that we don't need to compare ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=805"
+  },
+  {
+    "text": "this special marker instruction as data anymore, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=807"
+  },
+  {
+    "text": "we don't need it, so we can remove it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=809"
+  },
+  {
+    "text": "And that lets us save some code size as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=812"
+  },
+  {
+    "text": "That's how we made autorelease elision faster and smaller.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=814"
+  },
+  {
+    "text": "We went through several Swift and Objective-C runtime improvements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=818"
+  },
+  {
+    "text": "Let's wrap up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=822"
+  },
+  {
+    "text": "When your app is run on the new OS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=823"
+  },
+  {
+    "text": "thanks to the improvements in the runtimes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=825"
+  },
+  {
+    "text": "Swift protocol checks are more efficient. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=827"
+  },
+  {
+    "text": "Every time we try to do autorelease elision, that's faster too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=830"
+  },
+  {
+    "text": "Thanks to the new compilers and linker in Xcode 14 and message send stubs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=835"
+  },
+  {
+    "text": "you can save up to 2% of code size by rebuilding your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=838"
+  },
+  {
+    "text": "And finally, when you update your deployment target to iOS 16, tvOS 16, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=842"
+  },
+  {
+    "text": "or watchOS 9, you can further save another 2% ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=846"
+  },
+  {
+    "text": "by making retain/release calls smaller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=850"
+  },
+  {
+    "text": "Even more, thanks to the smaller autorelease elision sequence. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=852"
+  },
+  {
+    "text": "I hope you enjoyed this deep dive into the Swift and Objective-C runtimes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=856"
+  },
+  {
+    "text": "and thanks for watching.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110363/?time=859"
+  }
+]

@@ -1,0 +1,1146 @@
+[
+  {
+    "text": "♪ instrumental hip hop music ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=0"
+  },
+  {
+    "text": "Welcome, everyone. My name is David Hayward, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=9"
+  },
+  {
+    "text": "and I am a software engineer on the Core Image team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=11"
+  },
+  {
+    "text": "Today I will describe how you can display Extended Dynamic Range content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=14"
+  },
+  {
+    "text": "in your Core Image application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=18"
+  },
+  {
+    "text": "My talk will be broken up into four parts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=20"
+  },
+  {
+    "text": "First, I'll introduce some of the important terminology ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=23"
+  },
+  {
+    "text": "for EDR on our platforms. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=27"
+  },
+  {
+    "text": "Second, I'll describe a new Core Image sample project, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=29"
+  },
+  {
+    "text": "which I will then use to demonstrate how to add support for EDR. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=33"
+  },
+  {
+    "text": "Lastly, I will show you how to use CIFilters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=38"
+  },
+  {
+    "text": "to create images that produce EDR content.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=42"
+  },
+  {
+    "text": "So let's start with some key terminology. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=47"
+  },
+  {
+    "text": "SDR, or Standard Dynamic Range, is the traditional way to represent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=50"
+  },
+  {
+    "text": "RGB colors using the normalized range of 0 for black to 1 for white. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=54"
+  },
+  {
+    "text": "In contrast, EDR, or Extended Dynamic Range, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=60"
+  },
+  {
+    "text": "is the recommended way to represent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=63"
+  },
+  {
+    "text": "RGB colors beyond the normal range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=65"
+  },
+  {
+    "text": "As with SDR, 0 represents black, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=69"
+  },
+  {
+    "text": "and 1 represents the same brightness ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=72"
+  },
+  {
+    "text": "as SDR white. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=74"
+  },
+  {
+    "text": "But with EDR, values greater than 1 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=76"
+  },
+  {
+    "text": "can be used to represent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=78"
+  },
+  {
+    "text": "even brighter pixels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=80"
+  },
+  {
+    "text": "But keep in mind that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=82"
+  },
+  {
+    "text": "while values greater than one are allowed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=84"
+  },
+  {
+    "text": "values above the headroom will be clipped.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=86"
+  },
+  {
+    "text": "Headroom is derived ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=90"
+  },
+  {
+    "text": "from the display's current maximum Nits ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=91"
+  },
+  {
+    "text": "divided by the Nits of SDR white.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=93"
+  },
+  {
+    "text": "Note that the headroom value can vary between displays ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=97"
+  },
+  {
+    "text": "or as the ambient conditions or display brightness changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=100"
+  },
+  {
+    "text": "I recommend that you watch the \"Explore EDR on iOS\" presentation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=104"
+  },
+  {
+    "text": "for a deeper discussion of these concepts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=109"
+  },
+  {
+    "text": "There are several sources for EDR content that you can present in your application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=112"
+  },
+  {
+    "text": "First, some file formats, such as TIFF and OpenEXR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=117"
+  },
+  {
+    "text": "can store floating point values for EDR.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=121"
+  },
+  {
+    "text": "Also, you can use AVFoundation to obtain frames from HDR video formats.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=125"
+  },
+  {
+    "text": "The Metal APIs can be used to render EDR environments to a texture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=132"
+  },
+  {
+    "text": "Also, ProRAW DNG files can be rendered to reveal EDR highlights.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=137"
+  },
+  {
+    "text": "The 2021 presentation \"Capture and process ProRAW images\" describes this in detail.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=143"
+  },
+  {
+    "text": "For the next part of my presentation, I will describe how to use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=150"
+  },
+  {
+    "text": "Core Image with Metal in a SwiftUI application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=154"
+  },
+  {
+    "text": "Later, I will outline how to add EDR support to this application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=158"
+  },
+  {
+    "text": "We have recently released a new sample code project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=163"
+  },
+  {
+    "text": "that demonstrates best practices for how to combine Core Image ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=165"
+  },
+  {
+    "text": "and a Metal Kit View in a SwiftUI multiplatform app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=169"
+  },
+  {
+    "text": "I recommend you download the sample and look at the code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=174"
+  },
+  {
+    "text": "but let me take this opportunity to show you how it looks and works.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=176"
+  },
+  {
+    "text": "The sample draws an animated, procedural CIImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=181"
+  },
+  {
+    "text": "that is displayed into a Metal view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=185"
+  },
+  {
+    "text": "For optimal performance, the sample uses an MTKView. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=188"
+  },
+  {
+    "text": "To keep the code simple, the app displays an animated checkerboard CIImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=192"
+  },
+  {
+    "text": "as a proxy for whatever content that your app desires.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=197"
+  },
+  {
+    "text": "Also, the app uses SwiftUI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=202"
+  },
+  {
+    "text": "so that a common code base can be used across macOS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=204"
+  },
+  {
+    "text": "iOS, and iPadOS platforms.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=208"
+  },
+  {
+    "text": "The project is built from a few short source files, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=212"
+  },
+  {
+    "text": "so let me describe how the classes interact.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=215"
+  },
+  {
+    "text": "There are three important pieces in this application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=219"
+  },
+  {
+    "text": "The first and and most critical is the \"MetalView.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=222"
+  },
+  {
+    "text": "It provides a SwiftUI-compatible View implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=225"
+  },
+  {
+    "text": "that wraps the MTKView class.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=229"
+  },
+  {
+    "text": "Because the MTKView class is based on NSView on macOS ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=233"
+  },
+  {
+    "text": "and UIView on other platforms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=237"
+  },
+  {
+    "text": "the MetalView implementation uses a ViewRepresentable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=240"
+  },
+  {
+    "text": "to bridge between SwiftUI and the platform-specific MTKView classes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=243"
+  },
+  {
+    "text": "The MTKView, however, is not directly responsible for the rendering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=249"
+  },
+  {
+    "text": "Instead, it uses its delegate to do that work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=254"
+  },
+  {
+    "text": "In this app, the Renderer class is the delegate for the MTKView. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=258"
+  },
+  {
+    "text": "It responsible for initializing the graphics state objects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=263"
+  },
+  {
+    "text": "such as the Metal command queue and the Core Image context.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=266"
+  },
+  {
+    "text": "It also implements the draw() method that is required to be a MetalView delegate.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=270"
+  },
+  {
+    "text": "The Renderer, however, is not directly responsible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=277"
+  },
+  {
+    "text": "for determining what image to draw. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=280"
+  },
+  {
+    "text": "Instead, it uses its imageProvider block to get a CIImage to draw.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=283"
+  },
+  {
+    "text": "In this app, the ContentView class implements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=289"
+  },
+  {
+    "text": "the block of code that provides the CIImage to be rendered.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=292"
+  },
+  {
+    "text": "To summarize briefly, the MetalView calls its delegate to draw. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=298"
+  },
+  {
+    "text": "The Renderer draw() method calls the ContentView ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=303"
+  },
+  {
+    "text": "to provide the image to draw. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=306"
+  },
+  {
+    "text": "Let me talk in a bit more detail about the code in these three classes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=309"
+  },
+  {
+    "text": "starting with the makeView() code in the MetalView class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=313"
+  },
+  {
+    "text": "When makeView() is called to create a MTKView, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=317"
+  },
+  {
+    "text": "it sets the view's delegate to the Renderer state object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=320"
+  },
+  {
+    "text": "This is the canonical approach to implement a SwiftUI view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=324"
+  },
+  {
+    "text": "that wraps a NSView or UIView.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=327"
+  },
+  {
+    "text": "Next, it sets preferredFramesPerSecond to specify ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=331"
+  },
+  {
+    "text": "how frequently the view should be rendered. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=335"
+  },
+  {
+    "text": "This property is important because it determines what drives ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=337"
+  },
+  {
+    "text": "the drawing of the view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=340"
+  },
+  {
+    "text": "Let me describe how this works.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=342"
+  },
+  {
+    "text": "This sample is an animated application, so the code sets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=345"
+  },
+  {
+    "text": "view.preferredFramesPerSecond to the desired frame rate.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=348"
+  },
+  {
+    "text": "By setting this, the MTKView is configured ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=353"
+  },
+  {
+    "text": "so that the view itself drives the timing of the draw events.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=355"
+  },
+  {
+    "text": "This causes view's render delegate to draw() periodically, which, in turn, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=360"
+  },
+  {
+    "text": "will ask the content provider to create a CIImage for the current time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=365"
+  },
+  {
+    "text": "And the process will repeat and repeat until the animation is paused.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=371"
+  },
+  {
+    "text": "In other cases, such as for an image editing app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=378"
+  },
+  {
+    "text": "it is best for user interactions with controls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=381"
+  },
+  {
+    "text": "to drive when the view should be drawn.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=383"
+  },
+  {
+    "text": "By setting enableSetNeedsDisplay to true, the MTKView is configured ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=387"
+  },
+  {
+    "text": "so that controls can drive the timing of the draw events. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=392"
+  },
+  {
+    "text": "When a control is moved, the updateView() method should be called.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=396"
+  },
+  {
+    "text": "Then, the view's delegate will be called to draw() once.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=401"
+  },
+  {
+    "text": "and each draw will ask the content provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=406"
+  },
+  {
+    "text": "to create a CIImage for the current control state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=409"
+  },
+  {
+    "text": "This approach is also appropriate when the arrival of frames of video ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=415"
+  },
+  {
+    "text": "should drive the draw events.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=418"
+  },
+  {
+    "text": "That wraps up my discussion of the MetalView class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=422"
+  },
+  {
+    "text": "Moving on, the most important code in the Renderer delegate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=425"
+  },
+  {
+    "text": "is the draw() method.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=428"
+  },
+  {
+    "text": "The renderer's draw() method is called at a periodic frame rate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=432"
+  },
+  {
+    "text": "When the draw() method is called, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=436"
+  },
+  {
+    "text": "it needs to determine the content scale factor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=437"
+  },
+  {
+    "text": "that reflects the resolution of the display that the view is on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=439"
+  },
+  {
+    "text": "This is needed because CIImages are measured in pixels, not points. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=443"
+  },
+  {
+    "text": "It is important to do this every time the draw() method is called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=448"
+  },
+  {
+    "text": "because this property can change ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=452"
+  },
+  {
+    "text": "if the view is moved to a different display.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=454"
+  },
+  {
+    "text": "Next, it creates a CIRenderDestination with a mtlTextureProvider.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=458"
+  },
+  {
+    "text": "Then it calls the content provider to make a CIImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=463"
+  },
+  {
+    "text": "to use for the current time and scale factor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=466"
+  },
+  {
+    "text": "This returned image is then centered in the view's visible area ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=469"
+  },
+  {
+    "text": "and blended over an opaque background, and then we start the task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=473"
+  },
+  {
+    "text": "to render the CIImage to the view destination.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=477"
+  },
+  {
+    "text": "The most important code in the ContentView class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=482"
+  },
+  {
+    "text": "is the init() method.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=485"
+  },
+  {
+    "text": "The init() method is responsible for creating the body of the Content view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=487"
+  },
+  {
+    "text": "Doing this will establish the connections to the Renderer and MetalView classes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=492"
+  },
+  {
+    "text": "First, it creates a Renderer object with an image provider block.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=497"
+  },
+  {
+    "text": "That block is responsible for returning a CIImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=503"
+  },
+  {
+    "text": "for the requested time and scale.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=506"
+  },
+  {
+    "text": "And lastly, it sets the body of the ContentView ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=510"
+  },
+  {
+    "text": "to the MetalView which uses that Renderer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=513"
+  },
+  {
+    "text": "Okay, now that's done, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=517"
+  },
+  {
+    "text": "we have a simple SwiftUI app that can render using Core Image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=519"
+  },
+  {
+    "text": "Next let’s see how you can modify this app to support rendering with EDR headroom.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=524"
+  },
+  {
+    "text": "It is really easy to add EDR support to this application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=530"
+  },
+  {
+    "text": "Step 1 is to initialize the view for EDR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=534"
+  },
+  {
+    "text": "step 2 is to calculate the headroom before every render, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=537"
+  },
+  {
+    "text": "and step 3 is to build a CIImage that uses the available headroom. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=541"
+  },
+  {
+    "text": "Let me show you the actual code for these additions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=546"
+  },
+  {
+    "text": "First, one small addition is needed in the MetalView class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=550"
+  },
+  {
+    "text": "When you make the view, you need to tell the layer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=554"
+  },
+  {
+    "text": "it wantsExtendedDynamicRangeContent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=557"
+  },
+  {
+    "text": "and tell the view that its pixelFormat should be .rgba16Float ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=560"
+  },
+  {
+    "text": "and its colorspace should be extended and linear.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=565"
+  },
+  {
+    "text": "Second, some changes are needed in the draw() method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=569"
+  },
+  {
+    "text": "of the Renderer class.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=572"
+  },
+  {
+    "text": "In the draw() method, we need to add code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=575"
+  },
+  {
+    "text": "that gets the current screen for the view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=578"
+  },
+  {
+    "text": "and then asks the screen ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=580"
+  },
+  {
+    "text": "for the current EDR headroom.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=582"
+  },
+  {
+    "text": "Then the headroom is passed as a parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=585"
+  },
+  {
+    "text": "to the image provider block. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=587"
+  },
+  {
+    "text": "Note that it is important to do this every time the draw() method is called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=589"
+  },
+  {
+    "text": "Headroom is a dynamic property that will change ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=594"
+  },
+  {
+    "text": "depending on how the ambient conditions or display brightness changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=596"
+  },
+  {
+    "text": "And the third change is to the provider block ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=601"
+  },
+  {
+    "text": "in the ContentView class.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=603"
+  },
+  {
+    "text": "Here we need to add the headroom argument to the image provider block declaration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=606"
+  },
+  {
+    "text": "We can then use the headroom with CIFilters to return a CIImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=610"
+  },
+  {
+    "text": "that will look wonderful on the user's EDR display. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=615"
+  },
+  {
+    "text": "So to summarize, these were the three simple steps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=619"
+  },
+  {
+    "text": "to add EDR support to this application: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=621"
+  },
+  {
+    "text": "initialize the view for EDR, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=624"
+  },
+  {
+    "text": "determine the headroom before every render, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=627"
+  },
+  {
+    "text": "and build a CIImage to display given the headroom. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=630"
+  },
+  {
+    "text": "This will be the topic of the rest of this presentation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=634"
+  },
+  {
+    "text": "Now that the app supports EDR, let's make it display some EDR content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=637"
+  },
+  {
+    "text": "using CIFilters to make CIImages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=642"
+  },
+  {
+    "text": "Over 150 of the filters built into Core Image support EDR. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=646"
+  },
+  {
+    "text": "This means that all these filters can either generate images ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=650"
+  },
+  {
+    "text": "with EDR content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=654"
+  },
+  {
+    "text": "or process images that contain EDR content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=655"
+  },
+  {
+    "text": "For example, the CIColorControls and CIExposureAdjust filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=659"
+  },
+  {
+    "text": "can allow your app to alter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=664"
+  },
+  {
+    "text": "the brightness, hue, saturation, and contrast of images with EDR colors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=666"
+  },
+  {
+    "text": "And several filters, such as the gradient filters, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=672"
+  },
+  {
+    "text": "can generate images given EDR color parameters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=674"
+  },
+  {
+    "text": "The three new filters we added this year also support EDR images. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=679"
+  },
+  {
+    "text": "Most notably, CIAreaLogarithmicHistogram ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=683"
+  },
+  {
+    "text": "can produce a histogram ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=686"
+  },
+  {
+    "text": "for an arbitrary range of brightness values.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=688"
+  },
+  {
+    "text": "The CIColorCube filters are examples of filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=691"
+  },
+  {
+    "text": "that we updated this year to work better with EDR input images.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=694"
+  },
+  {
+    "text": "All these built-in filters just work because the Core Image working color space ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=700"
+  },
+  {
+    "text": "is unclamped and linear, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=704"
+  },
+  {
+    "text": "which allows RGB values outside the 0-to-1 range. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=706"
+  },
+  {
+    "text": "As you develop your app, you can check if a given filter supports EDR.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=711"
+  },
+  {
+    "text": "To do this, you create an instance of a filter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=717"
+  },
+  {
+    "text": "then ask the filter's attributes for its categories, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=720"
+  },
+  {
+    "text": "and then check if the array contains kCICategoryHighDynamicRange. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=724"
+  },
+  {
+    "text": "Also, a new feature that we added is Xcode QuickLook debugging support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=729"
+  },
+  {
+    "text": "for CIFilter variables. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=734"
+  },
+  {
+    "text": "This will show the documentation for each Filter class, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=736"
+  },
+  {
+    "text": "including the categories and requirements of each input parameter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=739"
+  },
+  {
+    "text": "Given all these EDR filters, there is an infinite variety ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=745"
+  },
+  {
+    "text": "of effects that your app can apply to its content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=749"
+  },
+  {
+    "text": "In the example that I will describe today, I will add a ripple effect ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=752"
+  },
+  {
+    "text": "with a bright specular reflection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=756"
+  },
+  {
+    "text": "to the checkerboard pattern from the sample app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=758"
+  },
+  {
+    "text": "To create this effect, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=762"
+  },
+  {
+    "text": "we need an instance of the rippleTransition filter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=763"
+  },
+  {
+    "text": "Next, we set both the input and target image to be the checker image.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=768"
+  },
+  {
+    "text": "Then we set the filter inputs that control the center ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=774"
+  },
+  {
+    "text": "and transition time of the ripple...",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=777"
+  },
+  {
+    "text": "And set the shadingImage to be a gradient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=782"
+  },
+  {
+    "text": "that will produce a specular highlight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=785"
+  },
+  {
+    "text": "on the ripple.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=787"
+  },
+  {
+    "text": "And finally, we ask the filter for the outputImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=789"
+  },
+  {
+    "text": "given all the filter inputs we set.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=793"
+  },
+  {
+    "text": "Let me also describe how to create the shadingImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=795"
+  },
+  {
+    "text": "that will be used to create the specular highlight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=799"
+  },
+  {
+    "text": "for the ripple effect. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=802"
+  },
+  {
+    "text": "We could create this image from bitmap data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=804"
+  },
+  {
+    "text": "but to get even better performance, we can generate this CIImage procedurally.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=807"
+  },
+  {
+    "text": "To do this, we create an instance of the linearGradient filter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=813"
+  },
+  {
+    "text": "This filter creates a gradient given two points and two CIColors.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=818"
+  },
+  {
+    "text": "We want the specular to be white, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=824"
+  },
+  {
+    "text": "with a brightness based on the current headroom ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=826"
+  },
+  {
+    "text": "but limited to a reasonable maximum.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=828"
+  },
+  {
+    "text": "The limit that you use will depend on the look of the effect ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=831"
+  },
+  {
+    "text": "that you wish to apply.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=835"
+  },
+  {
+    "text": "The color0 should be made using that white level ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=838"
+  },
+  {
+    "text": "in an unclamped linear colorspace.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=841"
+  },
+  {
+    "text": "The color1 is set to the clear color.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=845"
+  },
+  {
+    "text": "Point0 and point1 are set to coordinates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=849"
+  },
+  {
+    "text": "so that the specular will appear from the upper left direction.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=851"
+  },
+  {
+    "text": "And then the filter's outputImage is cropped to the size needed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=856"
+  },
+  {
+    "text": "by the ripple filter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=860"
+  },
+  {
+    "text": "The resulting ripple with specular effect is just a simple proxy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=862"
+  },
+  {
+    "text": "for what you could do in your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=866"
+  },
+  {
+    "text": "It does illustrate an important principle, however. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=869"
+  },
+  {
+    "text": "It is usually best to use bright pixels in moderation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=872"
+  },
+  {
+    "text": "Less is more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=876"
+  },
+  {
+    "text": "The bright pixels will be more impactful that way.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=877"
+  },
+  {
+    "text": "We now have a working app that uses two built-in CIFilters for an EDR effect. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=881"
+  },
+  {
+    "text": "Please feel free to experiment with the other built-in EDR filters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=888"
+  },
+  {
+    "text": "Next, I'd like to take a few minutes to discuss ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=893"
+  },
+  {
+    "text": "how best to use the CIColorCube filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=895"
+  },
+  {
+    "text": "as well as some dos and don'ts when writing your own custom filters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=898"
+  },
+  {
+    "text": "One very popular filter is CIColorCubeWithColorSpace. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=903"
+  },
+  {
+    "text": "Traditionally, this filter is used to apply looks to SDR images. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=908"
+  },
+  {
+    "text": "This filter even is used to implement effects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=913"
+  },
+  {
+    "text": "in the Photos app like Process, Instant, and Tonal.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=915"
+  },
+  {
+    "text": "Traditionally, the cube data used in looks like this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=921"
+  },
+  {
+    "text": "have a critical limitation: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=924"
+  },
+  {
+    "text": "the data only inputs and outputs RGB colors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=926"
+  },
+  {
+    "text": "in the 0-to-1 range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=930"
+  },
+  {
+    "text": "One way to avoid this limitation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=932"
+  },
+  {
+    "text": "is to tell the CIColorCubeWithColorSpace filter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=934"
+  },
+  {
+    "text": "to use an EDR colorspace such as HLG or PQ.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=937"
+  },
+  {
+    "text": "This can yield the best results for EDR content, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=943"
+  },
+  {
+    "text": "but this will require creating new cube data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=946"
+  },
+  {
+    "text": "that is valid over the colorspace range. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=949"
+  },
+  {
+    "text": "Also, you may need to increase the cube dimensions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=952"
+  },
+  {
+    "text": "Instead, you may want to continue to use SDR cube data on EDR images: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=956"
+  },
+  {
+    "text": "New this year, you can tell the filter to extrapolate SDR cube data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=962"
+  },
+  {
+    "text": "To enable this feature, set the SDR cube data as you normally would. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=967"
+  },
+  {
+    "text": "Then set the new extrapolate property of the filter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=972"
+  },
+  {
+    "text": "With this set to 'true', you can give the filter an EDR input image ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=977"
+  },
+  {
+    "text": "and get an EDR output image.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=981"
+  },
+  {
+    "text": "The last topic I'd like to cover today are some best practices ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=985"
+  },
+  {
+    "text": "if you are creating your own custom CIKernels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=989"
+  },
+  {
+    "text": "First, review your kernel code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=993"
+  },
+  {
+    "text": "for math that limits RGB values to the 0-to-1 range ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=995"
+  },
+  {
+    "text": "by using functions like clamp, min, or max.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=999"
+  },
+  {
+    "text": "In many cases, these limits can be safely removed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1004"
+  },
+  {
+    "text": "and the kernel will work correctly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1007"
+  },
+  {
+    "text": "Second, even though RGB values can go beyond the 0-to-1 range, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1010"
+  },
+  {
+    "text": "the alpha value must be between 0 and 1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1014"
+  },
+  {
+    "text": "or you will get undefined behavior ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1017"
+  },
+  {
+    "text": "when blending or displaying images.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1019"
+  },
+  {
+    "text": "In this example, the kernel is inadvertently multiplying ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1023"
+  },
+  {
+    "text": "the alpha channel by 5, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1026"
+  },
+  {
+    "text": "when the correct behavior is to only multiply the RGB values by 5.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1028"
+  },
+  {
+    "text": "That concludes my presentation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1035"
+  },
+  {
+    "text": "To wrap up, today we learned how to add support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1036"
+  },
+  {
+    "text": "for EDR headroom to a Core Image SwiftUI application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1040"
+  },
+  {
+    "text": "as well how to use a variety of built-in CIFilters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1044"
+  },
+  {
+    "text": "to create and modify EDR content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1048"
+  },
+  {
+    "text": "Thank you for watching! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1051"
+  },
+  {
+    "text": "♪ instrumental hip hop music ♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10114/?time=1053"
+  }
+]

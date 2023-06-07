@@ -1,0 +1,1802 @@
+[
+  {
+    "text": "Hello and welcome to \"A Reintroduction to Uniform Type Identifiers.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=0"
+  },
+  {
+    "text": "My name is Jonathan Grynspan, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=5"
+  },
+  {
+    "text": "and I work on the App Discovery and Engagement Team at Apple.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=6"
+  },
+  {
+    "text": "The last time we talked about uniform type identifiers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=10"
+  },
+  {
+    "text": "was at WWDC 2004. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=13"
+  },
+  {
+    "text": "That was a long time ago, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=16"
+  },
+  {
+    "text": "but I remember it like it was yesterday.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=18"
+  },
+  {
+    "text": "Apple's 2004 product lineup was classic cool, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=21"
+  },
+  {
+    "text": "with products like the all-aluminum design of the PowerBook G4, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=24"
+  },
+  {
+    "text": "the eye-popping colors of the iPod Mini ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=28"
+  },
+  {
+    "text": "and the magical home theater experience of the iMac G5. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=31"
+  },
+  {
+    "text": "Apple has stayed awesome, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=35"
+  },
+  {
+    "text": "but you've got to admit 2004 really was a long time ago.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=37"
+  },
+  {
+    "text": "So we're going to cover the basics today, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=42"
+  },
+  {
+    "text": "starting with how Apple's operating systems ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=45"
+  },
+  {
+    "text": "determine the type of a file.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=47"
+  },
+  {
+    "text": "Then we'll explore how to tell the system about new file types it doesn't know about ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=50"
+  },
+  {
+    "text": "and how to handle them.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=55"
+  },
+  {
+    "text": "Finally, we'll explore some new API in iOS 14 and macOS Big Sur ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=57"
+  },
+  {
+    "text": "that makes working with file types a breeze.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=62"
+  },
+  {
+    "text": "Whether you're new to the subject or not, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=65"
+  },
+  {
+    "text": "we have something for you, so stick around.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=67"
+  },
+  {
+    "text": "Let's take a look at a file that could be on anybody's computer: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=71"
+  },
+  {
+    "text": "a photo of a cat using an iPad Mini.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=74"
+  },
+  {
+    "text": "When you save that picture to disk, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=77"
+  },
+  {
+    "text": "it produces what's called a regular file. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=79"
+  },
+  {
+    "text": "That's POSIX terminology for a sequence of bytes stored on disk.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=82"
+  },
+  {
+    "text": "Later on, when you want to open this photo again, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=86"
+  },
+  {
+    "text": "you can double-click it and it will just work, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=89"
+  },
+  {
+    "text": "opening in an image viewer like Preview. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=91"
+  },
+  {
+    "text": "But how does the system know that this is an image, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=94"
+  },
+  {
+    "text": "in this case saved as JPEG, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=97"
+  },
+  {
+    "text": "rather than a text file or an MP3 track or a Pages document? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=99"
+  },
+  {
+    "text": "Files are sequences of bytes, so you might expect ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=104"
+  },
+  {
+    "text": "that when the system needs to know the type of a file, it cracks it open ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=106"
+  },
+  {
+    "text": "and reads the bits inside to figure it out.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=110"
+  },
+  {
+    "text": "Actually, the system almost never does that ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=114"
+  },
+  {
+    "text": "because it's extremely expensive ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=117"
+  },
+  {
+    "text": "and requires read permissions most processes don't have.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=119"
+  },
+  {
+    "text": "In fact, the operating system bases most of its decisions ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=123"
+  },
+  {
+    "text": "on the file's path extension. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=127"
+  },
+  {
+    "text": "That is the case-normalized substring following the last period character, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=129"
+  },
+  {
+    "text": "so long as it does not contain any white space or control characters. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=133"
+  },
+  {
+    "text": "On Apple's platforms, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=138"
+  },
+  {
+    "text": "we don't typically show recognized path extensions to the user, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=139"
+  },
+  {
+    "text": "but they're still there. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=142"
+  },
+  {
+    "text": "If we reveal this file's path extension, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=144"
+  },
+  {
+    "text": "we can see that it is J-P-E-G, so this is a JPEG image.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=147"
+  },
+  {
+    "text": "So .jpeg means a JPEG image, right? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=152"
+  },
+  {
+    "text": "Yes, but there are other path extensions for JPEG images. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=157"
+  },
+  {
+    "text": ".jpg and .jpe are the most common.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=161"
+  },
+  {
+    "text": "On the web, however, it's a different story. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=165"
+  },
+  {
+    "text": "Web servers don't generally identify files by their path extension. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=168"
+  },
+  {
+    "text": "Instead, they use something called a MIME type or a media type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=172"
+  },
+  {
+    "text": "For JPEG, that's image/jpeg. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=177"
+  },
+  {
+    "text": "Of course, nothing in life is ever that simple, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=181"
+  },
+  {
+    "text": "and some servers instead use ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=184"
+  },
+  {
+    "text": "the common but nonstandard image/jpg MIME type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=186"
+  },
+  {
+    "text": "That's five different pieces of metadata, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=191"
+  },
+  {
+    "text": "all representing exactly the same thing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=193"
+  },
+  {
+    "text": "Well, on Apple's platforms, that's okay, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=196"
+  },
+  {
+    "text": "because we use a single string called a uniform type identifier ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=199"
+  },
+  {
+    "text": "to canonically identify this file format.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=202"
+  },
+  {
+    "text": "For JPEG images, the uniform type identifier is public.jpeg. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=206"
+  },
+  {
+    "text": "This one string refers to all JPEG images, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=211"
+  },
+  {
+    "text": "whether they're local or on the web.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=213"
+  },
+  {
+    "text": "Now, an interesting property of file types is that they exist in a hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=217"
+  },
+  {
+    "text": "Every JPEG image is also more abstractly an image, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=221"
+  },
+  {
+    "text": "as are PNG images, TIFF images, et cetera. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=225"
+  },
+  {
+    "text": "When talking about uniform type identifiers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=229"
+  },
+  {
+    "text": "we say that the JPEG type conforms to the more abstract image type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=232"
+  },
+  {
+    "text": "This conformance tree implicitly allows for multiple inheritance. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=237"
+  },
+  {
+    "text": "If you think about it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=241"
+  },
+  {
+    "text": "this is sort of like how protocols work in Swift and Objective-C.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=242"
+  },
+  {
+    "text": "A concrete class or struct can inherit from any number of protocols. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=247"
+  },
+  {
+    "text": "Let me show you what I mean.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=251"
+  },
+  {
+    "text": "Here's public.jpeg. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=253"
+  },
+  {
+    "text": "And here's public.image, which is an abstract type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=255"
+  },
+  {
+    "text": "that describes all image file formats. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=258"
+  },
+  {
+    "text": "But all image file formats can be represented as sequences of bytes.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=262"
+  },
+  {
+    "text": "So public.image conforms to public.data, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=267"
+  },
+  {
+    "text": "which is a very abstract type representing any regular file on disk, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=270"
+  },
+  {
+    "text": "or really any sequence of bytes, regardless of where they're stored.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=274"
+  },
+  {
+    "text": "In turn, public.data conforms to one final type, public.item.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=279"
+  },
+  {
+    "text": "All file system objects, be they files, folders, symlinks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=284"
+  },
+  {
+    "text": "or even something more esoteric such as POSIX pipes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=288"
+  },
+  {
+    "text": "are represented by public.item.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=291"
+  },
+  {
+    "text": "Just as we can go up the hierarchy, we can travel down it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=294"
+  },
+  {
+    "text": "There are image formats other than JPEG, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=298"
+  },
+  {
+    "text": "such as public.png and public.tiff, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=300"
+  },
+  {
+    "text": "and they are also subtypes of public.image. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=304"
+  },
+  {
+    "text": "However, they are not part of the conformance hierarchy of public.jpeg. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=307"
+  },
+  {
+    "text": "They're just its siblings. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=311"
+  },
+  {
+    "text": "If we move up a level and focus on public.data, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=313"
+  },
+  {
+    "text": "we can see that there are many types that conform to it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=316"
+  },
+  {
+    "text": "because nearly everything on your computer can be represented by a sequence of bytes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=319"
+  },
+  {
+    "text": "Here, we see public.audio, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=324"
+  },
+  {
+    "text": "which is an abstract type describing audible sounds, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=326"
+  },
+  {
+    "text": "and public.text, which is an abstract type describing legible text. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=329"
+  },
+  {
+    "text": "They are subtypes of public.data and siblings of public.image.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=333"
+  },
+  {
+    "text": "I mentioned a while back that multiple inheritance is possible ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=339"
+  },
+  {
+    "text": "with uniform type identifiers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=342"
+  },
+  {
+    "text": "And that's true of images because images are data ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=344"
+  },
+  {
+    "text": "but they're also content that the user cares about, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=347"
+  },
+  {
+    "text": "something the user might want to upload to iCloud Drive or share over AirDrop.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=350"
+  },
+  {
+    "text": "So public.image also conforms to public.content, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=355"
+  },
+  {
+    "text": "which doesn't represent anything concrete in the file system, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=359"
+  },
+  {
+    "text": "but does tell us that we should treat its subtypes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=362"
+  },
+  {
+    "text": "as things that are important to the user.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=365"
+  },
+  {
+    "text": "I focused pretty heavily on how uniform type identifiers represent files. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=369"
+  },
+  {
+    "text": "That's probably the most common use for them, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=373"
+  },
+  {
+    "text": "as far as users are concerned. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=376"
+  },
+  {
+    "text": "But we use them throughout our platforms for other purposes too. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=377"
+  },
+  {
+    "text": "For instance, we also use them as the canonical type of pasteboard content. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=382"
+  },
+  {
+    "text": "After all, if you can save it to disk, you can copy and paste it too.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=386"
+  },
+  {
+    "text": "We also use them for hierarchies that have nothing to do with files. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=390"
+  },
+  {
+    "text": "This is a bit of an Apple secret, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=394"
+  },
+  {
+    "text": "but we also use uniform type identifiers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=395"
+  },
+  {
+    "text": "to identify different models of hardware we ship. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=398"
+  },
+  {
+    "text": "All Mac models, for instance, conform to com.apple.mac. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=401"
+  },
+  {
+    "text": "And if we want to get hypothetical, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=406"
+  },
+  {
+    "text": "you could even use uniform type identifiers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=408"
+  },
+  {
+    "text": "to refer to hierarchies unrelated to computers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=410"
+  },
+  {
+    "text": "such as the tree of life.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=413"
+  },
+  {
+    "text": "That's what uniform type identifiers are ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=416"
+  },
+  {
+    "text": "and how we use them on our platforms. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=418"
+  },
+  {
+    "text": "Many apps create and maintain their own data formats, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=420"
+  },
+  {
+    "text": "and these formats deserve their own unique types. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=424"
+  },
+  {
+    "text": "When you create a new type, how do you add it to the type hierarchy? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=427"
+  },
+  {
+    "text": "If you're using types declared by the system, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=432"
+  },
+  {
+    "text": "you don't need to do much. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=434"
+  },
+  {
+    "text": "We include a large number of types in a bundle called CoreTypes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=436"
+  },
+  {
+    "text": "in /System/Library/CoreServices.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=439"
+  },
+  {
+    "text": "Any uniform type identifier in that bundle's Info.plist ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=443"
+  },
+  {
+    "text": "can be referenced by your app without additional changes.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=447"
+  },
+  {
+    "text": "But for types you invented ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=450"
+  },
+  {
+    "text": "or which you're borrowing from another app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=452"
+  },
+  {
+    "text": "you may need to tell the system about them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=454"
+  },
+  {
+    "text": "To do so, you need to create your own uniform type identifier.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=457"
+  },
+  {
+    "text": "When creating your own uniform type identifier, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=463"
+  },
+  {
+    "text": "there are a few naming rules to follow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=465"
+  },
+  {
+    "text": "First, uniform type identifiers are always case-insensitive ASCII ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=468"
+  },
+  {
+    "text": "and always reverse-DNS, such as com.example.file.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=472"
+  },
+  {
+    "text": "Ideally, you'll use some more descriptive identifiers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=477"
+  },
+  {
+    "text": "com.example.file doesn't really make it easy to debug. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=480"
+  },
+  {
+    "text": "com.example.imagetemplate or com.example.encrypteddatabase ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=484"
+  },
+  {
+    "text": "or something like that would be better.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=489"
+  },
+  {
+    "text": "Apple reserves some prefixes or namespaces in identifiers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=493"
+  },
+  {
+    "text": "and you should not create your own identifiers that use these namespaces. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=497"
+  },
+  {
+    "text": "The system may ignore them if you do.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=501"
+  },
+  {
+    "text": "First is \"public,\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=504"
+  },
+  {
+    "text": "which is reserved for use by Apple to declare standardized types. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=505"
+  },
+  {
+    "text": "If we're missing a standardized type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=509"
+  },
+  {
+    "text": "please let us know via the Feedback Assistant.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=511"
+  },
+  {
+    "text": "dyn, short for dynamic, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=515"
+  },
+  {
+    "text": "is reserved for use by the operating system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=517"
+  },
+  {
+    "text": "when generating compatibility shims. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=520"
+  },
+  {
+    "text": "They are typically opaque strings, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=522"
+  },
+  {
+    "text": "and they can change between OS releases, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=524"
+  },
+  {
+    "text": "so don't hard-code their values.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=526"
+  },
+  {
+    "text": "In practice, they're fairly rare these days. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=529"
+  },
+  {
+    "text": "You typically only see them when encountering a file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=531"
+  },
+  {
+    "text": "with an unrecognized path extension.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=534"
+  },
+  {
+    "text": "com.example is reserved for templates, examples, sample code and the like.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=537"
+  },
+  {
+    "text": "Finally, com.apple is reserved for use by Apple.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=543"
+  },
+  {
+    "text": "There are two broad steps you need to take when adding a type to your application ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=549"
+  },
+  {
+    "text": "that the system will recognize. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=553"
+  },
+  {
+    "text": "The first step is to declare the type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=555"
+  },
+  {
+    "text": "Declaring a type basically means your app is saying, \"This type exists,\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=557"
+  },
+  {
+    "text": "but doesn't mean you can open the type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=562"
+  },
+  {
+    "text": "If you actually want to open a type, you need to support the type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=565"
+  },
+  {
+    "text": "which is your app's way of saying, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=568"
+  },
+  {
+    "text": "\"No matter who declared the type, I can open it.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=570"
+  },
+  {
+    "text": "These two steps are distinct.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=573"
+  },
+  {
+    "text": "When you declare your type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=577"
+  },
+  {
+    "text": "you need to decide whether you will import or export it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=578"
+  },
+  {
+    "text": "If you are using a type that was invented or designed by somebody else ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=582"
+  },
+  {
+    "text": "or for use primarily with another application, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=585"
+  },
+  {
+    "text": "you should typically import the type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=588"
+  },
+  {
+    "text": "That tells the system, \"This type exists. Here's some information about it.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=590"
+  },
+  {
+    "text": "But if the app that invented it is installed, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=595"
+  },
+  {
+    "text": "that app can provide more authoritative information.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=598"
+  },
+  {
+    "text": "On the other hand, if you invented the type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=602"
+  },
+  {
+    "text": "or it's meant for use specifically with your app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=605"
+  },
+  {
+    "text": "it is appropriate to export it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=607"
+  },
+  {
+    "text": "This tells the system, \"I am authoritative for this type.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=609"
+  },
+  {
+    "text": "Finally, if you are using a type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=613"
+  },
+  {
+    "text": "that ships with the system as part of Core Types, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=615"
+  },
+  {
+    "text": "you don't need to import or export it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=617"
+  },
+  {
+    "text": "The system has already provided a declaration, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=620"
+  },
+  {
+    "text": "and you can just use the type's uniform type identifier immediately.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=622"
+  },
+  {
+    "text": "I'd like to show you how to declare a type in your app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=628"
+  },
+  {
+    "text": "and how to show the system you support opening it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=630"
+  },
+  {
+    "text": "So let's take a look at Xcode, where I'm hard at work ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=633"
+  },
+  {
+    "text": "on a brand-new restauranting-over-the-web experience.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=636"
+  },
+  {
+    "text": "This app has the ability to read restaurant menus ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=639"
+  },
+  {
+    "text": "that have been saved in a JSON-based format we've designed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=642"
+  },
+  {
+    "text": "We want to be able to open those menu files in our app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=646"
+  },
+  {
+    "text": "so we'll need to first declare a type for them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=649"
+  },
+  {
+    "text": "Because we created this type ourselves and we own the format, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=651"
+  },
+  {
+    "text": "it makes sense for us to export the type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=655"
+  },
+  {
+    "text": "The first thing we'll do in Xcode ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=658"
+  },
+  {
+    "text": "is select the project itself to reveal its settings.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=659"
+  },
+  {
+    "text": "We want to select the target corresponding to our app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=663"
+  },
+  {
+    "text": "Right now, I'm looking at our iOS app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=666"
+  },
+  {
+    "text": "but we'd do the same thing for a macOS app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=669"
+  },
+  {
+    "text": "Then we'll switch over to the Info tab, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=672"
+  },
+  {
+    "text": "which represents the contents of an app's Info.plist file. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=674"
+  },
+  {
+    "text": "Expand the Exported Type Identifiers section. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=678"
+  },
+  {
+    "text": "Click the Add button at the bottom of the section ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=681"
+  },
+  {
+    "text": "to add a new type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=683"
+  },
+  {
+    "text": "The first thing we want to add is the uniform type identifier we came up with.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=685"
+  },
+  {
+    "text": "For this demo, we'll use com.example.restaurantmenu.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=692"
+  },
+  {
+    "text": "Remember, com.example is reserved by Apple for use in examples and demos. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=697"
+  },
+  {
+    "text": "You'll usually want to use a reverse DNS name that you own. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=702"
+  },
+  {
+    "text": "For instance, the company Claris would use com.claris, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=706"
+  },
+  {
+    "text": "while Beats would use com.beatsbydre.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=709"
+  },
+  {
+    "text": "Now we have to think about conformance.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=713"
+  },
+  {
+    "text": "Types that represent files in the file system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=718"
+  },
+  {
+    "text": "need to conform to public.data if they're regular files-- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=720"
+  },
+  {
+    "text": "that is, sequences of bytes-- ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=723"
+  },
+  {
+    "text": "or to com.apple.package if they're directories ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=725"
+  },
+  {
+    "text": "that the operating system should treat as files. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=728"
+  },
+  {
+    "text": "This type is going to be saved to disk using Swift's JSON encoder, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=731"
+  },
+  {
+    "text": "which means it's a sequence of bytes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=735"
+  },
+  {
+    "text": "That means regular file, and that means public.data.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=737"
+  },
+  {
+    "text": "Looks like we have a decision to make. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=742"
+  },
+  {
+    "text": "Because these files will contain JSON data, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=744"
+  },
+  {
+    "text": "they will be readable by anything that can read a JSON file. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=747"
+  },
+  {
+    "text": "That means the type can also conform to public.json.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=750"
+  },
+  {
+    "text": "That's a really useful property for some file types ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=754"
+  },
+  {
+    "text": "where the ability to edit them manually is important. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=757"
+  },
+  {
+    "text": "But for other types, it's an implementation detail only.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=759"
+  },
+  {
+    "text": "We'll add conformance to public.json for this type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=764"
+  },
+  {
+    "text": "You can skip these sorts of implementation details ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=767"
+  },
+  {
+    "text": "when creating your types ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=770"
+  },
+  {
+    "text": "if you don't want other developers to rely on them ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=771"
+  },
+  {
+    "text": "or if you expect your type's format may change in the future. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=773"
+  },
+  {
+    "text": "This file type is something the user would consider a document ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=777"
+  },
+  {
+    "text": "or content worth interacting with directly.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=780"
+  },
+  {
+    "text": "So we'll also make sure it conforms to public.content.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=783"
+  },
+  {
+    "text": "Next, we'll need to decide on a file name extension ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=788"
+  },
+  {
+    "text": "to associate with our type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=791"
+  },
+  {
+    "text": "This extension will tie the type back into the file system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=795"
+  },
+  {
+    "text": "and allow the system to recognize that appropriately named files have this type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=798"
+  },
+  {
+    "text": "We may be tempted to use a three-character extension, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=803"
+  },
+  {
+    "text": "but no major platform vendor ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=805"
+  },
+  {
+    "text": "has required three-character extensions since 1995. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=807"
+  },
+  {
+    "text": "We have lots of room to breathe here, and avoiding conflicts ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=811"
+  },
+  {
+    "text": "with other developers' type declarations is important. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=814"
+  },
+  {
+    "text": "So we'll use a longer extension, restaurantmenu. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=817"
+  },
+  {
+    "text": "Note that we didn't put a dot there. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=822"
+  },
+  {
+    "text": "The operating system knows to add it for us when creating file names. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=823"
+  },
+  {
+    "text": "Lastly, this is also a good opportunity ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=828"
+  },
+  {
+    "text": "to come up with a human-readable name for this type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=830"
+  },
+  {
+    "text": "Since our app is simply called Restaurant, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=833"
+  },
+  {
+    "text": "and since we picked the extension restaurantmenu, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=835"
+  },
+  {
+    "text": "we'll keep this simple and name it Restaurant Menu.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=838"
+  },
+  {
+    "text": "This string is localizable in our InfoPlist.strings file.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=843"
+  },
+  {
+    "text": "Use the string we just typed as your key when localizing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=847"
+  },
+  {
+    "text": "Now that we've declared the type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=850"
+  },
+  {
+    "text": "we need to tell the system that our app is able to open it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=852"
+  },
+  {
+    "text": "Expand the Document Type section.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=855"
+  },
+  {
+    "text": "Click the Add button at the bottom of the section ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=858"
+  },
+  {
+    "text": "to add a new supported type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=860"
+  },
+  {
+    "text": "This section is simpler than the Exported Type Identifier section. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=863"
+  },
+  {
+    "text": "The only thing we're required to specify ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=867"
+  },
+  {
+    "text": "is the list of uniform type identifiers the app supports. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=869"
+  },
+  {
+    "text": "To allow for flexibility, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=873"
+  },
+  {
+    "text": "we can specify multiple types for a single entry here ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=874"
+  },
+  {
+    "text": "or one per entry.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=877"
+  },
+  {
+    "text": "I personally prefer having one type per entry, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=880"
+  },
+  {
+    "text": "but it's mostly a question of personal preference, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=882"
+  },
+  {
+    "text": "like tabs versus spaces.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=885"
+  },
+  {
+    "text": "Anyway, we'll add our uniform type identifier to this field.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=887"
+  },
+  {
+    "text": "We should also set this entry's handler rank to Owner. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=895"
+  },
+  {
+    "text": "This step isn't required but it's strongly recommended ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=899"
+  },
+  {
+    "text": "because it helps the system intelligently pick the right app for a given job. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=902"
+  },
+  {
+    "text": "Since we invented this type, we own it.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=906"
+  },
+  {
+    "text": "On macOS, there is an additional Rule field ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=909"
+  },
+  {
+    "text": "that lets us specify whether we can open files ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=912"
+  },
+  {
+    "text": "as an editor or a viewer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=914"
+  },
+  {
+    "text": "Editors can both open and save files of a given type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=917"
+  },
+  {
+    "text": "while viewers can only open them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=920"
+  },
+  {
+    "text": "Because our app can both read and write these files, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=922"
+  },
+  {
+    "text": "we'd specify editor. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=925"
+  },
+  {
+    "text": "We're done editing the Info section. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=927"
+  },
+  {
+    "text": "Our app can now open our Restaurant Menu files. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=930"
+  },
+  {
+    "text": "We'll need to write some SwiftUI, UIkit or AppKit code ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=932"
+  },
+  {
+    "text": "to handle the document once the system passes it to us.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=936"
+  },
+  {
+    "text": "For more information on building a document-based application in Swift UI, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=940"
+  },
+  {
+    "text": "check out \"Build Document-Based Apps in SwiftUI\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=943"
+  },
+  {
+    "text": "from WWDC20. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=946"
+  },
+  {
+    "text": "Documentation for building document-based applications using UIkit and AppKit ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=949"
+  },
+  {
+    "text": "is available online at developer.apple.com.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=953"
+  },
+  {
+    "text": "Our app has a competitor on the App Store, Compy's Food. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=958"
+  },
+  {
+    "text": "Lots of restaurant owners use that app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=961"
+  },
+  {
+    "text": "and have saved their menus in the file format owned by that app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=963"
+  },
+  {
+    "text": "We want to also support reading those files. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=967"
+  },
+  {
+    "text": "This type was invented by somebody else, and we're only borrowing it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=970"
+  },
+  {
+    "text": "so we need to import it instead of export it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=973"
+  },
+  {
+    "text": "Let's head back to the Info tab for our app target ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=976"
+  },
+  {
+    "text": "and select Imported Type Identifiers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=978"
+  },
+  {
+    "text": "Note that because we created a new SwiftUI app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=982"
+  },
+  {
+    "text": "we have an existing entry here for an example type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=984"
+  },
+  {
+    "text": "We can replace the contents of the form with our own data, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=987"
+  },
+  {
+    "text": "which is what I'll do. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=990"
+  },
+  {
+    "text": "If we didn't have an existing example type in our target, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=992"
+  },
+  {
+    "text": "we could of course add a new type with the Add button below.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=995"
+  },
+  {
+    "text": "I'll fill in the Info section specified by Compy's Food.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=998"
+  },
+  {
+    "text": "Of course, the details here are examples only. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1002"
+  },
+  {
+    "text": "If you're adding support for a real competitor's type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1005"
+  },
+  {
+    "text": "you should strive to match what they've included in their Info.plist file.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1008"
+  },
+  {
+    "text": "Because this type is imported, it tells the system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1013"
+  },
+  {
+    "text": "about the sort of files produced by the Compy's Food app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1015"
+  },
+  {
+    "text": "But if the user has that app installed, the system can prefer its declaration, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1019"
+  },
+  {
+    "text": "which should be exported as more authoritative.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1023"
+  },
+  {
+    "text": "We'll now add support for opening these files ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1027"
+  },
+  {
+    "text": "so that the system can pick our app when the user wants to open one of them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1029"
+  },
+  {
+    "text": "We'll go back to the Document Type section.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1033"
+  },
+  {
+    "text": "We'll create a separate entry for Compy's Food List ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1037"
+  },
+  {
+    "text": "and add the new type identifier.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1039"
+  },
+  {
+    "text": "This entry is a little different from the other one ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1043"
+  },
+  {
+    "text": "because we're not the owner of the type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1045"
+  },
+  {
+    "text": "Instead, we want our handler rank to be Alternate.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1048"
+  },
+  {
+    "text": "Because our app can read these files but not write them, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1052"
+  },
+  {
+    "text": "we'd specify a role of Viewer on macOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1054"
+  },
+  {
+    "text": "The system now knows we can open this file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1058"
+  },
+  {
+    "text": "but that we may not be the best choice if the user has Compy's Food installed, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1060"
+  },
+  {
+    "text": "since that app is the owner of the file type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1064"
+  },
+  {
+    "text": "We want to be good citizens on the platform, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1067"
+  },
+  {
+    "text": "so it's important to respect type ownership this way ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1069"
+  },
+  {
+    "text": "even though we both know our code is way better than our competitor's code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1072"
+  },
+  {
+    "text": "Just as we did with our own restaurant menu type, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1076"
+  },
+  {
+    "text": "we'll need to write some Swift or Objective-C ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1079"
+  },
+  {
+    "text": "to actually read these files in our app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1081"
+  },
+  {
+    "text": "Check out developer.apple.com for more info.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1083"
+  },
+  {
+    "text": "So now that we've declared a type and told the system we support it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1087"
+  },
+  {
+    "text": "it's time to work with that type in our code. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1090"
+  },
+  {
+    "text": "This section assumes you're at least broadly familiar ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1094"
+  },
+  {
+    "text": "with the uniform type identifier's API in the Core Services framework. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1096"
+  },
+  {
+    "text": "Here we have a small program ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1101"
+  },
+  {
+    "text": "that walks a directory or a set of file URLs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1102"
+  },
+  {
+    "text": "It gets the uniform type identifier of each represented file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1105"
+  },
+  {
+    "text": "and then prints a localized description of that type identifier. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1109"
+  },
+  {
+    "text": "If the file is an image, it draws it somewhere, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1114"
+  },
+  {
+    "text": "and if it's an audio clip, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1116"
+  },
+  {
+    "text": "it plays it over the user's speakers or AirPods. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1118"
+  },
+  {
+    "text": "Right away, there are some problems visible here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1121"
+  },
+  {
+    "text": "We have to explicitly cast our strings to CFStrings ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1125"
+  },
+  {
+    "text": "to use them with the global UTType functions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1128"
+  },
+  {
+    "text": "And we have to manually manage the lifetime of the CFString ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1131"
+  },
+  {
+    "text": "we get from UTTypeCopyDescription.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1134"
+  },
+  {
+    "text": "But, and I'm very happy to talk to you about this, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1137"
+  },
+  {
+    "text": "in iOS 14 and macOS Big Sur, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1140"
+  },
+  {
+    "text": "we have introduced a brand-new uniform type identifiers framework ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1143"
+  },
+  {
+    "text": "that brings first-class Swiftiness to uniform type identifiers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1147"
+  },
+  {
+    "text": "Where we previously used CFStrings to represent type identifiers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1151"
+  },
+  {
+    "text": "we can now use UTType to represent types and their properties. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1154"
+  },
+  {
+    "text": "Let's walk through this code and convert it to use the new framework.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1159"
+  },
+  {
+    "text": "I've imported the framework in order to get access to the API it contains, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1164"
+  },
+  {
+    "text": "and now I'll change the type identifier URL property to contentType, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1168"
+  },
+  {
+    "text": "whose value is an instance of a new struct, UTType.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1172"
+  },
+  {
+    "text": "This struct encapsulates a uniform type identifier ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1176"
+  },
+  {
+    "text": "alongside metadata about it. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1179"
+  },
+  {
+    "text": "Next, we'll fix this unretained value.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1182"
+  },
+  {
+    "text": "UTType has a localized description property. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1185"
+  },
+  {
+    "text": "Properties like this one are a much more natural way ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1188"
+  },
+  {
+    "text": "to work with the type's attributes and global functions. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1191"
+  },
+  {
+    "text": "The value of this property corresponds ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1195"
+  },
+  {
+    "text": "to the description string you entered in Xcode, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1196"
+  },
+  {
+    "text": "and is localized when you localize your app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1199"
+  },
+  {
+    "text": "Next, let's turn to UTTypeConformsTo, another global function.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1202"
+  },
+  {
+    "text": "This function takes the CFString, which necessitates explicit casts.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1207"
+  },
+  {
+    "text": "Unsurprisingly, UTType has a conforms-to member method. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1212"
+  },
+  {
+    "text": "But what are these: .image and .audio? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1216"
+  },
+  {
+    "text": "Remember this slide? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1220"
+  },
+  {
+    "text": "When we were designing this new framework, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1222"
+  },
+  {
+    "text": "we took a look at the set of types declared by the system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1224"
+  },
+  {
+    "text": "as well as the set of CFString constants exposed in the old API, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1226"
+  },
+  {
+    "text": "and we brought them over to the new framework as named constants. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1231"
+  },
+  {
+    "text": "There are over 120 such constants defined in the new framework, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1235"
+  },
+  {
+    "text": "covering the most commonly used system-defined types. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1239"
+  },
+  {
+    "text": "Of course, earlier in this session, we declared some types in our app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1242"
+  },
+  {
+    "text": "Wouldn't it be nice if we could expose constants for them too? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1246"
+  },
+  {
+    "text": "I'm just full of good news today, because you can do exactly that. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1251"
+  },
+  {
+    "text": "We have API for declaring named constants ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1255"
+  },
+  {
+    "text": "for types that you export and for types that you import. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1257"
+  },
+  {
+    "text": "The semantics are a little different for each. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1261"
+  },
+  {
+    "text": "When you export a type, you're saying, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1264"
+  },
+  {
+    "text": "\"I own this type. I created it. My app is the authority for this type.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1266"
+  },
+  {
+    "text": "So we go ahead and create an instance of UTType for you, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1271"
+  },
+  {
+    "text": "safe in the knowledge that you know everything about this type.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1274"
+  },
+  {
+    "text": "When you import a type, you're saying, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1277"
+  },
+  {
+    "text": "\"I know about this type, but somebody else might know more than me,\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1280"
+  },
+  {
+    "text": "and the owner of that type might declare the type differently than you did.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1283"
+  },
+  {
+    "text": "If that happens, we can substitute that type on the fly ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1287"
+  },
+  {
+    "text": "in the most common use cases. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1291"
+  },
+  {
+    "text": "We need your cooperation though. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1293"
+  },
+  {
+    "text": "Rather than declaring your imported types as constants, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1295"
+  },
+  {
+    "text": "declare them as static computed variables, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1298"
+  },
+  {
+    "text": "so that if the declaration changes due to an app installation, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1301"
+  },
+  {
+    "text": "you'll pick up the updated type automatically.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1305"
+  },
+  {
+    "text": "We've built support into Xcode for detecting issues with types you declare. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1309"
+  },
+  {
+    "text": "We can detect if an exported or imported type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1313"
+  },
+  {
+    "text": "is missing from your Info.plist, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1315"
+  },
+  {
+    "text": "or if you used the wrong constant initializer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1317"
+  },
+  {
+    "text": "We'll work to improve the support over time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1321"
+  },
+  {
+    "text": "and your input will be invaluable here, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1323"
+  },
+  {
+    "text": "so please provide feedback. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1325"
+  },
+  {
+    "text": "A number of frameworks support our new API in iOS 14 and macOS Big Sur. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1327"
+  },
+  {
+    "text": "Foundation has the URL property I just showed you, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1333"
+  },
+  {
+    "text": "and it also has utilities for generating recommended file names ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1336"
+  },
+  {
+    "text": "based on a string or URL and an instance of UTType.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1339"
+  },
+  {
+    "text": "SwiftUI has extensive support for UTType. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1344"
+  },
+  {
+    "text": "Pasteboard and drag-and-drop APIs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1347"
+  },
+  {
+    "text": "such as the onDrop event handler, use them exclusively.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1349"
+  },
+  {
+    "text": "And SwiftUI's new support for document-based apps ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1354"
+  },
+  {
+    "text": "is designed to use UTType. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1356"
+  },
+  {
+    "text": "I recommend you check out ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1359"
+  },
+  {
+    "text": "\"Build Document-Based Apps in SwiftUI\" from WWDC 20 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1360"
+  },
+  {
+    "text": "to learn more about it.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1364"
+  },
+  {
+    "text": "When using AppKit, NSWorkspace will let you get an icon for any UTType. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1367"
+  },
+  {
+    "text": "And NSOpenPanel and NSSavePanel support UTTypes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1372"
+  },
+  {
+    "text": "UIkit supports using UTTypes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1376"
+  },
+  {
+    "text": "when presenting document pickers and document browsers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1378"
+  },
+  {
+    "text": "And Core Spotlight lets you create an attribute set from a UTType.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1382"
+  },
+  {
+    "text": "There are a number of APIs that do not support UTType in this release, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1386"
+  },
+  {
+    "text": "and you may find yourself needing to interact with them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1391"
+  },
+  {
+    "text": "It's not difficult. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1393"
+  },
+  {
+    "text": "If you need to pass a uniform type identifier to an API, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1395"
+  },
+  {
+    "text": "get the UTType's identifier property and cast it to a CFString.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1398"
+  },
+  {
+    "text": "If you want to convert a uniform type identifier back to a UTType, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1403"
+  },
+  {
+    "text": "cast it from CFString to String ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1407"
+  },
+  {
+    "text": "and initialize your UTType with that string. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1409"
+  },
+  {
+    "text": "This is a failable initializer, so don't forget to check for nil.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1412"
+  },
+  {
+    "text": "In Objective-C, it's a little wordier, but the idea is the same. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1417"
+  },
+  {
+    "text": "Cast the UTType's identifier to CFStringRef ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1422"
+  },
+  {
+    "text": "or cast a CFString to NSString and create a UTType from it.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1425"
+  },
+  {
+    "text": "We've seen today how the system derives a file's type from its metadata ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1431"
+  },
+  {
+    "text": "and how Apple encapsulates that information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1435"
+  },
+  {
+    "text": "using uniform type identifiers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1438"
+  },
+  {
+    "text": "We've learned how to declare and use our own types ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1441"
+  },
+  {
+    "text": "and how to interact with types that may be shared among multiple applications.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1444"
+  },
+  {
+    "text": "And we've introduced a new uniform type identifiers framework ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1449"
+  },
+  {
+    "text": "that provides a modern, object-oriented way ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1453"
+  },
+  {
+    "text": "to interact with types.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1455"
+  },
+  {
+    "text": "I look forward to seeing how you use this knowledge ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1457"
+  },
+  {
+    "text": "and the new framework to build your apps. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1460"
+  },
+  {
+    "text": "Thank you.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10696/?time=1462"
+  }
+]

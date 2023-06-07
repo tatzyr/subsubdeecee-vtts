@@ -1,0 +1,1582 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=0"
+  },
+  {
+    "text": "Welcome to Visualize and Optimize Swift Concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=9"
+  },
+  {
+    "text": "My name is Mike, and I work on the Swift runtime library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=12"
+  },
+  {
+    "text": "Hi, I'm Harjas, and I work on Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=16"
+  },
+  {
+    "text": "Together, we're going to discuss ways to better understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=18"
+  },
+  {
+    "text": "your Swift Concurrency code and make it go faster, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=21"
+  },
+  {
+    "text": "including a new visualization tool available in Instruments 14. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=24"
+  },
+  {
+    "text": "Let's start off with a really quick recap of the various parts of Swift Concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=28"
+  },
+  {
+    "text": "and how they work together, to make sure you're up to speed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=32"
+  },
+  {
+    "text": "After that, we'll demo the new concurrency instrument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=36"
+  },
+  {
+    "text": "We'll show you how we use it to solve some real performance issues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=38"
+  },
+  {
+    "text": "with an app using Swift Concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=41"
+  },
+  {
+    "text": "Finally, we'll discuss the potential problems of thread pool exhaustion ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=44"
+  },
+  {
+    "text": "and continuation misuse and how to avoid them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=48"
+  },
+  {
+    "text": "Last year, we introduced Swift Concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=51"
+  },
+  {
+    "text": "This was a new language feature that includes async/await, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=54"
+  },
+  {
+    "text": "structured concurrency, and Actors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=58"
+  },
+  {
+    "text": "We've been pleased to see a great deal of adoption of these features since then, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=61"
+  },
+  {
+    "text": "both inside and outside Apple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=64"
+  },
+  {
+    "text": "Swift concurrency adds several new features to the language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=67"
+  },
+  {
+    "text": "which work together to make concurrent programming easier and safer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=70"
+  },
+  {
+    "text": "Async/await are basic syntactic building blocks for concurrent code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=74"
+  },
+  {
+    "text": "They allow you to create and call functions that can suspend their work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=79"
+  },
+  {
+    "text": "in the middle of execution, then resume that work later, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=82"
+  },
+  {
+    "text": "without blocking an execution thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=85"
+  },
+  {
+    "text": "Tasks are the basic unit of work in concurrent code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=89"
+  },
+  {
+    "text": "Tasks execute concurrent code and manage its state and associated data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=92"
+  },
+  {
+    "text": "They contain local variables, handle cancellation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=97"
+  },
+  {
+    "text": "and begin and suspend execution of async code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=100"
+  },
+  {
+    "text": "Structured concurrency makes it easy to spawn child tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=104"
+  },
+  {
+    "text": "to run in parallel and wait for them to complete. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=107"
+  },
+  {
+    "text": "The language provides syntax which keeps the work grouped together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=110"
+  },
+  {
+    "text": "and ensures that tasks are awaited or automatically canceled if not used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=113"
+  },
+  {
+    "text": "Actors coordinate multiple tasks that need to access shared data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=119"
+  },
+  {
+    "text": "They isolate data from the outside, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=123"
+  },
+  {
+    "text": "and allow only one task at a time to manipulate their internal state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=125"
+  },
+  {
+    "text": "avoiding data races from concurrent mutation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=129"
+  },
+  {
+    "text": "New in Instruments 14, we're introducing a set of instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=132"
+  },
+  {
+    "text": "that can capture and visualize all of this activity in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=136"
+  },
+  {
+    "text": "helping you to understand what your app is doing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=139"
+  },
+  {
+    "text": "locate problems, and improve performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=141"
+  },
+  {
+    "text": "For a more in-depth discussion of the fundamentals of Swift Concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=144"
+  },
+  {
+    "text": "we have several videos about these features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=148"
+  },
+  {
+    "text": "linked in the Related Videos section.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=150"
+  },
+  {
+    "text": "Let's take a look at optimizing an app using Swift Concurrency code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=154"
+  },
+  {
+    "text": "Swift concurrency makes it easy to to write correct concurrent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=158"
+  },
+  {
+    "text": "and parallel code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=161"
+  },
+  {
+    "text": "However, it's still possible to write code that misuses concurrency constructs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=163"
+  },
+  {
+    "text": "It's also possible to use them correctly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=168"
+  },
+  {
+    "text": "but in a way that doesn't get the performance benefits you were aiming for.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=170"
+  },
+  {
+    "text": "There are a few common problems that can arise when writing code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=174"
+  },
+  {
+    "text": "using Swift concurrency that can cause poor performance or bugs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=177"
+  },
+  {
+    "text": "Main Actor blocking can cause your app to hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=182"
+  },
+  {
+    "text": "Actor contention and thread pool exhaustion hurt performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=186"
+  },
+  {
+    "text": "by reducing parallel execution. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=190"
+  },
+  {
+    "text": "Continuation misuse causes leaks or crashes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=193"
+  },
+  {
+    "text": "The new Swift Concurrency instrument can help you discover and fix these problems. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=197"
+  },
+  {
+    "text": "Let's take a look at each of these, starting with main Actor blocking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=202"
+  },
+  {
+    "text": "Main Actor blocking occurs when a long-running task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=206"
+  },
+  {
+    "text": "runs on the main Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=208"
+  },
+  {
+    "text": "The main Actor is a special Actor which executes all of its work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=211"
+  },
+  {
+    "text": "on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=214"
+  },
+  {
+    "text": "UI work must be done on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=216"
+  },
+  {
+    "text": "and the main Actor allows you to integrate UI code into Swift Concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=219"
+  },
+  {
+    "text": "However, because the main thread is so important for UI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=223"
+  },
+  {
+    "text": "it needs to be available and can't be occupied by a long-running unit of work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=226"
+  },
+  {
+    "text": "When this happens, your app appears to lock up and becomes unresponsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=230"
+  },
+  {
+    "text": "Code running on the main Actor must finish quickly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=235"
+  },
+  {
+    "text": "and either complete its work or move computation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=238"
+  },
+  {
+    "text": "off of the main Actor and into the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=241"
+  },
+  {
+    "text": "Work can be moved into the background by putting it in a normal Actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=244"
+  },
+  {
+    "text": "or in a detached task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=247"
+  },
+  {
+    "text": "Small units of work can be executed on the main Actor to update UI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=249"
+  },
+  {
+    "text": "or perform other tasks that must be done on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=253"
+  },
+  {
+    "text": "Let's see a demo of this in action. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=256"
+  },
+  {
+    "text": "Thanks, Mike. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=258"
+  },
+  {
+    "text": "Here we have our File Squeezer application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=260"
+  },
+  {
+    "text": "We built this application to be able to quickly compress ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=262"
+  },
+  {
+    "text": "all the files in a folder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=265"
+  },
+  {
+    "text": "It seems to work alright for small files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=267"
+  },
+  {
+    "text": "However, when I use larger files, it takes much longer than expected ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=270"
+  },
+  {
+    "text": "and the UI is completely frozen and does not respond to any interactions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=274"
+  },
+  {
+    "text": "This behavior is very off-putting to users ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=279"
+  },
+  {
+    "text": "and may make them think that the application has crashed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=282"
+  },
+  {
+    "text": "or will never finish. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=285"
+  },
+  {
+    "text": "We should strive to ensure that our UI is always responsive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=286"
+  },
+  {
+    "text": "for the best user experience. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=290"
+  },
+  {
+    "text": "To investigate this performance problem, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=291"
+  },
+  {
+    "text": "we can use the new Swift Concurrency template in Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=294"
+  },
+  {
+    "text": "The Swift Tasks and Swift Actors instruments provide a full suite of tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=298"
+  },
+  {
+    "text": "to help you visualize and optimize your concurrency code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=302"
+  },
+  {
+    "text": "When you're just starting to investigate a performance problem ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=306"
+  },
+  {
+    "text": "you should first take a look at the top-level statistics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=308"
+  },
+  {
+    "text": "provided to you by the Swift Tasks instrument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=312"
+  },
+  {
+    "text": "The first of these is Running Tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=315"
+  },
+  {
+    "text": "which show you how many tasks are executing simultaneously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=318"
+  },
+  {
+    "text": "Next, we have Alive Tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=322"
+  },
+  {
+    "text": "which show how many tasks are present at a given point in time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=324"
+  },
+  {
+    "text": "And finally, Total Tasks; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=328"
+  },
+  {
+    "text": "graph the total number of tasks that have been created ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=331"
+  },
+  {
+    "text": "up until that point in time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=333"
+  },
+  {
+    "text": "When you're attempting to reduce your application memory footprint, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=336"
+  },
+  {
+    "text": "you should take a close look at the Alive and Total Tasks statistics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=339"
+  },
+  {
+    "text": "The combination of all of these statistics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=344"
+  },
+  {
+    "text": "give you a good picture of how well your code is parallelizing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=347"
+  },
+  {
+    "text": "and how many resources you are consuming. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=350"
+  },
+  {
+    "text": "One of the many detail views for this instrument is the Task Forest; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=353"
+  },
+  {
+    "text": "shown in the bottom half of this window, it provides a graphical representation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=358"
+  },
+  {
+    "text": "of the parent-child relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=362"
+  },
+  {
+    "text": "between Tasks in structured concurrency code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=365"
+  },
+  {
+    "text": "Next, we have our Task Summary view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=369"
+  },
+  {
+    "text": "This shows how much time each Task spends in different states. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=372"
+  },
+  {
+    "text": "We have super-charged the view by allowing you to right-click on a Task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=377"
+  },
+  {
+    "text": "to be able to pin a Track containing all the information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=381"
+  },
+  {
+    "text": "about the selected Task to the timeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=385"
+  },
+  {
+    "text": "This allows you to quickly find and learn about Tasks of interest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=387"
+  },
+  {
+    "text": "that may be running for a very long time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=392"
+  },
+  {
+    "text": "or stuck waiting to get access to an Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=394"
+  },
+  {
+    "text": "Once you pin a Swift Task to the timeline, you get four key features. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=398"
+  },
+  {
+    "text": "First, is the track that shows you what state your Swift Task is in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=403"
+  },
+  {
+    "text": "Second, is the Task creation backtrace in the extended detail view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=408"
+  },
+  {
+    "text": "Third, is the narrative view that provides more context ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=413"
+  },
+  {
+    "text": "about the state a Swift Task is in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=416"
+  },
+  {
+    "text": "Such as, if it's waiting on a Task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=418"
+  },
+  {
+    "text": "it will inform you which Task you are waiting on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=421"
+  },
+  {
+    "text": "Lastly, you have access to the same pin action in the narrative view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=424"
+  },
+  {
+    "text": "as you did in the summary view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=428"
+  },
+  {
+    "text": "So, you can pin a child Task, a thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=430"
+  },
+  {
+    "text": "or even a Swift Actor to the timeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=433"
+  },
+  {
+    "text": "This narrative view will be instrumental in finding how a Swift Task is related ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=436"
+  },
+  {
+    "text": "to your other concurrency primitives and the CPU. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=441"
+  },
+  {
+    "text": "Now that we have seen a brief overview ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=446"
+  },
+  {
+    "text": "of some of the features in the new instrument, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=448"
+  },
+  {
+    "text": "let's profile our application and optimize our code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=450"
+  },
+  {
+    "text": "We can do this by pulling up our project in Xcode and pressing Command-I. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=453"
+  },
+  {
+    "text": "This will compile our application, open up instruments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=458"
+  },
+  {
+    "text": "and pre-select the target to the File Squeezer application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=460"
+  },
+  {
+    "text": "From here you can pick the Swift Concurrency option in the template picker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=464"
+  },
+  {
+    "text": "and start recording.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=468"
+  },
+  {
+    "text": "Once again, I'll drop the large files onto the app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=472"
+  },
+  {
+    "text": "Again, we see that the app starts spinning and the UI is not responsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=476"
+  },
+  {
+    "text": "We will let this run for a few more seconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=481"
+  },
+  {
+    "text": "so that Instruments can capture all the information about our application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=483"
+  },
+  {
+    "text": "Now that we have a trace, we can start investigating. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=488"
+  },
+  {
+    "text": "I'm going to fullscreen this trace to better see all the information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=491"
+  },
+  {
+    "text": "We can use option-drag to zoom in on our area of interest.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=497"
+  },
+  {
+    "text": "In the process track, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=504"
+  },
+  {
+    "text": "Instruments shows us exactly where this UI hang was occurring. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=506"
+  },
+  {
+    "text": "This can be useful for cases when it is not clear ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=511"
+  },
+  {
+    "text": "when the hang occurred or how long it lasted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=514"
+  },
+  {
+    "text": "As I mentioned earlier, a good place to start ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=517"
+  },
+  {
+    "text": "is the top-level Swift Task statistics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=519"
+  },
+  {
+    "text": "What catches my eye right away is the Running Tasks count. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=522"
+  },
+  {
+    "text": "For most of the time, only one Task is running. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=526"
+  },
+  {
+    "text": "This tells us part of the problem is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=529"
+  },
+  {
+    "text": "all of our work is being forced to serialize. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=531"
+  },
+  {
+    "text": "We can use the Task State summary to find our longest running Task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=535"
+  },
+  {
+    "text": "and use the pin action to pin it to the timeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=539"
+  },
+  {
+    "text": "The narrative view for this Task tells us that it ran on a background thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=543"
+  },
+  {
+    "text": "for a short amount of time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=548"
+  },
+  {
+    "text": "and then ran on the Main Thread for a long time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=549"
+  },
+  {
+    "text": "To further investigate, we can pin the Main Thread to the timeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=554"
+  },
+  {
+    "text": "The Main Thread is being blocked by several long running Tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=563"
+  },
+  {
+    "text": "This demonstrates the issue of Main Actor blocking that Mike spoke about. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=567"
+  },
+  {
+    "text": "So the questions we have to ask ourselves are, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=571"
+  },
+  {
+    "text": "\"What is this Task doing?\" and \"Where did this Task come from?\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=574"
+  },
+  {
+    "text": "We can switch back to the narrative view to answer both of these questions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=578"
+  },
+  {
+    "text": "The creation backtrace in the extended detail view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=583"
+  },
+  {
+    "text": "shows that the task was created in the compressAllFiles function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=585"
+  },
+  {
+    "text": "The narrative shows that the Task is executing closure number one ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=590"
+  },
+  {
+    "text": "in compressAllFiles. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=595"
+  },
+  {
+    "text": "By right-clicking on this symbol, we can open this in the source viewer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=596"
+  },
+  {
+    "text": "Closure number one inside this function is calling our compression work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=603"
+  },
+  {
+    "text": "Now that we know where this Task was created and what it is doing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=608"
+  },
+  {
+    "text": "we can open our code in Xcode and adapt it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=612"
+  },
+  {
+    "text": "so that we don't run these heavy computations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=614"
+  },
+  {
+    "text": "on the Main Thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=616"
+  },
+  {
+    "text": "The compress file function is located within the CompressionState class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=618"
+  },
+  {
+    "text": "The entire CompressionState class is annotated to run on the @MainActor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=624"
+  },
+  {
+    "text": "This explains why the Task also ran on the Main Thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=629"
+  },
+  {
+    "text": "We need this entire class to be on the MainActor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=632"
+  },
+  {
+    "text": "because the @Published property here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=635"
+  },
+  {
+    "text": "must only be updated from the Main Thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=638"
+  },
+  {
+    "text": "otherwise, we could run into runtime issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=640"
+  },
+  {
+    "text": "So, instead we could try to convert this class into its own Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=644"
+  },
+  {
+    "text": "However, the compiler will tell us that we can't do this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=649"
+  },
+  {
+    "text": "because essentially we would be saying that this shared mutable state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=653"
+  },
+  {
+    "text": "needs to be protected by two different Actors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=657"
+  },
+  {
+    "text": "But that does give us a hint for what the real solution is. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=661"
+  },
+  {
+    "text": "We have two different pieces of mutable state here within this class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=664"
+  },
+  {
+    "text": "One piece of state, the 'files' property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=669"
+  },
+  {
+    "text": "needs to be isolated to the MainActor because it is observed by SwiftUI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=671"
+  },
+  {
+    "text": "But access to the other piece of state, the logs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=676"
+  },
+  {
+    "text": "needs to be protected from concurrent access, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=679"
+  },
+  {
+    "text": "but which thread accesses logs at any given point doesn't matter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=682"
+  },
+  {
+    "text": "Thus, it doesn't actually need to be on the Main Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=687"
+  },
+  {
+    "text": "We still want to protect it from concurrent access, though, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=692"
+  },
+  {
+    "text": "so we wrap it in its own Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=695"
+  },
+  {
+    "text": "All we need now is add a way for Tasks to hop between the two as needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=698"
+  },
+  {
+    "text": "We can create a new Actor and call it ParallelCompressor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=705"
+  },
+  {
+    "text": "We can then copy the log state into the new Actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=713"
+  },
+  {
+    "text": "and add some extra setup code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=719"
+  },
+  {
+    "text": "From here, we need to make these Actors communicate with each other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=724"
+  },
+  {
+    "text": "First, let's remove the code that referred to the logs variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=728"
+  },
+  {
+    "text": "from the CompressionState class, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=732"
+  },
+  {
+    "text": "and add it to our ParallelCompressor Actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=738"
+  },
+  {
+    "text": "Then finally, we need to update CompressionState ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=747"
+  },
+  {
+    "text": "to invoke compressFile on the ParallelCompressor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=750"
+  },
+  {
+    "text": "With these changes, let's test our application again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=763"
+  },
+  {
+    "text": "Once again, I'll drop the large files onto our application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=768"
+  },
+  {
+    "text": "The UI is no longer hung, which is a great improvement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=775"
+  },
+  {
+    "text": "but we aren't getting the speed that we would expect. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=778"
+  },
+  {
+    "text": "We really want to take full advantage of all the cores in the machine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=781"
+  },
+  {
+    "text": "to do this work as fast as possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=786"
+  },
+  {
+    "text": "Mike, what else should we be watching out for? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=788"
+  },
+  {
+    "text": "Mike: We've solved our hang by moving work off of the Main Actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=792"
+  },
+  {
+    "text": "but we're still not getting the performance we want. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=796"
+  },
+  {
+    "text": "To see why, we need to take a closer look at Actors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=799"
+  },
+  {
+    "text": "Actors make it safe for multiple tasks to manipulate shared state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=802"
+  },
+  {
+    "text": "However, they do this by serializing access to that shared state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=806"
+  },
+  {
+    "text": "Only one task at a time is allowed to occupy the Actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=811"
+  },
+  {
+    "text": "and other tasks that need to use that Actor will wait. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=814"
+  },
+  {
+    "text": "Swift concurrency allows for parallel computation using unstructured tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=818"
+  },
+  {
+    "text": "task groups, and async let. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=822"
+  },
+  {
+    "text": "Ideally, these constructs are able to use many CPU cores simultaneously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=825"
+  },
+  {
+    "text": "When using Actors from such code, beware of performing large amounts of work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=829"
+  },
+  {
+    "text": "on an Actor that's shared among these tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=833"
+  },
+  {
+    "text": "When multiple tasks attempt to use the same Actor simultaneously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=837"
+  },
+  {
+    "text": "the Actor serializes execution of those tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=840"
+  },
+  {
+    "text": "Because of this, we lose the performance benefits of parallel computation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=844"
+  },
+  {
+    "text": "This is because each task must wait for the Actor to become available. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=851"
+  },
+  {
+    "text": "To fix this, we need make sure that tasks only run on the Actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=856"
+  },
+  {
+    "text": "when they really need exclusive access to the Actor's data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=859"
+  },
+  {
+    "text": "Everything else should run off of the Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=863"
+  },
+  {
+    "text": "We divide the task into chunks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=865"
+  },
+  {
+    "text": "Some chunks must run on the Actor, and the others don't. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=868"
+  },
+  {
+    "text": "The non-Actor isolated chunks can be executed in parallel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=872"
+  },
+  {
+    "text": "which means the computer can finish the work much faster. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=876"
+  },
+  {
+    "text": "Let's see a demo of this in action. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=879"
+  },
+  {
+    "text": "Harjas: Thanks, Mike. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=881"
+  },
+  {
+    "text": "Let's take a look at the trace of our updated \"File Squeezer\" application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=883"
+  },
+  {
+    "text": "and keep in mind what Mike has just taught us. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=887"
+  },
+  {
+    "text": "The Task Summary view shows us that our concurrency code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=889"
+  },
+  {
+    "text": "is spending an alarming amount of time in the Enqueued state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=893"
+  },
+  {
+    "text": "This means we have a lot of Tasks waiting to get exclusive access to an Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=897"
+  },
+  {
+    "text": "Let's pin one of these Tasks to learn why.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=902"
+  },
+  {
+    "text": "This Task spends quite a while waiting to get onto ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=907"
+  },
+  {
+    "text": "the ParallelCompressor Actor before it runs the compression work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=911"
+  },
+  {
+    "text": "Let's go ahead and pin the Actor to our timeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=916"
+  },
+  {
+    "text": "Here we have some top-level data for the ParallelCompressor Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=923"
+  },
+  {
+    "text": "This Actor Queue seems to be getting blocked by some long running Tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=928"
+  },
+  {
+    "text": "Tasks should really only stay on an Actor for as long as needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=933"
+  },
+  {
+    "text": "Let's go back to the Task narrative.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=937"
+  },
+  {
+    "text": "After the enqueue on ParallelCompressor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=942"
+  },
+  {
+    "text": "the Task runs in closure number one in compressAllFiles. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=945"
+  },
+  {
+    "text": "So let's start our investigation there. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=950"
+  },
+  {
+    "text": "The source code shows us that this closure is primarily running our compression work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=952"
+  },
+  {
+    "text": "Since the compressFile function is part of the ParallelCompressor Actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=959"
+  },
+  {
+    "text": "the entire execution of this function happens on the Actor; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=964"
+  },
+  {
+    "text": "blocking all other compression work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=969"
+  },
+  {
+    "text": "To resolve this issue, we need to pull the compressFile function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=971"
+  },
+  {
+    "text": "out of Actor-isolation and into a detached task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=975"
+  },
+  {
+    "text": "By doing this, we can have the detached task only on an Actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=982"
+  },
+  {
+    "text": "for as long as needed to update the relevant mutable state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=987"
+  },
+  {
+    "text": "So now the compress function can be executed freely, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=991"
+  },
+  {
+    "text": "on any thread in the thread pool, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=995"
+  },
+  {
+    "text": "until it needs to access Actor-protected state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=998"
+  },
+  {
+    "text": "For example, when it needs to access the 'files' property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1002"
+  },
+  {
+    "text": "it'll move onto the Main Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1005"
+  },
+  {
+    "text": "But as soon as it's done there, it moves into the \"sea of concurrency\" again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1008"
+  },
+  {
+    "text": "until it needs to access the logs property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1013"
+  },
+  {
+    "text": "for which it moves on to the ParallelCompressor Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1017"
+  },
+  {
+    "text": "But again, as soon as it's done there, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1021"
+  },
+  {
+    "text": "it leaves the Actor again to be executed on the thread pool. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1023"
+  },
+  {
+    "text": "But of course, we don't have just one task doing compression work; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1028"
+  },
+  {
+    "text": "we have many. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1032"
+  },
+  {
+    "text": "And by not being constrained to an Actor, they can all be executed concurrently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1034"
+  },
+  {
+    "text": "only limited by the number of threads.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1039"
+  },
+  {
+    "text": "Of course, each Actor can only execute one task at a time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1043"
+  },
+  {
+    "text": "but most of the time, our Tasks don't need to be on an Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1049"
+  },
+  {
+    "text": "So like Mike explained, this allows our compression tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1053"
+  },
+  {
+    "text": "to executed in parallel and utilize all available CPU cores. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1057"
+  },
+  {
+    "text": "So let's make this change now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1063"
+  },
+  {
+    "text": "We can mark the compressFile function as nonisolated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1067"
+  },
+  {
+    "text": "This does result in a few compiler errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1073"
+  },
+  {
+    "text": "By marking it as nonisolated, we told the Swift compiler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1076"
+  },
+  {
+    "text": "that we don't need access to the shared state of this Actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1080"
+  },
+  {
+    "text": "But that isn't entirely true. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1084"
+  },
+  {
+    "text": "This log function is Actor-isolated and it needs access to the shared mutable state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1086"
+  },
+  {
+    "text": "In order to fix this, we need to make this function async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1093"
+  },
+  {
+    "text": "and then mark all of our log invocations with the await keyword.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1099"
+  },
+  {
+    "text": "Now we need to update our task creation to create a detached task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1109"
+  },
+  {
+    "text": "We do this to ensure the Task does not inherit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1120"
+  },
+  {
+    "text": "the Actor-context that it was created in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1123"
+  },
+  {
+    "text": "For detached tasks, we need to explicitly capture self.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1127"
+  },
+  {
+    "text": "Let's test our application again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1136"
+  },
+  {
+    "text": "The app is able to compress all the files simultaneously ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1145"
+  },
+  {
+    "text": "and the UI remains responsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1149"
+  },
+  {
+    "text": "To verify our improvements, we can check the Swift Actors instrument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1152"
+  },
+  {
+    "text": "Looking at the ParallelCompressor Actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1158"
+  },
+  {
+    "text": "most of the work executed on the Actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1160"
+  },
+  {
+    "text": "is only for a short amount of time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1163"
+  },
+  {
+    "text": "and the queue size never gets out of hand. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1166"
+  },
+  {
+    "text": "To recap, we used the Instrument to Isolate the cause of a UI hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1170"
+  },
+  {
+    "text": "we restructured our concurrency code for better parallelism, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1175"
+  },
+  {
+    "text": "and verified performance improvements using data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1178"
+  },
+  {
+    "text": "Now Mike is gonna tell us about some other potential performance issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1182"
+  },
+  {
+    "text": "Mike: There are two common problems I'd like to cover ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1186"
+  },
+  {
+    "text": "beyond what we've seen in the demo. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1188"
+  },
+  {
+    "text": "First, let's talk about thread pool exhaustion. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1190"
+  },
+  {
+    "text": "Thread pool exhaustion can hurt performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1193"
+  },
+  {
+    "text": "or even deadlock an application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1195"
+  },
+  {
+    "text": "Swift concurrency requires tasks to make forward progress when they're running. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1197"
+  },
+  {
+    "text": "When a task waits for something, it normally does so by suspending. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1202"
+  },
+  {
+    "text": "However, it's possible for code within a task to perform a blocking call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1206"
+  },
+  {
+    "text": "such as blocking file or network IO, or acquiring locks, without suspending. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1210"
+  },
+  {
+    "text": "This breaks the requirement for tasks to make forward progress. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1215"
+  },
+  {
+    "text": "When this happens, the task continues to occupy the thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1220"
+  },
+  {
+    "text": "where it's executing, but it isn't actually using a CPU core. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1223"
+  },
+  {
+    "text": "Because the pool of threads is limited and some of them are blocked, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1227"
+  },
+  {
+    "text": "the concurrency runtime is unable to fully use all CPU cores. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1230"
+  },
+  {
+    "text": "This reduces the amount of parallel computation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1234"
+  },
+  {
+    "text": "that can be done and the maximum performance of your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1237"
+  },
+  {
+    "text": "In extreme cases, when the entire thread pool is occupied by blocked tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1241"
+  },
+  {
+    "text": "and they're waiting on something that requires a new task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1245"
+  },
+  {
+    "text": "to run on the thread pool, the concurrency runtime can deadlock. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1248"
+  },
+  {
+    "text": "Be sure to avoid blocking calls in tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1252"
+  },
+  {
+    "text": "File and network IO must be performed using async APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1255"
+  },
+  {
+    "text": "Avoid waiting on condition variables or semaphores. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1260"
+  },
+  {
+    "text": "Fine-grained, briefly-held locks are acceptable if necessary, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1263"
+  },
+  {
+    "text": "but avoid locks that have a lot of contention ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1267"
+  },
+  {
+    "text": "or are held for long periods of time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1269"
+  },
+  {
+    "text": "If you have code that needs to do these things, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1272"
+  },
+  {
+    "text": "move that code outside of the concurrency thread pool– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1274"
+  },
+  {
+    "text": "for example, by running it on a Dispatch queue– ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1277"
+  },
+  {
+    "text": "and bridge it to the concurrency world using continuations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1280"
+  },
+  {
+    "text": "Whenever possible, use async APIs for blocking operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1283"
+  },
+  {
+    "text": "to keep the system operating smoothly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1287"
+  },
+  {
+    "text": "When you're using continuations, you must be careful to use them correctly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1290"
+  },
+  {
+    "text": "Continuations are the bridge between Swift concurrency and other forms of async code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1295"
+  },
+  {
+    "text": "A continuation suspends the current task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1300"
+  },
+  {
+    "text": "and provides a callback which resumes the task when called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1303"
+  },
+  {
+    "text": "This can then be used with callback-based async APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1307"
+  },
+  {
+    "text": "From the perspective of Swift concurrency, the task suspends, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1311"
+  },
+  {
+    "text": "and then it resumes when the continuation is resumed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1314"
+  },
+  {
+    "text": "From the perspective of the callback-based async API, the work begins, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1318"
+  },
+  {
+    "text": "and then the callback is called when the work completes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1322"
+  },
+  {
+    "text": "The Swift Concurrency instrument knows about continuations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1325"
+  },
+  {
+    "text": "and will mark the time interval accordingly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1327"
+  },
+  {
+    "text": "showing you that the task was waiting on a continuation to be called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1330"
+  },
+  {
+    "text": "Continuation callbacks have a special requirement: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1334"
+  },
+  {
+    "text": "they must be called exactly once, no more, no less. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1336"
+  },
+  {
+    "text": "This is a common requirement in callback-based APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1340"
+  },
+  {
+    "text": "but it tends to be an informal one ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1343"
+  },
+  {
+    "text": "and is not enforced by the language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1345"
+  },
+  {
+    "text": "and oversights are common. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1347"
+  },
+  {
+    "text": "Swift concurrency makes this a hard requirement. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1349"
+  },
+  {
+    "text": "If the callback is called twice, the program will crash or misbehave. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1352"
+  },
+  {
+    "text": "If the callback is never called, the task will leak. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1356"
+  },
+  {
+    "text": "In this code snippet we use withCheckedContinuation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1360"
+  },
+  {
+    "text": "to get a continuation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1363"
+  },
+  {
+    "text": "We then invoke a callback-based API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1365"
+  },
+  {
+    "text": "In the callback, we resume the continuation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1368"
+  },
+  {
+    "text": "This meets the requirement of calling it exactly once. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1371"
+  },
+  {
+    "text": "It's important to be careful when the code is more complex. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1374"
+  },
+  {
+    "text": "On the left, we've modified the callback ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1378"
+  },
+  {
+    "text": "to only resume the continuation on success. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1380"
+  },
+  {
+    "text": "This is a bug. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1382"
+  },
+  {
+    "text": "On failure, the continuation will not be resumed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1384"
+  },
+  {
+    "text": "and the task will be suspended forever. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1387"
+  },
+  {
+    "text": "On the right, we're resuming the continuation twice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1390"
+  },
+  {
+    "text": "This is also a bug, and the app will misbehave or crash. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1393"
+  },
+  {
+    "text": "Both of these snippets violate the requirement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1397"
+  },
+  {
+    "text": "to resume the continuation exactly once. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1399"
+  },
+  {
+    "text": "Two kinds of continuations are available: checked and unsafe. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1403"
+  },
+  {
+    "text": "Always use the withCheckedContinuation API for continuations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1407"
+  },
+  {
+    "text": "unless performance is absolutely critical. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1412"
+  },
+  {
+    "text": "Checked continuations automatically detect misuse and flag an error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1415"
+  },
+  {
+    "text": "When a checked continuation is called twice, the continuation traps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1420"
+  },
+  {
+    "text": "When the continuation is never called at all, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1424"
+  },
+  {
+    "text": "a message is printed to the console when the continuation is destroyed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1427"
+  },
+  {
+    "text": "warning you that the continuation leaked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1430"
+  },
+  {
+    "text": "The Swift Concurrency instrument will show the corresponding task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1433"
+  },
+  {
+    "text": "stuck indefinitely in the continuation state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1436"
+  },
+  {
+    "text": "There is much more to look into for the new Swift Concurrency template ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1440"
+  },
+  {
+    "text": "in Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1443"
+  },
+  {
+    "text": "You can get graphic visualization of structured concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1444"
+  },
+  {
+    "text": "view task creation calltrees, and inspect the exact assembly instructions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1448"
+  },
+  {
+    "text": "to get a full picture of the Swift Concurrency runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1452"
+  },
+  {
+    "text": "To learn more about how Swift Concurrency works under the hood, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1455"
+  },
+  {
+    "text": "watch last year's session on \"Swift Concurrency: Behind the Scenes.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1458"
+  },
+  {
+    "text": "And to learn more about data races, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1462"
+  },
+  {
+    "text": "watch \"Eliminate data races using Swift Concurrency.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1463"
+  },
+  {
+    "text": "Thanks for watching! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1467"
+  },
+  {
+    "text": "And have fun debugging your concurrency code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110350/?time=1468"
+  }
+]

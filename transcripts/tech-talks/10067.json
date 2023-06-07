@@ -1,0 +1,830 @@
+[
+  {
+    "text": "Hi, I'm Johannes Fortmann ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=0"
+  },
+  {
+    "text": "from the Cloud FileProvider team.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=2"
+  },
+  {
+    "text": "Today we will talk about how to use the new FileProvider API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=5"
+  },
+  {
+    "text": "introduced in iOS 16 to bring desktop class sync to iOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=9"
+  },
+  {
+    "text": "After the introduction, we'll do a quick recap ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=15"
+  },
+  {
+    "text": "of the aims of a file provider.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=18"
+  },
+  {
+    "text": "We will discuss the optimal approach ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=21"
+  },
+  {
+    "text": "for architecting your app, as well as best practices ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=23"
+  },
+  {
+    "text": "that become especially important on iOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=26"
+  },
+  {
+    "text": "Last, I'll show you a quick demo of a provider running on iOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=29"
+  },
+  {
+    "text": "Big Sur introduced a declarative API ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=34"
+  },
+  {
+    "text": "for syncing files to your Mac.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=37"
+  },
+  {
+    "text": "This API has been adopted by many cloud vendors ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=39"
+  },
+  {
+    "text": "to great success.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=42"
+  },
+  {
+    "text": "My team has been steadily working on improving the API, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=43"
+  },
+  {
+    "text": "and we're excited to also make it available on iOS 16.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=47"
+  },
+  {
+    "text": "This API will enable your iOS apps to provide what we call ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=51"
+  },
+  {
+    "text": "\"desktop class sync.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=55"
+  },
+  {
+    "text": "What do I mean by that? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=58"
+  },
+  {
+    "text": "As apps on iOS get more powerful, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=61"
+  },
+  {
+    "text": "it becomes important for them ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=64"
+  },
+  {
+    "text": "to be able to access a shared location on the file system.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=65"
+  },
+  {
+    "text": "People want these powerful apps to be able to access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=69"
+  },
+  {
+    "text": "all types of file system objects.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=72"
+  },
+  {
+    "text": "If they choose, their app should be able to access folders ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=76"
+  },
+  {
+    "text": "and create new files.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=79"
+  },
+  {
+    "text": "We want all of this to happen while guaranteeing consistency.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=81"
+  },
+  {
+    "text": "What does consistency mean? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=86"
+  },
+  {
+    "text": "On iOS, background runtime has historically been limited ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=88"
+  },
+  {
+    "text": "because of power concerns.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=92"
+  },
+  {
+    "text": "At the same time, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=94"
+  },
+  {
+    "text": "changes are expected to be uploaded in the background.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=95"
+  },
+  {
+    "text": "The modern FileProvider API was introduced ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=99"
+  },
+  {
+    "text": "to solve this problem.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=102"
+  },
+  {
+    "text": "At a basic level, you implement an app extension ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=105"
+  },
+  {
+    "text": "that is responsible for enumerating items, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=108"
+  },
+  {
+    "text": "fetching and uploading contents, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=112"
+  },
+  {
+    "text": "and updating the list of items if they change remotely.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=115"
+  },
+  {
+    "text": "The system is responsible for exposing the information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=119"
+  },
+  {
+    "text": "you provide and for maintaining consistency.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=123"
+  },
+  {
+    "text": "An important task of the system ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=127"
+  },
+  {
+    "text": "is to keep track of errors and retry if necessary.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=129"
+  },
+  {
+    "text": "For some operations, such as fetching contents, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=134"
+  },
+  {
+    "text": "retries come naturally.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=137"
+  },
+  {
+    "text": "The user is actively waiting for their download ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=139"
+  },
+  {
+    "text": "and probably monitoring the progress bar closely.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=142"
+  },
+  {
+    "text": "Uploads, on the other hand, require scheduling.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=146"
+  },
+  {
+    "text": "By tracking the state of the items on disk, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=149"
+  },
+  {
+    "text": "the system ensures that the updated contents get uploaded.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=151"
+  },
+  {
+    "text": "Progress and errors are tracked ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=156"
+  },
+  {
+    "text": "to retry the upload if necessary.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=159"
+  },
+  {
+    "text": "Another complex topic is consistency during uploads.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=161"
+  },
+  {
+    "text": "The system manages clones of the file contents ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=165"
+  },
+  {
+    "text": "to ensure that during an upload subsequent accesses to the file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=168"
+  },
+  {
+    "text": "succeed and show the correct data.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=172"
+  },
+  {
+    "text": "During these operations, the system also ensures ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=177"
+  },
+  {
+    "text": "that the local version stays consistent, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=181"
+  },
+  {
+    "text": "even with multiple apps accessing it, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=183"
+  },
+  {
+    "text": "and that includes sync downs from the remote server.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=186"
+  },
+  {
+    "text": "This is implemented transparently to you ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=190"
+  },
+  {
+    "text": "using APFS features and file coordination.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=192"
+  },
+  {
+    "text": "Storage limits are an important constraint on mobile devices.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=198"
+  },
+  {
+    "text": "The system uses an APFS feature ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=204"
+  },
+  {
+    "text": "to atomically track the change state of local files.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=206"
+  },
+  {
+    "text": "This allows it to transparently evict files ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=211"
+  },
+  {
+    "text": "that don't have local changes based on disk usage ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=213"
+  },
+  {
+    "text": "and least recently used status.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=217"
+  },
+  {
+    "text": "Files that are fully uploaded do not count against your app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=220"
+  },
+  {
+    "text": "in the Storage Management pane in Settings.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=223"
+  },
+  {
+    "text": "You may have noticed that so far ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=227"
+  },
+  {
+    "text": "we have talked about the system and the extension.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=230"
+  },
+  {
+    "text": "Let's talk about where your app comes in.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=233"
+  },
+  {
+    "text": "I recommend that you employ a strict separation of concerns.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=236"
+  },
+  {
+    "text": "The system is responsible for managing the structures on-disk ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=240"
+  },
+  {
+    "text": "and scheduling tasks.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=244"
+  },
+  {
+    "text": "Your extension is responsible for performing those tasks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=247"
+  },
+  {
+    "text": "to sync up and down.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=250"
+  },
+  {
+    "text": "The system tracks all state about the file hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=252"
+  },
+  {
+    "text": "and which parts require sync.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=255"
+  },
+  {
+    "text": "That means that your extension can be very lightweight.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=258"
+  },
+  {
+    "text": "It does not have to track any item-specific state at all.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=262"
+  },
+  {
+    "text": "Your application is not responsible for any syncing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=266"
+  },
+  {
+    "text": "Ideally, it doesn't have to talk to the server at all.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=270"
+  },
+  {
+    "text": "Instead, it interacts with your extension ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=275"
+  },
+  {
+    "text": "through two mechanisms.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=278"
+  },
+  {
+    "text": "It can interact with the extension indirectly, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=281"
+  },
+  {
+    "text": "the same way that any other application on the system does.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=284"
+  },
+  {
+    "text": "There is API to fetch the file URL of any managed item, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=287"
+  },
+  {
+    "text": "including the root.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=291"
+  },
+  {
+    "text": "These locations are then accessible ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=293"
+  },
+  {
+    "text": "using the regular file system APIs.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=295"
+  },
+  {
+    "text": "Alternatively, your app can request a direct ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=300"
+  },
+  {
+    "text": "XPC service connection to your extension.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=303"
+  },
+  {
+    "text": "This is particularly useful to handle tasks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=306"
+  },
+  {
+    "text": "that cannot be expressed as file system manipulations, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=309"
+  },
+  {
+    "text": "such as sharing files or resolving conflicts.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=312"
+  },
+  {
+    "text": "Both of these mechanisms can also be used ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=317"
+  },
+  {
+    "text": "by FileProvider UI extensions to provide an additional ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=319"
+  },
+  {
+    "text": "integration point in the Files app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=322"
+  },
+  {
+    "text": "I would like to touch on three points ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=326"
+  },
+  {
+    "text": "that become especially important with stateless providers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=328"
+  },
+  {
+    "text": "First, let's talk about uploads.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=332"
+  },
+  {
+    "text": "As I mentioned earlier, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=335"
+  },
+  {
+    "text": "the system keeps track of uploads ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=336"
+  },
+  {
+    "text": "and will grant your extension time to perform the upload.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=338"
+  },
+  {
+    "text": "An important consequence of this is that you must ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=342"
+  },
+  {
+    "text": "keep the system aware that your upload is actually progressing ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=344"
+  },
+  {
+    "text": "by reporting progress.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=348"
+  },
+  {
+    "text": "If an upload task doesn't progress, it will be cancelled.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=350"
+  },
+  {
+    "text": "The system provides a grace period to wind down ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=354"
+  },
+  {
+    "text": "the upload cleanly, but if the cancellation takes too long ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=357"
+  },
+  {
+    "text": "your extension will be terminated.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=361"
+  },
+  {
+    "text": "Let's check out the code.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=363"
+  },
+  {
+    "text": "To implement a cancellation handler, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=365"
+  },
+  {
+    "text": "simply set it on the progress return ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=368"
+  },
+  {
+    "text": "from the task-specific method.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=370"
+  },
+  {
+    "text": "In case of uploads, that's modifyItem.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=372"
+  },
+  {
+    "text": "In your handler, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=376"
+  },
+  {
+    "text": "you cancel the actual upload work you were performing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=377"
+  },
+  {
+    "text": "Of course, you'll also need to call the completion handler ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=382"
+  },
+  {
+    "text": "to signal that a cancellation error occurred.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=385"
+  },
+  {
+    "text": "The code example here uses an async task cancellation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=387"
+  },
+  {
+    "text": "to make this convenient, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=391"
+  },
+  {
+    "text": "but you could also call the completion handler manually.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=392"
+  },
+  {
+    "text": "Next up, let's talk about the sync down path.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=397"
+  },
+  {
+    "text": "When the user interacts with their files, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=400"
+  },
+  {
+    "text": "your main app will not be running ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=402"
+  },
+  {
+    "text": "to receive changes from your server.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=404"
+  },
+  {
+    "text": "To still inform the system about remote changes, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=407"
+  },
+  {
+    "text": "you should implement push notifications.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=409"
+  },
+  {
+    "text": "PushKit exposes a specific push type ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=412"
+  },
+  {
+    "text": "for file providers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=415"
+  },
+  {
+    "text": "You can register for these pushes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=417"
+  },
+  {
+    "text": "right from your extension.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=418"
+  },
+  {
+    "text": "On your server, you send pushes with a well-defined payload.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=421"
+  },
+  {
+    "text": "The system will receive the push ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=425"
+  },
+  {
+    "text": "and refresh the current state if appropriate.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=427"
+  },
+  {
+    "text": "As with the other types of tasks, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=429"
+  },
+  {
+    "text": "the system may delay the actual refresh ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=431"
+  },
+  {
+    "text": "depending on the situation, like battery state ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=434"
+  },
+  {
+    "text": "or whether the user is currently looking at their files.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=437"
+  },
+  {
+    "text": "This last thing is just something ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=442"
+  },
+  {
+    "text": "I would like to call your attention to: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=444"
+  },
+  {
+    "text": "the system manages the folder hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=446"
+  },
+  {
+    "text": "that your extension reports.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=448"
+  },
+  {
+    "text": "This allows it to vend the entire folder hierarchy.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=450"
+  },
+  {
+    "text": "Your extension doesn't have to do anything extra here.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=453"
+  },
+  {
+    "text": "This is enabled by default for modern file providers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=456"
+  },
+  {
+    "text": "Let's have a quick demonstration of what kind of workflows ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=460"
+  },
+  {
+    "text": "that last feature enables.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=463"
+  },
+  {
+    "text": "I've set up my device with this session's sample code.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=465"
+  },
+  {
+    "text": "We have ported our sample code to iOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=468"
+  },
+  {
+    "text": "We built an iOS app to handle logging into our server ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=471"
+  },
+  {
+    "text": "but the extension is mostly unchanged ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=474"
+  },
+  {
+    "text": "from the macOS version.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=476"
+  },
+  {
+    "text": "I'm running the sample code on my iPad right now.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=478"
+  },
+  {
+    "text": "I've got Files running on the right side ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=481"
+  },
+  {
+    "text": "and it's already synced my files.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=483"
+  },
+  {
+    "text": "I've also written an app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=486"
+  },
+  {
+    "text": "that takes advantage of folder selection.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=487"
+  },
+  {
+    "text": "My app applies a sepia filter to all images in a folder.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=489"
+  },
+  {
+    "text": "This type of application benefits from folder access ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=493"
+  },
+  {
+    "text": "because it can operate on all items in the folder ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=495"
+  },
+  {
+    "text": "without forcing an interaction for each individual item.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=498"
+  },
+  {
+    "text": "With desktop class sync, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=502"
+  },
+  {
+    "text": "I can simply drag a folder from the Files app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=504"
+  },
+  {
+    "text": "into my batch editor.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=506"
+  },
+  {
+    "text": "Let me pull up the folder and files ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=509"
+  },
+  {
+    "text": "so that we can monitor the progress.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=511"
+  },
+  {
+    "text": "I then push the button ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=515"
+  },
+  {
+    "text": "and all my photos get downloaded and modified.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=516"
+  },
+  {
+    "text": "After modification, they are automatically uploaded.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=520"
+  },
+  {
+    "text": "The upload progress reported by the extension ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=525"
+  },
+  {
+    "text": "is surfaced to the user at the bottom of the Files app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=527"
+  },
+  {
+    "text": "to keep them in the loop.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=530"
+  },
+  {
+    "text": "Let's say I wanted to implement something like this with my app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=533"
+  },
+  {
+    "text": "First, let's implement dragging an item.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=537"
+  },
+  {
+    "text": "To allow initiating a drag, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=540"
+  },
+  {
+    "text": "you implement the onDrag method.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=542"
+  },
+  {
+    "text": "The method will return an NSItemProvider.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=544"
+  },
+  {
+    "text": "You register a file representation ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=547"
+  },
+  {
+    "text": "on the itemProvider with the type of file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=550"
+  },
+  {
+    "text": "you will be dragging.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=552"
+  },
+  {
+    "text": "In our case, that's a folder.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=554"
+  },
+  {
+    "text": "Use the getUserVisibleURL method to fetch the URL.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=557"
+  },
+  {
+    "text": "On the receiving side, implement onDrop ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=563"
+  },
+  {
+    "text": "to mark a view as the drop target.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=566"
+  },
+  {
+    "text": "You can then load the file URL ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=570"
+  },
+  {
+    "text": "from the appropriate item provider.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=572"
+  },
+  {
+    "text": "Note that this is going to be a file ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=575"
+  },
+  {
+    "text": "that lives outside your sandbox.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=577"
+  },
+  {
+    "text": "For your app to access it, it will have to consume ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=580"
+  },
+  {
+    "text": "and release the security scope of the URL.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=583"
+  },
+  {
+    "text": "What are your next steps? ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=587"
+  },
+  {
+    "text": "We've updated the sample code to include an iOS app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=589"
+  },
+  {
+    "text": "Download it and experiment with setting up ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=594"
+  },
+  {
+    "text": "a simple stateless provider.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=597"
+  },
+  {
+    "text": "If you're starting from scratch, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=599"
+  },
+  {
+    "text": "be sure to use the updated Xcode template.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=601"
+  },
+  {
+    "text": "It includes a basic frame to get you started.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=604"
+  },
+  {
+    "text": "To learn more about file providers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=607"
+  },
+  {
+    "text": "and how to implement them, refer to ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=609"
+  },
+  {
+    "text": "\"Sync files to the cloud with FileProvider on macOS\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=611"
+  },
+  {
+    "text": "from WWDC21.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=615"
+  },
+  {
+    "text": "Thank you for watching.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=619"
+  },
+  {
+    "text": "I'm excited to use your performant ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=620"
+  },
+  {
+    "text": "and reliable providers on iOS devices.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10067/?time=622"
+  }
+]

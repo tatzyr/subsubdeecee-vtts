@@ -1,0 +1,1482 @@
+[
+  {
+    "text": "Hi. I'm Patrick from the OS performance team at Apple. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=2"
+  },
+  {
+    "text": "Today we're gonna dive into ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=5"
+  },
+  {
+    "text": "demystifying and eliminating render hitches in your apps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=7"
+  },
+  {
+    "text": "iOS uses the Render Loop to display your views, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=11"
+  },
+  {
+    "text": "and hitch is anytime the Render Loop does not complete a frame ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=14"
+  },
+  {
+    "text": "in time for display.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=17"
+  },
+  {
+    "text": "For an overview of the entire Render Loop, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=20"
+  },
+  {
+    "text": "check out my talk \"Explore UI Animation Hitches and The Render Loop.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=22"
+  },
+  {
+    "text": "Here we'll focus on render hitches, which are hitches caused by slowness ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=26"
+  },
+  {
+    "text": "in the render prepare and render execute phases.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=30"
+  },
+  {
+    "text": "First, we'll look at what are these two render phases, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=34"
+  },
+  {
+    "text": "then see how to catch and triage render hitches in our app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=37"
+  },
+  {
+    "text": "using Instruments and the Xcode view debugger. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=41"
+  },
+  {
+    "text": "Lastly, we'll look at some recommendations to optimize our layer tree ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=44"
+  },
+  {
+    "text": "and stop hitches from interrupting our user experience.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=48"
+  },
+  {
+    "text": "Let's start by defining the render phases.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=52"
+  },
+  {
+    "text": "During the commit phase, apps modify their UI ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=55"
+  },
+  {
+    "text": "and submit updated UI layer trees for processing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=58"
+  },
+  {
+    "text": "We call these submissions \"commits,\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=61"
+  },
+  {
+    "text": "and the render server is responsible for rendering commits ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=63"
+  },
+  {
+    "text": "for all foreground processes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=66"
+  },
+  {
+    "text": "If the work in the render server takes longer than one frame duration, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=69"
+  },
+  {
+    "text": "it can hitch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=72"
+  },
+  {
+    "text": "Although the work happens outside the app's process, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=74"
+  },
+  {
+    "text": "the rendering work is done on your app's behalf, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=77"
+  },
+  {
+    "text": "so you are responsible for how long it takes to render your app's layer tree.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=80"
+  },
+  {
+    "text": "The render server has two phases: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=85"
+  },
+  {
+    "text": "render prepare and render execute.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=87"
+  },
+  {
+    "text": "The render prepare phase is where our layer tree is compiled down ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=90"
+  },
+  {
+    "text": "into a pipeline of simple operations for the GPU to execute. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=94"
+  },
+  {
+    "text": "Animations which take place over a couple of frames ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=98"
+  },
+  {
+    "text": "are also handled here. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=100"
+  },
+  {
+    "text": "During the render execute phase, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=102"
+  },
+  {
+    "text": "the GPU draws the app's layers into a final image ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=104"
+  },
+  {
+    "text": "ready to be displayed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=107"
+  },
+  {
+    "text": "Either of these phases could delay the frame's delivery time.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=109"
+  },
+  {
+    "text": "To help understand these concepts, let's walk through an example render.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=114"
+  },
+  {
+    "text": "We will walk through the rendering of this frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=118"
+  },
+  {
+    "text": "Notice that the shadow is around both the circle and the bar. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=120"
+  },
+  {
+    "text": "This will become important later. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=124"
+  },
+  {
+    "text": "We start with the layer tree ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=126"
+  },
+  {
+    "text": "that the app submitted to the render server on the left. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=128"
+  },
+  {
+    "text": "The render server will step layer by layer to compile a pipeline of drawing commands ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=130"
+  },
+  {
+    "text": "that allows the GPU to draw the UI from back to front.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=135"
+  },
+  {
+    "text": "Starting at the root node, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=140"
+  },
+  {
+    "text": "the render server walks from sibling to sibling ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=142"
+  },
+  {
+    "text": "and parent to child ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=146"
+  },
+  {
+    "text": "until it has every layer in the hierarchy.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=147"
+  },
+  {
+    "text": "Finally, it has the entire pipeline ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=152"
+  },
+  {
+    "text": "that the GPU can execute during the next execute phase. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=154"
+  },
+  {
+    "text": "The GPU's job is to take this pipeline ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=158"
+  },
+  {
+    "text": "and draw each step into the final texture in the center. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=161"
+  },
+  {
+    "text": "It's this texture that will be displayed on screen during the display phase. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=164"
+  },
+  {
+    "text": "Starting with the first blue layer, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=169"
+  },
+  {
+    "text": "it draws the color in the specified bounds. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=171"
+  },
+  {
+    "text": "Next, the darker blue is drawn into its bounds, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=173"
+  },
+  {
+    "text": "and we move on to the next layer.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=176"
+  },
+  {
+    "text": "But now, the GPU must draw the shadow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=179"
+  },
+  {
+    "text": "The shadow shape is defined by the next two layers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=182"
+  },
+  {
+    "text": "so the GPU does not know what shape to draw the shadow with. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=185"
+  },
+  {
+    "text": "If we drew the circle and bar first, though, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=189"
+  },
+  {
+    "text": "then the shadow would occlude them with black and it would look incorrect. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=191"
+  },
+  {
+    "text": "That means the GPU has hit a roadblock, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=195"
+  },
+  {
+    "text": "and to continue, it must switch to a different texture ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=198"
+  },
+  {
+    "text": "to figure out the shadow's shape. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=200"
+  },
+  {
+    "text": "We call this \"offscreen rendering\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=202"
+  },
+  {
+    "text": "because we are drawing somewhere other than the final texture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=204"
+  },
+  {
+    "text": "From here, it can draw the circle and the bar. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=208"
+  },
+  {
+    "text": "And now it has the shadow shape isolated in the offscreen texture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=212"
+  },
+  {
+    "text": "It has all it needs to make the shadow shape ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=217"
+  },
+  {
+    "text": "by first making the layers black and then blurring it.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=219"
+  },
+  {
+    "text": "It can then copy that offscreen texture into the final texture, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=223"
+  },
+  {
+    "text": "and the shadow layer has been completed.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=227"
+  },
+  {
+    "text": "The next step is to draw the circle and then the rectangle again.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=230"
+  },
+  {
+    "text": "It will finish by copying the image of the text that the app drew on top.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=235"
+  },
+  {
+    "text": "We have now completed both render phases, and the frame is ready to be displayed. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=240"
+  },
+  {
+    "text": "But we did have to do a special trick to render the shadow, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=245"
+  },
+  {
+    "text": "which caused our rendering to take longer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=248"
+  },
+  {
+    "text": "This is called an offscreen pass.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=250"
+  },
+  {
+    "text": "An offscreen pass is anytime the GPU must render a layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=254"
+  },
+  {
+    "text": "by first rendering it somewhere else and then copying it over. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=257"
+  },
+  {
+    "text": "With the shadow, it had to draw the layers to figure out the final shape. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=261"
+  },
+  {
+    "text": "Offscreen passes can add up and cause the rendering to hitch ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=265"
+  },
+  {
+    "text": "so it's important to monitor and try to avoid them in your app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=268"
+  },
+  {
+    "text": "There are four main types of offscreen passes that can be optimized: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=273"
+  },
+  {
+    "text": "shadows, masks, rounded rectangles and visual effects.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=276"
+  },
+  {
+    "text": "We saw an example of a shadow offscreen in the example render. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=281"
+  },
+  {
+    "text": "In this case, the renderer does not have enough information to draw the shadow ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=285"
+  },
+  {
+    "text": "without drawing the layer it is attached to first.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=288"
+  },
+  {
+    "text": "The second type of offscreen ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=293"
+  },
+  {
+    "text": "is when a layer or tree of layers requires masking. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=294"
+  },
+  {
+    "text": "The renderer needs to render the masked subtree. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=297"
+  },
+  {
+    "text": "But it also needs to avoid overwriting the pixels outside the masked shape. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=300"
+  },
+  {
+    "text": "So it will render the entire subtree offscreen ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=305"
+  },
+  {
+    "text": "before copying only the pixels within the masked shape ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=309"
+  },
+  {
+    "text": "back to the final texture. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=312"
+  },
+  {
+    "text": "This offscreen can lead to rendering many pixels ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=314"
+  },
+  {
+    "text": "that the user is never going to see.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=317"
+  },
+  {
+    "text": "The third type is related to masking. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=320"
+  },
+  {
+    "text": "Rounding the corners of layers can sometimes require an offscreen. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=323"
+  },
+  {
+    "text": "If not given enough information, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=327"
+  },
+  {
+    "text": "the renderer may have to draw the entire view offscreen ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=329"
+  },
+  {
+    "text": "and then copy the pixels inside the rounded shape back.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=332"
+  },
+  {
+    "text": "The fourth type is from visual effect views. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=338"
+  },
+  {
+    "text": "UI Kit provides two visual effect types: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=340"
+  },
+  {
+    "text": "vibrancy and blurring. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=343"
+  },
+  {
+    "text": "To apply these effects, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=345"
+  },
+  {
+    "text": "the renderer must copy what's beneath the visual effect view ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=346"
+  },
+  {
+    "text": "to another texture with an offscreen pass. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=350"
+  },
+  {
+    "text": "Then it applies the visual effect types to the result ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=352"
+  },
+  {
+    "text": "and copies it back. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=356"
+  },
+  {
+    "text": "You will see this in UI navigation bars, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=357"
+  },
+  {
+    "text": "UI tab bars and many other standard controls, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=359"
+  },
+  {
+    "text": "as it's very common across iOS, tvOS and macOS.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=362"
+  },
+  {
+    "text": "So these four offscreen types can slow down the rendering ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=367"
+  },
+  {
+    "text": "and cause render hitches.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=370"
+  },
+  {
+    "text": "Now that we've described the details of the render phase ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=372"
+  },
+  {
+    "text": "and seen how a high number of offscreen passes can cause them, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=375"
+  },
+  {
+    "text": "let's move to our second topic: ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=379"
+  },
+  {
+    "text": "finding hitches with Instruments.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=381"
+  },
+  {
+    "text": "In Instruments 12, we released a new Instrument template ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=385"
+  },
+  {
+    "text": "to profile hitches in your apps.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=388"
+  },
+  {
+    "text": "Some users have complained about hitches in the Meal Planner app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=391"
+  },
+  {
+    "text": "and I'd like to investigate, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=394"
+  },
+  {
+    "text": "so I begin in Instrument and start scrolling in the app.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=395"
+  },
+  {
+    "text": "And here is the trace of the Meal Planner app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=401"
+  },
+  {
+    "text": "using the animation hitches template. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=403"
+  },
+  {
+    "text": "I'm curious to dive into some of the hitches I saw while scrolling.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=405"
+  },
+  {
+    "text": "Let's zoom in and expand the Hitches track to find hitch 16.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=409"
+  },
+  {
+    "text": "Each track corresponds to a stage of the Render Loop we talked about earlier.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=414"
+  },
+  {
+    "text": "Along the top is the most important track. It shows hitch intervals. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=419"
+  },
+  {
+    "text": "This is the amount of time since the frame should have been ready.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=423"
+  },
+  {
+    "text": "The User Events track shows the user events ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=427"
+  },
+  {
+    "text": "associated with the hitching frame.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=430"
+  },
+  {
+    "text": "The Commits track shows all commit phases ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=434"
+  },
+  {
+    "text": "sent to the render server during that frame. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=436"
+  },
+  {
+    "text": "Make sure to watch \"Find and Fix Hitches in the Commit Phase\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=439"
+  },
+  {
+    "text": "for more on these tracks specifically.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=442"
+  },
+  {
+    "text": "And here's what we've been focused on in this video. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=445"
+  },
+  {
+    "text": "The Renders and GPU tracks show the work performed by the render server.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=448"
+  },
+  {
+    "text": "The Frame Lifetimes track shows the entire duration that it took ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=453"
+  },
+  {
+    "text": "to compose the frame from event to display.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=456"
+  },
+  {
+    "text": "And finally, the Built-In Display track ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=460"
+  },
+  {
+    "text": "shows all the frames that appeared on display ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=462"
+  },
+  {
+    "text": "along with the VSYNCs that happened along the way.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=465"
+  },
+  {
+    "text": "You can compare the frame lifetime with the beginning of the hitch duration ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=468"
+  },
+  {
+    "text": "to visualize the expected interval ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=472"
+  },
+  {
+    "text": "that the frame should have been done composing. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=474"
+  },
+  {
+    "text": "In this hitch, we were two frames over, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=477"
+  },
+  {
+    "text": "and from following the VSYNCs, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=479"
+  },
+  {
+    "text": "we can see that both the commit and the render phases went over time.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=481"
+  },
+  {
+    "text": "This interval is called the acceptable latency, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=485"
+  },
+  {
+    "text": "and all time after that is the hitch duration.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=488"
+  },
+  {
+    "text": "Below the tracks, we see the detailed metrics of the hitches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=494"
+  },
+  {
+    "text": "when the Hitches track is selected. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=497"
+  },
+  {
+    "text": "We were looking at hitch 16. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=499"
+  },
+  {
+    "text": "We can see the hitch time and the acceptable latency. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=501"
+  },
+  {
+    "text": "This is how long we had to complete the frame.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=504"
+  },
+  {
+    "text": "The buffer count is the number of buffers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=509"
+  },
+  {
+    "text": "used by the render server at the time of the hitch. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=511"
+  },
+  {
+    "text": "The default value is two, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=514"
+  },
+  {
+    "text": "but it can be three when a rendering frame has been delayed ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=516"
+  },
+  {
+    "text": "and the render server is trying to catch up. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=519"
+  },
+  {
+    "text": "In double buffered mode, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=521"
+  },
+  {
+    "text": "we have two frames, or 33.34 milliseconds on an iPhone, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=523"
+  },
+  {
+    "text": "which is what we see in the latency column. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=527"
+  },
+  {
+    "text": "Always remember to follow the Hitch Duration track above, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=529"
+  },
+  {
+    "text": "which will always highlight the area of interest, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=532"
+  },
+  {
+    "text": "no matter the buffer count.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=535"
+  },
+  {
+    "text": "Lastly, there's the hitch type. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=537"
+  },
+  {
+    "text": "The hitch type surfaces the types of hitches ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=539"
+  },
+  {
+    "text": "and helps give you context on what to dive into in your app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=541"
+  },
+  {
+    "text": "Here, we see we have both expensive commits ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=545"
+  },
+  {
+    "text": "and expensive GPU time, which is what we saw in the tracks above. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=548"
+  },
+  {
+    "text": "Expanding out, we can focus on the Render and GPU tracks ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=552"
+  },
+  {
+    "text": "and select them to see an analyzer with more information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=555"
+  },
+  {
+    "text": "on the prepare and execute phases.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=558"
+  },
+  {
+    "text": "A crucial column is the render count, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=561"
+  },
+  {
+    "text": "where we can see the number of offscreen passes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=564"
+  },
+  {
+    "text": "that the GPU had to make. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=566"
+  },
+  {
+    "text": "Because we know we had a render hitch, we need to look at these offscreens ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=568"
+  },
+  {
+    "text": "and understand what is causing them and how we could fix them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=571"
+  },
+  {
+    "text": "The best way to look at our layer tree is using the Xcode view debunker. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=575"
+  },
+  {
+    "text": "So for that, let's go to a demo.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=578"
+  },
+  {
+    "text": "Here we are in the view debugger with our Meal Planner app paused. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=582"
+  },
+  {
+    "text": "On the left, we see our view controllers, windows, constraints and views. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=586"
+  },
+  {
+    "text": "But starting with Xcode 11.2, we can also show layers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=591"
+  },
+  {
+    "text": "If we click on Editor, let's click on the new Show Layers item.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=595"
+  },
+  {
+    "text": "Cool. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=601"
+  },
+  {
+    "text": "Now on the left in the navigator ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=603"
+  },
+  {
+    "text": "we can click on any view and see its layer and all of its sublayers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=604"
+  },
+  {
+    "text": "When we select a layer, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=610"
+  },
+  {
+    "text": "we are presented this brand-new layer inspector, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=611"
+  },
+  {
+    "text": "which services useful properties of our layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=614"
+  },
+  {
+    "text": "So we can see here that we have our tag views backing layer, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=617"
+  },
+  {
+    "text": "and we can see the background color, opacity, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=621"
+  },
+  {
+    "text": "whether we have enabled masksToBounds and lots of other properties. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=624"
+  },
+  {
+    "text": "Importantly, we can see the offscreen count. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=628"
+  },
+  {
+    "text": "This is the number of offscreens it took to render this layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=631"
+  },
+  {
+    "text": "Below that are what we call offscreen flags. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=634"
+  },
+  {
+    "text": "These describe the reason for the offscreen.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=637"
+  },
+  {
+    "text": "Now, a given flag, like offscreen mask, for example, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=640"
+  },
+  {
+    "text": "can trigger multiple numbers of offscreens. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=643"
+  },
+  {
+    "text": "For example, here we have two.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=646"
+  },
+  {
+    "text": "But if we were to dig through each layer in our entire app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=648"
+  },
+  {
+    "text": "to check its offscreen count, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=651"
+  },
+  {
+    "text": "we still would not have enough insight to reduce any of these offscreen passes.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=653"
+  },
+  {
+    "text": "To help identify and suggest performance optimizations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=658"
+  },
+  {
+    "text": "in your view and layer hierarchy, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=661"
+  },
+  {
+    "text": "we added a new runtime issue type in Xcode 12 ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=663"
+  },
+  {
+    "text": "we call optimization opportunities.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=666"
+  },
+  {
+    "text": "These are enabled by default, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=670"
+  },
+  {
+    "text": "but you can find the option in the Editor menu ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=671"
+  },
+  {
+    "text": "under Show Optimization Opportunities.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=674"
+  },
+  {
+    "text": "These optimization opportunities are an incredible resource ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=677"
+  },
+  {
+    "text": "developed and written by Apple's performance teams ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=680"
+  },
+  {
+    "text": "after years of optimizing apps' rendering performance.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=683"
+  },
+  {
+    "text": "These are meant to suggest simple yet valuable changes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=687"
+  },
+  {
+    "text": "that will not affect the overall look of your layers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=690"
+  },
+  {
+    "text": "In our navigator, we can see the purple runtime issue indicator on some layers.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=693"
+  },
+  {
+    "text": "Here we have our star layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=701"
+  },
+  {
+    "text": "We see in the inspector that it takes five offscreens. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=703"
+  },
+  {
+    "text": "Highlighting over the indicator reveals the cause is because of dynamic shadows. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=706"
+  },
+  {
+    "text": "Let's go to the runtime issue navigator to see more details.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=711"
+  },
+  {
+    "text": "It's here that we can read the message for the issue. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=717"
+  },
+  {
+    "text": "It says that the layer is using dynamic shadows, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=720"
+  },
+  {
+    "text": "which are expensive to render. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=722"
+  },
+  {
+    "text": "If possible, try setting shadowPath ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=724"
+  },
+  {
+    "text": "or pre-rendering the shadow into an image and putting it under the layer.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=726"
+  },
+  {
+    "text": "We discuss this type of offscreen in the slides. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=731"
+  },
+  {
+    "text": "The renderer does not have enough information ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=734"
+  },
+  {
+    "text": "and needs to draw the layer offscreen to figure out the shadow's shape. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=737"
+  },
+  {
+    "text": "By using the shadowPath property on the CALayer, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=741"
+  },
+  {
+    "text": "we can actually give the renderer the exact steps to use ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=744"
+  },
+  {
+    "text": "and eliminate all five offscreens.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=748"
+  },
+  {
+    "text": "These really add up in our app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=751"
+  },
+  {
+    "text": "so let's take a look at the code and make this change.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=753"
+  },
+  {
+    "text": "Here we are with our star layer, where we set the shadow. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=757"
+  },
+  {
+    "text": "The optimization text told us to set the shadowPath, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=760"
+  },
+  {
+    "text": "which accepts any CGPath. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=763"
+  },
+  {
+    "text": "Let's reuse the star path that we already created.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=765"
+  },
+  {
+    "text": "Just like that, we've eliminated five offscreen passes ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=770"
+  },
+  {
+    "text": "per CollectionViewCell. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=773"
+  },
+  {
+    "text": "That's a big fix.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=774"
+  },
+  {
+    "text": "Now back in our debug navigator, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=777"
+  },
+  {
+    "text": "we still see some other runtime issue indicators. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=779"
+  },
+  {
+    "text": "On our tag view, we see a runtime issue on the layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=782"
+  },
+  {
+    "text": "In the navigator, we see two offscreens caused by an offscreen mask. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=786"
+  },
+  {
+    "text": "This layer is composed of an image view and a label view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=791"
+  },
+  {
+    "text": "We were worried about things escaping the red background, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=795"
+  },
+  {
+    "text": "so we added a mask layer.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=797"
+  },
+  {
+    "text": "In the runtime tool tip, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=800"
+  },
+  {
+    "text": "we see that the cause is simple background color masking.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=802"
+  },
+  {
+    "text": "In the issue navigator, we see the opportunity text. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=807"
+  },
+  {
+    "text": "It says that this layer is using a simple layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=810"
+  },
+  {
+    "text": "with a background color set as a mask. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=813"
+  },
+  {
+    "text": "Instead, use a container layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=815"
+  },
+  {
+    "text": "of the same frame and corner radius as the mask, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=818"
+  },
+  {
+    "text": "both masksToBounds set to \"Yes.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=820"
+  },
+  {
+    "text": "The offscreen is caused by the renderer needing to render our mask layer first, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=823"
+  },
+  {
+    "text": "and the suggestion is to eliminate this layer altogether. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=828"
+  },
+  {
+    "text": "Let's check it out in code.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=831"
+  },
+  {
+    "text": "Here we have our tag view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=836"
+  },
+  {
+    "text": "We create a mask layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=838"
+  },
+  {
+    "text": "and give it a black background color and corner radius. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=839"
+  },
+  {
+    "text": "This mask layer is simple, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=843"
+  },
+  {
+    "text": "and any simple layer should never be a mask. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=845"
+  },
+  {
+    "text": "Instead, we should just define this requested mask shape on the actual layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=848"
+  },
+  {
+    "text": "so the renderer can optimize the drawing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=852"
+  },
+  {
+    "text": "We can instead set the corner radius to 10, like we wanted, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=855"
+  },
+  {
+    "text": "and then set masksToBounds equal to \"True.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=858"
+  },
+  {
+    "text": "Then delete the mask altogether.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=861"
+  },
+  {
+    "text": "But that only eliminates one offscreen. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=865"
+  },
+  {
+    "text": "Because we have sublayers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=868"
+  },
+  {
+    "text": "masksToBounds will need to do an offscreen pass ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=869"
+  },
+  {
+    "text": "to make sure the views are clipped correctly. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=871"
+  },
+  {
+    "text": "But in our view, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=874"
+  },
+  {
+    "text": "we've ensured that sublayers cannot exceed the bounds of our tag view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=875"
+  },
+  {
+    "text": "So in fact we actually do not need masking at all. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=879"
+  },
+  {
+    "text": "Let's delete that masksToBounds call. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=882"
+  },
+  {
+    "text": "And now we've eliminated both offscreens. Awesome. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=885"
+  },
+  {
+    "text": "So far with three lines of code, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=889"
+  },
+  {
+    "text": "we've saved seven offscreens per CollectionViewCell. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=890"
+  },
+  {
+    "text": "This is a tremendous improvement, but we have one more issue to explore. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=893"
+  },
+  {
+    "text": "Let's head back to the navigator.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=898"
+  },
+  {
+    "text": "Let's select our image view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=903"
+  },
+  {
+    "text": "We see that it has rounded corners, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=905"
+  },
+  {
+    "text": "and when we highlight the runtime issue, we see it says, \"simple shape masking.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=906"
+  },
+  {
+    "text": "Once again, we will go to the runtime navigator to learn more.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=911"
+  },
+  {
+    "text": "It says that the layer is masked by a CAShapeLayer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=916"
+  },
+  {
+    "text": "with a path that's a rect, a roundedRect or an ellipse. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=919"
+  },
+  {
+    "text": "Instead, use an appropriately transformed container layer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=923"
+  },
+  {
+    "text": "with cornerRadius and masksToBounds set.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=926"
+  },
+  {
+    "text": "The offscreen is caused by the renderer needing to mask to another layer again. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=930"
+  },
+  {
+    "text": "But this time, it's not a simple layer. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=935"
+  },
+  {
+    "text": "Let's look at the code to understand what's happening.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=937"
+  },
+  {
+    "text": "Here in the code, we see we have our image view. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=942"
+  },
+  {
+    "text": "First, we create a CAShapeLayer ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=945"
+  },
+  {
+    "text": "and use a UIBezierPath API to create a path ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=947"
+  },
+  {
+    "text": "and then use that as the mask.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=950"
+  },
+  {
+    "text": "What's happening here is that we're using a shape layer, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=953"
+  },
+  {
+    "text": "which can be a valid type of mask. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=955"
+  },
+  {
+    "text": "But Xcode is able to detect that rather than a complex shape, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=958"
+  },
+  {
+    "text": "we're just creating a rounded rectangle. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=962"
+  },
+  {
+    "text": "The reason we wrote this code is because we were trying to create ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=964"
+  },
+  {
+    "text": "a special type of rounded rectangle sometimes called a squircle.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=967"
+  },
+  {
+    "text": "These type of rounded rectangles are very popular in iOS. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=971"
+  },
+  {
+    "text": "But this is not the best way to get that effect. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=975"
+  },
+  {
+    "text": "Starting in iOS 13, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=978"
+  },
+  {
+    "text": "we can use the cornerCurve property ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=979"
+  },
+  {
+    "text": "to make the cornerRadius effect into a squircle shape. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=981"
+  },
+  {
+    "text": "Now we can eliminate shapeLayer altogether ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=985"
+  },
+  {
+    "text": "and just set cornerRadius and cornerCurve to \"continuous.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=989"
+  },
+  {
+    "text": "Just like that, we've eliminated two more offscreens ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=995"
+  },
+  {
+    "text": "by just using the provided API. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=997"
+  },
+  {
+    "text": "So we were able to really optimize our offscreen count ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1000"
+  },
+  {
+    "text": "and bring it from 36 down to zero. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1003"
+  },
+  {
+    "text": "That's amazing.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1005"
+  },
+  {
+    "text": "Back in the view debugger, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1009"
+  },
+  {
+    "text": "we see some other runtime issues that are not render related. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1010"
+  },
+  {
+    "text": "Nonetheless we'd like to show them to our coworker Charles ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1013"
+  },
+  {
+    "text": "so he can try and optimize them. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1016"
+  },
+  {
+    "text": "Before, this would require Charles having the same device as us ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1018"
+  },
+  {
+    "text": "and attaching to his app and pausing it in the view debugger.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1021"
+  },
+  {
+    "text": "But now we are able to save the state of our view debugger ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1025"
+  },
+  {
+    "text": "so that we can send it in an e-mail, share it with coworkers ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1029"
+  },
+  {
+    "text": "or even attach it to feedback reports. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1032"
+  },
+  {
+    "text": "To do this, we can select File, Export View Hierarchy...",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1035"
+  },
+  {
+    "text": "clicking \"Save,\" and voilà. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1041"
+  },
+  {
+    "text": "We now have a sendable file encapsulating all of our views, layers, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1043"
+  },
+  {
+    "text": "constraints and runtime issues. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1048"
+  },
+  {
+    "text": "This makes it much easier to collaborate remotely ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1051"
+  },
+  {
+    "text": "and will really help as you try tracking down ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1054"
+  },
+  {
+    "text": "all your unnecessary offscreens.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1056"
+  },
+  {
+    "text": "Now that we've seen how the Xcode view debugger ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1059"
+  },
+  {
+    "text": "can highlight offscreen issues in our app, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1062"
+  },
+  {
+    "text": "let's recap some recommendations.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1064"
+  },
+  {
+    "text": "The most important thing to do in every app ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1067"
+  },
+  {
+    "text": "is to always use the provided APIs. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1069"
+  },
+  {
+    "text": "When setting a shadow, make sure to set a shadowPath ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1072"
+  },
+  {
+    "text": "to save a large number of offscreen passes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1075"
+  },
+  {
+    "text": "When rounding a rectangle, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1078"
+  },
+  {
+    "text": "use the cornerRadius and cornerCurve properties. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1079"
+  },
+  {
+    "text": "Avoid using masks or corner contents to form rounded rectangle shapes. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1083"
+  },
+  {
+    "text": "These cause unnecessary offscreens.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1088"
+  },
+  {
+    "text": "For most layers, creating a UIBezierPath ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1091"
+  },
+  {
+    "text": "by rounding the layer's bounds to its cornerRadius ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1093"
+  },
+  {
+    "text": "is all that's needed to set a good shadowPath.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1096"
+  },
+  {
+    "text": "The second step is to optimize masking across your app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1099"
+  },
+  {
+    "text": "Use masksToBounds to mask to a rectangle, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1103"
+  },
+  {
+    "text": "rounded rectangle or ellipse. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1106"
+  },
+  {
+    "text": "It's much more performant than custom mask layers. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1109"
+  },
+  {
+    "text": "Overall, make sure masking is actually required. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1112"
+  },
+  {
+    "text": "If content in the subtree will not exceed the bounds, ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1115"
+  },
+  {
+    "text": "then disable masksToBounds altogether.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1117"
+  },
+  {
+    "text": "These are only recommendations. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1121"
+  },
+  {
+    "text": "It's important to profile your app using Instruments ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1123"
+  },
+  {
+    "text": "and use the optimization opportunities ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1125"
+  },
+  {
+    "text": "to inspect your layer tree for simple yet crucial tips ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1127"
+  },
+  {
+    "text": "to lowering your overall offscreen count. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1130"
+  },
+  {
+    "text": "Lastly, remember that you can save the state of the view hierarchy ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1133"
+  },
+  {
+    "text": "to share with your team ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1137"
+  },
+  {
+    "text": "or even attach feedbacks in the feedback reporter app. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1139"
+  },
+  {
+    "text": "Overall, these tools and the recommendations ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1142"
+  },
+  {
+    "text": "will help you avoid render hitches. ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1145"
+  },
+  {
+    "text": "For commit hitches, make sure to check out ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1147"
+  },
+  {
+    "text": "\"Find and Fix Hitches in the Commit Phase.\" ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1150"
+  },
+  {
+    "text": "Together, these talks will help you reduce your app's hitch time ratio ",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1153"
+  },
+  {
+    "text": "and keep your users scrolling smooth.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1157"
+  },
+  {
+    "text": "Thanks for watching.",
+    "link": "https://developer.apple.com/videos/play/tech-talks-10857/?time=1160"
+  }
+]

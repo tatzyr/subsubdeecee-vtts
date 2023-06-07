@@ -1,0 +1,1382 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=0"
+  },
+  {
+    "text": "Zheng Naiwei: Hello and welcome to WWDC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=9"
+  },
+  {
+    "text": "My name is Zheng Naiwei from Apple's AVFoundation Team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=12"
+  },
+  {
+    "text": "In this session we are going to talk about how to improve ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=16"
+  },
+  {
+    "text": "streaming delivery reliability with new features we added to HLS Content Steering.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=20"
+  },
+  {
+    "text": "We will cover three topics today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=26"
+  },
+  {
+    "text": "If you haven't heard of Content Steering, don't worry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=29"
+  },
+  {
+    "text": "It's a piece of HLS technology ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=31"
+  },
+  {
+    "text": "that can dynamically steer streaming traffic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=34"
+  },
+  {
+    "text": "to improve streaming service quality. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=37"
+  },
+  {
+    "text": "I will give you a short review to help you get on track.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=39"
+  },
+  {
+    "text": "Then I will present the new Pathway cloning feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=44"
+  },
+  {
+    "text": "which can bring dynamic steering ability beyond limits, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=48"
+  },
+  {
+    "text": "to further improve the reliability of your streaming service.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=52"
+  },
+  {
+    "text": "Finally, I will use concrete examples to guide you through how to influence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=56"
+  },
+  {
+    "text": "server-side logic for steering traffic. Let's wait no more and get started.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=64"
+  },
+  {
+    "text": "Back in the time we don't have Content Steering, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=67"
+  },
+  {
+    "text": "variant selection in case of error fallback wasn't standardized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=70"
+  },
+  {
+    "text": "in the HLS specification. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=74"
+  },
+  {
+    "text": "And different client implementations can behave differently ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=76"
+  },
+  {
+    "text": "in choosing the next fallback variant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=79"
+  },
+  {
+    "text": "But a typical way to do this is to follow the variant ordering ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=82"
+  },
+  {
+    "text": "in the multivariant playlist.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=85"
+  },
+  {
+    "text": "If a streaming provider wants to specify a set of fallback CDNs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=88"
+  },
+  {
+    "text": "they need to list every variant from every CDN ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=92"
+  },
+  {
+    "text": "and properly order them in the multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=95"
+  },
+  {
+    "text": "This way, in case the client player encountered a failure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=98"
+  },
+  {
+    "text": "in the first variant, it can move on to the next variant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=102"
+  },
+  {
+    "text": "in the playlist with the failed variant penalized from selection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=106"
+  },
+  {
+    "text": "In this case, we see that the client player had trouble with the 6 Mbps variant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=110"
+  },
+  {
+    "text": "from CDN1 and thus moved on to the next 3 Mbps variant from CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=115"
+  },
+  {
+    "text": "following the order in the multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=121"
+  },
+  {
+    "text": "If unfortunately the 3 Mbps variant from CDN1 also failed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=124"
+  },
+  {
+    "text": "the client player would be left with no variants from CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=130"
+  },
+  {
+    "text": "and move on to the 6 Mbps variant from CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=134"
+  },
+  {
+    "text": "It can do this on and on until no variant to fallback to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=138"
+  },
+  {
+    "text": "However, even though the playlist authoring server can control the ordering ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=142"
+  },
+  {
+    "text": "of the fallback variants, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=146"
+  },
+  {
+    "text": "such control only happens ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=148"
+  },
+  {
+    "text": "at the point of client requesting the multivariant playlist, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=150"
+  },
+  {
+    "text": "and once the playlist was handed out, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=154"
+  },
+  {
+    "text": "there's no way to change the fallback ordering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=156"
+  },
+  {
+    "text": "This is where Content Steering comes into the picture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=159"
+  },
+  {
+    "text": "With Content Steering, the streaming provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=162"
+  },
+  {
+    "text": "can now group variants into Pathways with different CDN hosts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=165"
+  },
+  {
+    "text": "The error fallback behavior is now standardized for Content Steering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=170"
+  },
+  {
+    "text": "Pathways are ordered by preference. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=175"
+  },
+  {
+    "text": "In this example, the CDN1 Pathway at the top ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=177"
+  },
+  {
+    "text": "is most preferred, following CDN2 and CDN3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=180"
+  },
+  {
+    "text": "The streaming provider also hosts a Steering Server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=185"
+  },
+  {
+    "text": "generating Steering Manifests for each client player. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=188"
+  },
+  {
+    "text": "A Steering Manifest defines rules of Pathway priorities, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=193"
+  },
+  {
+    "text": "so the player can follow the rules ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=196"
+  },
+  {
+    "text": "in selecting and fallback between variant streams.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=198"
+  },
+  {
+    "text": "Let's say for example the streaming provider is trying to offload ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=203"
+  },
+  {
+    "text": "some of the traffic from CDN1 to CND2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=207"
+  },
+  {
+    "text": "It would generate a Steering Manifest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=211"
+  },
+  {
+    "text": "with the new Pathway priority rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=213"
+  },
+  {
+    "text": "and when a client player playing from CDN1 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=216"
+  },
+  {
+    "text": "requests for a Steering Manifest update, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=219"
+  },
+  {
+    "text": "the Steering Server can send the prepared Steering Manifest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=222"
+  },
+  {
+    "text": "with the rule changes to the client. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=225"
+  },
+  {
+    "text": "The client will parse and see the new Pathway Priority rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=228"
+  },
+  {
+    "text": "and apply it to its playback session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=232"
+  },
+  {
+    "text": "In this case the rule change switched preference order ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=235"
+  },
+  {
+    "text": "between Pathway CDN1 and CDN2 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=239"
+  },
+  {
+    "text": "so that the client player will switch and play from CDN2 immediately. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=242"
+  },
+  {
+    "text": "Then, in case of failures, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=247"
+  },
+  {
+    "text": "the client will first exhaust fallback variants within the current Pathway, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=249"
+  },
+  {
+    "text": "and fallback to the most preferred Pathway ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=255"
+  },
+  {
+    "text": "according to its current Pathway Priority. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=257"
+  },
+  {
+    "text": "In this case, if all variants from CDN2 were errored out, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=260"
+  },
+  {
+    "text": "the client player can start to choose from variants from CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=264"
+  },
+  {
+    "text": "which is the next preferred Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=268"
+  },
+  {
+    "text": "When we apply Content Steering to the global scale, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=270"
+  },
+  {
+    "text": "it can solve bigger regional load balancing problems. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=274"
+  },
+  {
+    "text": "Let's say our streaming service provider operates all around the world, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=277"
+  },
+  {
+    "text": "with two main CDN providers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=281"
+  },
+  {
+    "text": "To assign these CDNs to client players globally, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=284"
+  },
+  {
+    "text": "the Steering Server prepared two different Steering Manifests, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=287"
+  },
+  {
+    "text": "one prefers CDN1, and the other prefers CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=291"
+  },
+  {
+    "text": "Then it distributes these Steering Manifests ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=296"
+  },
+  {
+    "text": "based on the client player's region ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=298"
+  },
+  {
+    "text": "so that the North and South America utilizes CDN1 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=302"
+  },
+  {
+    "text": "and the rest of the world utilizes CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=306"
+  },
+  {
+    "text": "At the top of the world map we show a horizontal stacked bar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=310"
+  },
+  {
+    "text": "representing the distribution of traffic between CDN1 and CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=314"
+  },
+  {
+    "text": "As of right now, both CDNs are serving half of the worldwide traffic.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=318"
+  },
+  {
+    "text": "However, over time the streaming service provider observed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=324"
+  },
+  {
+    "text": "a significant increase of traffic towards CDN2 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=328"
+  },
+  {
+    "text": "because of global daylight shift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=331"
+  },
+  {
+    "text": "At the same time, the traffics toward CDN1 is decreasing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=334"
+  },
+  {
+    "text": "So the streaming provider decided to steer the Europe region to use CDN1. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=339"
+  },
+  {
+    "text": "It does so by preparing a Steering Manifest that prefers CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=344"
+  },
+  {
+    "text": "and sends it to clients from the Europe region. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=348"
+  },
+  {
+    "text": "Now those client players in that region will steer traffic to CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=352"
+  },
+  {
+    "text": "offloading from CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=356"
+  },
+  {
+    "text": "And the global traffic became more balanced. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=358"
+  },
+  {
+    "text": "Now let's take a look at an HLS multivariant playlist ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=361"
+  },
+  {
+    "text": "with Content Steering support. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=365"
+  },
+  {
+    "text": "First we see the EXT-X-CONTENT-STEERING tag ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=367"
+  },
+  {
+    "text": "that indicates this multivariant playlist uses Content Steering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=371"
+  },
+  {
+    "text": "Then we have a SERVER-URI attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=376"
+  },
+  {
+    "text": "specifying where the client should request Steering Manifest updates from.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=379"
+  },
+  {
+    "text": "Then the next PATHWAY-ID attribute specifies the initial pathway to choose ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=385"
+  },
+  {
+    "text": "for playback at startup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=389"
+  },
+  {
+    "text": "Then we can see that each variant stream were given an PATHWAY-ID attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=393"
+  },
+  {
+    "text": "to group them into Pathways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=398"
+  },
+  {
+    "text": "Each Pathway should have the same set of variant streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=400"
+  },
+  {
+    "text": "with only difference being their URIs and media group names. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=403"
+  },
+  {
+    "text": "In this example, we have two Pathways, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=408"
+  },
+  {
+    "text": "namely CDN1 and CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=411"
+  },
+  {
+    "text": "Both contains two variant streams, one 6 Mbps high resolution video ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=413"
+  },
+  {
+    "text": "and one 3 Mbps lower resolution video. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=418"
+  },
+  {
+    "text": "With the only difference being their URI hostname. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=422"
+  },
+  {
+    "text": "There are also two distinct audio groups for each Pathway ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=426"
+  },
+  {
+    "text": "where they have different URI hostnames. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=429"
+  },
+  {
+    "text": "Here is an example Steering Manifest, which is a JSON document. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=433"
+  },
+  {
+    "text": "The PATHWAY-PRIORITY field is a list of Pathway IDs in the preference order. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=437"
+  },
+  {
+    "text": "So in this case, the receiving client player would prefer CDN1 over CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=442"
+  },
+  {
+    "text": "This is the Steering Manifest the Steering Server would provide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=447"
+  },
+  {
+    "text": "to the European clients, to let them prefer CDN1. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=450"
+  },
+  {
+    "text": "By altering the PATHWAY-PRIORITY field in a Steering Manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=454"
+  },
+  {
+    "text": "a Steering Server can control the steering policy for every client. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=458"
+  },
+  {
+    "text": "That's it for a quick overview of Content Steering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=462"
+  },
+  {
+    "text": "If you want a more in-depth explanation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=465"
+  },
+  {
+    "text": "feel free to check out my WWDC21 talk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=468"
+  },
+  {
+    "text": "Improve global streaming availability with HLS Content Steering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=471"
+  },
+  {
+    "text": "However, our journey for supporting a more scalable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=476"
+  },
+  {
+    "text": "and more reliable streaming service doesn't stop here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=479"
+  },
+  {
+    "text": "Nowadays companies can access more versatile cloud infrastructures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=483"
+  },
+  {
+    "text": "and tools to achieve things unimaginable in the past, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=488"
+  },
+  {
+    "text": "and we have to catch up in the leap in technology. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=492"
+  },
+  {
+    "text": "Let's say our streaming service provider has grown larger this year, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=496"
+  },
+  {
+    "text": "and they are experimenting with a new way to satisfy the dynamic traffic demands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=500"
+  },
+  {
+    "text": "of its growing user base. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=504"
+  },
+  {
+    "text": "They are doing it by dynamically spawning fleets of CDN servers in real-time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=507"
+  },
+  {
+    "text": "to alleviate temporal traffics stresses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=511"
+  },
+  {
+    "text": "For example, it can spawn a new fleet of CDN3 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=515"
+  },
+  {
+    "text": "and want to advertise it to existing clients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=518"
+  },
+  {
+    "text": "However the challenge here is that the dynamically spawned CDN info ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=521"
+  },
+  {
+    "text": "is not included in the multivariant playlists ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=525"
+  },
+  {
+    "text": "when existing client requested it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=528"
+  },
+  {
+    "text": "because it just didn't exist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=530"
+  },
+  {
+    "text": "So what can we do to tell our client players of the emergence of a new CDN? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=533"
+  },
+  {
+    "text": "This is where our new Pathway Cloning feature comes in handy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=539"
+  },
+  {
+    "text": "It's a new feature with backward compatibility ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=543"
+  },
+  {
+    "text": "with Content Steering 1.2 introduced in WWDC21. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=546"
+  },
+  {
+    "text": "With Pathway Cloning, the Steering Server can announce new CDNs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=551"
+  },
+  {
+    "text": "to existing clients ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=555"
+  },
+  {
+    "text": "using a compact manifest definition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=556"
+  },
+  {
+    "text": "By assuming Pathways are structure-identical, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=560"
+  },
+  {
+    "text": "new Pathways can be created by copying and modifying existing Pathways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=562"
+  },
+  {
+    "text": "Let's take a look at the structure of a Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=567"
+  },
+  {
+    "text": "A Pathway consists of one or many variant streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=571"
+  },
+  {
+    "text": "Each variant stream can only be in one and only one Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=575"
+  },
+  {
+    "text": "If not specified the PATHWAY-ID attribute, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=579"
+  },
+  {
+    "text": "it implicitly belongs to the default “dot” Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=581"
+  },
+  {
+    "text": "Each variant stream may refer to zero or one media group for each media type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=585"
+  },
+  {
+    "text": "out of audio, subtitle, and closed-caption. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=590"
+  },
+  {
+    "text": "Each media group may be referenced by multiple variant streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=594"
+  },
+  {
+    "text": "even from different Pathways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=597"
+  },
+  {
+    "text": "When we clone a new Pathway out of an existing one, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=599"
+  },
+  {
+    "text": "we should not only clone its variant streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=602"
+  },
+  {
+    "text": "but also the referenced media groups, if any.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=605"
+  },
+  {
+    "text": "Then, to make it a new Pathway, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=610"
+  },
+  {
+    "text": "we need to modify the URIs of the variant and rendition streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=613"
+  },
+  {
+    "text": "of the newly cloned Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=616"
+  },
+  {
+    "text": "Let's take the 6 Mbps variant stream from the cloned Pathway for example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=619"
+  },
+  {
+    "text": "Let's say this particular variant stream has the URI as shown. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=625"
+  },
+  {
+    "text": "To modify it to become the URI for the new Pathway, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=630"
+  },
+  {
+    "text": "the most flexible way is to replace the full URI line in whole. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=633"
+  },
+  {
+    "text": "This means we need to store a full set of URIs in the Steering Manifest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=638"
+  },
+  {
+    "text": "for each cloned Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=642"
+  },
+  {
+    "text": "However, in practice we can usually do better than that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=644"
+  },
+  {
+    "text": "It is common in the industry to deploy streaming assets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=648"
+  },
+  {
+    "text": "across multiple CDNs retaining the same URI path structure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=651"
+  },
+  {
+    "text": "And assets served from the same URI share the same URI hostname ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=656"
+  },
+  {
+    "text": "and query parameters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=660"
+  },
+  {
+    "text": "If it's the case, we only need to store the replacement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=663"
+  },
+  {
+    "text": "of host and query parameters in the manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=666"
+  },
+  {
+    "text": "and replace the components of all cloned URIs and we got the new Pathway.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=670"
+  },
+  {
+    "text": "Let's take a look at how we can define the Pathway Clone in a Manifest object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=675"
+  },
+  {
+    "text": "We added the PATHWAY-CLONES field with an array of Pathway Clone objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=681"
+  },
+  {
+    "text": "Each Pathway Clone object defines a new Pathway cloned from an existing Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=685"
+  },
+  {
+    "text": "In this example, we have one Pathway Clone object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=691"
+  },
+  {
+    "text": "The BASE-ID field specifies CDN1 to be the original Pathway to clone from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=695"
+  },
+  {
+    "text": "The ID field specifies the new Pathway ID to be CDN3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=701"
+  },
+  {
+    "text": "Next, we have the URI-REPLACEMENT field with an object of URI replacement rules.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=706"
+  },
+  {
+    "text": "In this example, we are using the HOST and query parameters replacement rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=714"
+  },
+  {
+    "text": "which should replace the host part, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=718"
+  },
+  {
+    "text": "and insert or replace query parameters of the stream URIs respectively. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=720"
+  },
+  {
+    "text": "In this case, we are replacing the host part ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=726"
+  },
+  {
+    "text": "to be cdn3.example.com, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=729"
+  },
+  {
+    "text": "and adding or setting query parameter “foo” with value xyz, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=731"
+  },
+  {
+    "text": "and query parameter “bar” with value 123.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=735"
+  },
+  {
+    "text": "Let's try to apply the host and parameter URI replacement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=741"
+  },
+  {
+    "text": "on our previous example URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=744"
+  },
+  {
+    "text": "First we have the resolved variant stream URI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=747"
+  },
+  {
+    "text": "based on the multivariant playlist's URI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=750"
+  },
+  {
+    "text": "In the Steering Manifest we used HOST URI replacement rule. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=754"
+  },
+  {
+    "text": "So for the host part of the URI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=758"
+  },
+  {
+    "text": "we replace it with cdn3.example.com, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=760"
+  },
+  {
+    "text": "and got the new host part for the new URI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=764"
+  },
+  {
+    "text": "Then we retain the URI path component from the cloned URI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=771"
+  },
+  {
+    "text": "Finally, we apply the URI query parameter replacement rule. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=779"
+  },
+  {
+    "text": "Here we replace the “foo” parameter because it exists on the original URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=783"
+  },
+  {
+    "text": "Then we append the “bar” parameter because it's a new parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=788"
+  },
+  {
+    "text": "Then we have the replaced query parameter part of the new URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=793"
+  },
+  {
+    "text": "The final result URI would be the URI for the 6 Mbps variant stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=799"
+  },
+  {
+    "text": "from the new Pathway CDN3.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=803"
+  },
+  {
+    "text": "We apply the same URI replacement rule to the rest of the variants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=807"
+  },
+  {
+    "text": "and renditions in the cloned Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=811"
+  },
+  {
+    "text": "For the 3 Mbps variant stream, we have the original URI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=814"
+  },
+  {
+    "text": "and apply the host and parameter replacement rule to get the new URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=819"
+  },
+  {
+    "text": "We do the same for the audio and subtitle renditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=824"
+  },
+  {
+    "text": "After we apply the URI replacement rule to all cloned variants and renditions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=828"
+  },
+  {
+    "text": "we have a new Pathway that serves from the new CDN host.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=833"
+  },
+  {
+    "text": "Let's take another example and let's say the streaming provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=838"
+  },
+  {
+    "text": "wants to serve their highest bandwidth video and audio streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=842"
+  },
+  {
+    "text": "from a specially tuned, fastest CDN host, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=846"
+  },
+  {
+    "text": "different from the rest of the lower bitrate streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=849"
+  },
+  {
+    "text": "This is where per-stable-ID URI replacement rule comes in handy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=853"
+  },
+  {
+    "text": "In HLS, STABLE-VARIANT-ID and STABLE-RENDITION-ID attributes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=858"
+  },
+  {
+    "text": "were introduced to identify variant and rendition streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=863"
+  },
+  {
+    "text": "By setting them in the multivariant playlist, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=867"
+  },
+  {
+    "text": "we can later reference each variant or rendition stream, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=870"
+  },
+  {
+    "text": "by their stable ID in the Pathway Clone object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=873"
+  },
+  {
+    "text": "in the Steering Manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=876"
+  },
+  {
+    "text": "and assign per-stream URI replacement rules.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=878"
+  },
+  {
+    "text": "To define these particular special URI replacement rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=881"
+  },
+  {
+    "text": "we need to assign stable IDs to all the variant and rendition streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=885"
+  },
+  {
+    "text": "in the multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=889"
+  },
+  {
+    "text": "For example we assign STABLE-RENDITION-ID \"audio-en-ac3\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=891"
+  },
+  {
+    "text": "to the AC3 English audio, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=896"
+  },
+  {
+    "text": "and STABLE-VARIANT-ID \"video-4k-dv\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=898"
+  },
+  {
+    "text": "to the 25 Mbps 4K variant stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=901"
+  },
+  {
+    "text": "Then, in the Steering Manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=905"
+  },
+  {
+    "text": "we can add the two flexible replacement rules ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=907"
+  },
+  {
+    "text": "by referencing their stable IDs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=910"
+  },
+  {
+    "text": "For variant streams, we added \"PER-VARIANT-URIS\" field ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=913"
+  },
+  {
+    "text": "to the \"URI-REPLACEMENT\" object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=917"
+  },
+  {
+    "text": "with a dictionary of STABLE-VARIANT-ID to URI records. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=919"
+  },
+  {
+    "text": "Here we specify to replace the URI of the variant stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=924"
+  },
+  {
+    "text": "with STABLE-VARIANT-ID \"video-4k-dv\" with the following URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=927"
+  },
+  {
+    "text": "For the rendition stream, we added \"PER-RENDITION-URIS\" field ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=933"
+  },
+  {
+    "text": "to the \"URI-REPLACEMENT\" object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=937"
+  },
+  {
+    "text": "with a dictionary of STABLE-RENDITION-ID to URI records. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=940"
+  },
+  {
+    "text": "Here we specify to replace the URI of rendition stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=944"
+  },
+  {
+    "text": "with STABLE-RENDITION-ID \"audio-en-ac3\" with the following URI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=948"
+  },
+  {
+    "text": "Here we see that after applying the URI replacement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=955"
+  },
+  {
+    "text": "all streams are serving from the new cdn3.exmaple.com host ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=958"
+  },
+  {
+    "text": "except the 4K video variant and AC3 English audio rendition, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=963"
+  },
+  {
+    "text": "where they have special URI replacement rules ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=968"
+  },
+  {
+    "text": "pointing them to the faster.example.com host, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=971"
+  },
+  {
+    "text": "and with different URI path and query components.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=975"
+  },
+  {
+    "text": "With Pathway Cloning, when the streaming provider dynamically spawn ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=980"
+  },
+  {
+    "text": "new CDN fleet, in this example, CDN3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=984"
+  },
+  {
+    "text": "the steering server can add CDN3 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=988"
+  },
+  {
+    "text": "as a Pathway Clone for existing clients in their Steering Manifest. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=990"
+  },
+  {
+    "text": "It can also choose a region, for example Europe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=995"
+  },
+  {
+    "text": "to prioritize CDN3 as the primary Pathway. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=999"
+  },
+  {
+    "text": "When clients in Europe got the Steering Manifest update, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1004"
+  },
+  {
+    "text": "they will steer their traffics toward CDN3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1008"
+  },
+  {
+    "text": "For the final part of this talk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1011"
+  },
+  {
+    "text": "let's switch our focus to the details of Steering Server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1014"
+  },
+  {
+    "text": "to explain how to implement the server logic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1017"
+  },
+  {
+    "text": "with concrete examples, to steer client player traffics for load balancing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1020"
+  },
+  {
+    "text": "One way to manage and orchestrate a swamp of client players ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1026"
+  },
+  {
+    "text": "and apply partitioned rules is to put every client into a bucket, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1029"
+  },
+  {
+    "text": "and apply the rules at the buckets level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1034"
+  },
+  {
+    "text": "It's simple to implement the bucketing at the Steering Server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1036"
+  },
+  {
+    "text": "without maintaining any client session states. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1040"
+  },
+  {
+    "text": "When a client player requests for the initial Steering Manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1043"
+  },
+  {
+    "text": "it makes an HTTP GET request at the Steering Server URI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1047"
+  },
+  {
+    "text": "The server then generates a uniform random number out of 12 possible buckets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1051"
+  },
+  {
+    "text": "When returning the Steering Manifest, the server adds the bucket number, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1057"
+  },
+  {
+    "text": "in this case, 7, to the RELOAD-URI attribute, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1061"
+  },
+  {
+    "text": "which will be the Steering Manifest URI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1065"
+  },
+  {
+    "text": "for the next request from the client player. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1067"
+  },
+  {
+    "text": "So that the next time the client player request for Steering Manifest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1070"
+  },
+  {
+    "text": "it will carry the bucket number in its request parameter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1074"
+  },
+  {
+    "text": "and the server can extract it and apply steering rules based on the bucket number.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1077"
+  },
+  {
+    "text": "Now let's take a look at a simple bipartition steering rule. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1083"
+  },
+  {
+    "text": "In this case, we want to steer 50% traffic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1086"
+  },
+  {
+    "text": "to prefer CDN1 and the other 50% of the traffic to prefer CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1089"
+  },
+  {
+    "text": "We can write such rule in terms of the bucket number. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1095"
+  },
+  {
+    "text": "If the client player's bucket number falls in the first 6 buckets, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1098"
+  },
+  {
+    "text": "we return Steering Manifest with PATHWAY-PRIORITY prefers CDN1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1102"
+  },
+  {
+    "text": "and otherwise return that with PATHWAY-PRIORITY prefers CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1107"
+  },
+  {
+    "text": "Since clients are assigned to buckets uniformly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1112"
+  },
+  {
+    "text": "dividing the 12 buckets into 6 buckets can bipartition the traffics evenly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1116"
+  },
+  {
+    "text": "Now let's say a new Pathway called CDN3 is dynamically spawned. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1123"
+  },
+  {
+    "text": "The Steering Server can advertise it using Pathway cloning ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1129"
+  },
+  {
+    "text": "to clients that don’t know it from their multivariant playlists. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1133"
+  },
+  {
+    "text": "One common question when constructing a Steering Manifest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1137"
+  },
+  {
+    "text": "with Pathway Cloning, is to determine the set of Pathways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1140"
+  },
+  {
+    "text": "that need to be included in the PATHWAY-CLONES array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1144"
+  },
+  {
+    "text": "The rule is to clone Pathways that are not in the client's multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1148"
+  },
+  {
+    "text": "However, without maintaining any server side states ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1153"
+  },
+  {
+    "text": "about the client session, how can the Steering Server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1155"
+  },
+  {
+    "text": "know the set of Pathways in the client's multivariant playlist? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1158"
+  },
+  {
+    "text": "One way to do it is to include the set of Pathways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1164"
+  },
+  {
+    "text": "in the initial steering server URI as a query parameter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1167"
+  },
+  {
+    "text": "during the generation of the multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1172"
+  },
+  {
+    "text": "In this case, the multivariant playlist contains two pathways, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1175"
+  },
+  {
+    "text": "CDN1 and CDN2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1179"
+  },
+  {
+    "text": "Therefore, it includes them in the SERVER-URI attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1182"
+  },
+  {
+    "text": "as a query parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1185"
+  },
+  {
+    "text": "Then the client player would send request to the URI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1188"
+  },
+  {
+    "text": "carrying the parameters to the steering server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1192"
+  },
+  {
+    "text": "Then the steering server can extract the parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1196"
+  },
+  {
+    "text": "as the set of Pathways in the client's multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1198"
+  },
+  {
+    "text": "Then it can calculate the set of Pathways to be cloned, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1203"
+  },
+  {
+    "text": "by subtracting the set of available Pathways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1206"
+  },
+  {
+    "text": "with the set of Pathways in the client's multivariant playlist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1209"
+  },
+  {
+    "text": "In this case, the available Pathways are CDN1, 2, and 3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1213"
+  },
+  {
+    "text": "and the Pathways in the client's multivariant playlist are CDN1 and CDN2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1217"
+  },
+  {
+    "text": "therefore, the Pathway that needs to be included ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1222"
+  },
+  {
+    "text": "in the PATHWAY-CLONES array is CDN3.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1225"
+  },
+  {
+    "text": "Let's also take a look how the Steering Server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1231"
+  },
+  {
+    "text": "can change its steering rules when there are three available Pathways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1233"
+  },
+  {
+    "text": "In this case, the server wants to partition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1238"
+  },
+  {
+    "text": "the client traffics evenly across CDN1, 2, and 3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1241"
+  },
+  {
+    "text": "We write this rule by returning PATHWAY-PRIORITY that prefers CDN1 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1245"
+  },
+  {
+    "text": "if the client's bucket number falls in the first third of the 12 buckets, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1250"
+  },
+  {
+    "text": "returning PATHWAY-PRIORITY that prefers CDN2 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1257"
+  },
+  {
+    "text": "if the client's bucket number falls in the second third range, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1260"
+  },
+  {
+    "text": "and otherwise returning PATHWAY-PRIORITY that prefers CDN3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1265"
+  },
+  {
+    "text": "This way each Pathway would serve a third of the client traffics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1270"
+  },
+  {
+    "text": "With everything we covered, you are now fully equipped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1275"
+  },
+  {
+    "text": "to build your Steering Server with your own dynamic steering rules. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1278"
+  },
+  {
+    "text": "Doing so can further improve the reliability of your streaming service.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1283"
+  },
+  {
+    "text": "That's it for our updates in Content Steering this year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1288"
+  },
+  {
+    "text": "If you haven't done it yet, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1292"
+  },
+  {
+    "text": "try adopting Content Steering as your HLS CDN fallback mechanism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1293"
+  },
+  {
+    "text": "as it's more versatile and provides dynamic traffic steering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1298"
+  },
+  {
+    "text": "Please also take advantage of the new Pathway Cloning feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1303"
+  },
+  {
+    "text": "to improve your service's reliability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1307"
+  },
+  {
+    "text": "As usual, check out the latest IETF HLS specification for more technical details. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1310"
+  },
+  {
+    "text": "And remember to utilize our HTTP Live Streaming Tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1317"
+  },
+  {
+    "text": "to validate your playlists as you make changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1321"
+  },
+  {
+    "text": "Finally, if you have more questions or suggestion, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1324"
+  },
+  {
+    "text": "feel free to reach out at hls-interest@ietf.org. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1327"
+  },
+  {
+    "text": "Thank you for joining, and have a great day.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10144/?time=1333"
+  }
+]

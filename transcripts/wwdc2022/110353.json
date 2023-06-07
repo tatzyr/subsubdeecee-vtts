@@ -1,0 +1,1566 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=0"
+  },
+  {
+    "text": "Hi, I'm Slava from the swift compiler team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=9"
+  },
+  {
+    "text": "Welcome to Design Protocol Interfaces in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=12"
+  },
+  {
+    "text": "I'm going to pick up where the Embrace Swift Generics talk left off, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=17"
+  },
+  {
+    "text": "and show you some advanced techniques for abstracting over concrete types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=21"
+  },
+  {
+    "text": "and modeling type relationships using protocols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=26"
+  },
+  {
+    "text": "This talk will cover both existing language features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=30"
+  },
+  {
+    "text": "as well as some of the new capabilities introduced in Swift 5.7.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=34"
+  },
+  {
+    "text": "This talk has three main themes: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=40"
+  },
+  {
+    "text": "First, I'll show you how protocols with associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=43"
+  },
+  {
+    "text": "interact with existential 'any' types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=47"
+  },
+  {
+    "text": "by explaining how 'result type erasure' works. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=49"
+  },
+  {
+    "text": "Next, I'll explain using opaque result types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=53"
+  },
+  {
+    "text": "to improve encapsulation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=57"
+  },
+  {
+    "text": "by separating interface from implementation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=59"
+  },
+  {
+    "text": "For the final topic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=63"
+  },
+  {
+    "text": "you will see how same-type requirements in protocols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=65"
+  },
+  {
+    "text": "can model relationships between multiple different sets of concrete types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=68"
+  },
+  {
+    "text": "Let's start by learning how protocols with associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=74"
+  },
+  {
+    "text": "interact with existential types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=78"
+  },
+  {
+    "text": "Here, we have a data model with a pair of protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=82"
+  },
+  {
+    "text": "and four concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=85"
+  },
+  {
+    "text": "There are two types of animals, chickens and cows, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=88"
+  },
+  {
+    "text": "and two types of food, eggs and milk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=91"
+  },
+  {
+    "text": "Chickens produce eggs, and cows produce milk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=95"
+  },
+  {
+    "text": "To abstract over the production of food, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=99"
+  },
+  {
+    "text": "I'm going to add a produce() method to the Animal protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=102"
+  },
+  {
+    "text": "You might remember from the 'Embrace swift generics' talk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=106"
+  },
+  {
+    "text": "that that the best way to abstract the different return types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=110"
+  },
+  {
+    "text": "of produce() on Cow and Chicken ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=113"
+  },
+  {
+    "text": "is to use an associated type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=115"
+  },
+  {
+    "text": "By using an associated type, we're declaring that: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=118"
+  },
+  {
+    "text": "given some concrete type of Animal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=121"
+  },
+  {
+    "text": "calling produce() returns some specific type of Food, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=124"
+  },
+  {
+    "text": "that depends on the concrete Animal type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=128"
+  },
+  {
+    "text": "We can show this relationship with a diagram. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=132"
+  },
+  {
+    "text": "The protocol 'Self' type stands in for the actual concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=135"
+  },
+  {
+    "text": "conforming to the 'Animal' protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=140"
+  },
+  {
+    "text": "The 'Self' type has an associated 'Commodity' type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=142"
+  },
+  {
+    "text": "conforming to 'Food'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=146"
+  },
+  {
+    "text": "Let's look at the relationships between the concrete Chicken and Cow types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=148"
+  },
+  {
+    "text": "and the associated type diagram for the Animal protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=152"
+  },
+  {
+    "text": "The Chicken type conforms to the Animal protocol with a CommodityType of 'Egg'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=157"
+  },
+  {
+    "text": "And the Cow type conforms to the Animal protocol with a CommodityType of 'Milk'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=162"
+  },
+  {
+    "text": "Now, let's say we have a farm full of animals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=168"
+  },
+  {
+    "text": "The 'animals' stored property on Farm is a heterogenous array of 'any Animal'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=171"
+  },
+  {
+    "text": "In embrace Swift generics, we saw how the 'any Animal' type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=178"
+  },
+  {
+    "text": "has a box representation that has the ability to store ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=182"
+  },
+  {
+    "text": "any concrete type of animal dynamically. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=185"
+  },
+  {
+    "text": "This strategy of using the same representation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=189"
+  },
+  {
+    "text": "for different concrete types is called type erasure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=192"
+  },
+  {
+    "text": "The produceCommodities() method maps over the array of animals, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=197"
+  },
+  {
+    "text": "calling the produce() method on each one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=201"
+  },
+  {
+    "text": "The method looks simple, but we know that type erasure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=204"
+  },
+  {
+    "text": "will eliminate static type relationships to the underlying type of animal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=207"
+  },
+  {
+    "text": "so it's worth digging deeper to understand why this code type checks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=211"
+  },
+  {
+    "text": "The 'animal' parameter in the map() closure has type 'any Animal'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=217"
+  },
+  {
+    "text": "The return type of 'produce()' is an associated type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=223"
+  },
+  {
+    "text": "When you call a method returning an associated type on an existential type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=227"
+  },
+  {
+    "text": "the compiler will use type erasure to determine the result type of the call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=232"
+  },
+  {
+    "text": "Type erasure replaces these associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=238"
+  },
+  {
+    "text": "with corresponding existential types that have equivalent constraints. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=241"
+  },
+  {
+    "text": "We've erased the relationship between the concrete Animal type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=245"
+  },
+  {
+    "text": "and the associated CommodityType ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=249"
+  },
+  {
+    "text": "by replacing them with 'any Animal' and 'any Food'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=252"
+  },
+  {
+    "text": "The type 'any Food' is called the upper bound of the associated CommodityType. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=256"
+  },
+  {
+    "text": "Since the produce() method is called on an 'any Animal', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=262"
+  },
+  {
+    "text": "the return value is type erased, giving us a value of type 'any Food'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=265"
+  },
+  {
+    "text": "This is exactly the type we expect here.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=271"
+  },
+  {
+    "text": "Let's take a closer look at how associated-type erasure works, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=274"
+  },
+  {
+    "text": "which is a new feature in Swift 5.7. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=278"
+  },
+  {
+    "text": "An associated type appearing in the result type of a protocol method – ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=281"
+  },
+  {
+    "text": "on the right-hand side of the arrow – ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=286"
+  },
+  {
+    "text": "is said to be in 'producing position', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=288"
+  },
+  {
+    "text": "because calling the method will produce a value of this type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=291"
+  },
+  {
+    "text": "When we call this method on 'any Animal', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=296"
+  },
+  {
+    "text": "we don't know the concrete result type at compile time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=299"
+  },
+  {
+    "text": "but we do know that it is a subtype of the upper bound. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=302"
+  },
+  {
+    "text": "Here in this example, we're calling produce() on an 'any Animal' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=306"
+  },
+  {
+    "text": "that holds a Cow at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=310"
+  },
+  {
+    "text": "In our case, the produce() method on Cow returns Milk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=313"
+  },
+  {
+    "text": "Milk can be stored inside of an 'any Food', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=317"
+  },
+  {
+    "text": "which is the upper bound of the associated CommodityType of the Animal protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=321"
+  },
+  {
+    "text": "This is always safe, for all concrete types that conform to the Animal protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=327"
+  },
+  {
+    "text": "On the other hand, let's think about what happens if the associated type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=334"
+  },
+  {
+    "text": "appears in the parameter list of a method or initializer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=338"
+  },
+  {
+    "text": "Here, the eat() method on the Animal protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=342"
+  },
+  {
+    "text": "has the associated FeedType in consuming position. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=345"
+  },
+  {
+    "text": "We need to pass in a value of this type to call the method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=349"
+  },
+  {
+    "text": "Since the conversion goes in the other direction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=353"
+  },
+  {
+    "text": "type erasure cannot be performed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=356"
+  },
+  {
+    "text": "The upper bound existential type for the associated type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=359"
+  },
+  {
+    "text": "does not safety convert to the actual concrete type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=363"
+  },
+  {
+    "text": "because the concrete type is unknown. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=366"
+  },
+  {
+    "text": "Let's look at an example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=370"
+  },
+  {
+    "text": "Once again, we have an 'any Animal' storing a Cow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=371"
+  },
+  {
+    "text": "Suppose that the 'eat' method on Cow takes Hay. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=375"
+  },
+  {
+    "text": "The upper bound of the Animal protocol's associated 'FeedType' is 'any AnimalFeed'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=379"
+  },
+  {
+    "text": "But given an arbitrary 'any AnimalFeed', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=385"
+  },
+  {
+    "text": "there is no way to statically guarantee ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=388"
+  },
+  {
+    "text": "that it stores the 'Hay' concrete type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=391"
+  },
+  {
+    "text": "Type erasure does not allow us to work with associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=394"
+  },
+  {
+    "text": "in consuming position. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=398"
+  },
+  {
+    "text": "Instead, you must unbox the existential 'any' type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=400"
+  },
+  {
+    "text": "by passing it to a function that takes an opaque 'some' type.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=404"
+  },
+  {
+    "text": "This type erasure behavior with associated types is actually similar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=409"
+  },
+  {
+    "text": "to an existing language feature you may have seen in Swift 5.6. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=413"
+  },
+  {
+    "text": "Consider a protocol for cloning reference types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=418"
+  },
+  {
+    "text": "This protocol defines a single clone() method, returning Self. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=422"
+  },
+  {
+    "text": "When you call clone() on a value of type 'any Cloneable', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=426"
+  },
+  {
+    "text": "the result type 'Self', is type erased to its upper bound. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=430"
+  },
+  {
+    "text": "The upper bound of the Self type is always the protocol itself, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=436"
+  },
+  {
+    "text": "so we get back a new value of type 'any Cloneable'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=440"
+  },
+  {
+    "text": "So to summarize: you can use 'any' to declare that the type of a value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=445"
+  },
+  {
+    "text": "is an existential type that stores some concrete type conforming to a protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=450"
+  },
+  {
+    "text": "This even works with protocols that have associated types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=456"
+  },
+  {
+    "text": "When calling a protocol method with an associated type in producing position, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=460"
+  },
+  {
+    "text": "the associated type is type-erased to its upper bound, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=465"
+  },
+  {
+    "text": "which is another existential type that carries the associated type's constraints. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=469"
+  },
+  {
+    "text": "Abstracting over concrete types isn't only useful for function inputs - ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=474"
+  },
+  {
+    "text": "it's useful for function outputs, too, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=480"
+  },
+  {
+    "text": "so that concrete types are only visible from the implementation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=482"
+  },
+  {
+    "text": "Let's take a look at how to abstract away concrete result types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=487"
+  },
+  {
+    "text": "to separate the essential interface of a piece of code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=491"
+  },
+  {
+    "text": "from its implementation details, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=494"
+  },
+  {
+    "text": "making static type assignments more modular and robust in the face of changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=497"
+  },
+  {
+    "text": "Let's generalize the Animal protocol to allow feeding Animals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=502"
+  },
+  {
+    "text": "Animals get hungry, and when they're hungry they need to eat. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=507"
+  },
+  {
+    "text": "Let's add an isHungry property to the Animal protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=510"
+  },
+  {
+    "text": "The feedAnimals() method on Farm will feed the subset of animals that are hungry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=515"
+  },
+  {
+    "text": "I've split off the computation of this subset of hungry animals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=520"
+  },
+  {
+    "text": "into a hungryAnimals property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=524"
+  },
+  {
+    "text": "This initial implementation of hungryAnimals() uses the filter() method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=527"
+  },
+  {
+    "text": "to select the subset of animals where the isHungry property is true. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=531"
+  },
+  {
+    "text": "Calling filter() on an array of 'any Animal' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=536"
+  },
+  {
+    "text": "returns a new array of 'any Animal'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=539"
+  },
+  {
+    "text": "Now you might notice that feedAnimals() ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=543"
+  },
+  {
+    "text": "only iterates over the result of hungryAnimals once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=545"
+  },
+  {
+    "text": "and then immediately discards this temporary array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=549"
+  },
+  {
+    "text": "This is inefficient if the farm contains a large number of hungry animals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=553"
+  },
+  {
+    "text": "One way to avoid this temporary allocation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=558"
+  },
+  {
+    "text": "is to use the standard library's lazy collections feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=561"
+  },
+  {
+    "text": "By replacing the call to 'filter' with 'lazy.filter', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=565"
+  },
+  {
+    "text": "we get what is known as a lazy collection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=569"
+  },
+  {
+    "text": "A lazy collection has the same elements as the array returned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=573"
+  },
+  {
+    "text": "by a plain call to 'filter', but it avoids the temporary allocation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=578"
+  },
+  {
+    "text": "However, now the type of the 'hungryAnimals' property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=583"
+  },
+  {
+    "text": "must be declared as this rather complex concrete type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=587"
+  },
+  {
+    "text": "'LazyFilterSequence of Array of any Animal'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=591"
+  },
+  {
+    "text": "This exposes an unnecessary implementation detail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=595"
+  },
+  {
+    "text": "The client, feedAnimals(), doesn't care that we used 'lazy.filter' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=600"
+  },
+  {
+    "text": "in the implementation of 'hungryAnimals'; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=605"
+  },
+  {
+    "text": "it only needs to know that it's getting some collection that it can iterate over. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=608"
+  },
+  {
+    "text": "An opaque result type can be used to hide the complex concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=614"
+  },
+  {
+    "text": "behind the abstract interface of a Collection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=619"
+  },
+  {
+    "text": "Now clients calling 'hungryAnimals' only know they're getting some concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=623"
+  },
+  {
+    "text": "conforming to the Collection protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=628"
+  },
+  {
+    "text": "but they don't know the specific concrete type of collection.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=631"
+  },
+  {
+    "text": "However as written, this actually hides too much ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=636"
+  },
+  {
+    "text": "static type information from the client. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=639"
+  },
+  {
+    "text": "We're declaring that hungryAnimals outputs some concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=643"
+  },
+  {
+    "text": "conforming to Collection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=647"
+  },
+  {
+    "text": "but we don't know anything about this Collection's Element type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=649"
+  },
+  {
+    "text": "Without the knowledge that the element type is 'any Animal', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=653"
+  },
+  {
+    "text": "all we can do with the element type is pass it around; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=657"
+  },
+  {
+    "text": "we can't call any of the methods of the Animal protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=661"
+  },
+  {
+    "text": "Let's focus on the opaque result type 'some Collection'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=666"
+  },
+  {
+    "text": "We can strike the right balance between hiding implementation details ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=670"
+  },
+  {
+    "text": "and exposing a sufficiently-rich interface ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=675"
+  },
+  {
+    "text": "by using a constrained opaque result type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=678"
+  },
+  {
+    "text": "Constrained opaque result types are new in Swift 5.7. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=682"
+  },
+  {
+    "text": "A constrained opaque result type is written by applying type arguments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=686"
+  },
+  {
+    "text": "in angle brackets after the protocol name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=691"
+  },
+  {
+    "text": "The Collection protocol has a single type argument, the Element type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=694"
+  },
+  {
+    "text": "Now once 'hungryAnimals' is declared with a constrained opaque result type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=699"
+  },
+  {
+    "text": "the fact that it is actually a 'LazyFilterSequence of an array ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=704"
+  },
+  {
+    "text": "of any Animal' is hidden from the client; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=709"
+  },
+  {
+    "text": "but the client still has the knowledge ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=712"
+  },
+  {
+    "text": "that it is some concrete type conforming to Collection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=715"
+  },
+  {
+    "text": "whose Element associated type is equal to 'any Animal'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=719"
+  },
+  {
+    "text": "This is precisely the interface that we want here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=723"
+  },
+  {
+    "text": "Inside the for loop in 'feedAnimals()', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=727"
+  },
+  {
+    "text": "the 'animal' variable has the type 'any Animal', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=731"
+  },
+  {
+    "text": "allowing methods of the Animal protocol to be called on each hungry animal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=734"
+  },
+  {
+    "text": "This all works because the Collection protocol declares ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=740"
+  },
+  {
+    "text": "that the Element associated type is a primary associated type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=744"
+  },
+  {
+    "text": "You can declare your own protocols with primary associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=750"
+  },
+  {
+    "text": "by naming one or more associated types in angle brackets after the protocol name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=754"
+  },
+  {
+    "text": "like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=759"
+  },
+  {
+    "text": "The associated types that work best as primary associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=761"
+  },
+  {
+    "text": "are those that are usually provided by the caller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=766"
+  },
+  {
+    "text": "such as an Element type of a collection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=769"
+  },
+  {
+    "text": "as opposed to implementation details, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=772"
+  },
+  {
+    "text": "such as the collection's Iterator type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=775"
+  },
+  {
+    "text": "Often, you will see a correspondence between the primary associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=778"
+  },
+  {
+    "text": "of a protocol, and the generic parameters of a concrete type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=781"
+  },
+  {
+    "text": "conforming to this protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=785"
+  },
+  {
+    "text": "Here, you can see that the Element primary associated type of 'Collection' ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=787"
+  },
+  {
+    "text": "is implemented by the 'Element' generic parameter of Array and Set, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=791"
+  },
+  {
+    "text": "two concrete types defined by the standard library that both conform to Collection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=796"
+  },
+  {
+    "text": "'Collection of Element' can be used with opaque result types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=801"
+  },
+  {
+    "text": "using the 'some' keyword, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=805"
+  },
+  {
+    "text": "as well as with constrained existential types using the 'any' keyword. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=807"
+  },
+  {
+    "text": "Before Swift 5.7, you would've needed to write your own data type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=812"
+  },
+  {
+    "text": "to represent an existential type with a specific generic argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=816"
+  },
+  {
+    "text": "Swift 5.7 builds this concept into the language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=821"
+  },
+  {
+    "text": "with constrained existential types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=825"
+  },
+  {
+    "text": "If we wanted hungryAnimals to have the option ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=828"
+  },
+  {
+    "text": "of whether to compute the hungryAnimals lazily or eagerly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=831"
+  },
+  {
+    "text": "using an opaque Collection of any Animal would result in an error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=836"
+  },
+  {
+    "text": "that the function returns two different underlying types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=842"
+  },
+  {
+    "text": "We can fix this by instead returning 'any Collection of any Animal', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=846"
+  },
+  {
+    "text": "signaling that this API can return different types across calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=851"
+  },
+  {
+    "text": "The ability to constrain primary associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=856"
+  },
+  {
+    "text": "gives opaque types and existential types a new level of expressivity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=860"
+  },
+  {
+    "text": "This can be used with various standard library protocols such as Collection; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=866"
+  },
+  {
+    "text": "you can also declare your own protocols to have primary associated types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=871"
+  },
+  {
+    "text": "Writing generic code using opaque types must rely on abstract type relationships. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=876"
+  },
+  {
+    "text": "Let's discuss how to identify and guarantee necessary type relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=883"
+  },
+  {
+    "text": "between multiple abstract types using related protocols.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=888"
+  },
+  {
+    "text": "We're going to add a new associated type to the Animal protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=894"
+  },
+  {
+    "text": "for the concrete type of animal feed that this animal eats, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=898"
+  },
+  {
+    "text": "together with an eat() method that tells the animal to consume this type of feed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=902"
+  },
+  {
+    "text": "To make things more interesting, I'm going to introduce ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=907"
+  },
+  {
+    "text": "an additional complication: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=910"
+  },
+  {
+    "text": "before we can feed an animal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=912"
+  },
+  {
+    "text": "we must grow the appropriate type of crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=915"
+  },
+  {
+    "text": "and harvest the crop to produce the feed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=918"
+  },
+  {
+    "text": "Here is the first set of concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=921"
+  },
+  {
+    "text": "A cow eats hay, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=924"
+  },
+  {
+    "text": "so given a cow, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=926"
+  },
+  {
+    "text": "we first need to grow some hay. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=929"
+  },
+  {
+    "text": "This gives us alfalfa, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=931"
+  },
+  {
+    "text": "which is harvested and processed into hay, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=933"
+  },
+  {
+    "text": "that the cow can eat. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=937"
+  },
+  {
+    "text": "Here's the second set of concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=940"
+  },
+  {
+    "text": "A chicken eats scratch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=943"
+  },
+  {
+    "text": "so if you bring me a chicken, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=946"
+  },
+  {
+    "text": "we first need to grow a type of grain called millet ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=948"
+  },
+  {
+    "text": "that we harvest and process ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=952"
+  },
+  {
+    "text": "to produce chicken scratch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=954"
+  },
+  {
+    "text": "which we feed to our chicken. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=956"
+  },
+  {
+    "text": "I want to abstract over these two sets of related concrete types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=959"
+  },
+  {
+    "text": "so I can implement the feedAnimal() method once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=964"
+  },
+  {
+    "text": "and have it feed both cows and chickens, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=967"
+  },
+  {
+    "text": "as well as any new types of animals I might adopt in the future. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=970"
+  },
+  {
+    "text": "Since feedAnimal() needs to work with the eat() method of the Animal protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=975"
+  },
+  {
+    "text": "which has an associated type in consuming position, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=980"
+  },
+  {
+    "text": "I'm going to unbox the existential by declaring that the feedAnimal() method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=984"
+  },
+  {
+    "text": "takes 'some Animal' as a parameter type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=989"
+  },
+  {
+    "text": "To start, I'll define a pair of protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=993"
+  },
+  {
+    "text": "AnimalFeed and Crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=996"
+  },
+  {
+    "text": "using what we know about protocols and associated types so far. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=998"
+  },
+  {
+    "text": "AnimalFeed has an associated CropType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1003"
+  },
+  {
+    "text": "which conforms to Crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1006"
+  },
+  {
+    "text": "and Crop has an associated FeedType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1008"
+  },
+  {
+    "text": "which conforms to AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1011"
+  },
+  {
+    "text": "As before, we can look at a diagram of type parameters for each protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1014"
+  },
+  {
+    "text": "First, let's look at AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1020"
+  },
+  {
+    "text": "Every protocol has a 'Self' type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1023"
+  },
+  {
+    "text": "which stands for the concrete conforming type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1025"
+  },
+  {
+    "text": "Our protocol has an associated 'CropType', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1029"
+  },
+  {
+    "text": "which conforms to Crop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1032"
+  },
+  {
+    "text": "The associated 'CropType' has a nested associated 'FeedType', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1034"
+  },
+  {
+    "text": "which conforms to AnimalFeed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1038"
+  },
+  {
+    "text": "which has a nested associated 'CropType' conforming to Crop, and so on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1041"
+  },
+  {
+    "text": "In fact, this back-and-forth continues forever, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1047"
+  },
+  {
+    "text": "with an infinite nesting of associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1050"
+  },
+  {
+    "text": "that alternate between conforming to AnimalFeed and Crop.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1053"
+  },
+  {
+    "text": "With the Crop protocol, we have a similar situation, just shifted by one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1059"
+  },
+  {
+    "text": "We start with the 'Self' type, conforming to 'Crop', ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1065"
+  },
+  {
+    "text": "which has an associated 'FeedType', conforming to AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1068"
+  },
+  {
+    "text": "This has a nested associated 'CropType', conforming to Crop and so on...",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1073"
+  },
+  {
+    "text": "To infinity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1082"
+  },
+  {
+    "text": "Let's see if these protocols correctly model the relationship ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1084"
+  },
+  {
+    "text": "between our concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1088"
+  },
+  {
+    "text": "Recall that before we can feed an animal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1091"
+  },
+  {
+    "text": "we need to grow the crop ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1093"
+  },
+  {
+    "text": "that is then processed into the correct type of animal feed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1095"
+  },
+  {
+    "text": "grow() is a static method in the AnimalFeed protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1099"
+  },
+  {
+    "text": "which means it must be called directly on a type conforming to AnimalFeed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1102"
+  },
+  {
+    "text": "and not on a specific value whose type conforms to AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1107"
+  },
+  {
+    "text": "We need to write down a the name of a type conforming to AnimalFeed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1112"
+  },
+  {
+    "text": "but all we have is a specific value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1117"
+  },
+  {
+    "text": "of some type conforming to Animal, a different protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1119"
+  },
+  {
+    "text": "Well, we can get the type of this value, which we know is some type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1123"
+  },
+  {
+    "text": "conforming to Animal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1127"
+  },
+  {
+    "text": "and Animal has an associated FeedType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1129"
+  },
+  {
+    "text": "which conforms to AnimalFeed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1131"
+  },
+  {
+    "text": "This type can be used as the base of the method call grow(). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1136"
+  },
+  {
+    "text": "The grow() method on AnimalFeed returns a value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1140"
+  },
+  {
+    "text": "whose type is the nested associated CropType of AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1144"
+  },
+  {
+    "text": "We know that CropType conforms to Crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1149"
+  },
+  {
+    "text": "so I can call harvest() on it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1151"
+  },
+  {
+    "text": "But what do I get back? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1153"
+  },
+  {
+    "text": "harvest() is declared to return the associated FeedType ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1155"
+  },
+  {
+    "text": "of the Crop protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1159"
+  },
+  {
+    "text": "In our case, since the base of the call is (some Animal).FeedType.CropType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1161"
+  },
+  {
+    "text": "harvest() will output a value of type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1169"
+  },
+  {
+    "text": "(some Animal).FeedType.CropType.FeedType. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1172"
+  },
+  {
+    "text": "Unfortunately, this is the wrong type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1177"
+  },
+  {
+    "text": "The eat() method on (some Animal) expects (some Animal).FeedType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1180"
+  },
+  {
+    "text": "and not (some Animal).FeedType.CropType.FeedType. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1185"
+  },
+  {
+    "text": "The program is not well-typed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1191"
+  },
+  {
+    "text": "These protocol definitions, as written, do not actually guarantee ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1193"
+  },
+  {
+    "text": "that if we start with a type of animal feed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1198"
+  },
+  {
+    "text": "and then grow and harvest this crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1201"
+  },
+  {
+    "text": "we'll get back the same type of animal feed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1204"
+  },
+  {
+    "text": "that we started with, which is what our animal expects to eat. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1206"
+  },
+  {
+    "text": "Another way to think about it is that these protocol definitions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1210"
+  },
+  {
+    "text": "are too general - they don't accurately model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1214"
+  },
+  {
+    "text": "the desired relationship between our concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1217"
+  },
+  {
+    "text": "To understand why, let's look at our Hay and Alfalfa types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1221"
+  },
+  {
+    "text": "When I grow hay, I get alfalfa, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1226"
+  },
+  {
+    "text": "and when I harvest alfalfa, I get hay, and so on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1229"
+  },
+  {
+    "text": "Now imagine I'm refactoring my code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1233"
+  },
+  {
+    "text": "and I accidentally change the return type of the harvest() method on Alfalfa ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1235"
+  },
+  {
+    "text": "to return Scratch instead of Hay. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1240"
+  },
+  {
+    "text": "After this accidental change, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1243"
+  },
+  {
+    "text": "the concrete types still satisfy the requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1246"
+  },
+  {
+    "text": "of the AnimalFeed and Crop protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1249"
+  },
+  {
+    "text": "even though we violate our desired invariant that growing and harvesting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1251"
+  },
+  {
+    "text": "a crop produces the same type of animal feed that we started with. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1256"
+  },
+  {
+    "text": "Let's look at the AnimalFeed protocol again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1262"
+  },
+  {
+    "text": "the real problem here is that in a sense, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1265"
+  },
+  {
+    "text": "we have too many distinct associated types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1268"
+  },
+  {
+    "text": "We need to write down the fact that two of these associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1272"
+  },
+  {
+    "text": "are actually the same concrete type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1276"
+  },
+  {
+    "text": "This will prevent incorrectly-written concrete types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1279"
+  },
+  {
+    "text": "from conforming to our protocols; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1283"
+  },
+  {
+    "text": "it will also to give the feedAnimal() method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1286"
+  },
+  {
+    "text": "the guarantee that it needs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1288"
+  },
+  {
+    "text": "We can express the relationship between these associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1290"
+  },
+  {
+    "text": "using a same-type requirement, written in a 'where' clause. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1294"
+  },
+  {
+    "text": "A same-type requirement expresses a static guarantee ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1299"
+  },
+  {
+    "text": "that two different, possibly nested associated types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1303"
+  },
+  {
+    "text": "must in fact be the same concrete type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1307"
+  },
+  {
+    "text": "Adding a same-type requirement here imposes a restriction ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1310"
+  },
+  {
+    "text": "on the concrete types that conform to the AnimalFeed protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1314"
+  },
+  {
+    "text": "In this same-type requirement here, we're declaring that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1318"
+  },
+  {
+    "text": "`Self dot CropType dot FeedType' is the same type as 'Self'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1322"
+  },
+  {
+    "text": "what does this look like in our diagram? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1329"
+  },
+  {
+    "text": "Well, here is how we can visualize it: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1332"
+  },
+  {
+    "text": "Each concrete type conforming to AnimalFeed has a CropType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1335"
+  },
+  {
+    "text": "which conforms to Crop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1339"
+  },
+  {
+    "text": "However, the FeedType of this CropType, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1341"
+  },
+  {
+    "text": "is not just some other type conforming to AnimalFeed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1344"
+  },
+  {
+    "text": "it is the same concrete type as the original AnimalFeed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1348"
+  },
+  {
+    "text": "Instead of an infinite tower of nested associated types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1354"
+  },
+  {
+    "text": "I've collapsed all relationships down to a single pair ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1358"
+  },
+  {
+    "text": "of related associated types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1362"
+  },
+  {
+    "text": "What about the 'Crop' protocol? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1365"
+  },
+  {
+    "text": "Here, the Crop's FeedType has collapsed down to a pair of types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1368"
+  },
+  {
+    "text": "but we still have one too many associated types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1373"
+  },
+  {
+    "text": "We want to say that the Crop's FeedType's Crop Type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1377"
+  },
+  {
+    "text": "is the same type as the Crop that we originally started with.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1382"
+  },
+  {
+    "text": "Now that these two protocols have been equipped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1390"
+  },
+  {
+    "text": "with same-type requirements, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1393"
+  },
+  {
+    "text": "we can revisit the 'feedAnimal()' method again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1395"
+  },
+  {
+    "text": "We start with the type of some Animal, as before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1399"
+  },
+  {
+    "text": "and we get the animal's feed type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1402"
+  },
+  {
+    "text": "which we know conforms to the AnimalFeed protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1405"
+  },
+  {
+    "text": "When we grow this crop, we get some animal's feed type's crop type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1409"
+  },
+  {
+    "text": "But now, when we harvest this crop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1415"
+  },
+  {
+    "text": "instead of getting yet another nested associated type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1418"
+  },
+  {
+    "text": "we get exactly the feed type that our animal expects, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1421"
+  },
+  {
+    "text": "and the happy animal is now guaranteed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1425"
+  },
+  {
+    "text": "to eat() the correct type of animal feed that we just grew. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1427"
+  },
+  {
+    "text": "Finally, let's look at an associated type diagram for the Animal protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1432"
+  },
+  {
+    "text": "which pulls everything together we've seen so far.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1437"
+  },
+  {
+    "text": "Here are the two sets of conforming types: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1443"
+  },
+  {
+    "text": "first, we have Cow, Hay, and Alfalfa. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1446"
+  },
+  {
+    "text": "Second, we have Chicken, Scratch and Millet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1450"
+  },
+  {
+    "text": "Notice how our three protocols precisely model the relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1453"
+  },
+  {
+    "text": "between each set of three concrete types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1458"
+  },
+  {
+    "text": "By understanding your data model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1461"
+  },
+  {
+    "text": "you can use same-type requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1464"
+  },
+  {
+    "text": "to define equivalences between these different nested associated types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1466"
+  },
+  {
+    "text": "Generic code can then rely on these relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1471"
+  },
+  {
+    "text": "when chaining together multiple calls to protocol requirements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1475"
+  },
+  {
+    "text": "During this session, we explored when type erasure is safe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1480"
+  },
+  {
+    "text": "and when we need to be in a context where type relationships are guaranteed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1484"
+  },
+  {
+    "text": "Then, we discussed how to strike the right balance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1489"
+  },
+  {
+    "text": "between preserving rich type information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1492"
+  },
+  {
+    "text": "and hiding implementation details using primary associated types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1495"
+  },
+  {
+    "text": "which can be used with both opaque result types and existential types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1500"
+  },
+  {
+    "text": "Finally, we saw how to identify and guarantee type relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1505"
+  },
+  {
+    "text": "between sets of concrete types using same-type requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1510"
+  },
+  {
+    "text": "across the protocols that represent those related sets of types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1514"
+  },
+  {
+    "text": "Thank you for joining me. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1518"
+  },
+  {
+    "text": "I hope you have a great WWDC.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-110353/?time=1520"
+  }
+]

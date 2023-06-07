@@ -1,0 +1,1142 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=0"
+  },
+  {
+    "text": "Felix Acero: Hi, my name is Felix Acero, and I am a Software Engineer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=9"
+  },
+  {
+    "text": "with the Security Engineering and Architecture team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=12"
+  },
+  {
+    "text": "In this video, I am going to show you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=15"
+  },
+  {
+    "text": "how you can use the LocalAuthentication framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=17"
+  },
+  {
+    "text": "to improve the authentication and authorization flows of your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=19"
+  },
+  {
+    "text": "We will start by taking a look at the generic concepts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=23"
+  },
+  {
+    "text": "of authentication and authorization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=25"
+  },
+  {
+    "text": "and how they apply to your application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=28"
+  },
+  {
+    "text": "Then we will review how the existing LocalAuthentication API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=31"
+  },
+  {
+    "text": "and in particular the LAContext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=34"
+  },
+  {
+    "text": "can help you implement a wide range of authorization schemes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=37"
+  },
+  {
+    "text": "And finally we will see how the new APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=41"
+  },
+  {
+    "text": "we are adding to LocalAuthentication this year ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=43"
+  },
+  {
+    "text": "can help you further streamline your authorization code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=45"
+  },
+  {
+    "text": "So let's start by talking about authentication and authorization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=50"
+  },
+  {
+    "text": "Authentication and authorization are distinct ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=53"
+  },
+  {
+    "text": "yet closely related security concepts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=56"
+  },
+  {
+    "text": "On the one hand, authentication is the act of verifying the identity of the user. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=59"
+  },
+  {
+    "text": "On the other hand, authorization is the act of verifying whether a given user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=64"
+  },
+  {
+    "text": "is allowed to perform a specific operation on a concrete resource. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=68"
+  },
+  {
+    "text": "Put together, we can see that, since we first need to verify ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=73"
+  },
+  {
+    "text": "that the user is who they claim to be before we can evaluate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=76"
+  },
+  {
+    "text": "what resources and operations are available to them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=79"
+  },
+  {
+    "text": "we can say that authentication in fact enables authorization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=82"
+  },
+  {
+    "text": "To help illustrate these concepts, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=86"
+  },
+  {
+    "text": "let's look at a concrete example involving a common security resource ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=88"
+  },
+  {
+    "text": "managed by your applications, such as Secure Enclave keys.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=91"
+  },
+  {
+    "text": "Secure Enclave keys are special types of asymmetric keys ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=95"
+  },
+  {
+    "text": "that are bound to a specific device and which are protected ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=98"
+  },
+  {
+    "text": "by a hardware-based key manager that is isolated from the main processor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=101"
+  },
+  {
+    "text": "What makes these keys special is that when you store a private key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=106"
+  },
+  {
+    "text": "in the Secure Enclave, you never actually handle the key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=109"
+  },
+  {
+    "text": "but instead instruct the Secure Enclave to perform operations with it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=111"
+  },
+  {
+    "text": "Secure Enclave keys can be associated with access control lists ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=116"
+  },
+  {
+    "text": "or ACLs for short. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=119"
+  },
+  {
+    "text": "An access control list specifies the requirements that need to be satisfied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=122"
+  },
+  {
+    "text": "in order to perform specific operations such as signing or decrypting a blob.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=125"
+  },
+  {
+    "text": "They can specify when a given item is available, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=131"
+  },
+  {
+    "text": "for example after device unlock, as well as the authentication requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=134"
+  },
+  {
+    "text": "needed to allow the execution of certain operations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=138"
+  },
+  {
+    "text": "For this example, let's say that your app wants to protect ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=141"
+  },
+  {
+    "text": "the sign and decrypt operations of its key with biometric authentication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=144"
+  },
+  {
+    "text": "while also ensuring that the key is only available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=148"
+  },
+  {
+    "text": "after the device has been unlocked.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=151"
+  },
+  {
+    "text": "Now let's see how an authorization flow would look like ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=154"
+  },
+  {
+    "text": "for a sign operation involving this key.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=157"
+  },
+  {
+    "text": "First, your application issues a request to sign a blob using the private key.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=160"
+  },
+  {
+    "text": "Then, after verifying that your application can access the key, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=165"
+  },
+  {
+    "text": "the system proceeds to identify the authorization requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=169"
+  },
+  {
+    "text": "for the sign operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=172"
+  },
+  {
+    "text": "In this case, the sign operation requires a successful biometric authentication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=174"
+  },
+  {
+    "text": "from any of the currently enrolled users. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=178"
+  },
+  {
+    "text": "The system will then walk the user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=181"
+  },
+  {
+    "text": "through the biometric authentication process via the standard UI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=183"
+  },
+  {
+    "text": "Upon a successful authentication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=187"
+  },
+  {
+    "text": "the system verifies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=189"
+  },
+  {
+    "text": "that all the remaining authorization requirements have been satisfied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=190"
+  },
+  {
+    "text": "before finally performing the sign operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=195"
+  },
+  {
+    "text": "and returning a signed blob to your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=198"
+  },
+  {
+    "text": "Let's break down the main components involved in this flow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=201"
+  },
+  {
+    "text": "to see how they fit into our initial definitions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=204"
+  },
+  {
+    "text": "First, we have a resource: the Secure Enclave key. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=206"
+  },
+  {
+    "text": "Second, we have an operation that can be performed with the key. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=210"
+  },
+  {
+    "text": "And third, we have a set of requirements that, among other things, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=215"
+  },
+  {
+    "text": "specify who is allowed to perform the operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=218"
+  },
+  {
+    "text": "as well as the means of authentication that should be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=221"
+  },
+  {
+    "text": "to verify their identity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=223"
+  },
+  {
+    "text": "Plugging the parameters of this example into our definitions, we can see that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=226"
+  },
+  {
+    "text": "for authentication, the question of whether this is the right user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=230"
+  },
+  {
+    "text": "is answered by means of a biometric authentication; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=234"
+  },
+  {
+    "text": "while for authorization, the question of whether the user is allowed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=237"
+  },
+  {
+    "text": "to perform a signature operation using the private key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=241"
+  },
+  {
+    "text": "is answered by verifying the requirements specified in the access control list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=244"
+  },
+  {
+    "text": "Now that we have seen how this works at a high level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=249"
+  },
+  {
+    "text": "we can take a look at the way a flow like this can be implemented ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=252"
+  },
+  {
+    "text": "using the current API of LocalAuthentication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=255"
+  },
+  {
+    "text": "Let's start by quickly reviewing the features offered by the LAContext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=258"
+  },
+  {
+    "text": "which is one of the core components of the framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=262"
+  },
+  {
+    "text": "An LAContext can be used to evaluate the user's identity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=265"
+  },
+  {
+    "text": "It handles user interaction when biometric or passcode authentication is required. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=269"
+  },
+  {
+    "text": "And it also interfaces with the Secure Enclave ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=273"
+  },
+  {
+    "text": "to enable the secure management of biometric data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=276"
+  },
+  {
+    "text": "From this perspective, the LAContext can be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=279"
+  },
+  {
+    "text": "to support your authentication use cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=281"
+  },
+  {
+    "text": "The LAContext can also be used in association with other frameworks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=284"
+  },
+  {
+    "text": "to support authorization flows. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=288"
+  },
+  {
+    "text": "For instance, you could use it to evaluate access control lists ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=290"
+  },
+  {
+    "text": "like the one we saw in our previous example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=294"
+  },
+  {
+    "text": "Let's take a closer look. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=296"
+  },
+  {
+    "text": "The first thing we need to do is to get access the ACL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=298"
+  },
+  {
+    "text": "associated with our private key. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=302"
+  },
+  {
+    "text": "We can do this with the help of the SecItemCopyMatching API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=305"
+  },
+  {
+    "text": "offered by the Security framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=308"
+  },
+  {
+    "text": "making sure that we provide the return-attributes key inside of our query.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=310"
+  },
+  {
+    "text": "Once we obtain access to the access control list, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=315"
+  },
+  {
+    "text": "we can evaluate it directly using the LAContext ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=318"
+  },
+  {
+    "text": "and the evaluateAccessControl API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=321"
+  },
+  {
+    "text": "The biggest advantage that this approach gives you is that it lets you decide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=324"
+  },
+  {
+    "text": "the right moment and the right place in your application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=328"
+  },
+  {
+    "text": "to prompt the user for this authorization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=330"
+  },
+  {
+    "text": "In this case, since the access control list requires ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=333"
+  },
+  {
+    "text": "biometric authentication for the signature operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=336"
+  },
+  {
+    "text": "the LAContext will present the familiar Face ID or Touch ID UI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=339"
+  },
+  {
+    "text": "Once the ACL has been authorized inside our LAContext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=344"
+  },
+  {
+    "text": "we will be able to use it as part of our query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=348"
+  },
+  {
+    "text": "for obtaining a reference to our key. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=350"
+  },
+  {
+    "text": "We do this by appending the LAContext to our SecItem query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=353"
+  },
+  {
+    "text": "under the use-authentication-context key.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=357"
+  },
+  {
+    "text": "By binding the LAContext to our private key reference, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=361"
+  },
+  {
+    "text": "we ensure that executing the signature operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=364"
+  },
+  {
+    "text": "will not trigger another authentication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=366"
+  },
+  {
+    "text": "while allowing the operation to continue without unnecessary prompts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=368"
+  },
+  {
+    "text": "These binding also means that no additional user interactions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=373"
+  },
+  {
+    "text": "will be required for future signatures until the LAContext is invalidated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=376"
+  },
+  {
+    "text": "The LAContext offers a great deal of flexibility ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=382"
+  },
+  {
+    "text": "and it lets you control each of the steps and parameters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=385"
+  },
+  {
+    "text": "involved in your authorization flows. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=387"
+  },
+  {
+    "text": "It can be used in combination with other frameworks such as the Security framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=390"
+  },
+  {
+    "text": "which in turn unlocks a wide range of use cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=393"
+  },
+  {
+    "text": "This versatility, however, comes at the cost of higher code complexity, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=397"
+  },
+  {
+    "text": "requiring you to carefully orchestrate the APIs offered by several frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=402"
+  },
+  {
+    "text": "Depending on your use case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=407"
+  },
+  {
+    "text": "the LAContext might be the right tool for you, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=408"
+  },
+  {
+    "text": "especially if the main value proposition of your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=410"
+  },
+  {
+    "text": "requires low-level access to keys, secrets, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=413"
+  },
+  {
+    "text": "contexts, and access control lists. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=416"
+  },
+  {
+    "text": "However, if all you need for your app is a way of authorizing access to content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=418"
+  },
+  {
+    "text": "or a sensitive resource, then you may want to trade off some of this flexibility ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=423"
+  },
+  {
+    "text": "for a simpler API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=427"
+  },
+  {
+    "text": "This brings us to our last topic, streamline your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=429"
+  },
+  {
+    "text": "New to iOS 16 and macOS 13, LocalAuthentication is introducing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=433"
+  },
+  {
+    "text": "a higher level, authorization focused API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=438"
+  },
+  {
+    "text": "The new API builds on top of existing concepts in LocalAuthentication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=442"
+  },
+  {
+    "text": "such as the LAContext and is geared towards simplifying the implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=446"
+  },
+  {
+    "text": "of common authorization flows, allowing you to focus all your energy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=451"
+  },
+  {
+    "text": "in the core value proposition of your apps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=455"
+  },
+  {
+    "text": "The most important abstraction introduced by the new API is the LARight.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=458"
+  },
+  {
+    "text": "The simplest use case you can give a LARight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=464"
+  },
+  {
+    "text": "is to help you authorize operations on application defined resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=466"
+  },
+  {
+    "text": "For instance, you could use a right to help you gate access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=471"
+  },
+  {
+    "text": "to the user profile section of your application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=474"
+  },
+  {
+    "text": "by first requiring a successful biometric authentication from your user.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=477"
+  },
+  {
+    "text": "By default, rights are protected by a set of authentication requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=482"
+  },
+  {
+    "text": "that allow your users to authenticate using Touch ID, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=486"
+  },
+  {
+    "text": "Face ID, Apple Watch, or their device passcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=490"
+  },
+  {
+    "text": "depending on the device they are using.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=493"
+  },
+  {
+    "text": "You can also choose to associate your rights ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=496"
+  },
+  {
+    "text": "with more granular requirements, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=499"
+  },
+  {
+    "text": "which allow you to further constrain the means of authentication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=500"
+  },
+  {
+    "text": "Let's have a look at how we can use LARights in code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=504"
+  },
+  {
+    "text": "The first thing that we need to do is to instantiate our right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=509"
+  },
+  {
+    "text": "We do this by specifying its requirements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=512"
+  },
+  {
+    "text": "In this case, our login right will require users to authenticate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=515"
+  },
+  {
+    "text": "using biometry or providing the device passcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=519"
+  },
+  {
+    "text": "We then proceed to verify that the current user can obtain the login right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=523"
+  },
+  {
+    "text": "We use this information to determine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=528"
+  },
+  {
+    "text": "whether we can continue with the login operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=530"
+  },
+  {
+    "text": "or if instead we need to redirect the user to the public section of our app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=532"
+  },
+  {
+    "text": "Finally, we can proceed with the actual authorize operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=538"
+  },
+  {
+    "text": "providing a localized reason that will be visible to the user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=541"
+  },
+  {
+    "text": "in the authorization UI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=544"
+  },
+  {
+    "text": "When authorizing a right in this way, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=548"
+  },
+  {
+    "text": "a brand-new, system-driven UI is presented. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=549"
+  },
+  {
+    "text": "The UI is rendered inside your application window ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=553"
+  },
+  {
+    "text": "and provides users with relevant information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=555"
+  },
+  {
+    "text": "to help them understand the origin and purpose of the operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=558"
+  },
+  {
+    "text": "We believe that the new look will allow you to craft authorization flows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=561"
+  },
+  {
+    "text": "that integrate more seamlessly with your application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=565"
+  },
+  {
+    "text": "and that provide more context and information for your users.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=567"
+  },
+  {
+    "text": "Now that we have seen how to create and authorize a right, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=572"
+  },
+  {
+    "text": "let's take a closer look at its lifecycle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=575"
+  },
+  {
+    "text": "Rights start their lifecycle in an unknown state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=578"
+  },
+  {
+    "text": "As soon as your application issues the authorize request, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=582"
+  },
+  {
+    "text": "the state of the right changes to authorizing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=585"
+  },
+  {
+    "text": "It is at this point that the user will be presented with the authorization UI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=588"
+  },
+  {
+    "text": "that we saw in the previous slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=591"
+  },
+  {
+    "text": "Depending on the success or failure of the operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=594"
+  },
+  {
+    "text": "the right may transition to authorized or notAuthorized state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=597"
+  },
+  {
+    "text": "This is the most important state transition for your application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=601"
+  },
+  {
+    "text": "Finally, the right can also move from the authorized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=605"
+  },
+  {
+    "text": "to the notAuthorized state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=607"
+  },
+  {
+    "text": "This occurs when your application explicitly issues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=609"
+  },
+  {
+    "text": "a deauthorize request on the right, or when the right instance is deallocated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=612"
+  },
+  {
+    "text": "Be sure to keep a strong reference to your right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=617"
+  },
+  {
+    "text": "in order to preserve its authorized state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=620"
+  },
+  {
+    "text": "After a right has been deauthorized, your application can continue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=623"
+  },
+  {
+    "text": "to issue authorization requests to restart the cycle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=627"
+  },
+  {
+    "text": "All the previous state transitions can be queried and observed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=631"
+  },
+  {
+    "text": "If you have access to the LARight instance, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=635"
+  },
+  {
+    "text": "you can query its state property directly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=637"
+  },
+  {
+    "text": "You can also observe all state transitions using KVO or Combine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=640"
+  },
+  {
+    "text": "Additionally, if your application handles several rights, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=644"
+  },
+  {
+    "text": "you can observe the state of all them from a single place ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=647"
+  },
+  {
+    "text": "by listening to the didBecomeAuthorized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=650"
+  },
+  {
+    "text": "and the didBecomeUnauthorized notifications, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=652"
+  },
+  {
+    "text": "which are published to the default NotificationCenter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=654"
+  },
+  {
+    "text": "after a change in the authorization state is detected.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=657"
+  },
+  {
+    "text": "Before we move on, let's jump back to our example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=661"
+  },
+  {
+    "text": "and add a logout operation to deauthorize our login right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=664"
+  },
+  {
+    "text": "By doing this, we guarantee that a new authorization will be required ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=668"
+  },
+  {
+    "text": "the next time the user wants to log in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=671"
+  },
+  {
+    "text": "So far, we have seen how to use right instances ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=675"
+  },
+  {
+    "text": "to authorize operations on application-defined resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=679"
+  },
+  {
+    "text": "We have also seen how the lifecycle and state of these rights ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=683"
+  },
+  {
+    "text": "is ultimately tied to the runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=686"
+  },
+  {
+    "text": "which means that on every session of your application, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=688"
+  },
+  {
+    "text": "you need to instantiate and configure these rights correctly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=691"
+  },
+  {
+    "text": "So let's take a look at how rights can be persisted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=695"
+  },
+  {
+    "text": "and what sort of possibilities this enables for your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=698"
+  },
+  {
+    "text": "LARights can be persisted with the help of the right store.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=702"
+  },
+  {
+    "text": "When persisted, rights are backed by a unique Secure Enclave key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=707"
+  },
+  {
+    "text": "that is protected with an access control list or ACL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=711"
+  },
+  {
+    "text": "that matches the authorization requirements of the right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=714"
+  },
+  {
+    "text": "This approach helps us ensure that the authorization requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=717"
+  },
+  {
+    "text": "will remain immutable after the right has been persisted.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=720"
+  },
+  {
+    "text": "You can also access the private key that backs your right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=725"
+  },
+  {
+    "text": "and use it to perform protected cryptographic operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=727"
+  },
+  {
+    "text": "such as decryption, signature, and key exchanges.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=731"
+  },
+  {
+    "text": "The corresponding public key is also accessible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=737"
+  },
+  {
+    "text": "and can be used to perform operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=739"
+  },
+  {
+    "text": "such as encryption and signature verification. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=741"
+  },
+  {
+    "text": "Because this is a public key, you can also export the bytes associated with it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=745"
+  },
+  {
+    "text": "Private key operations are only allowed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=751"
+  },
+  {
+    "text": "after the right has been successfully authorized. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=754"
+  },
+  {
+    "text": "In contrast, public key operations are always allowed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=756"
+  },
+  {
+    "text": "When persisting your right, you also have a chance of storing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=762"
+  },
+  {
+    "text": "a single, immutable secret along with it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=764"
+  },
+  {
+    "text": "The secret is also associated with an access control list ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=768"
+  },
+  {
+    "text": "that matches the authorization requirements of your right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=771"
+  },
+  {
+    "text": "and it only becomes accessible after the right has been authorized.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=774"
+  },
+  {
+    "text": "To summarize, LAPersistedRights are created ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=779"
+  },
+  {
+    "text": "with the help of the right store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=782"
+  },
+  {
+    "text": "They are configured only once ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=783"
+  },
+  {
+    "text": "and their authorization requirements are immutable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=785"
+  },
+  {
+    "text": "Because they are stored, they can be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=788"
+  },
+  {
+    "text": "across different sessions of your application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=790"
+  },
+  {
+    "text": "Internally, they are bound to a specific device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=793"
+  },
+  {
+    "text": "and are backed by a unique Secure Enclave key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=795"
+  },
+  {
+    "text": "which can be used to perform different cryptographic operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=798"
+  },
+  {
+    "text": "depending on the authorization status of the right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=801"
+  },
+  {
+    "text": "Finally, they can be used to protect a single, immutable secret ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=805"
+  },
+  {
+    "text": "that only becomes available after the right has been authorized.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=808"
+  },
+  {
+    "text": "Now that we understand some of the features offered by persisted rights, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=813"
+  },
+  {
+    "text": "let's see how they can help us implement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=816"
+  },
+  {
+    "text": "the scenario we discussed at the beginning of the presentation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=818"
+  },
+  {
+    "text": "where we wanted to authorize a signature operation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=821"
+  },
+  {
+    "text": "We start by instantiating a regular right specifying its authorization requirements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=824"
+  },
+  {
+    "text": "In this case, we want to ensure that the right would only be granted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=829"
+  },
+  {
+    "text": "to users that have biometric enrollments in the device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=832"
+  },
+  {
+    "text": "at the moment of the creation of our right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=836"
+  },
+  {
+    "text": "Therefore, we use the biometryCurrentSet requirement.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=838"
+  },
+  {
+    "text": "We can then persist the right with the help of the right store, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=843"
+  },
+  {
+    "text": "providing a unique identifier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=846"
+  },
+  {
+    "text": "This identifier will be useful the next time we need to fetch the right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=848"
+  },
+  {
+    "text": "in future sessions of our application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=852"
+  },
+  {
+    "text": "Once the right is persisted, we get immediate access to its public key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=855"
+  },
+  {
+    "text": "and can start performing unprotected operations with it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=859"
+  },
+  {
+    "text": "without the need for an explicit authorization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=862"
+  },
+  {
+    "text": "In this example, we are simply exporting its public bytes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=865"
+  },
+  {
+    "text": "Later on, when it's time to perform a signature operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=870"
+  },
+  {
+    "text": "we can retrieve our right from the store ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=873"
+  },
+  {
+    "text": "using the unique identifier we provided during creation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=875"
+  },
+  {
+    "text": "We can then proceed to authorize the current user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=879"
+  },
+  {
+    "text": "through the authorize operation on our right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=882"
+  },
+  {
+    "text": "At this point, the system will walk the user through the authentication process ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=885"
+  },
+  {
+    "text": "and will verify that all the authorization requirements are satisfied.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=888"
+  },
+  {
+    "text": "After the right has been authorized, we can use its private key ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=893"
+  },
+  {
+    "text": "to perform protected cryptographic operations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=896"
+  },
+  {
+    "text": "In this case, we are using the private key to sign a challenge ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=899"
+  },
+  {
+    "text": "issued by the backend server of our application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=902"
+  },
+  {
+    "text": "To wrap up, we talked about the relationship that exists ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=906"
+  },
+  {
+    "text": "between the generic concepts of authentication and authorization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=909"
+  },
+  {
+    "text": "and particularly how authentication enables authorization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=913"
+  },
+  {
+    "text": "We went over some of the features offered by the LAContext ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=917"
+  },
+  {
+    "text": "and how it can be combined with frameworks such as Security ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=921"
+  },
+  {
+    "text": "to unlock very powerful and extensible authorization flows. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=923"
+  },
+  {
+    "text": "And finally, we looked into how the newly added LARight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=927"
+  },
+  {
+    "text": "could help you streamline the code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=930"
+  },
+  {
+    "text": "to implement certain authorization use cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=932"
+  },
+  {
+    "text": "We invite you take a look at existing usages of LocalAuthentication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=935"
+  },
+  {
+    "text": "in your app and consider whether some of the features we discussed today ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=939"
+  },
+  {
+    "text": "can help you simplify your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=942"
+  },
+  {
+    "text": "while still protecting the privacy and security of your users. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=944"
+  },
+  {
+    "text": "Thanks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2022-10108/?time=948"
+  }
+]
