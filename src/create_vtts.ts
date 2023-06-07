@@ -64,7 +64,7 @@ async function main() {
 
     const resultStr = resultAry.join("");
     await fs.writeFile(
-      `gh-pages-dir/vtts/${event}/${lang}/${video_id}.vtt`,
+      `gh-pages-dir/docs/${event}/${lang}/${video_id}.vtt`,
       resultStr
     );
   }
