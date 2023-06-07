@@ -32,7 +32,7 @@ async function main() {
         resultAry.push("\n");
         timeResultAry.push(`${time}\n`);
       }
-      resultAry.push(text);
+      resultAry.push(text.replace(/[\r\n]+/g, " "));
       hasReachedPeriod = !!text.match(/[.!?♪]"?\s*$/);
     }
     if (!hasReachedPeriod) {
