@@ -57,7 +57,7 @@ async function main() {
       const nextSec = timeLines[i + 1];
       const start = numberToTime(sec);
       const end = numberToTime(nextSec ?? 86399);
-      resultAry.push(`${start} -> ${end}\n`);
+      resultAry.push(`${start} --> ${end}\n`);
       resultAry.push(`${escapeSubtitle(text)}\n`);
       resultAry.push("\n");
     }
