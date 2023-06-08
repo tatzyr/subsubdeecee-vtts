@@ -1,0 +1,1078 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=0"
+  },
+  {
+    "text": "Zoe: Hi, I'm Zoe, an engineer on the Compiler team here at Apple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=10"
+  },
+  {
+    "text": "Today, I'm going to introduce Swift and C++ interoperability, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=14"
+  },
+  {
+    "text": "a new feature of Xcode 15 that lets you use Swift and C++ together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=19"
+  },
+  {
+    "text": "This talk will be split into two parts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=25"
+  },
+  {
+    "text": "First, I'm going to explain the basics of interoperability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=28"
+  },
+  {
+    "text": "Then I'll show you how you can make your C++ APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=32"
+  },
+  {
+    "text": "feel natural and safe in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=36"
+  },
+  {
+    "text": "Swift launched into a world where there were many big apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=40"
+  },
+  {
+    "text": "and codebases written in Objective-C. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=43"
+  },
+  {
+    "text": "It was essential that Swift was able to take advantage of this existing code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=46"
+  },
+  {
+    "text": "and be incrementally adopted into these codebases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=50"
+  },
+  {
+    "text": "Today, Swift takes this interoperability to the next level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=54"
+  },
+  {
+    "text": "allowing you to adopt Swift in even more places.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=58"
+  },
+  {
+    "text": "If you have a large C++ codebase, you can now incrementally adopt Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=63"
+  },
+  {
+    "text": "by taking advantage of bidirectional interoperability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=68"
+  },
+  {
+    "text": "And if you need access to a C++ library for your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=72"
+  },
+  {
+    "text": "you no longer have to write an Objective-C bridging layer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=76"
+  },
+  {
+    "text": "Let's see how easy it is to adopt Swift in a C++ codebase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=80"
+  },
+  {
+    "text": "by looking at a sample app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=85"
+  },
+  {
+    "text": "I'm working on a photo editing app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=88"
+  },
+  {
+    "text": "It lets me select a picture from my camera roll, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=90"
+  },
+  {
+    "text": "invert the colors, change the brightness, and so on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=92"
+  },
+  {
+    "text": "Before I get into the code, let's look at the structure of my app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=98"
+  },
+  {
+    "text": "The app can be split into two parts, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=102"
+  },
+  {
+    "text": "the image processing framework and the user interface code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=104"
+  },
+  {
+    "text": "The image processing framework that my app is based around ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=108"
+  },
+  {
+    "text": "is written in C++. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=112"
+  },
+  {
+    "text": "I wanted my user interface layer to be able to easily talk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=114"
+  },
+  {
+    "text": "to my C++ framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=118"
+  },
+  {
+    "text": "so I used Objective-C++ to implement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=119"
+  },
+  {
+    "text": "most of the user interface, such as the ViewController. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=122"
+  },
+  {
+    "text": "Now, I want users of my app to be able to pick a few photos ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=127"
+  },
+  {
+    "text": "from their camera roll to edit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=130"
+  },
+  {
+    "text": "I heard SwiftUI has a new PhotoPicker view that makes this easy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=133"
+  },
+  {
+    "text": "so I'd like to start adopting Swift in my app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=137"
+  },
+  {
+    "text": "Luckily, starting with Xcode 15, I can easily adopt Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=141"
+  },
+  {
+    "text": "in my Objective-C++ codebase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=145"
+  },
+  {
+    "text": "and still have access to all my C++ APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=148"
+  },
+  {
+    "text": "So let's get started by adding a Swift file to the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=151"
+  },
+  {
+    "text": "Because I'm using a C++ framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=156"
+  },
+  {
+    "text": "Xcode will import my C++ APIs automatically, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=159"
+  },
+  {
+    "text": "so I don't need a bridging header.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=163"
+  },
+  {
+    "text": "Then, I need to enable C++ interoperability ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=167"
+  },
+  {
+    "text": "in my project build settings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=170"
+  },
+  {
+    "text": "As you know, Swift can already call C and Objective-C APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=173"
+  },
+  {
+    "text": "so the build setting is currently set to C and Objective-C mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=178"
+  },
+  {
+    "text": "But I can change this to C++.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=182"
+  },
+  {
+    "text": "Now that the setting reads C++ and Objective-C++, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=187"
+  },
+  {
+    "text": "I can directly call APIs from my C++ image kit framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=190"
+  },
+  {
+    "text": "Back in my Swift file, I can import the framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=196"
+  },
+  {
+    "text": "just like any other Swift module, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=198"
+  },
+  {
+    "text": "and I can command click on the module name to see its contents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=202"
+  },
+  {
+    "text": "Now, these might look like Swift APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=207"
+  },
+  {
+    "text": "but they're actually from my C++ ImageKit library; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=209"
+  },
+  {
+    "text": "this is just how the Swift compiler sees them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=213"
+  },
+  {
+    "text": "Let's look at a few of the APIs that I'm going to use today.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=216"
+  },
+  {
+    "text": "Starting at the bottom, you can see a static member of type CxxImageEngine.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=221"
+  },
+  {
+    "text": "This is currently imported as an unsafe pointer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=227"
+  },
+  {
+    "text": "but we'll get into that more later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=230"
+  },
+  {
+    "text": "CxxImageEngine has a few other members, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=231"
+  },
+  {
+    "text": "namely loadImage and getImages, which I'll use shortly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=235"
+  },
+  {
+    "text": "Now I'll go ahead and drop in all the UI for my photo picker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=239"
+  },
+  {
+    "text": "so I can focus on the two methods that talk to C++.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=244"
+  },
+  {
+    "text": "I can grab the shared CxxImageEngine and call loadImage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=250"
+  },
+  {
+    "text": "on each of the selected images to load them into the engine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=254"
+  },
+  {
+    "text": "Wow, calling a C++ method in Swift is super easy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=258"
+  },
+  {
+    "text": "Now that my SwiftUI view is complete, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=262"
+  },
+  {
+    "text": "I want to use it in my Objective-C++ ViewController.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=264"
+  },
+  {
+    "text": "To do this, I need to make my struct public ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=269"
+  },
+  {
+    "text": "so that I can access it from my Objective-C++ code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=271"
+  },
+  {
+    "text": "Great! All my Swift code built successfully. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=276"
+  },
+  {
+    "text": "Now I can go to the ViewController file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=279"
+  },
+  {
+    "text": "and import the header that Swift generated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=281"
+  },
+  {
+    "text": "This header contains all my public Swift APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=287"
+  },
+  {
+    "text": "Now that I've imported the generated header, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=290"
+  },
+  {
+    "text": "I can start calling my Swift code in C++. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=292"
+  },
+  {
+    "text": "First, I'm going to construct the SwiftUI view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=296"
+  },
+  {
+    "text": "Then, I can call the present method.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=300"
+  },
+  {
+    "text": "And Xcode helps me out with code completion.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=306"
+  },
+  {
+    "text": "Let's test this on-device.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=311"
+  },
+  {
+    "text": "After I build and run the app, you can see our new SwiftUI view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=317"
+  },
+  {
+    "text": "directly imported into my Objective-C++ app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=320"
+  },
+  {
+    "text": "This was an example of truly bi-directional interoperability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=327"
+  },
+  {
+    "text": "I was able to seamlessly use C++ types and functions in Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=331"
+  },
+  {
+    "text": "and vice versa. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=336"
+  },
+  {
+    "text": "In C++, I was able to construct and use a SwiftUI view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=338"
+  },
+  {
+    "text": "where the body of the view called back into my C++ framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=342"
+  },
+  {
+    "text": "All the integration was done automatically by the Swift compiler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=347"
+  },
+  {
+    "text": "so I didn't need to write a bridging layer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=351"
+  },
+  {
+    "text": "And all the APIs were direct and native, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=354"
+  },
+  {
+    "text": "so unlike most of the other languages that interoperate, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=357"
+  },
+  {
+    "text": "there's no overhead when calling C++ APIs in Swift or vice versa. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=360"
+  },
+  {
+    "text": "I've been working with a pretty small app today, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=365"
+  },
+  {
+    "text": "but the Swift compiler can support interoperability ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=368"
+  },
+  {
+    "text": "in large and complex codebases.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=371"
+  },
+  {
+    "text": "Swift can import most C++ collections, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=375"
+  },
+  {
+    "text": "both from the standard library and elsewhere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=377"
+  },
+  {
+    "text": "Swift can handle function templates and class template specializations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=381"
+  },
+  {
+    "text": "And it supports managing memory using shared pointer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=386"
+  },
+  {
+    "text": "and similar user-defined types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=389"
+  },
+  {
+    "text": "Swift can understand these imported APIs at a high level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=392"
+  },
+  {
+    "text": "For example, it knows about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=395"
+  },
+  {
+    "text": "shared pointer's retain and release operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=397"
+  },
+  {
+    "text": "and it can use this high-level knowledge ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=399"
+  },
+  {
+    "text": "to apply a suite of powerful optimizations.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=402"
+  },
+  {
+    "text": "In the other direction, you can expose most Swift APIs to C++, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=406"
+  },
+  {
+    "text": "such as structs, classes, their methods, and other members. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=411"
+  },
+  {
+    "text": "You can even expose generic types like Array ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=415"
+  },
+  {
+    "text": "and resilient types that evolve over time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=419"
+  },
+  {
+    "text": "And C++ interoperability is fully supported by Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=422"
+  },
+  {
+    "text": "so you will get code completion, jump-to-definition, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=427"
+  },
+  {
+    "text": "and debugger support across both languages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=430"
+  },
+  {
+    "text": "These are just a few of the APIs that are supported by C++ interoperability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=434"
+  },
+  {
+    "text": "The Swift compiler supports interoperability between large codebases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=438"
+  },
+  {
+    "text": "that use all these APIs and more, promoting a cohesive experience ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=442"
+  },
+  {
+    "text": "across languages and allowing you to adopt Swift in even more places. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=447"
+  },
+  {
+    "text": "Now that we have the basics of interoperability covered, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=452"
+  },
+  {
+    "text": "let's dive deeper into this feature, exploring some ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=455"
+  },
+  {
+    "text": "to make your C++ APIs feel natural and safe in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=458"
+  },
+  {
+    "text": "The Swift compiler is able to automatically import most C++ APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=464"
+  },
+  {
+    "text": "and represent them as safe Swift APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=468"
+  },
+  {
+    "text": "For example, by default, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=472"
+  },
+  {
+    "text": "C++ types will be imported as Swift structs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=474"
+  },
+  {
+    "text": "C++ operators will be mapped to similar Swift operators, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=477"
+  },
+  {
+    "text": "and containers will be automatically imported as collections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=481"
+  },
+  {
+    "text": "But the compiler also allows you to fine-tune how APIs are imported ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=486"
+  },
+  {
+    "text": "and expose APIs that feel even more natural. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=490"
+  },
+  {
+    "text": "You can do this by providing the compiler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=494"
+  },
+  {
+    "text": "with more information about your APIs through the use of annotations.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=496"
+  },
+  {
+    "text": "For example, a function or method might use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=503"
+  },
+  {
+    "text": "a C++ naming convention that doesn't feel natural in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=506"
+  },
+  {
+    "text": "In these cases, you can use annotations to rename an imported function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=510"
+  },
+  {
+    "text": "add argument labels, or import a getter and a setter as a computed property.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=515"
+  },
+  {
+    "text": "Annotations can also help explain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=521"
+  },
+  {
+    "text": "high-level patterns like reference semantics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=524"
+  },
+  {
+    "text": "and allow you to import some types as Swift classes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=526"
+  },
+  {
+    "text": "Or correct Swift if it thinks an API is unsafe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=532"
+  },
+  {
+    "text": "when it's actually fine.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=535"
+  },
+  {
+    "text": "These annotations are a powerful way to communicate information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=538"
+  },
+  {
+    "text": "about the APIs that Swift is importing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=542"
+  },
+  {
+    "text": "Let's identify a few different APIs that I use in the Sample App ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=545"
+  },
+  {
+    "text": "and explore how I can use these annotations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=549"
+  },
+  {
+    "text": "to help Swift import my APIs in a way that feels safe and intuitive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=552"
+  },
+  {
+    "text": "Now that I have the photo picker completed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=559"
+  },
+  {
+    "text": "I also want to add a save button to save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=562"
+  },
+  {
+    "text": "the edited photos back to my photo library.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=564"
+  },
+  {
+    "text": "Jumping back to Swift, I can take another look at all the APIs I imported.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=569"
+  },
+  {
+    "text": "First, I'll need to gather the photos that are to be saved. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=576"
+  },
+  {
+    "text": "And I can do that using the getImages function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=579"
+  },
+  {
+    "text": "The getImages function returns a C++ vector. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=584"
+  },
+  {
+    "text": "Before I call this method, let's understand the details ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=589"
+  },
+  {
+    "text": "of how vector operates in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=592"
+  },
+  {
+    "text": "Swift types fall into two categories: value types and reference types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=595"
+  },
+  {
+    "text": "In Swift, structs represent value types and classes represent reference types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=601"
+  },
+  {
+    "text": "By default, C++ types will be imported as value types in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=608"
+  },
+  {
+    "text": "So Swift will import vector as a value type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=615"
+  },
+  {
+    "text": "that behaves like a Swift struct. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=617"
+  },
+  {
+    "text": "The only difference between vector and any other Swift struct ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=620"
+  },
+  {
+    "text": "is that Swift will use the type's special members, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=624"
+  },
+  {
+    "text": "such as copy constructors, to manage the lifetime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=627"
+  },
+  {
+    "text": "These copy constructors often perform deep copies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=631"
+  },
+  {
+    "text": "So unlike a Swift Array, which is only copied when it's modified, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=635"
+  },
+  {
+    "text": "when Swift copies a vector, it copies all the elements.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=639"
+  },
+  {
+    "text": "Now that I have a vector of images, I can iterate over the vector ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=644"
+  },
+  {
+    "text": "in a for-loop to get each image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=648"
+  },
+  {
+    "text": "convert the image back to a uiImage, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=651"
+  },
+  {
+    "text": "and save the image to my photo library.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=655"
+  },
+  {
+    "text": "This for-loop works because vector has begin and end methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=662"
+  },
+  {
+    "text": "so Swift will automatically import it as a collection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=666"
+  },
+  {
+    "text": "This automatic conformance to collection allows vector to be easily converted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=670"
+  },
+  {
+    "text": "to a Swift Array and provides access to methods like map and filter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=675"
+  },
+  {
+    "text": "For safety, it's important to use these Swift Collection APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=680"
+  },
+  {
+    "text": "rather than C++ iterator APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=685"
+  },
+  {
+    "text": "which do not fit into Swift's safety model.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=688"
+  },
+  {
+    "text": "With these C++ iterators, it's easy to introduce bugs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=692"
+  },
+  {
+    "text": "such as lifetime issues or invalid memory accesses. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=696"
+  },
+  {
+    "text": "On the other hand, Swift collection APIs are completely safe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=699"
+  },
+  {
+    "text": "even when they operate on a C++ collection.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=704"
+  },
+  {
+    "text": "The Swift compiler will help guide you towards these safer APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=708"
+  },
+  {
+    "text": "by marking unsafe C++ APIs as unavailable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=712"
+  },
+  {
+    "text": "and suggesting a safer alternative. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=715"
+  },
+  {
+    "text": "Let's go back to my Swift app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=718"
+  },
+  {
+    "text": "There's something that's been bothering me. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=722"
+  },
+  {
+    "text": "Every time I use the C++ImageEngine, I'm reminded that it's an unsafe pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=724"
+  },
+  {
+    "text": "And in fact, the type is always used as a pointer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=729"
+  },
+  {
+    "text": "in both Swift and C++. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=732"
+  },
+  {
+    "text": "This is because the type has what's called \"reference semantics.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=735"
+  },
+  {
+    "text": "This means the type is meant to have object identity, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=739"
+  },
+  {
+    "text": "and copies will not be distinct values, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=742"
+  },
+  {
+    "text": "but rather shared references to the same memory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=744"
+  },
+  {
+    "text": "As I mentioned before, Swift types fall into two categories: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=748"
+  },
+  {
+    "text": "value types and reference types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=751"
+  },
+  {
+    "text": "Objective-C also has a clear distinction between value types and reference types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=755"
+  },
+  {
+    "text": "which makes mapping Objective-C types to structs and classes easy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=759"
+  },
+  {
+    "text": "For C++, it isn't as clear which types fall into which category ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=764"
+  },
+  {
+    "text": "because unlike Swift and Objective-C, C++ doesn't have a strong distinction ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=769"
+  },
+  {
+    "text": "between value types and reference types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=774"
+  },
+  {
+    "text": "So by default, the compiler will import everything as a value type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=779"
+  },
+  {
+    "text": "But Swift also gives you the option to import some things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=783"
+  },
+  {
+    "text": "as reference or class types by adding an annotation to your C++ code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=786"
+  },
+  {
+    "text": "So I can map CxxImageEngine to a Swift class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=794"
+  },
+  {
+    "text": "using the SWIFT_SHARED_REFERENCE attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=797"
+  },
+  {
+    "text": "This attribute means Swift will enforce that the type is always passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=801"
+  },
+  {
+    "text": "as a pointer or reference and will represent this indirection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=804"
+  },
+  {
+    "text": "simply with the type rather than an unsafe pointer in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=808"
+  },
+  {
+    "text": "To make your code safe, Swift will automatically manage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=814"
+  },
+  {
+    "text": "the lifetime of references by retaining and releasing the references as needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=817"
+  },
+  {
+    "text": "To enable this kind of reference counting, you'll need to provide Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=822"
+  },
+  {
+    "text": "with both of these retain and release functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=825"
+  },
+  {
+    "text": "Let's dive into the C++ ImageKit header.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=828"
+  },
+  {
+    "text": "I can import swift/bridging to access annotations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=835"
+  },
+  {
+    "text": "like SWIFT_SHARED_REFERENCE. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=838"
+  },
+  {
+    "text": "Now I can apply this annotation to the type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=841"
+  },
+  {
+    "text": "specifying both a retain and release function that Swift can call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=844"
+  },
+  {
+    "text": "Great! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=848"
+  },
+  {
+    "text": "Now there are a few Swift compiler errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=850"
+  },
+  {
+    "text": "that are telling me I no longer need to dereference a pointer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=852"
+  },
+  {
+    "text": "There's one last thing that I can do to make this C++ API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=858"
+  },
+  {
+    "text": "feel right at home in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=862"
+  },
+  {
+    "text": "Here in the for-loop, I'm calling getImages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=864"
+  },
+  {
+    "text": "Defining a getter and setter like this is a fairly common pattern in C++, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=868"
+  },
+  {
+    "text": "but it doesn't feel very natural in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=873"
+  },
+  {
+    "text": "To make this feel a bit more native in Swift, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=876"
+  },
+  {
+    "text": "I can use another annotation from swift/bridging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=878"
+  },
+  {
+    "text": "The SWIFT_COMPUTED_PROPERTY attribute can be applied to a getter and setter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=883"
+  },
+  {
+    "text": "to map the pair into a Swift computed property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=887"
+  },
+  {
+    "text": "Let's go to our C++ header again to apply this annotation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=889"
+  },
+  {
+    "text": "Now I can look up the callers of my getImages method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=897"
+  },
+  {
+    "text": "by doing a secondary click on the definition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=901"
+  },
+  {
+    "text": "and selecting my Swift caller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=904"
+  },
+  {
+    "text": "which I can now rename to simply \"images.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=906"
+  },
+  {
+    "text": "Beautiful! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=911"
+  },
+  {
+    "text": "Now let's test out our app one last time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=912"
+  },
+  {
+    "text": "I can select a few photos and save them back to my camera roll.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=920"
+  },
+  {
+    "text": "Great! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=926"
+  },
+  {
+    "text": "During this talk, I used just two annotations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=929"
+  },
+  {
+    "text": "to improve the way my APIs were imported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=932"
+  },
+  {
+    "text": "But there are many other annotations that you can use in your C++ headers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=935"
+  },
+  {
+    "text": "All you need to do to access them is import swift/bridging.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=940"
+  },
+  {
+    "text": "To enable C++ interoperability in Xcode 15, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=946"
+  },
+  {
+    "text": "change the C++ and Objective-C interoperability mode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=949"
+  },
+  {
+    "text": "from C and Objective-C to C++ and Objective-C++. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=953"
+  },
+  {
+    "text": "And Swift and C++ interoperability is supported on all Apple platforms ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=958"
+  },
+  {
+    "text": "as well as Linux and Windows. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=963"
+  },
+  {
+    "text": "C++ is a large and complex language, and we want to improve ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=965"
+  },
+  {
+    "text": "the way we import C++ APIs and expose Swift APIs with your feedback. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=969"
+  },
+  {
+    "text": "When we change the way that C++ APIs are imported, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=975"
+  },
+  {
+    "text": "we'll create a new version of interoperability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=978"
+  },
+  {
+    "text": "This means you can chose when you want to take on these new features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=982"
+  },
+  {
+    "text": "allowing you to confidently start using C++ APIs in your development today.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=985"
+  },
+  {
+    "text": "If you notice any issues or have any suggestions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=992"
+  },
+  {
+    "text": "we'd love to hear from you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=995"
+  },
+  {
+    "text": "Please tell us using Feedback Assistant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=997"
+  },
+  {
+    "text": "C++ interoperability was designed by a Swift compiler workgroup ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1001"
+  },
+  {
+    "text": "entirely in the open source. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1005"
+  },
+  {
+    "text": "The workgroup is comprised of engineers and students ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1007"
+  },
+  {
+    "text": "from over a dozen companies and schools. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1010"
+  },
+  {
+    "text": "The work group developed two documents that define the vision ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1014"
+  },
+  {
+    "text": "for the future of Swift and C++ interoperability ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1017"
+  },
+  {
+    "text": "and will guide the evolution of this feature over time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1020"
+  },
+  {
+    "text": "You can join the workgroup and get involved on the forums. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1024"
+  },
+  {
+    "text": "Just head to swift.org.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1027"
+  },
+  {
+    "text": "In Swift 5.9, you can use your C++ APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1031"
+  },
+  {
+    "text": "automatically and safely with no overhead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1034"
+  },
+  {
+    "text": "You can incrementally adopt Swift by exposing new Swift code back to C++. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1037"
+  },
+  {
+    "text": "And you can improve and fine-tune imported APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1043"
+  },
+  {
+    "text": "by providing the compiler with more information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1047"
+  },
+  {
+    "text": "Thanks for watching, and have fun adopting Swift in all your C++ codebases.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10172/?time=1052"
+  }
+]

@@ -1,0 +1,1622 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=0"
+  },
+  {
+    "text": "Cyndy: Hello, I'm Cyndy, and I'm a compiler engineer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=10"
+  },
+  {
+    "text": "on the Languages and Runtimes Team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=13"
+  },
+  {
+    "text": "In this session, we're meeting Mergeable Libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=16"
+  },
+  {
+    "text": "This is a new model for building and distributing libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=19"
+  },
+  {
+    "text": "powered by the static linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=22"
+  },
+  {
+    "text": "I'll share how mergeable libraries work to make your apps build and run faster.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=25"
+  },
+  {
+    "text": "Then, I'll demonstrate how to enable mergeable libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=32"
+  },
+  {
+    "text": "in Xcode 15. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=35"
+  },
+  {
+    "text": "And lastly, I'll cover considerations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=38"
+  },
+  {
+    "text": "and what we recommend when using mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=41"
+  },
+  {
+    "text": "Before we dive in, I'll provide a brief overview ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=45"
+  },
+  {
+    "text": "of static and dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=48"
+  },
+  {
+    "text": "This will highlight the benefits of mergeable ones.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=51"
+  },
+  {
+    "text": "Static libraries are a collection of object files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=55"
+  },
+  {
+    "text": "At build time, the static linker finds which APIs to use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=59"
+  },
+  {
+    "text": "from those libraries and copies that code into the app binary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=64"
+  },
+  {
+    "text": "And since it's copied, the library isn't needed after building. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=70"
+  },
+  {
+    "text": "If code in static libraries changes or if more libraries are used, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=75"
+  },
+  {
+    "text": "it introduces a build time slowdown. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=79"
+  },
+  {
+    "text": "This is a result of how they are archived and linked into apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=82"
+  },
+  {
+    "text": "which makes iterative building and debugging slower. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=86"
+  },
+  {
+    "text": "Instead, dynamic libraries can be used to prevent this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=90"
+  },
+  {
+    "text": "Dynamic libraries are commonly called dylibs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=95"
+  },
+  {
+    "text": "They are the binary file type for framework targets in Xcode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=99"
+  },
+  {
+    "text": "The code from frameworks isn't copied into executables. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=104"
+  },
+  {
+    "text": "Rather, the static linker records the installed path of the library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=108"
+  },
+  {
+    "text": "into the app binary for later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=113"
+  },
+  {
+    "text": "Any frameworks not in the Apple SDK ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=116"
+  },
+  {
+    "text": "must be embedded into the app bundle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=118"
+  },
+  {
+    "text": "The key difference is when dynamic libraries are added or updated, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=122"
+  },
+  {
+    "text": "the static linker does not need to copy code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=127"
+  },
+  {
+    "text": "This results in faster builds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=130"
+  },
+  {
+    "text": "However, it adds complexity to when apps are used at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=133"
+  },
+  {
+    "text": "This is where a dynamic linker is needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=138"
+  },
+  {
+    "text": "When an app is launched, the dynamic linker named dyld ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=142"
+  },
+  {
+    "text": "must find and load framework dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=146"
+  },
+  {
+    "text": "This includes libraries those frameworks depend on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=149"
+  },
+  {
+    "text": "As more are used, this results in a steady increase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=154"
+  },
+  {
+    "text": "in memory consumption and app launch time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=158"
+  },
+  {
+    "text": "And when you factor in dependencies from the Apple SDK, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=162"
+  },
+  {
+    "text": "apps can often load hundreds of frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=165"
+  },
+  {
+    "text": "Our platforms have heavily optimized system libraries to account for this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=169"
+  },
+  {
+    "text": "But this doesn't apply to frameworks that get embedded in apps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=175"
+  },
+  {
+    "text": "So to recap, there are some tradeoffs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=179"
+  },
+  {
+    "text": "when deciding between using static and dynamic libraries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=182"
+  },
+  {
+    "text": "While dynamic libraries have little impact on build time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=187"
+  },
+  {
+    "text": "but noticeable launch time consequences, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=191"
+  },
+  {
+    "text": "static libraries provide minimal launch time impact ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=193"
+  },
+  {
+    "text": "but are costly on build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=196"
+  },
+  {
+    "text": "Due to this, we have historically recommended ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=199"
+  },
+  {
+    "text": "measuring what's best for your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=201"
+  },
+  {
+    "text": "With mergeable libraries, this is no longer needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=205"
+  },
+  {
+    "text": "Mergeable libraries unlock the best of both linking strategies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=210"
+  },
+  {
+    "text": "I'll describe how mergeable libraries are able to optimize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=215"
+  },
+  {
+    "text": "for performance and development. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=219"
+  },
+  {
+    "text": "Consider any binary image, like an executable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=222"
+  },
+  {
+    "text": "The frameworks this binary depends on are given to the static linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=227"
+  },
+  {
+    "text": "These dependencies can become mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=231"
+  },
+  {
+    "text": "And the linked output can become the merged binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=235"
+  },
+  {
+    "text": "But what makes these dependencies mergeable? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=240"
+  },
+  {
+    "text": "This can be explained by how they are built. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=243"
+  },
+  {
+    "text": "Any dynamic library can be built as mergeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=246"
+  },
+  {
+    "text": "When the static linker creates the library, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=250"
+  },
+  {
+    "text": "it also generates metadata. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=252"
+  },
+  {
+    "text": "The metadata is within the binary, increasing its overall size. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=256"
+  },
+  {
+    "text": "It allows the linker to treat the library similarly to a static library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=261"
+  },
+  {
+    "text": "when it's used as a link dependency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=266"
+  },
+  {
+    "text": "With the metadata, users of the library can choose ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=269"
+  },
+  {
+    "text": "to statically link as normal dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=272"
+  },
+  {
+    "text": "or merge them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=275"
+  },
+  {
+    "text": "The merged binary output can be an executable, like an app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=277"
+  },
+  {
+    "text": "or another dynamic library, like a framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=281"
+  },
+  {
+    "text": "Merging is comparable to how static libraries get linked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=286"
+  },
+  {
+    "text": "In the end, you're left with a binary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=290"
+  },
+  {
+    "text": "that contains the segments of the libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=292"
+  },
+  {
+    "text": "And that output binary remains the same file type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=295"
+  },
+  {
+    "text": "Merging is brand-new in Xcode 15. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=299"
+  },
+  {
+    "text": "The newly implemented static linker is what enables this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=303"
+  },
+  {
+    "text": "It works by using new linker options. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=307"
+  },
+  {
+    "text": "First, the libraries to merge are built with the option -make_mergeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=310"
+  },
+  {
+    "text": "This tells the linker to record the metadata. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=315"
+  },
+  {
+    "text": "Next, for the merged binary, the linker uses that metadata ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=319"
+  },
+  {
+    "text": "along with the libraries to produce the final output ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=323"
+  },
+  {
+    "text": "with the option -merge_library or -merge_framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=326"
+  },
+  {
+    "text": "Xcode handles these details for you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=330"
+  },
+  {
+    "text": "However, you can see these options being applied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=333"
+  },
+  {
+    "text": "when inspecting your build log. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=336"
+  },
+  {
+    "text": "But how is merging better than just linking? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=338"
+  },
+  {
+    "text": "Well, let's consider the size after merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=342"
+  },
+  {
+    "text": "Firstly, libraries and their metadata aren't needed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=346"
+  },
+  {
+    "text": "and can be removed after they've been merged. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=349"
+  },
+  {
+    "text": "So the only focus is the size of the merged binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=352"
+  },
+  {
+    "text": "When merging, the linker can de-duplicate content, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=357"
+  },
+  {
+    "text": "such as strings, across all libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=360"
+  },
+  {
+    "text": "For instance, it removes redundant symbol references, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=362"
+  },
+  {
+    "text": "Objective-C selectors, and objc_msgsend stubs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=365"
+  },
+  {
+    "text": "This results in a smaller overall app bundle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=370"
+  },
+  {
+    "text": "The image type of the final binary remains the same too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=374"
+  },
+  {
+    "text": "That means any already supported linker optimizations can be applied.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=378"
+  },
+  {
+    "text": "This also has a positive impact on app launch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=384"
+  },
+  {
+    "text": "When fewer frameworks are loaded, it reduces the work dyld ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=388"
+  },
+  {
+    "text": "and the kernel need to do when launching your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=392"
+  },
+  {
+    "text": "and it reduces memory usage, keeping your users happy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=395"
+  },
+  {
+    "text": "But we know separating code into libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=399"
+  },
+  {
+    "text": "is vital for effective development and maintenance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=402"
+  },
+  {
+    "text": "With mergeable libraries, you can have both. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=406"
+  },
+  {
+    "text": "Mergeable libraries make this possible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=410"
+  },
+  {
+    "text": "with minimal code and configuration changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=412"
+  },
+  {
+    "text": "And this scales nicely as you adopt newer frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=415"
+  },
+  {
+    "text": "Let's revisit the earlier diagram about dynamic linking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=419"
+  },
+  {
+    "text": "All of these embedded frameworks can become mergeable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=424"
+  },
+  {
+    "text": "since the linker can generate metadata for them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=427"
+  },
+  {
+    "text": "We can create a framework that merges the contents of the other libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=431"
+  },
+  {
+    "text": "So you end up with only one framework to embed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=435"
+  },
+  {
+    "text": "Dyld only needs to load that one library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=439"
+  },
+  {
+    "text": "containing all segments across the embedded frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=442"
+  },
+  {
+    "text": "Merging, in this way, can greatly simplify large dependency chains. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=446"
+  },
+  {
+    "text": "That's what mergeable libraries can achieve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=451"
+  },
+  {
+    "text": "Let's talk about how to enable them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=455"
+  },
+  {
+    "text": "There's two ways to enable library merging in Xcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=457"
+  },
+  {
+    "text": "I'll start with the simplest, automatic merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=461"
+  },
+  {
+    "text": "Then, I'll get into manual merging for whenever you'd like ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=464"
+  },
+  {
+    "text": "to take control of what should be mergeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=467"
+  },
+  {
+    "text": "I'll describe how mergeable libraries are able to provide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=470"
+  },
+  {
+    "text": "optimal build times when in debug mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=473"
+  },
+  {
+    "text": "And after, I'll share what to expect when you need to debug into ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=477"
+  },
+  {
+    "text": "and symbolicate your mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=480"
+  },
+  {
+    "text": "Automatic merging informs the build system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=484"
+  },
+  {
+    "text": "to merge all direct dependencies that are embedded framework targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=487"
+  },
+  {
+    "text": "It is especially useful on app targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=492"
+  },
+  {
+    "text": "I'll show you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=495"
+  },
+  {
+    "text": "I'm using the Swift and C++ Forest Project as an example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=497"
+  },
+  {
+    "text": "There's an app target that links against four frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=502"
+  },
+  {
+    "text": "There's SwiftUI, which comes from the Apple SDK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=507"
+  },
+  {
+    "text": "The other three, ForestBuilder, ForestUI, and Forest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=511"
+  },
+  {
+    "text": "are built in the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=514"
+  },
+  {
+    "text": "When automatic merging is enabled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=517"
+  },
+  {
+    "text": "the three forest frameworks will become mergeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=519"
+  },
+  {
+    "text": "SwiftUI is left as is since it's a system library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=522"
+  },
+  {
+    "text": "While linking the app, these frameworks will be merged ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=527"
+  },
+  {
+    "text": "directly into the app binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=530"
+  },
+  {
+    "text": "That means these frameworks won't be needed at launch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=533"
+  },
+  {
+    "text": "and can be removed from disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=536"
+  },
+  {
+    "text": "Let's see how to turn this on in Xcode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=539"
+  },
+  {
+    "text": "Inside the project, I've already clicked on the Swift and C++ app target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=542"
+  },
+  {
+    "text": "and I'm inside the build settings tab. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=546"
+  },
+  {
+    "text": "I need to update the MERGED_BINARY_TYPE build setting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=549"
+  },
+  {
+    "text": "I can use the filter text box to search for it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=553"
+  },
+  {
+    "text": "\"Create Merged Binary\" is exactly what I want to update. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=559"
+  },
+  {
+    "text": "It's the option that's mapped to the setting MERGED_BINARY_TYPE. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=563"
+  },
+  {
+    "text": "I'll click on the setting and update its value to Automatic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=568"
+  },
+  {
+    "text": "And that's it! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=572"
+  },
+  {
+    "text": "Mergeable library settings are under the General Linking options. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=576"
+  },
+  {
+    "text": "They are conveniently displayed in their own section ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=580"
+  },
+  {
+    "text": "named \"Linking - Mergeable Libraries.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=583"
+  },
+  {
+    "text": "When an app is enabled for library merging, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=587"
+  },
+  {
+    "text": "the segments of the libraries are linked directly into the app binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=590"
+  },
+  {
+    "text": "This results in a similar performance to static libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=594"
+  },
+  {
+    "text": "But the exports of mergeable libraries are preserved in the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=599"
+  },
+  {
+    "text": "It's often not applicable that apps export symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=604"
+  },
+  {
+    "text": "and it negatively impacts the size and build time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=606"
+  },
+  {
+    "text": "To prevent this, use the linker option -no_exported_symbols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=611"
+  },
+  {
+    "text": "This can be applied in Xcode by updating Other Linker Flags ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=616"
+  },
+  {
+    "text": "with \"-Wl, -no_exported_symbols.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=619"
+  },
+  {
+    "text": "If your app needs entry points for app extensions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=624"
+  },
+  {
+    "text": "use an export list that lists those symbols to tightly control this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=627"
+  },
+  {
+    "text": "This can be set under the same General Linking options ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=631"
+  },
+  {
+    "text": "using Exported Symbols File. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=634"
+  },
+  {
+    "text": "This allows the static linker to be the most effective ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=637"
+  },
+  {
+    "text": "for size optimizations like dead code stripping. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=640"
+  },
+  {
+    "text": "That was automatic merging, but there can be times ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=644"
+  },
+  {
+    "text": "when only some of your frameworks should be merged together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=648"
+  },
+  {
+    "text": "Xcode supports this via Manual Merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=652"
+  },
+  {
+    "text": "Manual merging is a fine-grained approach to specifying the libraries to merge. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=656"
+  },
+  {
+    "text": "This is useful when some dependencies need to stay in the app bundle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=662"
+  },
+  {
+    "text": "I'll expand on this later when discussing considerations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=666"
+  },
+  {
+    "text": "It is enabled by setting MERGED_BINARY_TYPE = manual ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=670"
+  },
+  {
+    "text": "on the overarching target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=674"
+  },
+  {
+    "text": "The libraries that should make up the final merged product ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=677"
+  },
+  {
+    "text": "are recognized by setting MERGEABLE_LIBRARY to YES. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=680"
+  },
+  {
+    "text": "And for libraries that should stay on disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=684"
+  },
+  {
+    "text": "keep the default setting of MERGEABLE_LIBRARY to NO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=686"
+  },
+  {
+    "text": "Let's go back to the Swift and C++ Forest Project to demonstrate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=690"
+  },
+  {
+    "text": "We're starting fresh without any changes related to automatic merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=694"
+  },
+  {
+    "text": "There's still the app target and the four frameworks it links against. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=699"
+  },
+  {
+    "text": "But now, I'm also considering tests. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=705"
+  },
+  {
+    "text": "There's an XCTest target and a support framework in the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=708"
+  },
+  {
+    "text": "The tests also depend on the forest framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=712"
+  },
+  {
+    "text": "Between the project's frameworks, the dependencies are all intertwined. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=716"
+  },
+  {
+    "text": "In this example, we have an XCTest target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=721"
+  },
+  {
+    "text": "but in your project, you may have targets like app extensions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=724"
+  },
+  {
+    "text": "that create a similar-looking dependency graph.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=728"
+  },
+  {
+    "text": "To leverage mergeable libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=733"
+  },
+  {
+    "text": "I'll isolate the app dependencies for the three forest frameworks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=735"
+  },
+  {
+    "text": "I'll create a framework, ForestKit, that merges the libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=740"
+  },
+  {
+    "text": "I need for the app but will also satisfy my test dependency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=744"
+  },
+  {
+    "text": "ForestKit is considered a group library because it'll encapsulate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=750"
+  },
+  {
+    "text": "the mergeable libraries both my app and tests depend on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=754"
+  },
+  {
+    "text": "As I'm enabling manual mode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=759"
+  },
+  {
+    "text": "I'll explicitly set which frameworks to make mergeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=761"
+  },
+  {
+    "text": "In this case, that's ForestBuilder, ForestUI, and Forest.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=765"
+  },
+  {
+    "text": "Those dependencies will merge into ForestKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=771"
+  },
+  {
+    "text": "By reducing the libraries to load, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=775"
+  },
+  {
+    "text": "my app has improved in launch time and bundle size. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=777"
+  },
+  {
+    "text": "Let's turn this on in Xcode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=782"
+  },
+  {
+    "text": "I've restarted the project and removed any settings used for automatic merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=784"
+  },
+  {
+    "text": "I'll start by creating the framework target ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=790"
+  },
+  {
+    "text": "that will merge the other frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=792"
+  },
+  {
+    "text": "This is my group library, ForestKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=794"
+  },
+  {
+    "text": "I can do this by clicking at the bottom of the Targets section.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=797"
+  },
+  {
+    "text": "I'm in the macOS tab in the template pop-up, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=803"
+  },
+  {
+    "text": "and I'll find the Framework template using the filter text box.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=807"
+  },
+  {
+    "text": "I'm going to set the product name to ForestKit and click Finish.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=812"
+  },
+  {
+    "text": "In this framework, I want to merge all libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=819"
+  },
+  {
+    "text": "except for the Forest Test Support framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=822"
+  },
+  {
+    "text": "But since my dependencies are intertwined, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=824"
+  },
+  {
+    "text": "I'll link against all of them for the time being. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=827"
+  },
+  {
+    "text": "To do this, I'll update the \"Link Binary with Libraries\" build phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=830"
+  },
+  {
+    "text": "to add the frameworks using the plus sign.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=835"
+  },
+  {
+    "text": "After the libraries pop-up has appeared, I'll click on the Forest framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=839"
+  },
+  {
+    "text": "and hold SHIFT and DOWN to highlight the other frameworks in the Xcode project.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=843"
+  },
+  {
+    "text": "Next, I need to enable manual merging on this target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=851"
+  },
+  {
+    "text": "I'll do this by going to the Build Settings tab ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=855"
+  },
+  {
+    "text": "and looking for \"Create Merged Binary\" again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=857"
+  },
+  {
+    "text": "I'll use the filter text box and type \"MERGE.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=861"
+  },
+  {
+    "text": "This time I'll select Manual as the value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=866"
+  },
+  {
+    "text": "That's everything I need to set on the group library target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=870"
+  },
+  {
+    "text": "I can select which libraries to merge by going to the build settings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=873"
+  },
+  {
+    "text": "for each framework target. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=877"
+  },
+  {
+    "text": "Navigating in the targets section, I'll start with the Forest framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=880"
+  },
+  {
+    "text": "I'm in the Build Settings tab and can click Build Mergeable Library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=885"
+  },
+  {
+    "text": "This option is mapped to the build setting MERGEABLE_LIBRARY, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=889"
+  },
+  {
+    "text": "and I'll update this value to Yes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=893"
+  },
+  {
+    "text": "I need to do the same for ForestUI and Forest Builder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=897"
+  },
+  {
+    "text": "I'm finished creating my merged ForestKit framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=907"
+  },
+  {
+    "text": "But I need to update some dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=910"
+  },
+  {
+    "text": "Because I've created a framework that encapsulates most of my dynamic libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=914"
+  },
+  {
+    "text": "I need to ensure my app and tests link against ForestKit and not the others. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=918"
+  },
+  {
+    "text": "I'll fix up the app first by clicking the Swift and C++ App Target.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=923"
+  },
+  {
+    "text": "I'm going back to the Build Phases Tab and down to \"Link Binary with Libraries.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=932"
+  },
+  {
+    "text": "This is where I will remove the unnecessary frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=938"
+  },
+  {
+    "text": "I select Forest and hold SHIFT and UP to collect ForestUI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=941"
+  },
+  {
+    "text": "and ForestBuilder to delete them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=946"
+  },
+  {
+    "text": "The final step is the tests. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=949"
+  },
+  {
+    "text": "I'll click on the XCTest target and go to the build phases tab ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=951"
+  },
+  {
+    "text": "under \"Link Binary with Libraries.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=955"
+  },
+  {
+    "text": "I'll remove the Forest framework by clicking the name in the table ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=959"
+  },
+  {
+    "text": "and deleting it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=963"
+  },
+  {
+    "text": "Then I will add ForestKit using the plus sign.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=967"
+  },
+  {
+    "text": "Once the pop-up appears, I'll double-click ForestKit.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=972"
+  },
+  {
+    "text": "And this is how to configure manual merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=979"
+  },
+  {
+    "text": "For the Swift and C++ Forest Project, I've been working in release mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=982"
+  },
+  {
+    "text": "This is when libraries are merged then removed from disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=987"
+  },
+  {
+    "text": "However, there is a build time overhead to merging ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=990"
+  },
+  {
+    "text": "that can get costly for development, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=994"
+  },
+  {
+    "text": "similar to the build time behavior with static libraries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=996"
+  },
+  {
+    "text": "To support iterative development in Xcode, the linker will not merge in debug mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1001"
+  },
+  {
+    "text": "The build system tells the linker to reexport the libraries instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1007"
+  },
+  {
+    "text": "Reexporting is a linker option that allows the implementation of code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1012"
+  },
+  {
+    "text": "to live in one dynamic library but has it show up ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1016"
+  },
+  {
+    "text": "as if it's implemented in another. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1019"
+  },
+  {
+    "text": "In other words, this means all of the libraries' APIs are reachable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1022"
+  },
+  {
+    "text": "by just depending on the merged target, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1027"
+  },
+  {
+    "text": "like your app extensions or tests. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1030"
+  },
+  {
+    "text": "This results in a similar build time benefit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1033"
+  },
+  {
+    "text": "as with dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1036"
+  },
+  {
+    "text": "At launch, dyld redirects any references to the reexported libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1039"
+  },
+  {
+    "text": "instead of expecting them to come directly from the merged binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1044"
+  },
+  {
+    "text": "That does mean in the debug case, the mergeable libraries stay on disk.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1049"
+  },
+  {
+    "text": "Speaking of debugging, let's look into a symbol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1055"
+  },
+  {
+    "text": "that could be in a mergeable library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1058"
+  },
+  {
+    "text": "I have a function that takes in an integer and returns back its squared result. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1060"
+  },
+  {
+    "text": "This is code that gets built. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1066"
+  },
+  {
+    "text": "However, we know this is not the code a machine executes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1068"
+  },
+  {
+    "text": "Instead, this code goes through many transformations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1072"
+  },
+  {
+    "text": "This is all fine until we need to look into that code for bugs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1077"
+  },
+  {
+    "text": "This is why Xcode supports symbolication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1081"
+  },
+  {
+    "text": "Symbolication is the process of associating these machine instructions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1084"
+  },
+  {
+    "text": "back to the original source code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1089"
+  },
+  {
+    "text": "This is useful to be able to understand crash logs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1092"
+  },
+  {
+    "text": "or to profile and debug your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1095"
+  },
+  {
+    "text": "How does this work with merged binaries? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1098"
+  },
+  {
+    "text": "When you enable merging, source location information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1102"
+  },
+  {
+    "text": "is still preserved from the original library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1106"
+  },
+  {
+    "text": "That means your debugging experience remains the same. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1109"
+  },
+  {
+    "text": "But keep in mind, when library information is displayed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1113"
+  },
+  {
+    "text": "like for stack traces, it will show the path to the merged binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1116"
+  },
+  {
+    "text": "This information is presented in crash logs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1121"
+  },
+  {
+    "text": "inside Instruments, and in the debugger. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1124"
+  },
+  {
+    "text": "It's time to take into consideration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1128"
+  },
+  {
+    "text": "how your own project could adopt mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1130"
+  },
+  {
+    "text": "In many cases, enabling them takes a few Xcode settings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1134"
+  },
+  {
+    "text": "But there are some factors worth noting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1138"
+  },
+  {
+    "text": "I'm going to cover five topics that are important to think about.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1141"
+  },
+  {
+    "text": "I'll begin with how you should handle any pre-existing dependencies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1146"
+  },
+  {
+    "text": "you have on mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1150"
+  },
+  {
+    "text": "Then, I'll go into what autolinking is and how it works with mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1153"
+  },
+  {
+    "text": "And there are some restrictions I'll get into ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1158"
+  },
+  {
+    "text": "if you use runtime lookup APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1160"
+  },
+  {
+    "text": "like dlopen or the bundle interface. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1163"
+  },
+  {
+    "text": "Since merging is powered by the static linker in Xcode 15, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1166"
+  },
+  {
+    "text": "I'll mention important differences between it and its predecessor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1170"
+  },
+  {
+    "text": "And the last consideration will be for folks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1175"
+  },
+  {
+    "text": "interested in shipping their frameworks to other developers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1177"
+  },
+  {
+    "text": "For library dependencies, let's go back to the diagram demonstrating dyld's work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1182"
+  },
+  {
+    "text": "If there are dependents of a mergeable library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1188"
+  },
+  {
+    "text": "that are not merged-- for example, other executables-- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1190"
+  },
+  {
+    "text": "they will need to update to depend on the merged framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1195"
+  },
+  {
+    "text": "because mergeable ones are removed from disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1199"
+  },
+  {
+    "text": "Another way this can come up is when an app relies on autolinking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1203"
+  },
+  {
+    "text": "Autolinking is a compiler option that's on by default. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1207"
+  },
+  {
+    "text": "When the compiler finds module imports in source code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1211"
+  },
+  {
+    "text": "it detects framework dependencies to then pass to the linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1215"
+  },
+  {
+    "text": "So if you're importing a module from a mergeable library, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1219"
+  },
+  {
+    "text": "this could cause dynamic linking issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1223"
+  },
+  {
+    "text": "You won't need to disable autolinking, though. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1227"
+  },
+  {
+    "text": "The solution here is the same as before: link against the merged framework.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1230"
+  },
+  {
+    "text": "The most common way to do this is to add the merged framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1237"
+  },
+  {
+    "text": "in the \"Link Binary with Libraries\" Build Phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1240"
+  },
+  {
+    "text": "and remove the mergeable ones if it's there already. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1244"
+  },
+  {
+    "text": "Otherwise, dyld won't be able to load the right frameworks for your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1247"
+  },
+  {
+    "text": "Most developers don't need to use dynamic linking APIs like dlopen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1254"
+  },
+  {
+    "text": "But if you do, those input paths will also need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1259"
+  },
+  {
+    "text": "to point to the merged framework target.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1262"
+  },
+  {
+    "text": "Similarly, resource lookup could be impacted by library merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1267"
+  },
+  {
+    "text": "This is because of what the runtime expects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1272"
+  },
+  {
+    "text": "In Swift, bundle is an API to have the runtime load a framework's bundle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1275"
+  },
+  {
+    "text": "The equivalent API in Objective-C is NSBundle's bundleForClass. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1281"
+  },
+  {
+    "text": "These APIs are used to work with a framework's resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1286"
+  },
+  {
+    "text": "without having to consider the bundle's structure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1291"
+  },
+  {
+    "text": "Up until iOS 12, the runtime needed the framework's binary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1295"
+  },
+  {
+    "text": "to discover bundles, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1299"
+  },
+  {
+    "text": "but mergeable frameworks won't have binaries in them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1301"
+  },
+  {
+    "text": "by the time the process is running. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1304"
+  },
+  {
+    "text": "Good news! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1307"
+  },
+  {
+    "text": "In iOS 12, a hook was added to enable lookup for this scenario. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1308"
+  },
+  {
+    "text": "That does mean if you rely on bundle lookup support, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1312"
+  },
+  {
+    "text": "you should update your minimum deployment version ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1316"
+  },
+  {
+    "text": "to iOS 12 or later to use mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1318"
+  },
+  {
+    "text": "But if you don't rely on these APIs, you can disable this support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1323"
+  },
+  {
+    "text": "with the new linker option -no_merged_libraries_hook. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1327"
+  },
+  {
+    "text": "Then you won't need to update your app's deployment version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1331"
+  },
+  {
+    "text": "If you're merging frameworks that don't contain bundle resources, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1335"
+  },
+  {
+    "text": "you also may not need the bundle hook. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1338"
+  },
+  {
+    "text": "If this is the case, you should consider adding ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1342"
+  },
+  {
+    "text": "this option anyway to improve launch time performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1344"
+  },
+  {
+    "text": "Throughout this talk, I've mentioned some new linker options. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1349"
+  },
+  {
+    "text": "These options will only work with the newly implemented linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1353"
+  },
+  {
+    "text": "But if you peek inside the toolchain, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1357"
+  },
+  {
+    "text": "you'll notice there are two static linkers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1360"
+  },
+  {
+    "text": "The older linker is still supported for backwards compatibility. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1363"
+  },
+  {
+    "text": "Most notably, that linker can still build for armv7k, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1367"
+  },
+  {
+    "text": "but the new linker does not. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1371"
+  },
+  {
+    "text": "The last platform to support the armv7k architecture was watchOS 8. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1374"
+  },
+  {
+    "text": "If you don't need to deploy to watchOS 8 or earlier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1379"
+  },
+  {
+    "text": "upgrade the deployment version to watchOS 9 to use the new linker. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1383"
+  },
+  {
+    "text": "I've described how to build and use mergeable libraries in your apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1388"
+  },
+  {
+    "text": "but what if you want to ship a mergeable library for others to use? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1393"
+  },
+  {
+    "text": "You can do this by creating an XCFramework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1397"
+  },
+  {
+    "text": "in the Swift Package Manager or in Xcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1400"
+  },
+  {
+    "text": "This allows you to build the framework including its metadata for distribution. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1403"
+  },
+  {
+    "text": "When other developers use the framework, they can decide whether to enable merging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1409"
+  },
+  {
+    "text": "Mergeable metadata roughly doubles the size of the dylib. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1414"
+  },
+  {
+    "text": "This doesn't impact the size of an app because metadata is discarded ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1418"
+  },
+  {
+    "text": "along with the mergeable library after building the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1422"
+  },
+  {
+    "text": "Otherwise, that metadata does get stripped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1426"
+  },
+  {
+    "text": "to prevent bloat when embedding them in apps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1429"
+  },
+  {
+    "text": "I've described some nuances to mergeable libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1433"
+  },
+  {
+    "text": "Now I'll share our recommendations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1436"
+  },
+  {
+    "text": "Setting dependencies on the merged binary is key to seamlessly adopting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1439"
+  },
+  {
+    "text": "This is necessary for any link dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1445"
+  },
+  {
+    "text": "It is especially important if you feed libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1449"
+  },
+  {
+    "text": "into tools that expect binaries during script phases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1451"
+  },
+  {
+    "text": "The static linker only merges direct dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1456"
+  },
+  {
+    "text": "So, to include more mergeable libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1460"
+  },
+  {
+    "text": "you should set them as explicit link dependencies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1463"
+  },
+  {
+    "text": "The settings for merging instructs the Xcode build system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1467"
+  },
+  {
+    "text": "to remove a framework's binary from disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1470"
+  },
+  {
+    "text": "This will cause side effects if it's not intentional, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1473"
+  },
+  {
+    "text": "so we recommend enabling them at the Xcode target level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1476"
+  },
+  {
+    "text": "And finally, to get the biggest benefit on productivity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1480"
+  },
+  {
+    "text": "while still optimizing for performance, consider updating any static libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1484"
+  },
+  {
+    "text": "that could be mergeable to dynamic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1489"
+  },
+  {
+    "text": "Mergeable libraries offer convenience and flexibility. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1492"
+  },
+  {
+    "text": "Between automatic and manual workflows, you can restructure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1496"
+  },
+  {
+    "text": "and add mergeable libraries at your leisure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1500"
+  },
+  {
+    "text": "and leave the necessary ones on disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1503"
+  },
+  {
+    "text": "This flexibility is helpful when gradually adopting or profiling. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1506"
+  },
+  {
+    "text": "Mergeable libraries offer size, build, and runtime improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1511"
+  },
+  {
+    "text": "when applied to framework and executable targets. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1516"
+  },
+  {
+    "text": "You can have the build system merge all direct framework dependencies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1520"
+  },
+  {
+    "text": "by using the automatic configuration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1524"
+  },
+  {
+    "text": "But when you need to pick and choose which dependencies to merge, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1527"
+  },
+  {
+    "text": "this can be done with the manual mode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1531"
+  },
+  {
+    "text": "And lastly, when updating your project to use mergeable libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1534"
+  },
+  {
+    "text": "ensure all dependents of those libraries are relying on the merged binary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1538"
+  },
+  {
+    "text": "instead of the libraries that get removed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1543"
+  },
+  {
+    "text": "For documentation about mergeable libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1547"
+  },
+  {
+    "text": "review \"Configuring your project to use mergeable libraries.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1549"
+  },
+  {
+    "text": "And to learn more about static and dynamic linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1553"
+  },
+  {
+    "text": "check out the session \"Link fast: Improve build and launch times.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1556"
+  },
+  {
+    "text": "We are thrilled to learn how mergeable libraries will be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1561"
+  },
+  {
+    "text": "in your projects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1564"
+  },
+  {
+    "text": "Thank you for joining me.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-10268/?time=1566"
+  }
+]

@@ -1,0 +1,338 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:11.000
+♪ ♪
+
+00:00:11.000 --> 00:00:14.000
+Kay: Này, đây là Kay từ Privacy Engineering.
+
+00:00:14.000 --> 00:00:26.000
+Tôi ở đây để giới thiệu một tính năng Quyền riêng tư và Bảo mật mới và thú vị trong Xcode sẽ giúp bạn tự động xác minh tính toàn vẹn của các phụ thuộc của mình.
+
+00:00:26.000 --> 00:00:37.000
+Tại Apple, chúng tôi tin rằng quyền riêng tư nên là cốt lõi trong quá trình phát triển của mọi người, cũng như nó là cốt lõi của các sản phẩm của chúng tôi.
+
+00:00:37.000 --> 00:00:50.000
+Xác minh chữ ký phụ thuộc trong Xcode sẽ giúp các nhà phát triển ứng dụng bảo vệ ứng dụng của họ và các tác giả phụ thuộc bảo vệ SDK mà họ phân phối.
+
+00:00:50.000 --> 00:00:54.000
+Các ứng dụng được phát triển bằng cách sử dụng một loạt các SDK.
+
+00:00:54.000 --> 00:00:57.000
+Ví dụ, iOS SDK.
+
+00:00:57.000 --> 00:01:08.000
+Một số được tạo ra bởi Apple, một số bởi các nhà phát triển ứng dụng để sử dụng trên tất cả các ứng dụng của họ và một số mà các nhà phát triển ứng dụng có được từ các nguồn khác.
+
+00:01:08.000 --> 00:01:18.000
+Chúng tạo thành chuỗi cung ứng của ứng dụng và có thể bao gồm các khuôn khổ, tệp nguồn Swift và các loại phụ thuộc khác.
+
+00:01:18.000 --> 00:01:27.000
+Sử dụng SDK của bên thứ ba có thể giúp phát triển ứng dụng dễ dàng hơn đáng kể và có thể cung cấp chức năng mở rộng.
+
+00:01:27.000 --> 00:01:32.000
+Tuy nhiên, điều này gây ra rủi ro.
+
+00:01:32.000 --> 00:01:38.000
+An ninh chuỗi cung ứng là quá trình giảm thiểu những rủi ro này.
+
+00:01:38.000 --> 00:01:51.000
+Bạn có trách nhiệm bảo vệ người dùng của mình bằng cách chọn lọc những phụ thuộc mà bạn bao gồm và đảm bảo rằng bạn không vô tình sử dụng phiên bản đã bị sửa đổi một cách độc hại.
+
+00:01:51.000 --> 00:02:00.000
+Trách nhiệm này cũng mở rộng cho các tác giả SDK, những người bao gồm các SDK khác như một phần của sự phát triển của họ.
+
+00:02:00.000 --> 00:02:09.000
+Các quy trình và công cụ có sẵn để giảm thiểu những rủi ro này có thể nặng nề hoặc phức tạp để thực hiện thủ công.
+
+00:02:09.000 --> 00:02:17.000
+Xác minh chữ ký phụ thuộc là một tính năng Xcode mới có thể giúp tác vụ này trở nên dễ dàng và tự động.
+
+00:02:17.000 --> 00:02:29.000
+Bây giờ bạn đã biết bảo mật chuỗi cung ứng là gì, tôi sẽ nói về vai trò của chữ ký số trong việc bảo vệ các nhà phát triển và giúp giảm bớt gánh nặng này.
+
+00:02:29.000 --> 00:02:41.000
+Để bắt đầu, tôi sẽ cung cấp cho bạn cái nhìn tổng quan về cách thức hoạt động của công nghệ ký mã của Apple và Xcode hiện đang làm gì để xác minh chữ ký của các phụ thuộc của bạn.
+
+00:02:41.000 --> 00:02:50.000
+Và sau đó tôi sẽ nói về cách các nhà phát triển ứng dụng có thể sử dụng tính năng này để đảm bảo rằng các phụ thuộc của họ không bị xâm phạm.
+
+00:02:50.000 --> 00:02:59.000
+Và cuối cùng, tôi sẽ thảo luận về những gì các tác giả SDK có thể làm để cải thiện tính bảo mật của hệ sinh thái.
+
+00:02:59.000 --> 00:03:04.000
+Tôi sẽ bắt đầu với cách thức hoạt động của công nghệ ký mã của Apple.
+
+00:03:04.000 --> 00:03:16.000
+Khi bạn đang phát triển SDK cho các nhà phát triển ứng dụng sử dụng, bạn muốn đảm bảo rằng không ai có thể sửa đổi hoặc can thiệp vào nó trong quá trình phân phối cho các máy khách SDK của bạn.
+
+00:03:16.000 --> 00:03:36.000
+Ký mã là một cơ chế để liên kết mật mã hệ nhị phân được tuân thủ cuối cùng và siêu dữ liệu liên quan như Info.plist hoặc bản kê khai quyền riêng tư cho khuôn khổ của bạn hoặc, đối với một số loại phân phối nhất định, chính mã nguồn, với danh tính nhà phát triển của bạn.
+
+00:03:36.000 --> 00:03:48.000
+Ở cấp độ cao, việc ký mã hoạt động bằng cách trước tiên tạo hàm băm Thư mục Mã, còn được gọi là CDHash, của tệp nhị phân được biên dịch của bạn.
+
+00:03:48.000 --> 00:03:53.000
+Để sau đó ký hàm băm này, bạn sử dụng danh tính nhà phát triển của mình.
+
+00:03:53.000 --> 00:03:58.000
+Danh tính này được đại diện bởi chứng chỉ nhà phát triển của bạn.
+
+00:03:58.000 --> 00:04:07.000
+Nó được tạo thành từ một khóa riêng được sử dụng để ký mã và một khóa công khai được phân phối như một phần của chữ ký.
+
+00:04:07.000 --> 00:04:12.000
+Chữ ký này có thể được gắn lại với danh tính của bạn.
+
+00:04:12.000 --> 00:04:24.000
+Danh tính này sau đó được sử dụng để ký hàm băm và có thể được kết hợp với dấu thời gian an toàn được sử dụng để xác thực rằng chữ ký đã được tạo tại một thời điểm cụ thể.
+
+00:04:24.000 --> 00:04:31.000
+Điều này đảm bảo rằng nếu bất kỳ ai xáo trộn SDK của bạn, chữ ký sẽ không còn hợp lệ nữa.
+
+00:04:31.000 --> 00:04:41.000
+Nó cũng cho phép các nhà phát triển ứng dụng xác minh rằng chính bạn là người đã ký nó, sử dụng chứng chỉ được nhúng vào chữ ký.
+
+00:04:41.000 --> 00:04:47.000
+Một loại phụ thuộc phổ biến mà bạn có thể sử dụng trong ứng dụng của mình là xcframework.
+
+00:04:47.000 --> 00:04:53.000
+Với xcframeworks, chữ ký nằm trong thư mục _CodeSignature.
+
+00:04:53.000 --> 00:05:10.000
+Chữ ký mã bảo vệ tính toàn vẹn của tất cả các tệp bên trong xcframework cuối cùng của bạn, bao gồm các tệp kê khai quyền riêng tư được đề cập trong video WWDC23 "Bắt đầu với bản kê khai quyền riêng tư".
+
+00:05:10.000 --> 00:05:27.000
+Bạn có thể xác minh thủ công các chữ ký mã này cho mọi phiên bản của mọi khung xc mà bạn đưa vào ứng dụng của mình, nhưng đây là một quá trình tốn thời gian và đặt gánh nặng lên bạn để có được lợi ích bảo mật.
+
+00:05:27.000 --> 00:05:43.000
+Xác minh chữ ký là một tính năng mới trong Xcode tự động xử lý việc xác minh các phụ thuộc của ứng dụng và bảo vệ tính toàn vẹn của chuỗi cung ứng của bạn bằng cách cảnh báo bạn nếu phát hiện ra sự cố.
+
+00:05:43.000 --> 00:05:53.000
+Xcode 15 hiện có các công cụ để giúp bạn tự động theo dõi danh tính được sử dụng để ký bất kỳ xcframeworks nào mà bạn đưa vào dự án của mình.
+
+00:05:53.000 --> 00:06:04.000
+Xcode hiện hiển thị một phần mới trong Thanh tra hiển thị trạng thái chữ ký cho xcframeworks mà bạn đưa vào ứng dụng của mình.
+
+00:06:04.000 --> 00:06:10.000
+Phần này bao gồm thông tin về chữ ký, chẳng hạn như danh tính của tác giả.
+
+00:06:10.000 --> 00:06:21.000
+Nó sẽ hiển thị liệu xcframework có được ký bởi danh tính Chương trình Nhà phát triển Apple, được ký bởi chứng chỉ tự ký hay hiện không có chữ ký hay không.
+
+00:06:21.000 --> 00:06:31.000
+Ngoài ra, Xcode sẽ ghi lại danh tính lần đầu tiên bạn sử dụng xcframework và xác minh rằng nó không thay đổi trong quá trình xây dựng sau này.
+
+00:06:31.000 --> 00:06:44.000
+Đối với các danh tính nhà phát triển khác nhau, Xcode cung cấp các mức tính năng khác nhau dựa trên sự tin tưởng vào danh tính được sử dụng cho một khung xc cụ thể.
+
+00:06:44.000 --> 00:06:59.000
+Đối với danh tính Chương trình Nhà phát triển Apple, Apple có thể kiểm tra tính hợp lệ của chứng chỉ được sử dụng, bao gồm cả việc nó có bị thu hồi hay không và đảm bảo rằng nhiều nhà phát triển không thể đăng ký cùng tên.
+
+00:06:59.000 --> 00:07:11.000
+Nếu chứng chỉ được sử dụng là tự ký, các nhà phát triển ứng dụng nên xác nhận tính hợp lệ và tính xác thực của nó trực tiếp với tác giả phụ thuộc.
+
+00:07:11.000 --> 00:07:24.000
+Khi chứng chỉ ký của tác giả xcframework hết hạn, Xcode có thể tự động xác thực rằng chứng chỉ mới cho danh tính Chương trình Nhà phát triển Apple là từ cùng một nhà phát triển.
+
+00:07:24.000 --> 00:07:36.000
+Đối với chứng chỉ tự ký, bạn sẽ cần xác minh thủ công rằng thay đổi này là hợp pháp, vì không có chứng thực chứng chỉ của một bên đáng tin cậy, như Apple.
+
+00:07:36.000 --> 00:07:55.000
+Khi sự phụ thuộc được ký bởi danh tính Chương trình Nhà phát triển Apple, Xcode sẽ xác minh nó khi xây dựng và hiển thị cho bạn cảnh báo nếu chữ ký không hợp lệ, danh tính đã thay đổi hoặc xcframework đã được ký sau khi chứng chỉ hết hạn.
+
+00:07:55.000 --> 00:08:02.000
+Xcode cũng sẽ cảnh báo bạn nếu chứng chỉ Chương trình Nhà phát triển Apple đã bị Apple thu hồi.
+
+00:08:02.000 --> 00:08:08.000
+Điều này có thể xảy ra nếu Apple xác định rằng tài khoản nhà phát triển là độc hại.
+
+00:08:08.000 --> 00:08:17.000
+Những cảnh báo này sẽ rất hiếm và sẽ tự động đảm bảo bạn không xây dựng ứng dụng của mình cho đến khi bạn giải quyết được vấn đề.
+
+00:08:17.000 --> 00:08:25.000
+Nếu điều này xảy ra, Xcode sẽ đề nghị cho phép bạn xóa xcframework khỏi dự án.
+
+00:08:25.000 --> 00:08:37.000
+Đối với danh tính tự ký, Xcode vẫn sẽ so sánh dấu vân tay SHA-256 của chứng chỉ với dấu vân tay đã được thêm vào dự án trước đó.
+
+00:08:37.000 --> 00:08:45.000
+Nó sẽ hiển thị cho bạn một cảnh báo nếu danh tính đã thay đổi hoặc nếu nội dung của sự phụ thuộc đã được sửa đổi.
+
+00:08:45.000 --> 00:08:56.000
+Bạn có thể cần liên hệ với tác giả xcframework để đảm bảo dấu vân tay khớp với những gì họ đã sử dụng hoặc tác giả xcframework có thể xuất bản thông tin này.
+
+00:08:56.000 --> 00:09:00.000
+Và đó là cách chữ ký số hoạt động trên xcframeworks.
+
+00:09:00.000 --> 00:09:06.000
+Tiếp theo, hãy để tôi chỉ cho bạn cách một nhà phát triển ứng dụng có thể sử dụng tính năng này trong Xcode.
+
+00:09:06.000 --> 00:09:11.000
+Để chứng minh, tôi sẽ sử dụng ứng dụng mẫu Backyard Birds.
+
+00:09:11.000 --> 00:09:22.000
+Nó cung cấp trải nghiệm chim kỹ thuật số, nơi bạn sở hữu nhiều sân sau, có thể đưa thức ăn và nước uống cho chim ra ngoài và xem khi nào khách tham quan chim xuất hiện.
+
+00:09:22.000 --> 00:09:30.000
+Tôi dự định sử dụng một xcframework có tên BirdFeeder để tự động hóa quy trình nạp lại thức ăn và nước.
+
+00:09:30.000 --> 00:09:36.000
+Tác giả của BirdFeeder xcframework đã ký bản phát hành gần đây nhất.
+
+00:09:36.000 --> 00:09:41.000
+Ở đây, tôi đã thêm BirdFeeder vào dự án của mình.
+
+00:09:41.000 --> 00:09:46.000
+Đối với xcframeworks, Xcode 15 sẽ có chế độ xem "Chữ ký" trong Thanh tra.
+
+00:09:46.000 --> 00:09:53.000
+Điều này hiển thị thông tin ký chứng chỉ, hiển thị chi tiết nhóm.
+
+00:09:53.000 --> 00:10:00.000
+Danh tính của nhà phát triển xcframework sẽ được lưu trữ trong dự án lần đầu tiên nó được nhìn thấy.
+
+00:10:00.000 --> 00:10:10.000
+Trong quá trình xây dựng, Xcode sẽ xác nhận rằng danh tính được sử dụng để ký BirdFeeder xcframework khớp với danh tính dự kiến trong dự án.
+
+00:10:10.000 --> 00:10:13.000
+Nó được xây dựng thành công.
+
+00:10:13.000 --> 00:10:27.000
+Để mô phỏng một cuộc tấn công chuỗi cung ứng, tôi sẽ giả vờ rằng ai đó đã đưa cho tôi phiên bản cập nhật của BirdFeeder xcframework mà họ nói đã thêm nhiều tính năng thú vị mới và cho hiệu suất tốt hơn.
+
+00:10:27.000 --> 00:10:34.000
+Điều này cũng có thể xảy ra với bạn khi bạn tải xuống xcframework từ một trang web mà bạn không hoàn toàn tin tưởng.
+
+00:10:34.000 --> 00:10:39.000
+Ở đây, tôi đã thay thế phiên bản trước của mình bằng phiên bản cập nhật này.
+
+00:10:39.000 --> 00:10:47.000
+Khi tôi xây dựng ứng dụng của mình, Xcode xác minh chữ ký của tất cả các xcframeworks trong ứng dụng.
+
+00:10:47.000 --> 00:10:57.000
+Việc xây dựng không thành công, chỉ ra rằng danh tính của nhà phát triển BirdFeeder không khớp với những gì đã được ghi lại trước đó trong dự án.
+
+00:10:57.000 --> 00:11:08.000
+Chọn lỗi cung cấp một cảnh báo giải thích rằng danh tính của nhà phát triển đã thay đổi, cho thấy danh tính dự kiến so với những gì có trong phiên bản mới như thế nào.
+
+00:11:08.000 --> 00:11:20.000
+Trong trường hợp này, nó cho thấy chứng chỉ dự kiến là Chứng chỉ Chương trình Nhà phát triển Apple, nhưng chứng chỉ trong dự án sử dụng chứng chỉ tự ký.
+
+00:11:20.000 --> 00:11:26.000
+Điều này có thể có nghĩa là xcframework đã bị xâm phạm hoặc thay đổi là hợp pháp.
+
+00:11:26.000 --> 00:11:33.000
+Ví dụ, họ có thể đã chuyển quyền sở hữu xcframework cho một nhà phát triển khác.
+
+00:11:33.000 --> 00:11:37.000
+Luôn luôn an toàn để hủy nếu bạn không chắc chắn.
+
+00:11:37.000 --> 00:11:42.000
+Điều này cho bạn thời gian để điều tra xem sự thay đổi có chính hãng hay không.
+
+00:11:42.000 --> 00:11:51.000
+Xcode bảo vệ bạn và các ứng dụng của bạn bằng cách đảm bảo rằng nếu thay đổi này xảy ra, bạn sẽ được thông báo tự động.
+
+00:11:51.000 --> 00:11:58.000
+Trong trường hợp này, sự thay đổi không được mong đợi, vì vậy tôi sẽ chuyển phiên bản mới này vào thùng rác trong Xcode.
+
+00:11:58.000 --> 00:12:11.000
+Tuy nhiên, nếu bạn biết thay đổi là hợp pháp - ví dụ, nhà phát triển đã thông báo điều này cho bạn thông qua một kênh công khai đã được xác minh - thì bạn có thể chấp nhận thay đổi.
+
+00:12:11.000 --> 00:12:17.000
+Cuối cùng, tôi sẽ nói về ý nghĩa của tính năng này đối với các tác giả SDK.
+
+00:12:17.000 --> 00:12:32.000
+Điều quan trọng đối với các tác giả SDK là ký SDK bằng mật mã vì nó cho phép nhà phát triển ứng dụng xác nhận danh tính và đảm bảo rằng mã không bị thay đổi hoặc giả mạo sau khi nó được ký.
+
+00:12:32.000 --> 00:12:40.000
+Cả hai thuộc tính này đều cực kỳ quan trọng để xây dựng lòng tin và phân phối SDK một cách an toàn.
+
+00:12:40.000 --> 00:12:50.000
+Như đã thảo luận trước đó, có hai loại danh tính mà bạn có thể sử dụng: Chương trình Nhà phát triển Apple và tự ký.
+
+00:12:50.000 --> 00:13:00.000
+Các thành viên của Chương trình Nhà phát triển Apple nên sử dụng các chứng chỉ được bao gồm như một phần của chương trình này để đảm bảo sự tin tưởng của khách hàng SDK của bạn.
+
+00:13:00.000 --> 00:13:11.000
+Bạn nên sử dụng chứng chỉ Phân phối Apple nếu bạn xuất bản SDK hoặc chứng chỉ Phát triển Apple nếu bạn đang phân phối các phiên bản thử nghiệm.
+
+00:13:11.000 --> 00:13:19.000
+Các thành viên Chương trình Doanh nghiệp nên sử dụng chứng chỉ Phân phối iOS hoặc Phát triển Ứng dụng của họ.
+
+00:13:19.000 --> 00:13:34.000
+Khi Apple cấp chứng chỉ cho bạn, Apple đang chứng thực rằng bạn là thành viên hợp pháp của Chương trình Nhà phát triển Apple và đã đáp ứng tất cả các yêu cầu cần thiết để có được chứng chỉ.
+
+00:13:34.000 --> 00:13:43.000
+Điều này bao gồm xác minh danh tính của bạn và tuân thủ các chính sách và hướng dẫn của Apple về quyền riêng tư và bảo mật.
+
+00:13:43.000 --> 00:14:01.000
+Nếu bạn thu hồi thủ công chứng chỉ được sử dụng để ký SDK, bạn sẽ cần phát hành phiên bản cập nhật được ký bằng chứng chỉ hợp lệ, vì Xcode sẽ không còn có thể xác minh chữ ký khi nhà phát triển cố gắng xây dựng ứng dụng của họ.
+
+00:14:01.000 --> 00:14:12.000
+SDK đã được ký bằng chứng chỉ Chương trình Nhà phát triển Apple có mức độ tin cậy cơ bản và đảm bảo rằng SDK không bị giả mạo.
+
+00:14:12.000 --> 00:14:21.000
+Trên hết, bởi vì Apple là cơ quan đáng tin cậy, việc xác thực chứng chỉ sẽ tự động được xử lý khi một chứng chỉ mới được tạo.
+
+00:14:21.000 --> 00:14:32.000
+Khi bắt đầu video này, tôi đã thảo luận về cách ký mã hoạt động và cách nó bao gồm chữ ký trong SDK của bạn bằng cách sử dụng danh tính nhà phát triển của bạn.
+
+00:14:32.000 --> 00:14:38.000
+Bây giờ chúng ta hãy xem qua cách bạn có thể làm điều này bằng cách sử dụng công cụ đồng thiết kế.
+
+00:14:38.000 --> 00:14:45.000
+Bạn có thể ký xcframeworks của mình bằng lệnh tại đây và danh tính Chương trình Nhà phát triển Apple của bạn.
+
+00:14:45.000 --> 00:14:54.000
+Cờ dấu thời gian được bao gồm để đảm bảo rằng chữ ký chứa dấu thời gian an toàn được Apple chứng thực.
+
+00:14:54.000 --> 00:15:04.000
+Tuy nhiên, nếu bạn không phải là thành viên của Chương trình Nhà phát triển Apple, bạn có thể tạo chứng chỉ tự ký và sử dụng nó với lệnh đồng thiết kế.
+
+00:15:04.000 --> 00:15:13.000
+Bạn có trách nhiệm chia sẻ với khách hàng SDK dấu vân tay của chứng chỉ này để bạn có thể xác minh xcframework đã được bạn ký.
+
+00:15:13.000 --> 00:15:24.000
+Các nhà phát triển bao gồm SDK của bạn trong ứng dụng của họ sẽ có thể xác nhận rằng xcframework đã được bạn ký bằng cách sử dụng tính năng mới có trong Xcode.
+
+00:15:24.000 --> 00:15:36.000
+Nếu bạn luôn ký vào SDK mà bạn phân phối, tính năng mới này trong Xcode sẽ giúp khách hàng SDK của bạn tự tin hơn vào chuỗi cung ứng của họ.
+
+00:15:36.000 --> 00:15:38.000
+Làm điều này thật đơn giản.
+
+00:15:38.000 --> 00:15:46.000
+Bạn có thể bắt đầu ngay lập tức với các phiên bản khung của mình mà bạn đã xuất bản mà không cần xây dựng mới.
+
+00:15:46.000 --> 00:15:54.000
+Điều này thậm chí còn hoạt động bằng cách sử dụng chứng chỉ tự ký nếu bạn hiện không phải là thành viên của Chương trình Nhà phát triển Apple.
+
+00:15:54.000 --> 00:16:03.000
+Sau đó, bạn có thể làm điều này cho tất cả các phiên bản mới của xcframeworks của mình bằng cách bao gồm lệnh đồng thiết kế trong tập lệnh xây dựng, để bạn không còn phải lo lắng nữa.
+
+00:16:03.000 --> 00:16:13.000
+Đối với các nhà phát triển ứng dụng, Xcode 15 sẽ tự động giúp bạn đảm bảo tính toàn vẹn và bảo mật của SDK cơ bản của ứng dụng.
+
+00:16:13.000 --> 00:16:24.000
+Đảm bảo rằng tất cả các chữ ký SDK được xác minh là một khía cạnh quan trọng của việc phát triển ứng dụng có trách nhiệm và bảo vệ người dùng của bạn.
+
+00:16:24.000 --> 00:16:31.000
+Bạn có thể giúp đỡ bằng cách khuyến khích các nhà phát triển trong chuỗi cung ứng của bạn bắt đầu ký SDK mà họ xuất bản.
+
+00:16:31.000 --> 00:16:39.000
+Đối với các tác giả SDK, hãy bắt đầu ký SDK của bạn để đảm bảo tính bảo mật và tính xác thực của chúng.
+
+00:16:39.000 --> 00:16:50.000
+Bằng cách ký mã của bạn, bạn thiết lập niềm tin với các khách hàng SDK của mình, cho họ thấy rằng bạn coi trọng vấn đề bảo mật và quyền riêng tư của họ.
+
+00:16:50.000 --> 00:16:52.000
+Phát triển ứng dụng vui vẻ!
+
+00:16:52.000 --> 00:16:55.000
+Đây là Kay, đăng xuất.
+
+00:16:55.000 --> 23:59:59.000
+♪ ♪
+

@@ -1,0 +1,950 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=0"
+  },
+  {
+    "text": "Andrew: Hi, I'm Andrew Rauh, a software engineer on Vision framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=10"
+  },
+  {
+    "text": "Today I'll be talking about Human Body Pose, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=13"
+  },
+  {
+    "text": "use of Depth in Vision framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=17"
+  },
+  {
+    "text": "and lifting people from images with instance masks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=19"
+  },
+  {
+    "text": "Detecting and understanding people has always been a focus for Vision, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=24"
+  },
+  {
+    "text": "and for a few years, Vision framework has offered Human Body Pose in 2D. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=27"
+  },
+  {
+    "text": "As a refresher, Human Body Pose in 2D returns an observation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=32"
+  },
+  {
+    "text": "with normalized pixel coordinates of landmark points ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=37"
+  },
+  {
+    "text": "defined on a skeleton corresponding to the input image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=40"
+  },
+  {
+    "text": "If you'd like to dive into more specifics, please review ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=44"
+  },
+  {
+    "text": "the \"Detect Body and Hand Pose\" session if you haven't already. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=47"
+  },
+  {
+    "text": "Vision is expanding support for capturing people in their environment to 3D ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=51"
+  },
+  {
+    "text": "with a new request named VNDetectHumanBodyPose3DRequest. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=55"
+  },
+  {
+    "text": "This request generates an observation that returns a 3D skeleton with 17 joints. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=60"
+  },
+  {
+    "text": "Joints may be accessed by joint name ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=66"
+  },
+  {
+    "text": "or as a collection by providing a joint group name.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=68"
+  },
+  {
+    "text": "Unlike other recognized points returned by Vision ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=72"
+  },
+  {
+    "text": "that are normalized to a lower left origin, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=74"
+  },
+  {
+    "text": "position of the 3D joints is returned in meters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=77"
+  },
+  {
+    "text": "relative to the captured scene in the real world ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=80"
+  },
+  {
+    "text": "with an origin at a root joint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=82"
+  },
+  {
+    "text": "This initial revision returns one skeleton ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=85"
+  },
+  {
+    "text": "for the most prominent person detected in the frame. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=88"
+  },
+  {
+    "text": "If you were building a fitness app and ran the request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=91"
+  },
+  {
+    "text": "on this image of a workout class in a gym, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=94"
+  },
+  {
+    "text": "the observation would correspond to the woman in the front ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=96"
+  },
+  {
+    "text": "who's closest to the camera. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=99"
+  },
+  {
+    "text": "To better demonstrate the structure of the 3D skeleton with some context, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=101"
+  },
+  {
+    "text": "let's break down this yoga pose. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=105"
+  },
+  {
+    "text": "Unsurprisingly, the 3D Human Body skeleton starts with a head group ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=108"
+  },
+  {
+    "text": "which contains points at the center and top of the head. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=112"
+  },
+  {
+    "text": "Next there's the torso group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=116"
+  },
+  {
+    "text": "which contains a left and right shoulder joint, spine, root joint, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=118"
+  },
+  {
+    "text": "which is at the center of the hip, and hip joints. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=123"
+  },
+  {
+    "text": "Keep in mind that some joints are returned in multiple groups. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=126"
+  },
+  {
+    "text": "For arms, there are left and right arm groups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=130"
+  },
+  {
+    "text": "each with a wrist, shoulder, and elbow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=134"
+  },
+  {
+    "text": "Left and right are always relative to the person, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=137"
+  },
+  {
+    "text": "not the left or right side of the image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=140"
+  },
+  {
+    "text": "Finally, our skeleton contains a left and right leg group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=143"
+  },
+  {
+    "text": "each with a corresponding hip, knee, and ankle joint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=148"
+  },
+  {
+    "text": "To use this new request, you follow the same workflow as other requests, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=153"
+  },
+  {
+    "text": "so this flow should be familiar to you if you've used Vision in your code before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=157"
+  },
+  {
+    "text": "You'd start by creating an instance of the new DetectHumanBodyPose3DRequest, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=161"
+  },
+  {
+    "text": "then initialize an image request handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=167"
+  },
+  {
+    "text": "with the asset you want to run your detection on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=170"
+  },
+  {
+    "text": "To run your request, pass your request instance into perform. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=173"
+  },
+  {
+    "text": "And if the request is successful, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=177"
+  },
+  {
+    "text": "a VNHumanBodyPose3DObservation will be returned without error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=179"
+  },
+  {
+    "text": "All photos are 2D representations of people in a 3D world. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=185"
+  },
+  {
+    "text": "Vision now enables you to retrieve that 3D position from images ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=189"
+  },
+  {
+    "text": "without ARKit or ARSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=193"
+  },
+  {
+    "text": "This is a powerful, lightweight option for understanding a subject in 3D space ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=196"
+  },
+  {
+    "text": "and unlocks an entirely new range of features in apps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=200"
+  },
+  {
+    "text": "I built a sample app to help understand and visualize this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=204"
+  },
+  {
+    "text": "When I open it up, I can select any image from my photo library.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=208"
+  },
+  {
+    "text": "My coworkers and I were inspired by the calmness ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=214"
+  },
+  {
+    "text": "of the yoga instructor earlier, so we took a break, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=216"
+  },
+  {
+    "text": "went outside, and tried a few poses out ourselves. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=219"
+  },
+  {
+    "text": "Now, I'm not as flexible as that teacher, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=222"
+  },
+  {
+    "text": "but I did a pretty good job with this pose, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=225"
+  },
+  {
+    "text": "and it should look great in 3D.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=227"
+  },
+  {
+    "text": "Let's run the request and bring me back into the third dimension.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=232"
+  },
+  {
+    "text": "The request is successful, and a 3D skeleton is aligned ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=237"
+  },
+  {
+    "text": "with where I am in the input image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=241"
+  },
+  {
+    "text": "If I rotate the scene, my arms extend out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=244"
+  },
+  {
+    "text": "and legs look correct relative to the hip based on how I was standing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=248"
+  },
+  {
+    "text": "This pyramid shape represents where the camera was located ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=253"
+  },
+  {
+    "text": "when the image was captured. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=257"
+  },
+  {
+    "text": "If I tap the Switch Perspective button, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=260"
+  },
+  {
+    "text": "the view is now from the camera's position. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=262"
+  },
+  {
+    "text": "I'll guide you through the code and concepts you need to know ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=265"
+  },
+  {
+    "text": "to create awesome experiences using 3D Human Body Pose in your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=268"
+  },
+  {
+    "text": "Building an app begins with using the points returned in the observation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=274"
+  },
+  {
+    "text": "There are two main APIs to retrieve them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=278"
+  },
+  {
+    "text": "recognizedPoint to access a specific joint's position ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=281"
+  },
+  {
+    "text": "or recognizedPoints to access a collection of joints with a specified group name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=285"
+  },
+  {
+    "text": "Besides these core methods, the observation offers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=290"
+  },
+  {
+    "text": "some additional helpful information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=293"
+  },
+  {
+    "text": "First, bodyHeight gives an estimated height of your subject in meters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=296"
+  },
+  {
+    "text": "Depending on the available depth metadata, this height will either be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=301"
+  },
+  {
+    "text": "a more accurate measured height or a reference height of 1.8 meters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=304"
+  },
+  {
+    "text": "I have a lot more to say about Depth and Vision in a minute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=309"
+  },
+  {
+    "text": "You can determine the technique used to compute height ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=312"
+  },
+  {
+    "text": "with the heightEstimation property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=315"
+  },
+  {
+    "text": "Next, the camera position is available though cameraOriginMatrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=318"
+  },
+  {
+    "text": "Since in real life the camera may not be exactly facing your subject, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=323"
+  },
+  {
+    "text": "this is useful to get an understanding of where the camera was ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=327"
+  },
+  {
+    "text": "relative to the person when the frame was captured. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=330"
+  },
+  {
+    "text": "The observation also offers an API to project joint coordinates back to 2D. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=333"
+  },
+  {
+    "text": "This is helpful if you want to overlay or align returned points ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=339"
+  },
+  {
+    "text": "with the input image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=343"
+  },
+  {
+    "text": "And finally, to get an understanding of how a person has moved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=345"
+  },
+  {
+    "text": "across two similar images, an API is available to get the position ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=348"
+  },
+  {
+    "text": "of a given joint relative to the camera.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=352"
+  },
+  {
+    "text": "Before I show how to use the 3D Human Body points, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=356"
+  },
+  {
+    "text": "I'd like to introduce the new geometry classes in Vision it inherits from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=360"
+  },
+  {
+    "text": "VNPoint3D is the base class that defines the simd_float 4x4 matrix ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=364"
+  },
+  {
+    "text": "for storing 3D position. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=369"
+  },
+  {
+    "text": "This representation is consistent with other Apple frameworks like ARKit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=371"
+  },
+  {
+    "text": "and contains all available rotation and translation information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=376"
+  },
+  {
+    "text": "Next, there is VNRecognizedPoint3D, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=380"
+  },
+  {
+    "text": "which inherits this position but also adds an identifier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=384"
+  },
+  {
+    "text": "This is used to store corresponding information like a joint name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=387"
+  },
+  {
+    "text": "Finally, the focus of today is VNHumanBodyRecognizedPoint3D, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=392"
+  },
+  {
+    "text": "which adds a local position and the parent joint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=396"
+  },
+  {
+    "text": "Let's go into some more specifics around how to work with properties of the point. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=400"
+  },
+  {
+    "text": "Using the recognizedPoint API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=405"
+  },
+  {
+    "text": "I retrieved the position for the left wrist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=407"
+  },
+  {
+    "text": "A joint's model position, or a point's position property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=409"
+  },
+  {
+    "text": "is always relative to the skeleton's root joint at the center of the hip. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=413"
+  },
+  {
+    "text": "If we bring our focus to the third column in the position matrix, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=418"
+  },
+  {
+    "text": "there are values for translation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=422"
+  },
+  {
+    "text": "The value for y for the left wrist is 0.9 meters above this figure's hip, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=424"
+  },
+  {
+    "text": "which seems right for this pose. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=429"
+  },
+  {
+    "text": "Next, there is the returned point's localPosition property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=432"
+  },
+  {
+    "text": "which is the position relative to a parent joint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=436"
+  },
+  {
+    "text": "So in this case, the left elbow would be the parent joint of the left wrist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=439"
+  },
+  {
+    "text": "The last column here shows the value to be -0.1 meters for the x axis, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=444"
+  },
+  {
+    "text": "which seems right as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=449"
+  },
+  {
+    "text": "Negative or positive values are determined by the point of reference, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=451"
+  },
+  {
+    "text": "and in this pose, the wrist is to the left side of the elbow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=455"
+  },
+  {
+    "text": "localPosition is useful if your app is only working with one area of the body. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=459"
+  },
+  {
+    "text": "It also simplifies determining the angle between a child and parent joint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=463"
+  },
+  {
+    "text": "I'll show how to calculate this angle in code in a sec. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=468"
+  },
+  {
+    "text": "When working with returned 3D points, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=472"
+  },
+  {
+    "text": "there are several concepts that may be helpful when building your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=475"
+  },
+  {
+    "text": "First, you often need to determine the angle between child and parent joints. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=478"
+  },
+  {
+    "text": "In the method calculateLocalAngleToParent, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=484"
+  },
+  {
+    "text": "the position relative to the parent joint is used to find that angle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=487"
+  },
+  {
+    "text": "Rotation for a node consists of rotation with respect to x, y, and z axes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=492"
+  },
+  {
+    "text": "or pitch, yaw, and roll. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=497"
+  },
+  {
+    "text": "For pitch, a rotation of 90 degrees is used to position ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=500"
+  },
+  {
+    "text": "the SceneKit node geometry from its default orientation facing straight down ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=505"
+  },
+  {
+    "text": "to one more appropriate for our skeleton. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=509"
+  },
+  {
+    "text": "For yaw, we use arc cosine of the z coordinate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=512"
+  },
+  {
+    "text": "divided by the vector length to get the proper angle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=516"
+  },
+  {
+    "text": "And for roll, the angle measurement is obtained ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=519"
+  },
+  {
+    "text": "with arc tangent of the y and x coordinates. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=523"
+  },
+  {
+    "text": "Next, your app may need to relate the returned 3D positions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=526"
+  },
+  {
+    "text": "with the original image, like in my sample app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=530"
+  },
+  {
+    "text": "In my visualization, I use point-in-image API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=533"
+  },
+  {
+    "text": "for two transformations to my image plane, a scale and a translation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=536"
+  },
+  {
+    "text": "First I need to scale my image plane proportionally to the returned points. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=541"
+  },
+  {
+    "text": "I fetch the distance between two known joints, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=547"
+  },
+  {
+    "text": "like center shoulder and spine, for both 3D and 2D, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=550"
+  },
+  {
+    "text": "relate them proportionally, and scale my image plane by this amount. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=556"
+  },
+  {
+    "text": "For the translation component, I use pointInImage API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=561"
+  },
+  {
+    "text": "to fetch the location of the root joint in the 2D image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=567"
+  },
+  {
+    "text": "This method uses that location to determine a shift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=571"
+  },
+  {
+    "text": "for the image plane for x and y axes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=574"
+  },
+  {
+    "text": "while also converting between lower left origin of the VNPoint coordinate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=576"
+  },
+  {
+    "text": "and the rendering environment origin at the center of the image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=581"
+  },
+  {
+    "text": "Finally, you may want to view the scene from the perspective of the camera ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=585"
+  },
+  {
+    "text": "or render a point at its location, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=589"
+  },
+  {
+    "text": "and you can retrieve this from cameraOriginMatrix. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=592"
+  },
+  {
+    "text": "Correct orientation will depend on your rendering environment, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=594"
+  },
+  {
+    "text": "but this is how I positioned my nodes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=598"
+  },
+  {
+    "text": "with this transform information using the pivot transform, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=601"
+  },
+  {
+    "text": "which relates the local coordinate system of this node to the rest of the scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=604"
+  },
+  {
+    "text": "I also used rotation information in cameraOriginMatrix ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=609"
+  },
+  {
+    "text": "to correctly rotate my image plane to face the camera ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=613"
+  },
+  {
+    "text": "with this code using inverse transform.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=616"
+  },
+  {
+    "text": "Since only rotation information is needed here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=621"
+  },
+  {
+    "text": "the translation information in the last column is ignored. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=624"
+  },
+  {
+    "text": "Putting all these pieces together allowed for the scene displayed in my sample app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=628"
+  },
+  {
+    "text": "Now, I'd like to take a few minutes to discuss ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=634"
+  },
+  {
+    "text": "some exciting additions involving Depth in Vision. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=637"
+  },
+  {
+    "text": "Vision framework now accepts Depth as an input ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=641"
+  },
+  {
+    "text": "alongside an image or frame buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=644"
+  },
+  {
+    "text": "VNImageRequestHandler has added initializer APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=647"
+  },
+  {
+    "text": "for cvPixelBuffer and cmSampleBuffer that take a new parameter for AVDepthData. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=651"
+  },
+  {
+    "text": "Additionally, if your file contains Depth data already, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=657"
+  },
+  {
+    "text": "you may use the existing APIs without modification. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=660"
+  },
+  {
+    "text": "Vision will fetch Depth from file automatically for you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=664"
+  },
+  {
+    "text": "When working with Depth in Apple SDKs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=668"
+  },
+  {
+    "text": "AVDepthData serves as the container class for interfacing with all Depth metadata. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=671"
+  },
+  {
+    "text": "Depth metadata captured by camera sensors contains a Depth map ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=676"
+  },
+  {
+    "text": "represented as either Disparity or Depth format. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=680"
+  },
+  {
+    "text": "These formats are interchangeable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=684"
+  },
+  {
+    "text": "and can be converted to each other using AVFoundation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=685"
+  },
+  {
+    "text": "Depth metadata also contains camera calibration data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=689"
+  },
+  {
+    "text": "like intrinsics, extrinsics, and lens distortion, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=693"
+  },
+  {
+    "text": "needed to reconstruct the 3D scene. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=696"
+  },
+  {
+    "text": "If you need to learn more specifics, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=699"
+  },
+  {
+    "text": "please review the \"Discover advancements in iOS camera capture\" session from 2022. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=701"
+  },
+  {
+    "text": "Depth can be obtained through camera capture sessions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=707"
+  },
+  {
+    "text": "or from previously captured files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=710"
+  },
+  {
+    "text": "Images captured by Camera app, like Portrait images in photos, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=712"
+  },
+  {
+    "text": "always store Depth as disparity maps with camera calibration metadata. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=717"
+  },
+  {
+    "text": "When capturing Depth in a live capture session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=721"
+  },
+  {
+    "text": "you have the added benefit of specifying the session to use LiDAR ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=723"
+  },
+  {
+    "text": "if the device supports it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=727"
+  },
+  {
+    "text": "LiDAR is powerful because it allows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=729"
+  },
+  {
+    "text": "for accurate scale and measurement of the scene.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=731"
+  },
+  {
+    "text": "Vision is also introducing APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=734"
+  },
+  {
+    "text": "to interact with more than one person in an image.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=736"
+  },
+  {
+    "text": "Vision currently offers the ability to separate people ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=740"
+  },
+  {
+    "text": "from the surrounding scene with GeneratePersonSegmentation request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=742"
+  },
+  {
+    "text": "This request returns a single mask containing all the people in the frame. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=746"
+  },
+  {
+    "text": "Vision is now letting you be a bit more selective ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=751"
+  },
+  {
+    "text": "with a new person instance mask request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=754"
+  },
+  {
+    "text": "This new API outputs up to four individual person masks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=757"
+  },
+  {
+    "text": "each with a confidence score. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=761"
+  },
+  {
+    "text": "So now you can select and lift your friends separately from an image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=763"
+  },
+  {
+    "text": "If you need to select and lift subjects other than people, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=768"
+  },
+  {
+    "text": "you can use the subject lifting API in VisionKit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=771"
+  },
+  {
+    "text": "or the foreground instance mask request in Vision framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=774"
+  },
+  {
+    "text": "Please check out \"Lift subjects from images in your app\" session ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=778"
+  },
+  {
+    "text": "for more information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=781"
+  },
+  {
+    "text": "Here is some sample code showing how to select ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=784"
+  },
+  {
+    "text": "a particular instance of a person you want from an image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=786"
+  },
+  {
+    "text": "Currently it's specifying to return all instances, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=790"
+  },
+  {
+    "text": "but you could choose instance 1 or 2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=793"
+  },
+  {
+    "text": "depending on what friend you'd like to focus on in the image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=796"
+  },
+  {
+    "text": "or use instance 0 to get the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=799"
+  },
+  {
+    "text": "This new request segments up to four people, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=803"
+  },
+  {
+    "text": "so if there are more than four people in your image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=806"
+  },
+  {
+    "text": "there are some additional conditions to handle in your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=809"
+  },
+  {
+    "text": "When scenes contain many people, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=812"
+  },
+  {
+    "text": "returned observations may miss people or combine them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=814"
+  },
+  {
+    "text": "Typically, this occurs with people present in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=818"
+  },
+  {
+    "text": "If your app has to deal with crowded scenes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=823"
+  },
+  {
+    "text": "there are strategies you can use to build the best experience possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=825"
+  },
+  {
+    "text": "Face-detection API in Vision can be used to count the number of faces in the image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=830"
+  },
+  {
+    "text": "and you can choose to skip images with more than four people ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=834"
+  },
+  {
+    "text": "or use the existing Person Segmentation request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=837"
+  },
+  {
+    "text": "and work with one mask for everyone.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=840"
+  },
+  {
+    "text": "To recap, Vision now offers powerful new ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=844"
+  },
+  {
+    "text": "to understand people and their environment with support for depth, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=847"
+  },
+  {
+    "text": "3D Human Body Pose, and person instance masks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=851"
+  },
+  {
+    "text": "But that's not all Vision is releasing this year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=855"
+  },
+  {
+    "text": "You can go beyond people and create amazing experiences ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=857"
+  },
+  {
+    "text": "with images of furry friends in \"Detect animal poses in Vision\" session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=861"
+  },
+  {
+    "text": "Thank you, and I can't wait to see what incredible features you build. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=865"
+  },
+  {
+    "text": "♪ ♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2023-111241/?time=871"
+  }
+]

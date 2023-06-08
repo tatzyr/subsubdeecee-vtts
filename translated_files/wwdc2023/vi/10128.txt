@@ -1,0 +1,545 @@
+10128
+
+♪ ♪
+
+Pawel Szczerbuk: Xin chào, tên tôi là Pawel Szczerbuk, và tôi là Kỹ sư phần mềm GPU.
+
+Kim loại có thể giúp bạn mở rộng các ứng dụng dò tia của mình thành các cảnh phức tạp và chi tiết.
+
+Dò tia là nền tảng cho độ trung thực của hình ảnh trong kết xuất sản xuất trong khi dò tia trong trò chơi tập trung vào tốc độ khung hình cao đồng thời cải thiện chất lượng hình ảnh.
+
+Hình ảnh Cảnh Đảo Moana của Disney này được hiển thị bằng dấu vết tia Kim loại.
+
+Hôm nay tôi sẽ nói về cách sử dụng dấu vết tia kim loại.
+
+Tôi sẽ làm nổi bật một số tính năng mới thú vị mà bạn có thể sử dụng để tăng tốc độ dò tia trong các trò chơi và trình kết xuất sản xuất.
+
+Các ứng dụng dò tia mô phỏng các tia sáng riêng lẻ nảy xung quanh một cảnh Để kết xuất bằng dò tia kim loại, bước đầu tiên là xác định hình học cảnh của bạn.
+
+Sau đó, Metal xây dựng một Cấu trúc Gia tốc chứa hình học của bạn và có thể được truy vấn hiệu quả cho các giao lộ bằng cách sử dụng tăng tốc GPU.
+
+Trong chức năng GPU, tạo một tia để giao với cảnh của bạn.
+
+Tạo một đối tượng liên ngành trong bộ đổ bóng của bạn và cung cấp cho nó cả tia của bạn và cấu trúc gia tốc.
+
+Điều này trả về kết quả giao nhau, với tất cả thông tin bạn có thể cần để tô bóng pixel hoặc xử lý nó hơn nữa.
+
+Mỗi phần này hoạt động cùng nhau để cho phép bạn xây dựng cảnh của mình, sử dụng instancing để thêm độ phức tạp trực quan và thực hiện giao điểm tia.
+
+Và có một số công cụ tuyệt vời theo ý của bạn để giúp bạn làm việc với các ứng dụng dò tia.
+
+Tất cả bắt đầu với việc xây dựng khung cảnh của bạn.
+
+API dò tia kim loại hỗ trợ một vài loại hình học khác nhau.
+
+Tất cả hình học này được lưu trữ trong một cấu trúc gia tốc.
+
+Một cấu trúc gia tốc tăng tốc quá trình dò tia bằng cách phân vùng đệ quy hình học.
+
+Điều này cho phép loại bỏ nhanh chóng bất kỳ hình học nào không giao với tia.
+
+Bạn có thể thiết lập một cấu trúc gia tốc trong ba bước.
+
+Tạo một mô tả cấu trúc gia tốc, nơi bạn sẽ cung cấp hình học thực tế của mình.
+
+Một khi bạn có bộ mô tả, bạn có thể phân bổ cấu trúc gia tốc, và sau đó xây dựng nó.
+
+Một bộ mô tả cấu trúc gia tốc chứa một hoặc nhiều bộ mô tả hình học.
+
+Có ba loại mô tả hình học có sẵn trong Metal.
+
+Hình tam giác là những thứ nguyên thủy mà tất cả chúng ta đều biết và yêu thích, được sử dụng để mô hình hóa hầu hết mọi thứ trong đồ họa máy tính.
+
+Các nguyên thủy hộp giới hạn hoàn toàn được xác định bởi chức năng giao nhau tùy chỉnh của bạn mà Metal sẽ gọi khi một tia chạm vào một hộp giới hạn kèm theo.
+
+Và mới trong năm nay, những đường cong.
+
+Những thứ này rất tuyệt vời để làm tóc và lông thú.
+
+Để tạo ra một cấu trúc gia tốc bằng cách sử dụng các hình tam giác, hãy tạo một mô tả hình học tam giác cho một phần hình học riêng lẻ.
+
+Bạn sẽ cung cấp bộ đệm đỉnh, bộ đệm chỉ mục và số lượng tam giác.
+
+Hình học hộp giới hạn hoạt động theo cách tương tự, ngoại trừ thay vì các đỉnh, bạn cung cấp các hộp giới hạn bao quanh hình học của bạn.
+
+Ngoài ra, bạn cung cấp một chức năng giao nhau mà Metal sẽ gọi khi một tia chạm vào hộp giới hạn nguyên thủy của bạn.
+
+Để biết thêm chi tiết về cách thiết lập chức năng giao lộ, hãy xem bài nói chuyện "Khám phá dò tia bằng Kim loại" năm 2020.
+
+Hình học như tóc, lông thú và thảm thực vật có thể có hàng nghìn hoặc thậm chí hàng triệu nguyên thủy.
+
+Chúng thường được mô hình hóa như những đường cong mịn, mịn.
+
+Thay vì sử dụng các hình tam giác để ước tính các đường cong này, bạn có thể sử dụng các nguyên thủy đường cong mới của Metal.
+
+Những đường cong này sẽ vẫn mượt mà ngay cả khi máy ảnh phóng to.
+
+Và so với hình tam giác, các đường cong có dấu chân bộ nhớ nhỏ gọn hơn và cho phép xây dựng cấu trúc gia tốc nhanh hơn.
+
+Một đường cong đầy đủ được tạo thành từ một loạt các đoạn đường cong được kết nối.
+
+Mỗi phân đoạn trên một đường cong là nguyên thủy của riêng nó và Metal gán cho mỗi phân đoạn một ID nguyên thủy duy nhất.
+
+Mỗi đoạn này được xác định bởi một loạt các điểm kiểm soát, kiểm soát hình dạng của đường cong.
+
+Các điểm kiểm soát này được nội suy bằng cách sử dụng một tập hợp các hàm cơ bản.
+
+Tùy thuộc vào chức năng cơ bản, mỗi đoạn đường cong có thể có 2, 3 hoặc 4 điểm kiểm soát.
+
+Metal cung cấp bốn hàm cơ sở đường cong khác nhau: Bezier, Catmull-Rom, B-Spline và Linear.
+
+Mỗi chức năng cơ bản này đều có những lợi ích riêng, vì vậy hãy chọn chức năng tốt nhất cho trường hợp sử dụng của bạn.
+
+Kim loại cũng yêu cầu bộ đệm chỉ số điểm kiểm soát.
+
+Mỗi đoạn đường cong có một chỉ mục trong bộ đệm này đại diện cho điểm kiểm soát đầu tiên cho đoạn.
+
+Ví dụ, giả sử bạn có bốn điểm kiểm soát.
+
+Bạn xác định một đoạn đường cong bằng cách sử dụng chỉ mục của điểm kiểm soát đầu tiên của nó, vì vậy hãy thêm số 0 vào bộ đệm chỉ mục.
+
+Ví dụ này đang sử dụng hàm cơ sở Catmull-Rom, vì vậy đoạn đường cong thực tế chỉ được xác định giữa các điểm kiểm soát 1 và 2.
+
+Tất cả những gì bạn cần làm để kết nối một đoạn đường cong khác là thêm một điểm kiểm soát nữa.
+
+Đoạn đường cong bổ sung này sử dụng các điểm kiểm soát từ 1 đến 4, vì vậy hãy thêm 1 vào bộ đệm chỉ mục.
+
+Hai phân đoạn đường cong này chia sẻ 3 điểm kiểm soát vì bộ đệm chỉ mục, đó là một lý do khiến các đường cong có thể tiết kiệm bộ nhớ.
+
+Lặp lại điều này nhiều lần nếu cần thiết để hoàn thành đường cong.
+
+Để bắt đầu một đường cong mới, chỉ cần thêm các điểm kiểm soát bổ sung không trùng với các điểm kiểm soát trước đó và thêm chỉ mục tương ứng vào bộ đệm chỉ mục.
+
+Cho đến nay các đường cong mà tôi đã mô tả là các đối tượng toán học trừu tượng.
+
+Để kết xuất chúng, chúng cần phải có một số loại hình dạng 3D.
+
+Mỗi điểm kiểm soát cũng có một bán kính được nội suy dọc theo chiều dài của đường cong.
+
+Theo mặc định, các đường cong được hiển thị với tiết diện hình trụ 3D.
+
+Điều này thật tuyệt vời cho những đường cong sẽ được nhìn cận cảnh.
+
+Đối với các đường cong sẽ chỉ được nhìn thấy từ xa, Metal cũng hỗ trợ các đường cong phẳng.
+
+Điều này có thể cải thiện hiệu suất bất cứ khi nào bạn không cần hình học 3D đầy đủ.
+
+Tương tự như hình tam giác và hộp giới hạn, hình học đường cong được biểu diễn bằng bộ mô tả hình học đường cong.
+
+Đính kèm bộ đệm chứa các điểm kiểm soát của bạn, bán kính tương ứng và chỉ số điểm kiểm soát.
+
+Đặt số lượng điểm điều khiển trong bộ đệm điểm điều khiển, cũng như số lượng phân đoạn đường cong thực tế.
+
+Điều này phải giống như số lượng chỉ số trong bộ đệm chỉ mục.
+
+Chỉ định loại đường cong bạn đang sử dụng.
+
+Ví dụ này sử dụng các đường cong Bezier tròn với 4 điểm kiểm soát trên mỗi đoạn đường cong.
+
+Đó là tất cả những gì bạn cần làm để thiết lập một mô tả hình học đường cong.
+
+Bây giờ bạn đã tạo các bộ mô tả hình học của mình, bạn có thể thiết lập bộ mô tả cấu trúc gia tốc.
+
+Sử dụng bộ mô tả cấu trúc gia tốc nguyên thủy cho hình học nguyên thủy như hình tam giác, hộp giới hạn và đường cong.
+
+Thêm bộ mô tả hình học vào bộ mô tả cấu trúc gia tốc.
+
+Nhiều mô tả hình học có thể được thêm vào một cấu trúc gia tốc duy nhất để kết hợp hình học.
+
+Khi bạn đã sẵn sàng mô tả cấu trúc gia tốc, bạn có thể phân bổ bộ nhớ cho cấu trúc tăng tốc.
+
+Metal cung cấp cho bạn toàn quyền kiểm soát khi nào và ở đâu bộ nhớ này được phân bổ.
+
+Đây là một thao tác gồm hai phần.
+
+Đầu tiên tính toán kích thước của các đối tượng cần thiết cho việc xây dựng.
+
+Thiết bị Metal cung cấp một phương pháp để tính toán kích thước phân bổ cần thiết cho cấu trúc gia tốc.
+
+Mặc dù có thể phân bổ dung lượng lưu trữ cho các cấu trúc gia tốc trực tiếp từ thiết bị Metal, việc phân bổ chúng từ một đống sẽ cho phép bạn giảm chi phí quản lý tài nguyên sau này.
+
+Đống có thể có các yêu cầu về kích thước và căn chỉnh bổ sung, bạn có thể truy vấn bằng một phương pháp khác trên thiết bị Metal.
+
+Với những kích thước này, bây giờ bạn có thể phân bổ bộ nhớ để lưu trữ cấu trúc gia tốc.
+
+Bộ lưu trữ này được đại diện bởi một đối tượng Cấu trúc Tăng tốc MTL.
+
+Để phân bổ một trong những đối tượng này, hãy gọi phương thức make Acceleration Structure trên một đống hoặc thiết bị Metal, truyền kích thước.
+
+Bạn cũng sẽ phân bổ một số bộ nhớ cào mà Metal sẽ sử dụng trong khi xây dựng cấu trúc gia tốc.
+
+Vì bộ nhớ này chỉ cần được truy cập bởi GPU, bạn có thể làm điều này bằng cách phân bổ bộ đệm chế độ lưu trữ riêng tư từ thiết bị Metal.
+
+Bây giờ bạn đã sẵn sàng để thực sự xây dựng cấu trúc gia tốc.
+
+Lên lịch hoạt động xây dựng, và sau đó Metal sẽ xây dựng khả năng tăng tốc cho bạn trên GPU.
+
+Bạn làm điều này bằng cách sử dụng bộ mã hóa lệnh cấu trúc tăng tốc.
+
+Bộ mã hóa này có một số phương pháp mà bạn có thể sử dụng để xây dựng và sửa đổi cấu trúc gia tốc.
+
+Trong trường hợp này, hãy gọi phương thức xây dựng với cấu trúc gia tốc đích, bộ mô tả và bộ đệm đầu.
+
+Metal sẽ xây dựng cấu trúc tăng tốc nguyên thủy cho hình học của bạn và nó sẽ có sẵn để sử dụng trong các lệnh GPU tiếp theo.
+
+Đó là cách bạn có thể thể hiện hình học trong cảnh của mình bằng cấu trúc gia tốc nguyên thủy.
+
+Để giúp bạn mở rộng quy mô thành các cảnh lớn hơn, Metal cũng hỗ trợ các cấu trúc tăng tốc phiên bản.
+
+Sẽ mất một lượng lớn bộ nhớ để lưu trữ một môi trường phức tạp, chi tiết như cảnh đảo Moana trong một cấu trúc gia tốc nguyên thủy duy nhất.
+
+Nhưng cảnh phức tạp này có cấu trúc lặp đi lặp lại trong hàng nghìn cây, hàng triệu lá và các vật thể khác, có thể được khai thác để hiển thị cảnh một cách hiệu quả.
+
+Tất cả các vật thể độc đáo trong khung cảnh, bao gồm núi, san hô và cây cối, có thể được thể hiện dưới dạng các cấu trúc gia tốc nguyên thủy.
+
+Chúng có thể được kết hợp thành một cấu trúc gia tốc ví dụ đại diện cho toàn bộ cảnh.
+
+Vì vậy, trong khi cấu trúc gia tốc nguyên thủy chứa hình học, cấu trúc gia tốc thể chứa các tham chiếu đến các cấu trúc gia tốc khác, được chuyển đổi sang các vị trí, kích thước và hướng khác nhau để tạo thành một cảnh đầy đủ.
+
+Mỗi trường hợp có một ma trận biến đổi để đặt cấu trúc gia tốc mà nó tham chiếu trong cảnh.
+
+Xây dựng một cấu trúc gia tốc thể tương tự như xây dựng một cấu trúc gia tốc nguyên thủy.
+
+Bạn sẽ bắt đầu bằng cách tạo một mô tả.
+
+Lần này, thay vì hình học, bạn cung cấp một bộ đệm chứa thông tin về từng trường hợp, như cấu trúc gia tốc mà nó tham chiếu và ma trận biến đổi đặt nó trong cảnh.
+
+Sau đó xây dựng cấu trúc tăng tốc trên GPU giống như cách bạn xây dựng cấu trúc tăng tốc nguyên thủy.
+
+Để tạo bộ mô tả, hãy xây dựng Bộ mô tả cấu trúc tăng tốc phiên bản MTL và đặt số lượng phiên bản mà nó sẽ chứa.
+
+Sau đó cung cấp một mảng các cấu trúc gia tốc nguyên thủy, có thể được tham chiếu bởi các phiên bản và chỉ định loại mô tả phiên bản nào sẽ được chứa trong bộ đệm phiên bản.
+
+Metal cung cấp một số loại mô tả phiên bản mà bạn có thể chọn, tùy thuộc vào trường hợp sử dụng của bạn.
+
+Bạn sẽ cấu hình các trường hợp trong cấu trúc tăng tốc trong hai bước.
+
+Đầu tiên, phân bổ một bộ đệm để lưu trữ dữ liệu mỗi phiên bản.
+
+Kích thước của bộ đệm này phụ thuộc vào số lượng phiên bản và kích thước của mỗi bộ mô tả phiên bản, nhưng nó được phân bổ giống như bất kỳ bộ đệm Metal nào khác.
+
+Khi bạn đã phân bổ bộ đệm, hãy gán nó cho bộ mô tả cấu trúc tăng tốc phiên bản.
+
+Tiếp theo, bạn sẽ điền vào bộ đệm phiên bản với thông tin về tất cả các phiên bản trong cấu trúc tăng tốc.
+
+Đối với mỗi trường hợp, hãy tạo một mô tả và chỉ định cấu trúc gia tốc mà trường hợp này đề cập đến.
+
+Bạn sẽ xác định cấu trúc tăng tốc với một chỉ mục vào mảng mà bạn đặt trên bộ mô tả cấu trúc tăng tốc phiên bản.
+
+Mỗi phiên bản cũng có một ma trận chuyển đổi, mặt nạ hiển thị và các thuộc tính khác tùy thuộc vào loại mô tả phiên bản bạn đang sử dụng.
+
+Bước cuối cùng là xây dựng cấu trúc gia tốc thực tế, đây là quá trình tương tự như đối với cấu trúc gia tốc nguyên thủy.
+
+Tất cả các bước trước khi xây dựng có thể chạy trên CPU.
+
+Nhưng nếu số lượng phiên bản lớn, quá trình điền vào bộ đệm phiên bản có thể trở nên chuyên sâu về tính toán.
+
+Vì các bộ mô tả phiên bản được lưu trữ trong bộ đệm Metal bình thường, bạn có thể tăng tốc bước này bằng cách điền vào các bộ mô tả này từ GPU.
+
+Đây là một cơ hội tuyệt vời để tăng tốc GPU, miễn là bạn biết cấu trúc tăng tốc của mình sẽ chứa bao nhiêu trường hợp trước khi bạn giao công việc cho GPU.
+
+Nhưng nếu bạn muốn làm điều gì đó như loại bỏ phiên bản, bạn sẽ phải loại bỏ các phiên bản trên CPU để bạn có thể đặt số lượng phiên bản cuối cùng trên bộ mô tả.
+
+Mới trong năm nay, bạn có thể điều khiển quá trình này trên GPU với bộ mô tả cấu trúc tăng tốc phiên bản gián tiếp mới.
+
+Với bộ mô tả gián tiếp này, bạn có thể loại bỏ các phiên bản, điền vào bộ đệm phiên bản và đặt số lượng phiên bản cuối cùng hoàn toàn trên GPU.
+
+Để thực hiện xây dựng cấu trúc tăng tốc dựa trên GPU, hãy tạo một mô tả cấu trúc tăng tốc phiên bản gián tiếp.
+
+Đặt số lượng phiên bản tối đa trên bộ mô tả và bộ đệm nơi bạn sẽ ghi số lượng phiên bản cuối cùng từ GPU.
+
+Sau đó, chỉ cần đặt bộ đệm mô tả phiên bản và bạn đã sẵn sàng bắt đầu định cấu hình các phiên bản trên GPU.
+
+Bạn sẽ sử dụng một loại mô tả khác trong bộ đệm phiên bản.
+
+Bộ mô tả phiên bản gián tiếp tương tự như bộ mô tả phiên bản trực tiếp, ngoại trừ việc bạn có thể xác định cấu trúc tăng tốc đang được phiên bản bằng cách chỉ cần gán nó cho bộ mô tả.
+
+Đó là cách bạn xây dựng một cấu trúc tăng tốc phiên bản.
+
+Cho đến nay, tôi đã nói về mô hình hai cấp độ của instancing.
+
+Trong mô hình này, một khu rừng trong khung cảnh đảo Moana bao gồm hàng nghìn trường hợp của các loại cây khác nhau.
+
+Nhưng nếu chúng ta đào sâu hơn, bản thân một cái cây là một thân cây có nhiều bản sao của cùng một chiếc lá.
+
+Bạn có thể tận dụng cấu trúc này bằng cách sử dụng tính năng tăng cường đa cấp mới.
+
+Với instancing đa cấp, một cấu trúc tăng tốc thể hiện có thể chứa không chỉ các cấu trúc tăng tốc nguyên thủy, mà còn các cấu trúc tăng tốc thể hiện khác.
+
+Ví dụ, trong cảnh này, một cây cọ có thể được biểu thị dưới dạng cấu trúc gia tốc thể hiện chứa thân cây và các trường hợp của lá, trong khi toàn cảnh có thể chứa các trường hợp của cây cọ.
+
+Khung cảnh đảo Moana là một ví dụ tuyệt vời về sức mạnh của việc nhập cảnh đa cấp.
+
+Khi sử dụng hai cấp độ instancing, thêm một loại cây vào một cảnh có thể có nghĩa là thêm hàng trăm hoặc thậm chí hàng nghìn bản sao của các bộ phận của cây.
+
+Nhưng với sự xâm nhập đa cấp, bạn có thể thêm các trường hợp của một cây phức tạp, được xác định với các trường hợp lặp lại của các bộ phận của nó.
+
+Điều này cứu hàng triệu trường hợp trên toàn cảnh đảo Moana.
+
+Nhưng sự xâm nhập đa cấp không chỉ dành cho những người kết xuất sản xuất.
+
+Nó cũng có giá trị cho các ứng dụng thời gian thực như trò chơi.
+
+Các trò chơi cũng sử dụng mô hình cấu trúc gia tốc hai cấp, xây dựng thế giới từ các trường hợp của các đối tượng trò chơi.
+
+Tuy nhiên, các trò chơi khác với các trình kết xuất sản xuất.
+
+Trình kết xuất sản xuất sử dụng hệ thống phân cấp sâu để sử dụng lại các đối tượng, nhưng trò chơi sử dụng danh sách dài các trường hợp cho các đối tượng trò chơi.
+
+Các trò chơi cũng xây dựng lại cấu trúc tăng tốc phiên bản của chúng cho mỗi khung cho nội dung động của chúng và số lượng phiên bản cao có nghĩa là rất nhiều thời gian GPU để xây dựng lại.
+
+Tuy nhiên trong một trò chơi, rất nhiều nội dung là tĩnh và không cần phải cập nhật mọi khung hình.
+
+Bạn có thể chia thế giới thành các cấu trúc gia tốc tĩnh và động để giới hạn các bản cập nhật cấu trúc gia tốc chỉ đối với nội dung thay đổi.
+
+Điều này có nghĩa là chỉ xây dựng lại nội dung động, thường ít hơn nhiều so với nội dung tĩnh.
+
+Khi áp dụng sự phân chia nội dung tĩnh và động này, điều quan trọng là phải cân bằng độ sâu của hệ thống phân cấp với chi phí bổ sung của việc đi qua tia.
+
+Trong một khung với việc xây dựng cấu trúc gia tốc và dò tia, sử dụng 3 cấp độ instancing cho phép bạn giảm thời gian xây dựng chỉ với tác động nhỏ đến thời gian theo dõi, tổng thể giảm thời gian khung hình.
+
+Instancing đa cấp là một công cụ tuyệt vời để giảm mức sử dụng bộ nhớ và tăng tốc độ xây dựng lại.
+
+Bạn cũng có những cách khác để tối ưu hóa các ứng dụng dò tia kim loại của mình.
+
+Một trong số đó là Xây dựng song song hóa.
+
+Một ứng dụng điển hình sẽ cần xây dựng hoặc cập nhật nhiều cấu trúc tăng tốc đại diện cho các cảnh khác nhau và các phần khác nhau của một cảnh.
+
+Bạn có thể giảm đáng kể thời gian khởi động của mình bằng cách chạy song song các bản dựng này.
+
+Bất cứ khi nào bạn có thể, hãy đảm bảo hàng loạt các bản dựng của bạn bằng cách mã hóa nhiều bản dựng vào cùng một bộ mã hóa lệnh để chúng có thể chạy song song.
+
+Bạn sẽ muốn song song hóa càng nhiều bản dựng càng tốt trong khi vẫn đảm bảo rằng bộ làm việc phù hợp với bộ nhớ.
+
+Cũng nên nhớ rằng sau khi cấu trúc gia tốc được xây dựng hoàn thành, bộ đệm vết xước không còn cần thiết nữa.
+
+Điều này có nghĩa là bạn có thể sử dụng lại bộ đệm đầu từ lô cấu trúc gia tốc được xây dựng sang lô tiếp theo.
+
+Đôi khi cách tốt nhất để giảm thời gian xây dựng lại các cấu trúc gia tốc là tránh xây dựng lại hoàn toàn.
+
+Đây là nơi trang bị lại cấu trúc gia tốc xuất hiện.
+
+Khi Metal xây dựng một cấu trúc gia tốc, nó nhóm các nguyên thủy gần đó thành một hệ thống phân cấp các hộp.
+
+Nếu nguyên thủy của bạn di chuyển, những hộp đó không còn đại diện chính xác cho cảnh và cấu trúc gia tốc cần được cập nhật.
+
+Nhưng nếu hình học chỉ thay đổi một chút, thì hệ thống phân cấp vẫn có thể hợp lý.
+
+Thay vì xây dựng một cấu trúc gia tốc mới từ đầu, Metal có thể trang bị lại cấu trúc gia tốc hiện có để phản ánh các vị trí mới của nguyên thủy trong hình học của bạn.
+
+Điều này rẻ hơn so với việc xây dựng lại cấu trúc gia tốc từ đầu.
+
+Việc trang bị lại yêu cầu một bộ đệm cào giống như một hoạt động xây dựng.
+
+Kích thước của bộ đệm cào trang bị lại nằm trong cùng một cấu trúc mà bạn đã sử dụng trước đó để phân bổ cấu trúc gia tốc.
+
+Thao tác tái trang bị chạy trên GPU và được mã hóa bằng bộ mã hóa lệnh cấu trúc tăng tốc.
+
+Việc tái trang bị có thể hoạt động tại chỗ hoặc vào một cấu trúc gia tốc khác.
+
+Cuối cùng, nén là một cách tuyệt vời để giảm kích thước cấu trúc gia tốc của bạn trong bộ nhớ.
+
+Khi bạn lần đầu tiên xây dựng một cấu trúc gia tốc, Metal không thể biết chính xác nó cần bao nhiêu bộ nhớ, vì vậy nó phải đưa ra một ước tính thận trọng.
+
+Khi bạn đã xây dựng cấu trúc gia tốc, Metal có thể tính toán kích thước tối thiểu cần thiết để biểu diễn nó.
+
+Với nén, bạn có thể phân bổ một cấu trúc tăng tốc mới với kích thước tối thiểu, và sau đó sử dụng GPU để sao chép từ cấu trúc tăng tốc hiện tại sang cấu trúc mới.
+
+Điều này đặc biệt có giá trị đối với các cấu trúc gia tốc nguyên thủy.
+
+Để sử dụng nén, hãy mã hóa một lệnh để tính toán kích thước nén của cấu trúc tăng tốc của bạn trên GPU.
+
+Khi bạn thực hiện lệnh, Metal sẽ ghi kích thước nén vào bộ đệm mà bạn cung cấp.
+
+Khi bạn đã đọc kích thước nén, bạn có thể phân bổ cấu trúc gia tốc mới với kích thước đó và sau đó mã hóa hoạt động "sao chép và nén" từ cấu trúc gia tốc cũ sang cấu trúc gia tốc mới.
+
+Sau khi bộ đệm lệnh này hoàn tất, bạn có thể giải phóng cấu trúc tăng tốc ban đầu.
+
+Để tìm hiểu thêm về việc tối ưu hóa các ứng dụng theo dõi tia kim loại của bạn, hãy xem phiên "Tối đa hóa hiệu suất truy tìm tia kim loại của bạn" năm 2022.
+
+Trong phần này, tôi đã thảo luận về cách thiết lập instancing, tận dụng tính năng instancing đa cấp mới và xử lý instancing trên quy mô lớn.
+
+Bây giờ là lúc để giao nhau với các tia sáng với cảnh.
+
+Trong Metal, bạn giao các tia trong một hàm GPU thực thi như một phần của lệnh.
+
+Trên Apple Silicon, bạn có thể giao các tia trong cả lệnh tính toán và kết xuất, và trên AMD và Intel, bạn có thể giao các tia trong các lệnh tính toán.
+
+Để sẵn sàng giao nhau với các tia, hãy liên kết cấu trúc gia tốc của bạn trên bộ mã hóa lệnh.
+
+Bây giờ bạn có thể giao các tia với cấu trúc tăng tốc này trong chức năng GPU của mình.
+
+Khai báo hàm với tham số cấu trúc gia tốc và tạo một đối tượng liên ngành.
+
+Bạn có thể thiết lập các thuộc tính trên liên ngành này để định cấu hình giao lộ tia để có hiệu suất tốt nhất.
+
+Để giao một tia với cảnh của bạn, chỉ cần tạo một tia và gọi phương thức giao nhau trên đối tượng liên ngành, truyền tia và cấu trúc gia tốc làm tham số.
+
+Điều này trả về mọi thứ bạn cần biết về giao điểm, như loại nguyên thủy mà tia giao nhau, khoảng cách đến giao điểm, ID của giao điểm nguyên thủy và hơn thế nữa.
+
+Để có thêm thông tin về điểm giao nhau tam giác, hãy thêm thẻ "dữ liệu tam giác" vào các loại liên ngành và "kết quả giao điểm".
+
+Điều này làm cho tọa độ barycentric tam giác có sẵn trong kết quả giao nhau.
+
+Điều đó bao gồm các tia giao nhau với cấu trúc gia tốc nguyên thủy.
+
+Các tia giao nhau với cấu trúc gia tốc thể hiện rất giống nhau.
+
+Liên kết cấu trúc tăng tốc phiên bản của bạn giống như cách bạn liên kết cấu trúc tăng tốc nguyên thủy và đảm bảo gọi useResource hoặc useHeap để làm cho các cấu trúc tăng tốc được tham chiếu trong cấu trúc tăng tốc phiên bản của bạn có sẵn trên GPU.
+
+Bạn chỉ cần thực hiện một vài thay đổi đối với chức năng GPU của mình để giao với các tia với cấu trúc tăng tốc phiên bản.
+
+Đầu tiên thêm thẻ instancing vào loại cấu trúc gia tốc.
+
+Sau đó thêm các thẻ instancing và "max levels" vào intersector của bạn và "intersection result".
+
+Thẻ "mức tối đa" chỉ định số lượng cấp độ tăng tốc trong cấu trúc tăng tốc của bạn.
+
+Ví dụ, cấu trúc gia tốc đại diện cho cảnh đảo Moana là cấu trúc gia tốc ba cấp.
+
+Cấp độ đầu tiên là cấu trúc gia tốc thể hiện chứa toàn bộ cảnh.
+
+Tầng thứ hai có các trường hợp san hô, cây cối và địa hình.
+
+Tầng thứ ba có các trường hợp của các bộ phận của cây, như lá, hoa và thân cây.
+
+Khi một tia giao nhau với cảnh này, nó không chỉ giao với một nguyên thủy, mà còn cả các trường hợp có chứa nguyên thủy.
+
+Nếu một tia giao với một chiếc lá của cây này, nó cũng giao với một phiên bản của cây và một phiên bản của chiếc lá trong cây.
+
+Metal theo dõi điều này cho bạn bằng cách ghi lại ID của từng trường hợp giao nhau.
+
+Trong trường hợp này, trường hợp giao nhau đầu tiên là cây có ID là 6 và trường hợp giao nhau thứ hai là lá có ID là 1.
+
+Tia cũng có thể giao nhau chỉ một trường hợp.
+
+Ví dụ, nếu tia giao với địa hình, thì Metal sẽ chỉ ghi lại ID của trường hợp địa hình.
+
+Bạn có thể tìm thấy số lượng các trường hợp được giao nhau và ID của các trường hợp giao nhau trong kết quả giao nhau.
+
+Đó là cách bạn có thể giao các tia với các cấu trúc gia tốc nguyên thủy và các cấu trúc gia tốc ví dụ.
+
+Có một vài điều cần ghi nhớ khi sử dụng đường cong nguyên thủy.
+
+Theo mặc định, Metal giả định bạn không sử dụng đường cong nguyên thủy khi bạn thực hiện giao điểm tia.
+
+Bạn có thể nói với Metal rằng bạn đang sử dụng các đường cong bằng cách đặt loại hình học trên đối tượng liên ngành.
+
+Khi bạn đã thiết lập loại hình học, bạn đã sẵn sàng giao nhau với các đường cong.
+
+Như trước đây, hãy tìm thông tin về giao lộ trên kết quả giao lộ.
+
+Nếu bạn sử dụng thẻ "dữ liệu đường cong", thì kết quả giao nhau cũng chứa tham số đường cong.
+
+Đây là giá trị bạn có thể cắm vào hàm cơ sở của đường cong để tính điểm dọc theo đường cong nơi nó giao với tia.
+
+Các chức năng này được triển khai cho bạn trong Ngôn ngữ tạo bóng kim loại.
+
+Bạn có thể tìm hiểu thêm trong đặc tả Ngôn ngữ Tạo bóng Kim loại.
+
+Trong nhiều ứng dụng, hình học đường cong được biểu diễn chỉ bằng một loại đường cong.
+
+Ví dụ, tất cả các đường cong trong cảnh của bạn có thể được biểu thị dưới dạng các đường cong bezier hình khối, với các tiết diện tròn.
+
+Trong trường hợp này, bạn có thể cho Metal biết cảnh của bạn sử dụng loại đường cong nào bằng cách đặt các thuộc tính của đường cong của bạn trên đối tượng liên ngành.
+
+Điều này cho phép bạn có được hiệu suất tốt nhất khi sử dụng các nguyên thủy đường cong.
+
+Đó là cách bạn có thể giao nhau với các tia sáng với cảnh của mình.
+
+Và bạn có thể sử dụng Xcode để gỡ lỗi và lập hồ sơ khối lượng công việc dò tia của mình.
+
+Một trong những công cụ theo ý của bạn khi xử lý các vấn đề khó gỡ lỗi là Xác thực Shader.
+
+Nó thực hiện kiểm tra thời gian chạy trong bộ đổ bóng của bạn và phát hiện các vấn đề có thể dẫn đến sự cố hoặc hỏng hóc.
+
+Shader Validation hiện bao gồm tất cả Metal API, bao gồm các tính năng dò tia mới nhất.
+
+Ngoài ra, Shader Validation đã giảm đáng kể tác động đến thời gian biên dịch shader.
+
+Điều này cực kỳ hữu ích khi bạn đang làm việc với các bộ đổ bóng dài và phức tạp, giống như những bộ đổ bóng thường thấy trong các ứng dụng dò tia.
+
+Một công cụ khác có thể giúp bạn là trình xem Cấu trúc Tăng tốc hiện đại.
+
+Nó cho phép bạn kiểm tra hiện trường mà bạn sử dụng để kiểm tra giao lộ.
+
+Khi tôi mở trình xem Cấu trúc gia tốc, tôi nhận được một phác thảo ở bên trái để điều hướng các khối xây dựng riêng lẻ trong cấu trúc gia tốc xuống các nguyên thủy hình học.
+
+Ở đây, nó liệt kê các hình tam giác riêng lẻ tạo nên hình học tam giác.
+
+Ở bên phải, tôi có một khung nhìn, nơi tôi có thể kiểm tra cấu trúc gia tốc ở các chế độ tô sáng khác nhau.
+
+Ví dụ, chế độ tô sáng "Axis-Aligned Bounding Box Traversals" có thể hình dung các khu vực có mức độ đi sâu hơn, tương ứng với thử nghiệm giao lộ đắt tiền hơn.
+
+Khi tôi di chuyển con trỏ qua cảnh, thanh tra viên cập nhật số lượng giao lộ mà một tia sẽ va vào theo hướng nhọn.
+
+Một ví dụ khác là chế độ tô sáng Cấu trúc Tăng tốc.
+
+Điều này hình dung các cấu trúc gia tốc với các màu sắc khác nhau.
+
+Trình xem Cấu trúc Gia tốc hỗ trợ tính năng tăng tốc đa cấp mới và hình học đường cong.
+
+Khi tôi di chuyển máy ảnh trong khung nhìn, tôi có thể tìm thấy các cấu trúc gia tốc ví dụ cho một số cây và đường cong cho một số tán lá.
+
+Để xác định cấu trúc gia tốc, tôi có thể nhấp vào khung nhìn để hiển thị nó trong phác thảo.
+
+Bây giờ, hãy xem xét kỹ hơn cấu trúc gia tốc của những chiếc lá cọ này.
+
+Trong cấu trúc gia tốc này, lá cọ bao gồm các đường cong.
+
+Tôi có thể thay đổi khung nhìn sang chế độ tô sáng Nguyên thủy để hình dung các phân đoạn đường cong.
+
+Để kiểm tra tốt hơn các đoạn đường cong, tôi sẽ phóng to một chút.
+
+Tương tự như chọn cấu trúc gia tốc trong cảnh trước đó, ở đây, tôi có thể nhấp để chọn từng phân đoạn.
+
+Một công cụ hữu ích khác theo ý của bạn khi kiểm tra khối lượng công việc dò tia là Trình gỡ lỗi Shader.
+
+Điều này có thể giúp bạn khắc phục sự cố trong mã đổ bóng của bạn.
+
+Ở đây, tôi đang ở một công văn tính toán thực hiện kiểm tra giao lộ trong bộ đổ bóng.
+
+Để bắt đầu gỡ lỗi bộ đổ bóng của mình, tôi có thể chọn nút Gỡ lỗi Bộ đổ bóng, chọn một chủ đề trong cửa sổ bật lên và sau đó nhấp vào nút Gỡ lỗi.
+
+Sau khi thu thập dữ liệu xong, tôi có thể kiểm tra giá trị cho từng biến tại bất kỳ thời điểm nào trong quá trình thực thi đổ bóng.
+
+Hãy xem xét kỹ hơn giá trị cho ID nguyên thủy.
+
+Để cung cấp thêm ngữ cảnh gỡ lỗi, Shader Debugger cũng cung cấp cho tôi dữ liệu từ các luồng lân cận.
+
+Ở đây, tôi có thể di con trỏ qua chế độ xem giá trị để kiểm tra các ID nguyên thủy từ cùng một nhóm luồng.
+
+Hiệu suất là một khía cạnh quan trọng khác của bất kỳ ứng dụng nào.
+
+Dòng thời gian Hồ sơ cung cấp tổng quan về hiệu suất khối lượng công việc theo dõi tia, cho phép bạn kiểm tra và tương quan các chỉ số hiệu suất khác nhau song song.
+
+Ngoài ra, tôi có thể thay đổi trình điều hướng Gỡ lỗi để xem tất cả các trạng thái đường ống trong khối lượng công việc.
+
+Và với dữ liệu hồ sơ đổ bóng, trình điều hướng liệt kê các trạng thái đường ống đắt nhất ở trên cùng.
+
+Mở rộng hơn nữa trạng thái đường ống cho thấy mã đổ bóng.
+
+Sau khi mở bộ đổ bóng, tôi có thể nhận được thông tin chi tiết về hồ sơ đổ bóng trên mỗi dòng về vị trí và cách mỗi bộ đổ bóng riêng lẻ sử dụng thời gian thực hiện.
+
+Khi tôi di chuyển con trỏ qua biểu đồ hình tròn trong thanh bên, nó sẽ hiển thị một cửa sổ bật lên với phân tích chi tiết hơn về chi phí tại dòng mã đó.
+
+Những công cụ này hỗ trợ tất cả các tính năng dò tia mới của Metal và có thể cung cấp các công cụ hỗ trợ gỡ lỗi và lập hồ sơ tuyệt vời khi bạn đang làm việc trên các ứng dụng Metal của mình.
+
+Truy tìm tia kim loại cũng hỗ trợ nhiều tính năng khác như: Chuyển động nguyên thủy và phiên bản để tạo hiệu ứng động cho các cảnh trong trình kết xuất sản xuất, các chức năng giao nhau tùy chỉnh, để tùy chỉnh giao điểm tia với các cải tiến như kiểm tra alpha và truy vấn giao điểm, cho tính di động từ các API dựa trên truy vấn.
+
+Metal Ray Tracing API, Ngôn ngữ và Công cụ hỗ trợ các ứng dụng kết xuất thời gian thực như trò chơi và trình kết xuất sản xuất.
+
+Bạn có thể sử dụng Metal Ray Tracing API mới nhất để xây dựng các cảnh của mình bằng cách sử dụng các cấu trúc gia tốc nguyên thủy, bao gồm cả hình học như các đường cong.
+
+Instancing và đặc biệt là tính năng instancing đa cấp mới cho phép bạn mở rộng quy mô thành các cảnh lớn hơn, phức tạp hơn.
+
+Các chức năng GPU của bạn có thể gọi trực tiếp Metal Ray Tracing APIs.
+
+Và cuối cùng, Xcode có thể giúp bạn gỡ lỗi và lập hồ sơ ứng dụng của mình.
+
+Hãy chắc chắn kiểm tra các cuộc nói chuyện dò tia trước đây, nơi chúng tôi đã đề cập đến nhiều chủ đề này chi tiết hơn, cũng như mã mẫu và tài liệu của chúng tôi.
+
+Cảm ơn vì đã xem.
+
+♪ ♪

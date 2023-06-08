@@ -1,0 +1,803 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:16.000
+Cyndy: Xin chào, tôi là Cyndy, và tôi là một kỹ sư biên dịch trong Nhóm Ngôn ngữ và Thời gian chạy.
+
+00:00:16.000 --> 00:00:19.000
+Trong phiên này, chúng ta sẽ gặp gỡ các Thư viện Hợp nhất.
+
+00:00:19.000 --> 00:00:25.000
+Đây là một mô hình mới để xây dựng và phân phối các thư viện được cung cấp bởi trình liên kết tĩnh.
+
+00:00:25.000 --> 00:00:32.000
+Tôi sẽ chia sẻ cách các thư viện có thể hợp nhất hoạt động để làm cho các ứng dụng của bạn được xây dựng và chạy nhanh hơn.
+
+00:00:32.000 --> 00:00:38.000
+Sau đó, tôi sẽ trình bày cách kích hoạt các thư viện có thể hợp nhất trong Xcode 15.
+
+00:00:38.000 --> 00:00:45.000
+Và cuối cùng, tôi sẽ đề cập đến những cân nhắc và những gì chúng tôi đề xuất khi sử dụng các thư viện có thể hợp nhất.
+
+00:00:45.000 --> 00:00:51.000
+Trước khi chúng ta đi sâu vào, tôi sẽ cung cấp một cái nhìn tổng quan ngắn gọn về các thư viện tĩnh và động.
+
+00:00:51.000 --> 00:00:55.000
+Điều này sẽ làm nổi bật những lợi ích của những cái có thể hợp nhất.
+
+00:00:55.000 --> 00:00:59.000
+Thư viện tĩnh là một tập hợp các tệp đối tượng.
+
+00:00:59.000 --> 00:01:10.000
+Tại thời điểm xây dựng, trình liên kết tĩnh tìm API nào sẽ sử dụng từ các thư viện đó và sao chép mã đó vào ứng dụng nhị phân.
+
+00:01:10.000 --> 00:01:15.000
+Và vì nó được sao chép, thư viện không cần thiết sau khi xây dựng.
+
+00:01:15.000 --> 00:01:22.000
+Nếu mã trong thư viện tĩnh thay đổi hoặc nếu nhiều thư viện hơn được sử dụng, nó sẽ giới thiệu thời gian xây dựng chậm lại.
+
+00:01:22.000 --> 00:01:30.000
+Đây là kết quả của cách chúng được lưu trữ và liên kết vào các ứng dụng, điều này làm cho việc xây dựng lặp đi lặp lại và gỡ lỗi chậm hơn.
+
+00:01:30.000 --> 00:01:35.000
+Thay vào đó, các thư viện động có thể được sử dụng để ngăn chặn điều này.
+
+00:01:35.000 --> 00:01:39.000
+Các thư viện động thường được gọi là dylibs.
+
+00:01:39.000 --> 00:01:44.000
+Chúng là loại tệp nhị phân cho các mục tiêu khung trong Xcode.
+
+00:01:44.000 --> 00:01:48.000
+Mã từ các khuôn khổ không được sao chép vào các tệp thực thi.
+
+00:01:48.000 --> 00:01:56.000
+Thay vào đó, trình liên kết tĩnh ghi lại đường dẫn đã cài đặt của thư viện vào tệp nhị phân ứng dụng để sử dụng.
+
+00:01:56.000 --> 00:02:02.000
+Bất kỳ khuôn khổ nào không có trong Apple SDK phải được nhúng vào gói ứng dụng.
+
+00:02:02.000 --> 00:02:10.000
+Sự khác biệt chính là khi các thư viện động được thêm hoặc cập nhật, trình liên kết tĩnh không cần sao chép mã.
+
+00:02:10.000 --> 00:02:13.000
+Điều này dẫn đến việc xây dựng nhanh hơn.
+
+00:02:13.000 --> 00:02:18.000
+Tuy nhiên, nó làm tăng thêm sự phức tạp khi các ứng dụng được sử dụng trong thời gian chạy.
+
+00:02:18.000 --> 00:02:22.000
+Đây là nơi cần một trình liên kết động.
+
+00:02:22.000 --> 00:02:29.000
+Khi một ứng dụng được khởi chạy, trình liên kết động có tên dyld phải tìm và tải các phụ thuộc khung.
+
+00:02:29.000 --> 00:02:34.000
+Điều này bao gồm các thư viện mà các khuôn khổ đó phụ thuộc vào.
+
+00:02:34.000 --> 00:02:42.000
+Khi được sử dụng nhiều hơn, điều này dẫn đến sự gia tăng ổn định về mức tiêu thụ bộ nhớ và thời gian khởi chạy ứng dụng.
+
+00:02:42.000 --> 00:02:49.000
+Và khi bạn tính đến sự phụ thuộc từ Apple SDK, các ứng dụng thường có thể tải hàng trăm khuôn khổ.
+
+00:02:49.000 --> 00:02:55.000
+Các nền tảng của chúng tôi đã tối ưu hóa rất nhiều thư viện hệ thống để giải thích cho điều này.
+
+00:02:55.000 --> 00:02:59.000
+Nhưng điều này không áp dụng cho các khuôn khổ được nhúng trong các ứng dụng.
+
+00:02:59.000 --> 00:03:07.000
+Vì vậy, tóm lại, có một số sự cân bằng khi quyết định giữa việc sử dụng thư viện tĩnh và động.
+
+00:03:07.000 --> 00:03:19.000
+Trong khi các thư viện động có ít tác động đến thời gian xây dựng nhưng hậu quả đáng chú ý về thời gian khởi chạy, các thư viện tĩnh cung cấp tác động thời gian khởi chạy tối thiểu nhưng tốn kém về thời gian xây dựng.
+
+00:03:19.000 --> 00:03:25.000
+Do đó, trong lịch sử chúng tôi đã khuyến nghị đo lường những gì tốt nhất cho ứng dụng của bạn.
+
+00:03:25.000 --> 00:03:30.000
+Với các thư viện có thể hợp nhất, điều này không còn cần thiết nữa.
+
+00:03:30.000 --> 00:03:35.000
+Các thư viện có thể hợp nhất mở khóa tốt nhất của cả hai chiến lược liên kết.
+
+00:03:35.000 --> 00:03:42.000
+Tôi sẽ mô tả cách các thư viện có thể hợp nhất có thể tối ưu hóa cho hiệu suất và sự phát triển.
+
+00:03:42.000 --> 00:03:47.000
+Xem xét bất kỳ hình ảnh nhị phân nào, như một hình ảnh thực thi.
+
+00:03:47.000 --> 00:03:51.000
+Các khuôn khổ mà nhị phân này phụ thuộc vào được trao cho trình liên kết tĩnh.
+
+00:03:51.000 --> 00:03:55.000
+Những phụ thuộc này có thể trở thành thư viện có thể hợp nhất.
+
+00:03:55.000 --> 00:04:00.000
+Và đầu ra được liên kết có thể trở thành nhị phân được hợp nhất.
+
+00:04:00.000 --> 00:04:03.000
+Nhưng điều gì làm cho những phụ thuộc này có thể hợp nhất được?
+
+00:04:03.000 --> 00:04:06.000
+Điều này có thể được giải thích bằng cách chúng được xây dựng.
+
+00:04:06.000 --> 00:04:10.000
+Bất kỳ thư viện động nào cũng có thể được xây dựng dưới dạng có thể hợp nhất.
+
+00:04:10.000 --> 00:04:16.000
+Khi trình liên kết tĩnh tạo thư viện, nó cũng tạo siêu dữ liệu.
+
+00:04:16.000 --> 00:04:21.000
+Siêu dữ liệu nằm trong hệ nhị phân, tăng kích thước tổng thể của nó.
+
+00:04:21.000 --> 00:04:29.000
+Nó cho phép trình liên kết xử lý thư viện tương tự như thư viện tĩnh khi nó được sử dụng như một phụ thuộc liên kết.
+
+00:04:29.000 --> 00:04:37.000
+Với siêu dữ liệu, người dùng thư viện có thể chọn liên kết tĩnh như các thư viện động bình thường hoặc hợp nhất chúng.
+
+00:04:37.000 --> 00:04:46.000
+Đầu ra nhị phân được hợp nhất có thể là một tệp thực thi, như một ứng dụng hoặc một thư viện động khác, như một khuôn khổ.
+
+00:04:46.000 --> 00:04:50.000
+Hợp nhất có thể so sánh với cách các thư viện tĩnh được liên kết.
+
+00:04:50.000 --> 00:04:55.000
+Cuối cùng, bạn chỉ còn lại một tệp nhị phân chứa các phân đoạn của thư viện.
+
+00:04:55.000 --> 00:04:59.000
+Và nhị phân đầu ra đó vẫn giữ nguyên loại tệp.
+
+00:04:59.000 --> 00:05:03.000
+Hợp nhất là thương hiệu mới trong Xcode 15.
+
+00:05:03.000 --> 00:05:07.000
+Trình liên kết tĩnh mới được triển khai là thứ cho phép điều này.
+
+00:05:07.000 --> 00:05:10.000
+Nó hoạt động bằng cách sử dụng các tùy chọn liên kết mới.
+
+00:05:10.000 --> 00:05:15.000
+Đầu tiên, các thư viện để hợp nhất được xây dựng với tùy chọn -make_mergeable.
+
+00:05:15.000 --> 00:05:19.000
+Điều này yêu cầu trình liên kết ghi lại siêu dữ liệu.
+
+00:05:19.000 --> 00:05:30.000
+Tiếp theo, đối với nhị phân được hợp nhất, trình liên kết sử dụng siêu dữ liệu đó cùng với các thư viện để tạo ra đầu ra cuối cùng với tùy chọn -merge_library hoặc -merge_framework.
+
+00:05:30.000 --> 00:05:33.000
+Xcode xử lý những chi tiết này cho bạn.
+
+00:05:33.000 --> 00:05:38.000
+Tuy nhiên, bạn có thể thấy các tùy chọn này đang được áp dụng khi kiểm tra nhật ký xây dựng của mình.
+
+00:05:38.000 --> 00:05:42.000
+Nhưng làm thế nào để hợp nhất tốt hơn là chỉ liên kết?
+
+00:05:42.000 --> 00:05:46.000
+Chà, hãy xem xét kích thước sau khi hợp nhất.
+
+00:05:46.000 --> 00:05:52.000
+Đầu tiên, các thư viện và siêu dữ liệu của chúng không cần thiết và có thể bị xóa sau khi chúng được hợp nhất.
+
+00:05:52.000 --> 00:05:57.000
+Vì vậy, trọng tâm duy nhất là kích thước của hệ nhị phân được hợp nhất.
+
+00:05:57.000 --> 00:06:02.000
+Khi hợp nhất, trình liên kết có thể khử trùng lặp nội dung, chẳng hạn như chuỗi, trên tất cả các thư viện.
+
+00:06:02.000 --> 00:06:10.000
+Ví dụ, nó loại bỏ các tham chiếu biểu tượng dư thừa, bộ chọn Objective-C và cuống objc_msgsend.
+
+00:06:10.000 --> 00:06:14.000
+Điều này dẫn đến một gói ứng dụng tổng thể nhỏ hơn.
+
+00:06:14.000 --> 00:06:18.000
+Loại hình ảnh của nhị phân cuối cùng cũng vẫn giữ nguyên.
+
+00:06:18.000 --> 00:06:24.000
+Điều đó có nghĩa là bất kỳ tối ưu hóa trình liên kết nào đã được hỗ trợ đều có thể được áp dụng.
+
+00:06:24.000 --> 00:06:28.000
+Điều này cũng có tác động tích cực đến việc khởi chạy ứng dụng.
+
+00:06:28.000 --> 00:06:39.000
+Khi tải ít khung hơn, nó sẽ làm giảm khả năng làm việc và hạt nhân cần làm khi khởi chạy ứng dụng của bạn và nó làm giảm mức sử dụng bộ nhớ, khiến người dùng của bạn hài lòng.
+
+00:06:39.000 --> 00:06:46.000
+Nhưng chúng tôi biết việc tách mã thành các thư viện là rất quan trọng để phát triển và bảo trì hiệu quả.
+
+00:06:46.000 --> 00:06:50.000
+Với các thư viện có thể hợp nhất, bạn có thể có cả hai.
+
+00:06:50.000 --> 00:06:55.000
+Các thư viện có thể hợp nhất làm cho điều này trở nên khả thi với các thay đổi cấu hình và mã tối thiểu.
+
+00:06:55.000 --> 00:06:59.000
+Và điều này có quy mô độc đáo khi bạn áp dụng các khuôn khổ mới hơn.
+
+00:06:59.000 --> 00:07:04.000
+Hãy xem lại sơ đồ trước đó về liên kết động.
+
+00:07:04.000 --> 00:07:11.000
+Tất cả các khung nhúng này có thể trở nên hợp nhất vì trình liên kết có thể tạo siêu dữ liệu cho chúng.
+
+00:07:11.000 --> 00:07:15.000
+Chúng ta có thể tạo ra một khuôn khổ hợp nhất nội dung của các thư viện khác.
+
+00:07:15.000 --> 00:07:19.000
+Vì vậy, bạn kết thúc chỉ với một khuôn khổ để nhúng.
+
+00:07:19.000 --> 00:07:26.000
+Dyld chỉ cần tải một thư viện chứa tất cả các phân đoạn trên các khung được nhúng.
+
+00:07:26.000 --> 00:07:31.000
+Hợp nhất, theo cách này, có thể đơn giản hóa rất nhiều chuỗi phụ thuộc lớn.
+
+00:07:31.000 --> 00:07:35.000
+Đó là những gì các thư viện có thể hợp nhất có thể đạt được.
+
+00:07:35.000 --> 00:07:37.000
+Hãy nói về cách kích hoạt chúng.
+
+00:07:37.000 --> 00:07:41.000
+Có hai cách để cho phép hợp nhất thư viện trong Xcode.
+
+00:07:41.000 --> 00:07:44.000
+Tôi sẽ bắt đầu với cách hợp nhất đơn giản nhất, tự động.
+
+00:07:44.000 --> 00:07:50.000
+Sau đó, tôi sẽ hợp nhất thủ công bất cứ khi nào bạn muốn kiểm soát những gì có thể hợp nhất được.
+
+00:07:50.000 --> 00:07:57.000
+Tôi sẽ mô tả cách các thư viện có thể hợp nhất có thể cung cấp thời gian xây dựng tối ưu khi ở chế độ gỡ lỗi.
+
+00:07:57.000 --> 00:08:04.000
+Và sau đó, tôi sẽ chia sẻ những gì mong đợi khi bạn cần gỡ lỗi và tượng trưng hóa các thư viện có thể hợp nhất của mình.
+
+00:08:04.000 --> 00:08:12.000
+Tự động hợp nhất thông báo cho hệ thống xây dựng để hợp nhất tất cả các phụ thuộc trực tiếp là các mục tiêu khung được nhúng.
+
+00:08:12.000 --> 00:08:15.000
+Nó đặc biệt hữu ích trên các mục tiêu ứng dụng.
+
+00:08:15.000 --> 00:08:17.000
+Tôi sẽ chỉ cho bạn.
+
+00:08:17.000 --> 00:08:22.000
+Tôi đang sử dụng Swift và C++ Forest Project làm ví dụ.
+
+00:08:22.000 --> 00:08:27.000
+Có một mục tiêu ứng dụng liên kết với bốn khuôn khổ.
+
+00:08:27.000 --> 00:08:31.000
+Có SwiftUI, đến từ Apple SDK.
+
+00:08:31.000 --> 00:08:37.000
+Ba cái còn lại, ForestBuilder, ForestUI, và Forest, được xây dựng trong dự án.
+
+00:08:37.000 --> 00:08:42.000
+Khi tự động hợp nhất được kích hoạt, ba khung rừng sẽ trở nên hợp nhất.
+
+00:08:42.000 --> 00:08:47.000
+SwiftUI vẫn nguyên như vậy vì nó là một thư viện hệ thống.
+
+00:08:47.000 --> 00:08:53.000
+Trong khi liên kết ứng dụng, các khung này sẽ được hợp nhất trực tiếp vào ứng dụng nhị phân.
+
+00:08:53.000 --> 00:08:59.000
+Điều đó có nghĩa là các khung này sẽ không cần thiết khi khởi chạy và có thể bị xóa khỏi đĩa.
+
+00:08:59.000 --> 00:09:02.000
+Hãy xem cách bật cái này trong Xcode.
+
+00:09:02.000 --> 00:09:09.000
+Bên trong dự án, tôi đã nhấp vào mục tiêu ứng dụng Swift và C++ và tôi đang ở trong tab cài đặt xây dựng.
+
+00:09:09.000 --> 00:09:13.000
+Tôi cần cập nhật cài đặt xây dựng MERGED_BINARY_TYPE.
+
+00:09:13.000 --> 00:09:19.000
+Tôi có thể sử dụng hộp văn bản lọc để tìm kiếm nó.
+
+00:09:19.000 --> 00:09:23.000
+"Tạo nhị phân hợp nhất" chính xác là những gì tôi muốn cập nhật.
+
+00:09:23.000 --> 00:09:28.000
+Đó là tùy chọn được ánh xạ đến cài đặt MERGED_BINARY_TYPE.
+
+00:09:28.000 --> 00:09:32.000
+Tôi sẽ nhấp vào cài đặt và cập nhật giá trị của nó thành Tự động.
+
+00:09:32.000 --> 00:09:36.000
+Và thế là xong!
+
+00:09:36.000 --> 00:09:40.000
+Cài đặt thư viện có thể hợp nhất nằm trong các tùy chọn Liên kết Chung.
+
+00:09:40.000 --> 00:09:47.000
+Chúng được hiển thị thuận tiện trong phần riêng của chúng có tên là "Liên kết - Thư viện có thể hợp nhất".
+
+00:09:47.000 --> 00:09:54.000
+Khi một ứng dụng được bật để hợp nhất thư viện, các phân đoạn của thư viện được liên kết trực tiếp vào tệp nhị phân ứng dụng.
+
+00:09:54.000 --> 00:09:59.000
+Điều này dẫn đến hiệu suất tương tự như các thư viện tĩnh.
+
+00:09:59.000 --> 00:10:04.000
+Nhưng việc xuất khẩu các thư viện có thể hợp nhất được giữ nguyên trong ứng dụng.
+
+00:10:04.000 --> 00:10:11.000
+Các ứng dụng thường không thể áp dụng xuất các biểu tượng và nó ảnh hưởng tiêu cực đến kích thước và thời gian xây dựng.
+
+00:10:11.000 --> 00:10:16.000
+Để ngăn chặn điều này, hãy sử dụng tùy chọn liên kết -no_exported_symbols.
+
+00:10:16.000 --> 00:10:24.000
+Điều này có thể được áp dụng trong Xcode bằng cách cập nhật các Cờ liên kết khác với "-Wl, -no_exported_symbols."
+
+00:10:24.000 --> 00:10:31.000
+Nếu ứng dụng của bạn cần các điểm vào cho các tiện ích mở rộng ứng dụng, hãy sử dụng danh sách xuất liệt kê các biểu tượng đó để kiểm soát chặt chẽ điều này.
+
+00:10:31.000 --> 00:10:37.000
+Điều này có thể được đặt dưới cùng một tùy chọn Liên kết Chung bằng cách sử dụng Tệp Biểu tượng Đã xuất.
+
+00:10:37.000 --> 00:10:44.000
+Điều này cho phép trình liên kết tĩnh hiệu quả nhất để tối ưu hóa kích thước như tước mã chết.
+
+00:10:44.000 --> 00:10:52.000
+Đó là sự hợp nhất tự động, nhưng có thể có những lúc chỉ một số khung của bạn nên được hợp nhất với nhau.
+
+00:10:52.000 --> 00:10:56.000
+Xcode hỗ trợ điều này thông qua Hợp nhất thủ công.
+
+00:10:56.000 --> 00:11:02.000
+Hợp nhất thủ công là một cách tiếp cận chi tiết để chỉ định các thư viện để hợp nhất.
+
+00:11:02.000 --> 00:11:06.000
+Điều này rất hữu ích khi một số phụ thuộc cần ở trong gói ứng dụng.
+
+00:11:06.000 --> 00:11:10.000
+Tôi sẽ mở rộng điều này sau khi thảo luận về những cân nhắc.
+
+00:11:10.000 --> 00:11:17.000
+Nó được kích hoạt bằng cách cài đặt MERGED_BINARY_TYPE = thủ công trên mục tiêu bao quát.
+
+00:11:17.000 --> 00:11:24.000
+Các thư viện tạo nên sản phẩm hợp nhất cuối cùng được nhận dạng bằng cách đặt MERGEABLE_LIBRARY thành CÓ.
+
+00:11:24.000 --> 00:11:30.000
+Và đối với các thư viện nên ở trên đĩa, hãy giữ cài đặt mặc định của MERGEABLE_LIBRARY thành NO.
+
+00:11:30.000 --> 00:11:34.000
+Hãy quay lại Dự án Rừng Swift và C++ để chứng minh.
+
+00:11:34.000 --> 00:11:39.000
+Chúng tôi đang bắt đầu làm mới mà không có bất kỳ thay đổi nào liên quan đến việc hợp nhất tự động.
+
+00:11:39.000 --> 00:11:45.000
+Vẫn còn mục tiêu ứng dụng và bốn khuôn khổ mà nó liên kết chống lại.
+
+00:11:45.000 --> 00:11:48.000
+Nhưng bây giờ, tôi cũng đang xem xét các bài kiểm tra.
+
+00:11:48.000 --> 00:11:52.000
+Có một mục tiêu XCTest và một khuôn khổ hỗ trợ trong dự án.
+
+00:11:52.000 --> 00:11:56.000
+Các bài kiểm tra cũng phụ thuộc vào khuôn khổ rừng.
+
+00:11:56.000 --> 00:12:01.000
+Giữa các khuôn khổ của dự án, tất cả các phụ thuộc đều đan xen vào nhau.
+
+00:12:01.000 --> 00:12:13.000
+Trong ví dụ này, chúng tôi có mục tiêu XCTest, nhưng trong dự án của bạn, bạn có thể có các mục tiêu như tiện ích mở rộng ứng dụng tạo ra biểu đồ phụ thuộc trông tương tự.
+
+00:12:13.000 --> 00:12:20.000
+Để tận dụng các thư viện có thể hợp nhất, tôi sẽ cô lập các phụ thuộc ứng dụng cho ba khung rừng.
+
+00:12:20.000 --> 00:12:30.000
+Tôi sẽ tạo một khuôn khổ, ForestKit, hợp nhất các thư viện tôi cần cho ứng dụng nhưng cũng sẽ đáp ứng sự phụ thuộc kiểm tra của tôi.
+
+00:12:30.000 --> 00:12:39.000
+ForestKit được coi là một thư viện nhóm vì nó sẽ gói gọn các thư viện có thể hợp nhất mà cả ứng dụng và các bài kiểm tra của tôi đều phụ thuộc vào.
+
+00:12:39.000 --> 00:12:45.000
+Khi tôi đang bật chế độ thủ công, tôi sẽ đặt rõ ràng khuôn khổ nào có thể hợp nhất được.
+
+00:12:45.000 --> 00:12:51.000
+Trong trường hợp này, đó là ForestBuilder, ForestUI và Forest.
+
+00:12:51.000 --> 00:12:55.000
+Những phụ thuộc đó sẽ hợp nhất vào ForestKit.
+
+00:12:55.000 --> 00:13:02.000
+Bằng cách giảm tải thư viện, ứng dụng của tôi đã được cải thiện về thời gian khởi chạy và kích thước gói.
+
+00:13:02.000 --> 00:13:04.000
+Hãy bật cái này lên Xcode.
+
+00:13:04.000 --> 00:13:10.000
+Tôi đã khởi động lại dự án và xóa mọi cài đặt được sử dụng để hợp nhất tự động.
+
+00:13:10.000 --> 00:13:14.000
+Tôi sẽ bắt đầu bằng cách tạo ra mục tiêu khung sẽ hợp nhất các khung khác.
+
+00:13:14.000 --> 00:13:17.000
+Đây là thư viện nhóm của tôi, ForestKit.
+
+00:13:17.000 --> 00:13:23.000
+Tôi có thể làm điều này bằng cách nhấp vào cuối phần Mục tiêu.
+
+00:13:23.000 --> 00:13:32.000
+Tôi đang ở trong tab macOS trong cửa sổ bật lên mẫu và tôi sẽ tìm thấy mẫu Framework bằng cách sử dụng hộp văn bản bộ lọc.
+
+00:13:32.000 --> 00:13:39.000
+Tôi sẽ đặt tên sản phẩm thành ForestKit và nhấp vào Kết thúc.
+
+00:13:39.000 --> 00:13:44.000
+Trong khuôn khổ này, tôi muốn hợp nhất tất cả các thư viện ngoại trừ khuôn khổ Hỗ trợ Kiểm tra Rừng.
+
+00:13:44.000 --> 00:13:50.000
+Nhưng vì sự phụ thuộc của tôi đan xen vào nhau, tôi sẽ liên kết với tất cả chúng trong thời điểm hiện tại.
+
+00:13:50.000 --> 00:13:59.000
+Để làm điều này, tôi sẽ cập nhật giai đoạn xây dựng "Liên kết nhị phân với thư viện" để thêm các khuôn khổ bằng cách sử dụng dấu cộng.
+
+00:13:59.000 --> 00:14:11.000
+Sau khi cửa sổ bật lên thư viện xuất hiện, tôi sẽ nhấp vào khung Forest và giữ SHIFT và DOWN để làm nổi bật các khung khác trong dự án Xcode.
+
+00:14:11.000 --> 00:14:15.000
+Tiếp theo, tôi cần kích hoạt hợp nhất thủ công trên mục tiêu này.
+
+00:14:15.000 --> 00:14:21.000
+Tôi sẽ làm điều này bằng cách vào tab Cài đặt Xây dựng và tìm kiếm lại "Tạo nhị phân hợp nhất".
+
+00:14:21.000 --> 00:14:26.000
+Tôi sẽ sử dụng hộp văn bản lọc và gõ "MERGE".
+
+00:14:26.000 --> 00:14:30.000
+Lần này tôi sẽ chọn Manual làm giá trị.
+
+00:14:30.000 --> 00:14:33.000
+Đó là tất cả những gì tôi cần đặt trên mục tiêu thư viện nhóm.
+
+00:14:33.000 --> 00:14:40.000
+Tôi có thể chọn thư viện nào để hợp nhất bằng cách vào cài đặt xây dựng cho từng mục tiêu khung.
+
+00:14:40.000 --> 00:14:45.000
+Điều hướng trong phần mục tiêu, tôi sẽ bắt đầu với khung Rừng.
+
+00:14:45.000 --> 00:14:49.000
+Tôi đang ở trong tab Cài đặt Xây dựng và có thể nhấp vào Xây dựng Thư viện Hợp nhất.
+
+00:14:49.000 --> 00:14:57.000
+Tùy chọn này được ánh xạ đến cài đặt xây dựng MERGEABLE_LIBRARY và tôi sẽ cập nhật giá trị này thành Có.
+
+00:14:57.000 --> 00:15:07.000
+Tôi cần làm điều tương tự cho ForestUI và Forest Builder.
+
+00:15:07.000 --> 00:15:10.000
+Tôi đã hoàn thành việc tạo khung ForestKit đã hợp nhất của mình.
+
+00:15:10.000 --> 00:15:14.000
+Nhưng tôi cần cập nhật một số phụ thuộc.
+
+00:15:14.000 --> 00:15:23.000
+Bởi vì tôi đã tạo ra một khuôn khổ gói gọn hầu hết các thư viện động của mình, tôi cần đảm bảo ứng dụng và kiểm tra của mình liên kết với ForestKit chứ không phải các ứng dụng khác.
+
+00:15:23.000 --> 00:15:32.000
+Tôi sẽ sửa ứng dụng trước bằng cách nhấp vào Swift và C++ App Target.
+
+00:15:32.000 --> 00:15:38.000
+Tôi sẽ quay lại Tab Giai đoạn Xây dựng và xuống "Liên kết Nhị phân với Thư viện."
+
+00:15:38.000 --> 00:15:41.000
+Đây là nơi tôi sẽ loại bỏ các khuôn khổ không cần thiết.
+
+00:15:41.000 --> 00:15:49.000
+Tôi chọn Forest và giữ SHIFT và UP để thu thập ForestUI và ForestBuilder để xóa chúng.
+
+00:15:49.000 --> 00:15:51.000
+Bước cuối cùng là các bài kiểm tra.
+
+00:15:51.000 --> 00:15:59.000
+Tôi sẽ nhấp vào mục tiêu XCTest và chuyển đến tab các giai đoạn xây dựng trong "Liên kết nhị phân với các thư viện".
+
+00:15:59.000 --> 00:16:07.000
+Tôi sẽ xóa khung Forest bằng cách nhấp vào tên trong bảng và xóa nó.
+
+00:16:07.000 --> 00:16:12.000
+Sau đó tôi sẽ thêm ForestKit bằng cách sử dụng dấu cộng.
+
+00:16:12.000 --> 00:16:19.000
+Khi cửa sổ bật lên xuất hiện, tôi sẽ nhấp đúp vào ForestKit.
+
+00:16:19.000 --> 00:16:22.000
+Và đây là cách cấu hình hợp nhất thủ công.
+
+00:16:22.000 --> 00:16:27.000
+Đối với Dự án Swift và C++ Forest, tôi đã làm việc ở chế độ phát hành.
+
+00:16:27.000 --> 00:16:30.000
+Đây là khi các thư viện được hợp nhất sau đó bị xóa khỏi đĩa.
+
+00:16:30.000 --> 00:16:41.000
+Tuy nhiên, có một chi phí thời gian xây dựng để hợp nhất có thể tốn kém cho việc phát triển, tương tự như hành vi thời gian xây dựng với các thư viện tĩnh.
+
+00:16:41.000 --> 00:16:47.000
+Để hỗ trợ phát triển lặp lại trong Xcode, trình liên kết sẽ không hợp nhất trong chế độ gỡ lỗi.
+
+00:16:47.000 --> 00:16:52.000
+Thay vào đó, hệ thống xây dựng yêu cầu trình liên kết xuất lại các thư viện.
+
+00:16:52.000 --> 00:17:02.000
+Tái xuất là một tùy chọn liên kết cho phép triển khai mã tồn tại trong một thư viện động nhưng nó hiển thị như thể nó được triển khai trong một thư viện khác.
+
+00:17:02.000 --> 00:17:13.000
+Nói cách khác, điều này có nghĩa là tất cả các API của thư viện đều có thể truy cập được chỉ bằng cách tùy thuộc vào mục tiêu được hợp nhất, như tiện ích mở rộng hoặc thử nghiệm ứng dụng của bạn.
+
+00:17:13.000 --> 00:17:19.000
+Điều này dẫn đến lợi ích thời gian xây dựng tương tự như với các thư viện động.
+
+00:17:19.000 --> 00:17:29.000
+Khi ra mắt, dyld chuyển hướng bất kỳ tham chiếu nào đến các thư viện được tái xuất thay vì mong đợi chúng đến trực tiếp từ tệp nhị phân được hợp nhất.
+
+00:17:29.000 --> 00:17:35.000
+Điều đó có nghĩa là trong trường hợp gỡ lỗi, các thư viện có thể hợp nhất vẫn ở trên đĩa.
+
+00:17:35.000 --> 00:17:40.000
+Nói về gỡ lỗi, chúng ta hãy xem xét một biểu tượng có thể nằm trong một thư viện có thể hợp nhất.
+
+00:17:40.000 --> 00:17:46.000
+Tôi có một hàm nhận một số nguyên và trả về kết quả bình phương của nó.
+
+00:17:46.000 --> 00:17:48.000
+Đây là mã được xây dựng.
+
+00:17:48.000 --> 00:17:52.000
+Tuy nhiên, chúng tôi biết đây không phải là mã mà máy thực thi.
+
+00:17:52.000 --> 00:17:57.000
+Thay vào đó, mã này trải qua nhiều biến đổi.
+
+00:17:57.000 --> 00:18:01.000
+Tất cả đều ổn cho đến khi chúng ta cần xem xét mã đó để tìm lỗi.
+
+00:18:01.000 --> 00:18:04.000
+Đây là lý do tại sao Xcode hỗ trợ biểu tượng hóa.
+
+00:18:04.000 --> 00:18:12.000
+Biểu tượng hóa là quá trình liên kết các hướng dẫn máy này trở lại mã nguồn gốc.
+
+00:18:12.000 --> 00:18:18.000
+Điều này rất hữu ích để có thể hiểu nhật ký sự cố hoặc lập hồ sơ và gỡ lỗi mã của bạn.
+
+00:18:18.000 --> 00:18:22.000
+Điều này hoạt động như thế nào với các tệp nhị phân được hợp nhất?
+
+00:18:22.000 --> 00:18:29.000
+Khi bạn bật hợp nhất, thông tin vị trí nguồn vẫn được lưu giữ từ thư viện gốc.
+
+00:18:29.000 --> 00:18:33.000
+Điều đó có nghĩa là trải nghiệm gỡ lỗi của bạn vẫn giữ nguyên.
+
+00:18:33.000 --> 00:18:41.000
+Nhưng hãy nhớ rằng, khi thông tin thư viện được hiển thị, như đối với dấu vết ngăn xếp, nó sẽ hiển thị đường dẫn đến nhị phân được hợp nhất.
+
+00:18:41.000 --> 00:18:48.000
+Thông tin này được trình bày trong nhật ký sự cố, bên trong Công cụ và trong trình gỡ lỗi.
+
+00:18:48.000 --> 00:18:54.000
+Đã đến lúc xem xét cách dự án của riêng bạn có thể áp dụng các thư viện có thể hợp nhất.
+
+00:18:54.000 --> 00:18:58.000
+Trong nhiều trường hợp, việc kích hoạt chúng sẽ mất một vài cài đặt Xcode.
+
+00:18:58.000 --> 00:19:01.000
+Nhưng có một số yếu tố đáng chú ý.
+
+00:19:01.000 --> 00:19:06.000
+Tôi sẽ đề cập đến năm chủ đề quan trọng cần suy nghĩ.
+
+00:19:06.000 --> 00:19:13.000
+Tôi sẽ bắt đầu với cách bạn nên xử lý bất kỳ phụ thuộc nào đã có từ trước mà bạn có trên các thư viện có thể hợp nhất.
+
+00:19:13.000 --> 00:19:18.000
+Sau đó, tôi sẽ đi sâu vào liên kết tự động là gì và nó hoạt động như thế nào với các thư viện có thể hợp nhất.
+
+00:19:18.000 --> 00:19:26.000
+Và có một số hạn chế mà tôi sẽ gặp phải nếu bạn sử dụng API tra cứu thời gian chạy như dlopen hoặc giao diện gói.
+
+00:19:26.000 --> 00:19:35.000
+Vì việc hợp nhất được cung cấp bởi trình liên kết tĩnh trong Xcode 15, tôi sẽ đề cập đến sự khác biệt quan trọng giữa nó và người tiền nhiệm của nó.
+
+00:19:35.000 --> 00:19:42.000
+Và sự cân nhắc cuối cùng sẽ dành cho những người quan tâm đến việc vận chuyển khuôn khổ của họ cho các nhà phát triển khác.
+
+00:19:42.000 --> 00:19:48.000
+Đối với các phụ thuộc thư viện, chúng ta hãy quay lại sơ đồ thể hiện công việc của dyld.
+
+00:19:48.000 --> 00:20:03.000
+Nếu có những người phụ thuộc của một thư viện có thể hợp nhất không được hợp nhất - ví dụ, các tệp thực thi khác - chúng sẽ cần cập nhật để phụ thuộc vào khung hợp nhất, bởi vì những cái có thể hợp nhất sẽ bị xóa khỏi đĩa.
+
+00:20:03.000 --> 00:20:07.000
+Một cách khác mà điều này có thể xuất hiện là khi một ứng dụng dựa vào liên kết tự động.
+
+00:20:07.000 --> 00:20:11.000
+Liên kết tự động là một tùy chọn trình biên dịch được bật theo mặc định.
+
+00:20:11.000 --> 00:20:19.000
+Khi trình biên dịch tìm thấy mô-đun nhập trong mã nguồn, nó sẽ phát hiện các phụ thuộc khung để sau đó chuyển đến trình liên kết.
+
+00:20:19.000 --> 00:20:27.000
+Vì vậy, nếu bạn đang nhập một mô-đun từ một thư viện có thể hợp nhất, điều này có thể gây ra các vấn đề liên kết động.
+
+00:20:27.000 --> 00:20:30.000
+Tuy nhiên, bạn sẽ không cần phải vô hiệu hóa liên kết tự động.
+
+00:20:30.000 --> 00:20:37.000
+Giải pháp ở đây giống như trước đây: liên kết chống lại khuôn khổ được hợp nhất.
+
+00:20:37.000 --> 00:20:47.000
+Cách phổ biến nhất để làm điều này là thêm khung hợp nhất trong Giai đoạn Xây dựng "Liên kết Nhị phân với Thư viện" và xóa các khung có thể hợp nhất nếu nó đã có sẵn.
+
+00:20:47.000 --> 00:20:54.000
+Nếu không, dyld sẽ không thể tải các khung phù hợp cho ứng dụng của bạn.
+
+00:20:54.000 --> 00:20:59.000
+Hầu hết các nhà phát triển không cần sử dụng các API liên kết động như dlopen.
+
+00:20:59.000 --> 00:21:07.000
+Nhưng nếu bạn làm vậy, những đường dẫn đầu vào đó cũng sẽ cần trỏ đến mục tiêu khung đã hợp nhất.
+
+00:21:07.000 --> 00:21:12.000
+Tương tự, tra cứu tài nguyên có thể bị ảnh hưởng bởi việc hợp nhất thư viện.
+
+00:21:12.000 --> 00:21:15.000
+Điều này là do những gì thời gian chạy mong đợi.
+
+00:21:15.000 --> 00:21:21.000
+Trong Swift, bundle là một API để tải thời gian chạy một gói của khung.
+
+00:21:21.000 --> 00:21:26.000
+API tương đương trong Objective-C là bundleForClass của NSBundle.
+
+00:21:26.000 --> 00:21:35.000
+Các API này được sử dụng để làm việc với tài nguyên của khung mà không cần phải xem xét cấu trúc của gói.
+
+00:21:35.000 --> 00:21:47.000
+Cho đến iOS 12, thời gian chạy cần nhị phân của khung để khám phá các gói, nhưng các khung có thể hợp nhất sẽ không có nhị phân trong đó vào thời điểm quá trình đang chạy.
+
+00:21:47.000 --> 00:21:48.000
+Tin tốt!
+
+00:21:48.000 --> 00:21:52.000
+Trong iOS 12, một cái móc đã được thêm vào để cho phép tra cứu cho kịch bản này.
+
+00:21:52.000 --> 00:22:03.000
+Điều đó có nghĩa là nếu bạn dựa vào hỗ trợ tra cứu gói, bạn nên cập nhật phiên bản triển khai tối thiểu của mình lên iOS 12 trở lên để sử dụng các thư viện có thể hợp nhất.
+
+00:22:03.000 --> 00:22:11.000
+Nhưng nếu bạn không dựa vào các API này, bạn có thể vô hiệu hóa hỗ trợ này với tùy chọn liên kết mới -no_merged_libraries_hook.
+
+00:22:11.000 --> 00:22:15.000
+Sau đó, bạn sẽ không cần cập nhật phiên bản triển khai ứng dụng của mình.
+
+00:22:15.000 --> 00:22:22.000
+Nếu bạn đang hợp nhất các khung không chứa tài nguyên gói, bạn cũng có thể không cần móc gói.
+
+00:22:22.000 --> 00:22:29.000
+Nếu đúng như vậy, bạn nên cân nhắc thêm tùy chọn này để cải thiện hiệu suất thời gian khởi chạy.
+
+00:22:29.000 --> 00:22:33.000
+Trong suốt buổi nói chuyện này, tôi đã đề cập đến một số tùy chọn liên kết mới.
+
+00:22:33.000 --> 00:22:37.000
+Các tùy chọn này sẽ chỉ hoạt động với trình liên kết mới được triển khai.
+
+00:22:37.000 --> 00:22:43.000
+Nhưng nếu bạn nhìn vào bên trong chuỗi công cụ, bạn sẽ nhận thấy có hai trình liên kết tĩnh.
+
+00:22:43.000 --> 00:22:47.000
+Trình liên kết cũ hơn vẫn được hỗ trợ để tương thích ngược.
+
+00:22:47.000 --> 00:22:54.000
+Đáng chú ý nhất, trình liên kết đó vẫn có thể xây dựng cho armv7k, nhưng trình liên kết mới thì không.
+
+00:22:54.000 --> 00:22:59.000
+Nền tảng cuối cùng hỗ trợ kiến trúc armv7k là watchOS 8.
+
+00:22:59.000 --> 00:23:08.000
+Nếu bạn không cần triển khai lên watchOS 8 hoặc cũ hơn, hãy nâng cấp phiên bản triển khai lên watchOS 9 để sử dụng trình liên kết mới.
+
+00:23:08.000 --> 00:23:17.000
+Tôi đã mô tả cách xây dựng và sử dụng các thư viện có thể hợp nhất trong các ứng dụng của bạn, nhưng nếu bạn muốn gửi một thư viện có thể hợp nhất cho người khác sử dụng thì sao?
+
+00:23:17.000 --> 00:23:23.000
+Bạn có thể làm điều này bằng cách tạo một XCFramework trong Swift Package Manager hoặc trong Xcode.
+
+00:23:23.000 --> 00:23:29.000
+Điều này cho phép bạn xây dựng khuôn khổ bao gồm siêu dữ liệu của nó để phân phối.
+
+00:23:29.000 --> 00:23:34.000
+Khi các nhà phát triển khác sử dụng khuôn khổ, họ có thể quyết định có cho phép hợp nhất hay không.
+
+00:23:34.000 --> 00:23:38.000
+Siêu dữ liệu có thể hợp nhất gần gấp đôi kích thước của dylib.
+
+00:23:38.000 --> 00:23:46.000
+Điều này không ảnh hưởng đến kích thước của một ứng dụng vì siêu dữ liệu bị loại bỏ cùng với thư viện có thể hợp nhất sau khi xây dựng ứng dụng.
+
+00:23:46.000 --> 00:23:53.000
+Mặt khác, siêu dữ liệu đó sẽ bị loại bỏ để ngăn chặn sự phình to khi nhúng chúng vào ứng dụng.
+
+00:23:53.000 --> 00:23:56.000
+Tôi đã mô tả một số sắc thái cho các thư viện có thể hợp nhất.
+
+00:23:56.000 --> 00:23:59.000
+Bây giờ tôi sẽ chia sẻ các đề xuất của chúng tôi.
+
+00:23:59.000 --> 00:24:05.000
+Thiết lập sự phụ thuộc vào nhị phân được hợp nhất là chìa khóa để áp dụng liền mạch.
+
+00:24:05.000 --> 00:24:09.000
+Điều này là cần thiết cho bất kỳ sự phụ thuộc liên kết nào.
+
+00:24:09.000 --> 00:24:16.000
+Điều đặc biệt quan trọng nếu bạn đưa các thư viện vào các công cụ mong đợi các tệp nhị phân trong các giai đoạn tập lệnh.
+
+00:24:16.000 --> 00:24:20.000
+Trình liên kết tĩnh chỉ hợp nhất các phụ thuộc trực tiếp.
+
+00:24:20.000 --> 00:24:27.000
+Vì vậy, để bao gồm nhiều thư viện có thể hợp nhất hơn, bạn nên đặt chúng làm phụ thuộc liên kết rõ ràng.
+
+00:24:27.000 --> 00:24:33.000
+Các cài đặt để hợp nhất hướng dẫn hệ thống xây dựng Xcode xóa hệ thống nhị phân của khung khỏi đĩa.
+
+00:24:33.000 --> 00:24:40.000
+Điều này sẽ gây ra tác dụng phụ nếu nó không cố ý, vì vậy chúng tôi khuyên bạn nên bật chúng ở cấp mục tiêu Xcode.
+
+00:24:40.000 --> 00:24:52.000
+Và cuối cùng, để có được lợi ích lớn nhất về năng suất trong khi vẫn tối ưu hóa hiệu suất, hãy cân nhắc cập nhật bất kỳ thư viện tĩnh nào có thể hợp nhất thành động.
+
+00:24:52.000 --> 00:24:56.000
+Các thư viện có thể hợp nhất mang lại sự tiện lợi và linh hoạt.
+
+00:24:56.000 --> 00:25:06.000
+Giữa quy trình làm việc tự động và thủ công, bạn có thể tái cấu trúc và thêm các thư viện có thể hợp nhất khi rảnh rỗi và để lại những thư viện cần thiết trên đĩa.
+
+00:25:06.000 --> 00:25:11.000
+Sự linh hoạt này rất hữu ích khi dần dần áp dụng hoặc lập hồ sơ.
+
+00:25:11.000 --> 00:25:20.000
+Các thư viện có thể hợp nhất cung cấp các cải tiến về kích thước, xây dựng và thời gian chạy khi được áp dụng cho các mục tiêu khung và thực thi.
+
+00:25:20.000 --> 00:25:27.000
+Bạn có thể yêu cầu hệ thống xây dựng hợp nhất tất cả các phụ thuộc khung trực tiếp bằng cách sử dụng cấu hình tự động.
+
+00:25:27.000 --> 00:25:34.000
+Nhưng khi bạn cần chọn và chọn phụ thuộc nào để hợp nhất, điều này có thể được thực hiện với chế độ thủ công.
+
+00:25:34.000 --> 00:25:47.000
+Và cuối cùng, khi cập nhật dự án của bạn để sử dụng các thư viện có thể hợp nhất, hãy đảm bảo tất cả những người phụ thuộc của các thư viện đó đang dựa vào tệp nhị phân được hợp nhất thay vì các thư viện bị xóa.
+
+00:25:47.000 --> 00:25:53.000
+Để biết tài liệu về các thư viện có thể hợp nhất, hãy xem lại "Định cấu hình dự án của bạn để sử dụng các thư viện có thể hợp nhất."
+
+00:25:53.000 --> 00:26:01.000
+Và để tìm hiểu thêm về liên kết tĩnh và động, hãy xem phiên "Liên kết nhanh: Cải thiện thời gian xây dựng và khởi chạy."
+
+00:26:01.000 --> 00:26:06.000
+Chúng tôi rất vui khi tìm hiểu cách các thư viện có thể hợp nhất sẽ được sử dụng trong các dự án của bạn.
+
+00:26:06.000 --> 23:59:59.000
+Cảm ơn vì đã tham gia cùng tôi.
+

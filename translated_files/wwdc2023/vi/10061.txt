@@ -1,0 +1,225 @@
+10061
+
+♪ ♪
+
+Kay: Này, đây là Kay từ Privacy Engineering.
+
+Tôi ở đây để giới thiệu một tính năng Quyền riêng tư và Bảo mật mới và thú vị trong Xcode sẽ giúp bạn tự động xác minh tính toàn vẹn của các phụ thuộc của mình.
+
+Tại Apple, chúng tôi tin rằng quyền riêng tư nên là cốt lõi trong quá trình phát triển của mọi người, cũng như nó là cốt lõi của các sản phẩm của chúng tôi.
+
+Xác minh chữ ký phụ thuộc trong Xcode sẽ giúp các nhà phát triển ứng dụng bảo vệ ứng dụng của họ và các tác giả phụ thuộc bảo vệ SDK mà họ phân phối.
+
+Các ứng dụng được phát triển bằng cách sử dụng một loạt các SDK.
+
+Ví dụ, iOS SDK.
+
+Một số được tạo ra bởi Apple, một số bởi các nhà phát triển ứng dụng để sử dụng trên tất cả các ứng dụng của họ và một số mà các nhà phát triển ứng dụng có được từ các nguồn khác.
+
+Chúng tạo thành chuỗi cung ứng của ứng dụng và có thể bao gồm các khuôn khổ, tệp nguồn Swift và các loại phụ thuộc khác.
+
+Sử dụng SDK của bên thứ ba có thể giúp phát triển ứng dụng dễ dàng hơn đáng kể và có thể cung cấp chức năng mở rộng.
+
+Tuy nhiên, điều này gây ra rủi ro.
+
+An ninh chuỗi cung ứng là quá trình giảm thiểu những rủi ro này.
+
+Bạn có trách nhiệm bảo vệ người dùng của mình bằng cách chọn lọc những phụ thuộc mà bạn bao gồm và đảm bảo rằng bạn không vô tình sử dụng phiên bản đã bị sửa đổi một cách độc hại.
+
+Trách nhiệm này cũng mở rộng cho các tác giả SDK, những người bao gồm các SDK khác như một phần của sự phát triển của họ.
+
+Các quy trình và công cụ có sẵn để giảm thiểu những rủi ro này có thể nặng nề hoặc phức tạp để thực hiện thủ công.
+
+Xác minh chữ ký phụ thuộc là một tính năng Xcode mới có thể giúp tác vụ này trở nên dễ dàng và tự động.
+
+Bây giờ bạn đã biết bảo mật chuỗi cung ứng là gì, tôi sẽ nói về vai trò của chữ ký số trong việc bảo vệ các nhà phát triển và giúp giảm bớt gánh nặng này.
+
+Để bắt đầu, tôi sẽ cung cấp cho bạn cái nhìn tổng quan về cách thức hoạt động của công nghệ ký mã của Apple và Xcode hiện đang làm gì để xác minh chữ ký của các phụ thuộc của bạn.
+
+Và sau đó tôi sẽ nói về cách các nhà phát triển ứng dụng có thể sử dụng tính năng này để đảm bảo rằng các phụ thuộc của họ không bị xâm phạm.
+
+Và cuối cùng, tôi sẽ thảo luận về những gì các tác giả SDK có thể làm để cải thiện tính bảo mật của hệ sinh thái.
+
+Tôi sẽ bắt đầu với cách thức hoạt động của công nghệ ký mã của Apple.
+
+Khi bạn đang phát triển SDK cho các nhà phát triển ứng dụng sử dụng, bạn muốn đảm bảo rằng không ai có thể sửa đổi hoặc can thiệp vào nó trong quá trình phân phối cho các máy khách SDK của bạn.
+
+Ký mã là một cơ chế để liên kết mật mã hệ nhị phân được tuân thủ cuối cùng và siêu dữ liệu liên quan như Info.plist hoặc bản kê khai quyền riêng tư cho khuôn khổ của bạn hoặc, đối với một số loại phân phối nhất định, chính mã nguồn, với danh tính nhà phát triển của bạn.
+
+Ở cấp độ cao, việc ký mã hoạt động bằng cách trước tiên tạo hàm băm Thư mục Mã, còn được gọi là CDHash, của tệp nhị phân được biên dịch của bạn.
+
+Để sau đó ký hàm băm này, bạn sử dụng danh tính nhà phát triển của mình.
+
+Danh tính này được đại diện bởi chứng chỉ nhà phát triển của bạn.
+
+Nó được tạo thành từ một khóa riêng được sử dụng để ký mã và một khóa công khai được phân phối như một phần của chữ ký.
+
+Chữ ký này có thể được gắn lại với danh tính của bạn.
+
+Danh tính này sau đó được sử dụng để ký hàm băm và có thể được kết hợp với dấu thời gian an toàn được sử dụng để xác thực rằng chữ ký đã được tạo tại một thời điểm cụ thể.
+
+Điều này đảm bảo rằng nếu bất kỳ ai xáo trộn SDK của bạn, chữ ký sẽ không còn hợp lệ nữa.
+
+Nó cũng cho phép các nhà phát triển ứng dụng xác minh rằng chính bạn là người đã ký nó, sử dụng chứng chỉ được nhúng vào chữ ký.
+
+Một loại phụ thuộc phổ biến mà bạn có thể sử dụng trong ứng dụng của mình là xcframework.
+
+Với xcframeworks, chữ ký nằm trong thư mục _CodeSignature.
+
+Chữ ký mã bảo vệ tính toàn vẹn của tất cả các tệp bên trong xcframework cuối cùng của bạn, bao gồm các tệp kê khai quyền riêng tư được đề cập trong video WWDC23 "Bắt đầu với bản kê khai quyền riêng tư".
+
+Bạn có thể xác minh thủ công các chữ ký mã này cho mọi phiên bản của mọi khung xc mà bạn đưa vào ứng dụng của mình, nhưng đây là một quá trình tốn thời gian và đặt gánh nặng lên bạn để có được lợi ích bảo mật.
+
+Xác minh chữ ký là một tính năng mới trong Xcode tự động xử lý việc xác minh các phụ thuộc của ứng dụng và bảo vệ tính toàn vẹn của chuỗi cung ứng của bạn bằng cách cảnh báo bạn nếu phát hiện ra sự cố.
+
+Xcode 15 hiện có các công cụ để giúp bạn tự động theo dõi danh tính được sử dụng để ký bất kỳ xcframeworks nào mà bạn đưa vào dự án của mình.
+
+Xcode hiện hiển thị một phần mới trong Thanh tra hiển thị trạng thái chữ ký cho xcframeworks mà bạn đưa vào ứng dụng của mình.
+
+Phần này bao gồm thông tin về chữ ký, chẳng hạn như danh tính của tác giả.
+
+Nó sẽ hiển thị liệu xcframework có được ký bởi danh tính Chương trình Nhà phát triển Apple, được ký bởi chứng chỉ tự ký hay hiện không có chữ ký hay không.
+
+Ngoài ra, Xcode sẽ ghi lại danh tính lần đầu tiên bạn sử dụng xcframework và xác minh rằng nó không thay đổi trong quá trình xây dựng sau này.
+
+Đối với các danh tính nhà phát triển khác nhau, Xcode cung cấp các mức tính năng khác nhau dựa trên sự tin tưởng vào danh tính được sử dụng cho một khung xc cụ thể.
+
+Đối với danh tính Chương trình Nhà phát triển Apple, Apple có thể kiểm tra tính hợp lệ của chứng chỉ được sử dụng, bao gồm cả việc nó có bị thu hồi hay không và đảm bảo rằng nhiều nhà phát triển không thể đăng ký cùng tên.
+
+Nếu chứng chỉ được sử dụng là tự ký, các nhà phát triển ứng dụng nên xác nhận tính hợp lệ và tính xác thực của nó trực tiếp với tác giả phụ thuộc.
+
+Khi chứng chỉ ký của tác giả xcframework hết hạn, Xcode có thể tự động xác thực rằng chứng chỉ mới cho danh tính Chương trình Nhà phát triển Apple là từ cùng một nhà phát triển.
+
+Đối với chứng chỉ tự ký, bạn sẽ cần xác minh thủ công rằng thay đổi này là hợp pháp, vì không có chứng thực chứng chỉ của một bên đáng tin cậy, như Apple.
+
+Khi sự phụ thuộc được ký bởi danh tính Chương trình Nhà phát triển Apple, Xcode sẽ xác minh nó khi xây dựng và hiển thị cho bạn cảnh báo nếu chữ ký không hợp lệ, danh tính đã thay đổi hoặc xcframework đã được ký sau khi chứng chỉ hết hạn.
+
+Xcode cũng sẽ cảnh báo bạn nếu chứng chỉ Chương trình Nhà phát triển Apple đã bị Apple thu hồi.
+
+Điều này có thể xảy ra nếu Apple xác định rằng tài khoản nhà phát triển là độc hại.
+
+Những cảnh báo này sẽ rất hiếm và sẽ tự động đảm bảo bạn không xây dựng ứng dụng của mình cho đến khi bạn giải quyết được vấn đề.
+
+Nếu điều này xảy ra, Xcode sẽ đề nghị cho phép bạn xóa xcframework khỏi dự án.
+
+Đối với danh tính tự ký, Xcode vẫn sẽ so sánh dấu vân tay SHA-256 của chứng chỉ với dấu vân tay đã được thêm vào dự án trước đó.
+
+Nó sẽ hiển thị cho bạn một cảnh báo nếu danh tính đã thay đổi hoặc nếu nội dung của sự phụ thuộc đã được sửa đổi.
+
+Bạn có thể cần liên hệ với tác giả xcframework để đảm bảo dấu vân tay khớp với những gì họ đã sử dụng hoặc tác giả xcframework có thể xuất bản thông tin này.
+
+Và đó là cách chữ ký số hoạt động trên xcframeworks.
+
+Tiếp theo, hãy để tôi chỉ cho bạn cách một nhà phát triển ứng dụng có thể sử dụng tính năng này trong Xcode.
+
+Để chứng minh, tôi sẽ sử dụng ứng dụng mẫu Backyard Birds.
+
+Nó cung cấp trải nghiệm chim kỹ thuật số, nơi bạn sở hữu nhiều sân sau, có thể đưa thức ăn và nước uống cho chim ra ngoài và xem khi nào khách tham quan chim xuất hiện.
+
+Tôi dự định sử dụng một xcframework có tên BirdFeeder để tự động hóa quy trình nạp lại thức ăn và nước.
+
+Tác giả của BirdFeeder xcframework đã ký bản phát hành gần đây nhất.
+
+Ở đây, tôi đã thêm BirdFeeder vào dự án của mình.
+
+Đối với xcframeworks, Xcode 15 sẽ có chế độ xem "Chữ ký" trong Thanh tra.
+
+Điều này hiển thị thông tin ký chứng chỉ, hiển thị chi tiết nhóm.
+
+Danh tính của nhà phát triển xcframework sẽ được lưu trữ trong dự án lần đầu tiên nó được nhìn thấy.
+
+Trong quá trình xây dựng, Xcode sẽ xác nhận rằng danh tính được sử dụng để ký BirdFeeder xcframework khớp với danh tính dự kiến trong dự án.
+
+Nó được xây dựng thành công.
+
+Để mô phỏng một cuộc tấn công chuỗi cung ứng, tôi sẽ giả vờ rằng ai đó đã đưa cho tôi phiên bản cập nhật của BirdFeeder xcframework mà họ nói đã thêm nhiều tính năng thú vị mới và cho hiệu suất tốt hơn.
+
+Điều này cũng có thể xảy ra với bạn khi bạn tải xuống xcframework từ một trang web mà bạn không hoàn toàn tin tưởng.
+
+Ở đây, tôi đã thay thế phiên bản trước của mình bằng phiên bản cập nhật này.
+
+Khi tôi xây dựng ứng dụng của mình, Xcode xác minh chữ ký của tất cả các xcframeworks trong ứng dụng.
+
+Việc xây dựng không thành công, chỉ ra rằng danh tính của nhà phát triển BirdFeeder không khớp với những gì đã được ghi lại trước đó trong dự án.
+
+Chọn lỗi cung cấp một cảnh báo giải thích rằng danh tính của nhà phát triển đã thay đổi, cho thấy danh tính dự kiến so với những gì có trong phiên bản mới như thế nào.
+
+Trong trường hợp này, nó cho thấy chứng chỉ dự kiến là Chứng chỉ Chương trình Nhà phát triển Apple, nhưng chứng chỉ trong dự án sử dụng chứng chỉ tự ký.
+
+Điều này có thể có nghĩa là xcframework đã bị xâm phạm hoặc thay đổi là hợp pháp.
+
+Ví dụ, họ có thể đã chuyển quyền sở hữu xcframework cho một nhà phát triển khác.
+
+Luôn luôn an toàn để hủy nếu bạn không chắc chắn.
+
+Điều này cho bạn thời gian để điều tra xem sự thay đổi có chính hãng hay không.
+
+Xcode bảo vệ bạn và các ứng dụng của bạn bằng cách đảm bảo rằng nếu thay đổi này xảy ra, bạn sẽ được thông báo tự động.
+
+Trong trường hợp này, sự thay đổi không được mong đợi, vì vậy tôi sẽ chuyển phiên bản mới này vào thùng rác trong Xcode.
+
+Tuy nhiên, nếu bạn biết thay đổi là hợp pháp - ví dụ, nhà phát triển đã thông báo điều này cho bạn thông qua một kênh công khai đã được xác minh - thì bạn có thể chấp nhận thay đổi.
+
+Cuối cùng, tôi sẽ nói về ý nghĩa của tính năng này đối với các tác giả SDK.
+
+Điều quan trọng đối với các tác giả SDK là ký SDK bằng mật mã vì nó cho phép nhà phát triển ứng dụng xác nhận danh tính và đảm bảo rằng mã không bị thay đổi hoặc giả mạo sau khi nó được ký.
+
+Cả hai thuộc tính này đều cực kỳ quan trọng để xây dựng lòng tin và phân phối SDK một cách an toàn.
+
+Như đã thảo luận trước đó, có hai loại danh tính mà bạn có thể sử dụng: Chương trình Nhà phát triển Apple và tự ký.
+
+Các thành viên của Chương trình Nhà phát triển Apple nên sử dụng các chứng chỉ được bao gồm như một phần của chương trình này để đảm bảo sự tin tưởng của khách hàng SDK của bạn.
+
+Bạn nên sử dụng chứng chỉ Phân phối Apple nếu bạn xuất bản SDK hoặc chứng chỉ Phát triển Apple nếu bạn đang phân phối các phiên bản thử nghiệm.
+
+Các thành viên Chương trình Doanh nghiệp nên sử dụng chứng chỉ Phân phối iOS hoặc Phát triển Ứng dụng của họ.
+
+Khi Apple cấp chứng chỉ cho bạn, Apple đang chứng thực rằng bạn là thành viên hợp pháp của Chương trình Nhà phát triển Apple và đã đáp ứng tất cả các yêu cầu cần thiết để có được chứng chỉ.
+
+Điều này bao gồm xác minh danh tính của bạn và tuân thủ các chính sách và hướng dẫn của Apple về quyền riêng tư và bảo mật.
+
+Nếu bạn thu hồi thủ công chứng chỉ được sử dụng để ký SDK, bạn sẽ cần phát hành phiên bản cập nhật được ký bằng chứng chỉ hợp lệ, vì Xcode sẽ không còn có thể xác minh chữ ký khi nhà phát triển cố gắng xây dựng ứng dụng của họ.
+
+SDK đã được ký bằng chứng chỉ Chương trình Nhà phát triển Apple có mức độ tin cậy cơ bản và đảm bảo rằng SDK không bị giả mạo.
+
+Trên hết, bởi vì Apple là cơ quan đáng tin cậy, việc xác thực chứng chỉ sẽ tự động được xử lý khi một chứng chỉ mới được tạo.
+
+Khi bắt đầu video này, tôi đã thảo luận về cách ký mã hoạt động và cách nó bao gồm chữ ký trong SDK của bạn bằng cách sử dụng danh tính nhà phát triển của bạn.
+
+Bây giờ chúng ta hãy xem qua cách bạn có thể làm điều này bằng cách sử dụng công cụ đồng thiết kế.
+
+Bạn có thể ký xcframeworks của mình bằng lệnh tại đây và danh tính Chương trình Nhà phát triển Apple của bạn.
+
+Cờ dấu thời gian được bao gồm để đảm bảo rằng chữ ký chứa dấu thời gian an toàn được Apple chứng thực.
+
+Tuy nhiên, nếu bạn không phải là thành viên của Chương trình Nhà phát triển Apple, bạn có thể tạo chứng chỉ tự ký và sử dụng nó với lệnh đồng thiết kế.
+
+Bạn có trách nhiệm chia sẻ với khách hàng SDK dấu vân tay của chứng chỉ này để bạn có thể xác minh xcframework đã được bạn ký.
+
+Các nhà phát triển bao gồm SDK của bạn trong ứng dụng của họ sẽ có thể xác nhận rằng xcframework đã được bạn ký bằng cách sử dụng tính năng mới có trong Xcode.
+
+Nếu bạn luôn ký vào SDK mà bạn phân phối, tính năng mới này trong Xcode sẽ giúp khách hàng SDK của bạn tự tin hơn vào chuỗi cung ứng của họ.
+
+Làm điều này thật đơn giản.
+
+Bạn có thể bắt đầu ngay lập tức với các phiên bản khung của mình mà bạn đã xuất bản mà không cần xây dựng mới.
+
+Điều này thậm chí còn hoạt động bằng cách sử dụng chứng chỉ tự ký nếu bạn hiện không phải là thành viên của Chương trình Nhà phát triển Apple.
+
+Sau đó, bạn có thể làm điều này cho tất cả các phiên bản mới của xcframeworks của mình bằng cách bao gồm lệnh đồng thiết kế trong tập lệnh xây dựng, để bạn không còn phải lo lắng nữa.
+
+Đối với các nhà phát triển ứng dụng, Xcode 15 sẽ tự động giúp bạn đảm bảo tính toàn vẹn và bảo mật của SDK cơ bản của ứng dụng.
+
+Đảm bảo rằng tất cả các chữ ký SDK được xác minh là một khía cạnh quan trọng của việc phát triển ứng dụng có trách nhiệm và bảo vệ người dùng của bạn.
+
+Bạn có thể giúp đỡ bằng cách khuyến khích các nhà phát triển trong chuỗi cung ứng của bạn bắt đầu ký SDK mà họ xuất bản.
+
+Đối với các tác giả SDK, hãy bắt đầu ký SDK của bạn để đảm bảo tính bảo mật và tính xác thực của chúng.
+
+Bằng cách ký mã của bạn, bạn thiết lập niềm tin với các khách hàng SDK của mình, cho họ thấy rằng bạn coi trọng vấn đề bảo mật và quyền riêng tư của họ.
+
+Phát triển ứng dụng vui vẻ!
+
+Đây là Kay, đăng xuất.
+
+♪ ♪

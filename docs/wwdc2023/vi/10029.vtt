@@ -1,0 +1,605 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:14.000
+Calvin: Xin chào. Tôi là Calvin Gaisford, một kỹ sư trong nhóm watchOS.
+
+00:00:14.000 --> 00:00:20.000
+Trong phiên mã này, chúng tôi sẽ xây dựng một tiện ích cho Smart Stack mới trên Apple Watch.
+
+00:00:20.000 --> 00:00:25.000
+Chúng tôi sẽ hướng dẫn bạn toàn bộ quá trình xây dựng Tiện ích bằng cách sử dụng cấu hình AppIntent.
+
+00:00:25.000 --> 00:00:31.000
+Trong quá trình này, chúng tôi sẽ sử dụng các bản cập nhật WidgetKit và SwiftUI mới nhất.
+
+00:00:31.000 --> 00:00:34.000
+Chúng tôi sẽ sử dụng ứng dụng Backyard Birds cho mã của chúng tôi.
+
+00:00:34.000 --> 00:00:41.000
+Backyard Birds là một ứng dụng cho phép bạn tạo và quản lý các sân sau thu hút các loài chim đến thăm.
+
+00:00:41.000 --> 00:00:43.000
+Tiện ích của chúng tôi sẽ hiển thị trạng thái của sân sau.
+
+00:00:43.000 --> 00:00:49.000
+Nếu một con chim đang đến thăm, nó sẽ hiển thị con chim và cũng bao gồm trạng thái của sân sau.
+
+00:00:49.000 --> 00:00:57.000
+Tiện ích sẽ cung cấp ngày có liên quan đến Smart Stack để nó có thể ưu tiên tiện ích của chúng tôi khi nó phù hợp nhất.
+
+00:00:57.000 --> 00:01:06.000
+Nếu bạn muốn theo dõi, bạn có thể tải xuống mã mẫu được liên kết với phiên này và mở dự án Backyard Birds Xcode.
+
+00:01:06.000 --> 00:01:15.000
+Chúng tôi đã thêm Tiện ích mở rộng Widget vào dự án đã tạo ra một số tệp, bao gồm tệp BackyardVisitorsWidget.
+
+00:01:15.000 --> 00:01:19.000
+Chúng tôi sẽ dành phần lớn thời gian để cập nhật tệp này.
+
+00:01:19.000 --> 00:01:20.000
+Đây là những gì chúng tôi sẽ đề cập.
+
+00:01:20.000 --> 00:01:25.000
+Đầu tiên, chúng ta sẽ xem xét cấu trúc tiện ích xác định tiện ích của chúng ta.
+
+00:01:25.000 --> 00:01:30.000
+Chúng tôi cũng sẽ làm một cái nhìn tổng quan nhanh về ý định cấu hình tiện ích.
+
+00:01:30.000 --> 00:01:39.000
+Sau đó, chúng tôi sẽ tùy chỉnh cấu trúc TimelineEntry của mình để giữ dữ liệu cho các chế độ xem tiện ích của chúng tôi và chúng tôi sẽ xây dựng dòng thời gian của mình.
+
+00:01:39.000 --> 00:01:46.000
+Khi dòng thời gian của chúng tôi có dữ liệu chúng tôi cần để bật xem trước, chúng tôi sẽ xây dựng chế độ xem tiện ích của mình.
+
+00:01:46.000 --> 00:01:52.000
+Sau khi quan điểm của chúng tôi được xây dựng, chúng tôi sẽ quay lại để hoàn thành dòng thời gian.
+
+00:01:52.000 --> 00:02:02.000
+Cuối cùng, chúng ta sẽ xem xét Trình quản lý ý định có liên quan và đặt ý định cho các ngày khi tiện ích của chúng ta nên được ưu tiên trên ngăn xếp thông minh watchOS.
+
+00:02:02.000 --> 00:02:10.000
+Hãy bắt đầu với cấu hình tiện ích bằng cách xem cấu trúc tiện ích trong mã của chúng tôi.
+
+00:02:10.000 --> 00:02:14.000
+Cấu trúc tiện ích là nơi cấu hình của tiện ích được xác định.
+
+00:02:14.000 --> 00:02:18.000
+Điểm mới trong watchOS là AppIntentConfigurations.
+
+00:02:18.000 --> 00:02:23.000
+Chúng tôi sẽ sử dụng AppIntentConfiguration trong tiện ích của mình.
+
+00:02:23.000 --> 00:02:30.000
+Mục đích cấu hình, nhà cung cấp và chế độ xem đều bị loại bỏ khi chúng tôi tạo WidgetExtension.
+
+00:02:30.000 --> 00:02:36.000
+Chúng tôi sẽ xem xét từng cái một và triển khai chúng cho tiện ích Backyard Birds của chúng tôi.
+
+00:02:36.000 --> 00:02:43.000
+Định nghĩa tiện ích này có vẻ tốt, vì vậy hãy tiếp tục và xem WidgetConfigurationIntent.
+
+00:02:43.000 --> 00:02:49.000
+Tiện ích của chúng tôi đang sử dụng Cấu hình Ý định Ứng dụng để cho phép nó thực hiện hai việc.
+
+00:02:49.000 --> 00:02:57.000
+Đầu tiên, tiện ích của chúng tôi có thể cung cấp một tập hợp các tiện ích được cấu hình sẵn trong thư viện tiện ích watchOS.
+
+00:02:57.000 --> 00:03:04.000
+Trong trường hợp của Backyard Birds, chúng tôi sẽ cung cấp cấu hình cho mỗi sân trong ứng dụng của mình.
+
+00:03:04.000 --> 00:03:11.000
+Thứ hai, WidgetConfigurationIntent sẽ được sử dụng để chỉ định ngày khi tiện ích của chúng tôi phù hợp nhất.
+
+00:03:11.000 --> 00:03:17.000
+Ngăn xếp thông minh sẽ sử dụng thông tin này để ưu tiên tiện ích của chúng tôi trong Ngăn xếp thông minh.
+
+00:03:17.000 --> 00:03:20.000
+Hãy xem ý định ứng dụng cấu hình tiện ích của chúng tôi.
+
+00:03:20.000 --> 00:03:25.000
+Mỗi sân ở Backyard Birds có một ID duy nhất.
+
+00:03:25.000 --> 00:03:36.000
+Tôi đã thêm một tham số có tên backyardID, vì vậy điều này có thể được sử dụng để tạo một tập hợp các ý định tiện ích, một cho mỗi sân được xác định bởi ID sân sau của họ.
+
+00:03:36.000 --> 00:03:41.000
+Đối với các tiện ích chúng tôi đang xây dựng, đó là tham số duy nhất chúng tôi cần.
+
+00:03:41.000 --> 00:03:49.000
+Để tìm hiểu thêm về App Intents và cách sử dụng thêm WidgetConfigurationIntent, hãy xem các phiên này về App Intents.
+
+00:03:49.000 --> 00:03:56.000
+Chúng tôi đã xác định cấu trúc tiện ích của mình và Mục Đích Cấu hình Tiện ích có thể chứa ID sân sau.
+
+00:03:56.000 --> 00:04:02.000
+Hãy chuyển sang dòng thời gian tiện ích của chúng tôi và xem cấu trúc TimelineEntry của chúng tôi.
+
+00:04:02.000 --> 00:04:10.000
+Cấu trúc TimelineEntry sẽ chứa tất cả dữ liệu mà chế độ xem tiện ích của chúng tôi sẽ cần để hiển thị cho một ngày cụ thể.
+
+00:04:10.000 --> 00:04:18.000
+Quay lại tệp BackyardVisitorsWidget, xác định vị trí cấu trúc SimpleEntry đã tạo.
+
+00:04:18.000 --> 00:04:23.000
+Các thuộc tính ngày và cấu hình đã được thêm vào khi tệp này được tạo.
+
+00:04:23.000 --> 00:04:29.000
+Chúng tôi cần xác định bất kỳ thuộc tính bổ sung nào mà chế độ xem tiện ích của chúng tôi sẽ cần.
+
+00:04:29.000 --> 00:04:35.000
+Tiện ích của chúng tôi sẽ hiển thị trạng thái của sân sau với tên, thức ăn và trạng thái nước.
+
+00:04:35.000 --> 00:04:41.000
+Nếu một con chim đang đến thăm, nó sẽ hiển thị con chim đến thăm và tên của con chim đó.
+
+00:04:41.000 --> 00:04:45.000
+Nếu không có một con chim, nó sẽ cho biết có bao nhiêu con chim đã đến thăm sân.
+
+00:04:45.000 --> 00:04:56.000
+Để hiển thị thông tin về sân, chúng tôi sẽ sử dụng một cấu trúc từ ứng dụng Backyard Birds để chứa tất cả thông tin về sân sau trong một thời điểm nhất định.
+
+00:04:56.000 --> 00:05:00.000
+Điều này rất quan trọng vì TimelineEntry có thể có một ngày trong tương lai.
+
+00:05:00.000 --> 00:05:10.000
+Hãy thêm tài sản sân sau vào TimelineEntry của chúng tôi.
+
+00:05:10.000 --> 00:05:16.000
+Bây giờ, hãy thêm một vài thuộc tính được tính toán dựa trên tài sản sân sau mà chúng tôi vừa thêm vào.
+
+00:05:16.000 --> 00:05:28.000
+Đầu tiên, hãy thêm một thuộc tính chim để chế độ xem tiện ích có thể kiểm tra xem một con chim có đang ghé thăm hay không và hiển thị nó.
+
+00:05:28.000 --> 00:05:38.000
+Bây giờ hãy thêm hai thuộc tính nữa mà chế độ xem của chúng tôi sẽ sử dụng để hiển thị thêm thông tin về sân.
+
+00:05:38.000 --> 00:05:45.000
+Thời lượng nước và thực phẩm Thời lượng sẽ được sử dụng để hiển thị thời gian nước và thực phẩm sẽ tồn tại trong bao lâu.
+
+00:05:45.000 --> 00:05:51.000
+Chúng được tính toán từ thuộc tính ngày trong TimelineEntry.
+
+00:05:51.000 --> 00:06:01.000
+TimelineEntry cũng có một thuộc tính có tên relevance, nếu được triển khai, có thể cho watchOS Smart Stack biết mục nhập dòng thời gian nào là quan trọng nhất.
+
+00:06:01.000 --> 00:06:08.000
+Hãy thêm thuộc tính liên quan vào TimelineEntry của chúng tôi.
+
+00:06:08.000 --> 00:06:16.000
+Bên trong, hãy kiểm tra xem sân sau có khách truy cập vào ngày của TimelineEntry không.
+
+00:06:16.000 --> 00:06:25.000
+Nếu có một con chim đến thăm, chúng tôi sẽ trả lại cấu trúc TimelineEntryRelevance.
+
+00:06:25.000 --> 00:06:32.000
+Cấu trúc TimelineEntryRelevance có hai tham số, một điểm và một thời lượng.
+
+00:06:32.000 --> 00:06:39.000
+Điểm số được sử dụng để ưu tiên một mục nhập so với các mục nhập khác trong cùng một dòng thời gian.
+
+00:06:39.000 --> 00:06:46.000
+Chúng tôi sẽ đặt điểm số thành 10 để xếp hạng một mục nhập có khách truy cập cao hơn mục nhập không có khách truy cập.
+
+00:06:46.000 --> 00:06:52.000
+Giá trị này là tùy ý và có thể có bất kỳ phạm vi giá trị nào cần thiết để xếp hạng các mục nhập trong dòng thời gian của bạn.
+
+00:06:52.000 --> 00:06:58.000
+Thời lượng được sử dụng để cho Smart Stack biết mục nhập liên quan này có hiệu lực trong bao lâu.
+
+00:06:58.000 --> 00:07:03.000
+Chúng tôi đã đặt thời lượng kéo dài cho đến Ngày kết thúc của khách truy cập.
+
+00:07:03.000 --> 00:07:17.000
+Nếu không có khách truy cập, hãy trả lại cấu trúc Mức độ liên quan với điểm 0. Điều này sẽ cho Ngăn xếp thông minh biết mục nhập dòng thời gian nào là quan trọng nhất.
+
+00:07:17.000 --> 00:07:27.000
+Tùy thuộc vào những gì khác đang xảy ra tại thời điểm đó, Widget của chúng tôi có thể được ưu tiên trên watchOS Smart Stack.
+
+00:07:27.000 --> 00:07:32.000
+TimelineEntry của chúng tôi trông rất tuyệt và có mọi thứ mà chế độ xem tiện ích của chúng tôi cần để hiển thị đúng cách.
+
+00:07:32.000 --> 00:07:36.000
+Hãy tiếp tục và xây dựng TimelineProvider của chúng tôi.
+
+00:07:36.000 --> 00:07:49.000
+Có bốn chức năng chúng tôi cần hoàn thành cho TimelineProvider của mình: trình giữ chỗ, ảnh chụp nhanh, dòng thời gian và đề xuất.
+
+00:07:49.000 --> 00:07:56.000
+Chức năng giữ chỗ được sử dụng khi tiện ích hiển thị lần đầu tiên và sẽ quay lại nhanh chóng.
+
+00:07:56.000 --> 00:08:01.000
+Vì chúng tôi đã cập nhật TimelineEntry của mình để lấy một sân sau, chúng tôi cần cung cấp một cái.
+
+00:08:01.000 --> 00:08:10.000
+Hãy khắc phục điều đó bằng cách thêm một sân sau ngẫu nhiên từ mô hình dữ liệu của ứng dụng.
+
+00:08:10.000 --> 00:08:14.000
+Điều đó thật tốt. Hãy tiếp tục.
+
+00:08:14.000 --> 00:08:19.000
+Chức năng chụp nhanh được sử dụng khi một tiện ích ở trong tình huống thoáng qua.
+
+00:08:19.000 --> 00:08:27.000
+Chức năng này sẽ trả về nhanh chóng, vì vậy việc sử dụng dữ liệu mẫu là tốt miễn là không mất quá vài giây để tìm nạp.
+
+00:08:27.000 --> 00:08:36.000
+Chúng ta có thể làm điều tương tự như chúng ta đã làm trong chức năng giữ chỗ và vượt qua một sân ngẫu nhiên.
+
+00:08:36.000 --> 00:08:40.000
+Điều đó có vẻ tốt, nhưng chúng ta có thể làm tốt hơn.
+
+00:08:40.000 --> 00:08:49.000
+Chức năng chụp nhanh được thông qua một ý định cấu hình có thuộc tính backyardID mà chúng tôi đã thêm trước đó.
+
+00:08:49.000 --> 00:08:57.000
+Dữ liệu của chúng tôi đều là địa phương, vì vậy chúng tôi có thể nhanh chóng tra cứu và trả lại sân sau thích hợp thay vì sử dụng sân sau ngẫu nhiên.
+
+00:08:57.000 --> 00:09:04.000
+Hãy lấy sân sau được cấu hình từ backyardID trong cấu hình.
+
+00:09:04.000 --> 00:09:13.000
+Bây giờ chúng ta hãy kiểm tra sân sau và xem liệu chúng ta có thể nhận được sự kiện khách truy cập từ nó không.
+
+00:09:13.000 --> 00:09:24.000
+Hãy trả lại một mục nhập được định cấu hình với ngày của khách truy cập và nếu chúng tôi không có khách truy cập, chúng tôi sẽ trả lại sân đã định cấu hình với ngày hiện tại.
+
+00:09:24.000 --> 00:09:31.000
+Điều này sẽ cung cấp bản xem trước tốt hơn cho người dùng vì nó sẽ hiển thị sân sau được cấu hình.
+
+00:09:31.000 --> 00:09:37.000
+Trước khi chúng ta đi sâu vào chức năng dòng thời gian, tôi muốn bật bản xem trước canvas Xcode.
+
+00:09:37.000 --> 00:09:48.000
+Hãy sửa SimpleEntry cuối cùng và cho nó một sân sau để chúng ta có thể xem bản xem trước.
+
+00:09:48.000 --> 00:09:56.000
+Bây giờ hãy bật khung vẽ.
+
+00:09:56.000 --> 00:10:00.000
+Điều mới trong Xcode là khả năng xem trước dòng thời gian tiện ích.
+
+00:10:00.000 --> 00:10:09.000
+Khung vẽ đang hiển thị bản xem trước của tiện ích hình chữ nhật và ở dưới cùng là một loạt các Mục nhập Dòng thời gian tạo nên dòng thời gian của tiện ích.
+
+00:10:09.000 --> 00:10:15.000
+Bản xem trước canvas đang sử dụng chế độ xem mặc định được tạo khi chúng tôi thêm tiện ích.
+
+00:10:15.000 --> 00:10:22.000
+Trước khi chúng tôi hoàn thành nhà cung cấp dòng thời gian, hãy xây dựng quan điểm của chúng tôi để chúng tôi có thể hình dung rõ hơn các dòng thời gian của mình khi chúng tôi xây dựng nó.
+
+00:10:22.000 --> 00:10:27.000
+Xác định vị trí BackyardBirdsWidgetEntryView.
+
+00:10:27.000 --> 00:10:37.000
+Hãy thêm một thuộc tính môi trường cho widgetFamily để chúng ta có thể xây dựng các chế độ xem cụ thể cho từng gia đình.
+
+00:10:37.000 --> 00:10:49.000
+Hãy thay thế phần thân bằng một câu lệnh chuyển đổi để chúng ta có thể thực hiện chế độ xem cho từng họ accessoryWidget.
+
+00:10:49.000 --> 00:10:56.000
+Bây giờ, hãy tạo một trường hợp cho accessoryRectangular với chế độ xem lấy một mục nhập làm tham số.
+
+00:10:56.000 --> 00:11:01.000
+Chúng tôi sẽ thực hiện chế độ xem này bên dưới.
+
+00:11:01.000 --> 00:11:08.000
+Chế độ xem hình chữ nhật là duy nhất, ở chỗ nó sẽ là chế độ xem tiện ích của chúng tôi được hiển thị trong ngăn xếp thông minh watchOS.
+
+00:11:08.000 --> 00:11:17.000
+Đối với chế độ xem hình chữ nhật của chúng tôi, chúng tôi sẽ làm theo một mẫu phổ biến, nơi chúng tôi sẽ có một hình ảnh ở bên trái và ba dòng văn bản ở bên phải.
+
+00:11:17.000 --> 00:11:26.000
+Hãy đi đến cuối tệp và chúng ta sẽ tạo RectangularBackyardView.
+
+00:11:26.000 --> 00:11:32.000
+Chế độ xem sử dụng TimelineEntry mà chúng tôi đã sửa đổi trước đó để chứa dữ liệu sân sau.
+
+00:11:32.000 --> 00:11:42.000
+Trước khi chúng ta tiếp tục, hãy chuyển chế độ xem canvas của chúng ta sang chế độ xem Hình chữ nhật Smart Stack.
+
+00:11:42.000 --> 00:11:47.000
+Điều này sẽ cho phép chúng tôi hình dung tiện ích khi chúng tôi xây dựng nó.
+
+00:11:47.000 --> 00:11:58.000
+Bây giờ hãy đặt một hình ảnh và ba dòng văn bản vào HStack của chế độ xem của chúng ta.
+
+00:11:58.000 --> 00:12:01.000
+Nhìn vào bản xem trước. Đó không chính xác là nó.
+
+00:12:01.000 --> 00:12:09.000
+Hãy đặt các dòng văn bản vào VStack của riêng họ.
+
+00:12:09.000 --> 00:12:12.000
+Được rồi, thế là gần rồi.
+
+00:12:12.000 --> 00:12:16.000
+Hãy đưa dữ liệu thực tế vào chế độ xem từ mục nhập.
+
+00:12:16.000 --> 00:12:26.000
+Đầu tiên, chúng ta sẽ sử dụng chế độ xem ComposedBird từ ứng dụng Backyard Birds có thể hiển thị một con chim.
+
+00:12:26.000 --> 00:12:29.000
+Con chim là tùy chọn, vì vậy chúng ta cần phải mở nó ra.
+
+00:12:29.000 --> 00:12:42.000
+Hãy đặt chế độ xem ComposedBird và VStack bên trong một kiểm tra if-let để xem có một con chim trong mục nhập hay không.
+
+00:12:42.000 --> 00:12:53.000
+Nếu không có chim, hãy đặt hình ảnh đài phun nước cho sân và văn bản không có chim.
+
+00:12:53.000 --> 00:13:07.000
+Bây giờ chúng ta có thể xem qua dòng thời gian và xem các mục hiển thị một con chim với ba dòng văn bản và các mục không hiển thị con chim.
+
+00:13:07.000 --> 00:13:11.000
+Hãy điền thông tin chi tiết cho trường hợp có một con chim trước.
+
+00:13:11.000 --> 00:13:28.000
+Đối với dòng đầu tiên, chúng tôi sẽ hiển thị tên của con chim, dòng thứ hai, tên của sân sau và dòng thứ ba, chúng tôi sẽ thêm thông tin về thức ăn và nước uống của sân.
+
+00:13:28.000 --> 00:13:42.000
+Đối với trường hợp không có chim, hãy hiển thị tên sân, thông tin thức ăn và nước uống, và sau đó là số lượng du khách đến sân này.
+
+00:13:42.000 --> 00:13:50.000
+Hãy xem các mục nhập của chúng ta trông như thế nào.
+
+00:13:50.000 --> 00:13:54.000
+Điều đó thật tuyệt, nhưng hãy sửa bố cục một chút.
+
+00:13:54.000 --> 00:13:57.000
+Đầu tiên, hãy cập nhật ComposedBird.
+
+00:13:57.000 --> 00:14:06.000
+Hãy làm cho chế độ xem được chia tỷ lệ ToFit và làm cho nó widgetAccentable để nó sẽ nhuộm màu khi được sử dụng trên mặt đồng hồ được nhuộm màu.
+
+00:14:06.000 --> 00:14:15.000
+Trên tên của con chim, hãy thêm phông chữ tiêu đề, làm cho nó có tỷ lệ và cũng làm cho nó widgetAccentable để nó có màu với mặt đồng hồ.
+
+00:14:15.000 --> 00:14:25.000
+Chúng tôi cũng sẽ làm cho văn bản có màu của cánh chim bằng cách sử dụng Phong cách tiền cảnh.
+
+00:14:25.000 --> 00:14:35.000
+Hãy thêm hệ số tỷ lệ vào cả hai chế độ xem khác của chúng tôi trong trường hợp tên dài.
+
+00:14:35.000 --> 00:14:43.000
+Hãy đặt foregroundStyle của dòng cuối cùng thành phụ.
+
+00:14:43.000 --> 00:14:53.000
+Cuối cùng, hãy làm cho ngăn xếp của chúng ta được căn chỉnh để ba chế độ xem văn bản của chúng ta được căn chỉnh.
+
+00:14:53.000 --> 00:14:55.000
+Quan điểm của chúng tôi trông khá tốt.
+
+00:14:55.000 --> 00:15:06.000
+Hãy áp dụng tất cả các cập nhật tương tự này cho các chế độ xem trong câu lệnh else khi không có một con chim.
+
+00:15:06.000 --> 00:15:15.000
+Bây giờ tiện ích của chúng tôi trông đẹp hơn.
+
+00:15:15.000 --> 00:15:20.000
+Lưu ý rằng tiện ích của chúng tôi có khoảng cách khác nhau khi hiển thị một con chim hoặc một cái sân.
+
+00:15:20.000 --> 00:15:35.000
+Hãy làm cho chúng khớp bằng cách thêm một khung vào chế độ xem chim và chế độ xem hình ảnh.
+
+00:15:35.000 --> 00:15:48.000
+Chúng tôi cũng sẽ thêm các khung vào VStacks để chúng căn chỉnh đúng cách.
+
+00:15:48.000 --> 00:15:54.000
+Có một tùy chọn nữa mà chúng tôi cần thêm vào để hoàn thành tiện ích của mình cho ngăn xếp thông minh watchOS.
+
+00:15:54.000 --> 00:15:57.000
+Điều mới trong SwiftUI là containerBackground.
+
+00:15:57.000 --> 00:16:02.000
+Hãy thay thế containerBackground bằng một gradient từ sân sau.
+
+00:16:02.000 --> 00:16:10.000
+Chúng tôi sẽ đặt vị trí nền chứa thành một tiện ích.
+
+00:16:10.000 --> 00:16:22.000
+Nền chứa được hệ thống sử dụng có chọn lọc và ở đây sẽ chỉ xuất hiện trong ngăn xếp thông minh watchOS chứ không phải trên mặt đồng hồ.
+
+00:16:22.000 --> 00:16:25.000
+Bây giờ chế độ xem của chúng tôi đã sẵn sàng cho watchOS Smart Stack.
+
+00:16:25.000 --> 00:16:33.000
+Khung cảnh trông rất tuyệt, vì vậy hãy quay lại TimelineProvider của chúng tôi và hoàn thành việc xây dựng dòng thời gian.
+
+00:16:33.000 --> 00:16:40.000
+Chức năng dòng thời gian là nơi một tiện ích tạo ra một tập hợp các mục nhập dòng thời gian có chứa dữ liệu để hiển thị chế độ xem của tiện ích.
+
+00:16:40.000 --> 00:16:45.000
+Đây là chức năng làm việc của một tiện ích.
+
+00:16:45.000 --> 00:16:49.000
+Ngay bây giờ nó đang tạo ra năm mục nhập với dữ liệu sân sau ngẫu nhiên.
+
+00:16:49.000 --> 00:16:54.000
+Hãy thay thế điều đó bằng một dòng thời gian đầy những chuyến thăm chim.
+
+00:16:54.000 --> 00:16:58.000
+Ở trên cùng của hàm là một mảng các Mục nhập Dòng thời gian.
+
+00:16:58.000 --> 00:17:01.000
+Chúng tôi sẽ sử dụng điều này để xây dựng dòng thời gian của mình.
+
+00:17:01.000 --> 00:17:07.000
+Đầu tiên, hãy xóa mã dòng thời gian đã tạo.
+
+00:17:07.000 --> 00:17:17.000
+Bây giờ, hãy lấy sân được cấu hình bằng cách sử dụng backyardID từ ConfigurationAppIntent.
+
+00:17:17.000 --> 00:17:22.000
+Cấu trúc sân sau có một tài sản trên đó chứa tất cả các Sự kiện dành cho khách truy cập cho sân đó.
+
+00:17:22.000 --> 00:17:26.000
+Hãy lặp lại các Sự kiện khách truy cập cho sân được lấy lại.
+
+00:17:26.000 --> 00:17:39.000
+Đối với mỗi sự kiện, hãy tạo một TimelineEntry chứa Ngày bắt đầu của visitorEvent và vượt qua sân sau được định cấu hình.
+
+00:17:39.000 --> 00:17:44.000
+Bản xem trước dòng thời gian của chúng tôi đã được cập nhật. Hãy xem nó đã thay đổi như thế nào.
+
+00:17:44.000 --> 00:17:49.000
+Bây giờ khi chúng tôi chọn các mục nhập dòng thời gian của mình, chúng tôi thấy các loài chim xuất hiện.
+
+00:17:49.000 --> 00:17:53.000
+Đó là những gì chúng tôi mong đợi. Tuy nhiên, mỗi mục nhập đều có khách truy cập.
+
+00:17:53.000 --> 00:17:57.000
+Chúng ta cũng cần thêm các mục nhập khi những con chim rời đi.
+
+00:17:57.000 --> 00:18:01.000
+Hãy tạo mục nhập thứ hai và sử dụng Ngày kết thúc của sự kiện khách truy cập.
+
+00:18:01.000 --> 00:18:11.000
+Chúng tôi sẽ sử dụng cùng một sân sau và thêm mục nhập vào mảng mục nhập.
+
+00:18:11.000 --> 00:18:15.000
+Hãy xem dòng thời gian ngay bây giờ.
+
+00:18:15.000 --> 00:18:20.000
+Được rồi, chúng tôi có các mục nhập khi những con chim ghé thăm và khi chúng rời đi.
+
+00:18:20.000 --> 00:18:25.000
+Dòng thời gian tiện ích của chúng tôi trông rất tuyệt và bản xem trước dòng thời gian mới này thật tuyệt vời.
+
+00:18:25.000 --> 00:18:31.000
+Nó sẽ làm cho việc xây dựng các tiện ích và dòng thời gian dễ dàng hơn rất nhiều.
+
+00:18:31.000 --> 00:18:37.000
+Cuối cùng, hãy triển khai chức năng đề xuất của nhà cung cấp dòng thời gian.
+
+00:18:37.000 --> 00:18:47.000
+Ở đây, chúng tôi cần trả về một mảng AppIntentRecommendations sẽ chứa WidgetConfigurationIntent của chúng tôi, chứa một backyardID.
+
+00:18:47.000 --> 00:18:52.000
+Hãy loại bỏ việc triển khai mặc định.
+
+00:18:52.000 --> 00:18:58.000
+Hãy tạo một loạt các đề xuất để trả lại.
+
+00:18:58.000 --> 00:19:09.000
+Tiếp theo, chúng tôi muốn tạo một đề xuất cho mỗi sân sau trong ứng dụng của mình, vì vậy hãy lặp lại tất cả các sân sau.
+
+00:19:09.000 --> 00:19:17.000
+Đối với mỗi sân sau, chúng tôi sẽ tạo một ConfigurationAppIntent và đặt backyardID.
+
+00:19:17.000 --> 00:19:25.000
+Và cuối cùng, hãy tạo một AppIntentRecommendation bằng cách sử dụng ConfigurationIntent và thêm nó vào mảng của chúng tôi.
+
+00:19:25.000 --> 00:19:31.000
+Chúng tôi sẽ mô tả tên sân sau.
+
+00:19:31.000 --> 00:19:44.000
+Chức năng đề xuất bây giờ sẽ cung cấp một danh sách các cấu hình tiện ích, một cho mỗi sân sau, trong thư viện tiện ích khi một người đang chọn tiện ích Backyard Birds.
+
+00:19:44.000 --> 00:19:47.000
+Xin chúc mừng.
+
+00:19:47.000 --> 00:19:55.000
+Bây giờ bạn đã xây dựng một tiện ích trên watchOS sẽ xuất hiện dưới dạng phức tạp mặt đồng hồ và ngăn xếp thông minh watchOS.
+
+00:19:55.000 --> 00:20:04.000
+Trước đó, chúng tôi đã nói một chút về mức độ liên quan khi chúng tôi triển khai thuộc tính mức độ liên quan trên TimelineEntry của mình, nhưng chúng tôi có thể làm được nhiều hơn thế.
+
+00:20:04.000 --> 00:20:10.000
+Mỗi sân trong ứng dụng Backyard Birds đều theo dõi nước và thức ăn có sẵn cho chim.
+
+00:20:10.000 --> 00:20:15.000
+Tiện ích mới của chúng tôi cũng sẽ hiển thị thông tin đó.
+
+00:20:15.000 --> 00:20:23.000
+Chúng tôi có thể cung cấp cho hệ thống một danh sách các ý định liên quan trong khoảng thời gian khi chúng tôi biết nước hoặc thức ăn sắp hết.
+
+00:20:23.000 --> 00:20:31.000
+Tiện ích của chúng tôi sẽ được ưu tiên trong những khoảng thời gian đó, cho mọi người biết sân của họ cần được chú ý.
+
+00:20:31.000 --> 00:20:42.000
+Quay lại mã của chúng tôi, hãy tạo một chức năng mới sẽ xây dựng các ý định có liên quan cho bất kỳ tiện ích nào có thể có của chúng tôi và sau đó cập nhật RelevantIntentManager với những ý định đó.
+
+00:20:42.000 --> 00:20:55.000
+Chúng tôi sẽ tạo ra một chức năng mới có tên updateBackyardRelevantIntents.
+
+00:20:55.000 --> 00:21:03.000
+Trong hàm, chúng ta cần một mảng các Ý định có liên quan.
+
+00:21:03.000 --> 00:21:10.000
+Và chúng tôi sẽ cập nhật RelevantIntentManager với mảng đó.
+
+00:21:10.000 --> 00:21:17.000
+Để điền vào mảng Ý định có liên quan, chúng tôi sẽ lặp qua tất cả các sân sau trong ứng dụng.
+
+00:21:17.000 --> 00:21:26.000
+Tiếp theo, chúng tôi sẽ tạo một ý định cấu hình cho sân sau và đặt ID sân sau thành sân sau hiện tại.
+
+00:21:26.000 --> 00:21:30.000
+Chúng tôi sẽ tạo một bối cảnh liên quan dựa trên ngày tháng.
+
+00:21:30.000 --> 00:21:40.000
+Trong trường hợp này, chúng tôi sẽ sử dụng ngày thức ăn thấp trong tương lai của sân sau và ngày thức ăn trống trong tương lai.
+
+00:21:40.000 --> 00:21:43.000
+Cuối cùng, chúng tôi sẽ tạo ra một Ý định có liên quan.
+
+00:21:43.000 --> 00:21:56.000
+Chúng tôi sẽ sử dụng configurationIntent cho tiện ích của chúng tôi, loại tiện ích của chúng tôi và có liên quanDateContext mà chúng tôi vừa tạo và thêm nó vào mảng của chúng tôi.
+
+00:21:56.000 --> 00:22:05.000
+Bây giờ, hãy làm điều tương tự cho những ngày LowWater và emptyWater của sân sau.
+
+00:22:05.000 --> 00:22:07.000
+Điều đó có vẻ tốt.
+
+00:22:07.000 --> 00:22:15.000
+Bây giờ RelevantIntentManager có phạm vi ngày khi mỗi cấu hình có thể có của tiện ích của chúng tôi có mức độ liên quan cao hơn.
+
+00:22:15.000 --> 00:22:22.000
+Hãy thêm chức năng này vào các thành phần chính để các Ý định có liên quan được cập nhật khi thích hợp.
+
+00:22:22.000 --> 00:22:27.000
+Đầu tiên, chúng ta hãy quay lại chức năng dòng thời gian trong nhà cung cấp dòng thời gian.
+
+00:22:27.000 --> 00:22:33.000
+Hãy gọi hàm của chúng ta ngay trước khi chúng ta trả về dòng thời gian.
+
+00:22:33.000 --> 00:22:39.000
+Điều này sẽ cập nhật các Ý định có liên quan mỗi khi chúng tôi cập nhật dòng thời gian tiện ích của mình.
+
+00:22:39.000 --> 00:22:43.000
+Chúng ta cũng hãy xem qua ứng dụng Backyard Birds.
+
+00:22:43.000 --> 00:22:51.000
+Ứng dụng Backyard Birds có chế độ xem chi tiết cho mỗi sân và cung cấp một trang nơi một người có thể đổ đầy thức ăn và nước uống.
+
+00:22:51.000 --> 00:22:59.000
+Đây cũng là một nơi lý tưởng để cập nhật các Ý định liên quan vì nguồn cung cấp thực phẩm và nước có thể thay đổi.
+
+00:22:59.000 --> 00:23:09.000
+Trong BackyardContentTab, chúng tôi sẽ thêm một Nhiệm vụ với chức năng updateBackyardRelevantIntents khi nhấn vào nút Nạp tiền.
+
+00:23:09.000 --> 00:23:20.000
+Vì chúng tôi biết thực phẩm và nước uống vừa được cập nhật, chúng tôi cũng nên thực hiện cuộc gọi vào WidgetKit và tải lại dòng thời gian của tiện ích của mình.
+
+00:23:20.000 --> 00:23:30.000
+Bây giờ ý định liên quan của chúng tôi sẽ được cập nhật và dòng thời gian của tiện ích của chúng tôi sẽ tải lại khi một người đổ đầy nước và thức ăn trong sân.
+
+00:23:30.000 --> 00:23:41.000
+Chúng tôi hiện đã xây dựng một tiện ích cho ngăn xếp thông minh watchOS và chúng tôi đã cập nhật RelevantIntentManager với ý định ngày tháng để ưu tiên tiện ích của chúng tôi khi nó phù hợp nhất.
+
+00:23:41.000 --> 00:23:43.000
+Cảm ơn vì đã theo dõi.
+
+00:23:43.000 --> 00:23:48.000
+Chúng tôi mong muốn được thấy các tiện ích bạn xây dựng cho watchOS Smart Stack.
+
+00:23:48.000 --> 00:23:56.000
+Để biết thêm thông tin về các tiện ích, Ngăn xếp thông minh và Ý định ứng dụng, hãy xem các phiên này.
+
+00:23:56.000 --> 23:59:59.000
+Hãy mạo hiểm và không bao giờ ngừng viết mã.
+

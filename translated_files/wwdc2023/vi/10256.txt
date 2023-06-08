@@ -1,0 +1,483 @@
+10256
+
+Xin chào, tôi là Kevin Tulod, một kỹ sư phần mềm trong nhóm tvOS.
+
+Và tôi là Somesh Ganesh, một kỹ sư trong nhóm Core Audio.
+
+Trong phiên này, chúng ta sẽ thảo luận về việc đưa hỗ trợ máy ảnh và micrô vào ứng dụng tvOS của bạn.
+
+tvOS 17 giới thiệu Continuity Camera và Mic cho Apple TV.
+
+Bây giờ bạn có thể truyền dữ liệu máy ảnh và micrô từ iPhone hoặc iPad của mình để sử dụng làm đầu vào trên tvOS.
+
+Điều này mở ra các thể loại ứng dụng và trải nghiệm hoàn toàn mới cho màn hình lớn.
+
+Hầu hết các ứng dụng trên tvOS thường được chia thành hai loại: ứng dụng phát lại nội dung, như phát trực tuyến phim và chương trình truyền hình, và trò chơi.
+
+Continuity Camera cho phép bạn xây dựng các ứng dụng hoàn toàn mới cho tvOS, như các ứng dụng tạo nội dung ghi lại video và âm thanh hoặc các ứng dụng xã hội như hội nghị truyền hình và phát trực tiếp.
+
+Bạn thậm chí có thể tích hợp máy ảnh và micrô vào các ứng dụng và trò chơi phát trực tuyến hiện có để tạo ra các tính năng hoàn toàn mới mà không thể có trong các phiên bản tvOS trước đó.
+
+Chức năng này cho phép một bộ ứng dụng đa dạng cho TV và tôi sẽ chỉ cho bạn cách đưa Máy ảnh và Mic liên tục vào ứng dụng tvOS của bạn.
+
+Năm ngoái, macOS Ventura đã giới thiệu Continuity Camera để sử dụng iPhone của bạn như một webcam.
+
+Bạn chỉ cần mang điện thoại của mình đến gần máy Mac, và máy ảnh và micrô sẽ có sẵn dưới dạng thiết bị đầu vào.
+
+Nếu bạn chưa quen với Continuity Camera trên macOS, hãy xem phiên về chủ đề này từ WWDC 2022.
+
+Trong phiên này, trước tiên tôi sẽ bắt đầu với tổng quan về các API mà ứng dụng của bạn hiện có thể áp dụng trên tvOS để truy cập máy ảnh và micrô.
+
+Tiếp theo, tôi sẽ đi sâu vào cách ứng dụng của bạn có thể áp dụng Máy ảnh liên tục trong tvOS để sử dụng iPhone hoặc iPad làm máy ảnh và micrô.
+
+Sau đó, tôi sẽ thảo luận ngắn gọn về cách xây dựng trải nghiệm ứng dụng tuyệt vời trên tvOS, làm nổi bật những điểm tương đồng và khác biệt khi so sánh với việc phát triển cho các nền tảng khác.
+
+Cuối cùng, Somesh sẽ thảo luận về các API micrô mà bạn có thể sử dụng trong ứng dụng của mình cho một loạt các nhu cầu âm thanh phức tạp.
+
+Hãy bắt đầu với một cái nhìn tổng quan về các API thiết bị chụp.
+
+AVFoundation, AVFAudio và AudioToolbox cung cấp cho bạn quyền truy cập vào máy ảnh và micrô để quay video và âm thanh.
+
+Hãy xem lại cách một ứng dụng có thể sử dụng các thiết bị chụp, đặc biệt là với gia đình lớp AVCapture của AVFoundation.
+
+Đầu tiên, các ứng dụng sử dụng AVCaptureDevices và AVCaptureDeviceInputs, đại diện cho máy ảnh và micrô.
+
+Những thứ này cắm vào AVCaptureSession, là đối tượng chính cho tất cả những thứ liên quan đến chụp.
+
+AVCaptureOutputs hiển thị dữ liệu từ đầu vào theo nhiều cách khác nhau.
+
+Bạn có thể sử dụng những thứ này để quay phim và chụp ảnh, truy cập máy ảnh và bộ đệm micrô hoặc nhận siêu dữ liệu khác từ các thiết bị đầu vào.
+
+Để hiển thị nguồn cấp dữ liệu camera trực tiếp trong giao diện người dùng, bạn có thể sử dụng AVCaptureVideoPreviewLayer.
+
+Đây là một loại đầu ra đặc biệt phân lớp CALayer.
+
+Và dữ liệu chảy từ đầu vào chụp đến đầu ra tương thích thông qua AVCaptureConnections.
+
+Các API chụp này có sẵn trên iOS, macOS và bây giờ là tvOS, bắt đầu với tvOS 17.
+
+Nếu bạn chưa quen với việc phát triển bằng cách sử dụng khả năng chụp của AVFoundation, bạn có thể tìm hiểu thêm tại trang bắt đầu Thiết lập Chụp trên developer.apple.com.
+
+tvOS hiện cũng hỗ trợ cùng một API máy ảnh và micrô được cung cấp trên iOS.
+
+Nếu bạn đã có máy ảnh hoặc ứng dụng micrô được xây dựng cho iOS, hầu hết mã của bạn sẽ chỉ hoạt động trên tvOS, nhưng có một vài API và thực hành mã hóa khác nhau.
+
+Vì Apple TV không có đầu vào AV tích hợp, ứng dụng của bạn sẽ cần áp dụng Device Discovery trước khi bạn có thể sử dụng máy ảnh và micrô.
+
+Điều này là để đảm bảo rằng ứng dụng của bạn có thể xử lý các trường hợp cạnh như khi các thiết bị Liên tục xuất hiện và biến mất.
+
+Ngoài ra còn có một vài sắc thái để đưa ứng dụng lên tvOS khác với iOS và chúng tôi sẽ xem xét những cân nhắc đó để có trải nghiệm ứng dụng tvOS tốt nhất.
+
+Vì cùng một API máy ảnh và micrô từ iOS hiện có sẵn trên tvOS, tôi sẽ hướng dẫn bạn cách đưa hỗ trợ tvOS đến một ứng dụng iOS hiện có.
+
+Tôi có một ứng dụng máy ảnh và micrô đơn giản đã được xây dựng cho iOS.
+
+Ứng dụng có giao diện người dùng cơ bản truy cập vào máy ảnh và micrô để chụp ảnh hoặc quay video và âm thanh.
+
+Trong suốt phiên này, tôi sẽ mang hỗ trợ tvOS đến ứng dụng này bằng cách sử dụng Continuity Camera và Mic APIs mới.
+
+Hãy cùng xem nó được xây dựng như thế nào.
+
+Trong Xcode, tôi sẽ mở ContentView, đây là nơi xác định giao diện người dùng của ứng dụng.
+
+Ở đây ứng dụng chỉ định vị trí của các yếu tố giao diện người dùng cơ bản mà chúng ta thấy trên màn hình.
+
+Quan trọng nhất là chế độ xem CameraPreview, kết nối với AVCaptureVideoPreviewLayer để hiển thị bản xem trước camera trực tiếp đằng sau tất cả các yếu tố giao diện người dùng khác.
+
+Tiếp theo là lớp CaptureSession, bao gồm một số lớp AVCaptureSession từ AVFoundation.
+
+Lớp này có một thuộc tính cho AVCaptureSession, được sử dụng để kiểm soát đầu vào chụp nào được chọn và nơi dữ liệu được xuất ra.
+
+Trong trường hợp này, đầu ra là AVCaptureVideoPreviewLayer được hiển thị trong ContentView.
+
+Lớp CaptureSession cũng có chức năng đặt đầu vào video đang hoạt động.
+
+Trong chức năng này, ứng dụng xác thực đầu vào đã chọn, định cấu hình AVCaptureSession và bắt đầu phiên.
+
+Điều này bắt đầu luồng dữ liệu từ AVCaptureDevice đến lớp xem trước được hiển thị trong ContentView.
+
+Tất cả các API AVCapture này hiện cũng có sẵn trên tvOS, vì vậy tôi sẽ tiếp tục và thêm tvOS làm hệ điều hành được hỗ trợ cho ứng dụng.
+
+Bây giờ tôi đang chọn dự án trong Project Navigator, làm nổi bật mục tiêu của ứng dụng và thêm Apple TV làm điểm đến được hỗ trợ.
+
+Tại thời điểm này, ứng dụng có thể xây dựng và chạy trên tvOS.
+
+Tuy nhiên, vì không có thiết bị đầu vào nào có sẵn, ứng dụng sẽ không hoạt động nhiều.
+
+Điều này đưa chúng ta đến Continuity Camera, bắt đầu với quá trình tìm kiếm một thiết bị chụp và chọn nó để sử dụng trên tvOS.
+
+Trước khi làm bất cứ điều gì liên quan đến AVCapture, ứng dụng của bạn nên đảm bảo rằng nó có quyền sử dụng các thiết bị quay video và âm thanh.
+
+Điều này mang đến cho ứng dụng của bạn cơ hội giải thích lý do tại sao nó cần quyền truy cập vào các thiết bị này và người dùng có thể chấp nhận hoặc từ chối quyền truy cập.
+
+Hãy nhớ đặt các phím sử dụng máy ảnh và micrô trong Info.plist của bạn.
+
+Mô tả này được hiển thị cho người dùng khi được nhắc ủy quyền.
+
+Bạn có thể quen với việc xây dựng các ứng dụng cho thiết bị cá nhân của người dùng, như iPhone hoặc iPad, có camera tích hợp.
+
+Tuy nhiên, Apple TV là một thiết bị chung được chia sẻ bởi nhiều người với tài khoản iCloud của riêng họ.
+
+Để có trải nghiệm tốt nhất trên thiết bị chung, bất kỳ ai có thiết bị tương thích, kể cả khách, đều có thể sử dụng thiết bị của họ làm Camera liên tục.
+
+Điều này có nghĩa là người dùng có thể sử dụng các tính năng ghi âm của ứng dụng của bạn ở nhà, tại nhà của một người bạn hoặc thậm chí là một không gian chung như cho thuê kỳ nghỉ.
+
+Điều đó cũng có nghĩa là máy ảnh có thể xuất hiện hoặc biến mất khỏi hệ thống bất cứ lúc nào và ứng dụng của bạn sẽ có thể xử lý những trường hợp này.
+
+AVKit hiện cung cấp một bộ điều khiển chế độ xem mới được gọi là AVContinuityDevicePickerViewController.
+
+Bạn có thể sử dụng bộ điều khiển này để chọn một thiết bị liên tục đủ điều kiện để sử dụng làm máy ảnh và micrô.
+
+Bộ điều khiển chế độ xem này liệt kê tất cả người dùng đã đăng nhập vào Apple TV và cho phép họ kết nối thiết bị của mình với Continuity Camera.
+
+Ngoài ra còn có một cách để khách ghép nối với Apple TV để sử dụng thiết bị iOS của họ cho Continuity Camera.
+
+Khi truy cập các thiết bị chụp, trước tiên ứng dụng của bạn nên kiểm tra xem có thiết bị nào có sẵn để sử dụng không.
+
+Nếu có sẵn, bạn có thể bắt đầu sử dụng các thiết bị chụp để bắt đầu phiên chụp và gửi dữ liệu đến bất kỳ AVCaptureOutputs nào.
+
+Nếu không có sẵn, hãy sử dụng bộ chọn thiết bị để trình bày giao diện người dùng có liên quan cho người dùng.
+
+Điều này hướng dẫn họ trong quá trình chia sẻ máy ảnh và micrô của thiết bị.
+
+Khi một thiết bị được chọn, bộ điều khiển chế độ xem sẽ gọi lại đại diện để cho bạn biết thiết bị đã xuất hiện.
+
+Sau đó, bạn có thể xác thực tính khả dụng của thiết bị đó và tiếp tục bắt đầu phiên chụp.
+
+Đằng sau hậu trường, tvOS và iOS làm việc cùng nhau để thiết lập kết nối này.
+
+Khi lựa chọn được thực hiện, tvOS sẽ ping các thiết bị đủ điều kiện của người dùng đó ở gần Apple TV và nhắc xác nhận.
+
+Sau đó, người dùng có thể chấp nhận kết nối trên bất kỳ thiết bị nào được thông báo.
+
+Tại thời điểm đó, máy ảnh và micrô có sẵn để sử dụng trong ứng dụng của bạn, và dữ liệu máy ảnh và micrô có thể bắt đầu phát trực tuyến.
+
+Để trình bày bộ chọn thiết bị trong ứng dụng SwiftUI của bạn, AVKit cung cấp công cụ sửa đổi continuityDevicePicker, mới đối với tvOS 17, để trình bày bộ chọn.
+
+Trạng thái trình bày của nó được cập nhật bởi một biến trạng thái, giống như các công cụ sửa đổi chế độ xem trình bày nội dung khác.
+
+Khi một thiết bị được chọn và trở nên khả dụng, bộ chọn sẽ loại bỏ và gọi lại bằng AVContinuityDevice.
+
+Đối tượng này có các tham chiếu đến AVCaptureDevices được liên kết với một thiết bị vật lý nhất định, như iPhone hoặc iPad.
+
+Bộ chọn thiết bị cũng có thể được trình bày trong các ứng dụng UIKit bằng AVContinuityDevicePickerViewController.
+
+Bộ điều khiển chế độ xem này nhận một đại diện cung cấp các sự kiện vòng đời tùy chọn và gọi lại khi AVContinuityDevice được chọn và có sẵn.
+
+Khi một thiết bị như vậy có sẵn, các thiết bị chụp cũng sẽ được xuất bản cho những người nghe thiết bị khác, chẳng hạn như AVCaptureDeviceDiscoverySession hoặc bất kỳ người quan sát KVO nào trên AVCaptureDevice.
+
+Hãy nhớ rằng trên tvOS, thiết bị chụp duy nhất là Máy ảnh liên tục.
+
+Điều này có nghĩa là ứng dụng của bạn sẽ phải xử lý các trường hợp máy ảnh và micrô chuyển từ không khả dụng sang có sẵn và ngược lại.
+
+Trên tất cả các nền tảng, AVCaptureDevice.systemPreferredCamera cho phép bạn truy cập vào máy ảnh có sẵn phù hợp nhất.
+
+API này hiện có sẵn trên tvOS và hoạt động theo cùng một cách.
+
+Tài sản này sẽ cập nhật dựa trên tính khả dụng của máy ảnh.
+
+Vì chỉ có một Camera liên tục có thể được kết nối với Apple TV tại một thời điểm, giá trị nil có nghĩa là không có máy ảnh nào có sẵn và giá trị không liên tục có nghĩa là có sẵn Máy ảnh liên tục.
+
+Bạn có thể sử dụng quan sát khóa-giá trị để theo dõi các thay đổi đối với systemPreferredCamera.
+
+Và trên tvOS, các thiết bị chụp được kết nối sẽ thuộc loại continuityCamera.
+
+Khi khóa-giá trị quan sát thuộc tính systemPreferredCamera, ứng dụng của bạn có thể đánh giá lại trạng thái mà nó nên ở dựa trên tính khả dụng của máy ảnh.
+
+Khi máy ảnh có sẵn, bạn có thể bắt đầu AVCaptureSession để bắt đầu quay video hoặc âm thanh.
+
+Khi máy ảnh không khả dụng, bạn nên thực hiện bất kỳ lần tháo gỡ cần thiết nào từ phiên chụp trước đó, cho người dùng biết rằng thiết bị không còn khả dụng nữa và cung cấp cho họ tùy chọn kết nối thiết bị mới.
+
+Khi Máy ảnh Liên tục được kết nối với Apple TV, ứng dụng của bạn có thể truy cập nhiều API chụp máy ảnh hiện có.
+
+Ví dụ, bạn có thể sử dụng AVCaptureMetadataOutput để lấy siêu dữ liệu video trên mỗi khung hình, chẳng hạn như bất kỳ khuôn mặt hoặc cơ thể nào được phát hiện.
+
+Bạn có thể chụp ảnh có độ phân giải cao bằng AVCapturePhotoOutput, quay phim bằng video và âm thanh với AVCaptureMovieFileOutput và theo dõi hiệu ứng video hoặc điều khiển các thuộc tính của máy ảnh như zoomFactor.
+
+Có rất nhiều API máy ảnh khác hiện có sẵn trên tvOS với Máy ảnh liên tục.
+
+Bạn có thể tham khảo các video trước đây đi sâu vào các tính năng và kỹ thuật chụp ảnh nâng cao.
+
+Đó là những API dành riêng cho tvOS mà ứng dụng của bạn sẽ cần áp dụng để khám phá và chọn các thiết bị Continuity Capture.
+
+Hãy mang chức năng này đến ứng dụng mà chúng tôi đang làm việc.
+
+Quay lại Xcode, trong ContentView, chúng tôi biết rằng chúng tôi cần một biến trạng thái trên tvOS để kiểm soát trạng thái trình bày của bộ chọn thiết bị.
+
+Tôi sẽ tiếp tục và thêm biến trạng thái và đảm bảo rằng nó chỉ được sử dụng trên tvOS bằng cách sử dụng trình bảo vệ trình biên dịch.
+
+Ở cuối ContentView, tôi sẽ tạo một tiện ích mở rộng chỉ dành cho tvOS để xử lý logic cụ thể của Continuity-Camera.
+
+Sau đó, tôi sẽ thêm một biến được tính toán để tạo một nút hiển thị bộ chọn thiết bị bằng cách chuyển đổi biến trạng thái mà chúng tôi đã thêm.
+
+Tiếp theo, tôi sẽ thêm một trình xử lý gọi lại sẽ được gọi khi Camera liên tục được kết nối.
+
+Sau khi kết nối, điều này đặt máy ảnh làm đầu vào video đang hoạt động, từ đó, bắt đầu phiên chụp.
+
+Cuối cùng, tôi sẽ thêm một phương pháp kích hoạt Camera liên tục trong trường hợp một phương pháp đã được kết nối.
+
+Bây giờ hãy bắt đầu thêm vào giao diện người dùng.
+
+Trong phần thân chế độ xem, tôi sẽ thêm nút chọn thiết bị vào chế độ xem của mình.
+
+Sau đó tôi sẽ thêm công cụ sửa đổi chế độ xem continuityDevicePicker và kết nối nó với biến trạng thái và hàm gọi lại được thêm vào trước đó.
+
+Cuối cùng, tôi sẽ thêm một tác vụ cố gắng kích hoạt thiết bị Liên tục được kết nối nếu một thiết bị đã được kết nối.
+
+Và đó là tất cả các thay đổi mã cần thiết để mang lại hỗ trợ tvOS cho ứng dụng máy ảnh iOS hiện có.
+
+Bây giờ hãy chạy nó trên Apple TV để xem nó trông như thế nào.
+
+Ứng dụng khởi chạy lên giao diện người dùng cơ bản, nhưng không có nguồn cấp dữ liệu máy ảnh, vì tôi chưa kết nối máy ảnh.
+
+Tôi sẽ tiếp tục và chọn nút tôi đã thêm để hiển thị bộ chọn thiết bị.
+
+Điều này cho tôi các tùy chọn để kết nối máy ảnh.
+
+Tôi sẽ tiếp tục và chọn người dùng của Justin và làm theo hướng dẫn để ghép nối.
+
+Và Máy ảnh Liên tục được kết nối!
+
+Đây là phiên bản tvOS của ứng dụng này trông như thế nào khi sử dụng cùng một mã được chia sẻ như iOS, chỉ với một vài thay đổi nhỏ để thêm khám phá thiết bị trên tvOS.
+
+Không có thay đổi nào đối với việc sử dụng hiện tại của các API máy ảnh.
+
+Tôi thậm chí có thể tiếp tục và chụp một bức ảnh, giống như trong ứng dụng iOS.
+
+Và đó là Continuity Camera trên tvOS.
+
+Nếu bạn đang điều chỉnh một ứng dụng hiện có cho tvOS hoặc chỉ mới bắt đầu phát triển tvOS, tôi muốn nhanh chóng tóm tắt lại một số sắc thái trên nền tảng.
+
+Sự khác biệt nổi bật nhất trên tvOS là sự tương tác của người dùng.
+
+tvOS không có sự kiện cảm ứng trực tiếp.
+
+Người dùng tương tác với hệ thống bằng cách sử dụng công cụ lấy nét bằng cách vuốt, nhấn mũi tên định hướng và các nút khác trên điều khiển từ xa.
+
+Là một thiết bị chung, tvOS có thể được sử dụng bởi nhiều người và hỗ trợ nhiều người dùng và khách.
+
+Điều này có nghĩa là ứng dụng của bạn có thể cần xử lý thông tin cá nhân khác với các nền tảng khác.
+
+Cuối cùng, tvOS có các chính sách lưu trữ tệp duy nhất.
+
+Điều này đặc biệt quan trọng nếu bạn đang viết một ứng dụng tạo nội dung ghi lại video hoặc âm thanh.
+
+Hãy đi vào chi tiết hơn.
+
+Hãy nhớ rằng không gian đĩa là một tài nguyên được chia sẻ.
+
+Người tiêu dùng chính của không gian đĩa là: hệ điều hành, không thể xóa được; khung và tệp nhị phân ứng dụng, một số trong đó có thể được giảm tải nếu cài đặt được bật; và phần lớn dung lượng được sử dụng làm bộ nhớ cache cho dữ liệu tạm thời.
+
+Các ứng dụng tvOS chủ yếu được xây dựng để tiêu thụ nội dung, như phát trực tuyến, yêu cầu bộ nhớ cache có sẵn rất lớn.
+
+Giữ mô hình không gian đĩa này giúp đảm bảo trải nghiệm người dùng tốt nhất trên tất cả các ứng dụng tvOS.
+
+Trên iOS, bạn có thể lưu trữ dữ liệu liên tục bằng cách sử dụng FileManager và ghi vào đường dẫn .documentDirectory.
+
+Việc sử dụng API này không được khuyến khích trên tvOS.
+
+Hệ điều hành không cho phép lưu trữ liên tục các tệp lớn.
+
+Mặc dù có sẵn trong các tiêu đề, việc sử dụng .documentDirectory sẽ thất bại với lỗi thời gian chạy.
+
+Thay vào đó, khi xây dựng cho tvOS, ứng dụng của bạn chỉ nên sử dụng .cachesDirectory.
+
+Dữ liệu trong thư mục này sẽ có sẵn trong khi ứng dụng của bạn đang chạy.
+
+Tuy nhiên, có thể dữ liệu này sẽ bị xóa khỏi đĩa giữa các lần khởi chạy ứng dụng.
+
+Vì lý do đó, bạn nên giảm tải dữ liệu của mình ở nơi khác càng sớm càng tốt, chẳng hạn như tải nó lên đám mây và xóa nó khi không còn cần thiết trên đĩa nữa.
+
+Có các tùy chọn lưu trữ tệp khác có sẵn trên tvOS, có một số trường hợp sử dụng nhiều người dùng thú vị.
+
+Ví dụ, bạn có thể lưu trữ dữ liệu ứng dụng của mình trong iCloud bằng CloudKit, ngay cả trên cơ sở mỗi người dùng.
+
+Chúng tôi đã đề cập đến các tùy chọn lưu trữ cho nhiều người dùng trên tvOS trong quá khứ và khuyến khích bạn tham khảo những video đó để biết thêm thông tin.
+
+Nếu bạn chưa quen với việc phát triển tvOS, hãy xem trang Lập kế hoạch ứng dụng tvOS của bạn trên developer.apple.com, trang này sẽ xem xét các tính năng và cân nhắc khác nhau cần lưu ý khi phát triển cho Apple TV.
+
+Và đó là cách bạn có thể xây dựng trải nghiệm ứng dụng tvOS tuyệt vời với các API Khám phá Thiết bị và Máy ảnh Liên tục mới trong tvOS 17.
+
+Bây giờ hãy nói về các khả năng micrô khác nhau mà bạn có thể truy cập trong tvOS 17.
+
+Các ứng dụng sẽ có khả năng sử dụng micrô trên tvOS lần đầu tiên!
+
+Hãy đi sâu vào những gì bạn cần làm trong ứng dụng của mình để tận dụng chức năng này.
+
+Đây là tổng quan về những thay đổi được thực hiện trong năm nay.
+
+Có những bổ sung cho Audio Session trong khung AVFAudio trên tvOS.
+
+Giống như trên iOS, Audio Session là giao diện cấp hệ thống nơi bạn giao tiếp cách bạn định sử dụng âm thanh trong ứng dụng của mình.
+
+Ví dụ: bạn đăng ký và xử lý các thông báo như gián đoạn hoặc thay đổi tuyến đường và đặt danh mục và chế độ ứng dụng của bạn.
+
+Bộ API ghi đầy đủ cũng đã được chuyển từ iOS sang tvOS.
+
+Chúng bao gồm các API ghi âm trong AVFAudio cũng như khung AudioToolbox.
+
+Hãy bắt đầu với Audio Session.
+
+Với tvOS 17, các ứng dụng sẽ có thể sử dụng một vài thiết bị micrô khác nhau trên Apple TV.
+
+Đây có thể là Micrô liên tục như iPhone hoặc iPad hoặc các thiết bị Bluetooth như AirPods hoặc các tai nghe khác có thể được ghép nối trực tiếp với thiết bị tvOS.
+
+Cách bạn có thể nhận ra loại thiết bị đầu vào là thông qua loại AVAudioSessionPort.
+
+Sau khi trải qua luồng Khám phá Thiết bị, bạn có thể truy cập vào AVContinuityDevice có thuộc tính audioSessionPorts.
+
+Thông tin về thiết bị âm thanh, bao gồm cả loại cổng của nó, có thể được truy vấn từ thuộc tính này.
+
+Hiện tại có một loại cổng mới cho Micrô liên tục và bạn nên sử dụng cổng này làm mã định danh nếu bạn muốn làm bất cứ điều gì cụ thể trong ứng dụng của mình dựa trên loại thiết bị đầu vào.
+
+Tuy nhiên, quy trình này sẽ chỉ hoạt động đối với iPhone và iPad thuộc AVContinuityDevice.
+
+Bạn cũng có thể tiếp tục sử dụng API Phiên Âm thanh hiện có để truy vấn các đầu vào có sẵn trên hệ thống.
+
+Loại cổng hiện có cho AirPods hoặc micrô Bluetooth đã được chuyển từ iOS.
+
+Dựa trên tính khả dụng của thiết bị chụp, bây giờ hãy nói về tính khả dụng của thiết bị micrô và cách bạn cần giám sát nó trên tvOS.
+
+Apple TV không có micrô tích hợp và ứng dụng của bạn không bao giờ được đảm bảo luôn có quyền truy cập vào thiết bị micrô.
+
+Cuối cùng, thuộc tính InputAvailable trong Audio Session hiện có hỗ trợ có thể quan sát được giá trị chính để bạn theo dõi khi có thiết bị micrô có sẵn để sử dụng và khi không có.
+
+Chúng tôi khuyên bạn nên nghe thuộc tính này để biết bất kỳ thay đổi động nào đối với tính khả dụng của micrô.
+
+Điều này cũng có thể giúp xác định thời gian của bạn để kích hoạt Phiên Âm thanh và bắt đầu I/O, cũng như xử lý trạng thái ứng dụng của bạn khi thiết bị micrô xuất hiện hoặc biến mất khỏi hệ thống.
+
+Tiếp theo, tương tự như iOS, API quyền ghi âm hiện có sẵn trên tvOS 17 để bạn kiểm tra xem người dùng đã cấp quyền truy cập ứng dụng của bạn vào micrô chưa và, nếu không, yêu cầu quyền ghi âm.
+
+Nó được khuyến nghị cho một ứng dụng để đảm bảo có quyền ghi lại để tránh thất bại trong khi khởi động I/O.
+
+Cuối cùng nhưng không kém phần quan trọng trong Phiên âm thanh, các danh mục và chế độ hỗ trợ đầu vào như danh mục cho playAndRecord và các chế độ như trò chuyện thoại và trò chuyện video, hiện cũng có sẵn trên tvOS.
+
+Bạn có thể tham khảo tiêu đề của chúng tôi, AVAudioSessionTypes, để giúp bạn xác định danh mục và chế độ phiên âm thanh nào phù hợp nhất với ứng dụng của bạn.
+
+Và đó là tất cả những thay đổi Phiên Âm thanh mới đối với tvOS 17.
+
+Bây giờ, hãy nói về bộ API ghi âm đa dạng và các trường hợp sử dụng được đề xuất của chúng.
+
+Đầu tiên, AVAudioRecorder.
+
+Đây là cách đơn giản nhất để ghi vào tệp âm thanh và nếu tất cả những gì bạn cần làm là ghi lại bất cứ thứ gì vào micrô cho trường hợp sử dụng không theo thời gian thực, AVAudioRecorder là lựa chọn bạn nên sử dụng.
+
+Nó có thể được cấu hình với nhiều định dạng mã hóa, định dạng tệp cụ thể, tốc độ mẫu, v.v.
+
+Tiếp theo, chúng ta có AVCapture.
+
+Như Kevin đã đề cập, bạn có thể tận dụng API AVCapture iOS hiện có để có quyền truy cập vào micrô cho các trường hợp sử dụng ghi âm cơ bản nếu cả máy ảnh và micrô đang phát.
+
+Chuyển sang AVAudioEngine.
+
+AVAudioEngine hỗ trợ cả ghi âm và phát lại cho các trường hợp sử dụng xử lý âm thanh đơn giản cũng như phức tạp.
+
+Một ví dụ về điều này có thể là một ứng dụng karaoke nơi bạn có thể phân tích đầu vào giọng nói của người dùng từ micrô của họ và trộn đầu vào micrô này với bản nhạc phát lại của bạn.
+
+Bây giờ, có một số trường hợp mà một ứng dụng có thể muốn tương tác trực tiếp với chu kỳ I/O âm thanh thời gian thực.
+
+AVAudioEngine cũng cung cấp một giao diện thời gian thực.
+
+Các ứng dụng có thể cung cấp các cuộc gọi lại kết xuất an toàn theo thời gian thực thông qua AVAudioSinkNode và AVAudioSourceNode.
+
+Bạn cũng có thể truy cập vào khả năng xử lý giọng nói với AVAudioEngine.
+
+Đối với các ứng dụng xử lý các giao diện cấp thấp, các cơ chế iOS tương ứng cũng đã được chuyển sang tvOS.
+
+Đối với các trường hợp sử dụng ghi âm không theo thời gian thực, bạn có thể liên hệ với AudioQueue.
+
+Để tương tác trực tiếp với chu trình I/O âm thanh thời gian thực, bạn có thể sử dụng các đơn vị âm thanh AU RemoteIO và AU VoiceIO thông qua các API AudioUnit hiện có.
+
+Nếu bạn muốn biết thêm thông tin chi tiết về các API này, tôi khuyên bạn nên xem trang web của Nhà phát triển để biết các khung Hộp công cụ Âm thanh và Âm thanh AVF.
+
+Bây giờ, nếu bạn yêu cầu luồng micrô trong đó việc phát lại từ Apple TV cần bị hủy tiếng vang, ví dụ như trong trường hợp sử dụng hội nghị, bạn nên chọn tham gia API xử lý giọng nói của chúng tôi.
+
+Hãy nói về lý do tại sao.
+
+So với sự cố hủy tiếng vang tiêu chuẩn, giả sử trên iPhone nơi việc ghi và phát lại diễn ra trên cùng một thiết bị, đây là mọi thứ mới trong thiết lập tvOS.
+
+Với lộ trình hỗ trợ Micrô liên tục, quá trình ghi âm diễn ra trên iPhone hoặc iPad.
+
+Tuy nhiên, việc phát lại được phát trực tuyến trên thiết bị tvOS và có thể được phát từ bất kỳ bộ loa TV tùy ý nào, thiết lập rạp hát gia đình, thanh âm thanh hoặc thậm chí là một cặp HomePod âm thanh nổi, hầu hết đều có khả năng phát lại các định dạng phong phú như 5.1 và 7.1 LPCM và chạy các hương vị xử lý âm thanh
+
+Cùng với điều này, trong cài đặt Apple TV nói chung, người dùng có thể cách thiết bị micrô vài feet và thiết bị micrô này có thể gần với các thiết bị phát lại lớn này hơn nhiều.
+
+Tất cả các kịch bản này đã thiết lập một vấn đề kiểm soát tiếng vang rất khó khăn, nơi chúng tôi muốn hủy tất cả phát lại từ Apple TV trong khi thu âm thanh từ môi trường cục bộ với chất lượng cao.
+
+Để giúp bạn vượt qua tất cả những thách thức này, tvOS 17 hiện có công nghệ xử lý giọng nói và hủy tiếng vang mới.
+
+Bạn có thể tận dụng điều này bằng cách đơn giản là áp dụng các API iOS hiện có, hiện cũng có trên tvOS, trong AVAudioEngine, nơi bạn chỉ cần gọi setVoiceProcessingEnabled trên inputNode.
+
+Bạn cũng có thể truy cập vào điều này thông qua đơn vị âm thanh AU VoiceIO bằng cách sử dụng loại phụ VoiceProcessingIO.
+
+Để biết thêm chi tiết về các API xử lý giọng nói của chúng tôi và các khả năng mà chúng cung cấp, vui lòng tham khảo phiên của chúng tôi Có gì mới trong Xử lý bằng giọng nói?
+
+Và đó là tất cả các API âm thanh mới đối với tvOS 17 trong năm nay.
+
+Bây giờ, hãy quay lại ứng dụng của chúng tôi và xem cách tận dụng một số chức năng micrô này trong đó.
+
+Quay lại Xcode, tôi sẽ mở lớp AudioCapturer của mình.
+
+Lớp này tóm tắt tất cả các sắc thái của API âm thanh cơ bản từ phần còn lại của mã ứng dụng.
+
+Nó có phiên bản AVAudioEngine riêng, đây là API ghi âm mà tôi sẽ sử dụng trong phiên bản này.
+
+Nó cũng có phiên bản chia sẻ riêng của Audio Session.
+
+Và đây là một cái nhìn sâu sắc nhanh chóng về những gì lớp học này làm.
+
+Ở cấp độ cao, nó thiết lập danh mục và chế độ Phiên âm thanh trước khi kích hoạt, thiết lập AVAudioEngine cơ bản với các định dạng chính xác...
+
+Và đặt xử lý giọng nói trên nút đầu vào, với nút chuyển đổi do người dùng kiểm soát để bỏ qua nó.
+
+Tôi đang chạy động cơ trong bối cảnh không theo thời gian thực trong ví dụ này.
+
+Bây giờ, hãy xem tôi cần làm gì để sửa đổi điều này cho tvOS.
+
+Ứng dụng iOS này được xây dựng như đối với tvOS giả sử thiết bị micrô luôn khả dụng.
+
+Những gì tôi cần làm là thêm một người quan sát để nghe thông báo KVO có sẵn đầu vào để đảm bảo rằng tôi có sẵn thiết bị micrô đầu vào trước khi bắt đầu Phiên âm thanh và sau đó bắt đầu I/O.
+
+Tôi sẽ tiếp tục và thêm nó vào đây.
+
+Tôi cũng cần đảm bảo rằng tôi xử lý trạng thái của ứng dụng khi thiết bị micrô hiển thị hoặc biến mất khỏi hệ thống, đó có thể là người dùng chỉ cần ngắt kết nối điện thoại của họ khỏi Apple TV trong phiên.
+
+Cái này bây giờ sẽ hoạt động tốt trên Apple TV của tôi. Hãy xem nó hoạt động!
+
+Đây, bây giờ tôi đang ở chế độ âm thanh của ứng dụng của mình.
+
+Tôi có thể nhấn phát để phát lại một bài hát và sau đó tiếp tục và ghi âm bản thân mình đang nói.
+
+Wow, bài hát này thật hấp dẫn!
+
+Tôi luôn cảm thấy muốn nhảy khi nghe nó.
+
+Điều đó thật vui!
+
+Bây giờ, ở chế độ xử lý giọng nói mà chúng tôi đã sử dụng, bài hát này được phát từ Apple TV sẽ bị hủy, khiến chúng tôi chỉ có âm thanh từ môi trường cục bộ được gửi đến ứng dụng.
+
+Chà, bài hát này thật hấp dẫn.
+
+Tôi luôn cảm thấy muốn nhảy khi nghe nó.
+
+Và đó là hủy bỏ tiếng vang trên tvOS.
+
+Và đó là một kết thúc tốt đẹp! Hãy tóm tắt lại những gì chúng ta đã trải qua.
+
+Chúng tôi đã giới thiệu tính năng ở cấp độ cao và nói về thể loại ứng dụng mới mà nó mở khóa trên tvOS.
+
+Sau đó, chúng tôi đã thảo luận về API Khám phá Thiết bị mới để trình bày bộ chọn thiết bị và chọn một thiết bị liên tục.
+
+Chúng tôi đã xem xét các API máy ảnh và micrô hiện có sẵn để sử dụng trên tvOS.
+
+Và cuối cùng, chúng tôi đã điều chỉnh một ứng dụng máy ảnh và micrô hiện có để xây dựng cho tvOS, chia sẻ càng nhiều mã càng tốt và chỉ thêm Device Discovery.
+
+Chúng tôi cũng tóm tắt lại một số cân nhắc cụ thể của tvOS.
+
+Chúng tôi rất vui khi bạn mang hỗ trợ máy ảnh và micrô đến ứng dụng tvOS của mình.
+
+Chúng tôi nóng lòng muốn xem các ứng dụng bạn sẽ phát triển trên nền tảng này với chức năng này!
+
+Cảm ơn bạn.
+
+.

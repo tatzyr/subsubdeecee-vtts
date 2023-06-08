@@ -1,0 +1,581 @@
+10105
+
+Rob: Xin chào.
+
+Tôi là Rob Simutis từ nhóm phần mềm Máy ảnh, với Sebastian Medina từ nhóm Ảnh, và chào mừng đến với phiên của chúng tôi, "Tạo ra trải nghiệm máy ảnh nhạy hơn."
+
+Chúng tôi sẽ giới thiệu một loạt các API mạnh mẽ mới trong các lớp chụp AVFoundation và trong khung PhotoKit.
+
+Đầu tiên, chúng ta sẽ nói về việc xử lý ảnh hoãn lại.
+
+Sau đó, tôi sẽ chỉ ra cách bạn thực sự có thể "nắm bắt khoảnh khắc" với độ trễ màn trập bằng không.
+
+Thứ ba, tôi sẽ đề cập đến các API Responsive Capture mới của chúng tôi.
+
+Và cuối cùng, tôi sẽ đi qua một cách khác để phản hồi với các hiệu ứng video được cập nhật.
+
+Bắt đầu với iOS 13, bạn có thể sử dụng giá trị liệt kê Ưu tiên Chất lượng ảnh của AVCapturePhotoSetting để thay đổi khả năng phản hồi hoặc bạn có thể chụp và lấy lại ảnh đã xử lý nhanh như thế nào, sau đó có thể chụp ảnh tiếp theo.
+
+Ứng dụng của bạn có thể chọn trong số các giá trị liệt kê khác nhau để đạt được khả năng phản hồi phù hợp, nhưng nó ảnh hưởng đến chất lượng hình ảnh.
+
+Hoặc nếu bạn luôn muốn sử dụng giá trị chất lượng, bạn có thể ảnh hưởng đến thời gian chụp để chụp.
+
+Trong iOS 17, bạn vẫn có thể sử dụng API này, nhưng chúng tôi sẽ mang đến cho bạn các API mới, bổ sung để bạn có thể cải thiện cơ hội chụp được bức ảnh bạn muốn đồng thời có được những bức ảnh chất lượng cao hơn.
+
+Tôi sẽ hướng dẫn bạn qua ứng dụng này mà nhóm của tôi đã xây dựng cho phiên của chúng tôi.
+
+Bằng cách bật từng công tắc bật tắt thành "bật", chúng tôi có thể kích hoạt các tính năng mới trong năm nay và chúng tôi sẽ xây dựng từng khái niệm một để tạo ra trải nghiệm chụp ảnh nhạy bén hơn.
+
+Vì vậy, hãy bắt đầu di chuyển, bắt đầu với việc xử lý ảnh hoãn lại.
+
+Ngày nay, để có được những bức ảnh chất lượng cao nhất từ AVCapturePhotoOutput, bạn sử dụng giá trị liệt kê ưu tiên chất lượng ảnh là "chất lượng" trên cài đặt khi bạn chụp ảnh.
+
+Đối với các giá trị "cân bằng" và "chất lượng" của chúng tôi, điều này thường liên quan đến một số loại phản ứng tổng hợp nhiều khung hình và giảm tiếng ồn.
+
+Trên iPhone 11 Pro và các mẫu mới hơn, một trong những kỹ thuật tiên tiến nhất của chúng tôi được gọi là "Deep Fusion".
+
+Điều này mang lại chi tiết tuyệt vời, sắc nét trong các bức ảnh có độ phân giải cao.
+
+Trong cảnh quay Deep Fusion này, lông của con vẹt siêu sắc nét và thực sự nổi bật.
+
+Nhưng nó phải trả giá.
+
+Quá trình xử lý này phải hoàn tất trước khi yêu cầu chụp tiếp theo bắt đầu và có thể mất một thời gian để hoàn thành.
+
+Hãy nhìn vào một ví dụ thực tế.
+
+Tôi đang tập hợp một bài thuyết trình về cách nhóm phần mềm máy ảnh đến văn phòng để hoàn thành công việc của mình.
+
+Đây là đồng nghiệp Devin của tôi đang sử dụng công nghệ xe đạp mới nhất để đi vòng quanh Apple Park.
+
+Khi tôi nhấn, tôi đang đợi nút chụp hoàn thành việc quay từ một lần chụp trước khi tôi có thể chụp lần tiếp theo.
+
+Kết quả cuối cùng là những bức ảnh Deep Fusion tuyệt vời.
+
+Chỉ cần kiểm tra chi tiết bộ râu đó!
+
+Nhưng trong khi tôi đang gõ, quá trình xử lý chạy đồng bộ và thời gian chụp để bắn cảm thấy hơi chậm chạp.
+
+Vì vậy, tôi có thể đã có được một bức ảnh đẹp với chi tiết sắc nét, nhưng có lẽ không chính xác là bức ảnh tôi đang tìm kiếm.
+
+Hãy xem sơ đồ các sự kiện.
+
+Bạn gọi phương thức capturePhoto của AVCapturePhotoOutput với cài đặt của bạn và đại diện của bạn nhận được cuộc gọi lại tại các điểm khác nhau trong quy trình...
+
+Chẳng hạn như willBeginCapture cho các cài đặt đã được giải quyết.
+
+Ngăn xếp phần mềm máy ảnh lấy các khung hình từ cảm biến và sử dụng các kỹ thuật xử lý của chúng tôi để hợp nhất chúng thành hình ảnh Deep Fusion...
+
+Sau đó, nó gửi lại ảnh cho bạn thông qua cuộc gọi lại đại diện didFinishProcessingPhoto.
+
+Quá trình xử lý này phải hoàn tất trước khi lần chụp tiếp theo xảy ra và điều đó có thể mất một thời gian.
+
+Bạn thậm chí có thể gọi capturePhoto trước khi lệnh gọi lại didFinishProcessingPhoto kích hoạt, nhưng nó sẽ không bắt đầu cho đến khi quá trình xử lý ảnh trước đó hoàn tất.
+
+Với việc xử lý ảnh bị trì hoãn, dòng thời gian này bị thu hẹp.
+
+Bạn yêu cầu một bức ảnh, và, khi phù hợp, đường ống máy ảnh sẽ cung cấp một bức ảnh "proxy" được xử lý nhẹ thông qua một cuộc gọi lại đại diện didFinishCapturingDeferredPhotoProxy mới.
+
+Bạn lưu trữ ảnh proxy này vào thư viện dưới dạng trình giữ chỗ.
+
+Và bức ảnh tiếp theo có thể được chụp ngay lập tức.
+
+Hệ thống sẽ chạy quá trình xử lý sau để có được bức ảnh cuối cùng sau khi phiên máy ảnh bị loại bỏ.
+
+Vì vậy, bây giờ nếu tôi bật xử lý ảnh hoãn lại trong cài đặt ứng dụng của mình, phiên chụp sẽ tự cấu hình lại để cung cấp cho tôi ảnh proxy tại thời điểm chụp khi thích hợp.
+
+Và tôi có thể có được những bức ảnh sắc nét, chi tiết cao như trước đây, nhưng tôi có thể chụp nhiều hơn trong số chúng khi tôi đang ở trong thời điểm này bằng cách trì hoãn quá trình xử lý cuối cùng sang một thời gian sau.
+
+Bánh xe đẹp. Những chiếc xe đạp đó chắc chắn.
+
+Vậy là xong. Đó là một bức ảnh tuyệt vời cho bài thuyết trình của tôi, bộ râu và tất cả.
+
+Vì vậy, hãy xem xét tất cả các phần tương tác để cung cấp cho bạn một bức ảnh được xử lý hoãn lại.
+
+Là một khóa học bồi dưỡng ngắn gọn từ các bài thuyết trình WW trước đó, khi định cấu hình AVCaptureSession để chụp ảnh, bạn thêm AVCaptureDeviceInput với AVCaptureDevice, tức là máy ảnh, vào phiên.
+
+Sau đó, bạn thêm AVCapturePhotoOutput vào phiên của mình và bạn chọn một định dạng hoặc cài đặt trước phiên cụ thể, thường là cài đặt trước phiên "Ảnh" khi ứng dụng của bạn gọi capturePhoto trên photoOutput.
+
+Nếu đó là một loại ảnh phù hợp hơn với việc xử lý ảnh hoãn lại, chúng tôi sẽ gọi lại cho bạn với didFinishCapturing Deferred Photo Proxy.
+
+Từ đó, bạn gửi dữ liệu proxy đến thư viện ảnh.
+
+Vì vậy, những gì bạn có bây giờ trong thư viện của mình là một bức ảnh proxy, nhưng cuối cùng bạn sẽ muốn sử dụng hoặc chia sẻ hình ảnh cuối cùng.
+
+Quá trình xử lý ảnh cuối cùng xảy ra theo yêu cầu khi bạn yêu cầu dữ liệu hình ảnh trở lại từ thư viện hoặc trong nền khi hệ thống xác định rằng các điều kiện là tốt để làm như vậy, chẳng hạn như thiết bị không hoạt động.
+
+Và bây giờ tôi sẽ để đồng nghiệp Sebastian của tôi chỉ cho bạn cách mã hóa điều này.
+
+Đến với bạn, Sebastian.
+
+Sebastian: Cảm ơn, Rob.
+
+Xin chào, tên tôi là Sebastian Medina và tôi là một kỹ sư trong nhóm Ảnh.
+
+Hôm nay tôi sẽ xem xét việc chụp một hình ảnh được chụp gần đây thông qua PhotoKit để kích hoạt quá trình xử lý hoãn lại.
+
+Sau đó, tôi sẽ yêu cầu cùng một hình ảnh đó để hiển thị những gì mới trong việc nhận hình ảnh từ yêu cầu PHImageManager.
+
+Mặc dù, trước khi tôi bắt đầu xử lý tài sản thông qua PhotoKit, tôi cần đảm bảo rằng API Máy ảnh mới để xử lý hoãn lại được thiết lập.
+
+Điều này sẽ cho phép ứng dụng của tôi chấp nhận hình ảnh proxy ảnh bị trì hoãn, mà chúng tôi có thể gửi qua PhotoKit.
+
+Bây giờ, tôi sẽ tiếp tục và viết mã để tận dụng điều này.
+
+Ở đây, tôi đã thiết lập các đối tượng AVCapturePhotoOutput và AVCaptureSession.
+
+Bây giờ, tôi có thể bắt đầu cấu hình phiên của chúng ta.
+
+Trong trường hợp này, tôi muốn phiên có một cài đặt trước loại ảnh để chúng ta có thể tận dụng lợi thế của việc xử lý hoãn lại.
+
+Bây giờ tôi sẽ lấy thiết bị chụp để sau đó thiết lập đầu vào thiết bị.
+
+Sau đó, nếu có thể, tôi sẽ thêm đầu vào thiết bị.
+
+Tiếp theo, tôi sẽ muốn kiểm tra xem photoOutput có thể được thêm vào hay không.
+
+Và nếu vậy, hãy thêm nó.
+
+Bây giờ cho những thứ mới.
+
+Tôi sẽ kiểm tra xem giá trị autoDeferredPhotoDeliverySupported mới có đúng không để đảm bảo rằng tôi có thể gửi ảnh đã chụp thông qua quá trình xử lý hoãn lại.
+
+Nếu điều này được thông qua, thì tôi có thể tiếp tục và chọn tham gia giao ảnh hoãn lại mới với tài sản autoDeferredPhotoDeliveryEnabled.
+
+Kiểm tra và kích hoạt giao ảnh hoãn lại này là tất cả những gì bạn cần thêm vào mã Máy ảnh của mình để kích hoạt ảnh bị trì hoãn.
+
+Cuối cùng, tôi sẽ cam kết cấu hình phiên của chúng tôi.
+
+Vì vậy, bây giờ khi một cuộc gọi được thực hiện cho phương thức capturePhoto, cuộc gọi lại đại diện mà chúng tôi nhận được sẽ giữ một đối tượng proxy bị trì hoãn.
+
+Hãy xem một ví dụ về một trong những cuộc gọi lại này.
+
+Trong cuộc gọi lại chụp ảnh này, tôi đang nhận được các đối tượng AVCapturePhotoOutput và AVCaptureDeferredPhotoProxy từ Camera, có liên quan đến hình ảnh tôi đã chụp gần đây.
+
+Đầu tiên, thực hành tốt là đảm bảo rằng chúng ta đang nhận được các giá trị đầu ra ảnh phù hợp, vì vậy tôi sẽ kiểm tra giá trị của tham số lỗi.
+
+Bây giờ, chúng ta sẽ bắt đầu lưu hình ảnh của mình vào thư viện ảnh bằng PhotoKit.
+
+Tôi sẽ thực hiện các thay đổi trên PHPhotoLibrary được chia sẻ.
+
+Mặc dù, chỉ cần lưu ý, chỉ cần có quyền truy cập ghi vào thư viện ảnh.
+
+Sau đó tôi sẽ chụp dữ liệu ảnh từ đối tượng AVCaptureDeferredPhotoProxy.
+
+Vì tôi sẽ thực hiện các thay đổi đối với thư viện ảnh, tôi sẽ cần thiết lập phương thức phiên bản performChanges có liên quan.
+
+Giống như với việc tiết kiệm bất kỳ tài sản nào, tôi sẽ sử dụng PHAssetCreationRequest.
+
+Sau đó tôi sẽ gọi phương thức 'addResource' theo yêu cầu.
+
+Đối với các thông số, tôi sẽ sử dụng PHAssetResourceType '.photoProxy' mới.
+
+Đây là những gì yêu cầu PhotoKit kích hoạt quá trình xử lý hoãn lại trên hình ảnh.
+
+Sau đó, tôi có thể thêm dữ liệu hình ảnh proxy đã chụp trước đó.
+
+Và trong trường hợp này tôi sẽ không sử dụng bất kỳ lựa chọn nào.
+
+Ở đây, điều quan trọng cần biết là việc sử dụng loại tài nguyên mới này trên dữ liệu hình ảnh không yêu cầu xử lý hoãn lại sẽ dẫn đến lỗi.
+
+Và nói về lỗi, tôi sẽ tiếp tục và kiểm tra chúng trong trình xử lý hoàn thành.
+
+Và nó dễ dàng như vậy.
+
+Hãy tiếp tục và xử lý thành công và lỗi trong trình xử lý hoàn thành khi ứng dụng của bạn thấy phù hợp.
+
+Bây giờ, giả sử tôi muốn lấy lại Tài sản của chúng tôi.
+
+Tôi có thể đạt được điều đó thông qua yêu cầu PHImageManager, vì vậy tôi sẽ xem qua mã để làm điều đó.
+
+Đối với các thông số, tôi có một đối tượng PHAsset cho hình ảnh tôi vừa gửi qua PhotoKit, kích thước mục tiêu của hình ảnh sẽ được trả về và chế độ nội dung.
+
+Tôi sẽ lấy một đối tượng PHImageManager mặc định. sau đó, tôi có thể gọi tài sản hình ảnh yêu cầu cho phương thức requestImageForAsset bằng cách sử dụng đối tượng imageManager của chúng tôi.
+
+Đối với các thông số, tôi sẽ sử dụng nội dung mà tôi đã tìm nạp trước đó, kích thước mục tiêu, chế độ nội dung và trong trường hợp này, tôi sẽ không sử dụng bất kỳ tùy chọn nào.
+
+Bây giờ tôi có thể xử lý các cuộc gọi lại thông qua resultHandler trong đó resultImage là UIImage và thông tin là một từ điển liên quan đến hình ảnh.
+
+Hôm nay, cuộc gọi lại đầu tiên sẽ giữ hình ảnh có độ phân giải thấp hơn với khóa phân cách thông tin PHImageResultIsDegradedKey trong khi cuộc gọi lại hình ảnh cuối cùng sẽ không.
+
+Vì vậy, tôi có thể kiểm tra những thứ đó ở đây.
+
+Việc bổ sung việc tạo hình ảnh đã xử lý thông qua PhotoKit mang đến cơ hội tốt để đưa ra API mới của chúng tôi, điều này sẽ cho phép các nhà phát triển nhận được hình ảnh phụ từ phương thức requestImageForAsset.
+
+Vì có thể mất nhiều thời gian hơn để một hình ảnh trải qua quá trình xử lý hoãn lại để hoàn thiện, hình ảnh phụ mới này có thể được hiển thị trong thời gian chờ đợi.
+
+Để nhận được hình ảnh mới này, bạn sẽ sử dụng allowSecondaryDegradedImage mới trong PHImageRequestOptions.
+
+Hình ảnh mới này sẽ được nép mình giữa hai lần gọi lại hiện tại từ phương thức requestImageForAsset.
+
+Và từ điển thông tin liên quan đến hình ảnh sẽ có một mục nhập cho PHImageResultIsDegradedKey, được sử dụng ngày hôm nay trong lần gọi lại hình ảnh đầu tiên.
+
+Để minh họa rõ hơn những gì đang diễn ra, hôm nay, phương thức requestImageForAsset cung cấp hai hình ảnh.
+
+Đầu tiên là một hình ảnh chất lượng thấp phù hợp để hiển thị tạm thời trong khi nó chuẩn bị hình ảnh chất lượng cao cuối cùng.
+
+Với tùy chọn mới này, giữa hai tùy chọn hiện tại, bạn sẽ được cung cấp một hình ảnh mới, có độ phân giải cao hơn để hiển thị trong khi hình ảnh cuối cùng đang được xử lý.
+
+Hiển thị hình ảnh mới này sẽ mang lại cho người dùng của bạn trải nghiệm hình ảnh dễ chịu hơn trong khi chờ hình ảnh cuối cùng hoàn tất quá trình xử lý.
+
+Bây giờ, hãy viết mã để tận dụng điều này.
+
+Mặc dù, lần này, tôi sẽ tạo một đối tượng PHImageRequestOptions.
+
+Sau đó tôi sẽ đặt tùy chọn allowSecondaryDegradedImage mới là đúng.
+
+Bằng cách này, yêu cầu biết để gửi lại cuộc gọi lại hình ảnh phụ mới.
+
+Ở đây, tôi có thể tiếp tục và sử dụng lại phương thức requestImageForAsset mà tôi đã viết trước đây, mặc dù bây giờ tôi sẽ thêm đối tượng tùy chọn yêu cầu hình ảnh mà tôi vừa tạo.
+
+Vì từ điển thông tin hình ảnh phụ mới sẽ giữ giá trị thực cho PHImageResultIsDegradedKey, giống như lần gọi lại đầu tiên, tôi sẽ kiểm tra điều đó ở đây.
+
+Và đó là để nhận được hình ảnh đại diện thứ cấp mới.
+
+Hãy nhớ xử lý các hình ảnh trong trình xử lý kết quả để hỗ trợ tốt nhất cho ứng dụng của bạn.
+
+Bây giờ bạn đã biết cách thêm hình ảnh vào thư viện ảnh của mình với quá trình xử lý hoãn lại và cách nhận hình ảnh chất lượng cao hơn thứ cấp từ yêu cầu hình ảnh để hiển thị trong ứng dụng của bạn trong khi chờ hình ảnh cuối cùng hoàn tất quá trình xử lý.
+
+Những thay đổi này sẽ có sẵn bắt đầu với iOS 17, tvOS 17 và macOS Sonoma cùng với các thay đổi PhotoKit xử lý hoãn mới.
+
+Bây giờ, tôi sẽ giao lại cho Rob để biết thêm về các công cụ mới để tạo ra một Máy ảnh nhạy hơn.
+
+Rob: Tuyệt vời. Cảm ơn, Sebastian!
+
+Hãy đi vào chi tiết tốt để đảm bảo bạn có trải nghiệm tuyệt vời với việc xử lý ảnh hoãn lại.
+
+Chúng ta sẽ bắt đầu với thư viện ảnh.
+
+Để sử dụng xử lý ảnh bị trì hoãn, bạn sẽ cần có quyền ghi vào thư viện ảnh để lưu trữ ảnh proxy và quyền đọc nếu ứng dụng của bạn cần hiển thị ảnh cuối cùng hoặc muốn sửa đổi nó theo bất kỳ cách nào.
+
+Nhưng hãy nhớ rằng, bạn chỉ nên yêu cầu quyền truy cập vào thư viện nhỏ nhất khi cần thiết từ khách hàng của mình để duy trì sự riêng tư và tin tưởng nhất thay mặt họ.
+
+Và, chúng tôi đặc biệt khuyên bạn nên một khi bạn nhận được proxy, bạn sẽ đưa fileDataRepresentation của nó vào thư viện càng nhanh càng tốt.
+
+Khi ứng dụng của bạn được nền, bạn có một khoảng thời gian giới hạn để chạy trước khi hệ thống tạm dừng nó.
+
+Nếu áp lực bộ nhớ trở nên quá lớn, ứng dụng của bạn có thể bị hệ thống tự động buộc phải bỏ trong cửa sổ nền đó.
+
+Đưa proxy vào thư viện càng nhanh càng tốt đảm bảo giảm thiểu khả năng mất dữ liệu cho khách hàng của bạn.
+
+Tiếp theo, nếu bạn thường thực hiện các thay đổi đối với bộ đệm pixel của ảnh như áp dụng bộ lọc hoặc nếu bạn thực hiện thay đổi đối với siêu dữ liệu hoặc các thuộc tính khác của AVCapturePhoto bằng cách sử dụng AVCapturePhoto File Data Representation Customizer, những điều này sẽ không có hiệu lực đối với ảnh đã hoàn thiện trong thư viện sau khi quá
+
+Bạn sẽ cần làm điều này sau khi điều chỉnh ảnh bằng cách sử dụng PhotoKit APIs.
+
+Ngoài ra, mã của bạn cần có khả năng xử lý cả proxy hoãn lại và ảnh không hoãn lại trong cùng một phiên.
+
+Điều này là do không phải tất cả các bức ảnh đều có ý nghĩa để xử lý với các bước bổ sung cần thiết.
+
+Ví dụ, chụp flash được chụp theo giá trị liệt kê ưu tiên chất lượng ảnh "chất lượng" không được xử lý theo cách có lợi từ việc tiết kiệm từ ảnh này sang ảnh khác như ảnh Deep Fusion.
+
+Bạn cũng có thể nhận thấy rằng không có thuộc tính chọn tham gia hoặc chọn không tham gia trên AVCapturePhotoSettings.
+
+Đó là bởi vì việc xử lý ảnh bị trì hoãn là tự động.
+
+Nếu bạn chọn tham gia và đường ống máy ảnh sẽ chụp một bức ảnh yêu cầu thời gian xử lý lâu hơn, nó sẽ gửi lại cho bạn một proxy.
+
+Nếu nó không phù hợp, nó sẽ gửi cho bạn bức ảnh cuối cùng, vì vậy không cần phải chọn tham gia hoặc chọn không tham gia trên cơ sở mỗi lần chụp.
+
+Bạn chỉ cần nói với AVCapturePhotoOutput rằng bạn muốn isAutoDeferredPhotoProcessingEnabled là true trước khi bạn bắt đầu phiên chụp.
+
+Cuối cùng, hãy nói về trải nghiệm người dùng.
+
+Xử lý ảnh bị trì hoãn cung cấp chất lượng hình ảnh tốt nhất của chúng tôi với thời gian chụp nhanh, nhưng điều đó chỉ trì hoãn quá trình xử lý cuối cùng cho đến một thời điểm sau đó.
+
+Nếu ứng dụng của bạn là ứng dụng mà người dùng có thể muốn hình ảnh ngay lập tức để chia sẻ hoặc chỉnh sửa và họ không quan tâm đến những bức ảnh chất lượng cao nhất mà chúng tôi cung cấp, thì có thể tránh sử dụng xử lý ảnh bị trì hoãn.
+
+Tính năng này có sẵn bắt đầu từ iPhone 11 Pro và 11 Pro Max và các iPhone mới hơn.
+
+Và đây là một số video liên quan tuyệt vời về cách làm việc với AVCapturePhotoOutput và xử lý quyền thư viện.
+
+Và bây giờ, hãy chuyển sang Zero Shutter Lag và nói về trượt ván.
+
+Đối với bài thuyết trình sắp tới của tôi về phương thức vận chuyển của nhóm phần mềm máy ảnh, chúng tôi đã đến một công viên trượt băng để lấy một số cảnh quay.
+
+Tôi đang quay phim đồng nghiệp của mình bằng Chế độ hành động trên iPhone 14 Pro và tôi cũng muốn có một số cảnh quay hành động anh hùng chất lượng cao cho các trang trình bày của mình.
+
+Nhưng, cảnh báo spoiler, tôi sẽ không trượt ván.
+
+Tôi nhấn vào nút chụp để chụp ảnh đồng nghiệp của tôi, Tomo, bắt không khí.
+
+Khi tôi đến thư viện ảnh để kiểm tra bức ảnh, đây là những gì tôi nhận được.
+
+Tôi đã nhấn nút chụp khi anh ấy đang ở độ cao của cú nhảy, nhưng bức ảnh là hạ cánh của anh ấy.
+
+Nó không chính xác là những gì tôi muốn.
+
+Vậy chuyện gì đã xảy ra vậy? Độ trễ màn trập.
+
+Độ trễ màn trập đã xảy ra.
+
+Bạn có thể nghĩ về "đệp màn trập" là độ trễ từ khi bạn yêu cầu chụp để đọc ra một hoặc nhiều khung hình từ cảm biến để hợp nhất thành ảnh và giao nó cho bạn.
+
+Ở đây, thời gian đang đi từ trái sang phải, trái là các khung cũ hơn và bên phải là các khung mới hơn.
+
+Giả sử khung năm là những gì có trong kính ngắm máy ảnh của bạn.
+
+Hôm nay, khi bạn gọi capturePhoto:with settings on an AVCapturePhotoOutput, đường ống máy ảnh bắt đầu lấy khung hình từ cảm biến và áp dụng các kỹ thuật xử lý của chúng tôi.
+
+Nhưng khung của các khung hình được chụp bắt đầu sau khi chạm xuống, sau khung năm.
+
+Những gì bạn nhận được là một bức ảnh dựa trên các khung từ sáu đến chín, hoặc thậm chí muộn hơn.
+
+Với tốc độ 30 khung hình mỗi giây, mỗi khung hình nằm trong kính ngắm trong 33 mili giây.
+
+Nghe có vẻ không nhiều, nhưng thực sự không mất nhiều thời gian để hành động kết thúc.
+
+Điều đó đủ lâu để Tomo hạ cánh, và tôi đã bỏ lỡ cảnh anh hùng đó.
+
+Với Zero Shutter Lag được bật, đường ống máy ảnh giữ một bộ đệm vòng quay của các khung hình từ quá khứ.
+
+Bây giờ, khung năm là những gì bạn nhìn thấy trong kính ngắm, bạn nhấn để chụp và đường ống máy ảnh thực hiện một chút du hành thời gian, lấy khung hình từ bộ đệm vòng và hợp nhất chúng lại với nhau và bạn có được bức ảnh bạn muốn.
+
+Vì vậy, bây giờ nếu tôi sử dụng nút chuyển đổi thứ hai trong ngăn cài đặt ứng dụng của mình để bật Zero Shutter Lag, khi Tomo bắt được không khí, khi tôi nhấn vào nút chụp, tôi sẽ có một trong những bức ảnh "anh hùng" mà tôi muốn cho bài thuyết trình của mình.
+
+Hãy nói về những gì bạn cần làm để có được Zero Shutter Lag trong ứng dụng của mình.
+
+Hoàn toàn không có gì!
+
+Chúng tôi đã bật Zero Shutter Lag trên các ứng dụng liên kết trên hoặc sau iOS 17 cho AVCaptureSessionPresets và AVCaptureDeviceFormats, nơi được hỗ trợ chất lượng ảnh cao nhất là đúng.
+
+Nhưng, nếu bạn thấy trong quá trình thử nghiệm rằng bạn không nhận được kết quả bạn muốn, bạn có thể đặt AVCapturePhotoOutput.isZeroShutter LagEnabled thành false để chọn không tham gia.
+
+Và bạn có thể xác minh xem photoOutput có hỗ trợ độ trễ màn trập bằng không cho cài đặt trước hoặc định dạng được định cấu hình hay không bằng cách kiểm tra xem isZeroShutterLagSupported có đúng không khi đầu ra được kết nối với phiên của bạn.
+
+Một số loại chụp ảnh tĩnh nhất định như chụp đèn flash, định cấu hình AVCaptureDevice để phơi sáng thủ công, chụp trong ngoặc và phân phối ảnh cấu thành, là các khung hình được đồng bộ hóa từ nhiều máy ảnh, không nhận được Zero Shutter Lag.
+
+Bởi vì đường ống máy ảnh đang di chuyển ngược thời gian để lấy khung hình từ bộ đệm vòng, người dùng có thể khiến máy ảnh rung vào ảnh nếu có độ trễ dài giữa cử chỉ bắt đầu chụp và khi bạn gửi đầu ra ảnh, Cài đặt ảnh.
+
+Vì vậy, bạn sẽ muốn giảm thiểu bất kỳ công việc nào bạn làm giữa sự kiện nhấn và lệnh gọi capturePhoto API trên đầu ra ảnh.
+
+Làm tròn các tính năng của chúng tôi để tạo ra trải nghiệm chụp ảnh nhạy hơn, bây giờ tôi sẽ đề cập đến các API Chụp đáp ứng.
+
+Đây là một nhóm API cho phép khách hàng của bạn chụp ảnh chồng chéo, ưu tiên thời gian chụp để chụp bằng cách điều chỉnh chất lượng ảnh và cũng đưa ra phản hồi giao diện người dùng tuyệt vời khi họ có thể chụp ảnh tiếp theo.
+
+Đầu tiên, API chính, chụp đáp ứng.
+
+Trở lại công viên trượt băng, với hai tính năng được bật trước đó, tôi có thể chụp khoảng hai bức ảnh mỗi giây.
+
+Chúng tôi đã làm chậm cảnh quay để giúp làm cho nó rõ ràng.
+
+Với hai khung hình mỗi giây, bạn không thể nhìn thấy nhiều hành động của Tomo trong không khí và đây là bức ảnh đẹp nhất mà tôi đã kết thúc.
+
+Khá tốt, nhưng hãy xem liệu chúng ta có thể làm tốt hơn không.
+
+Bây giờ tôi sẽ bật công tắc thứ 3 và thứ 4 để bật các tính năng Responsive Capture.
+
+Tôi sẽ xem xét Ưu tiên Chụp Nhanh một chút.
+
+Nhưng trước tiên, quay lại công viên!
+
+Và hãy thử lại lần nữa.
+
+Với khả năng chụp nhanh, tôi có thể chụp nhiều ảnh hơn trong cùng một khoảng thời gian, tăng cơ hội chụp đúng ảnh.
+
+Và có cảnh quay "anh hùng" để bắt đầu bài thuyết trình của tôi.
+
+Đội thực sự sẽ thích nó!
+
+Bạn có thể nghĩ đến một cuộc gọi đến AVCapturePhotoOutput.capturePhoto với phương pháp cài đặt là trải qua ba giai đoạn riêng biệt: chụp khung hình từ cảm biến, xử lý các khung hình đó đến hình ảnh không nén cuối cùng và sau đó mã hóa ảnh thành HEIC hoặc JPEG.
+
+Sau khi mã hóa xong, đầu ra ảnh sẽ gọi lại didFinishProcessingPhoto của đại diện của bạn hoặc nếu bạn đã chọn tham gia API xử lý ảnh bị trì hoãn, có lẽ didFinishCapturing Deferred Photo Proxy, nếu đó là một bức ảnh phù hợp.
+
+Nhưng một khi giai đoạn "chụp" hoàn tất và quá trình "xử lý" bắt đầu, về lý thuyết, đầu ra ảnh có thể bắt đầu một lần chụp khác.
+
+Và bây giờ, lý thuyết đó là thực tế và có sẵn cho ứng dụng của bạn.
+
+Bằng cách chọn tham gia API Chụp phản hồi chính, đầu ra ảnh sẽ chồng chéo lên các giai đoạn này để yêu cầu chụp ảnh mới có thể bắt đầu trong khi một yêu cầu khác đang trong giai đoạn xử lý, mang lại cho khách hàng của bạn những bức ảnh liên tiếp nhanh hơn và nhất quán hơn.
+
+Lưu ý rằng điều này sẽ làm tăng bộ nhớ cao nhất được sử dụng bởi đầu ra ảnh, vì vậy nếu ứng dụng của bạn cũng sử dụng nhiều bộ nhớ, nó sẽ gây áp lực lên hệ thống, trong trường hợp đó bạn có thể thích hoặc cần chọn không tham gia.
+
+Quay lại sơ đồ dòng thời gian của chúng tôi, tại đây, bạn chụp hai bức ảnh liên tiếp nhanh chóng.
+
+Đại diện của bạn sẽ được gọi lại cho willBeginCaptureFor resolvedSettings, và didFinishCaptureFor resolvedSettings for photo A.
+
+Nhưng sau đó thay vì nhận được một cuộc gọi lại Ảnh Xử lý didFinish cho Ảnh A, đó là bức ảnh được mã hóa và gửi cho bạn, bạn có thể nhận được willBeginCapture đầu tiên để giải quyết Cài đặt cho ảnh B.
+
+Hiện tại có hai yêu cầu ảnh trên chuyến bay, vì vậy bạn sẽ phải đảm bảo mã của mình xử lý đúng các cuộc gọi lại cho các bức ảnh xen kẽ.
+
+Để có được những ảnh chụp chồng chéo, đáp ứng đó, trước tiên hãy bật Zero Shutter Lag khi nó được hỗ trợ.
+
+Nó phải được bật để có được hỗ trợ chụp đáp ứng.
+
+Sau đó sử dụng AVCapturePhotoOutput isResponsiveCaptureSupported API để đảm bảo đầu ra ảnh hỗ trợ nó cho cài đặt trước hoặc định dạng, sau đó bật nó lên bằng cách cài đặt AVCapturePhotoOutput.
+
+.isResponsiveCaptureEnabled thành true.
+
+Trước đó, chúng tôi đã bật "ưu tiên chụp nhanh", vì vậy tôi sẽ xem xét ngắn gọn điều đó ngay bây giờ.
+
+Khi nó được bật cho đầu ra ảnh, nó sẽ phát hiện khi nhiều lần chụp được chụp trong một khoảng thời gian ngắn và để đáp lại, sẽ điều chỉnh chất lượng ảnh từ cài đặt chất lượng cao nhất sang cài đặt chất lượng "cân bằng" hơn để duy trì thời gian chụp để chụp.
+
+Nhưng, vì điều này có thể ảnh hưởng đến chất lượng ảnh, nó bị tắt theo mặc định.
+
+Trong ngăn Cài đặt của Camera.app, điều này được gọi là "Ưu tiên chụp nhanh hơn".
+
+Chúng tôi đã chọn bật nó theo mặc định cho Camera.app vì chúng tôi nghĩ rằng thời gian chụp liên tục quan trọng hơn theo mặc định, nhưng bạn có thể chọn khác cho ứng dụng của mình và khách hàng của mình.
+
+Như bạn có thể mong đợi bây giờ, bạn có thể kiểm tra thuộc tính "có hỗ trợ ưu tiên chụp nhanh" trên đầu ra ảnh khi nó được hỗ trợ và khi có, bạn có thể đặt "đang bật ưu tiên chụp nhanh" thành đúng nếu bạn hoặc khách hàng của bạn muốn sử dụng tính năng này.
+
+Bây giờ, hãy trò chuyện về việc quản lý trạng thái nút và giao diện.
+
+Đầu ra ảnh có thể đưa ra các chỉ báo về thời điểm nó sẵn sàng để bắt đầu lần chụp tiếp theo hoặc khi nó đang xử lý và bạn có thể cập nhật nút chụp ảnh của mình một cách thích hợp.
+
+Điều này được thực hiện thông qua một danh sách các giá trị được gọi là AVCapturePhotoOutput CaptureReadiness.
+
+Đầu ra ảnh có thể ở trạng thái "không chạy", "sẵn sàng" và ba trạng thái "chưa sẵn sàng": "Ngay lập tức", "đang chờ chụp" hoặc "đang chờ xử lý".
+
+Các liệt kê "chưa sẵn sàng" chỉ ra rằng nếu bạn gọi capturePhoto với cài đặt, bạn sẽ phải chịu thời gian chờ đợi lâu hơn giữa việc chụp và phân phối ảnh, làm tăng độ trễ màn trập mà tôi đã nói trước đây.
+
+Ứng dụng của bạn có thể lắng nghe sự thay đổi trạng thái này bằng cách sử dụng một lớp mới, AVCapturePhotoOutputReadinessCoordinator.
+
+Điều này thực hiện các cuộc gọi lại đến một đối tượng đại diện mà bạn cung cấp khi mức độ sẵn sàng của Đầu ra Ảnh thay đổi.
+
+Bạn có thể sử dụng lớp này ngay cả khi bạn không sử dụng Responsive Capture hoặc Fast Capture Prioritization APIs.
+
+Đây là cách bạn có thể truyền đạt tính khả dụng của màn trập và sửa đổi giao diện nút bằng cách sử dụng Điều phối viên Sẵn sàng và liệt kê Sẵn sàng.
+
+Ứng dụng cho phiên của chúng tôi tắt các sự kiện tương tác của người dùng trên nút chụp khi xử lý giá trị liệt kê "chưa sẵn sàng" để ngăn các yêu cầu bổ sung vô tình được xếp hàng bằng nhiều lần nhấn, dẫn đến độ trễ màn trập dài.
+
+Sau một lần nhấn và một capturePhoto với yêu cầu cài đặt đã được xếp hàng, trạng thái captureReadiness nằm giữa giá trị .ready và .notReadyMomentarily enum.
+
+Chụp đèn flash đạt trạng thái .notReadyWaitingForCapture.
+
+Cho đến khi đèn flash phát ra, đầu ra ảnh thậm chí còn không nhận được khung hình từ cảm biến, vì vậy nút bị mờ đi.
+
+Cuối cùng, nếu bạn chỉ sử dụng độ trễ màn trập bằng không và không có tính năng nào khác trong năm nay, Bạn có thể hiển thị một con quay trong khi giá trị enum .notReadyWaitingForProcessing là sự sẵn sàng hiện tại, vì việc chụp và xử lý của mỗi bức ảnh đang hoàn tất.
+
+Vì vậy, đây là cách bạn sử dụng điều phối viên sẵn sàng trong mã.
+
+Đầu tiên, tạo một điều phối viên sẵn sàng cho đầu ra ảnh và đặt một đối tượng đại diện thích hợp để nhận các cuộc gọi lại về trạng thái sẵn sàng.
+
+Sau đó, tại thời điểm mỗi lần chụp, hãy thiết lập cài đặt ảnh của bạn như bình thường.
+
+Sau đó, yêu cầu điều phối viên sẵn sàng bắt đầu theo dõi trạng thái sẵn sàng của yêu cầu chụp cho các cài đặt đó.
+
+Và sau đó gọi capturePhoto trên đầu ra ảnh.
+
+Điều phối viên sẵn sàng sau đó sẽ gọi lại đại diện captureReadinessDidChange.
+
+Bạn cập nhật trạng thái và giao diện của nút chụp dựa trên giá trị liệt kê sẵn sàng nhận được để cung cấp cho khách hàng của bạn phản hồi tốt nhất về thời điểm họ có thể chụp tiếp theo.
+
+Các API Responsive Capture và Fast Capture Prioritization có sẵn trên iPhone với chip A12 Bionic trở lên, và Điều phối viên Sẵn sàng có sẵn ở bất cứ nơi nào AVCapturePhotoOutput được hỗ trợ.
+
+Và bây giờ tôi đã bật tất cả các tính năng mới trong ứng dụng của chúng tôi, với trải nghiệm máy ảnh nhạy nhất có thể cũng mang lại những bức ảnh siêu sắc nét, chất lượng cao.
+
+Nhưng, bạn không cần phải sử dụng tất cả chúng để có được trải nghiệm được cải thiện.
+
+Bạn chỉ có thể sử dụng những cái phù hợp với ứng dụng của mình.
+
+Chúng tôi sẽ kết thúc phiên của mình hôm nay với các hiệu ứng video được cập nhật.
+
+Trước đây, Trung tâm điều khiển trên macOS đã cung cấp các tùy chọn cho các tính năng phát trực tuyến của máy ảnh như Sân khấu trung tâm, Chân dung và Ánh sáng phòng thu.
+
+Với macOS Sonoma, chúng tôi đã chuyển các hiệu ứng video ra khỏi Trung tâm điều khiển và vào menu riêng của nó.
+
+Bạn sẽ thấy bản xem trước của máy ảnh hoặc chia sẻ màn hình của mình và có thể bật Hiệu ứng Video như chế độ Chân dung và Studio Light.
+
+Các hiệu ứng Portrait và Studio Light hiện có thể điều chỉnh cường độ của chúng và Studio Light có sẵn trên nhiều thiết bị hơn.
+
+Và chúng ta có một loại hiệu ứng mới được gọi là "Phản ứng".
+
+Khi bạn đang thực hiện một cuộc gọi video, bạn có thể muốn bày tỏ rằng bạn yêu thích một ý tưởng hoặc giơ ngón tay cái lên về tin tốt, tất cả trong khi để loa tiếp tục mà không bị gián đoạn.
+
+Phản ứng kết hợp liền mạch video của bạn với bóng bay, hoa giấy và hơn thế nữa.
+
+Các phản ứng tuân theo mẫu hiệu ứng ánh sáng chân dung và phòng thu, trong đó chúng là tính năng máy ảnh cấp hệ thống, có sẵn ngay lập tức, mà không cần bất kỳ thay đổi mã nào trong ứng dụng của bạn.
+
+Để biết thêm chi tiết về hiệu ứng Portrait và Studio Light, hãy xem phiên năm 2021, "Có gì mới trong chụp ảnh."
+
+Chúng tôi có ba cách để hiển thị phản ứng trong luồng video Đầu tiên, bạn có thể nhấp vào hiệu ứng phản ứng ở ngăn dưới cùng trong menu Hiệu ứng Video mới trên macOS.
+
+Thứ hai, ứng dụng của bạn có thể gọi AVCaptureDevice.performEffect cho: một loại phản ứng. Ví dụ, có thể bạn có một bộ nút phản ứng trong một trong các chế độ xem ứng dụng của mình mà người tham gia có thể nhấp vào để thực hiện phản ứng.
+
+Và thứ ba, khi các phản ứng được kích hoạt, chúng có thể được gửi bằng cách thực hiện một cử chỉ.
+
+Hãy kiểm tra cái này.
+
+Bạn có thể giơ ngón tay cái lên, giơ ngón tay cái xuống, pháo hoa với hai ngón tay cái hướng lên, trái tim, bóng bay với một dấu hiệu chiến thắng, mưa với hai ngón tay cái hướng xuống, hoa giấy với hai dấu hiệu chiến thắng và yêu thích cá nhân của tôi, laser, sử dụng hai dấu hiệu của sừng.
+
+Này, đó là một loạt các hiệu ứng tuyệt vời.
+
+Bạn có thể kiểm tra hỗ trợ hiệu ứng phản ứng bằng cách xem thuộc tính reactionEffectsSupported trên AVCaptureDeviceFormat mà bạn muốn sử dụng trong phiên chụp của mình.
+
+Có những thuộc tính trên AVCaptureDevice mà bạn có thể đọc hoặc quan sát khóa-giá trị để biết khi nào nhận dạng cử chỉ được bật và khi nào hiệu ứng phản ứng đã được bật.
+
+Hãy nhớ rằng, vì những thứ này nằm dưới sự kiểm soát của người dùng, ứng dụng của bạn không thể bật hoặc tắt chúng.
+
+Trên iOS, đó là cùng một ý tưởng.
+
+Người tham gia vào Trung tâm điều khiển để bật hoặc tắt nhận dạng cử chỉ và bạn có thể quan sát giá trị chính khi điều này xảy ra.
+
+Tuy nhiên, để kích hoạt các hiệu ứng trong ứng dụng của bạn trên iOS, bạn sẽ cần thực hiện theo chương trình.
+
+Vì vậy, hãy xem qua cách bạn có thể làm điều đó, ngay bây giờ.
+
+Khi thuộc tính "canPerformReactionEffects" là đúng, việc gọi phương thức performEffect for reactionType sẽ hiển thị các phản ứng vào nguồn cấp dữ liệu video.
+
+Ứng dụng của bạn nên cung cấp các nút để kích hoạt các hiệu ứng.
+
+Các phản ứng đến thông qua cử chỉ có thể được hiển thị ở một vị trí khác trong video so với khi bạn gọi performEffect\ tùy thuộc vào tín hiệu nào được sử dụng để phát hiện.
+
+Chúng tôi có một enum mới được gọi là AVCaptureReactionType cho tất cả các hiệu ứng phản ứng khác nhau, chẳng hạn như ngón tay cái lên hoặc bóng bay mà AVCaptureDevice sẽ nhận ra trong phiên chụp và có thể hiển thị vào nội dung video.
+
+Và thuộc tính "AVCaptureDevice.availableReactionTypes" trả về một tập hợp AVCaptureReactionTypes dựa trên định dạng được định cấu hình hoặc cài đặt trước phiên.
+
+Những hiệu ứng này cũng có sẵn UIImages hệ thống tích hợp mà bạn có thể đặt trong chế độ xem của riêng mình.
+
+Bạn có thể lấy systemName cho một phản ứng từ một hàm mới AVCaptureReactionType.systemImageName nhận AVCaptureReactionType và trả về chuỗi thích hợp để sử dụng với hàm tạo UIImage systemName.
+
+Và chúng tôi có API để cho bạn biết khi nào các hiệu ứng phản ứng đang diễn ra, AVCaptureDevice.reactionEffectsInProgress có tên khéo léo.
+
+Khi người dùng thực hiện nhiều hiệu ứng phản ứng theo trình tự, chúng có thể chồng chéo lên nhau một thời gian ngắn, vì vậy điều này trả về một mảng các đối tượng trạng thái.
+
+Bạn có thể sử dụng quan sát Key-value để biết khi nào những điều này bắt đầu và kết thúc.
+
+Nếu bạn là một ứng dụng hội nghị thoại qua IP, bạn cũng có thể sử dụng thông tin này để gửi siêu dữ liệu về các hiệu ứng đến chế độ xem từ xa, đặc biệt khi những người gọi đó đã tắt video vì lý do băng thông.
+
+Ví dụ, bạn có thể hiển thị biểu tượng hiệu ứng trong giao diện người dùng của họ thay mặt cho người gọi khác.
+
+Kết xuất hoạt ảnh hiệu ứng cho luồng video có thể là một thách thức đối với bộ mã hóa video.
+
+Chúng làm tăng độ phức tạp của nội dung và nó có thể yêu cầu ngân sách tốc độ bit lớn hơn để mã hóa nó.
+
+Bằng cách quan sát Key-Value reactionEffectsInProgress, bạn có thể thực hiện các điều chỉnh bộ mã hóa trong khi kết xuất đang diễn ra.
+
+Nếu nó khả thi cho ứng dụng của bạn, bạn có thể tăng tốc độ bit của bộ mã hóa trong khi các hiệu ứng đang hiển thị.
+
+Hoặc nếu bạn đang sử dụng bộ mã hóa video có độ trễ thấp thông qua VideoToolbox và cài đặt MaxAllowedFrameQP VTCompressionPropertyKey, thì chúng tôi khuyến khích bạn chạy thử nghiệm trong ứng dụng của mình bằng cách sử dụng các cấu hình video khác nhau bao gồm độ phân giải, tốc độ khung hình và cấp tốc độ bit được
+
+Lưu ý rằng với giá trị MaxAllowedFrameQP thấp, tốc độ khung hình của các hiệu ứng có thể bị xâm phạm và bạn sẽ kết thúc với tốc độ khung hình video thấp.
+
+Phiên năm 2021 "Khám phá mã hóa video có độ trễ thấp với VideoToolbox" có nhiều thông tin tuyệt vời hơn khi làm việc với tính năng này.
+
+Bạn cũng nên biết rằng tốc độ khung hình video có thể thay đổi khi các hiệu ứng đang diễn ra.
+
+Ví dụ: nếu bạn đã định cấu hình AVCaptureSession của mình để chạy ở tốc độ 60 khung hình mỗi giây, bạn sẽ nhận được 60 khung hình mỗi giây trong khi các hiệu ứng không chạy.
+
+Nhưng trong khi các hiệu ứng đang được tiến hành, bạn có thể nhận được tốc độ khung hình khác nhau, chẳng hạn như 30 khung hình mỗi giây.
+
+Điều này tuân theo mô hình hiệu ứng Portrait và Studio Light trong đó tốc độ khung hình cuối có thể thấp hơn bạn đã chỉ định.
+
+Để xem tốc độ khung hình đó sẽ là bao nhiêu, hãy xem AVCaptureDeviceFormat.videoFrameRateRange ForReactionEffectsInProgress để biết định dạng bạn đang định cấu hình trên thiết bị.
+
+Như với các thuộc tính AVCaptureDeviceFormat khác, đây là thông tin cho ứng dụng của bạn, chứ không phải là thứ bạn có thể kiểm soát.
+
+Trên macOS và với các ứng dụng tvOS sử dụng Continuity Camera, hiệu ứng phản ứng luôn được bật.
+
+Trên hệ điều hành iOS và iPad, các ứng dụng có thể chọn tham gia thông qua các thay đổi đối với Info.plist của chúng.
+
+Bạn chọn tham gia bằng cách quảng cáo rằng bạn là danh mục ứng dụng VoIP trong mảng UIBackgroundModes của mình hoặc bằng cách thêm NSCameraReactionEffectsEnabled với giá trị CÓ.
+
+Hiệu ứng phản ứng và nhận dạng cử chỉ có sẵn trên iPhone và iPad với chip A14 trở lên, chẳng hạn như iPhone 12, Apple Silicon Macs và Intel Macs và Apple TV sử dụng các thiết bị Continuity Camera, màn hình Apple Studio được gắn vào USB-C iPad hoặc Apple Silicon Mac, và camera của bên thứ ba được gắn vào USB-C iPad hoặc
+
+Và điều đó kết thúc phiên của chúng tôi về trải nghiệm máy ảnh đáp ứng với các API mới trong năm nay.
+
+Chúng tôi đã nói về xử lý ảnh bị trì hoãn, độ trễ màn trập không và API chụp đáp ứng để cung cấp cho bạn những khả năng mới để tạo ra ứng dụng chụp ảnh phản hồi nhanh nhất với chất lượng hình ảnh được cải thiện và chúng tôi cũng đề cập đến cách người dùng của bạn thực sự có thể thể hiện bản thân với các hiệu ứng video được cập nhật, bao
+
+Tôi nóng lòng muốn xem bạn phản hồi như thế nào với tất cả các tính năng mới tuyệt vời.
+
+Cảm ơn vì đã xem.
+
+.
