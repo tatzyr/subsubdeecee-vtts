@@ -1,0 +1,363 @@
+110370
+
+♪ ♪
+
+Xin chào mọi người.
+
+Tên tôi là Adrian, và tôi sẽ nói chuyện với bạn về cách thiết lập dự án của bạn để có trải nghiệm gỡ lỗi tuyệt vời với LLDB.
+
+LLDB là công nghệ gỡ lỗi cơ bản đi kèm với Xcode.
+
+LLDB cho phép bạn đặt điểm dừng trong ứng dụng của mình, tạm dừng thực thi, kiểm tra trạng thái của các biến và đối tượng, khám phá mã của bạn và hơn thế nữa.
+
+LLDB có thể giúp bạn hiểu mã của bạn đang làm gì và nó cho phép bạn tìm ra điểm mà hành vi của mã của bạn khác với mong đợi của bạn.
+
+Đó là một công cụ mạnh mẽ để hiểu và khám phá mã.
+
+Nếu bạn muốn tìm hiểu thêm về LLDB, vui lòng xem các video trước đó, ví dụ "Khám phá các cải tiến điểm dừng" từ WWDC21.
+
+Hôm nay chúng ta sẽ xem xét một số quy trình làm việc nâng cao có ý nghĩa độc đáo đối với việc gỡ lỗi mã Swift.
+
+Có thể bạn đang tích hợp khuôn khổ của bên thứ ba vào ứng dụng của mình.
+
+Có thể ứng dụng của bạn và nhóm của bạn đã phát triển đến mức hầu hết mã của bạn đang được xây dựng bởi một hệ thống tích hợp liên tục.
+
+Có thể bạn đang sử dụng một hệ thống xây dựng tùy chỉnh để tích hợp với cơ sở hạ tầng của công ty bạn.
+
+Có thể bạn đang xây dựng phần mềm cho các nhà phát triển phần mềm khác.
+
+Hoặc bạn chỉ muốn tìm hiểu thêm về LLDB.
+
+Mục tiêu của tôi là cung cấp sự hiểu biết tốt hơn về cách thức hoạt động của LLDB và thông tin cần thiết từ hệ thống xây dựng để hoạt động.
+
+Tôi có một dự án nhỏ ở đây mà chúng tôi sẽ sử dụng làm ví dụ đang chạy của mình.
+
+Tôi là một kỹ sư biên dịch và tôi thích trò chơi, vì vậy trong thời gian rảnh rỗi, tôi viết trình phân tích cú pháp cho các cuộc phiêu lưu văn bản.
+
+Cái này gần đây tôi đã bắt đầu trong Swift thuần túy.
+
+Hãy để tôi cho bạn thấy những gì tôi có cho đến nay.
+
+Trò chơi sử dụng giao diện văn bản nên tôi đang chạy nó trong Terminal.
+
+Như trong mọi cuộc phiêu lưu hay, chúng ta sẽ bắt đầu bằng cách kiểm tra hàng tồn kho của mình.
+
+Trò chơi này diễn ra trong một khung cảnh đương đại.
+
+Tôi thấy rằng tôi có một chiếc iPhone.
+
+Tiếp theo, chúng ta hãy nhìn vào môi trường xung quanh chúng ta.
+
+Hmm, cảm biến này trông hấp dẫn.
+
+Có lẽ chúng ta có thể sử dụng iPhone trên cảm biến?
+
+Tôi đã đánh rơi chiếc iPhone?
+
+Uh, đó không phải là những gì tôi muốn cho bạn thấy.
+
+Tôi nghĩ rằng trò chơi của tôi có một lỗi.
+
+Điều tốt là đây là một cuộc nói chuyện gỡ lỗi.
+
+Hãy đặt một điểm dừng trong trình phân tích cú pháp và chạy lại lệnh của chúng ta.
+
+Trước tiên chúng ta nên xác minh rằng lệnh đã được đọc chính xác.
+
+Biến "từ" chứa lệnh được mã hóa.
+
+À, điều này đã không diễn ra như mong đợi.
+
+Tôi không biết chuyện gì đang xảy ra ở đây.
+
+Hôm qua tôi đã sử dụng trình gỡ lỗi mà không gặp vấn đề gì, và sau đó đêm qua tôi đã tích hợp khung giao diện người dùng này để tạo kiểu văn bản trên thiết bị đầu cuối.
+
+Các nhà phát triển của khuôn khổ đó có một hệ thống tích hợp liên tục tạo ra các bản dựng hàng đêm của khuôn khổ và tôi đang liên kết trực tiếp với cái mới nhất.
+
+Tôi tự hỏi liệu khuôn khổ này có liên quan gì đến những rắc rối gỡ lỗi của tôi không.
+
+Trường hợp điển hình, tôi đã nhận thấy rằng tôi không thể bước vào mã nguồn của khung, mặc dù tôi đã tải xuống bản dựng gỡ lỗi một cách rõ ràng.
+
+Nhìn kìa.
+
+Tôi chỉ thấy việc tháo gỡ.
+
+Hãy cố gắng hiểu những gì đã xảy ra ở đó, và hãy bắt đầu bằng cách tìm ra lý do tại sao tôi không thể thấy bất kỳ mã nguồn nào.
+
+LLDB cần gì để hiển thị mã nguồn?
+
+Khi trình biên dịch biên dịch một hàm, nó sẽ tạo ra mã máy.
+
+Và nó để lại vụn bánh mì cho trình gỡ lỗi để một địa chỉ trong tệp thực thi có thể được ánh xạ đến tệp nguồn và số dòng và ngược lại.
+
+Những mẩu bánh mì này được gọi là thông tin gỡ lỗi.
+
+Trên nền tảng Apple, thông tin gỡ lỗi được lưu trữ trong các tệp đối tượng.
+
+Để lưu trữ và phân phối, thông tin gỡ lỗi có thể được liên kết thành các gói .dSYM.
+
+Trình liên kết thông tin gỡ lỗi được gọi là dsymutil.
+
+LLDB sử dụng Spotlight để định vị các gói .dSYM, vì vậy nó khá linh hoạt về vị trí của chúng trên đĩa.
+
+Bây giờ chúng ta đã biết thông tin gỡ lỗi hoạt động như thế nào, hãy quay lại ví dụ.
+
+Đầu tiên, hãy xác minh rằng LLDB đã thực sự tìm thấy dSYM cho khuôn khổ.
+
+Chúng ta có thể làm điều này với lệnh danh sách hình ảnh.
+
+Khung giao diện người dùng được gọi là "TerminalInterface".
+
+Vâng, LLDB đã tìm thấy dSYM cho khuôn khổ.
+
+Điều đó có nghĩa là nó có quyền truy cập vào thông tin gỡ lỗi.
+
+Chúng ta có thể sử dụng "tra cứu hình ảnh" để có thêm thông tin về địa chỉ hiện tại.
+
+Nhân tiện, nếu bạn muốn tìm hiểu thêm về các tùy chọn khác nhau, LLDB có một trợ giúp tích hợp tuyệt vời.
+
+À, tôi nghĩ tôi hiểu tại sao không có mã nguồn: Đường dẫn nguồn này ở đây chỉ ra vị trí của các nguồn trên máy chủ xây dựng, không phải vị trí của chúng trên máy cục bộ của tôi.
+
+Chúng ta có thể sửa nó.
+
+LLDB có một bản đồ nguồn tích hợp mà chúng ta có thể sử dụng để chuyển hướng các đường dẫn này.
+
+Chúng ta có thể nhập lệnh ngay bây giờ, nhưng tôi muốn làm cho thay đổi này lâu dài hơn.
+
+Trong trình chỉnh sửa Sơ đồ, bạn có thể hiển thị bằng cách truy cập Sản phẩm, Sơ đồ, Sơ đồ chỉnh sửa hoặc chỉ bằng cách nhấp tùy chọn vào nút phát, bạn có thể xác định tệp init LLDB cho mỗi dự án.
+
+Tôi đã thêm một cái cho dự án này.
+
+Bây giờ chúng ta đã thiết lập LLDB, hãy chạy lại dự án của chúng ta.
+
+Và chúng tôi có mã nguồn.
+
+LLDB có thể ánh xạ lại các đường dẫn nguồn bằng cách sử dụng "cài đặt đặt target.source-map".
+
+Bạn có thể đặt lệnh này vào tệp .lldbinit của dự án để nó chạy tự động.
+
+Ngoài ra, mỗi gói .dSYM chứa một tệp XML .plist nơi bạn có thể đặt một từ điển ánh xạ lại tiền tố đường dẫn.
+
+Nếu bạn có tập lệnh tải xuống tìm nạp các bản dựng mới nhất từ máy chủ, bạn có thể sửa đổi tập lệnh đó để tự động đưa từ điển ánh xạ lại thích hợp vào .dSYM đã tải xuống.
+
+Bạn có thể tìm hiểu thêm về quy trình này trên trang web LLDB.
+
+Đường dẫn nguồn hoàn toàn không dành riêng cho ngôn ngữ, vì vậy phương pháp này hoạt động cho các dự án Swift, C++ và Objective-C.
+
+Để tìm hiểu thêm về các biểu tượng trên nền tảng của Apple, hãy xem "Biểu tượng: Ngoài những điều cơ bản" từ WWDC21.
+
+Khi mã nguồn được biên dịch trên trang trại máy chủ xây dựng, các đường dẫn từ xa đến các tệp nguồn có thể khác nhau giữa các máy.
+
+Để tránh phải xác định một tiền tố ánh xạ lại cho mỗi máy, chúng ta có thể hướng dẫn trình biên dịch chuẩn hóa các đường dẫn nguồn trước khi đưa chúng vào thông tin gỡ lỗi.
+
+Điều này được thực hiện bằng cách sử dụng tùy chọn -debug-prefix-map.
+
+Bằng cách này, tiền tố đường dẫn dành riêng cho máy có thể được thay thế bằng một tên giữ chỗ duy nhất, chuẩn, sau đó có thể được ánh xạ lại đến đường dẫn cục bộ trong LLDB.
+
+Trước khi chúng tôi tiếp xúc nguồn, tôi đã cố gắng in mô tả đối tượng của "từ".
+
+Điều đó đã không hiệu quả.
+
+Trên thực tế, thậm chí chỉ đánh giá cụm từ "từ" cũng không hiệu quả.
+
+Ít nhất chúng ta có thể thấy các biến trong chế độ xem các biến.
+
+Bảng điều khiển tương đương với chế độ xem biến Xcode là lệnh "biến khung" hoặc "v".
+
+Nếu bạn muốn tìm hiểu thêm về các sắc thái giữa các lệnh này, hãy xem "LLDB: Beyond 'po'" từ WWDC19.
+
+Vậy po là gì và tại sao nó vẫn không hoạt động?
+
+Để hiểu điều này có nghĩa là gì, chúng ta cần tìm hiểu thêm về LLDB.
+
+Xin nhắc lại, LLDB là một trình gỡ lỗi.
+
+Nhưng LLDB không chỉ là một trình gỡ lỗi.
+
+Nó cũng là một trình biên dịch!
+
+Ngoài chức năng của trình gỡ lỗi, LLDB cũng bao gồm một bản sao đầy đủ chức năng của trình biên dịch Swift và Clang.
+
+Các trình biên dịch này cung cấp năng lượng cho trình đánh giá biểu thức của LLDB, mà bạn có thể biết thông qua bí danh lệnh p và po.
+
+Với trình đánh giá biểu thức, chúng ta có thể vượt ra ngoài việc xem xét các biến, chúng ta có thể thực hiện tính toán, gọi các hàm và thậm chí thay đổi trạng thái của chương trình.
+
+Kiểm tra "Gỡ lỗi nâng cao với Xcode và LLDB" từ WWDC18 để có được một số ý tưởng về những gì có thể với các lệnh đó.
+
+Trình gỡ lỗi định dạng biến cục bộ như thế nào?
+
+Thông tin gỡ lỗi do trình biên dịch cung cấp cho trình gỡ lỗi biết nơi lưu trữ một biến trong bộ nhớ.
+
+Nhưng chỉ với thông tin đó, LLDB sẽ chỉ có thể hiển thị cho chúng ta một loại byte thô ngẫu nhiên.
+
+Vậy làm thế nào để LLDB biến nó thành đầu ra được định dạng độc đáo?
+
+Câu trả lời là các loại.
+
+Thông tin loại cho phép LLDB hiểu cấu trúc và bố cục bộ nhớ của một biến nguồn.
+
+Với thông tin loại, LLDB biết loại tổng hợp có những trường nào và các loại cho phép LLDB sử dụng các trình định dạng dữ liệu thích hợp để in chúng đẹp mắt.
+
+Bây giờ hãy xem thông tin loại đến từ đâu.
+
+Ở phía trình gỡ lỗi, nơi biến khung và lệnh v hoạt động, LLDB lấy thông tin loại từ Thông tin gỡ lỗi.
+
+Và LLDB cũng nhận được các loại từ siêu dữ liệu phản ánh Swift.
+
+Về phía trình biên dịch, nơi trình đánh giá biểu thức và po trực tiếp, LLDB lấy thông tin loại từ Mô-đun.
+
+Sự tách biệt sạch sẽ này là mới trong Xcode 14 và giải thích lý do tại sao chế độ xem biến có thể hoạt động đầy đủ ngay cả khi trình đánh giá biểu thức không có.
+
+Mô-đun là cách trình biên dịch tổ chức khai báo kiểu.
+
+Trình biên dịch Swift biết nhiều cách nhập mô-đun, nhưng trước khi chúng ta đi sâu vào đó, tôi muốn cho bạn thấy một tính năng mới tiện dụng.
+
+Làm thế nào để chúng ta bắt đầu chẩn đoán một vấn đề đang xảy ra ở phía trình biên dịch?
+
+Năm nay LLDB đã thêm một lệnh "kiểm tra sức khỏe nhanh" mới.
+
+Đây là điểm dừng đầu tiên của bạn để tìm hiểu xem việc nhập mô-đun có thất bại hay không.
+
+Để tôi chỉ cho bạn cách thức hoạt động của nó.
+
+Bằng cách chạy swift-healthcheck sau khi sự cố xảy ra, chúng ta có thể truy cập vào nhật ký của cấu hình trình đánh giá biểu thức Swift.
+
+Ở cuối nhật ký, chúng tôi thấy rằng LLDB gặp sự cố khi nhập mô-đun Swift "TerminalUI".
+
+Dựa trên tên, tôi cho rằng đây là một chi tiết triển khai của khung TerminalInterface.
+
+Mô-đun bị thiếu này là một vấn đề vì loại bản thân là chung chung so với việc triển khai giao diện người dùng và nếu không có mô-đun chứa loại đó, trình đánh giá biểu thức không thể nhận ra loại động của "bản thân".
+
+Tôi đang gửi một tin nhắn đến các nhà phát triển của khuôn khổ và yêu cầu họ điều tra.
+
+Theo kinh nghiệm của tôi, họ luôn phản hồi rất nhanh.
+
+Ai biết được, có lẽ chúng ta thậm chí có thể tìm ra giải pháp trước khi kết thúc video này.
+
+Trong thời gian chờ đợi, chúng ta hãy xem cách trình biên dịch của LLDB tìm thấy các mô-đun Swift.
+
+Ứng dụng của tôi có mô-đun Swift riêng.
+
+Nó có thể nhập một khung hệ thống, chẳng hạn như Foundation.
+
+Khung hệ thống là các tệp giao diện Swift ổn định về văn bản nằm trong SDK.
+
+Bất kỳ mô-đun Swift nào cũng có thể nhập mô-đun Clang, đây là tên ưa thích cho một hoặc nhiều tệp tiêu đề được nhóm lại cùng với sự trợ giúp của tệp bản đồ mô-đun.
+
+Các mô-đun Clang có thể phụ thuộc vào các mô-đun Clang khác.
+
+Ứng dụng của tôi cũng có thể nhập một mô-đun Swift thuộc về một khuôn khổ được xây dựng cục bộ.
+
+Nó cũng có thể nhập các tệp giao diện Swift văn bản không phải là một phần của SDK.
+
+Nếu bạn muốn tìm hiểu cách thực hiện, hãy xem "Khung nhị phân trong Swift" từ WWDC19.
+
+Ứng dụng của tôi cũng có thể liên kết với một thư viện tĩnh có chứa mã Swift, và sau đó cũng đi kèm với một mô-đun Swift.
+
+Hmm, chúng ta vẫn chưa xong.
+
+Tôi nên đề cập rằng cũng có các tiêu đề bắc cầu, cũng có thể nhập các mô-đun Clang.
+
+Cuối cùng, như một tính năng đặc biệt chỉ trong LLDB, một số nội dung mô-đun có thể được xây dựng lại chỉ từ thông tin gỡ lỗi.
+
+Đó là rất nhiều nguồn!
+
+Làm thế nào để LLDB tìm thấy tất cả chúng?
+
+Công việc của hệ thống xây dựng là đóng gói các mô-đun để LLDB có thể tìm thấy chúng.
+
+Các mô-đun từ các khung hệ thống vẫn ở trong SDK.
+
+LLDB sẽ tìm thấy một SDK phù hợp để đọc chúng khi nó được đính kèm vào chương trình của bạn.
+
+Khi gỡ lỗi trực tiếp từ các tệp đối tượng, LLDB sẽ tìm thấy tất cả các mô-đun không phải SDK nơi chúng đang ở thời điểm xây dựng.
+
+Dsymutil có thể đóng gói một kho lưu trữ thông tin gỡ lỗi được gọi là a. Gói DSYM cho mọi thư viện động, khung hoặc dylib và có thể thực thi.
+
+Mỗi gói .dSYM có thể chứa các mô-đun Swift nhị phân, có thể chứa các tiêu đề bắc cầu, tệp giao diện Swift văn bản và quan trọng nhất là thông tin gỡ lỗi.
+
+Điều đó bao gồm mọi thứ.
+
+Mọi thứ?
+
+Tất cả mọi thứ ngoại trừ các mô-đun Swift thuộc về kho lưu trữ tĩnh.
+
+Để mô-đun Swift được dsymutil chọn, nó cần được đăng ký với trình liên kết.
+
+Đối với các thư viện động và tệp thực thi, hệ thống xây dựng sẽ tự động thực hiện việc này cho bạn.
+
+Nhưng các kho lưu trữ tĩnh không được tạo ra bởi trình liên kết, chúng chỉ là tập hợp các tệp đối tượng, giống như tệp zip.
+
+Điều đó có nghĩa là trách nhiệm đăng ký bất kỳ mô-đun Swift nào với trình liên kết rơi vào mọi thư viện thực thi hoặc động liên kết kho lưu trữ tĩnh.
+
+Trong nhiều trường hợp, hệ thống xây dựng của Xcode sẽ làm điều này cho bạn.
+
+Nhưng nếu bạn đang duy trì hệ thống xây dựng tùy chỉnh của riêng mình hoặc nếu bạn đã xác định các quy tắc xây dựng tùy chỉnh, đây là điều cần lưu ý.
+
+Khi sử dụng trình liên kết Apple, các mô-đun Swift cần được đăng ký với tùy chọn -add-ast-path.
+
+Kiểm tra nhật ký xây dựng của bạn để xác minh rằng đây là trường hợp.
+
+Bạn cũng có thể sử dụng dsymutil để đổ bảng biểu tượng của tệp thực thi của mình và grep cho "swiftmodule" để xác minh rằng nó đã hoạt động.
+
+Trên các nền tảng khác như Linux, trình điều khiển swift hỗ trợ hành động -modulewrap chuyển đổi các tệp mô-đun Swift nhị phân thành các đối tượng mà bạn có thể liên kết thành tệp nhị phân của mình cùng với phần còn lại của thông tin gỡ lỗi.
+
+LLDB sẽ tìm thấy nó ở đó.
+
+Các nhà phát triển của khuôn khổ đã phản hồi đáng kinh ngạc.
+
+Như chúng tôi đã nghi ngờ, hóa ra là một phần của hệ thống xây dựng của khuôn khổ, một kho lưu trữ tĩnh được sử dụng.
+
+Và đó là mô-đun Swift thuộc về kho lưu trữ tĩnh bị thiếu trong gói dSYM.
+
+Bây giờ tôi đã cài đặt một phiên bản cố định của khung.
+
+Nó đã đăng ký mô-đun tĩnh bị thiếu với trình liên kết và vì vậy dsymutil đã có thể thu thập nó.
+
+Bây giờ bản thân có thể được giải quyết.
+
+Và chúng ta có thể in mô tả đối tượng của "từ".
+
+Vì dù sao chúng tôi cũng đang sử dụng bảng điều khiển, tôi đang sử dụng bí danh s để bước vào hàm parseFrom.
+
+Và bây giờ chúng ta cũng có thể dễ dàng tìm thấy lỗi, đây chỉ là lỗi sao chép và dán ở đây.
+
+Và cùng với đó, chúng tôi không chỉ giải được câu đố về mô-đun Swift bị thiếu, mà còn là câu đố đầu tiên của trò chơi.
+
+Trước khi chúng ta kết thúc, tôi có thêm một chi tiết cần chú ý.
+
+Trình biên dịch Swift sẽ tuần tự hóa các đường dẫn tìm kiếm tiêu đề Clang và các tùy chọn liên quan khác vào các tệp nhị phân .swiftmodule.
+
+Điều này thật tuyệt vì nó làm cho việc nhập các phụ thuộc mô-đun Clang của họ chỉ hoạt động trong quá trình xây dựng.
+
+Nhưng khi xây dựng trên một cỗ máy khác, những con đường cục bộ này có thể gây bất lợi.
+
+Vì vậy, trước khi vận chuyển một mô-đun .swift nhị phân sang một máy khác, hãy cân nhắc xây dựng với cờ Trình biên dịch -no-serialize-debugging-options.
+
+Trong Xcode, điều này được kiểm soát thông qua cài đặt SWIFT_SERIALIZE_DEBUGGING_OPTIONS.
+
+Bạn có thể giới thiệu lại các đường dẫn tìm kiếm này trong LLDB với một trong các cài đặt sau.
+
+Hãy tóm tắt lại những gì chúng ta đã học được.
+
+Nếu bạn muốn gửi mã từ máy này sang máy khác, bạn nên tự hỏi mình mức độ gỡ lỗi mà bạn mong đợi sẽ làm.
+
+Ví dụ: nếu bạn gửi một khung nhị phân cho một nhà phát triển khác và bạn không mong đợi họ bước vào mã của bạn trong trình gỡ lỗi, tốt nhất bạn chỉ gửi mô-đun Swift dưới dạng tệp giao diện .swift văn bản.
+
+Nhưng nếu bạn đang thiết lập một máy chủ xây dựng hoặc một hệ thống tích hợp liên tục, nơi các nhà phát triển dự kiến sẽ gỡ lỗi các tạo tác xây dựng đã tải xuống, bạn sẽ muốn đảm bảo xây dựng một mô-đun Swift nhị phân và xem xét tắt tuần tự hóa đường dẫn tìm kiếm.
+
+Bạn cũng có thể chuẩn hóa các đường dẫn nguồn trên máy chủ trong thông tin gỡ lỗi bằng cách sử dụng tùy chọn -debug-prefix-map.
+
+Đó là tất cả những gì tôi dành cho bạn.
+
+Hôm nay chúng ta đã tìm hiểu về bản chất kép của LLDB như một trình gỡ lỗi và một trình biên dịch.
+
+Trình gỡ lỗi cần thông tin gỡ lỗi và siêu dữ liệu phản ánh để hoạt động và cung cấp chế độ xem biến Xcode và lệnh v.
+
+Trình biên dịch cần Mô-đun và nhạy cảm với các đường dẫn tìm kiếm.
+
+Nó đứng sau các lệnh expr, p và po.
+
+Một cách tốt để có được chẩn đoán trình biên dịch là lệnh kiểm tra sức khỏe nhanh mới trong LLDB.
+
+Cảm ơn bạn đã xem! ♪ ♪

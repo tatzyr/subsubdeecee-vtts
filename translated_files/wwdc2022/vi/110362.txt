@@ -1,0 +1,647 @@
+110362
+
+♪ ♪
+
+Nick Kledzik: Xin chào, tôi là Nick Kledzik, Kỹ sư trưởng trong nhóm Linker của Apple.
+
+Hôm nay, tôi muốn chia sẻ với bạn cách liên kết nhanh.
+
+Tôi sẽ cho bạn biết Apple đã làm gì để cải thiện liên kết, cũng như giúp bạn hiểu điều gì thực sự xảy ra trong quá trình liên kết để bạn có thể cải thiện hiệu suất liên kết của ứng dụng của mình.
+
+Vậy liên kết là gì?
+
+Bạn đã viết mã, nhưng bạn cũng sử dụng mã mà người khác đã viết dưới dạng thư viện hoặc khuôn khổ.
+
+Để mã của bạn sử dụng các thư viện đó, cần có trình liên kết.
+
+Bây giờ, thực sự có hai loại liên kết.
+
+Có "liên kết tĩnh", xảy ra khi bạn xây dựng ứng dụng của mình.
+
+Điều này có thể ảnh hưởng đến việc mất bao lâu để ứng dụng của bạn xây dựng và ứng dụng của bạn kết thúc lớn như thế nào.
+
+Và có "liên kết động".
+
+Điều này xảy ra khi ứng dụng của bạn được khởi chạy.
+
+Điều này có thể ảnh hưởng đến việc khách hàng của bạn phải đợi ứng dụng của bạn khởi chạy trong bao lâu.
+
+Trong phiên này tôi sẽ nói về cả liên kết tĩnh và động.
+
+Đầu tiên, tôi sẽ xác định liên kết tĩnh là gì và nó đến từ đâu, với một số ví dụ.
+
+Tiếp theo, tôi sẽ tiết lộ những gì mới trong ld64, trình liên kết tĩnh của Apple.
+
+Sau đó, với nền tảng này về liên kết tĩnh, tôi sẽ trình bày chi tiết các phương pháp hay nhất cho liên kết tĩnh.
+
+Nửa sau của bài nói chuyện này sẽ bao gồm liên kết động.
+
+Tôi sẽ chỉ ra liên kết động là gì và nó đến từ đâu, và điều gì xảy ra trong liên kết động.
+
+Tiếp theo, tôi sẽ tiết lộ có gì mới trong dyld năm nay.
+
+Sau đó, tôi sẽ nói về những gì bạn có thể làm để cải thiện hiệu suất thời gian liên kết động của ứng dụng.
+
+Và cuối cùng, chúng tôi sẽ kết thúc với hai công cụ mới sẽ giúp bạn nhìn trộm đằng sau rèm cửa.
+
+Bạn sẽ có thể thấy những gì có trong các tệp nhị phân của mình và những gì đang xảy ra trong quá trình liên kết động.
+
+Để hiểu liên kết tĩnh, chúng ta hãy quay lại thời điểm tất cả bắt đầu.
+
+Ban đầu, các chương trình rất đơn giản và chỉ có một tệp nguồn.
+
+Xây dựng thật dễ dàng.
+
+Bạn vừa chạy trình biên dịch trên một tệp nguồn của mình và nó đã tạo ra chương trình thực thi.
+
+Nhưng có tất cả mã nguồn của bạn trong một tệp không mở rộng quy mô.
+
+Làm thế nào để bạn xây dựng với nhiều tệp nguồn?
+
+Và điều này không chỉ vì bạn không muốn chỉnh sửa một tệp văn bản lớn.
+
+Khoản tiết kiệm thực sự không phải là biên dịch lại mọi chức năng, mỗi khi bạn xây dựng.
+
+Những gì họ đã làm là chia trình biên dịch thành hai phần.
+
+Phần đầu tiên biên dịch mã nguồn thành tệp "đối tượng có thể di chuyển" trung gian mới.
+
+Phần thứ hai đọc tệp .o có thể định vị lại và tạo ra một chương trình thực thi.
+
+Bây giờ chúng ta gọi phần thứ hai là 'ld', trình liên kết tĩnh.
+
+Vì vậy, bây giờ bạn đã biết liên kết tĩnh đến từ đâu.
+
+Khi phần mềm phát triển, chẳng mấy chốc mọi người đã chuyển các tệp .o.
+
+Nhưng điều đó trở nên cồng kềnh.
+
+Ai đó đã nghĩ, "Sẽ thật tuyệt nếu chúng ta có thể đóng gói một bộ tệp .o vào một 'thư viện'?"
+
+Vào thời điểm đó, cách tiêu chuẩn để gói các tệp lại với nhau là với công cụ lưu trữ 'ar'.
+
+Nó được sử dụng để sao lưu và phân phối.
+
+Vì vậy, quy trình làm việc đã trở thành điều này.
+
+Bạn có thể 'nâng cấp' nhiều tệp .o vào một kho lưu trữ và trình liên kết đã được tăng cường để biết cách đọc tệp .o trực tiếp từ tệp lưu trữ.
+
+Đây là một cải tiến tuyệt vời để chia sẻ mã chung.
+
+Vào thời điểm đó nó chỉ được gọi là thư viện hoặc kho lưu trữ.
+
+Hôm nay, chúng tôi gọi nó là một thư viện tĩnh.
+
+Nhưng bây giờ chương trình cuối cùng đã trở nên lớn vì hàng nghìn chức năng từ các thư viện này đã được sao chép vào nó, ngay cả khi chỉ một vài trong số các chức năng đó được sử dụng.
+
+Vì vậy, một tối ưu hóa thông minh đã được thêm vào.
+
+Thay vì để trình liên kết sử dụng tất cả các tệp .o từ thư viện tĩnh, trình liên kết sẽ chỉ kéo các tệp .o từ thư viện tĩnh nếu làm như vậy sẽ giải quyết một số biểu tượng không xác định.
+
+Điều đó có nghĩa là ai đó có thể xây dựng một thư viện tĩnh libc.a lớn, chứa tất cả các chức năng thư viện tiêu chuẩn C.
+
+Mọi chương trình đều có thể liên kết với một libc.a, nhưng mỗi chương trình chỉ có những phần của libc mà chương trình thực sự cần.
+
+Và chúng ta vẫn có mô hình đó ngày hôm nay.
+
+Nhưng việc tải có chọn lọc từ các thư viện tĩnh không rõ ràng và thu được nhiều lập trình viên.
+
+Để làm cho việc tải có chọn lọc các thư viện tĩnh rõ ràng hơn một chút, tôi có một kịch bản đơn giản.
+
+Trong main.c, có một hàm được gọi là "main" gọi một hàm "foo".
+
+Trong foo.c, có foo gọi là bar.
+
+Trong bar.c, có việc triển khai bar nhưng cũng có một việc triển khai một chức năng khác không được sử dụng.
+
+Cuối cùng, trong baz.c, có một hàm baz gọi một hàm có tên undef.
+
+Bây giờ chúng tôi biên dịch mỗi tệp .o của riêng nó.
+
+Bạn sẽ thấy foo, bar và undef không có hộp màu xám vì chúng không được xác định.
+
+Đó là, sử dụng một biểu tượng chứ không phải một định nghĩa.
+
+Bây giờ, giả sử bạn quyết định kết hợp bar.o và baz.o thành một thư viện tĩnh.
+
+Tiếp theo, bạn liên kết hai tệp .o và thư viện tĩnh.
+
+Hãy cùng bước qua những gì thực sự xảy ra.
+
+Đầu tiên, trình liên kết hoạt động thông qua các tệp theo thứ tự dòng lệnh.
+
+Đầu tiên nó tìm thấy là main.o.
+
+Nó tải main.o và tìm định nghĩa cho "main", được hiển thị ở đây trong bảng ký hiệu.
+
+Nhưng cũng thấy rằng main có một "foo" không xác định.
+
+Trình liên kết sau đó phân tích tệp tiếp theo trên dòng lệnh là foo.o.
+
+Tệp này thêm một định nghĩa về "foo".
+
+Điều đó có nghĩa là foo không còn là không xác định nữa.
+
+Nhưng tải foo.o cũng thêm một biểu tượng không xác định mới cho "thanh".
+
+Bây giờ tất cả các tệp .o trên dòng lệnh đã được tải, trình liên kết sẽ kiểm tra xem có bất kỳ ký hiệu không xác định nào còn lại không.
+
+Trong trường hợp này, "thanh" vẫn không được xác định, vì vậy trình liên kết bắt đầu xem xét các thư viện trên dòng lệnh để xem liệu một thư viện có thỏa mãn biểu tượng "thanh" bị thiếu không xác định đó hay không.
+
+Trình liên kết tìm thấy bar.o trong thư viện tĩnh xác định ký hiệu "bar".
+
+Vì vậy, trình liên kết tải bar.o ra khỏi kho lưu trữ.
+
+Tại thời điểm đó không còn bất kỳ biểu tượng không xác định nào nữa, vì vậy trình liên kết dừng xử lý các thư viện.
+
+Trình liên kết chuyển sang giai đoạn tiếp theo và gán địa chỉ cho tất cả các chức năng và dữ liệu sẽ có trong chương trình.
+
+Sau đó, nó sao chép tất cả các chức năng và dữ liệu vào tệp đầu ra.
+
+Et thì đấy! Bạn có chương trình đầu ra của mình.
+
+Lưu ý rằng baz.o đã ở trong thư viện tĩnh nhưng không được tải vào chương trình.
+
+Nó không được tải vì cách trình liên kết tải có chọn lọc từ các thư viện tĩnh.
+
+Điều này không rõ ràng, nhưng là khía cạnh quan trọng của các thư viện tĩnh.
+
+Bây giờ bạn đã hiểu những điều cơ bản của liên kết tĩnh và thư viện tĩnh.
+
+Hãy chuyển sang những cải tiến gần đây trên trình liên kết tĩnh của Apple, được gọi là ld64.
+
+Theo nhu cầu phổ biến, chúng tôi đã dành một chút thời gian trong năm nay để tối ưu hóa ld64.
+
+Và liên kết năm nay là...
+
+Nhanh gấp đôi cho nhiều dự án.
+
+Chúng ta đã làm điều này như thế nào?
+
+Bây giờ chúng tôi sử dụng tốt hơn các lõi trên máy phát triển của bạn.
+
+Chúng tôi đã tìm thấy một số lĩnh vực mà chúng tôi có thể sử dụng nhiều lõi để thực hiện công việc liên kết song song.
+
+Điều đó bao gồm sao chép nội dung từ đầu vào tệp đầu ra, xây dựng song song các phần khác nhau của LINKEDIT và thay đổi các hàm băm tính toán và đồng thiết kế UUID được thực hiện song song.
+
+Tiếp theo, chúng tôi đã cải thiện một số thuật toán.
+
+Hóa ra trình tạo exports-trie hoạt động rất tốt nếu bạn chuyển sang sử dụng các đối tượng C++ string_view để biểu diễn các lát chuỗi của mỗi biểu tượng.
+
+Chúng tôi cũng đã sử dụng các thư viện tiền điện tử mới nhất tận dụng khả năng tăng tốc phần cứng khi tính toán UUID của tệp nhị phân và chúng tôi cũng đã cải thiện các thuật toán khác.
+
+Trong khi làm việc để cải thiện hiệu suất của trình liên kết, chúng tôi nhận thấy các vấn đề về cấu hình trong một số ứng dụng ảnh hưởng đến thời gian liên kết.
+
+Tiếp theo, tôi sẽ nói về những gì bạn có thể làm trong dự án của mình để cải thiện thời gian liên kết.
+
+Tôi sẽ đề cập đến năm chủ đề.
+
+Đầu tiên, liệu bạn có nên sử dụng các thư viện tĩnh hay không.
+
+Và sau đó ba lựa chọn ít được biết đến có ảnh hưởng lớn đến thời gian liên kết của bạn.
+
+Cuối cùng, tôi sẽ thảo luận về một số hành vi liên kết tĩnh có thể khiến bạn ngạc nhiên.
+
+Chủ đề đầu tiên là nếu bạn đang tích cực làm việc trên một tệp nguồn được xây dựng thành một thư viện tĩnh, bạn đã giới thiệu sự chậm lại cho thời gian xây dựng của mình.
+
+Bởi vì sau khi tệp được biên dịch, toàn bộ thư viện tĩnh phải được xây dựng lại, bao gồm cả mục lục của nó.
+
+Đây chỉ là rất nhiều I/O bổ sung.
+
+Các thư viện tĩnh có ý nghĩa nhất đối với mã ổn định.
+
+Đó là, mã không được thay đổi tích cực.
+
+Bạn nên cân nhắc việc di chuyển mã đang được phát triển tích cực ra khỏi thư viện tĩnh để giảm thời gian xây dựng.
+
+Trước đó chúng tôi đã cho thấy việc tải có chọn lọc từ kho lưu trữ.
+
+Nhưng một nhược điểm của điều đó là nó làm chậm trình liên kết.
+
+Đó là bởi vì để làm cho các bản dựng có thể tái tạo và tuân theo ngữ nghĩa thư viện tĩnh truyền thống, trình liên kết phải xử lý các thư viện tĩnh theo thứ tự nối tiếp, cố định.
+
+Điều đó có nghĩa là một số chiến thắng song song của ld64 không thể được sử dụng với các thư viện tĩnh.
+
+Nhưng nếu bạn không thực sự cần hành vi lịch sử này, bạn có thể sử dụng tùy chọn liên kết để tăng tốc độ xây dựng của mình.
+
+Tùy chọn liên kết đó được gọi là "tất cả tải".
+
+Nó yêu cầu trình liên kết tải một cách mù quáng tất cả các tệp .o từ tất cả các thư viện tĩnh.
+
+Điều này rất hữu ích nếu ứng dụng của bạn sẽ tải có chọn lọc hầu hết nội dung từ tất cả các thư viện tĩnh.
+
+Sử dụng -all_load sẽ cho phép trình liên kết phân tích cú pháp song song tất cả các thư viện tĩnh và nội dung của chúng.
+
+Nhưng nếu ứng dụng của bạn thực hiện các thủ thuật thông minh trong đó nó có nhiều thư viện tĩnh thực hiện cùng một biểu tượng và phụ thuộc vào thứ tự dòng lệnh của các thư viện tĩnh để thúc đẩy việc triển khai nào được sử dụng, thì tùy chọn này không dành cho bạn.
+
+Bởi vì trình liên kết sẽ tải tất cả các triển khai và không nhất thiết phải nhận được ngữ nghĩa biểu tượng được tìm thấy trong chế độ liên kết tĩnh thông thường.
+
+Nhược điểm khác của -all_load là nó có thể làm cho chương trình của bạn lớn hơn vì mã "không sử dụng" hiện đang được thêm vào.
+
+Để bù đắp cho điều đó, bạn có thể sử dụng tùy chọn liên kết -dead_strip.
+
+Tùy chọn đó sẽ khiến trình liên kết xóa mã và dữ liệu không thể truy cập được.
+
+Bây giờ, thuật toán tước chết rất nhanh và thường tự trả tiền bằng cách giảm kích thước của tệp đầu ra.
+
+Nhưng nếu bạn quan tâm đến việc sử dụng -all_load và -dead_strip, bạn nên tính thời gian cho trình liên kết có và không có các tùy chọn đó để xem liệu đó có phải là chiến thắng cho trường hợp cụ thể của bạn hay không.
+
+Tùy chọn liên kết tiếp theo là -no_exported_symbols.
+
+Một chút nền tảng ở đây.
+
+Một phần của phân đoạn LINKEDIT mà trình liên kết tạo ra là bộ ba xuất khẩu, là cây tiền tố mã hóa tất cả các tên, địa chỉ và cờ ký hiệu đã xuất.
+
+Trong khi tất cả các dylibs cần phải có các ký hiệu đã xuất, một ứng dụng chính nhị phân thường không cần bất kỳ ký hiệu đã xuất nào.
+
+Đó là, thường không có gì tìm kiếm các biểu tượng trong tệp thực thi chính.
+
+Nếu đúng như vậy, bạn có thể sử dụng -no_exported_symbols cho mục tiêu ứng dụng để bỏ qua việc tạo cấu trúc dữ liệu trie trong LINKEDIT, điều này sẽ cải thiện thời gian liên kết.
+
+Nhưng nếu ứng dụng của bạn tải các plugin liên kết trở lại tệp thực thi chính hoặc bạn sử dụng xctest với ứng dụng của mình làm môi trường máy chủ để chạy các gói xctest, ứng dụng của bạn phải có tất cả các bản xuất, có nghĩa là bạn không thể sử dụng -no_exported_symbols cho cấu hình đó.
+
+Bây giờ, chỉ có ý nghĩa khi cố gắng ngăn chặn việc xuất khẩu trie nếu nó lớn.
+
+Bạn có thể chạy lệnh dyld_info được hiển thị ở đây để đếm số lượng ký hiệu đã xuất.
+
+Một ứng dụng lớn mà chúng tôi thấy có khoảng một triệu biểu tượng được xuất.
+
+Và trình liên kết mất hai đến ba giây để xây dựng trie xuất khẩu cho nhiều biểu tượng đó.
+
+Vì vậy, việc thêm -no_exported_symbols đã giảm thời gian liên kết của ứng dụng đó từ hai đến ba giây.
+
+Tôi sẽ cho bạn biết thêm về công cụ dyld_info sau trong buổi nói chuyện này.
+
+Lựa chọn tiếp theo là: -no_deduplicate.
+
+Vài năm trước, chúng tôi đã thêm một đường chuyền mới vào trình liên kết để hợp nhất các chức năng có cùng hướng dẫn nhưng tên khác nhau.
+
+Hóa ra, với việc mở rộng mẫu C++, bạn có thể nhận được rất nhiều trong số đó.
+
+Nhưng đây là một thuật toán đắt tiền.
+
+Trình liên kết phải băm đệ quy các hướng dẫn của mọi hàm, để giúp tìm kiếm các bản sao.
+
+Do chi phí, chúng tôi đã giới hạn thuật toán nên trình liên kết chỉ xem xét các ký hiệu độ phân giải yếu.
+
+Đó là những thứ mà trình biên dịch C++ phát ra cho các bản mở rộng mẫu không được nội tuyến.
+
+Bây giờ, de-dup là một tối ưu hóa kích thước và các bản dựng gỡ lỗi là về các bản dựng nhanh chứ không phải về kích thước.
+
+Vì vậy, theo mặc định, Xcode vô hiệu hóa tối ưu hóa de-dup bằng cách chuyển -no_deduplicate đến trình liên kết cho các cấu hình Gỡ lỗi.
+
+Và clang cũng sẽ chuyển tùy chọn no-dedup cho trình liên kết nếu bạn chạy dòng liên kết clang với -O0.
+
+Tóm lại, nếu bạn sử dụng C++ và có bản dựng tùy chỉnh, nghĩa là bạn sử dụng cấu hình không chuẩn trong Xcode hoặc bạn sử dụng một số hệ thống xây dựng khác, bạn nên đảm bảo các bản dựng gỡ lỗi của mình thêm -no_deduplicate để cải thiện thời gian liên kết.
+
+Các tùy chọn mà tôi vừa nói đến là các đối số dòng lệnh thực tế cho ld.
+
+Khi sử dụng Xcode, bạn cần thay đổi cài đặt xây dựng sản phẩm của mình.
+
+Bên trong cài đặt xây dựng, hãy tìm "Cờ liên kết khác".
+
+Đây là những gì bạn sẽ đặt cho -all_load.
+
+Và lưu ý rằng tùy chọn "Xuất mã chết" cũng ở đây.
+
+Và có -no_exported_symbols.
+
+Và đây là -no_deduplicate.
+
+Bây giờ hãy nói về một số điều bất ngờ mà bạn có thể gặp phải khi sử dụng các thư viện tĩnh.
+
+Điều ngạc nhiên đầu tiên là khi bạn có mã nguồn được xây dựng thành một thư viện tĩnh mà ứng dụng của bạn liên kết và mã đó không kết thúc trong ứng dụng cuối cùng.
+
+Ví dụ, bạn đã thêm "thuộc tính được sử dụng" vào một số hàm hoặc bạn có danh mục Objective-C.
+
+Do tải có chọn lọc mà trình liên kết thực hiện, nếu các tệp đối tượng đó trong thư viện tĩnh cũng không xác định một số biểu tượng cần thiết trong liên kết, các tệp đối tượng đó sẽ không được trình liên kết tải.
+
+Một tương tác thú vị khác là các thư viện tĩnh và thoát chết.
+
+Hóa ra việc tước chết có thể che giấu nhiều vấn đề thư viện tĩnh.
+
+Thông thường, các biểu tượng bị thiếu hoặc các biểu tượng trùng lặp sẽ khiến trình liên kết bị lỗi.
+
+Nhưng việc tước chết khiến trình liên kết chạy đường chuyền khả năng truy cập qua tất cả mã và dữ liệu, bắt đầu từ chính và nếu hóa ra biểu tượng bị thiếu là từ mã không thể truy cập, trình liên kết sẽ ngăn chặn lỗi biểu tượng bị thiếu.
+
+Tương tự, nếu có các ký hiệu trùng lặp từ các thư viện tĩnh, trình liên kết sẽ chọn ký hiệu đầu tiên chứ không phải lỗi.
+
+Điều ngạc nhiên lớn cuối cùng với việc sử dụng các thư viện tĩnh, là khi một thư viện tĩnh được tích hợp vào nhiều khuôn khổ.
+
+Mỗi khuôn khổ đó chạy tốt một cách cô lập, nhưng sau đó tại một số thời điểm, một số ứng dụng sử dụng cả hai khuôn khổ và bùng nổ, bạn gặp phải các vấn đề kỳ lạ về thời gian chạy vì nhiều định nghĩa.
+
+Trường hợp phổ biến nhất mà bạn sẽ thấy là cảnh báo thời gian chạy Objective-C về nhiều trường hợp của cùng một tên lớp.
+
+Nhìn chung, các thư viện tĩnh rất mạnh, nhưng bạn cần hiểu chúng để tránh những cạm bẫy.
+
+Điều đó kết thúc liên kết tĩnh.
+
+Bây giờ, hãy chuyển sang liên kết động.
+
+Đầu tiên, hãy xem sơ đồ ban đầu để liên kết tĩnh với thư viện tĩnh.
+
+Bây giờ hãy nghĩ về cách điều này sẽ mở rộng theo thời gian, vì ngày càng có nhiều mã nguồn.
+
+Rõ ràng là khi ngày càng có nhiều thư viện được cung cấp, chương trình cuối cùng có thể phát triển về quy mô.
+
+Điều đó có nghĩa là thời gian liên kết tĩnh để xây dựng chương trình đó cũng sẽ tăng theo thời gian.
+
+Bây giờ hãy xem những thư viện này được tạo ra như thế nào.
+
+Điều gì sẽ xảy ra nếu chúng ta thực hiện chuyển đổi này?
+
+Chúng tôi thay đổi 'ar' thành 'ld' và thư viện đầu ra bây giờ là một tệp nhị phân thực thi.
+
+Đây là sự khởi đầu của các thư viện năng động vào những năm 90.
+
+Như một cách viết tắt, chúng tôi gọi các thư viện động là "dylibs".
+
+Trên các nền tảng khác, chúng được gọi là DSO hoặc DLL.
+
+Vậy chính xác thì chuyện gì đang xảy ra ở đây vậy?
+
+Và điều đó giúp khả năng mở rộng như thế nào?
+
+Điều quan trọng là trình liên kết tĩnh xử lý liên kết với một thư viện động khác nhau.
+
+Thay vì sao chép mã ra khỏi thư viện vào chương trình cuối cùng, trình liên kết chỉ ghi lại một loại lời hứa.
+
+Đó là, nó ghi lại tên biểu tượng được sử dụng từ thư viện động và đường dẫn của thư viện sẽ là gì trong thời gian chạy.
+
+Đây là một lợi thế như thế nào?
+
+Nó có nghĩa là kích thước tệp chương trình của bạn nằm dưới sự kiểm soát của bạn.
+
+Nó chỉ chứa mã của bạn và một danh sách các thư viện động mà nó cần trong thời gian chạy.
+
+Bạn không còn nhận được các bản sao mã thư viện trong chương trình của mình nữa.
+
+Thời gian liên kết tĩnh của chương trình của bạn hiện tỷ lệ thuận với kích thước mã của bạn và không phụ thuộc vào số lượng dylibs bạn liên kết.
+
+Ngoài ra, hệ thống Bộ nhớ Ảo giờ đây có thể tỏa sáng.
+
+Khi nó thấy cùng một thư viện động được sử dụng trong nhiều quy trình, hệ thống Bộ nhớ ảo sẽ sử dụng lại cùng một trang RAM vật lý cho dylib đó trong tất cả các quy trình sử dụng dylib đó.
+
+Tôi đã chỉ cho bạn cách các thư viện động bắt đầu và chúng giải quyết vấn đề gì.
+
+Nhưng "chi phí" cho những "lợi ích" đó là bao nhiêu?
+
+Đầu tiên, một lợi ích của việc sử dụng các thư viện động là chúng tôi đã tăng tốc thời gian xây dựng.
+
+Nhưng chi phí là việc khởi chạy ứng dụng của bạn bây giờ chậm hơn.
+
+Điều này là do khởi chạy không còn chỉ tải một tệp chương trình nữa.
+
+Bây giờ tất cả các dylibs cũng cần được tải và kết nối với nhau.
+
+Nói cách khác, bạn vừa hoãn một số chi phí liên kết từ thời gian xây dựng đến thời gian ra mắt.
+
+Thứ hai, một chương trình dựa trên thư viện động sẽ có nhiều trang bẩn hơn.
+
+Trong trường hợp thư viện tĩnh, trình liên kết sẽ đồng định vị tất cả các toàn cục từ tất cả các thư viện tĩnh vào cùng một trang DỮ LIỆU trong tệp thực thi chính.
+
+Nhưng với dylibs, mỗi thư viện có trang DỮ LIỆU của nó.
+
+Cuối cùng, một chi phí khác của liên kết động là nó giới thiệu nhu cầu về một cái gì đó mới: một liên kết động!
+
+Bạn có nhớ lời hứa đó đã được ghi lại trong tệp thực thi tại thời điểm xây dựng không?
+
+Bây giờ chúng ta cần một cái gì đó trong thời gian chạy sẽ thực hiện lời hứa đó để tải thư viện của chúng ta.
+
+Đó là mục đích của dyld, trình liên kết động.
+
+Hãy đi sâu vào cách liên kết động hoạt động trong thời gian chạy.
+
+Một tệp nhị phân thực thi được chia thành các phân đoạn, thường ít nhất là TEXT, DATA và LINKEDIT.
+
+Các phân đoạn luôn là bội số của kích thước trang cho hệ điều hành.
+
+Mỗi phân đoạn có một sự cho phép khác nhau.
+
+Ví dụ, phân đoạn TEXT có quyền "thực thi".
+
+Điều đó có nghĩa là CPU có thể coi các byte trên trang là hướng dẫn mã máy.
+
+Trong thời gian chạy, dyld phải mmap() các tệp thực thi vào bộ nhớ với quyền của từng phân đoạn, như được hiển thị ở đây.
+
+Bởi vì các phân đoạn có kích thước trang và căn chỉnh trang, điều đó giúp hệ thống bộ nhớ ảo dễ dàng thiết lập chương trình hoặc tệp dylib làm kho lưu trữ sao lưu cho phạm vi VM.
+
+Điều đó có nghĩa là không có gì được tải vào RAM cho đến khi có một số quyền truy cập bộ nhớ trên các trang đó, điều này gây ra lỗi trang, khiến hệ thống VM đọc phạm vi con thích hợp của tệp và điền vào trang RAM cần thiết với nội dung của nó.
+
+Nhưng chỉ lập bản đồ là không đủ.
+
+Bằng cách nào đó chương trình cần được "dây nối" hoặc liên kết với dylib.
+
+Đối với điều đó, chúng tôi có một khái niệm gọi là "sửa chữa".
+
+Trong sơ đồ, chúng ta thấy chương trình có các con trỏ được thiết lập điểm đó đến các phần của dylib mà nó sử dụng.
+
+Hãy đi sâu vào việc sửa chữa là gì.
+
+Đây là bạn của chúng tôi, tập tin mach-o.
+
+Bây giờ, TEXT là bất biến.
+
+Và trên thực tế, nó phải nằm trong một hệ thống dựa trên việc ký mã.
+
+Vậy nếu có một hàm gọi malloc() thì sao?
+
+Điều đó có thể hoạt động như thế nào?
+
+Không thể biết địa chỉ tương đối của _malloc khi nào chương trình được xây dựng.
+
+Chà, điều xảy ra là, trình liên kết tĩnh thấy rằng malloc đang ở trong trạng thái dylib và đã chuyển đổi trang web cuộc gọi.
+
+Trang web cuộc gọi trở thành cuộc gọi đến sơ khai được tổng hợp bởi trình liên kết trong cùng một phân đoạn VĂN BẢN, vì vậy địa chỉ tương đối được biết tại thời điểm xây dựng, có nghĩa là hướng dẫn BL có thể được hình thành chính xác.
+
+Điều đó giúp ích như thế nào khi sơ khai tải một con trỏ từ DỮ LIỆU và nhảy đến vị trí đó.
+
+Bây giờ, không cần thay đổi nào đối với VĂN BẢN trong thời gian chạy - chỉ cần DỮ LIỆU được thay đổi bởi dyld.
+
+Trên thực tế, bí quyết để hiểu dyld là tất cả các sửa chữa được thực hiện bởi dyld chỉ là dyld đặt một con trỏ trong DỮ LIỆU.
+
+Vì vậy, hãy tìm hiểu thêm về các sửa chữa mà dyld thực hiện.
+
+Đâu đó trong LINKEDIT là thông tin dyld cần để điều khiển những gì sửa chữa được thực hiện.
+
+Có hai loại sửa chữa.
+
+Đầu tiên được gọi là rebases, và chúng là khi một dylib hoặc ứng dụng có một con trỏ trỏ vào bên trong chính nó.
+
+Bây giờ có một tính năng bảo mật được gọi là ASLR, khiến dyld tải dylibs tại các địa chỉ ngẫu nhiên.
+
+Và điều đó có nghĩa là những con trỏ bên trong đó không thể chỉ được đặt tại thời điểm xây dựng.
+
+Thay vào đó, dyld cần điều chỉnh hoặc "tái căn cứ" những con trỏ đó khi khởi chạy.
+
+Trên đĩa, những con trỏ đó chứa địa chỉ đích của chúng, nếu dylib được tải ở địa chỉ bằng không.
+
+Bằng cách đó, tất cả những gì LINKEDIT cần ghi lại là vị trí của mỗi vị trí rebase.
+
+Dyld sau đó chỉ có thể thêm địa chỉ tải thực tế của dylib vào từng vị trí rebase để sửa chúng một cách chính xác.
+
+Loại sửa chữa thứ hai là ràng buộc.
+
+Ràng buộc là tài liệu tham khảo mang tính biểu tượng.
+
+Đó là, mục tiêu của họ là một tên biểu tượng chứ không phải một con số.
+
+Ví dụ, một con trỏ đến hàm "malloc".
+
+Chuỗi "_malloc" thực sự được lưu trữ trong LINKEDIT và dyld sử dụng chuỗi đó để tra cứu địa chỉ thực tế của malloc trong bộ ba xuất của libSystem.dylib.
+
+Sau đó, dyld lưu trữ giá trị đó ở vị trí được chỉ định bởi ràng buộc.
+
+Năm nay chúng tôi công bố một cách mới để mã hóa các bản sửa lỗi, mà chúng tôi gọi là "các bản sửa lỗi theo chuỗi".
+
+Ưu điểm đầu tiên là làm cho LINKEDIT nhỏ hơn.
+
+LINKEDIT nhỏ hơn vì thay vì lưu trữ tất cả các vị trí sửa chữa, định dạng mới chỉ lưu trữ vị trí cố định đầu tiên trong mỗi trang DỮ LIỆU, cũng như danh sách các ký hiệu đã nhập.
+
+Sau đó, phần còn lại của thông tin được mã hóa trong chính phân đoạn DỮ LIỆU, ở nơi mà các bản sửa lỗi cuối cùng sẽ được thiết lập.
+
+Định dạng mới này được đặt tên là, các bản sửa lỗi theo chuỗi, từ thực tế là các vị trí sửa chữa được "chuỗi" lại với nhau.
+
+LINKEDIT chỉ cho biết lần sửa lỗi đầu tiên ở đâu, sau đó ở vị trí con trỏ 64-bit trong DATA, một số bit chứa độ lệch cho vị trí sửa chữa tiếp theo.
+
+Cũng được đóng gói trong đó có một chút cho biết liệu việc sửa chữa là một ràng buộc hay một rebase.
+
+Nếu nó là một liên kết, các bit còn lại là chỉ mục của biểu tượng.
+
+Nếu đó là một rebase, phần còn lại của các bit là độ lệch của mục tiêu trong hình ảnh.
+
+Cuối cùng, hỗ trợ thời gian chạy cho các bản sửa lỗi theo chuỗi đã tồn tại trong iOS 13.4 trở lên.
+
+Điều đó có nghĩa là bạn có thể bắt đầu sử dụng định dạng mới này ngay hôm nay, miễn là mục tiêu triển khai của bạn là iOS 13.4 trở lên.
+
+Và định dạng sửa chữa theo chuỗi cho phép một tính năng hệ điều hành mới mà chúng tôi sẽ công bố trong năm nay.
+
+Nhưng để hiểu điều đó, tôi cần nói về cách hoạt động của dyld.
+
+Dyld bắt đầu với tệp thực thi chính - nói ứng dụng của bạn.
+
+Phân tích cú pháp mach-o đó để tìm các dylibs phụ thuộc, nghĩa là, những gì đã hứa với các thư viện động mà nó cần.
+
+Nó tìm thấy những dylibs và mmap()s chúng.
+
+Sau đó, đối với mỗi thứ đó, nó phân tích cú pháp cấu trúc mach-o của chúng, tải bất kỳ dylibs bổ sung nào khi cần thiết.
+
+Khi mọi thứ đã được tải, dyld sẽ tra cứu tất cả các ký hiệu ràng buộc cần thiết và sử dụng các địa chỉ đó khi thực hiện sửa chữa.
+
+Cuối cùng, một khi tất cả các bản sửa lỗi được thực hiện, dyld sẽ chạy trình khởi tạo, từ dưới lên.
+
+Năm năm trước chúng tôi đã công bố một công nghệ dyld mới.
+
+Chúng tôi nhận ra các bước màu xanh lá cây ở trên giống nhau mỗi khi ứng dụng của bạn được khởi chạy.
+
+Vì vậy, miễn là chương trình và dylibs không thay đổi, tất cả các bước màu xanh lá cây có thể được lưu vào bộ nhớ cache trong lần khởi chạy đầu tiên và được sử dụng lại trong các lần khởi chạy tiếp theo.
+
+Năm nay chúng tôi công bố những cải tiến hiệu suất dyld bổ sung.
+
+Chúng tôi đang công bố một tính năng dyld mới được gọi là "liên kết trang trong".
+
+Thay vì dyld áp dụng tất cả các bản sửa lỗi cho tất cả các dylibs khi khởi chạy, hạt nhân hiện có thể áp dụng các bản sửa lỗi cho các trang DỮ LIỆU của bạn một cách lười biếng, trên trang vào.
+
+Luôn luôn là trường hợp lần đầu tiên sử dụng một số địa chỉ trong một số trang của vùng mmap()ed đã kích hoạt hạt nhân đọc trong trang đó.
+
+Nhưng bây giờ, nếu đó là một trang DATA, hạt nhân cũng sẽ áp dụng sửa chữa mà trang đó cần.
+
+Chúng tôi đã có một trường hợp đặc biệt về liên kết trang trong hơn một thập kỷ cho các dylibs hệ điều hành trong bộ nhớ cache được chia sẻ dyld.
+
+Năm nay chúng tôi đã khái quát hóa nó và cung cấp nó cho mọi người.
+
+Cơ chế này làm giảm bộ nhớ bẩn và thời gian khởi chạy.
+
+Nó cũng có nghĩa là các trang DATA_CONST sạch sẽ, có nghĩa là chúng có thể bị đuổi và tạo lại giống như các trang TEXT, giúp giảm áp lực bộ nhớ.
+
+Tính năng liên kết trang này sẽ có trong bản phát hành sắp tới của iOS, macOS và watchOS.
+
+Nhưng liên kết trang trong chỉ hoạt động cho các tệp nhị phân được xây dựng với các bản sửa lỗi theo chuỗi.
+
+Đó là bởi vì với các bản sửa lỗi được xâu chuỗi, hầu hết thông tin sửa chữa sẽ được mã hóa trong phân đoạn DỮ LIỆU trên đĩa, có nghĩa là nó có sẵn cho hạt nhân trong quá trình vào trang.
+
+Một lưu ý là dyld chỉ sử dụng cơ chế này trong quá trình phóng.
+
+Bất kỳ dylibs dlopen()ed nào sau này không nhận được liên kết trang trong.
+
+Trong trường hợp đó, dyld đi theo con đường truyền thống và áp dụng các sửa chữa trong cuộc gọi dốc.
+
+Với ý nghĩ đó, chúng ta hãy quay lại sơ đồ quy trình làm việc dyld.
+
+Trong năm năm nay, dyld đã tối ưu hóa các bước trên bằng màu xanh lá cây bằng cách lưu vào bộ nhớ đệm hoạt động khi ra mắt lần đầu tiên và sử dụng lại nó khi ra mắt sau.
+
+Bây giờ, dyld có thể tối ưu hóa bước "áp dụng sửa chữa" bằng cách không thực sự thực hiện sửa chữa và để hạt nhân thực hiện chúng một cách lười biếng trên trang.
+
+Bây giờ bạn đã thấy có gì mới trong dyld, hãy nói về các phương pháp hay nhất để liên kết động.
+
+Bạn có thể làm gì để giúp cải thiện hiệu suất liên kết động?
+
+Như tôi vừa chỉ ra, dyld đã tăng tốc hầu hết các bước trong liên kết động.
+
+Một điều bạn có thể kiểm soát là bạn có bao nhiêu dylibs.
+
+Càng có nhiều dylibs, dyld càng phải làm nhiều công việc để tải chúng.
+
+Ngược lại, càng ít dylibs, dyld công việc càng phải thực hiện ít hơn.
+
+Điều tiếp theo bạn có thể xem xét là trình khởi tạo tĩnh, đó là mã luôn chạy, chính trước.
+
+Ví dụ, không thực hiện I/O hoặc kết nối mạng trong trình khởi tạo tĩnh.
+
+Bất cứ điều gì có thể mất hơn vài mili giây không bao giờ nên được thực hiện trong trình khởi tạo.
+
+Như chúng ta đã biết, thế giới đang trở nên phức tạp hơn và người dùng của bạn muốn có nhiều chức năng hơn.
+
+Vì vậy, thật hợp lý khi sử dụng các thư viện để quản lý tất cả các chức năng đó.
+
+Mục tiêu của bạn là tìm ra điểm ngọt ngào giữa các thư viện động và tĩnh.
+
+Quá nhiều thư viện tĩnh và chu kỳ xây dựng/gỡ lỗi lặp đi lặp lại của bạn bị chậm lại.
+
+Mặt khác, quá nhiều thư viện động và thời gian khởi chạy của bạn chậm và khách hàng của bạn nhận thấy.
+
+Nhưng chúng tôi đã tăng tốc ld64 trong năm nay, vì vậy điểm ngọt ngào của bạn có thể đã thay đổi, vì bây giờ bạn có thể sử dụng nhiều thư viện tĩnh hơn hoặc nhiều tệp nguồn hơn trực tiếp trong ứng dụng của mình và vẫn được xây dựng trong cùng một khoảng thời gian.
+
+Cuối cùng, nếu nó hoạt động cho cơ sở đã cài đặt của bạn, việc cập nhật lên mục tiêu triển khai mới hơn có thể cho phép các công cụ tạo các bản sửa lỗi theo chuỗi, làm cho các tệp nhị phân của bạn nhỏ hơn và cải thiện thời gian khởi chạy.
+
+Điều cuối cùng tôi muốn tất cả các bạn biết là hai công cụ mới sẽ giúp bạn nhìn vào bên trong quá trình liên kết.
+
+Công cụ đầu tiên là dyld_usage.
+
+Bạn có thể sử dụng nó để theo dõi những gì dyld đang làm.
+
+Công cụ này chỉ có trên macOS, nhưng bạn có thể sử dụng nó để theo dõi ứng dụng của mình khi khởi chạy trong trình giả lập hoặc nếu ứng dụng của bạn được xây dựng cho Mac Catalyst.
+
+Đây là một ví dụ chạy với TextEdit trên macOS.
+
+Như bạn có thể thấy qua một vài dòng trên cùng, việc ra mắt tổng cộng mất 15ms, nhưng chỉ có 1ms để sửa chữa, nhờ vào liên kết trang.
+
+Phần lớn thời gian hiện được dành cho các trình khởi tạo tĩnh.
+
+Công cụ tiếp theo là dyld_info.
+
+Bạn có thể sử dụng nó để kiểm tra các tệp nhị phân, cả trên đĩa và trong bộ nhớ cache dyld hiện tại.
+
+Công cụ này có nhiều lựa chọn, nhưng tôi sẽ chỉ cho bạn cách xem xuất và sửa chữa.
+
+Ở đây tùy chọn -fixup hiển thị tất cả các vị trí sửa chữa mà dyld sẽ xử lý và các mục tiêu của chúng.
+
+Đầu ra giống nhau bất kể tệp là bản sửa lỗi kiểu cũ hay bản sửa lỗi chuỗi mới.
+
+Ở đây tùy chọn -exports sẽ hiển thị tất cả các ký hiệu đã xuất trong dylib và độ lệch của từng ký hiệu từ đầu dylib.
+
+Trong trường hợp này, nó đang hiển thị thông tin về Foundation.framework là dylib trong bộ nhớ cache dyld.
+
+Không có tệp nào trên đĩa, nhưng công cụ dyld_info sử dụng cùng mã với dyld và do đó có thể tìm thấy nó.
+
+Bây giờ bạn đã hiểu lịch sử và sự đánh đổi của các thư viện tĩnh so với động, bạn nên xem lại những gì ứng dụng của bạn làm và xác định xem bạn đã tìm thấy điểm ngọt ngào của mình chưa.
+
+Tiếp theo, nếu bạn có một ứng dụng lớn và nhận thấy việc xây dựng mất một lúc để liên kết, hãy thử Xcode 14 có trình liên kết nhanh hơn mới.
+
+Nếu bạn vẫn muốn tăng tốc liên kết tĩnh của mình nhiều hơn, hãy xem xét ba tùy chọn liên kết mà tôi đã trình bày chi tiết và xem liệu chúng có hợp lý trong việc xây dựng của bạn không và cải thiện thời gian liên kết của bạn.
+
+Cuối cùng, bạn cũng có thể thử xây dựng ứng dụng của mình và bất kỳ khung nhúng nào cho iOS 13.4 trở lên để cho phép sửa chữa theo chuỗi.
+
+Sau đó xem liệu ứng dụng của bạn có nhỏ hơn và khởi chạy nhanh hơn trên iOS 16 hay không.
+
+Cảm ơn vì đã xem, và chúc bạn có một WWDC tuyệt vời.

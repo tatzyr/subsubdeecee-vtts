@@ -1,0 +1,320 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:15.000
+Dựa trên Imageblocks và đổ bóng gạch, Imageblock Sample Coverage Control mang đến cho bạn những cơ hội mới để tối ưu hóa các đường chuyền kết xuất đa mẫu của bạn và được thiết kế cho phần cứng đa mẫu nâng cao trong GPU của A11.
+
+00:00:15.000 --> 00:00:23.000
+Bảo hiểm mẫu Imageblock là phần thứ ba trong một loạt các bài thuyết trình tập trung vào các tính năng Metal 2 mới trên A11.
+
+00:00:23.000 --> 00:00:31.000
+Trước khi chúng ta đi sâu vào các tính năng đa mẫu nâng cao trong Metal 2, chúng ta hãy làm mới nhanh về Multisample Antialiasing.
+
+00:00:31.000 --> 00:00:42.000
+Multisample Antialiasing, hay MSAA, là một kỹ thuật được sử dụng để cải thiện sự xuất hiện của các cạnh nguyên thủy bằng cách biểu diễn từng điểm ảnh với nhiều mẫu chiều sâu và màu sắc.
+
+00:00:42.000 --> 00:00:47.000
+Đầu tiên chúng ta hãy xem cách GPU hiển thị một hình tam giác mà không cần đa mẫu.
+
+00:00:47.000 --> 00:00:53.000
+Đây là một lưới bốn x bốn điểm ảnh đại diện cho tệp đính kèm màu của bạn.
+
+00:00:53.000 --> 00:00:59.000
+Bộ rasterizer của GPU lấy mẫu trung tâm của một điểm ảnh để xác định xem nó có được bao phủ bởi một nguyên thủy hay không.
+
+00:00:59.000 --> 00:01:02.000
+Hãy mang theo một hình tam giác.
+
+00:01:02.000 --> 00:01:06.000
+Tất cả các trung tâm điểm ảnh được bao phủ bởi nguyên thủy đều có màu đỏ.
+
+00:01:06.000 --> 00:01:14.000
+Nếu mỗi điểm ảnh chỉ có một vị trí mẫu duy nhất, một điểm ảnh được phân loại là được che phủ hoặc không được che phủ chỉ dựa trên trung tâm điểm ảnh.
+
+00:01:14.000 --> 00:01:22.000
+Bạn có thể thấy trong hình ảnh kết quả triệu chứng cổ điển của răng cưa cạnh: các hiện vật cầu thang còn được gọi là jaggies.
+
+00:01:22.000 --> 00:01:26.000
+Hãy xem cùng một hình tam giác được hiển thị với khử răng cưa đa mẫu.
+
+00:01:26.000 --> 00:01:33.000
+Đối với ví dụ này, mỗi điểm ảnh có bốn vị trí lấy mẫu phân bố đều.
+
+00:01:33.000 --> 00:01:40.000
+Với bốn mẫu trên mỗi điểm ảnh, bộ rasterizer của GPU có thể xác định độ bao phủ hạt mịn hơn cho nguyên thủy.
+
+00:01:40.000 --> 00:01:49.000
+Khi một tệp đính kèm đa mẫu được giải quyết, GPU sẽ tính trung bình các giá trị của các mẫu để xác định màu cuối cùng của mỗi điểm ảnh.
+
+00:01:49.000 --> 00:01:54.000
+Điều này dẫn đến một cạnh mịn hơn và làm giảm sự xuất hiện của hiệu ứng cầu thang.
+
+00:01:54.000 --> 00:02:12.000
+Trong các triển khai đa mẫu truyền thống, sự đánh đổi cho giao diện cạnh được cải thiện là chi phí tính toán của việc trộn từng mẫu, dấu chân bộ nhớ lớn hơn của kết cấu tệp đính kèm đa mẫu và băng thông bộ nhớ cao hơn để lưu trữ và phân giải nhiều mẫu trên mỗi pixel.
+
+00:02:12.000 --> 00:02:21.000
+GPU A-Series của Apple có triển khai MSAA rất hiệu quả để giải quyết trực tiếp những sự đánh đổi này.
+
+00:02:21.000 --> 00:02:31.000
+Phần cứng theo dõi xem mỗi điểm ảnh có chứa một cạnh nguyên thủy hay không để quá trình pha trộn của bạn chỉ thực hiện trên mỗi mẫu đối với các điểm ảnh có giá trị mẫu khác nhau.
+
+00:02:31.000 --> 00:02:40.000
+Với Metal trên GPU dòng A, bạn có thể loại bỏ các yêu cầu lưu trữ bộ nhớ bổ sung bằng cách sử dụng các mục tiêu kết xuất không bộ nhớ cho các tệp đính kèm đa mẫu.
+
+00:02:40.000 --> 00:02:45.000
+Dữ liệu mẫu đầy đủ chỉ tồn tại tạm thời trong bộ nhớ gạch.
+
+00:02:45.000 --> 00:02:57.000
+Bằng cách sử dụng hành động lưu trữ giải quyết đa mẫu của Metal, bạn tránh phát sinh bất kỳ băng thông bộ nhớ hệ thống bổ sung nào bằng cách phân giải trực tiếp từ bộ nhớ ô đến tệp đính kèm giải quyết.
+
+00:02:57.000 --> 00:03:06.000
+Ngoài ra, Metal 2 đã giới thiệu Vị trí mẫu có thể lập trình để cho phép bạn chọn vị trí mẫu và kiểm soát mẫu lấy mẫu của mình.
+
+00:03:06.000 --> 00:03:12.000
+Với Metal 2 trên A11, chúng tôi đã làm cho việc đa mẫu thậm chí còn hiệu quả hơn trong việc pha trộn.
+
+00:03:12.000 --> 00:03:26.000
+Trong khi các GPU dòng A hiện tại đã theo dõi xem các cạnh có giao nhau với từng điểm ảnh hay không, GPU A11 mở rộng theo dõi này đến độ chi tiết thậm chí còn mịn hơn bằng cách theo dõi số lượng mẫu duy nhất trong mỗi pixel.
+
+00:03:26.000 --> 00:03:38.000
+Ngay cả khi không sử dụng bất kỳ tính năng Metal 2 nào khác, các ứng dụng đa mẫu hiện tại của bạn sẽ kết hợp hiệu quả hơn với phần cứng đa lấy mẫu nâng cao của GPU A11.
+
+00:03:38.000 --> 00:03:53.000
+Tận dụng tính linh hoạt của các tính năng Metal 2 khác như Imageblocks và đổ bóng gạch, Imageblock Sample Coverage Control cho phép bạn truy cập vào dữ liệu theo dõi vùng phủ mẫu của từng pixel để kiểm soát nhiều hơn các lần kết xuất đa mẫu của bạn.
+
+00:03:53.000 --> 00:04:04.000
+Với Imageblock Sample Coverage Control, các đường ống gạch của bạn có thể giải quyết dữ liệu mẫu bất cứ lúc nào trong một đường chuyền kết xuất bằng cách sử dụng các thuật toán giải quyết tùy chỉnh của riêng bạn.
+
+00:04:04.000 --> 00:04:14.000
+Để hiểu tính linh hoạt bổ sung được cung cấp bởi Imageblock Sample Coverage Control, trước tiên bạn cần hiểu cách thức hoạt động của theo dõi cạnh trong GPU A-Series.
+
+00:04:14.000 --> 00:04:24.000
+Các GPU dòng A hiện tại rasterize cảnh của bạn trong các ô và mỗi ô chứa siêu dữ liệu theo dõi xem một pixel có chứa cạnh nguyên thủy hay không.
+
+00:04:24.000 --> 00:04:30.000
+Trong hình ảnh này, các điểm ảnh màu đỏ chứa các cạnh nguyên thủy và các điểm ảnh màu trắng thì không.
+
+00:04:30.000 --> 00:04:35.000
+Số lượng điểm ảnh chứa cạnh tăng lên so với mật độ hình học cảnh của bạn.
+
+00:04:35.000 --> 00:04:41.000
+Khi một điểm ảnh chứa một cạnh nguyên thủy, điều đó có nghĩa là nó có nhiều giá trị mẫu duy nhất.
+
+00:04:41.000 --> 00:04:46.000
+Vì lý do này, phương trình pha trộn thực hiện trên mỗi mẫu cho các điểm ảnh chứa cạnh.
+
+00:04:46.000 --> 00:04:50.000
+Các điểm ảnh không chứa cạnh chỉ cần trộn một lần.
+
+00:04:50.000 --> 00:04:54.000
+GPU A11 theo dõi các cạnh với độ chi tiết mịn hơn.
+
+00:04:54.000 --> 00:04:58.000
+Các điểm ảnh chứa các cạnh thường chỉ có một vài mẫu độc đáo.
+
+00:04:58.000 --> 00:05:04.000
+GPU đa mẫu nâng cao của A11 theo dõi và chỉ pha trộn các mẫu độc đáo.
+
+00:05:04.000 --> 00:05:10.000
+Trong Ngôn ngữ tạo bóng kim loại, chúng tôi đặt tên cho những mẫu độc đáo này: màu sắc.
+
+00:05:10.000 --> 00:05:15.000
+Vì vậy, chúng ta hãy xem GPU A11 cải thiện hiệu suất pha trộn đa mẫu như thế nào.
+
+00:05:15.000 --> 00:05:21.000
+Đối với các điểm ảnh có chứa cạnh nguyên thủy, GPU A11 sẽ theo dõi số lượng màu duy nhất trong điểm ảnh đó.
+
+00:05:21.000 --> 00:05:28.000
+Khi các nguyên thủy giao nhau hoặc bao phủ hoàn toàn một điểm ảnh, số lượng màu chứa trong điểm ảnh đó sẽ tăng lên và thu nhỏ lại.
+
+00:05:28.000 --> 00:05:32.000
+GPU A11 tự động theo dõi các quá trình chuyển đổi này.
+
+00:05:32.000 --> 00:05:38.000
+Trong sơ đồ bên phải, điểm ảnh chứa bốn mẫu, nhưng chỉ có hai màu.
+
+00:05:38.000 --> 00:05:45.000
+Khi GPU A11 cần pha trộn nguyên thủy tiếp theo với điểm ảnh này, chỉ có hai mẫu duy nhất để pha trộn.
+
+00:05:45.000 --> 00:05:52.000
+Và đối với các thuật toán kết xuất nâng cao sử dụng pha trộn có thể lập trình, khoản tiết kiệm sẽ rất đáng kể.
+
+00:05:52.000 --> 00:05:56.000
+Vì vậy, hãy lấy một đoạn thông qua một vài trong số các chuyển đổi theo dõi màu sắc này.
+
+00:05:56.000 --> 00:06:02.000
+Ban đầu, mỗi mảnh chứa một màu duy nhất, đại diện cho tất cả các mẫu.
+
+00:06:02.000 --> 00:06:06.000
+Đây sẽ là màu rõ ràng của bạn khi kết xuất bắt đầu.
+
+00:06:06.000 --> 00:06:15.000
+Nếu một cạnh nguyên thủy cắt xuyên qua một điểm ảnh, GPU A11 sẽ tạo ra một màu độc đáo mới và gán các mẫu được che phủ cho màu mới.
+
+00:06:15.000 --> 00:06:20.000
+Hai mẫu được bao phủ bởi hình tam giác màu xanh lá cây này được gán cho mẫu màu mới.
+
+00:06:20.000 --> 00:06:25.000
+Các mẫu không được che phủ vẫn được gán cho màu 0.
+
+00:06:25.000 --> 00:06:30.000
+Giả sử nguyên thủy tiếp theo giao với điểm ảnh này là một tam giác mờ màu đỏ.
+
+00:06:30.000 --> 00:06:33.000
+Hình tam giác màu đỏ bao gồm ba mẫu.
+
+00:06:33.000 --> 00:06:38.000
+Các GPU A-Series hiện tại sẽ pha trộn từng mẫu trong số ba mẫu được bảo hiểm.
+
+00:06:38.000 --> 00:06:45.000
+GPU A11, chỉ pha trộn hai lần vì hai trong số các mẫu được bao phủ có chung chỉ số màu.
+
+00:06:45.000 --> 00:06:55.000
+Trong trường hợp này, màu một là sự pha trộn giữa màu xanh lá cây và màu đỏ, và GPU tạo ra một màu mới ở chỉ số hai vì đó là một màu mới, độc đáo.
+
+00:06:55.000 --> 00:07:00.000
+Số lượng màu sắc độc đáo trong một điểm ảnh có thể tăng lên khi một điểm ảnh nguyên thủy cắt qua một điểm ảnh.
+
+00:07:00.000 --> 00:07:05.000
+Nhưng có những lúc phần cứng sẽ giảm số lượng màu sắc độc đáo.
+
+00:07:05.000 --> 00:07:10.000
+Ở đây, một hình tam giác mờ đục, không pha trộn hoàn toàn bao phủ điểm ảnh.
+
+00:07:10.000 --> 00:07:23.000
+Tất cả bốn mẫu đều được thay thế hoàn toàn bằng màu xanh lam, vì vậy GPU A11 sẽ hợp nhất ba màu trở lại một, vì tất cả các mẫu màu xanh lam có thể được biểu diễn bằng một màu duy nhất một lần nữa.
+
+00:07:23.000 --> 00:07:36.000
+Phần cứng biến đổi nâng cao trong GPU A11 mạnh đến mức chúng tôi đã mở rộng ngôn ngữ đổ bóng Metal để cung cấp cho bạn quyền kiểm soát rõ ràng đối với phạm vi bảo hiểm mẫu với Kiểm soát bảo hiểm mẫu Imageblock.
+
+00:07:36.000 --> 00:07:46.000
+Với tính năng mới này, các đường ống gạch có khả năng phân giải dữ liệu mẫu tại chỗ ở giữa quá trình kết xuất bằng cách thay đổi phạm vi màu của pixel.
+
+00:07:46.000 --> 00:07:52.000
+Và vì bạn viết hạt nhân bằng Ngôn ngữ đổ bóng kim loại, điều đó có nghĩa là bạn có thể viết các bộ lọc phân giải tùy chỉnh của riêng mình.
+
+00:07:52.000 --> 00:07:55.000
+Hãy xem qua một ví dụ đơn giản.
+
+00:07:55.000 --> 00:08:00.000
+Đầu tiên, chúng ta có một hạt nhân có đối số khối hình ảnh.
+
+00:08:00.000 --> 00:08:05.000
+Tiếp theo, chúng tôi truy vấn số lượng màu tại một tọa độ nhất định trong khối hình ảnh.
+
+00:08:05.000 --> 00:08:14.000
+Đối với một đường chuyền kết xuất với bốn mẫu trên mỗi pixel, giá trị được trả về có thể là một, hai, ba hoặc bốn, tùy thuộc vào số lượng màu duy nhất tại pixel đó.
+
+00:08:14.000 --> 00:08:20.000
+Một khối hình ảnh đa mẫu có thể trả về dữ liệu khối hình ảnh cho mỗi mẫu hoặc màu.
+
+00:08:20.000 --> 00:08:25.000
+Trong ví dụ này, chúng ta sẽ lấy dữ liệu khối hình ảnh cho màu c.
+
+00:08:25.000 --> 00:08:33.000
+Vì ví dụ này đang lặp lại số lượng màu duy nhất, chúng ta cũng cần xem xét số lượng mẫu được bao phủ bởi mỗi màu.
+
+00:08:33.000 --> 00:08:41.000
+Chúng tôi làm điều này bằng cách lấy mặt nạ phủ sóng cho chỉ mục màu này và gọi số lượng cửa sổ bật lên để lấy số bit đã đặt trong mặt nạ.
+
+00:08:41.000 --> 00:08:52.000
+Tiếp theo, chúng tôi hoàn thành việc phân giải màu sắc của mình bằng cách chia cho số lượng mẫu trên mỗi pixel và viết giá trị đã phân giải trở lại khối hình ảnh bằng mặt nạ mẫu đầy đủ.
+
+00:08:52.000 --> 00:09:00.000
+Bằng cách viết một giá trị duy nhất với mặt nạ mẫu đầy đủ, GPU A11 sẽ hợp nhất tất cả dữ liệu mẫu trở lại một màu duy nhất.
+
+00:09:00.000 --> 00:09:11.000
+Bây giờ đây là một ví dụ về giải pháp cơ bản, nhưng vì nó là một đường ống gạch, bạn có thể viết một hạt nhân để giải quyết dữ liệu mẫu của mình theo cách phù hợp nhất với ứng dụng của bạn.
+
+00:09:11.000 --> 00:09:14.000
+Vì vậy, bạn vừa thấy một ví dụ về việc viết bộ lọc độ phân giải tùy chỉnh.
+
+00:09:14.000 --> 00:09:18.000
+Hãy thảo luận về một lý do khác để sử dụng bóng gạch để giải quyết dữ liệu mẫu.
+
+00:09:18.000 --> 00:09:26.000
+Giờ đây, một số ứng dụng hiển thị các cảnh phức tạp với nhiều hình học mờ đục và nhiều hình học mờ như các hạt.
+
+00:09:26.000 --> 00:09:41.000
+Mặc dù GPU A11 sẽ cố gắng hết sức để chỉ pha trộn các màu độc đáo cho mỗi điểm ảnh, nhưng nếu bạn biết rằng cảnh của mình có nhiều hình học pha trộn, với lượng lớn quá mức, bạn có thể muốn giải quyết dữ liệu mẫu của mình bằng đường ống gạch trước giai đoạn pha trộn nặng.
+
+00:09:41.000 --> 00:09:53.000
+Với Imageblock Sample Coverage Control, bạn có thể giải quyết dữ liệu mẫu bằng đường ống gạch sau khi hiển thị hình học mờ đục của mình để đảm bảo rằng tất cả các pixel đều chứa một màu duy nhất trước khi pha trộn.
+
+00:09:53.000 --> 00:09:59.000
+Hãy xem xét một ví dụ nâng cao hơn về việc sử dụng đường ống gạch để thay đổi phạm vi bao phủ của dữ liệu mẫu.
+
+00:09:59.000 --> 00:10:06.000
+Vì đường ống gạch có thể được triển khai với chức năng tính toán, bạn có thể làm nhiều hơn là chỉ đơn giản là các giá trị trung bình cùng nhau.
+
+00:10:06.000 --> 00:10:19.000
+Ứng dụng mẫu Tổng hợp bề mặt của chúng tôi bắt đầu với thuật toán tô bóng hoãn một lần nhiều mẫu và sử dụng công văn hạt nhân dựa trên ô để giảm số lượng mẫu được tô bóng trong đường chuyền hoãn lại.
+
+00:10:19.000 --> 00:10:29.000
+Mục tiêu của thuật toán này là tô bóng ít mẫu hơn trong thẻ hoãn lại đắt tiền trong khi vẫn giữ được lợi ích làm mịn cạnh của khử răng cưa đa mẫu.
+
+00:10:29.000 --> 00:10:36.000
+Chúng tôi sẽ không đi sâu vào tất cả các chi tiết của thuật toán, vì vậy hãy chắc chắn tải xuống và khám phá ứng dụng mẫu Tổng hợp bề mặt của chúng tôi.
+
+00:10:36.000 --> 00:10:41.000
+Nhưng bây giờ chúng ta hãy hình dung kỹ thuật này làm giảm chi phí che bóng như thế nào.
+
+00:10:41.000 --> 00:10:47.000
+Hai hình ảnh trực quan hóa các điểm ảnh chứa nhiều hơn một mẫu trên mỗi điểm ảnh trong bộ đệm g.
+
+00:10:47.000 --> 00:10:55.000
+Hình ảnh bên trái hiển thị bộ đệm g trước khi hợp nhất các bề mặt và hình ảnh bên phải hiển thị bộ đệm g sau khi hợp nhất các bề mặt.
+
+00:10:55.000 --> 00:11:01.000
+Hạt nhân tổng hợp bề mặt có thể làm giảm số lượng mẫu bộ đệm g cần được tô bóng.
+
+00:11:01.000 --> 00:11:09.000
+Như bạn có thể thấy trên hình ảnh bên phải, các điểm ảnh duy nhất chứa nhiều mẫu duy nhất nằm trên các nếp nhăn thực và ranh giới độ sâu.
+
+00:11:09.000 --> 00:11:20.000
+Trước Metal 2 trên GPU A11, thuật toán này sẽ yêu cầu một đường chuyền kết xuất riêng biệt cho từng giai đoạn của thuật toán, phát sinh nhiều chuyến đi khứ hồi đến bộ nhớ hệ thống.
+
+00:11:20.000 --> 00:11:29.000
+Nhưng với Imageblock Sample Coverage Control, cả ba giai đoạn của thuật toán có thể được hợp nhất thành một lần kết xuất, tiết kiệm cho ứng dụng của bạn rất nhiều băng thông bộ nhớ.
+
+00:11:29.000 --> 00:11:36.000
+Như bạn có thể thấy trong sơ đồ, cả ba giai đoạn đều hoạt động trên khối hình ảnh giữ tất cả dữ liệu làm việc bên trong bộ nhớ gạch.
+
+00:11:36.000 --> 00:11:40.000
+Đầu tiên, bạn sẽ hiển thị bộ đệm g cho khối hình ảnh trong bộ nhớ ô.
+
+00:11:40.000 --> 00:11:50.000
+Và tiếp theo, bạn sẽ gửi đường ống gạch tổng hợp bề mặt để giảm số lượng mẫu bộ đệm g thành ít mẫu bộ đệm g tổng hợp hơn.
+
+00:11:50.000 --> 00:11:56.000
+Cuối cùng, đường chuyền che bóng bị trì hoãn sẽ chỉ che bóng cho từng mẫu tổng hợp.
+
+00:11:56.000 --> 00:12:04.000
+Nếu bạn muốn tìm hiểu thêm về kỹ thuật này, vui lòng truy cập liên kết ở cuối bài thuyết trình này để tải xuống ứng dụng mẫu.
+
+00:12:04.000 --> 00:12:10.000
+Tóm lại, trước tiên chúng ta đã nói về những cải tiến phần cứng được thực hiện để đa mẫu trong GPU A11.
+
+00:12:10.000 --> 00:12:17.000
+GPU A11 theo dõi số lượng mẫu duy nhất trong mỗi điểm ảnh để giảm chi phí pha trộn.
+
+00:12:17.000 --> 00:12:23.000
+Tối ưu hóa này áp dụng cho cả pha trộn API cũng như pha trộn có thể lập trình.
+
+00:12:23.000 --> 00:12:31.000
+Sau đó, chúng tôi đã thảo luận về những cải tiến trong Metal 2 cho GPU A11 để hiển thị tính năng phần cứng mạnh mẽ này cho các hạt nhân được sử dụng trong bóng gạch.
+
+00:12:31.000 --> 00:12:42.000
+Với Imageblock Sample Coverage Control, bạn có thể viết các hạt nhân giải quyết tùy chỉnh của riêng mình và gửi chúng bất cứ lúc nào trong một đường chuyền kết xuất để thực hiện các tối ưu hóa mới mạnh mẽ.
+
+00:12:42.000 --> 00:12:53.000
+Cùng với nhau, đa mẫu nâng cao trong GPU A11 và các tính năng ngôn ngữ đổ bóng mới trong Metal 2 cho phép các kỹ thuật mới để giữ dữ liệu của bạn trên chip lâu hơn.
+
+00:12:53.000 --> 00:13:00.000
+Bạn có thể sử dụng tính năng này để triển khai các thuật toán như Surface Aggregation trong một lần kết xuất duy nhất.
+
+00:13:00.000 --> 00:13:10.000
+Để biết thêm thông tin về Metal 2 và các liên kết đến mã mẫu, vui lòng truy cập trang web của nhà phát triển tại developer.apple.com/metal.
+
+00:13:10.000 --> 23:59:59.000
+Cảm ơn bạn đã xem.
+

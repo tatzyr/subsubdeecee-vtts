@@ -1,0 +1,571 @@
+10101
+
+♪ nhạc cụ hip hop ♪
+
+Xin chào và chào mừng.
+
+Tên tôi là Alè Segovia Azapian từ nhóm Phần mềm GPU tại Apple.
+
+Và tôi là Mayur, cũng từ nhóm Phần mềm GPU.
+
+Alè: Trong phiên này chúng ta sẽ nói về kết xuất không ràng buộc.
+
+Mô hình ràng buộc không ràng buộc là một cách hiện đại để cung cấp tài nguyên cho bộ đổ bóng của bạn, mở khóa các kỹ thuật kết xuất tiên tiến, chẳng hạn như dò tia.
+
+Hôm nay, tôi sẽ bắt đầu với một bản tóm tắt ngắn gọn về cách hoạt động của mô hình ràng buộc không ràng buộc và cách bạn có thể dễ dàng áp dụng liên kết trong các trò chơi và ứng dụng của mình với Metal 3.
+
+Kết xuất Bindless tổng hợp dữ liệu, mở ra những cơ hội mới để cải thiện hiệu suất trên CPU và GPU.
+
+Hôm nay tôi sẽ cung cấp cho bạn hai mẹo cụ thể để cải thiện thời gian CPU và GPU của bạn.
+
+Sau đó, tôi sẽ giao nó cho Mayur, và anh ấy sẽ chỉ cho bạn cách các công cụ có thể giúp bạn áp dụng một mô hình không ràng buộc.
+
+Trong mô hình không ràng buộc, các tài nguyên được tổng hợp và liên kết cùng với các bộ đệm đối số.
+
+Về mặt khái niệm, đây là những gì nó trông giống như.
+
+Trong ví dụ này, một mảng tổng hợp tất cả các mắt lưới trong một cảnh.
+
+Không giống như mô hình ràng buộc truyền thống, nơi bạn liên kết từng tài nguyên một cách độc lập với một vị trí cụ thể trong một đường ống, trong mô hình không ràng buộc, các tài nguyên trước tiên được liên kết với nhau trong bộ nhớ.
+
+Điều này cho phép bạn liên kết một bộ đệm duy nhất mà các bộ đổ bóng của bạn có thể tự do điều hướng và truy cập các tài nguyên mà chúng cần để tính toán các bề mặt và ánh sáng phức tạp.
+
+Sau khi ứng dụng không bị ràng buộc, các bộ đổ bóng dò tia có thể truy cập tất cả dữ liệu họ cần để tô bóng các phản xạ đẹp mắt.
+
+Ứng dụng làm cho các mô hình và kết cấu 3D, bao gồm sàn nhà, xe tải, vật liệu của chúng và thậm chí cả bầu trời, có sẵn cho các bộ đổ bóng dò tia bằng cách đặt tất cả dữ liệu của nó vào bộ đệm đối số.
+
+Thậm chí tốt hơn, khi kết xuất không ràng buộc được ghép nối với các tính năng Metal khác như Heaps, các ứng dụng và trò chơi sẽ tận hưởng hiệu suất tốt hơn, nhờ ít áp lực hơn lên CPU.
+
+Tôi sẽ nói về bốn cải tiến cụ thể trong Metal 3 mà bạn có thể thấy hữu ích cho kết xuất không ràng buộc.
+
+Bộ đệm đối số là cấu trúc Kim loại cơ bản cho phép bạn liên kết các tài nguyên của mình với nhau.
+
+Chúng tham khảo các tài nguyên như kết cấu và các bộ đệm khác.
+
+Metal 3 làm cho việc ghi bộ đệm đối số dễ dàng hơn bao giờ hết bởi vì bây giờ bạn không còn cần một đối tượng bộ mã hóa đối số nữa.
+
+Và điều tương tự cũng đúng với các mảng không giới hạn.
+
+Bây giờ bạn có thể phân bổ các cấu trúc tăng tốc từ Metal Heap và Shader Validation Layer cảnh báo bạn khi tài nguyên không nằm trong bộ nhớ GPU.
+
+Cùng với nhau, bốn tính năng này giúp việc không bị ràng buộc trở nên dễ dàng hơn bao giờ hết.
+
+Đặc biệt, viết bộ đệm đối số trong Metal 3 là một niềm vui.
+
+Để mã hóa một cảnh thành bộ đệm đối số, bạn ghi vào các bộ đệm này dữ liệu cảnh, chẳng hạn như các trường hợp, mắt lưới, vật liệu và kết cấu.
+
+Trong Metal 2, điều này được thực hiện với một bộ mã hóa đối số.
+
+Vì vậy, trước tiên, tôi sẽ tóm tắt lại cách các đối tượng này hoạt động, và sau đó tôi sẽ chỉ cho bạn cách Metal 3 giúp đơn giản hóa mã của bạn.
+
+Với bộ mã hóa đối số, bước đầu tiên là tạo phiên bản bộ mã hóa.
+
+Bạn làm điều này thông qua phản xạ chức năng đổ bóng hoặc bằng cách mô tả các thành viên cấu trúc thành Metal.
+
+Với phiên bản bộ mã hóa, đặt đích ghi của nó và bù đắp thành bộ đệm đối số mục tiêu.
+
+Và sử dụng các phương pháp của nó để ghi dữ liệu vào bộ đệm.
+
+Vui lòng xem phiên không ràng buộc từ năm ngoái để được bồi dưỡng chi tiết về bộ đệm đối số và bộ mã hóa đối số.
+
+Bây giờ cơ chế này rất tuyệt, nhưng các đối tượng bộ mã hóa đôi khi có thể khó quản lý.
+
+Metal cung cấp hai cơ chế để tạo ra các bộ mã hóa đối số.
+
+Có thể không rõ cái nào phù hợp với ứng dụng của bạn.
+
+Ngoài ra, việc sử dụng bộ mã hóa đối số từ nhiều luồng đòi hỏi sự cẩn thận.
+
+Các nhà phát triển, trực giác hiểu cách viết cấu trúc C và với Metal 3, giờ đây bạn có thể làm điều đó cho bộ đệm đối số của mình.
+
+Metal 3 đơn giản hóa việc ghi bộ đệm đối số bằng cách cho phép bạn ghi trực tiếp vào chúng giống như bất kỳ cấu trúc phía CPU nào khác.
+
+Bây giờ bạn có quyền truy cập vào địa chỉ GPU ảo và ID tài nguyên của tài nguyên của bạn.
+
+Khi bạn viết những thứ này trực tiếp vào bộ đệm đối số của mình, Metal giờ đây hiểu những tài nguyên bạn đang tham khảo.
+
+Về mặt chức năng, nó giống như mã hóa tham chiếu trước đây bằng cách sử dụng bộ mã hóa đối số, ngoại trừ bộ mã hóa không còn cần thiết nữa.
+
+Khả năng này được hỗ trợ tất cả các thiết bị có hỗ trợ bộ đệm đối số cấp 2.
+
+Đó là, bất kỳ máy Mac nào từ năm 2016 trở lên và bất kỳ thiết bị iOS nào có chip sinh học A13 trở lên.
+
+Nếu bạn không chắc liệu một thiết bị có hỗ trợ bộ đệm đối số cấp 2 hay không, có một truy vấn tính năng thuận tiện trong đối tượng MTLDevice mà bạn có thể sử dụng.
+
+Đây là quá trình bây giờ trông như thế nào trong Metal 3.
+
+Đầu tiên, xác định các cấu trúc hiển thị CPU của bạn, sử dụng loại 64-bit cho các địa chỉ bộ đệm và MTLResourceID cho các kết cấu.
+
+Sau đó, phân bổ bộ đệm đối số.
+
+Bạn phân bổ bộ đệm trực tiếp từ MTLDevice hoặc từ MTLHeap.
+
+Bạn lấy nội dung của bộ đệm và truyền nó vào loại cấu trúc bộ đệm đối số.
+
+Và cuối cùng, viết địa chỉ và ID tài nguyên cho các thành viên cấu trúc.
+
+Hãy xem cách điều này được thực hiện trong bản demo kết xuất lai.
+
+Đây là mã. Chú ý xem nó đơn giản như thế nào.
+
+Cấu trúc phía máy chủ lưu trữ trực tiếp địa chỉ GPU của bộ đệm chuẩn.
+
+Đây là một số nguyên không dấu 64-bit nên tôi đã sử dụng uint64_t.
+
+Bây giờ không có đối tượng bộ mã hóa, bạn chỉ cần sử dụng kích thước của cấu trúc cho bộ đệm đối số của mình.
+
+Metal đảm bảo rằng kích thước và sự liên kết của cấu trúc GPU và CPU khớp với clang và trình biên dịch Metal shader.
+
+Tiếp theo, phân bổ bộ đệm như bình thường.
+
+Và nếu chế độ lưu trữ của bộ đệm được Quản lý hoặc Chia sẻ, hãy lấy một con trỏ trực tiếp đến bộ đệm và truyền nó đến loại cấu trúc.
+
+Và cuối cùng, đặt thành viên bình thường thành gpuAddress, và tùy chọn, một phần bù mà bạn phải căn chỉnh theo yêu cầu bộ nhớ của GPU.
+
+Một điều tôi muốn nhấn mạnh là cách khai báo cấu trúc thay đổi giữa Ngôn ngữ đổ bóng kim loại và khai báo C.
+
+Trong ví dụ này, chúng được giữ riêng biệt, nhưng nếu bạn thích, bạn có thể có một khai báo cấu trúc duy nhất trong tiêu đề được chia sẻ và sử dụng biên dịch có điều kiện để phân biệt giữa các loại trình biên dịch đổ bóng và các loại C.
+
+Đây là một tuyên bố thống nhất trong C.
+
+Macro __METAL_VERSION__ chỉ được xác định khi biên dịch mã đổ bóng.
+
+Sử dụng nó để tách mã GPU và CPU trong khai báo tiêu đề.
+
+Nếu ứng dụng của bạn nhắm mục tiêu C++, bạn có thể tiến xa hơn và sử dụng các mẫu để làm cho các khai báo thậm chí còn thống nhất hơn.
+
+Kiểm tra mã mẫu bộ đệm đối số để biết các phương pháp hay nhất.
+
+Bây giờ đó là cách bạn viết một cấu trúc, nhưng bạn cũng có thể viết nhiều cấu trúc bằng cách sử dụng các mảng không giới hạn.
+
+Bạn đã có thể triển khai các mảng không giới hạn trong Metal bằng cách sử dụng bộ mã hóa đối số, nhưng Metal 3 đơn giản hóa quy trình hơn nữa bằng cách đưa nó đến gần hơn với việc chỉ điền vào một mảng các cấu trúc.
+
+Đây là những gì khác biệt so với việc chỉ viết một cấu trúc.
+
+Bây giờ bạn cần phân bổ đủ dung lượng lưu trữ cho tất cả các cấu trúc bạn muốn lưu trữ.
+
+Và sau đó, lặp lại mảng, ghi dữ liệu cho mỗi cấu trúc.
+
+Quay lại mẫu mã, trước tiên, mở rộng kích thước của bộ đệm để lưu trữ nhiều cấu trúc như các mắt lưới trong cảnh.
+
+Lưu ý cách điều này giống hệt như bạn làm cho bộ đệm CPU: nhân kích thước của cấu trúc với số lượng lưới.
+
+Tôi muốn dành một chút thời gian để lưu ý rằng điều này mạnh mẽ như thế nào.
+
+Biến đơn này kiểm soát hoàn toàn kích thước của mảng.
+
+Bộ đổ bóng không cần khai báo kích thước này cho trình biên dịch bộ đổ bóng kim loại tại bất kỳ thời điểm nào và nó có thể tự do lập chỉ mục vào bất kỳ vị trí nào.
+
+Đây là một phần lý do khiến mô hình không liên kết rất linh hoạt trong Metal, bởi vì bạn viết các bộ đổ bóng truy cập các mảng ở bất kỳ kích thước nào mà không có ràng buộc.
+
+Nó chỉ hoạt động!
+
+Tiếp theo, phân bổ bộ đệm có kích thước này và truyền con trỏ đến nội dung đến đúng loại cấu trúc lưới.
+
+Bây giờ bộ đệm đã đủ lớn, hãy đi bộ với một vòng lặp đơn giản, trải dài kích thước của cấu trúc lưới.
+
+Và cuối cùng, đặt trực tiếp GPUAddress của mỗi cấu trúc trong mảng và tùy chọn, một độ lệch được căn chỉnh.
+
+Từ phía GPU trong bộ đổ bóng, đây là một cách để thể hiện mảng không giới hạn.
+
+Ở đây, tôi khai báo nó như một tham số con trỏ lưới mà tôi chuyển đến bộ đổ bóng.
+
+Điều này cho phép bạn có thể tự do truy cập nội dung trực tiếp, giống như bạn làm với bất kỳ mảng C nào.
+
+Một lựa chọn khác là kéo tất cả các mảng không giới hạn vào một cấu trúc.
+
+Điều này giúp giữ cho các bộ đổ bóng gọn gàng bằng cách tổng hợp dữ liệu ở một nơi duy nhất.
+
+Trong ví dụ này, tất cả các mắt lưới và vật liệu được tập hợp lại với nhau trong một cấu trúc cảnh.
+
+Sử dụng cấu trúc cảnh, cảnh được truyền trực tiếp đến bộ đổ bóng bằng cách liên kết một bộ đệm duy nhất, thay vì chuyển từng mảng không giới hạn riêng biệt.
+
+Và quyền truy cập giống như trước đây, nhưng bây giờ, mảng lưới được tiếp cận thông qua cấu trúc cảnh.
+
+Và đó là cách viết bộ đệm đối số và mảng không giới hạn trong Metal 3.
+
+API được cải tiến hoàn toàn giờ đây làm cho nó trực quan hơn và phù hợp với những gì bạn làm cho các cấu trúc CPU hoặc các mảng cấu trúc.
+
+Với bản cập nhật dò tia năm nay, các cấu trúc gia tốc dò tia có thể được phân bổ từ Metal Heaps, cùng với bộ đệm và kết cấu của bạn.
+
+Điều này có nghĩa là chúng có thể được tổng hợp với nhau và với các loại tài nguyên khác.
+
+Điều này thật tuyệt, bởi vì khi bạn tổng hợp tất cả các cấu trúc gia tốc thành đống, bạn có thể gắn cờ tất cả chúng cư trú trong một cuộc gọi duy nhất để sử dụng đống.
+
+Đây là một cơ hội lớn để tiết kiệm đáng kể CPU trong chuỗi kết xuất ứng dụng của bạn.
+
+Dưới đây là một số mẹo để làm việc với các cấu trúc gia tốc trong đống.
+
+Đầu tiên, khi được phân bổ từ đống, các cấu trúc gia tốc có các yêu cầu về căn chỉnh và kích thước khác nhau tùy theo thiết bị.
+
+Có một truy vấn mới để kiểm tra kích thước và sự liên kết của cấu trúc gia tốc để phân bổ đống.
+
+Sử dụng phương thức heapAccelerationStructureSize vàAlignWithDescriptor của MTLDevice để xác định SizeAndAlignment cho các bộ mô tả cấu trúc.
+
+Hãy nhớ rằng, điều này khác với phương pháp accelerationStructureSizes WithDescriptor trong MTLDevice.
+
+Bây giờ các cấu trúc gia tốc nằm trong một đối tượng MTLHeap, hãy gọi useHeap: để làm cho tất cả chúng cư trú trong một cuộc gọi duy nhất.
+
+Điều này nhanh hơn so với việc gọi useResource trên từng tài nguyên riêng lẻ.
+
+Và hãy nhớ rằng trừ khi bạn chọn đống của mình vào theo dõi mối nguy hiểm, Metal không ngăn cản các điều kiện chạy đua đối với các tài nguyên được phân bổ từ chúng, vì vậy bạn sẽ cần đồng bộ hóa cấu trúc gia tốc được xây dựng giữa nhau và với công việc dò tia.
+
+Tuy nhiên, đừng lo lắng, tôi sẽ nói nhiều hơn về điều này trong giây lát.
+
+Để biết thêm chi tiết về điều này và các tiến bộ hiệu suất dò tia khác trong Metal 3, hãy đảm bảo xem bài nói chuyện "Tối đa hóa hiệu suất dò tia kim loại của bạn" trong năm nay.
+
+Sử dụng các cấu trúc tăng tốc được phân bổ bằng đống cung cấp cơ hội để giảm mức sử dụng CPU của ứng dụng của bạn khi nó quan trọng nhất.
+
+Cuối cùng nhưng không kém phần quan trọng, đây là một trong những tính năng yêu thích của tôi trong năm nay: Cải tiến xác thực Shader.
+
+Về chủ đề useResource và useHeap, điều rất quan trọng là các ứng dụng gắn cờ cư trú cho Metal cho tất cả các tài nguyên được truy cập gián tiếp.
+
+Quên làm điều đó có nghĩa là các trang bộ nhớ hỗ trợ các tài nguyên đó có thể không có mặt tại thời điểm kết xuất.
+
+Điều này có thể gây ra lỗi bộ đệm lệnh, khởi động lại GPU hoặc thậm chí hỏng hình ảnh.
+
+Thật không may, rất phổ biến khi gặp phải những vấn đề này khi bắt đầu hành trình không ràng buộc, bởi vì trong không ràng buộc, phần lớn tài nguyên cảnh được truy cập gián tiếp và các trình đổ bóng đưa ra quyết định điều hướng con trỏ trong thời gian chạy.
+
+Năm nay, Metal 3 giới thiệu chức năng mới trong lớp xác thực đổ bóng sẽ giúp bạn theo dõi nơi cư trú bị thiếu của tài nguyên trong quá trình thực thi bộ đệm lệnh.
+
+Tôi sẽ chỉ cho bạn một ví dụ cụ thể.
+
+Trong quá trình cập nhật của ứng dụng Kết xuất Lai, chúng tôi đã gặp phải một vấn đề thực sự trong đó phản xạ đôi khi trông không chính xác.
+
+Tôi sẽ chỉ cho bạn cách lớp xác thực đã giúp chẩn đoán và khắc phục sự cố này.
+
+Để gắn cờ cư trú cho Metal, ứng dụng lưu trữ tất cả các tài nguyên riêng lẻ không được hỗ trợ bởi đống vào một bộ có thể thay đổi tại thời điểm tải.
+
+Ứng dụng thêm bộ đệm và nó thêm kết cấu.
+
+Tại thời điểm kết xuất, trước khi ứng dụng gửi hạt nhân dò tia, nó chỉ ra cho Metal rằng nó sử dụng tất cả các tài nguyên trong bộ.
+
+Đây là một quá trình đơn giản trong đó ứng dụng lặp lại tập hợp và gọi useResource trên mỗi phần tử.
+
+Kim loại sau đó làm cho tất cả các tài nguyên này cư trú trước khi bắt đầu công việc dò tia.
+
+Đây là một phần của mã nơi ứng dụng thu thập tài nguyên vào bộ này.
+
+Ứng dụng thực hiện điều này như một phần của quá trình ghi bộ đệm đối số của nó.
+
+Chức năng tải của ứng dụng lặp lại trên mỗi lưới con.
+
+Nó thu thập dữ liệu cần thiết để ghi vào bộ đệm đối số - nghĩa là dữ liệu chỉ mục và dữ liệu kết cấu cho vật liệu - sau đó nó lưu trữ địa chỉ của bộ đệm chỉ mục trong bộ đệm đối số.
+
+Đối với vật liệu, sau đó nó lặp qua mảng kết cấu, ghi ID tài nguyên GPU kết cấu vào bộ đệm đối số.
+
+Và cuối cùng, nó thêm tất cả các kết cấu riêng lẻ từ các vật liệu lưới con vào bộ sceneResources, vì vậy nó có thể gắn cờ chúng cư trú tại thời điểm gửi đi.
+
+Thật không may, có một lỗi tinh tế ở đây.
+
+Ứng dụng sẽ chạy bộ đệm lệnh và trong một số trường hợp, các phản xạ sẽ bị thiếu.
+
+Trước đây, thật khó để theo dõi điều này.
+
+Bây giờ trong Metal 3, lớp xác nhận đổ bóng đến để giải cứu.
+
+Những loại vấn đề này hiện tạo ra lỗi trong quá trình thực thi bộ đệm lệnh, cho biết vấn đề là gì.
+
+Thông báo lỗi cho biết tên của hàm đổ bóng đã kích hoạt sự cố, tên của đường chuyền, tệp kim loại và dòng mã nơi nó phát hiện quyền truy cập và thậm chí cả nhãn của bộ đệm, kích thước của nó và thực tế là nó không phải là cư trú.
+
+Là một mẹo chuyên nghiệp, đây là lý do tại sao việc dán nhãn các vật thể Kim loại luôn là một cách thực hành tốt.
+
+Các công cụ sử dụng nhãn, điều này rất hữu ích khi cố gắng xác định đối tượng nào là đối tượng nào trong khi gỡ lỗi ứng dụng của bạn.
+
+Với tất cả thông tin chi tiết này trong tay, giờ đây thật dễ dàng để tìm thấy tài nguyên còn thiếu trong mã đổ bóng.
+
+Điều tuyệt vời hơn nữa là khi điểm ngắt gỡ lỗi được bật, Xcode sẽ thuận tiện hiển thị dòng chính xác trong mã đổ bóng nơi xác thực đổ bóng phát hiện ra sự cố.
+
+Trong trường hợp của ứng dụng demo, đó là bộ đệm chỉ số không thường trú.
+
+Việc sửa chữa bây giờ rất đơn giản.
+
+Quay trở lại mã, ứng dụng hiện lưu trữ bộ đệm chỉ mục bị thiếu vào bộ tài nguyên thường trú.
+
+Với những thay đổi này, sau này vào thời điểm dò tia, Metal biết cách cung cấp bộ đệm chỉ mục cho GPU, giải quyết vấn đề.
+
+Đây là một công cụ thiết yếu và là một công cụ thay đổi cuộc chơi hoàn chỉnh, có khả năng giúp bạn tiết kiệm hàng giờ thời gian gỡ lỗi trong hành trình không ràng buộc của mình.
+
+Vì vậy, đó là những cải tiến mà Metal 3 mang lại để giúp bạn tổ chức và tham khảo các tài nguyên không ràng buộc.
+
+Bây giờ tôi sẽ chuyển số và nói về cách tối đa hóa hiệu suất trò chơi của bạn khi không bị ràng buộc.
+
+Trong phần này, tôi sẽ đề cập đến hai chủ đề: tài nguyên không được giữ lại và tài nguyên không được theo dõi.
+
+Những mẹo này sẽ giúp bạn đạt được hiệu suất cao hơn từ cả CPU và GPU của mình khi bạn có tài nguyên tổng hợp và tồn tại lâu dài.
+
+Bây giờ, để nói về cách cải thiện hiệu suất CPU với các tài nguyên tồn tại lâu dài, trước tiên tôi sẽ tóm tắt lại vòng đời tài nguyên Metal.
+
+Objective-C và Swift xử lý vòng đời đối tượng thông qua đếm tham chiếu.
+
+Tài nguyên kim loại tuân theo mô hình này.
+
+Tài nguyên bắt đầu với số lượng giữ lại là 1 và thời gian chạy sẽ phân bổ chúng khi tất cả các tham chiếu mạnh biến mất.
+
+Bởi vì CPU và GPU hoạt động song song, sẽ có vấn đề nếu CPU phân bổ tài nguyên bằng cách cho phép retainCount của nó đạt 0 trong khi GPU vẫn đang sử dụng nó.
+
+Để ngăn chặn điều này, bộ đệm lệnh Metal tạo ra các tham chiếu mạnh mẽ đến tất cả các tài nguyên mà họ sử dụng, đảm bảo retainCount của chúng luôn ít nhất là 1.
+
+Metal tạo ra các tham chiếu mạnh mẽ cho các tài nguyên mà bạn liên kết trực tiếp với một đường ống với các chức năng như setVertexBuffer hoặc setFragmentTexture-- và điều này cũng bao gồm các tệp đính kèm kết xuất-- Các đối tượng đống kim loại mà bạn gắn cờ cư trú thông qua useHeap API và các tài nguyên gián tiếp
+
+Để biết thêm chi tiết về vòng đời của đối tượng kim loại, vui lòng xem bài nói chuyện "Chương trình kim loại trong C++ với kim loại-cpp" trong năm nay.
+
+Bây giờ, rất hữu ích khi Metal tạo ra các tài liệu tham khảo này, bởi vì với tư cách là một lập trình viên, bạn không bao giờ phải lo lắng rằng bạn có thể đang phân bổ một đối tượng trong khi GPU vẫn đang sử dụng nó.
+
+Đảm bảo an toàn này mà Metal cung cấp cho bạn rất nhanh để thực hiện, nhưng nó đi kèm với chi phí CPU nhỏ.
+
+Bây giờ, trong mô hình không ràng buộc, các ứng dụng tổng hợp tài nguyên thành đống và chúng có xu hướng tồn tại lâu dài, phù hợp với miền của ứng dụng.
+
+Ví dụ, trong một trò chơi, tài nguyên tồn tại trong suốt thời gian của toàn bộ cấp độ.
+
+Trong trường hợp này, Metal không cần thiết phải cung cấp các đảm bảo bổ sung về vòng đời tài nguyên.
+
+Những gì bạn có thể làm sau đó là thu lại chi phí CPU này bằng cách yêu cầu bộ đệm lệnh Metal không giữ lại tài nguyên mà chúng tham chiếu.
+
+Để tắt tính năng giữ tài nguyên tự động của Metal, chỉ cần tạo một bộ đệm lệnh với các tham chiếu không được giữ lại.
+
+Bạn làm điều này trực tiếp từ MTLCommandQueue, giống như bạn tạo bất kỳ bộ đệm lệnh thông thường nào.
+
+Bạn không cần thực hiện bất kỳ thay đổi nào khác đối với ứng dụng của mình, miễn là bạn đã đảm bảo vòng đời tài nguyên của mình.
+
+Hãy nhớ rằng mức độ chi tiết cho cài đặt này là toàn bộ đệm lệnh.
+
+Nó sẽ giữ lại tất cả các tài nguyên được tham chiếu hoặc không có tài nguyên nào trong số đó.
+
+Trong một microbenchmark nhỏ, chúng tôi đã đo mức giảm sử dụng CPU 2% trong vòng đời của bộ đệm lệnh chỉ bằng cách chuyển sang bộ đệm lệnh với các tham chiếu không được giữ lại.
+
+Nhưng thời gian này đã được dành để tạo ra và phá hủy hoàn toàn các tài liệu tham khảo mạnh mẽ không cần thiết.
+
+Tóm lại, các tài nguyên không lưu giữ cung cấp cơ hội tiết kiệm thêm CPU khi bạn đã đảm bảo vòng đời tài nguyên.
+
+Tương tự như các tài nguyên không được giữ lại, các tài nguyên không được theo dõi cung cấp cơ hội vô hiệu hóa tính năng an toàn để có được hiệu suất cao hơn.
+
+Nhiều kỹ thuật trực quan bao gồm kết xuất đến các kết cấu trung gian và ghi vào bộ đệm và sau đó tiêu thụ chúng trong các lần sau này.
+
+Lập bản đồ bóng, lột da và xử lý hậu kỳ là những ví dụ điển hình về điều này.
+
+Giờ đây, việc sản xuất và tiêu thụ tài nguyên ngay lập tức tạo ra các mối nguy hiểm đọc sau khi ghi.
+
+Ngoài ra, khi một số lần ghi vào cùng một tài nguyên, chẳng hạn như hai lần kết xuất được vẽ vào cùng một tệp đính kèm, lần lượt hoặc hai bộ mã hóa blit ghi vào cùng một tài nguyên, nó sẽ tạo ra các nguy cơ ghi sau khi ghi do cách lịch trình Metal hoạt động trên GPU.
+
+Khi bạn sử dụng tài nguyên được theo dõi, Metal sẽ tự động sử dụng các nguyên thủy đồng bộ hóa để tránh các mối nguy hiểm trên dòng thời gian GPU.
+
+Ví dụ, Metal khiến GPU chờ đợi một đường chuyền lột da tính toán để hoàn thành việc ghi vào bộ đệm trước khi bắt đầu một đường chuyền kết xuất cảnh đọc từ cùng một bộ đệm.
+
+Điều này thật tuyệt, và đó là một phần lớn lý do tại sao Metal là một API đồ họa dễ tiếp cận như vậy, nhưng có một số cân nhắc về hiệu suất cho các ứng dụng tổng hợp tài nguyên thành đống.
+
+Hãy xem xét ví dụ này.
+
+Ở đây, GPU đang bận, vẽ hai khung hình thực hiện lột da đỉnh, hiển thị cảnh và áp dụng ánh xạ tông màu, lần lượt từng cái một.
+
+Khi ứng dụng giữ cho GPU bận rộn, Metal xác định các cơ hội nơi công việc kết xuất và tính toán có thể chồng chéo lên nhau, dựa trên sự phụ thuộc vào tài nguyên.
+
+Khi không có sự phụ thuộc và các điều kiện phù hợp, lịch trình Metal hoạt động chồng chéo lên nhau và chạy song song.
+
+Điều này làm bão hòa GPU và cho phép nó hoàn thành nhiều công việc hơn trong cùng một khoảng thời gian đồng hồ treo tường.
+
+Bây giờ, khi ứng dụng tổng hợp các tài nguyên lại với nhau thành một đống, tất cả các tài nguyên con của nó sẽ xuất hiện dưới dạng một tài nguyên duy nhất cho Metal.
+
+Đây là điều làm cho đống rất hiệu quả để làm việc cùng.
+
+Nhưng điều này có nghĩa là Metal thấy công việc đọc và ghi trên cùng một tài nguyên và phải lên lịch làm việc một cách thận trọng để tránh bất kỳ điều kiện chủng tộc nào, ngay cả khi không có mối nguy hiểm thực sự nào tồn tại.
+
+Tình huống này được gọi là "chia sẻ sai" và, như bạn có thể mong đợi, nó làm tăng thời gian thực thi đồng hồ tường của công việc GPU.
+
+Vì vậy, đây là mẹo hiệu suất.
+
+Nếu bạn biết không có sự phụ thuộc giữa các tài nguyên trong đống, thì bạn có thể tránh hành vi này.
+
+Để tránh chia sẻ sai, bạn có thể chọn tài nguyên không theo dõi mối nguy hiểm và trực tiếp báo hiệu các phụ thuộc chi tiết cho Metal.
+
+Bạn chọn không tham gia theo dõi tài nguyên bằng cách đặt thuộc tính hazardTracking của bộ mô tả tài nguyên thành Untracked.
+
+Bởi vì điều này rất quan trọng, nó là hành vi mặc định cho đống, vì nó cho phép bạn mở khóa nhiều cơ hội hơn để GPU chạy công việc của bạn song song ngay khi ra khỏi cổng.
+
+Khi bạn bắt đầu sử dụng các tài nguyên không được theo dõi, bạn thể hiện sự phụ thuộc bằng cách sử dụng các nguyên thủy sau.
+
+Tùy thuộc vào tình huống, hãy sử dụng Hàng rào, Sự kiện, Sự kiện được chia sẻ hoặc Rào cản bộ nhớ.
+
+Metal Fences đồng bộ hóa quyền truy cập vào một hoặc nhiều tài nguyên trên các đường kết xuất và tính toán khác nhau, trong bối cảnh của một hàng đợi lệnh duy nhất.
+
+Đây là một loại rào cản phân chia nguyên thủy, vì vậy người tiêu dùng vượt qua đợi cho đến khi nhà sản xuất báo hiệu Hàng rào.
+
+Yêu cầu duy nhất bạn cần ghi nhớ khi sử dụng Fences là cam kết hoặc xếp hàng bộ đệm lệnh của nhà sản xuất trước bộ đệm lệnh tiêu thụ của bạn.
+
+Khi bạn không thể đảm bảo đơn hàng này hoặc cần đồng bộ hóa qua nhiều hàng đợi trên cùng một thiết bị, hãy sử dụng Sự kiện MTL.
+
+Sử dụng Sự kiện, bộ đệm lệnh tiêu dùng chờ bộ đệm lệnh của nhà sản xuất báo hiệu Sự kiện với một giá trị nhất định.
+
+Sau khi nó báo hiệu giá trị, việc đọc tài nguyên là an toàn.
+
+Sử dụng Sự kiện để yêu cầu GPU tạm dừng công việc cho đến khi lệnh báo hiệu Sự kiện.
+
+MTLSharedEvents hoạt động rất giống với các Sự kiện thông thường, nhưng hoạt động ở phạm vi lớn hơn vượt ra ngoài một GPU duy nhất.
+
+Sử dụng những thứ này để đồng bộ hóa quyền truy cập vào tài nguyên trên các thiết bị Metal khác nhau và thậm chí với CPU.
+
+Ví dụ, sử dụng Sự kiện được chia sẻ để xử lý kết quả tính toán GPU từ CPU.
+
+Đây là một ví dụ.
+
+GPU trong trường hợp này lột da một lưới trong một đường chuyền tính toán và CPU lưu trữ tư thế vào đĩa.
+
+Bởi vì hai thiết bị này là các thiết bị độc lập, hãy sử dụng Sự kiện được chia sẻ để CPU đợi cho đến khi GPU tạo ra tài nguyên.
+
+Ban đầu, CPU bắt đầu chờ GPU vô điều kiện báo hiệu Sự kiện được chia sẻ.
+
+Khi GPU tạo ra tài nguyên và đặt nó vào bộ nhớ thống nhất, nó báo hiệu Sự kiện được chia sẻ.
+
+Tại thời điểm này, luồng chờ trên CPU thức dậy và tiêu thụ tài nguyên một cách an toàn.
+
+Loại nguyên thủy cuối cùng là Memory Barriers.
+
+Rào cản bộ nhớ buộc tất cả các lệnh tiếp theo trong một kết xuất hoặc tính toán duy nhất để đợi cho đến khi tất cả các lệnh trước đó kết thúc.
+
+Chi phí của một hàng rào tương tự như chi phí của một Hàng rào trong hầu hết các trường hợp.
+
+Tuy nhiên, có một ngoại lệ.
+
+Ngoại lệ đó là các rào cản sau giai đoạn phân đoạn trong một đường chuyền kết xuất.
+
+Những rào cản này có chi phí rất cao tương tự như việc tách đường chuyền kết xuất.
+
+Metal vô hiệu hóa các rào cản sau giai đoạn phân mảnh trên GPU của Apple để giúp các ứng dụng của bạn luôn đi trên con đường trình điều khiển nhanh nhất.
+
+Lớp gỡ lỗi Metal thậm chí còn tạo ra lỗi xác thực nếu bạn thêm rào cản sau khi phân mảnh trên GPU của Apple.
+
+Nên sử dụng Hàng rào để đồng bộ hóa tài nguyên sau giai đoạn phân mảnh.
+
+Đây là một bản tóm tắt ngắn về các nguyên thủy đồng bộ hóa và khi nào nên sử dụng chúng.
+
+Thích sử dụng Hàng rào cho chi phí thấp nhất khi cam kết hoặc xếp hàng công việc cho một hàng đợi lệnh duy nhất trong nhà sản xuất, sau đó là đơn đặt hàng của người tiêu dùng.
+
+Hàng rào rất tốt cho phần lớn các trường hợp phổ biến.
+
+Khi thứ tự gửi không thể được đảm bảo, hoặc có nhiều hàng đợi lệnh, hãy sử dụng Metal Events.
+
+Sự kiện được chia sẻ cho phép đồng bộ hóa nhiều GPU giữa chúng và với CPU.
+
+Chỉ sử dụng chúng trong những trường hợp đa thiết bị cụ thể này.
+
+Sử dụng Rào cản Bộ nhớ cho các trường hợp muốn đồng bộ hóa trong một lần vượt qua.
+
+Rào cản là một nguyên thủy nhanh trong hầu hết các trường hợp, chẳng hạn như các đường tính toán đồng thời và các giai đoạn đỉnh giữa các cuộc gọi vẽ.
+
+Nhưng lời nhắc nhở thân thiện, hãy sử dụng Hàng rào giữa các đường chuyền thay vì rào cản để đồng bộ hóa sau các giai đoạn phân mảnh, bởi vì những rào cản này rất đắt và GPU của Apple không cho phép điều đó.
+
+Sử dụng các tài nguyên không được theo dõi và theo dõi chi tiết thủ công, giờ đây bạn có thể có tất cả các lợi thế của việc tổng hợp dữ liệu, đồng thời tối đa hóa tính song song của GPU.
+
+Và đó là những mẹo hiệu suất để tận dụng tối đa CPU và GPU khi không bị ràng buộc.
+
+Tôi đã nói rất nhiều về cách Metal 3 mở khóa quy trình làm việc đơn giản và hiệu quả.
+
+Nhưng viết mã chỉ là một nửa phương trình.
+
+Nửa còn lại là cách các công cụ có sẵn có thể giúp bạn xác minh cách GPU nhìn thấy và thực thi công việc.
+
+Bây giờ tôi sẽ giao nó cho Mayur để nói về những gì mới với dụng cụ Metal 3 cho bindless.
+
+Mayur: Cảm ơn Alè.
+
+Hôm nay, tôi rất vui được giới thiệu cho bạn một số tính năng mới tuyệt vời trong Trình gỡ lỗi kim loại sẽ giúp bạn gỡ lỗi và tối ưu hóa các Ứng dụng không ràng buộc của mình.
+
+Tôi vừa chụp một khung hình của ứng dụng HybridRendering mà Alè vừa cho bạn xem.
+
+Khi bạn chụp một khung hình trong Trình gỡ lỗi kim loại, bạn sẽ đến trang Tóm tắt, trang này cung cấp cho bạn cái nhìn tổng quan về khung hình của bạn cùng với những hiểu biết hữu ích về cách cải thiện hiệu suất ứng dụng của bạn.
+
+Nhưng hôm nay, tôi rất vui được cho bạn thấy trình xem phụ thuộc mới.
+
+Để mở nó, chỉ cần nhấp vào Phụ thuộc ở đây ở bên trái.
+
+Đây là trình xem phụ thuộc mới và nó có thiết kế hoàn toàn mới được đóng gói với các tính năng mới mạnh mẽ.
+
+Trình xem phụ thuộc hiển thị cho bạn một biểu diễn dựa trên biểu đồ về khối lượng công việc của bạn.
+
+Mỗi nút trong biểu đồ đại diện cho một đường chuyền, được mã hóa bởi bộ mã hóa lệnh và tài nguyên đầu ra của nó.
+
+Các cạnh đại diện cho sự phụ thuộc tài nguyên giữa các lần vượt qua.
+
+Mới trong năm nay, bạn có thể phân tích khối lượng công việc của mình bằng cách tập trung vào hai loại phụ thuộc.
+
+Luồng dữ liệu và đồng bộ hóa.
+
+Các đường liền nét đại diện cho luồng dữ liệu và chúng cho bạn thấy cách dữ liệu lưu thông trong ứng dụng của bạn.
+
+Các đường chấm đại diện cho sự đồng bộ hóa và chúng hiển thị cho bạn các phụ thuộc giới thiệu đồng bộ hóa GPU giữa các lần truyền.
+
+Để tìm hiểu thêm, bạn có thể nhấp vào bất kỳ bộ mã hóa, tài nguyên hoặc cạnh nào và trình gỡ lỗi sẽ hiển thị cho bạn rất nhiều thông tin chi tiết trong thanh bên mới.
+
+Ví dụ, cạnh này thêm đồng bộ hóa và cũng có luồng dữ liệu giữa các lần truyền này.
+
+Theo mặc định, trình xem phụ thuộc hiển thị cả luồng dữ liệu và phụ thuộc đồng bộ hóa, nhưng bạn có thể sử dụng menu này ở dưới cùng để chỉ tập trung vào một trong các loại phụ thuộc.
+
+Ở đây, tôi sẽ chỉ tập trung vào việc đồng bộ hóa.
+
+Như Alè đã nói trước đó, chia sẻ sai là một vấn đề phổ biến khi đọc và viết các tài nguyên khác nhau từ một đống được theo dõi.
+
+Trình xem phụ thuộc giúp dễ dàng nắm bắt những vấn đề này.
+
+Bản demo này tôi đã chụp là từ một phiên bản phát triển ban đầu có vấn đề này.
+
+Nếu tôi nhấp vào đống này, trình xem phụ thuộc cho tôi thấy rằng đống này được theo dõi và do đó thêm đồng bộ hóa giữa hai lần này.
+
+Trình xem phụ thuộc cũng làm nổi bật các tài nguyên được phân bổ bên trong đống, chẳng hạn như kết cấu mục tiêu kết xuất này mà bộ mã hóa kết xuất lưu trữ và bộ đệm mà bộ mã hóa tính toán đọc và ghi vào.
+
+Vấn đề là không cần đồng bộ hóa giữa hai lần này vì bộ mã hóa tính toán không sử dụng bất kỳ tài nguyên nào từ các bộ mã hóa trước đó.
+
+Để loại bỏ sự phụ thuộc này, tôi có thể sửa đổi ứng dụng để sử dụng một đống không được theo dõi và chèn Hàng rào nơi cần đồng bộ hóa.
+
+Với sự thay đổi đó, hai đường chuyền này giờ đây có thể chạy song song.
+
+Một cải tiến tuyệt vời khác trong Xcode 14 để giúp gỡ lỗi các ứng dụng không ràng buộc của bạn là danh sách tài nguyên mới.
+
+Tôi có thể điều hướng đến một cuộc gọi rút thăm mà tôi muốn gỡ lỗi và mở nó.
+
+Khi sử dụng bindless, hàng trăm hoặc thậm chí hàng nghìn tài nguyên có sẵn cho GPU bất cứ lúc nào.
+
+Năm nay, trình gỡ lỗi Metal cung cấp cho bạn khả năng kiểm tra xem cuộc gọi rút thăm nào được truy cập, chỉ bằng cách nhấp vào chế độ "Đã truy cập" ở trên cùng.
+
+Bây giờ trình gỡ lỗi chỉ hiển thị cho tôi một số ít tài nguyên mà cuộc gọi rút ra này truy cập và loại của mỗi truy cập.
+
+Điều này thực sự hữu ích để hiểu những tài nguyên mà bộ đổ bóng của bạn đã truy cập từ bộ đệm đối số.
+
+Biết những tài nguyên mà cuộc gọi vẽ của bạn sử dụng là tuyệt vời, nhưng nếu nó hiển thị các tài nguyên mà bạn không mong đợi, bạn có thể sử dụng trình gỡ lỗi đổ bóng để tìm hiểu chuyện gì đang xảy ra.
+
+Để bắt đầu trình gỡ lỗi đổ bóng, chỉ cần nhấp vào nút gỡ lỗi ở đây trong thanh dưới cùng, chọn pixel mà bạn muốn gỡ lỗi và nhấn nút Gỡ lỗi.
+
+Và bây giờ bạn đang ở trong trình gỡ lỗi đổ bóng.
+
+Trình gỡ lỗi đổ bóng cho thấy mã của bạn được thực thi từng dòng như thế nào, bao gồm cả tài nguyên nào đã được truy cập.
+
+Đối với những dòng này, bộ đổ bóng này đọc kết cấu từ bộ đệm đối số.
+
+Tôi có thể mở rộng các chế độ xem chi tiết trên thanh bên phải để kiểm tra tài nguyên nào đã được đọc.
+
+Điều này có thể giúp xác định các vấn đề trong đó bộ đổ bóng của bạn truy cập vào phần tử bộ đệm đối số sai.
+
+Trong bản demo này, tôi đã chỉ cho bạn cách sử dụng trình xem phụ thuộc mới để phân tích và xác thực các phụ thuộc tài nguyên, cách sử dụng danh sách tài nguyên mới để hiểu cuộc gọi vẽ đã truy cập tài nguyên nào và cách sử dụng trình gỡ lỗi đổ bóng để phân tích, từng dòng một, cách trình đổ bóng được thực thi.
+
+Tôi nóng lòng muốn xem cách bạn sử dụng các tính năng mới này để tạo ra các ứng dụng Metal bindless tuyệt vời.
+
+Quay lại với bạn Alè.
+
+Alè: Cảm ơn bạn, Mayur. Đó là một bản demo tuyệt vời.
+
+Để kết thúc, Metal 3 mang lại rất nhiều thứ cho bàn để không bị ràng buộc.
+
+Với mã hóa bộ đệm đối số đơn giản hóa, cấu trúc tăng tốc từ đống, cải tiến lớp xác thực và các công cụ, Metal 3 là một API tuyệt vời để mang lại hiệu quả và hiệu quả không ràng buộc cho các trò chơi và ứng dụng của bạn.
+
+Với những cải tiến của năm nay, ứng dụng kết xuất kết hợp trông đẹp hơn bao giờ hết.
+
+Chúng tôi đang phát hành phiên bản cập nhật này của ứng dụng với mã nguồn đầy đủ trong thư viện mã mẫu Metal.
+
+Bạn có thể tải xuống, nghiên cứu và sửa đổi nó, và như một bài tập, tôi thách thức bạn tiến xa hơn nữa và thêm phản xạ đệ quy vào bề mặt gương.
+
+Tôi nóng lòng muốn xem bạn làm gì với nó.
+
+Chưa bao giờ có thời điểm tốt hơn để không liên kết với Metal 3.
+
+Cảm ơn bạn đã xem.
+
+♪ nhạc cụ hip hop ♪

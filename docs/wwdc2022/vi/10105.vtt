@@ -1,0 +1,884 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:11.000
+Xin chào, tên tôi là Yi.
+
+00:00:11.000 --> 00:00:13.000
+Xin chào, tên tôi là Dominik.
+
+00:00:13.000 --> 00:00:16.000
+Và chúng tôi là kỹ sư phần mềm GPU.
+
+00:00:16.000 --> 00:00:27.000
+Hôm nay, Dominik và tôi sẽ nói về các cải tiến và tính năng hiệu suất mà chúng tôi đã thêm vào API dò tia kim loại trong năm nay để giúp bạn tối đa hóa hiệu suất của các ứng dụng dò tia của mình.
+
+00:00:27.000 --> 00:00:33.000
+Các ứng dụng dò tia mô phỏng các tia sáng riêng lẻ nảy xung quanh một cảnh.
+
+00:00:33.000 --> 00:00:42.000
+Điều này được sử dụng trong các trò chơi và kết xuất ngoại tuyến để tạo ra phản xạ chân thực, bóng tối, chiếu sáng toàn cầu và hơn thế nữa.
+
+00:00:42.000 --> 00:00:47.000
+Điều này đòi hỏi phải mô phỏng rất nhiều tia, vì vậy hiệu suất là rất quan trọng đối với các ứng dụng này.
+
+00:00:47.000 --> 00:00:54.000
+May mắn thay, Metal đã tích hợp hỗ trợ theo dõi tia được tối ưu hóa cho tất cả các thiết bị của Apple.
+
+00:00:54.000 --> 00:00:57.000
+Hãy xem xét ngắn gọn cách hoạt động của dò tia trong Metal.
+
+00:00:57.000 --> 00:01:05.000
+API dò tia kim loại có sẵn từ bên trong các hàm đổ bóng như chức năng tính toán hoặc phân đoạn.
+
+00:01:05.000 --> 00:01:09.000
+Chúng tôi bắt đầu bằng cách tạo ra một số tia được phát ra hiện trường.
+
+00:01:09.000 --> 00:01:18.000
+Tiếp theo, chúng tôi tạo ra một đối tượng liên ngành và sử dụng nó để kiểm tra giao điểm giữa các tia của chúng ta và hình học trong cảnh.
+
+00:01:18.000 --> 00:01:24.000
+Một lát sau, tôi sẽ mô tả một số tính năng mới mà chúng tôi đã thêm vào trong năm nay để tăng tốc độ tìm kiếm giao lộ.
+
+00:01:24.000 --> 00:01:32.000
+Quá trình này phụ thuộc vào một cấu trúc dữ liệu đặc biệt được gọi là cấu trúc gia tốc, cũng đại diện cho hình học trong cảnh.
+
+00:01:32.000 --> 00:01:38.000
+Tôi cũng sẽ nói về một số tính năng mới và cải tiến hiệu suất tập trung vào cấu trúc tăng tốc ngày hôm nay.
+
+00:01:38.000 --> 00:01:45.000
+Liên ngành trả về một đối tượng kết quả giao nhau mô tả nguyên thủy mỗi tia bắn trúng.
+
+00:01:45.000 --> 00:01:50.000
+Kết quả giao nhau được sử dụng để tạo ra một màu để ghi vào hình ảnh đầu ra.
+
+00:01:50.000 --> 00:01:55.000
+Nó cũng có thể được sử dụng để tạo ra các tia bổ sung trải qua quá trình một lần nữa.
+
+00:01:55.000 --> 00:02:01.000
+Chúng ta có thể lặp lại quá trình này bao nhiêu lần tùy thích để mô phỏng ánh sáng nảy xung quanh cảnh.
+
+00:02:01.000 --> 00:02:09.000
+Nếu bạn muốn tìm hiểu thêm về những điều cơ bản của API dò tia kim loại, tôi khuyên bạn nên xem lại các phiên WWDC trước đây của chúng tôi.
+
+00:02:09.000 --> 00:02:19.000
+Lần đầu tiên chúng tôi giới thiệu API dò tia kim loại tại WWDC20 và năm ngoái, chúng tôi đã giới thiệu các tính năng mới bao gồm hỗ trợ làm mờ chuyển động.
+
+00:02:19.000 --> 00:02:22.000
+Hôm nay, tôi sẽ nói về ba điều.
+
+00:02:22.000 --> 00:02:30.000
+Đầu tiên, tôi sẽ cho bạn biết về các tính năng mới cho phép bạn cải thiện hiệu suất dò tia trong các ứng dụng của mình.
+
+00:02:30.000 --> 00:02:38.000
+Tiếp theo, tôi sẽ nói về những cải tiến và tính năng mà chúng tôi đã thêm vào API cấu trúc tăng tốc.
+
+00:02:38.000 --> 00:02:43.000
+Cuối cùng, Dominik sẽ cho bạn biết về những cải tiến đối với các công cụ GPU của chúng tôi để dò tia.
+
+00:02:43.000 --> 00:02:51.000
+Năm nay, chúng tôi đã thêm ba tính năng mới nhằm cải thiện hiệu suất dò tia hoặc đơn giản hóa mã của bạn.
+
+00:02:51.000 --> 00:03:01.000
+Chúng là dữ liệu trên mỗi nguyên thủy, khả năng truy xuất bộ đệm từ các bảng hàm giao điểm và hỗ trợ truy tìm tia từ bộ đệm lệnh gián tiếp.
+
+00:03:01.000 --> 00:03:04.000
+Hãy bắt đầu với dữ liệu mỗi nguyên thủy.
+
+00:03:04.000 --> 00:03:13.000
+Các ứng dụng thường có dữ liệu được liên kết với nguyên thủy trong cảnh của chúng như màu đỉnh, chuẩn và tọa độ kết cấu.
+
+00:03:13.000 --> 00:03:21.000
+Năm nay, chúng tôi đã thêm khả năng lưu trữ một lượng nhỏ dữ liệu cho mỗi nguyên thủy trực tiếp trong cấu trúc gia tốc.
+
+00:03:21.000 --> 00:03:27.000
+Dữ liệu này có thể được truy cập với ít gián tiếp bộ nhớ hơn và lỗi bộ nhớ cache, cải thiện hiệu suất.
+
+00:03:27.000 --> 00:03:37.000
+Điều này cũng làm giảm nhu cầu lưu trữ cấu trúc dữ liệu phụ trợ phức tạp thường được yêu cầu để tra cứu dữ liệu liên quan đến nguyên thủy của bạn.
+
+00:03:37.000 --> 00:03:39.000
+Hãy xem xét một ví dụ.
+
+00:03:39.000 --> 00:03:47.000
+Kiểm tra alpha là một kỹ thuật được sử dụng để thêm độ phức tạp cho hình học trong suốt mà không làm tăng số lượng tam giác.
+
+00:03:47.000 --> 00:03:56.000
+Trong kỹ thuật này, kênh alpha của kết cấu được ánh xạ lên hình tam giác được sử dụng để xác định xem tia sẽ chạm vào tam giác hay tiếp tục xa hơn.
+
+00:03:56.000 --> 00:04:04.000
+Để đạt được điều này, bạn cần cấu hình liên ngành để gọi hàm giao nhau tùy chỉnh của mình khi một tam giác bị tia va vào.
+
+00:04:04.000 --> 00:04:13.000
+Mục tiêu cuối cùng là lấy mẫu từ kết cấu liên quan đến tam giác và kiểm tra xem giá trị alpha có cho phép tia tiếp tục đi qua nguyên thủy hay không.
+
+00:04:13.000 --> 00:04:20.000
+Để đến đó, bạn cần hai thông tin: đối tượng kết cấu và tọa độ UV.
+
+00:04:20.000 --> 00:04:30.000
+Trong một triển khai điển hình của thử nghiệm alpha, bạn sẽ cần truy cập một số bộ đệm trung gian trong bộ nhớ thiết bị Metal để có được thông tin này.
+
+00:04:30.000 --> 00:04:37.000
+Đầu tiên, bạn sẽ lưu trữ kết cấu liên quan đến nguyên thủy trong một số loại cấu trúc vật liệu.
+
+00:04:37.000 --> 00:04:41.000
+Một số vật liệu sẽ được đóng gói vào bộ đệm.
+
+00:04:41.000 --> 00:04:48.000
+Sẽ không thực tế khi lưu trữ cấu trúc vật liệu cho mọi nguyên thủy, vì chúng có thể khá lớn và có thể có rất nhiều nguyên thủy.
+
+00:04:48.000 --> 00:04:56.000
+Thay vào đó, bạn sẽ chỉ muốn lưu trữ ID vật liệu cho mỗi nguyên thủy trong bộ đệm và sử dụng chúng để tra cứu tài liệu.
+
+00:04:56.000 --> 00:05:04.000
+Tiếp theo, để tính toán tia cực tím, bạn cần tải tia cực tím cho mỗi đỉnh từ một bộ đệm khác và nội suy chúng.
+
+00:05:04.000 --> 00:05:07.000
+Cuối cùng, giả sử bạn đang sử dụng hình học ví dụ.
+
+00:05:07.000 --> 00:05:12.000
+Bạn có thể muốn mỗi trường hợp có vật liệu và ánh xạ tia cực tím riêng.
+
+00:05:12.000 --> 00:05:22.000
+Để hỗ trợ điều đó, bạn sẽ lưu trữ các con trỏ đến bộ đệm UV và Material ID trong bộ đệm Dữ liệu Phiên bản, thêm một cấp độ gián tiếp khác vào chức năng của bạn.
+
+00:05:22.000 --> 00:05:31.000
+Cách tiếp cận này yêu cầu bạn duy trì một thiết lập bộ đệm khá phức tạp và liên quan đến nhiều lớp gián tiếp để có được dữ liệu mà bạn cần.
+
+00:05:31.000 --> 00:05:37.000
+Điều này cũng có thể dẫn đến việc bỏ lỡ bộ nhớ cache sẽ ảnh hưởng tiêu cực đến hiệu suất.
+
+00:05:37.000 --> 00:05:40.000
+Hãy xem mã cần thiết để thực hiện sơ đồ này.
+
+00:05:40.000 --> 00:05:46.000
+Sau đó, tôi sẽ chỉ cho bạn cách bạn có thể đơn giản hóa nó từng bước bằng cách sử dụng dữ liệu mỗi nguyên thủy.
+
+00:05:46.000 --> 00:05:50.000
+Đây là triển khai ban đầu của hàm giao điểm kiểm tra alpha.
+
+00:05:50.000 --> 00:05:54.000
+Hàm này được gọi khi tia chạm vào một tam giác được kiểm tra alpha.
+
+00:05:54.000 --> 00:05:58.000
+Chức năng bắt đầu bằng cách tải dữ liệu phiên bản từ bộ nhớ.
+
+00:05:58.000 --> 00:06:04.000
+Đây là bộ đệm chứa các con trỏ đến tia cực tím và bộ đệm vật liệu được sử dụng bởi ví dụ.
+
+00:06:04.000 --> 00:06:10.000
+Tiếp theo, chức năng tải tọa độ UV từ bộ đệm UV và nội suy chúng.
+
+00:06:10.000 --> 00:06:12.000
+Đây là một lần tải bộ nhớ khác.
+
+00:06:12.000 --> 00:06:16.000
+Sau đó, hàm tải chỉ mục vật liệu từ một bộ đệm khác.
+
+00:06:16.000 --> 00:06:20.000
+Và cuối cùng, chức năng tải vật liệu và lấy mẫu kết cấu tương ứng.
+
+00:06:20.000 --> 00:06:26.000
+Tại thời điểm này, hàm có giá trị alpha cần thiết và có thể so sánh nó với ngưỡng.
+
+00:06:26.000 --> 00:06:33.000
+Bây giờ, tôi sẽ chỉ cho bạn cách bạn có thể đơn giản hóa mã này và cải thiện hiệu suất của nó bằng cách sử dụng dữ liệu per-primitive.
+
+00:06:33.000 --> 00:06:45.000
+Thay vì sử dụng thiết lập bộ đệm phức tạp với nhiều lớp gián tiếp, bạn chỉ có thể lưu trữ dữ liệu mà hàm giao điểm sẽ cần cho mỗi nguyên thủy trực tiếp trong cấu trúc gia tốc.
+
+00:06:45.000 --> 00:06:51.000
+Trong ví dụ này, bạn có thể tạo một cấu trúc chứa kết cấu và tọa độ UV cho mỗi nguyên thủy.
+
+00:06:51.000 --> 00:07:00.000
+Bạn cung cấp dữ liệu này khi xây dựng cấu trúc gia tốc và hàm giao điểm chỉ đơn giản là nhận một con trỏ đến dữ liệu đó khi một tia chạm vào nguyên thủy.
+
+00:07:00.000 --> 00:07:07.000
+Bạn có thể lưu trữ bất cứ thứ gì bạn thích trong dữ liệu mỗi nguyên thủy, nhưng giữ kích thước nhỏ sẽ giúp đạt được hiệu suất tốt nhất.
+
+00:07:07.000 --> 00:07:10.000
+Tôi sẽ bắt đầu với các đầu vào cho chức năng giao nhau.
+
+00:07:10.000 --> 00:07:19.000
+Có quyền truy cập vào tất cả chúng mang lại cho bạn rất nhiều sự linh hoạt khi triển khai, nhưng nó cũng có thể tăng mức sử dụng đăng ký trên GPU.
+
+00:07:19.000 --> 00:07:26.000
+Với dữ liệu mỗi nguyên thủy, thay vì tất cả các bộ đệm, bạn chỉ cần truy cập con trỏ dữ liệu nguyên thủy.
+
+00:07:26.000 --> 00:07:30.000
+Đây là dữ liệu bạn lưu trữ trực tiếp trong cấu trúc gia tốc.
+
+00:07:30.000 --> 00:07:36.000
+Trong trường hợp này, mỗi nguyên thủy có đối tượng kết cấu riêng và tia cực tím cho tất cả các đỉnh của nó.
+
+00:07:36.000 --> 00:07:41.000
+Tiếp theo là tải từ bộ đệm vật liệu toàn cầu và bộ đệm dữ liệu phiên bản.
+
+00:07:41.000 --> 00:07:43.000
+Bạn sẽ không cần một trong hai cái.
+
+00:07:43.000 --> 00:07:47.000
+Thay vào đó, bạn có thể thực hiện một lần tải từ con trỏ dữ liệu mỗi nguyên thủy.
+
+00:07:47.000 --> 00:07:51.000
+Đây là quyền truy cập bộ nhớ thiết bị duy nhất cần thiết trong chức năng này.
+
+00:07:51.000 --> 00:07:52.000
+Tiếp theo là tia cực tím.
+
+00:07:52.000 --> 00:08:01.000
+Thay vì hủy tham chiếu một con trỏ được truy xuất từ dữ liệu phiên bản, bạn chỉ cần truy cập dữ liệu được nhúng trong cấu trúc dữ liệu per-primitive.
+
+00:08:01.000 --> 00:08:07.000
+Sự thay đổi trong mã rất tinh tế, nhưng rất quan trọng đối với hiệu suất, vì không có tải bộ nhớ bổ sung nào liên quan.
+
+00:08:07.000 --> 00:08:10.000
+Cuối cùng, có những tính chất vật chất.
+
+00:08:10.000 --> 00:08:18.000
+Vì phần duy nhất của vật liệu cần thiết là kết cấu, bạn có thể mã hóa kết cấu nguyên thủy trực tiếp trong cấu trúc dữ liệu per-primitive.
+
+00:08:18.000 --> 00:08:22.000
+Điều này có nghĩa là bạn không cần truy cập bộ đệm chỉ mục vật liệu và vật liệu nữa.
+
+00:08:22.000 --> 00:08:28.000
+Bạn có thể chỉ cần sử dụng kết cấu trực tiếp mà không phải trả chi phí cho việc hủy tham chiếu bộ nhớ bổ sung.
+
+00:08:28.000 --> 00:08:33.000
+Đây là cách mã giao nhau của bạn có thể đơn giản hơn bao nhiêu khi sử dụng dữ liệu per-primitive.
+
+00:08:33.000 --> 00:08:39.000
+Tất cả các truy cập bộ nhớ tốn kém được thay thế chỉ bằng một lần tải từ con trỏ dữ liệu nguyên thủy.
+
+00:08:39.000 --> 00:08:44.000
+Trên hết, mã đơn giản và dễ theo dõi hơn nhiều.
+
+00:08:44.000 --> 00:08:49.000
+Tiếp theo, tôi sẽ chỉ cho bạn cách lưu trữ dữ liệu nguyên thủy trong cấu trúc gia tốc.
+
+00:08:49.000 --> 00:08:53.000
+Bạn sẽ cần phải làm điều này trước khi bạn có thể truy cập nó từ một chức năng giao lộ.
+
+00:08:53.000 --> 00:08:57.000
+Bạn sẽ cần thiết lập một vài trường trong mô tả hình học cấu trúc gia tốc.
+
+00:08:57.000 --> 00:09:01.000
+Đầu tiên, đặt bộ đệm Metal nơi lưu trữ tất cả dữ liệu.
+
+00:09:01.000 --> 00:09:05.000
+Tiếp theo, chỉ định kích thước của dữ liệu sẽ được lưu trữ cho mỗi nguyên thủy.
+
+00:09:05.000 --> 00:09:13.000
+Nếu dữ liệu của bạn không được đóng gói chặt chẽ trong bộ đệm hoặc không bắt đầu ở đầu bộ đệm, bạn cũng có thể chỉ định sải chân và độ lệch.
+
+00:09:13.000 --> 00:09:17.000
+Nếu không, các giá trị này mặc định là 0 nên bạn không cần phải đặt chúng.
+
+00:09:17.000 --> 00:09:21.000
+Bạn đã thấy cách bạn có thể sử dụng dữ liệu per-primitive trong một hàm giao nhau.
+
+00:09:21.000 --> 00:09:24.000
+Nó chỉ đơn giản được chuyển vào hàm như một con trỏ.
+
+00:09:24.000 --> 00:09:28.000
+Nhưng đó không phải là tất cả - bạn có quyền truy cập vào dữ liệu này bất cứ nơi nào bạn cần.
+
+00:09:28.000 --> 00:09:32.000
+Điều đó bao gồm kết quả giao nhau cuối cùng được trả về bởi liên ngành.
+
+00:09:32.000 --> 00:09:39.000
+Và nếu bạn đang sử dụng truy vấn giao điểm, dữ liệu nguyên thủy cũng có sẵn cho cả giao điểm ứng cử viên và giao điểm đã cam kết.
+
+00:09:39.000 --> 00:09:45.000
+Điều này có nghĩa là bạn có thể sử dụng dữ liệu per-primitive để đổ bóng ngoài việc kiểm tra giao lộ.
+
+00:09:45.000 --> 00:09:54.000
+Dữ liệu mỗi nguyên thủy có thể cải thiện hiệu suất của cả mã giao điểm và mã đổ bóng của bạn bằng cách giảm số lần truy cập và gián tiếp bộ nhớ.
+
+00:09:54.000 --> 00:10:03.000
+Trên thực tế, chúng tôi đã tìm thấy trong một trong những ứng dụng thử nghiệm của riêng mình rằng việc sử dụng dữ liệu mỗi nguyên thủy dẫn đến cải thiện hiệu suất từ 10% đến 16%.
+
+00:10:03.000 --> 00:10:11.000
+Chúng tôi không thể chờ đợi bạn dùng thử và xem bạn có thể nhận được những loại cải tiến nào về hiệu suất và chất lượng mã.
+
+00:10:11.000 --> 00:10:18.000
+Năm nay, chúng tôi cũng đã thêm một tính năng tiện lợi khác vào ngôn ngữ đổ bóng kim loại để giúp bạn đơn giản hóa hạt nhân dò tia của mình.
+
+00:10:18.000 --> 00:10:26.000
+Các ứng dụng thường truyền cùng một tập hợp các ràng buộc cho cả chức năng giao nhau và hạt nhân dò tia chính của chúng.
+
+00:10:26.000 --> 00:10:32.000
+Ví dụ, mã mẫu dò tia của chúng tôi sử dụng hàm giao nhau để hiển thị các quả cầu.
+
+00:10:32.000 --> 00:10:37.000
+Hàm giao điểm này truy cập vào bộ đệm tài nguyên chứa thông tin về từng quả cầu.
+
+00:10:37.000 --> 00:10:43.000
+Để chuyển bộ đệm này vào hàm giao điểm, ứng dụng liên kết bộ đệm với bảng hàm giao nhau.
+
+00:10:43.000 --> 00:10:50.000
+Tuy nhiên, hạt nhân dò tia chính cũng cần quyền truy cập vào bộ đệm tài nguyên, vì vậy ứng dụng cũng liên kết bộ đệm ở đó.
+
+00:10:50.000 --> 00:10:57.000
+Năm nay, ngôn ngữ đổ bóng kim loại cho phép bạn truy cập các bộ đệm bị ràng buộc với các bảng chức năng giao nhau.
+
+00:10:57.000 --> 00:11:05.000
+Với tính năng mới này, bạn có thể tiết kiệm công sức liên kết bộ đệm cho hạt nhân và thay vào đó truy cập nó trực tiếp từ bảng hàm giao điểm.
+
+00:11:05.000 --> 00:11:11.000
+Bạn có thể làm điều này bằng cách gọi phương thức get_buffer trên bảng hàm giao điểm, cung cấp loại con trỏ của nó.
+
+00:11:11.000 --> 00:11:15.000
+Bạn cũng có thể truy cập các bảng chức năng hiển thị theo loại chức năng của chúng.
+
+00:11:15.000 --> 00:11:24.000
+Bộ đệm lệnh gián tiếp cho phép bạn mã hóa GPU hoạt động độc lập trên GPU và đại diện cho một yếu tố cơ bản của các đường ống điều khiển GPU.
+
+00:11:24.000 --> 00:11:33.000
+Để tìm hiểu thêm về bộ đệm lệnh gián tiếp và kết xuất dựa trên GPU, chúng tôi khuyên bạn nên xem lại phiên "Kết xuất hiện đại với Kim loại" từ WWDC 2019.
+
+00:11:33.000 --> 00:11:37.000
+Cho phép hỗ trợ dò tia trong bộ đệm lệnh gián tiếp rất dễ dàng.
+
+00:11:37.000 --> 00:11:42.000
+Tất cả những gì bạn phải làm là đặt cờ supportRayTracing trên bộ mô tả.
+
+00:11:42.000 --> 00:11:50.000
+Bộ đệm lệnh gián tiếp gửi đồ họa và các chức năng tính toán, vì vậy bạn có thể chỉ cần sử dụng dò tia từ các chức năng đó như bình thường.
+
+00:11:50.000 --> 00:11:58.000
+Đó là tóm tắt tất cả các tính năng mới mà chúng tôi đã thêm vào trong năm nay để giúp bạn cải thiện hiệu suất dò tia trong các ứng dụng của mình.
+
+00:11:58.000 --> 00:12:01.000
+Tiếp theo, hãy nói về cấu trúc gia tốc.
+
+00:12:01.000 --> 00:12:08.000
+Chúng tôi đã triển khai một số cải tiến hiệu suất và các tính năng bổ sung tập trung vào việc xây dựng các cấu trúc gia tốc.
+
+00:12:08.000 --> 00:12:10.000
+Hãy tóm tắt lại những gì chúng được sử dụng để làm.
+
+00:12:10.000 --> 00:12:15.000
+Cấu trúc gia tốc là cấu trúc dữ liệu giúp đẩy nhanh quá trình dò tia.
+
+00:12:15.000 --> 00:12:23.000
+Họ làm điều này bằng cách phân chia không gian đệ quy để chúng ta có thể nhanh chóng tìm thấy hình tam giác nào có khả năng giao với một tia.
+
+00:12:23.000 --> 00:12:31.000
+Để hỗ trợ xây dựng các cảnh phức tạp, Metal hỗ trợ hai loại cấu trúc gia tốc: cấu trúc gia tốc nguyên thủy và cấu trúc gia tốc ví dụ.
+
+00:12:31.000 --> 00:12:36.000
+Các mảnh hình học riêng lẻ được thể hiện bằng cách sử dụng các cấu trúc gia tốc nguyên thủy.
+
+00:12:36.000 --> 00:12:44.000
+Chúng có thể là một cái gì đó đơn giản như một mặt phẳng hoặc một khối lập phương, hoặc một cái gì đó phức tạp hơn như một hình cầu hoặc một lưới tam giác.
+
+00:12:44.000 --> 00:12:48.000
+Bạn có thể tạo các cảnh phức tạp hơn bằng cách sử dụng cấu trúc tăng tốc phiên bản.
+
+00:12:48.000 --> 00:12:53.000
+Các cấu trúc gia tốc phiên bản tạo ra các bản sao của các cấu trúc gia tốc nguyên thủy.
+
+00:12:53.000 --> 00:12:58.000
+Đầu tiên, xác định ma trận biến đổi cho từng đối tượng trong cảnh của bạn.
+
+00:12:58.000 --> 00:13:05.000
+Sau đó, sử dụng mảng ma trận biến đổi và cấu trúc gia tốc nguyên thủy để xây dựng cấu trúc gia tốc thể hiện.
+
+00:13:05.000 --> 00:13:09.000
+Đó là cách bạn có thể xây dựng một cảnh tĩnh bằng cách sử dụng các cấu trúc gia tốc.
+
+00:13:09.000 --> 00:13:16.000
+Tiếp theo, hãy xem các ứng dụng động như trò chơi sẽ sử dụng cấu trúc tăng tốc như thế nào.
+
+00:13:16.000 --> 00:13:23.000
+Hãy bắt đầu từ đầu: có một số nhiệm vụ bạn cần làm khi lần đầu tiên khởi chạy trò chơi hoặc tải một cấp độ mới.
+
+00:13:23.000 --> 00:13:27.000
+Điều này bao gồm các tác vụ thông thường như tải mô hình và kết cấu.
+
+00:13:27.000 --> 00:13:34.000
+Với dò tia, bạn cũng cần xây dựng các cấu trúc gia tốc nguyên thủy cho tất cả các mô hình sẽ được sử dụng.
+
+00:13:34.000 --> 00:13:42.000
+Chúng tôi khuyên bạn nên xây dựng càng nhiều cấu trúc gia tốc nguyên thủy của mình càng tốt tại thời điểm tải để tiết kiệm thời gian trong vòng lặp kết xuất chính của bạn.
+
+00:13:42.000 --> 00:13:48.000
+Bạn có thể sử dụng cấu trúc tăng tốc phiên bản để thêm hoặc xóa các đối tượng này khỏi cảnh nếu cần.
+
+00:13:48.000 --> 00:13:51.000
+Khi ứng dụng của bạn tải xong, nó sẽ đi vào vòng lặp chính.
+
+00:13:51.000 --> 00:13:58.000
+Mỗi khung hình, nó hiển thị cảnh bằng cách sử dụng kết hợp rasterization, dò tia và xử lý hậu kỳ.
+
+00:13:58.000 --> 00:14:05.000
+Tuy nhiên, vì các trò chơi rất năng động, bạn có thể sẽ cần cập nhật một số cấu trúc tăng tốc.
+
+00:14:05.000 --> 00:14:11.000
+Điều này thường bao gồm việc trang bị lại một số mô hình biến dạng hoặc hoạt hình như các nhân vật lột da.
+
+00:14:11.000 --> 00:14:18.000
+Việc trang bị lại cấu trúc tăng tốc hiện có nhanh hơn nhiều so với việc xây dựng lại toàn bộ, vì vậy chúng tôi khuyên bạn nên sử dụng nó cho những trường hợp như thế này.
+
+00:14:18.000 --> 00:14:22.000
+Bạn cũng nên xây dựng lại toàn bộ cấu trúc tăng tốc phiên bản.
+
+00:14:22.000 --> 00:14:30.000
+Điều này là cần thiết vì các đối tượng có thể đã được thêm hoặc xóa khỏi cảnh kể từ khung hình cuối cùng hoặc chúng có thể đã di chuyển đáng kể.
+
+00:14:30.000 --> 00:14:39.000
+Việc xây dựng lại toàn bộ là tốt trong trường hợp này vì chỉ có một cấu trúc gia tốc phiên bản và nó thường chỉ chứa tối đa vài nghìn đối tượng.
+
+00:14:39.000 --> 00:14:43.000
+Năm nay, chúng tôi đã cải thiện hiệu suất cho tất cả các trường hợp này.
+
+00:14:43.000 --> 00:14:49.000
+Đầu tiên, các bản dựng cấu trúc tăng tốc hiện nhanh hơn tới 2,3 lần trên Apple Silicon.
+
+00:14:49.000 --> 00:14:54.000
+Thứ hai, việc tái trang bị cũng nhanh hơn tới 38%.
+
+00:14:54.000 --> 00:14:58.000
+Điều này có nghĩa là cả thời gian tải và chi phí trên mỗi khung đều giảm.
+
+00:14:58.000 --> 00:15:00.000
+Nhưng nó thậm chí còn tốt hơn.
+
+00:15:00.000 --> 00:15:05.000
+Một số ứng dụng xây dựng hàng trăm hoặc thậm chí hàng nghìn cấu trúc gia tốc nguyên thủy nhỏ.
+
+00:15:05.000 --> 00:15:13.000
+Những bản dựng nhỏ này không thực hiện đủ công việc riêng lẻ để lấp đầy GPU, dẫn đến thời gian dài sử dụng GPU thấp.
+
+00:15:13.000 --> 00:15:19.000
+Do đó, nhiều bản dựng hiện được tự động thực hiện song song bất cứ khi nào có thể trên Apple Silicon.
+
+00:15:19.000 --> 00:15:24.000
+Điều này dẫn đến việc xây dựng nhanh hơn tới 2,8 lần khi chúng chạy song song.
+
+00:15:24.000 --> 00:15:26.000
+Điều này tiếp tục giảm thời gian tải.
+
+00:15:26.000 --> 00:15:37.000
+Và điều này không chỉ áp dụng cho các bản dựng: nó áp dụng cho tất cả các hoạt động cấu trúc gia tốc bao gồm nén chặt và trang bị lại, vì vậy chi phí trên mỗi khung hình của bạn cũng được giảm bớt.
+
+00:15:37.000 --> 00:15:43.000
+Có một vài hướng dẫn bạn sẽ cần tuân theo để đảm bảo rằng bạn có thể hưởng lợi từ việc tối ưu hóa này.
+
+00:15:43.000 --> 00:15:46.000
+Đây là một ví dụ xây dựng một loạt các cấu trúc gia tốc.
+
+00:15:46.000 --> 00:15:53.000
+Để xây dựng chúng song song, bạn sẽ cần đảm bảo rằng bạn sử dụng cùng một bộ mã hóa lệnh cấu trúc tăng tốc cho nhiều bản dựng.
+
+00:15:53.000 --> 00:15:58.000
+Ngoài ra, các bản dựng sử dụng cùng một bộ đệm đầu không thể chạy song song.
+
+00:15:58.000 --> 00:16:07.000
+Do đó, bạn sẽ muốn đảm bảo rằng bạn đang lặp qua một nhóm nhỏ các bộ đệm đầu thay vì sử dụng cùng một bộ đệm đầu cho mỗi bản dựng.
+
+00:16:07.000 --> 00:16:12.000
+Đó là tất cả những cải tiến hiệu suất mà chúng tôi đã thực hiện để xây dựng các cấu trúc gia tốc.
+
+00:16:12.000 --> 00:16:19.000
+Chúng tôi cũng đã thêm ba tính năng mới để giúp xây dựng các cấu trúc gia tốc dễ dàng và hiệu quả hơn.
+
+00:16:19.000 --> 00:16:29.000
+Chúng hỗ trợ cho các định dạng đỉnh bổ sung, ma trận biến đổi và phân bổ cấu trúc gia tốc từ đống.
+
+00:16:29.000 --> 00:16:32.000
+Hãy bắt đầu với các định dạng đỉnh.
+
+00:16:32.000 --> 00:16:41.000
+Tối ưu hóa hiệu suất phổ biến là sử dụng các định dạng định dạng định lượng tử hóa hoặc giảm độ chính xác cho dữ liệu đỉnh, dẫn đến việc sử dụng bộ nhớ thấp hơn.
+
+00:16:41.000 --> 00:16:46.000
+Năm nay, bạn có thể xây dựng các cấu trúc gia tốc từ một loạt các định dạng đỉnh.
+
+00:16:46.000 --> 00:16:57.000
+Điều này bao gồm một nửa định dạng dấu phẩy động chính xác, hai định dạng đỉnh thành phần cho hình học phẳng và tất cả các định dạng số nguyên chuẩn hóa thông thường.
+
+00:16:57.000 --> 00:17:04.000
+Trước đây, các cấu trúc gia tốc đã yêu cầu ba thành phần, dữ liệu đỉnh dấu phẩy động có độ chính xác đầy đủ.
+
+00:17:04.000 --> 00:17:10.000
+Trong ví dụ này, ứng dụng có dữ liệu đỉnh ở định dạng đỉnh chính xác một nửa.
+
+00:17:10.000 --> 00:17:16.000
+Dữ liệu này cần được giải nén và sao chép vào bộ đệm tạm thời chỉ để xây dựng cấu trúc gia tốc.
+
+00:17:16.000 --> 00:17:27.000
+Với tính năng định dạng đỉnh mới, các bản dựng cấu trúc gia tốc hiện có thể tiêu thụ dữ liệu đỉnh ở bất kỳ định dạng nào được hỗ trợ, loại bỏ nhu cầu tạo bản sao tạm thời.
+
+00:17:27.000 --> 00:17:29.000
+Cài đặt định dạng đỉnh không thể đơn giản hơn.
+
+00:17:29.000 --> 00:17:34.000
+Tất cả những gì bạn cần làm là đặt thuộc tính trên bộ mô tả hình học của bạn.
+
+00:17:34.000 --> 00:17:37.000
+Tiếp theo, hãy nói về ma trận biến đổi.
+
+00:17:37.000 --> 00:17:45.000
+Tính năng này bổ sung cho các định dạng đỉnh mới, để bạn có thể chuyển đổi trước dữ liệu đỉnh của mình trước khi xây dựng cấu trúc tăng tốc.
+
+00:17:45.000 --> 00:17:51.000
+Ví dụ, bạn có thể muốn sử dụng chúng để giải nén các mắt lưới phức tạp được lưu trữ ở định dạng chuẩn hóa.
+
+00:17:51.000 --> 00:17:54.000
+Hãy xem xét mô hình Gấu trúc đỏ trong cảnh này.
+
+00:17:54.000 --> 00:18:04.000
+Để bình thường hóa hình học để sử dụng một trong các định dạng nén của chúng tôi, bạn lấy lưới, tính toán giới hạn của nó và sau đó chia tỷ lệ chúng thành phạm vi từ 0 đến một.
+
+00:18:04.000 --> 00:18:13.000
+Sau đó, bạn có thể sử dụng một trong các định dạng đỉnh số nguyên được chuẩn hóa để lưu trữ lưới, giảm dung lượng mà nó chiếm trên đĩa và trong bộ nhớ.
+
+00:18:13.000 --> 00:18:21.000
+Trong thời gian chạy, bạn cung cấp một ma trận sẽ chia tỷ lệ và bù đắp từng đỉnh đến vị trí cuối cùng.
+
+00:18:21.000 --> 00:18:25.000
+Áp dụng ma trận đó sẽ truy xuất mô hình ban đầu.
+
+00:18:25.000 --> 00:18:30.000
+Bây giờ chúng ta hãy đi qua cách thiết lập cấu trúc gia tốc truyền một ma trận biến đổi.
+
+00:18:30.000 --> 00:18:33.000
+Bạn bắt đầu bằng cách tạo bộ đệm biến đổi.
+
+00:18:33.000 --> 00:18:41.000
+Một cách để làm điều này là tạo ra một đối tượng MTLPackedFloat4x3 chứa ma trận chuyển đổi tỷ lệ và bù đắp.
+
+00:18:41.000 --> 00:18:46.000
+Sau đó, tạo một Bộ đệm kim loại đủ lớn để giữ ma trận.
+
+00:18:46.000 --> 00:18:49.000
+Và cuối cùng, sao chép ma trận vào Bộ đệm.
+
+00:18:49.000 --> 00:18:52.000
+Tiếp theo, thiết lập cấu trúc gia tốc.
+
+00:18:52.000 --> 00:18:55.000
+Đầu tiên, tạo một mô tả hình học tam giác.
+
+00:18:55.000 --> 00:18:58.000
+Sau đó, chỉ định Bộ đệm Ma trận biến đổi.
+
+00:18:58.000 --> 00:19:01.000
+Và cuối cùng là Bù đắp bộ đệm.
+
+00:19:01.000 --> 00:19:05.000
+Đó là tất cả những gì bạn cần làm để thiết lập ma trận chuyển đổi.
+
+00:19:05.000 --> 00:19:12.000
+Những ma trận này cũng có thể được sử dụng để kết hợp các cấu trúc gia tốc đơn giản để cải thiện hiệu suất dò tia.
+
+00:19:12.000 --> 00:19:14.000
+Hãy xem một cảnh ví dụ.
+
+00:19:14.000 --> 00:19:19.000
+Ở đây, các hộp và quả cầu đều là những mắt lưới tương đối đơn giản.
+
+00:19:19.000 --> 00:19:25.000
+Điều này thể hiện một cơ hội để tối ưu hóa cấu trúc gia tốc cho nhóm này ở phía trước của cảnh.
+
+00:19:25.000 --> 00:19:32.000
+Tập trung vào cấu trúc gia tốc của phiên bản, có một chi phí cho mỗi trường hợp mà tia của bạn chiếu vào.
+
+00:19:32.000 --> 00:19:38.000
+Có một chi phí cho việc chuyển đổi tia và sau đó chuyển từ phiên bản sang cấu trúc gia tốc nguyên thủy.
+
+00:19:38.000 --> 00:19:42.000
+Điều này xảy ra thường xuyên hơn với các trường hợp chồng chéo.
+
+00:19:42.000 --> 00:19:50.000
+Để giảm số lượng phiên bản, bạn có thể tạo một cấu trúc gia tốc nguyên thủy duy nhất chứa cả hộp và hình cầu.
+
+00:19:50.000 --> 00:19:57.000
+Để làm điều này, bạn có thể tạo một bộ mô tả hình học cho mỗi đối tượng, mỗi đối tượng có ma trận biến đổi riêng.
+
+00:19:57.000 --> 00:20:05.000
+Cấu trúc gia tốc nguyên thủy kết quả là một thể hiện duy nhất trong cấu trúc gia tốc thể hiện và chứa các hộp và hình cầu.
+
+00:20:05.000 --> 00:20:09.000
+Điều này sẽ dẫn đến một cấu trúc gia tốc hoạt động tốt hơn.
+
+00:20:09.000 --> 00:20:12.000
+Hãy xem cách thiết lập cái này trong mã.
+
+00:20:12.000 --> 00:20:16.000
+Bạn bắt đầu với bộ mô tả xác định hình học hình cầu.
+
+00:20:16.000 --> 00:20:24.000
+Tiếp theo, đặt bộ đệm đỉnh, bộ đệm chỉ mục và các thuộc tính khác như bình thường cho cấu trúc gia tốc nguyên thủy.
+
+00:20:24.000 --> 00:20:32.000
+Sự khác biệt là, bạn cũng chỉ định bộ đệm biến đổi có chứa ma trận biến đổi được sử dụng cho bản sao của hình cầu.
+
+00:20:32.000 --> 00:20:38.000
+Đối với các hộp, bạn có nhiều mô tả hình học chia sẻ bộ đệm đỉnh và chỉ mục.
+
+00:20:38.000 --> 00:20:42.000
+Bạn chỉ cần chỉ định các bộ đệm biến đổi khác nhau cho mỗi bản sao.
+
+00:20:42.000 --> 00:20:49.000
+Cuối cùng, khi tạo bộ mô tả cho cấu trúc gia tốc nguyên thủy, hãy thêm tất cả các bộ mô tả hình học.
+
+00:20:49.000 --> 00:20:56.000
+Điều này sẽ dẫn đến một cấu trúc gia tốc nguyên thủy mà bạn có thể đưa vào cảnh với một biến đổi danh tính.
+
+00:20:56.000 --> 00:21:04.000
+Cấu trúc gia tốc nguyên thủy này sẽ mất ít thời gian hơn để xây dựng so với các cấu trúc gia tốc riêng biệt và sẽ giao nhau nhanh hơn.
+
+00:21:04.000 --> 00:21:11.000
+Cuối cùng, việc phân bổ đống các cấu trúc gia tốc là một trong những tính năng được yêu cầu nhiều nhất của chúng tôi.
+
+00:21:11.000 --> 00:21:16.000
+Với tính năng này, giờ đây bạn có nhiều quyền kiểm soát hơn đối với việc phân bổ cấu trúc gia tốc.
+
+00:21:16.000 --> 00:21:23.000
+Nó cũng cho phép bạn sử dụng lại bộ nhớ đống giữa các lần phân bổ, tránh phân bổ bộ đệm tốn kém.
+
+00:21:23.000 --> 00:21:31.000
+Heaps cũng có thể giúp cải thiện hiệu suất bằng cách giảm các cuộc gọi đến phương thức useResource: khi sử dụng các cấu trúc tăng tốc phiên bản.
+
+00:21:31.000 --> 00:21:39.000
+Quay trở lại cảnh ví dụ, cấu trúc gia tốc phiên bản tham chiếu các cấu trúc gia tốc nguyên thủy một cách gián tiếp.
+
+00:21:39.000 --> 00:21:49.000
+Điều này có nghĩa là mỗi lần bạn muốn sử dụng cấu trúc tăng tốc phiên bản với bộ mã hóa lệnh, bạn cần gọi phương thức useResource: cho mỗi cấu trúc tăng tốc nguyên thủy.
+
+00:21:49.000 --> 00:21:56.000
+Đối với các cảnh lớn, điều này có thể yêu cầu hàng nghìn cuộc gọi để sử dụng Tài nguyên: mỗi lần bạn sử dụng cấu trúc tăng tốc phiên bản.
+
+00:21:56.000 --> 00:22:09.000
+Biết rằng bạn có rất nhiều lệnh gọi useResource:, bạn có thể gọi useResources: để giảm số lượng lệnh gọi API, nhưng bạn vẫn cần duy trì một mảng các cấu trúc gia tốc của mình và Metal vẫn cần lặp qua mảng.
+
+00:22:09.000 --> 00:22:14.000
+Thay vào đó, bạn có thể phân bổ tất cả các cấu trúc gia tốc nguyên thủy này từ cùng một đống.
+
+00:22:14.000 --> 00:22:24.000
+Khi bạn muốn sử dụng cấu trúc tăng tốc thể hiện, bạn chỉ cần thực hiện một cuộc gọi duy nhất đến phương thức useHeap: để tham chiếu tất cả các cấu trúc tăng tốc nguyên thủy.
+
+00:22:24.000 --> 00:22:32.000
+Chúng tôi đã thấy một sự cải thiện hiệu suất nhỏ trong một ứng dụng đơn giản bằng cách thay thế các cuộc gọi đến useResource: bằng một cuộc gọi duy nhất để useHeap:.
+
+00:22:32.000 --> 00:22:35.000
+Hãy xem cách bạn có thể phân bổ cấu trúc gia tốc từ một đống.
+
+00:22:35.000 --> 00:22:43.000
+Bạn có thể trực tiếp phân bổ cấu trúc gia tốc bằng cách gọi một phương thức trên đống lấy mô tả cấu trúc gia tốc làm đầu vào.
+
+00:22:43.000 --> 00:22:52.000
+Nếu bạn không phân bổ bằng cách sử dụng bộ mô tả, thiết bị Metal sẽ xác định kích thước và yêu cầu căn chỉnh để phân bổ cấu trúc gia tốc từ một đống.
+
+00:22:52.000 --> 00:22:59.000
+Bạn có thể lấy thông tin này từ thiết bị Metal bằng cách cung cấp mô tả hoặc kích thước cấu trúc gia tốc.
+
+00:22:59.000 --> 00:23:04.000
+Khi kích thước cuối cùng được xác định, bạn có thể phân bổ cấu trúc gia tốc từ đống.
+
+00:23:04.000 --> 00:23:07.000
+Có một vài điều cần nhớ khi sử dụng đống.
+
+00:23:07.000 --> 00:23:15.000
+Đầu tiên, hãy nhớ gọi useHeap: để làm cho tất cả các cấu trúc gia tốc trong đống cư trú trong suốt thời gian dò tia vượt qua.
+
+00:23:15.000 --> 00:23:20.000
+Thứ hai, theo mặc định, Metal không theo dõi tài nguyên bạn phân bổ từ một đống.
+
+00:23:20.000 --> 00:23:27.000
+Bạn có thể chọn tham gia theo dõi rủi ro tài nguyên hoặc bạn có thể quản lý đồng bộ hóa của riêng mình theo cách thủ công.
+
+00:23:27.000 --> 00:23:35.000
+Bạn có thể sử dụng MTLFences để đồng bộ hóa giữa các bộ mã hóa lệnh và MTLEvents để đồng bộ hóa trên các bộ đệm lệnh.
+
+00:23:35.000 --> 00:23:40.000
+Đó là những tính năng mới và cải tiến hiệu suất trong API dò tia kim loại trong năm nay.
+
+00:23:40.000 --> 00:23:49.000
+Tiếp theo, Dominik sẽ nói về những cải tiến đối với các công cụ Metal của Xcode sẽ tăng năng suất của bạn khi phát triển các ứng dụng dò tia.
+
+00:23:49.000 --> 00:23:50.000
+Dominik: Cảm ơn, Yi.
+
+00:23:50.000 --> 00:24:10.000
+Có rất nhiều cải tiến đối với các công cụ Metal trong Xcode 14, nhưng ở đây, tôi muốn nhấn mạnh chỉ một số cải tiến đặc biệt hữu ích khi phát triển các ứng dụng dò tia Bắt đầu với trình gỡ lỗi Metal, tôi sẽ nói về những cải tiến đối với Trình xem cấu trúc tăng tốc, Shader Profiler và Trình gỡ lỗi Shader.
+
+00:24:10.000 --> 00:24:16.000
+Sau đó, tôi sẽ làm tròn nó với Xác thực Shader thời gian chạy.
+
+00:24:16.000 --> 00:24:21.000
+Đầu tiên, chúng ta hãy xem Trình xem Cấu trúc Tăng tốc.
+
+00:24:21.000 --> 00:24:34.000
+Trình xem cấu trúc gia tốc trong Trình gỡ lỗi kim loại cho phép bạn kiểm tra, rất chi tiết, tất cả các hình học và trường hợp của tất cả các mắt lưới tạo nên cấu trúc gia tốc của bạn.
+
+00:24:34.000 --> 00:24:46.000
+Xcode 14 hiện hỗ trợ gỡ lỗi các cấu trúc gia tốc với chuyển động nguyên thủy hoặc phiên bản và chế độ nổi bật mới để trực quan hóa các nguyên thủy với trình kiểm tra dữ liệu mỗi nguyên thủy.
+
+00:24:46.000 --> 00:24:49.000
+Hãy xem chúng hoạt động.
+
+00:24:49.000 --> 00:24:58.000
+Nếu bạn đang sử dụng các cấu trúc gia tốc với chuyển động, bây giờ bạn có một máy chà sàn ở thanh dưới cùng để xem cấu trúc gia tốc của bạn tại các thời điểm khác nhau.
+
+00:24:58.000 --> 00:25:02.000
+Ở bên phải của máy chà sàn là một nút "phát".
+
+00:25:02.000 --> 00:25:05.000
+Bạn có thể sử dụng nó để phát hoạt ảnh qua lại trong một vòng lặp.
+
+00:25:05.000 --> 00:25:11.000
+Bây giờ hãy để tôi chỉ cho bạn cách kiểm tra các nguyên thủy riêng lẻ trong cấu trúc gia tốc của bạn.
+
+00:25:11.000 --> 00:25:15.000
+Điều này đặc biệt hữu ích nếu bạn đang sử dụng API dữ liệu mỗi nguyên thủy mới.
+
+00:25:15.000 --> 00:25:19.000
+Và vì vậy có một chế độ nổi bật mới chỉ dành cho việc này.
+
+00:25:19.000 --> 00:25:25.000
+Chế độ tô sáng nguyên thủy cho phép bạn truy cập vào tất cả dữ liệu nguyên thủy...
+
+00:25:25.000 --> 00:25:30.000
+Và cho phép bạn chọn các nguyên thủy cụ thể để kiểm tra chi tiết.
+
+00:25:30.000 --> 00:25:35.000
+Trong thanh bên trái, bạn có thể tìm thấy các mũi tên bên cạnh các hàng dữ liệu.
+
+00:25:35.000 --> 00:25:41.000
+Nhấp vào một mũi tên sẽ hiển thị một cửa sổ bật lên hiển thị dữ liệu tương ứng cho nguyên thủy.
+
+00:25:41.000 --> 00:25:51.000
+Những bổ sung này cho trình xem cấu trúc tăng tốc đảm bảo bạn có toàn quyền truy cập, xuống từng nguyên thủy, vào tất cả các thành phần tạo nên cấu trúc tăng tốc của bạn.
+
+00:25:51.000 --> 00:25:55.000
+Tiếp theo, hãy nói về những cải tiến cho Shader Profiler.
+
+00:25:55.000 --> 00:26:13.000
+Shader Profiler cung cấp cho bạn thông tin chi tiết về hiệu suất của shader của bạn, cung cấp chi phí thời gian thực thi trên mỗi đường ống và trên GPU của Apple, nó cung cấp độ chi tiết hơn ở cấp nguồn, hiển thị chi phí thực thi trên mỗi dòng được phân phối trên các danh mục hướng dẫn.
+
+00:26:13.000 --> 00:26:23.000
+Trong Xcode 14, các bản ghi GPU hồ sơ đã được cập nhật để hỗ trợ các chức năng giao nhau, các chức năng hiển thị và các thư viện động.
+
+00:26:23.000 --> 00:26:28.000
+Ở đây chúng ta có một hạt nhân dò tia sử dụng chức năng giao nhau.
+
+00:26:28.000 --> 00:26:33.000
+Bây giờ bạn có thể xem kết quả lập hồ sơ trên mỗi dòng bên trong hàm giao lộ.
+
+00:26:33.000 --> 00:26:41.000
+Điều này bao gồm phân tích các danh mục hướng dẫn đóng góp vào chi phí.
+
+00:26:41.000 --> 00:26:46.000
+Lập hồ sơ các chức năng hiển thị hoạt động theo cùng một cách.
+
+00:26:46.000 --> 00:26:53.000
+Và tương tự, thông tin hồ sơ chi tiết hiện có sẵn cho mã đổ bóng từ các thư viện động được liên kết.
+
+00:26:53.000 --> 00:27:02.000
+Với những bổ sung này, giờ đây bạn đã có bảng phân tích đầy đủ về hiệu suất của đường ống của mình, xuống từng dòng mã.
+
+00:27:02.000 --> 00:27:04.000
+Chuyển sang Trình gỡ lỗi Shader.
+
+00:27:04.000 --> 00:27:10.000
+Trình gỡ lỗi Shader cung cấp một quy trình làm việc độc đáo và cực kỳ hiệu quả để gỡ lỗi tính chính xác của mã đổ bóng của bạn.
+
+00:27:10.000 --> 00:27:17.000
+Cũng giống như với Shader Profiler, chúng tôi cũng đã mở rộng hỗ trợ để cho phép gỡ lỗi các chức năng được liên kết và thư viện động.
+
+00:27:17.000 --> 00:27:27.000
+Ở đây chúng ta có một hạt nhân dò tia gọi ra một hàm hiển thị được liên kết được truyền qua một bảng hàm hiển thị.
+
+00:27:27.000 --> 00:27:37.000
+Bây giờ bạn có thể theo dõi việc thực thi hạt nhân vào mã hàm hiển thị của mình để xác minh rằng mã hoạt động như bạn mong đợi.
+
+00:27:37.000 --> 00:27:41.000
+Một lần nữa, điều tương tự cũng áp dụng cho việc gỡ lỗi các thư viện động.
+
+00:27:41.000 --> 00:27:47.000
+Bạn cũng có thể nhảy vào và ra khỏi bất kỳ thư viện động nào được thực thi được liên kết với đường ống của bạn.
+
+00:27:47.000 --> 00:27:55.000
+Với những bổ sung này, giờ đây bạn đã có một bức tranh hoàn chỉnh về việc thực thi đổ bóng của mình trên các chức năng và thư viện được liên kết trong đường ống của bạn.
+
+00:27:55.000 --> 00:28:05.000
+Bây giờ, trước khi bạn chụp và nhảy vào Trình gỡ lỗi Shader, bạn nên bật Xác thực Shader trong thời gian chạy.
+
+00:28:05.000 --> 00:28:16.000
+Xác thực Shader là một cách tuyệt vời để chẩn đoán lỗi thời gian chạy trên GPU, phát hiện các vấn đề như truy cập bộ nhớ ngoài giới hạn, đọc kết cấu null và hơn thế nữa.
+
+00:28:16.000 --> 00:28:28.000
+Để bật Xác thực Shader trong Xcode, tất cả những gì bạn cần làm là vào hộp thoại "Chỉnh sửa sơ đồ", chọn hành động "Chạy" và trong tab "chẩn đoán" đánh dấu vào hộp kiểm "Xác thực Shade".
+
+00:28:28.000 --> 00:28:31.000
+Và bạn đã sẵn sàng để đi.
+
+00:28:31.000 --> 00:28:40.000
+Trong Metal 3, chúng tôi đã thêm tính năng phát hiện Stack Overflow sẽ giúp bạn nhanh chóng tìm ra các vấn đề mà nếu không sẽ dẫn đến hành vi không xác định.
+
+00:28:40.000 --> 00:28:45.000
+Tôi sẽ nhanh chóng giải thích chi tiết về ngăn xếp chức năng trong Bộ đổ bóng kim loại và vấn đề của Stack Overflow.
+
+00:28:45.000 --> 00:28:53.000
+Ngăn xếp cuộc gọi là một vùng trong bộ nhớ thiết bị nơi Metal lưu trữ các giá trị của dữ liệu cục bộ được sử dụng trong các hàm đổ bóng của bạn.
+
+00:28:53.000 --> 00:29:01.000
+Nếu hàm được gọi không được biết tại thời điểm biên dịch, Metal cần sự trợ giúp của bạn trong việc ước tính dung lượng bộ nhớ cần thiết cho ngăn xếp.
+
+00:29:01.000 --> 00:29:08.000
+Một ví dụ về việc gọi một hàm không xác định tại thời điểm biên dịch có thể là một hàm giao điểm dò tia.
+
+00:29:08.000 --> 00:29:16.000
+Nếu bạn đang sử dụng các hàm giao nhau tùy chỉnh, độ sâu ngăn xếp cuộc gọi tối đa nên được đặt thành 1, để phân bổ không gian cho nó.
+
+00:29:16.000 --> 00:29:19.000
+Đây là giá trị mặc định, vì vậy bạn không cần phải làm gì hơn.
+
+00:29:19.000 --> 00:29:28.000
+Tuy nhiên, nếu bạn đang sử dụng Bảng hàm để gọi vào hàm Visible, đây là một ví dụ khác về lệnh gọi hàm không xác định tại thời điểm biên dịch.
+
+00:29:28.000 --> 00:29:36.000
+Nếu bạn thực hiện một cuộc gọi như vậy từ một hàm giao nhau, như trong ví dụ này, ngăn xếp cuộc gọi của bạn sẽ sâu hai cấp độ.
+
+00:29:36.000 --> 00:29:43.000
+Một ví dụ khác là gọi đến các thư viện động và gọi một hàm cục bộ bằng cách sử dụng con trỏ hàm.
+
+00:29:43.000 --> 00:29:51.000
+Trong ví dụ này, ngăn xếp cuộc gọi của chúng tôi có bốn cấp độ với các cuộc gọi lồng nhau đến các loại chức năng khác nhau không thể giải quyết được khi đổ bóng được biên dịch.
+
+00:29:51.000 --> 00:29:59.000
+Để cấu hình Metal đúng cách để phân bổ dung lượng bộ nhớ phù hợp, bạn cần tự chỉ định độ sâu ngăn xếp cuộc gọi tối đa là 4.
+
+00:29:59.000 --> 00:30:09.000
+Điều quan trọng cần nhớ là khi giá trị của Độ sâu ngăn xếp cuộc gọi tối đa được đặt quá thấp cho chương trình của bạn, Stack Overflow có thể xảy ra, dẫn đến hành vi không xác định.
+
+00:30:09.000 --> 00:30:20.000
+Nhưng nếu bạn đang chạy với tính năng Xác thực Shader được bật, những tình huống như vậy sẽ được phát hiện sớm và bạn sẽ thấy thông tin trong Xcode về nơi xảy ra Tràn ngăn xếp.
+
+00:30:20.000 --> 00:30:26.000
+Sau đó, bạn có thể sửa mã đổ bóng của mình hoặc điều chỉnh độ sâu ngăn xếp cuộc gọi tối đa của mình trong bộ mô tả đường ống.
+
+00:30:26.000 --> 00:30:37.000
+Tất cả những cải tiến mới này đối với các công cụ Metal trong Xcode 14 đảm bảo bạn có một bức tranh hoàn chỉnh hơn và cái nhìn sâu sắc hơn về hiệu suất và tính chính xác của các ứng dụng dò tia của bạn.
+
+00:30:37.000 --> 00:30:50.000
+Để biết thêm về cách tận dụng tối đa các công cụ Metal để gỡ lỗi và lập hồ sơ, hãy xem các phiên khác này Tất cả về việc tối đa hóa hiệu suất dò tia Metal cho các ứng dụng của bạn.
+
+00:30:50.000 --> 00:30:57.000
+Chúng tôi đã nói về cách bạn có thể tăng hiệu suất và đơn giản hóa mã của mình bằng cách sử dụng các tính năng mới như dữ liệu nguyên thủy.
+
+00:30:57.000 --> 00:31:05.000
+Chúng tôi cũng đã mô tả các kỹ thuật và tính năng tối ưu hóa giúp xây dựng các cấu trúc gia tốc nhanh hơn và thuận tiện hơn bao giờ hết.
+
+00:31:05.000 --> 00:31:14.000
+Cuối cùng, chúng tôi đã đề cập đến tất cả các cải tiến mới cho các công cụ Metal trong Xcode 14 sẽ cung cấp cho bạn cái nhìn sâu sắc hơn trong quá trình phát triển của bạn.
+
+00:31:14.000 --> 23:59:59.000
+Cảm ơn vì đã xem.
+

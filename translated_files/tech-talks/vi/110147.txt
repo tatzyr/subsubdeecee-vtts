@@ -1,0 +1,663 @@
+110147
+
+Pierre Morf: Chào mừng bạn đến với phiên về cách điều chỉnh lịch trình công việc CPU cho các trò chơi silicon của Apple.
+
+Tôi là Pierre Morf, làm việc trong nhóm Hệ sinh thái kim loại.
+
+Tôi đã giúp một số nhà phát triển bên thứ ba tối ưu hóa khối lượng công việc GPU và CPU của họ trên nền tảng Apple.
+
+Với sự giúp đỡ của nhóm CoreOS, tôi đã tập hợp ở đây thông tin và hướng dẫn để đạt được hiệu suất và hiệu quả CPU tốt hơn trong các trò chơi.
+
+Chúng tôi đang tập trung vào các trò chơi, bởi vì chúng thường đòi hỏi nhiều về tài nguyên phần cứng.
+
+Ngoài ra, khối lượng công việc điển hình của họ yêu cầu hàng trăm, nếu không muốn nói là hàng nghìn công việc CPU phải được xử lý mọi khung hình.
+
+Để hoàn thành chúng trong 16 mili giây hoặc ít hơn, các công việc phải được điều chỉnh cho phù hợp với thông lượng CPU tối đa và chi phí gửi của chúng phải được giảm thiểu.
+
+Đầu tiên, tôi sẽ xem qua tổng quan về CPU silicon của Apple và kiến trúc độc đáo của nó.
+
+Sau đó, tôi sẽ cung cấp cho bạn hướng dẫn cơ bản về cách tổ chức công việc của bạn để tối đa hóa hiệu quả CPU.
+
+Cuối cùng, chúng ta sẽ thảo luận về các API hữu ích để tận dụng, một khi những nguyên tắc đó được thực hiện.
+
+Hãy bắt đầu với kiến trúc CPU của Apple.
+
+Apple đã thiết kế chip của riêng mình trong hơn một thập kỷ.
+
+Chúng là cốt lõi của các thiết bị Apple.
+
+Apple silicon cung cấp hiệu suất cao và hiệu quả chưa từng có.
+
+Năm ngoái, Apple đã giới thiệu chip M1.
+
+Đó là con chip silicon đầu tiên của Apple được cung cấp cho máy tính Mac.
+
+Và năm nay...
+
+...Chúng tôi đã giới thiệu M1 Pro và M1 Max.
+
+Thiết kế mới của họ là một bước nhảy vọt lớn đối với Apple silicon và giúp họ có thể giải quyết hiệu quả khối lượng công việc rất khắt khe.
+
+Chip M1 tập hợp nhiều thành phần trong một gói duy nhất.
+
+Nó chứa một CPU, một GPU, Neural Engine, và nhiều hơn nữa.
+
+Nó cũng có bộ nhớ thống nhất băng thông cao, độ trễ thấp; nó có thể truy cập được cho tất cả các thành phần của chip thông qua Apple Fabric.
+
+Điều đó có nghĩa là CPU và GPU có thể hoạt động trên cùng một dữ liệu mà không cần sao chép nó.
+
+Hãy phóng to CPU.
+
+Trên M1, CPU chứa các lõi của hai loại khác nhau: lõi hiệu suất và lõi hiệu suất.
+
+Những thứ đó khác nhau về mặt vật lý, lõi E nhỏ hơn.
+
+Các lõi hiệu quả có nghĩa là xử lý công việc với mức tiêu thụ năng lượng rất thấp.
+
+Có một điểm rút ra rất quan trọng: lõi P và E sử dụng một vi kiến trúc tương tự, đó thực sự là hoạt động bên trong của chúng.
+
+Chúng đã được thiết kế để các nhà phát triển không cần quan tâm liệu một luồng chạy trên lõi P hay E.
+
+Nếu một chương trình được tối ưu hóa để hoạt động tốt trên một loại lõi, nó được kỳ vọng sẽ hoạt động tốt trên loại lõi khác.
+
+Những lõi đó được nhóm lại với nhau thành các cụm, ít nhất là theo loại của chúng.
+
+Trên M1, mỗi cụm có bộ nhớ đệm cấp cuối cùng - L2 - được chia sẻ bởi tất cả các lõi của nó.
+
+Giao tiếp giữa các cụm đi qua Apple Fabric.
+
+Cấu trúc liên kết CPU được hiển thị ở đây dành riêng cho chip M1.
+
+Các thiết bị khác có thể có bố cục CPU khác.
+
+Ví dụ, một chiếc iPhone XS có một cụm gồm hai lõi P và một cụm bốn lõi E.
+
+Kiến trúc này cho phép hệ thống tối ưu hóa hiệu suất khi cần thiết hoặc tối ưu hóa hiệu quả thay vào đó, cải thiện tuổi thọ pin, khi hiệu suất không phải là ưu tiên hàng đầu.
+
+Mỗi cụm có thể được kích hoạt độc lập hoặc điều chỉnh tần số của nó bởi bộ lập lịch của hạt nhân - tùy thuộc vào khối lượng công việc hiện tại, áp suất nhiệt hiện tại cho cụm đó và các yếu tố khác.
+
+Cuối cùng, lưu ý rằng tính khả dụng của lõi P không được đảm bảo.
+
+Hệ thống có quyền làm cho chúng không khả dụng trong các tình huống nhiệt quan trọng.
+
+Đây là tổng quan về các lớp API khác nhau tương tác với CPU.
+
+Đầu tiên chúng ta có XNU - hạt nhân chạy macOS và iOS.
+
+Đó là nơi bộ lập lịch sống, quyết định những gì chạy trên CPU và khi nào.
+
+Trên hết, chúng tôi có hai thư viện: POSIX với các đối tượng pthreads và Mach.
+
+Cả hai đều cung cấp các nguyên thủy phân luồng cơ bản và đồng bộ hóa cho ứng dụng.
+
+Trên hết, chúng tôi có các thư viện cấp cao hơn.
+
+NSObjects liên quan đến luồng đóng gói các tay cầm POSIX.
+
+Trong ví dụ, một NSLock đóng gói một pthread_mutex_lock, một NSThread đóng gói một pthread, trong số những thứ khác.
+
+Đó cũng là nơi GCD tọa ngồi.
+
+GCD là một người quản lý công việc nâng cao.
+
+Chúng tôi sẽ đề cập đến nó sau.
+
+Trong phiên này, chúng tôi sẽ làm việc theo cách của mình bắt đầu từ mức thấp, kết thúc với các tính năng API.
+
+Hãy bắt đầu bằng cách tập trung vào những gì hoạt động tốt nhất cho CPU và cách giảm bớt khối lượng công việc được đặt trên bộ lập lịch.
+
+Đây sẽ là hướng dẫn hiệu quả cơ bản của chúng tôi.
+
+Chúng áp dụng cho bất kỳ triển khai trình quản lý công việc nào, bất khả tri về API và áp dụng cho nhiều nền tảng - bao gồm cả Apple silicon và máy Mac dựa trên Intel.
+
+Hãy tưởng tượng chúng ta đang ở trong một thế giới lý tưởng và chúng ta có công việc này.
+
+Nếu chúng ta trải nó trên bốn lõi, nó sẽ được xử lý chính xác gấp bốn lần nhanh hơn, phải không?
+
+Thật không may, điều đó không đơn giản trong một CPU thực.
+
+Có rất nhiều hoạt động kế toán đang diễn ra, mỗi hoạt động tốn một số thời gian thực hiện.
+
+Cần có ba chi phí cần ghi nhớ về hiệu quả.
+
+Nhìn vào các lõi 1, 2, và 3.
+
+Họ đã không làm bất cứ điều gì trước khi xử lý công việc của chúng tôi.
+
+Chà, khi lõi CPU không có gì để làm trong một thời gian khá dài, nó sẽ không hoạt động để tiết kiệm năng lượng.
+
+Và việc kích hoạt lại một lõi nhàn rỗi mất một chút thời gian.
+
+Đó là chi phí đầu tiên của chúng tôi, chi phí đánh thức cốt lõi.
+
+Đây là một cái khác.
+
+Công việc CPU lần đầu tiên được bắt đầu bởi bộ lập lịch hệ điều hành.
+
+Nó quyết định quy trình và luồng nào sẽ chạy tiếp theo và trên lõi nào.
+
+Lõi CPU sau đó chuyển sang ngữ cảnh thực thi đó.
+
+Chúng tôi sẽ gọi đó là chi phí lên lịch.
+
+Bây giờ, loại chi phí thứ ba và cuối cùng.
+
+Hãy xem xét luồng chạy trên Core 0 báo hiệu những luồng trên lõi 1, 2 và 3.
+
+Ví dụ, với một semaphore.
+
+Tín hiệu đó không phải là tức thời.
+
+Trong khoảng thời gian này, hạt nhân phải xác định luồng nào đang chờ trên nguyên thủy; và trong trường hợp luồng không hoạt động, nó cần lên lịch cho nó.
+
+Sự chậm trễ này được gọi là độ trễ đồng bộ hóa.
+
+Những chi phí đó xuất hiện, dưới hình thức này hay hình thức khác, trong hầu hết các kiến trúc CPU.
+
+Bản thân chúng không phải là một vấn đề, vì chúng rất, rất ngắn.
+
+Nhưng chúng có thể trở thành một thành công trong hiệu suất nếu chúng tích lũy, xuất hiện nhiều lần và thường xuyên.
+
+Những chi phí đó trông như thế nào trong cuộc sống thực?
+
+Đây là dấu vết nhạc cụ của một trò chơi đang chạy trên M1.
+
+Trò chơi đó thể hiện một mô hình có vấn đề, lặp lại hầu hết các khung hình của nó.
+
+Nó cố gắng song song hóa các công việc ở độ chi tiết cực kỳ tốt.
+
+Chúng tôi đã phóng to rất nhiều vào dòng thời gian của nó.
+
+Để cung cấp cho bạn một ý tưởng, phần đó chỉ mất 18 micro giây.
+
+Hãy tập trung vào lõi CPU đó và hai luồng đó.
+
+Hai luồng đó có thể đã chạy song song, nhưng cuối cùng chúng đã chạy nối tiếp trên cùng một lõi đó.
+
+Hãy xem tại sao.
+
+Họ đồng bộ hóa với nhau rất thường xuyên.
+
+Cái đầu tiên báo hiệu cái thứ hai bắt đầu và rất nhanh chóng chờ đợi ngang hàng của nó được hoàn thành.
+
+Cái thứ hai bắt đầu hoạt động, nhanh chóng báo hiệu cái đầu tiên và đợi rất nhanh sau đó.
+
+Mô hình này lặp đi lặp lại nhiều lần.
+
+Chúng ta có thể thấy hai vấn đề ở đây: đầu tiên, các nguyên thủy đồng bộ hóa được sử dụng ở tần suất cực cao.
+
+Điều đó làm gián đoạn công việc và gây ra chi phí.
+
+Chúng ta có thể thấy điều đó trên đầu với các phần màu đỏ.
+
+Thứ hai, công việc tích cực - các phần màu xanh lam - cực kỳ ngắn gọn.
+
+Nó chỉ kéo dài từ bốn đến 20 micro giây.
+
+Thời lượng này quá nhỏ, nó chỉ ngắn hơn thời gian cần thiết để đánh thức lõi CPU.
+
+Trong các phần màu đỏ đó, bộ lập lịch hệ điều hành chủ yếu chờ lõi CPU thức dậy.
+
+Nhưng ngay trước khi điều đó xảy ra, một luồng chặn và giải phóng lõi.
+
+Luồng thứ hai sau đó chạy trên cùng một lõi đó thay vì đợi lâu hơn một chút để một luồng khác thức dậy.
+
+Đó là cách hai chủ đề đó mất đi một cơ hội nhỏ để chạy song song.
+
+Chỉ từ quan sát này, chúng ta đã có thể xác định hai hướng dẫn.
+
+Đầu tiên, chọn chi tiết công việc phù hợp.
+
+Chúng ta có thể đạt được nó bằng cách hợp nhất những công việc nhỏ thành những công việc lớn hơn.
+
+Lên lịch cho một chủ đề mất một chút thời gian, bất kể điều gì.
+
+Nếu một công việc trở nên nhỏ bé, chi phí lên lịch sẽ chiếm một phần tương đối lớn hơn trong dòng thời gian của chuỗi.
+
+CPU sẽ không được sử dụng đúng mức.
+
+Ngược lại, các công việc lớn hơn khấu hao chi phí lên lịch bằng cách chạy lâu hơn.
+
+Chúng tôi đã thấy một ứng dụng chuyên nghiệp - gửi rất nhiều mục công việc 30 micro giây - tăng đáng kể hiệu suất của chúng khi chúng hợp nhất chúng.
+
+Thứ hai, sắp xếp đủ công việc trước khi tận dụng các chủ đề.
+
+Điều này có thể được thực hiện trong mọi khung hình, bằng cách chuẩn bị sẵn sàng hầu hết các công việc cùng một lúc.
+
+Khi bạn báo hiệu và chờ các luồng, điều đó thường có nghĩa là một số sẽ được lên lịch trên lõi CPU và một số sẽ bị chặn và di chuyển khỏi lõi.
+
+Làm điều đó nhiều lần là một cạm bẫy về hiệu suất.
+
+Đánh thức và tạm dừng các chủ đề liên tục làm tăng thêm chi phí mà chúng ta vừa nói đến.
+
+Ngược lại, làm cho các luồng xử lý nhiều công việc hơn mà không bị gián đoạn sẽ loại bỏ các điểm đồng bộ hóa.
+
+Ví dụ, khi xử lý các vòng lặp lồng nhau, tốt hơn hết là song song hóa bên ngoài ở độ chi tiết thô hơn.
+
+Điều đó khiến các vòng lặp bên trong không bị gián đoạn.
+
+Điều đó mang lại cho họ sự gắn kết tốt hơn, sử dụng bộ nhớ cache tốt hơn và nhìn chung, ít điểm đồng bộ hóa hơn.
+
+Trước khi tận dụng nhiều chủ đề hơn, hãy xác định xem nó có xứng đáng với chi phí hay không.
+
+Bây giờ chúng ta hãy xem xét một dấu vết trò chơi khác.
+
+Cái đó đang chạy trên iPhone XS.
+
+Chúng tôi sẽ tập trung vào những chủ đề trợ giúp đó.
+
+Chúng ta có thể thấy độ trễ đồng bộ hóa ở đây.
+
+Đây là thời gian hạt nhân báo hiệu những người trợ giúp khác nhau đó.
+
+Có hai vấn đề ở đây: thứ nhất, công việc thực tế lại cực kỳ nhỏ - khoảng 11 micro giây - đặc biệt là so với toàn bộ chi phí.
+
+Hợp nhất những công việc đó lại với nhau sẽ tiết kiệm năng lượng hơn.
+
+Vấn đề thứ hai: trong khoảng thời gian đó, 80 luồng khác nhau đã được lên lịch trên ba lõi.
+
+Chúng ta có thể thấy các chuyển đổi ngữ cảnh ở đây, những khoảng trống nhỏ giữa các công việc đang hoạt động.
+
+Trong ví dụ này, nó chưa phải là vấn đề - nhưng với nhiều luồng hơn, thời gian chuyển đổi ngữ cảnh có thể tích lũy và cản trở hiệu suất CPU.
+
+Làm thế nào chúng ta có thể giảm thiểu tất cả các loại chi phí khác nhau khi một trò chơi điển hình có ít nhất hàng trăm công việc trên mỗi khung hình?
+
+Cách tốt nhất để làm như vậy là sử dụng một nhóm công việc.
+
+Chủ đề công nhân tiêu thụ chúng thông qua việc ăn cắp công việc.
+
+Lên lịch cho một luồng được thực hiện bởi hạt nhân; chúng tôi thấy nó mất một thời gian.
+
+Và CPU cũng phải thực hiện một số công việc, như chuyển đổi ngữ cảnh.
+
+Mặt khác, bắt đầu một công việc mới trong không gian người dùng rẻ hơn nhiều.
+
+Nói chung, một công nhân chỉ cần giảm một bộ đếm nguyên tử và lấy một con trỏ đến một công việc.
+
+Điểm thứ hai: tránh tương tác với các luồng được xác định trước, vì sử dụng công nhân sẽ làm giảm số lượng công tắc ngữ cảnh.
+
+Và khi họ nhận được nhiều công việc hơn, bạn tận dụng một chủ đề đã hoạt động trên một lõi đã hoạt động.
+
+Cuối cùng, hãy sử dụng hồ bơi của bạn một cách khôn ngoan.
+
+Thức dậy vừa đủ công nhân cho công việc đang xếp hàng.
+
+Và quy tắc trước đây cũng được áp dụng ở đây: đảm bảo đủ công việc được sắp xếp để biện minh cho việc đánh thức một luồng công nhân và giữ cho nó bận rộn.
+
+Chúng tôi đã giảm chi phí của mình; bây giờ, chúng tôi phải tận dụng tối đa chu kỳ CPU của mình.
+
+Đây là một số mẫu cần tránh.
+
+Tránh phải chờ đợi bận rộn.
+
+Họ có khả năng khóa lõi P, thay vì làm điều gì đó hữu ích với nó.
+
+Chúng cũng ngăn bộ lập lịch quảng bá một luồng từ và E đến lõi P.
+
+Bạn cũng đang lãng phí năng lượng và tạo ra nhiệt không cần thiết, ăn mòn khoảng không nhiệt của bạn.
+
+Thứ hai, định nghĩa về hàm năng suất lỏng lẻo trên các nền tảng và thậm chí cả hệ điều hành.
+
+Trên các nền tảng của Apple, điều đó có nghĩa là, "cố gắng nhượng lại cốt lõi mà tôi đang chạy cho bất kỳ luồng nào khác trên hệ thống, bất kỳ thứ gì khác, bất kể ưu tiên của chúng là gì."
+
+Nó tăng mức độ ưu tiên luồng hiện tại về 0 một cách hiệu quả.
+
+Lợi suất cũng có thời lượng do hệ thống xác định.
+
+Nó có thể rất dài - lên đến 10 mili giây.
+
+Thứ ba, các cuộc gọi đi ngủ cũng không được khuyến khích.
+
+Chờ đợi một sự kiện cụ thể sẽ hiệu quả hơn nhiều.
+
+Ngoài ra, lưu ý trên nền tảng Apple, sleep(0) không có ý nghĩa gì và cuộc gọi đó thậm chí còn bị loại bỏ.
+
+Những mẫu đó nói chung là một dấu hiệu cho thấy lỗi lập lịch trình cơ bản đã xảy ra ngay từ đầu.
+
+Thay vào đó, hãy đợi các tín hiệu rõ ràng với một semaphore hoặc một biến có điều kiện.
+
+Hướng dẫn cuối cùng: chia tỷ lệ số lượng luồng để phù hợp với số lượng lõi CPU.
+
+Tránh tạo lại các nhóm luồng mới trong mỗi khung hoặc phần mềm trung gian bạn đang sử dụng.
+
+Đừng mở rộng số lượng chủ đề của bạn dựa trên khối lượng công việc của bạn.
+
+Nếu khối lượng công việc của bạn tăng lên đáng kể, thì chủ đề của bạn cũng sẽ được tính.
+
+Thay vào đó, hãy truy vấn thông tin CPU để định cỡ nhóm luồng của bạn một cách thích hợp và tối đa hóa các cơ hội song song cho hệ thống hiện tại.
+
+Hãy xem cách truy vấn thông tin này.
+
+Bắt đầu với macOS Monterey và iOS 15, bạn có thể truy vấn các chi tiết nâng cao về bố cục CPU với giao diện sysctl.
+
+Ngoài việc có được tổng số lượng tất cả các lõi CPU, bây giờ bạn có thể truy vấn xem máy có bao nhiêu loại lõi với nperflevels.
+
+Trên M1, chúng tôi có hai loại lõi: P và E.
+
+Sử dụng phạm vi này để truy vấn dữ liệu trên mỗi loại lõi, số 0 là hiệu suất cao nhất.
+
+Ví dụ, perflevel{N}.logicalcpu cho biết CPU hiện tại có bao nhiêu lõi P.
+
+Đây chỉ là một cái nhìn tổng quan.
+
+Bạn cũng có thể truy vấn nhiều chi tiết khác, như có bao nhiêu lõi chia sẻ cùng một L2.
+
+Để biết thêm chi tiết, hãy tham khảo trang sysctl man hoặc trang web tài liệu.
+
+Khi lập hồ sơ sử dụng CPU của bạn, hai bản nhạc cụ rất hữu ích.
+
+Chúng có sẵn trong mẫu Hiệu suất Trò chơi.
+
+Cái đầu tiên, System Load, đưa ra số lượng luồng hoạt động trên mỗi lõi CPU.
+
+Cái thứ hai là Thread State Trace.
+
+Theo mặc định, ngăn chi tiết hiển thị số lượng thay đổi trạng thái luồng và thời lượng của chúng trên mỗi quy trình.
+
+Nó có thể được thay đổi thành chế độ xem Công tắc ngữ cảnh.
+
+Điều này sẽ cung cấp cho bạn số lượng công tắc ngữ cảnh cho mỗi quy trình trong phạm vi thời gian đã chọn.
+
+Số lượng công tắc ngữ cảnh là một thước đo hữu ích để đo lường hiệu quả lên lịch của ứng dụng.
+
+Hãy kết thúc phần này.
+
+Bằng cách làm theo các hướng dẫn đó, bạn sẽ tận dụng tối đa CPU và hợp lý hóa những gì bộ lập lịch phải làm.
+
+Nén các công việc nhỏ, nhỏ thành các công việc chạy lâu hơn làm tăng lợi ích của các tính năng kiến trúc vi mô, như bộ nhớ cache, trình tìm nạp trước và công cụ dự đoán.
+
+Xử lý nhiều công việc hơn cùng một lúc có nghĩa là ít ngắt độ trễ và chuyển đổi ngữ cảnh hơn.
+
+Một nhóm luồng được chia tỷ lệ thích hợp giúp bộ lập lịch dễ dàng cân bằng lại công việc giữa lõi E và P.
+
+Một điểm mấu chốt cho hiệu quả và hiệu suất là giảm thiểu tần suất khối lượng công việc của bạn ngày càng rộng và hẹp.
+
+Bây giờ chúng ta hãy đi sâu vào những khối API nào bạn có thể tận dụng trong khi áp dụng các nguyên tắc đó.
+
+Trong phần này, chúng tôi sẽ đề cập đến các chính sách ưu tiên và lập kế hoạch, nguyên thủy đồng bộ hóa và cân nhắc bộ nhớ khi đa luồng.
+
+Nhưng trước tiên, hãy bắt đầu bằng cách xem lén GCD.
+
+Nếu bạn không có người quản lý công việc, hoặc nếu nó không đạt được hiệu suất cao mà bạn đang hướng tới, GCD là một lựa chọn tuyệt vời.
+
+Đó là một người quản lý công việc có mục đích chung sử dụng ăn cắp công việc.
+
+Nó có sẵn trên tất cả các nền tảng của Apple và Linux, và nó là mã nguồn mở.
+
+API này được tối ưu hóa cao.
+
+Đầu tiên, nó đã tuân theo tất cả các phương pháp hay nhất dành cho bạn.
+
+Thứ hai, nó được tích hợp trong nhân XNU.
+
+Điều đó có nghĩa là GCD có thể theo dõi các chi tiết bên trong cho bạn, như khả năng tản nhiệt của máy hiện tại, tỷ lệ lõi P/E, áp suất nhiệt hiện tại, v.v.
+
+Giao diện của nó dựa vào hàng đợi điều phối nối tiếp và đồng thời.
+
+Bạn có thể xếp hàng các công việc trong đó với các ưu tiên khác nhau.
+
+Trong nội bộ, mỗi hàng đợi điều phối tận dụng một lượng luồng thay đổi từ một nhóm luồng riêng tư.
+
+Con số đó phụ thuộc vào loại hàng đợi và thuộc tính công việc.
+
+Nhóm luồng nội bộ này được chia sẻ cho toàn bộ quá trình.
+
+Điều đó có nghĩa là trong một quy trình nhất định, nhiều thư viện có thể sử dụng GCD mà không cần tạo lại một nhóm mới.
+
+GCD cung cấp nhiều tính năng.
+
+Ở đây chúng tôi sẽ nhanh chóng xem xét chỉ hai chức năng từ hàng đợi điều phối đồng thời, chỉ để hiểu nó hoạt động như thế nào.
+
+Cái đầu tiên, dispatch_async, cho phép bạn xếp hàng một công việc được tạo thành từ một con trỏ hàm và một con trỏ dữ liệu.
+
+Khi bắt đầu một công việc, hàng đợi đồng thời có thể tận dụng một chuỗi bổ sung nếu công việc tiếp theo trong dòng cũng đã sẵn sàng để được xử lý.
+
+Đó là một lựa chọn tuyệt vời cho các công việc độc lập không đồng bộ điển hình.
+
+Nhưng không quá nhiều cho các vấn đề song song ồ ạt.
+
+Trong trường hợp đó, có dispatch_apply.
+
+Cái đó sẽ tận dụng nhiều luồng ngay từ đầu, mà không làm quá tải trình quản lý luồng của GCD.
+
+Chúng tôi đã thấy một số ứng dụng chuyên nghiệp tăng hiệu suất của chúng bằng cách di chuyển song song để sử dụng dispatch_apply.
+
+Đó chỉ là một cái nhìn tổng quan nhanh về GCD.
+
+Để tìm hiểu thêm về nó và những mẫu nào cần tránh, hãy tham khảo hai phiên WWDC đó.
+
+Bây giờ chúng ta hãy chuyển sang quản lý công việc tùy chỉnh.
+
+Chúng tôi sẽ đề cập đến những điểm quan trọng nhất khi thao tác trực tiếp các luồng và đồng bộ hóa chúng.
+
+Hãy bắt đầu với sự ưu tiên.
+
+Trong phần trước, chúng tôi đã xem xét cách tăng hiệu quả CPU khi gửi công việc.
+
+Nhưng cho đến nay, chúng tôi đã không đề cập rằng tất cả các công việc đều không bình đẳng.
+
+Một số rất quan trọng về thời gian, kết quả của chúng là cần thiết càng sớm càng tốt.
+
+Và một số khung hình khác sẽ chỉ được yêu cầu trong một hoặc hai khung hình tiếp theo.
+
+Vì vậy, cần phải truyền đạt cảm giác quan trọng khi xử lý công việc của bạn để cung cấp nhiều nguồn lực hơn cho những công việc quan trọng hơn.
+
+Điều đó có thể được thực hiện bằng cách ưu tiên các chủ đề của bạn.
+
+Đặt mức độ ưu tiên luồng phù hợp cũng thông báo cho hệ thống rằng trò chơi của bạn quan trọng hơn hoạt động nền.
+
+Điều này có thể đạt được bằng cách thiết lập một luồng có giá trị ưu tiên CPU thô hoặc lớp QoS.
+
+Cả hai khái niệm đều có liên quan với nhau, nhưng hơi khác nhau.
+
+Mức độ ưu tiên CPU thô là một giá trị nguyên cho biết thông lượng tính toán quan trọng như thế nào.
+
+Trên các nền tảng của Apple, trái ngược với Linux, đây là một giá trị tăng dần - càng cao, càng quan trọng.
+
+Mức độ ưu tiên CPU này cũng gợi ý - trong số các yếu tố khác - về việc liệu một luồng nên chạy trên lõi P hay E.
+
+Bây giờ, mức độ ưu tiên CPU này không ảnh hưởng đến phần còn lại của tài nguyên hệ thống vì nó không đưa ra bất kỳ ý định nào về những gì luồng đang làm.
+
+Thay vào đó, các chủ đề có thể được ưu tiên với Chất lượng Dịch vụ - viết tắt là QoS.
+
+QoS đã được thiết kế để gắn ngữ nghĩa vào các luồng.
+
+Ý định này giúp người lập lịch đưa ra quyết định thông minh về thời điểm thực hiện các nhiệm vụ và làm cho hệ điều hành phản hồi nhanh hơn.
+
+Ví dụ, một nhiệm vụ có tầm quan trọng thấp hơn có thể bị trì hoãn một chút về thời gian để tiết kiệm năng lượng.
+
+Nó cũng cho phép ưu tiên truy cập tài nguyên hệ thống như truy cập mạng, đĩa.
+
+Nó cũng cung cấp các ngưỡng để kết hợp hẹn giờ - một tính năng tiết kiệm năng lượng.
+
+Các lớp QoS cũng bao gồm mức độ ưu tiên CPU.
+
+Có năm lớp QoS, đi từ QOS_CLASS_BACKGROUND, lớp ít quan trọng nhất, đến QOS_CLASS_USER_INTERACTIVE, lớp cao nhất.
+
+Mỗi cái bao gồm một mức độ ưu tiên CPU mặc định.
+
+Tùy chọn, bạn có thể hạ cấp nó một chút trong một phạm vi giới hạn.
+
+Điều này rất hữu ích nếu bạn muốn tinh chỉnh mức độ ưu tiên CPU cho một số luồng chọn vào cùng một lớp QoS.
+
+Lưu ý phải rất cẩn thận với lớp Nền - các luồng sử dụng nó có thể không chạy trong một thời gian rất dài.
+
+Vì vậy, nhìn chung, các trò chơi sử dụng các ưu tiên CPU từ 5 đến 47.
+
+Hãy xem điều đó được thực hiện như thế nào trong thực tế.
+
+Đầu tiên, bạn cần phân bổ và khởi tạo các thuộc tính pthread với các giá trị mặc định.
+
+Sau đó, bạn đặt lớp QoS bắt buộc và sau đó chuyển các thuộc tính đó cho hàm pthread_create.
+
+Kết thúc bằng cách phá hủy cấu trúc thuộc tính.
+
+Bạn cũng có thể đặt một lớp QoS thành một chuỗi đã tồn tại.
+
+Ví dụ, hàm đó ảnh hưởng đến chuỗi gọi.
+
+Lưu ý ở đây, chúng tôi đã sử dụng độ lệch -5, hạ cấp mức độ ưu tiên CPU của lớp từ 47 xuống 42.
+
+Lưu ý rằng bạn có thể thấy hậu tố np trong tên hàm.
+
+Đó là viết tắt của "nonportable"; đó là một quy ước đặt tên được sử dụng cho các chức năng dành riêng cho các nền tảng của Apple.
+
+Cuối cùng, hãy cẩn thận rằng nếu thay vì sử dụng các chức năng đó, bạn trực tiếp đặt giá trị ưu tiên CPU thô, bạn chọn không tham gia QoS cho luồng đó.
+
+Điều đó là vĩnh viễn và bạn không thể chọn lại QoS cho chủ đề đó sau đó.
+
+iOS và macOS xử lý nhiều quy trình, đối mặt với người dùng hoặc chạy trong nền.
+
+Trong một số trường hợp, hệ thống có thể bị quá tải.
+
+Nếu điều đó xảy ra, hạt nhân cần một cách để đảm bảo tất cả các luồng có cơ hội chạy vào một thời điểm nào đó.
+
+Điều đó được thực hiện với sự phân rã ưu tiên.
+
+Trong trường hợp đặc biệt này, hạt nhân từ từ giảm mức độ ưu tiên luồng theo thời gian; tất cả các luồng sau đó có cơ hội chạy.
+
+Sự phân rã ưu tiên có thể có vấn đề trong những trường hợp rất đặc biệt.
+
+Thông thường, các trò chơi có một vài chủ đề rất quan trọng, như chủ đề chính và chủ đề kết xuất.
+
+Nếu chuỗi kết xuất bị chặn trước, bạn có thể bỏ lỡ một cửa sổ trình bày và trò chơi sẽ bị giật.
+
+Trong những trường hợp đó, bạn có thể chọn không tham gia phân rã ưu tiên với các chính sách lập lịch.
+
+Theo mặc định, các luồng được tạo bằng chính sách SCHED_OTHER.
+
+Đây là một chính sách chia sẻ thời gian.
+
+Các chủ đề sử dụng nó có thể bị phân rã ưu tiên.
+
+Nó cũng tương thích với các lớp QoS mà chúng tôi đã trình bày trước đây.
+
+Mặt khác, chúng tôi có chính sách SCHED_RR tùy chọn.
+
+RR là viết tắt của "round-robin".
+
+Các chủ đề chọn tham gia vào nó có mức độ ưu tiên cố định không bị ảnh hưởng bởi sự phân rã ưu tiên.
+
+Nó cung cấp sự nhất quán tốt hơn trong độ trễ thực thi.
+
+Lưu ý rằng nó được thiết kế dành riêng cho công việc nhất quán, định kỳ và ưu tiên cao, ví dụ: luồng kết xuất chuyên dụng hoặc luồng công nhân trên mỗi khung hình.
+
+Các luồng chọn tham gia nó phải hoạt động trên một cửa sổ thời gian rất cụ thể và không liên tục bận CPU 100 phần trăm thời gian.
+
+Sử dụng chính sách này cũng có thể dẫn đến nạn đói trong các chủ đề khác của bạn.
+
+Cuối cùng, chính sách này không tương thích với các lớp QoS - các luồng sẽ cần sử dụng mức độ ưu tiên CPU thô.
+
+Đây là bố cục được đề xuất cho các chủ đề trò chơi.
+
+Đầu tiên, xác định trong trò chơi của bạn những gì là ưu tiên cao, trung bình và thấp và những gì quan trọng đối với trải nghiệm người dùng.
+
+Việc phân chia công việc theo mức độ ưu tiên cho phép hệ thống biết phần nào trong ứng dụng của bạn là quan trọng nhất.
+
+Sử dụng các công cụ để lập hồ sơ trò chơi của bạn và chỉ chọn tham gia SCHED_RR cho các chủ đề thực sự cần nó.
+
+Ngoài ra, không bao giờ sử dụng SCHED_RR cho một công việc dài hạn, mở rộng nhiều khung hình.
+
+Dựa vào QoS trong những trường hợp đó để giúp hệ thống cân bằng hiệu suất với các quy trình khác.
+
+Một lý do khác để ủng hộ việc chọn tham gia QoS là khi một luồng tương tác với các khung của Apple như GCD hoặc NSOperationQueues.
+
+Những khuôn khổ đó cố gắng truyền bá lớp QoS từ nhà phát hành công việc vào chính công việc.
+
+Điều đó rõ ràng bị bỏ qua nếu chuỗi phát hành đã từ bỏ QoS.
+
+Hãy đề cập đến một điểm cuối cùng liên quan đến các ưu tiên: đảo ngược ưu tiên.
+
+Đảo ngược ưu tiên xảy ra khi một luồng ưu tiên cao bị đình trệ, bị chặn bởi một luồng có mức độ ưu tiên thấp.
+
+Điều này thường xảy ra với các loại trừ lẫn nhau.
+
+Hai chủ đề cố gắng truy cập cùng một tài nguyên, chiến đấu để có được cùng một khóa.
+
+Trong một số trường hợp, hệ thống có thể giải quyết sự đảo ngược này bằng cách tăng luồng ưu tiên thấp.
+
+Hãy xem nó hoạt động như thế nào.
+
+Hãy xem xét hai chủ đề - đây là dòng thời gian thực hiện của chúng.
+
+Trong ví dụ này, sợi màu xanh lam được ưu tiên thấp, sợi màu xanh lá cây được ưu tiên cao.
+
+Ở giữa, chúng ta có dòng thời gian khóa, hiển thị luồng nào trong hai luồng sẽ sở hữu khóa đó.
+
+Sợi chỉ màu xanh bắt đầu thực thi và lấy khóa.
+
+Sợi chỉ màu xanh lá cây cũng bắt đầu.
+
+Tại thời điểm này, sợi chỉ màu xanh lá cây cố gắng có được khóa đó, hiện thuộc sở hữu của sợi chỉ màu xanh lam.
+
+Sợi chỉ màu xanh lá cây chặn lại và chờ khóa đó có sẵn trở lại.
+
+Trong trường hợp này, thời gian chạy có thể cho biết luồng nào sở hữu khóa đó.
+
+Do đó, nó có thể giải quyết sự đảo ngược ưu tiên, bằng cách tăng mức độ ưu tiên thấp của luồng màu xanh lam.
+
+Nguyên thủy nào có khả năng giải quyết đảo ngược ưu tiên và nguyên thủy nào thì không?
+
+Các nguyên thủy đối xứng với một chủ sở hữu được biết đến duy nhất có thể làm điều đó, như pthread_mutex_t hoặc hiệu quả nhất, os_unfair_lock.
+
+Các nguyên thủy không đối xứng như biến điều kiện pthread hoặc dispatch_semaphore không có khả năng này, bởi vì thời gian chạy không biết luồng nào sẽ báo hiệu nó.
+
+Hãy ghi nhớ tính năng này khi chọn nguyên thủy đồng bộ hóa và ưu tiên các nguyên thủy đối xứng để truy cập loại trừ lẫn nhau.
+
+Để hoàn thành phần này, hãy thảo luận một vài khuyến nghị về trí nhớ.
+
+Khi tương tác với các khung Objective-C, một số đối tượng được tạo dưới dạng tự động phát hành.
+
+Điều đó có nghĩa là họ được thêm vào danh sách, để việc phân bổ giao dịch của họ chỉ xảy ra sau đó.
+
+Các khối hồ bơi tự động phát hành là các phạm vi giới hạn thời gian các đối tượng như vậy có thể được giữ xung quanh.
+
+Chúng giúp giảm hiệu quả diện tích bộ nhớ cao nhất của ứng dụng của bạn.
+
+Điều quan trọng là phải có ít nhất một nhóm tự động phát hành, trong mỗi điểm vào luồng.
+
+Nếu bất kỳ luồng nào thao tác các đối tượng được tự động phát hành - ví dụ, thông qua Metal - mà không có, điều đó sẽ dẫn đến rò rỉ bộ nhớ.
+
+Các khối hồ bơi tự động giải phóng có thể được lồng vào nhau, để kiểm soát tốt hơn khi bộ nhớ được tái chế.
+
+Lý tưởng nhất là chuỗi kết xuất nên tạo luồng thứ hai xung quanh quy trình kết xuất khung lặp lại.
+
+Các luồng công nhân nên có chủ đề thứ hai bắt đầu kích hoạt và đóng lại khi công nhân đỗ xe, chờ đợi thêm công việc.
+
+Hãy xem một ví dụ.
+
+Đây là một điểm vào luồng công nhân.
+
+Nó bắt đầu ngay lập tức với một khối hồ bơi tự động phát hành.
+
+Sau đó nó chờ đợi công việc có sẵn.
+
+Khi công nhân được kích hoạt, chúng tôi thêm một khối nhóm tự động phát hành mới và giữ nó xung quanh khi chúng tôi xử lý công việc.
+
+Khi sợi chỉ chuẩn bị đợi và đậu, chúng tôi ra khỏi hồ bơi lồng nhau.
+
+Để kết luận, một mẹo nhanh về trí nhớ.
+
+Để cải thiện hiệu suất, tránh để nhiều luồng ghi đồng thời dữ liệu nằm trong cùng một dòng bộ nhớ cache.
+
+Điều đó được gọi là "chia sẻ sai".
+
+Nhiều lần đọc từ cùng một cấu trúc dữ liệu là ổn, nhưng các lần ghi cạnh tranh như vậy dẫn đến việc ping-ponging dòng bộ nhớ cache giữa các bộ nhớ đệm phần cứng khác nhau.
+
+Trên Apple silicon, một dòng bộ nhớ đệm dài 128 byte.
+
+Một giải pháp cho điều này là chèn phần đệm vào cấu trúc dữ liệu của bạn để giảm xung đột bộ nhớ.
+
+Chúng tôi đã hoàn thành phần cuối cùng này.
+
+Hãy kết thúc.
+
+Lần đầu tiên chúng tôi có cái nhìn tổng quan về kiến trúc CPU của Apple và cách thiết kế đột phá của nó làm cho nó hiệu quả hơn nhiều.
+
+Sau đó, chúng tôi đã tìm hiểu cách cung cấp CPU hiệu quả và làm cho nó chạy trơn tru trong khi giảm tải đặt trên bộ lập lịch hệ điều hành.
+
+Cuối cùng chúng tôi đã xem xét các khái niệm API quan trọng, chẳng hạn như ưu tiên luồng, chính sách lập lịch, đảo ngược ưu tiên, kết thúc với các mẹo về bộ nhớ.
+
+Đừng quên thường xuyên lập hồ sơ trò chơi của bạn bằng các công cụ để theo dõi khối lượng công việc của nó, vì vậy bạn có thể phát hiện sớm các vấn đề về hiệu suất.
+
+Cảm ơn bạn đã quan tâm.

@@ -1,0 +1,401 @@
+10192
+
+♪ ♪
+
+Alex: Xin chào. Tên tôi là Alex. Tôi đến từ nhóm Kỹ thuật Video.
+
+Hôm nay, đồng nghiệp Antoine của tôi và tôi sẽ chia sẻ với bạn những gì mới trong RoomPlan.
+
+RoomPlan sử dụng các thuật toán học máy tinh vi được cung cấp bởi ARKit để phát hiện tường, cửa sổ, cửa ra vào, lỗ mở và các vật thể xác định phòng khác.
+
+RoomCaptureView API của chúng tôi cho phép bạn tích hợp trải nghiệm quét trực tiếp vào ứng dụng của mình.
+
+Sau khi quét xong, ứng dụng của bạn có thể trình bày mô hình 3D kết quả và xuất sang tệp USDZ.
+
+Trong phiên này, chúng ta sẽ nói về những gì mới trong RoomPlan.
+
+Chúng ta sẽ bắt đầu với một cách mới để kết hợp RoomPlan với ARKit bằng cách sử dụng ARSession tùy chỉnh.
+
+Sau đó, chúng tôi sẽ chuyển sự chú ý sang hỗ trợ MultiRoom của chúng tôi.
+
+Chúng tôi cung cấp một MultiRoom API mới để hợp nhất các bản quét phòng riêng lẻ thành một cấu trúc lớn hơn.
+
+Tiếp theo, chúng tôi sẽ hiển thị hỗ trợ VoiceOver mới cho RoomCaptureView.
+
+Cuối cùng, chúng tôi sẽ xem xét một số cải tiến trong các đại diện và cải tiến RoomPlan đối với các chức năng xuất của chúng tôi để kích hoạt quy trình làm việc mới.
+
+Hãy bắt đầu với hỗ trợ ARSession tùy chỉnh.
+
+Như đã đề cập trước đó, RoomPlan đang dựa vào thông tin từ ARKit để phát hiện tường, cửa sổ, cửa ra vào, lỗ mở và các vật thể khác trong quá trình quét.
+
+Đối với điều này, RoomCaptureSession đang chạy với ARSession mặc định.
+
+Tính năng mới trong iOS 17, RoomPlan có thể sử dụng ARSession tùy chỉnh với ARWorldTrackingConfiguration.
+
+Điều này cho phép một số cách mới để kết hợp việc sử dụng RoomPlan và ARKit trong cùng một quy trình làm việc.
+
+Hãy xem xét một số ví dụ.
+
+Một cách để sử dụng RoomPlan với ARSession tùy chỉnh là kết hợp kết quả RoomPlan với hình học cảnh ARKit và phát hiện mặt phẳng để tương tác nhập vai hơn giữa nội dung ảo và hình học trong thế giới thực.
+
+Hơn nữa, bạn có thể thu thập các biểu diễn ảnh của một không gian bằng cách sử dụng chụp ảnh chất lượng cao từ ARKit để tạo danh sách bất động sản phong phú hơn với RoomPlan.
+
+Và nếu bạn đang sử dụng RoomPlan như một phần của trải nghiệm AR hiện có, bạn có thể kết hợp các kết quả từ RoomPlan mà không làm gián đoạn ARAnchors hiện tại của mình.
+
+Đây chỉ là một vài trường hợp sử dụng mà ARSession tùy chỉnh có thể cung cấp.
+
+Hãy cùng xem một số mã để xem cách bạn chuyển ARSession tùy chỉnh sang RoomPlan.
+
+Đây là chức năng init và stop trong RoomPlan trước đó.
+
+Và đây là cách bạn chuyển một ARSession tùy chỉnh sang hàm init.
+
+Bất kỳ ARSession tùy chỉnh nào với ARWorldTrackingConfiguration sẽ được vinh danh bên trong RoomCaptureSession.
+
+Ngoài ra, chức năng dừng hiện bao gồm một tùy chọn mới để xác định xem bạn có muốn tạm dừng ARSession cơ bản hay không.
+
+Bạn có thể đặt Boolean thành false trong trường hợp bạn muốn ARSession của mình tiếp tục chạy sau khi RoomCaptureSession dừng lại.
+
+Trong phần tiếp theo, chúng ta sẽ thấy cách làm việc với ARSession cho phép quy trình làm việc mới, như hợp nhất nhiều lần quét thành một cấu trúc lớn hơn Hãy chuyển sự chú ý của chúng ta sang hỗ trợ MultiRoom.
+
+Hỗ trợ MultiRoom là gì?
+
+Trong RoomPlan trước đây, bạn có thể thực hiện một lần quét và nhận mô hình 3D cho một phòng đơn.
+
+Giả sử bạn đã thực hiện một vài lần quét các phòng khác nhau trong một ngôi nhà, chẳng hạn như phòng ăn, nhà bếp, phòng khách, hành lang và phòng ngủ.
+
+Nếu bạn muốn hợp nhất chúng, bạn sẽ phải đối mặt với một số thách thức.
+
+Đầu tiên, tất cả chúng đều nằm trong hệ tọa độ riêng của chúng, có nghĩa là nguồn gốc và hướng của tọa độ thế giới là khác nhau đối với mỗi phòng.
+
+Thứ hai, ngay cả khi bạn khâu chúng theo cách thủ công, cuối cùng bạn sẽ có các bức tường trùng lặp và các vật thể có khả năng trùng lặp.
+
+Trước tiên hãy giải quyết các hệ tọa độ khác nhau.
+
+Những gì chúng tôi muốn đạt được ở đây là thực hiện tất cả các lần quét trong cùng một hệ tọa độ.
+
+Hai cách tiếp cận được đề xuất ở đây để quét nhiều phòng.
+
+Đầu tiên, sử dụng ARSession liên tục.
+
+Thứ hai, sử dụng bản địa hóa lại ARSession.
+
+Hãy xem cách sử dụng ARSession liên tục.
+
+Trong RoomPlan trước đây, khi RoomCaptureSession dừng lại, ARSession bị tạm dừng.
+
+Mỗi lần quét có một hệ tọa độ khác nhau.
+
+API mới của chúng tôi hiện có một đối số mới trong hàm dừng, chúng tôi có thể đặt pauseARSession thành false.
+
+Điều này cho phép ARSession tiếp tục chạy cho lần quét tiếp theo, ngay cả lần quét sau đó, cho đến khi cuối cùng chúng tôi quyết định tạm dừng ARSession một lần nữa.
+
+Sử dụng cách tiếp cận này, chúng tôi có thể đảm bảo cùng một ARSession chạy trên một số lần quét.
+
+Điều này sẽ cho phép chúng ta có một hệ tọa độ thế giới chung cho tất cả các lần quét của chúng ta.
+
+Hãy xem cái này hoạt động như thế nào trong mã.
+
+Đây là một ví dụ để chạy RoomCaptureSession với ARSession liên tục.
+
+Chúng tôi bắt đầu lần quét đầu tiên với RoomCaptureSession.run.
+
+Sau đó, đây là phần quan trọng.
+
+Với API mới trong RoomCaptureSession.stop, chúng ta cần đặt pauseARSession thành false.
+
+Điều này sẽ giữ cho ARSession chạy cho lần quét tiếp theo.
+
+Sau đó, chúng tôi sử dụng cùng một phiên bản roomCaptureSession cho lần quét thứ hai.
+
+Sau đó, chúng tôi dừng lần quét thứ hai.
+
+Cuối cùng, chúng ta có thể nhận được kết quả quét thứ nhất và thứ hai trong cùng một hệ tọa độ.
+
+Một cách tiếp cận khác để thực hiện quét phòng riêng lẻ trong cùng một không gian tọa độ là sử dụng định vị lại ARSession.
+
+Cách tiếp cận này phù hợp nhất nếu bạn đang quét phòng riêng lẻ vào những thời điểm khác nhau, chẳng hạn như quay lại cùng một địa điểm vào ngày hoặc tuần tới.
+
+Hãy cùng xem cái này hoạt động như thế nào.
+
+Một lần nữa, đây là một lần quét duy nhất để có được mô hình 3D của một phòng đơn.
+
+Vì chúng tôi dừng RoomCaptureSession và tạm dừng ARSession, để định vị lại hoạt động cho các lần quét trong tương lai, chúng tôi cần lưu ARWorldMap vào đĩa.
+
+Nếu bạn muốn tiếp tục quá trình quét trước đó khi ARSession bị tạm dừng, bây giờ bạn có thể tiếp tục quét bằng cách tải ARWorldMap từ ARSession đã tạm dừng.
+
+Sử dụng ARWorldMap này, bạn có thể định vị lại so với môi trường quét trước đó để đảm bảo rằng một loạt các lần quét đều chia sẻ một hệ tọa độ chung.
+
+Hãy xem xét các mã mẫu cho quy trình quét với việc định vị lại.
+
+Đầu tiên, chúng tôi chạy lần quét đầu tiên.
+
+Sau đó, chúng tôi dừng lần quét đầu tiên bằng cách tạm dừng ARSession.
+
+Sau đó, để tái bản địa hóa hoạt động, chúng ta cần lưu ARWorldMap khi ARSession bị tạm dừng.
+
+Trước khi chạy lần quét thứ hai, chúng ta cần khôi phục ARWorldMap trước đó của mình.
+
+Đầu tiên, chúng tôi tải ARWorldMap.
+
+Và chúng tôi chỉ định ARWorldMap đã tải cho ARWorldTrackingConfiguration. initialWorldMap.
+
+Sau đó, chúng tôi chạy ARSession để kích hoạt tái định vị hóa.
+
+Sau khi hoàn tất việc định vị lại, ARSession trước đó sẽ được tải.
+
+Tọa độ thế giới hiện tại được liên kết với tọa độ thế giới trước đó.
+
+Sau đó chúng ta có thể chạy lần quét thứ hai.
+
+Cuối cùng, chúng tôi dừng lần quét thứ hai.
+
+Với tất cả các bước này, kết quả quét thứ nhất và thứ hai nằm trong cùng một tọa độ thế giới 3D.
+
+Chúng tôi đã thấy hai cách tiếp cận để liên kết nhiều lần quét trong cùng một hệ tọa độ 3D.
+
+Tiếp theo, chúng ta sẽ xem xét cách hợp nhất chúng thành một cấu trúc kết hợp bằng cách sử dụng API MultiRoom mới của chúng tôi.
+
+Đối với mỗi lần quét, chúng tôi có thể chạy RoomBuilder API để tạo ra CapturedRoom riêng lẻ.
+
+Như đã trình bày trước đây, với việc định vị lại ARSession và ARSession liên tục, tất cả CapturedRooms đều nằm trong cùng một không gian thế giới 3D.
+
+Đây là đầu ra từ RoomBuilder với ba CapturedRooms.
+
+Bây giờ chúng tôi cung cấp một API hợp nhất mới, StructureBuilder, để hợp nhất tất cả chúng thành một cấu trúc lớn, CapturedStructure.
+
+Tiếp theo, hãy xem các mã mẫu cho StructureBuilder API.
+
+Đây là cách chúng tôi sử dụng StructureBuilder API để hợp nhất nhiều lần quét.
+
+Đầu tiên, chúng tôi tạo một phiên bản StructureBuilder với tùy chọn cấu hình.
+
+Sau đó, chúng tôi tạo một Mảng để tải nhiều CapturedRooms, mà chúng tôi đã quét trước đó.
+
+Sau đó, chúng tôi gọi StructureBuilder API để lấy capturedStructure, đây là kết quả được hợp nhất.
+
+Cuối cùng, chúng ta có thể xuất capturedStructure sang tệp USDZ.
+
+Và đây là định nghĩa CapturedStructure.
+
+Đầu tiên, nó có một tài sản gồm các phòng.
+
+Đó là một mảng các trường hợp CapturedRoom.
+
+Sau đó, nó có các thuộc tính cho các bức tường, cửa ra vào, cửa sổ, lỗ mở và đồ vật được hợp nhất.
+
+Cuối cùng, nó có chức năng xuất sang tệp USDZ.
+
+Hãy xem MultiRoom hoạt động.
+
+Chúng tôi cung cấp cho bạn một sample.app, cho phép bạn hợp nhất nhiều lần quét với StructureBuilder API và xuất sang tệp USDZ.
+
+Tệp USDZ của chúng tôi đã sẵn sàng để xem trước trong cả iOS và macOS.
+
+Bạn có thể tiến thêm một bước nữa bằng cách tải tệp USDZ của mình vào Công cụ tạo nội dung kỹ thuật số như Blender.
+
+Sau khi chúng tôi áp dụng một số làm đẹp cho mô hình 3D, kết quả có thể trông thậm chí còn tốt hơn.
+
+Cuối cùng, hãy nói về một số cân nhắc để có được trải nghiệm MultiRoom tốt nhất với sự hỗ trợ của MultiRoom.
+
+MultiRoom hoạt động tốt nhất cho các ngôi nhà dân cư một tầng, với thiết lập điển hình từ một đến bốn phòng ngủ, phòng khách, nhà bếp và phòng ăn.
+
+Để quét và hợp nhất các phòng riêng lẻ, chúng tôi đề xuất tổng diện tích tối đa là 2.000 feet vuông hoặc khoảng 186 mét vuông.
+
+Hơn nữa, nên có ánh sáng tốt từ 50 lux trở lên để đảm bảo RoomPlan có thể quét với luồng video rõ ràng và hiệu suất theo dõi AR tốt.
+
+Bây giờ, đây là Antoine để cho chúng tôi biết về những cải tiến hơn nữa cho RoomPlan trong iOS 17.
+
+Antoine: Cảm ơn, Alex.
+
+Đón từ đây, hãy nói về khả năng tiếp cận.
+
+Khi chúng ta nói về kết xuất, hầu hết chúng ta đều nghĩ về phương thức thị giác, nhưng đối với những người có thị lực kém, phương thức này không phải là phương thức hữu ích nhất.
+
+Năm nay, RoomPlan đã thêm phản hồi âm thanh khi VoiceOver được bật, cho phép điện thoại của bạn cung cấp hướng dẫn về quét và mô tả những gì nó nhìn thấy.
+
+VoiceOver: Di chuyển thiết bị để bắt đầu.
+
+Hướng camera ở cạnh dưới của bức tường.
+
+Một lò sưởi. Một bức tường.
+
+Một cửa sổ.
+
+Antoine: Bây giờ hãy nói về thông tin mới mà RoomPlan có thể thu thập từ một căn phòng và cách nó được hiển thị.
+
+RoomPlan giúp bạn dễ dàng quét nhiều loại phòng.
+
+Tuy nhiên, cho đến nay, nó bị giới hạn để thể hiện chính xác một tập hợp hữu hạn các tình huống trong phòng.
+
+RoomPlan hiện hỗ trợ nhiều loại phòng thậm chí còn lớn hơn, bao gồm tường nghiêng và tường cong, nhưng cũng có các yếu tố nhà bếp lõm như máy rửa chén, lò nướng hoặc bồn rửa.
+
+RoomPlan cũng đã được cải tiến để phát hiện cấu hình của các đối tượng thuộc một danh mục nhất định.
+
+Ví dụ, có rất nhiều loại ghế sofa, từ ghế đơn đến ghế hình chữ L, và trên ghế sofa hình vuông đơn giản mà RoomPlan sẽ phát hiện trong phiên bản mới.
+
+Khi chúng tôi giới thiệu RoomPlan, chúng tôi đã nói về hai yếu tố mà RoomPlan có thể quét: bề mặt và đồ vật.
+
+Bây giờ, chúng tôi đang thêm các yếu tố mới để mô tả các khu vực bên trong một căn phòng.
+
+Chúng tôi gọi chúng là các phần.
+
+Các bức tường bây giờ có thể được mô tả như đa giác, để xử lý các bức tường không đồng nhất như tường nghiêng hoặc tường có dầm.
+
+Cho đến nay, các bức tường và cửa sổ cong là một phần của API chỉ dành cho dữ liệu.
+
+Bây giờ, kết quả cuối cùng từ RoomCaptureView cũng có thể hiển thị các bức tường cong.
+
+Bên cạnh các loại bề mặt, các loại sàn là một bổ sung khác cũng có thể được mô tả như một đa giác.
+
+Các đối tượng hiện có các thuộc tính để mô tả tốt hơn các cấu hình khác nhau bên trong một danh mục.
+
+Các bề mặt và đối tượng bây giờ có một biến mẹ mới.
+
+Nó chứa số nhận dạng của cha mẹ chúng.
+
+Ví dụ, cha mẹ của cửa sổ là một bức tường, cha mẹ của một chiếc ghế có thể là một cái bàn, và cha mẹ của máy rửa chén có thể là một nơi lưu trữ.
+
+Hãy trình bày chi tiết tất cả những cải tiến đó bằng các ví dụ.
+
+Mỗi phần mô tả các khu vực khác nhau trong phòng hoặc ngôi nhà của bạn.
+
+Một phần có nhãn trong số những thứ sau: phòng khách, phòng ngủ, phòng tắm, nhà bếp và phòng ăn.
+
+Nó có một vị trí nhất định, ở một tầng nhất định.
+
+Các bức tường không đồng nhất có thể được hiển thị dưới dạng đa giác bằng cách sử dụng biến polygonCorner.
+
+Sàn hiện được biểu diễn dưới dạng hình chữ nhật trong quá trình quét và được làm đẹp như một đa giác khi quá trình quét kết thúc.
+
+Cha mẹ của máy rửa bát, lò nướng và bồn rửa hiện được khắc trong kết xuất.
+
+Khi chúng tôi giới thiệu RoomPlan, các danh mục đã được sử dụng để mô tả một đối tượng.
+
+Tuy nhiên, đại diện này có những hạn chế.
+
+Hãy lấy ví dụ về một chiếc ghế.
+
+Một số loại ghế có thể đại diện cho loại này, ví dụ như ghế đẩu, ghế ăn hoặc ghế văn phòng.
+
+Tất cả họ đều có một mục đích khác nhau.
+
+Để có sự thể hiện tốt hơn của các đối tượng, chúng tôi hiện đang thêm các thuộc tính.
+
+Trong ví dụ này, sử dụng các thuộc tính, chúng tôi có sự hiểu biết trung thực hơn về những gì đã được quét.
+
+Trong RoomPlan API, các thuộc tính có sẵn thông qua một mảng đa hình của enums.
+
+Tuy nhiên, enums không phải là cách tốt nhất để hiểu các thuộc tính.
+
+Trong phần tiếp theo, chúng ta sẽ khám phá những cách mới để đi đến một đại diện hấp dẫn hơn.
+
+Các thuộc tính, cùng với các thông tin mới khác được thu thập trong quá trình quét, hiện có thể được đưa vào kết quả đã xuất của chúng tôi.
+
+Có hai bổ sung cho loại dữ liệu mà bây giờ chúng ta có thể xuất: một tệp để tìm lại siêu dữ liệu từ nút USDZ và một cấu trúc để làm phong phú thêm USDZ đã xuất với các mô hình.
+
+Khi xuất một Phòng dưới dạng lưới, chúng tôi tạo ra một USDZ chứa một cây nút cho các bề mặt và đối tượng.
+
+Năm nay, chúng tôi đã thêm một nhóm phần chứa các trung tâm phần.
+
+Tuy nhiên, khi làm như vậy, chúng tôi thiếu một lượng thông tin đáng kể từ quá trình quét của mình, ví dụ như kích thước của tường và đối tượng, cũng như các thuộc tính đối tượng.
+
+Một tệp ánh xạ bây giờ có thể được tạo ra khi xuất một căn phòng.
+
+Đó là một từ điển được mã hóa của String to UUID tạo ra cầu nối giữa tên nút duy nhất USDZ và phần tử CapturedRoom, được xác định duy nhất bởi mã định danh của nó.
+
+Hãy xem nó mở ra như thế nào trong RoomPlan API.
+
+Trong phiên bản trước của RoomPlan, một phòng có thể được xuất theo hai cách: dưới dạng USDZ, thông qua hàm xuất và dưới dạng JSON hoặc Plist, mã hóa cấu trúc CapturedRoom.
+
+Mới trong iOS 17, chỉ định URL siêu dữ liệu để ánh xạ phòng đến USDZ trong chức năng xuất, bạn có thể liên hệ hai thông tin đã xuất.
+
+Bằng cách này, khi hiển thị phòng quét của bạn, bạn có thể truy vấn thông tin bổ sung về một bề mặt hoặc một đối tượng.
+
+Cùng với tệp ánh xạ mới, chúng tôi đang giới thiệu Nhà cung cấp mô hình để thay thế các đối tượng, từng được biểu diễn dưới dạng hộp, bằng các mô hình khớp với các thuộc tính đã được quét.
+
+Những gì chúng tôi muốn làm ở đây là liên kết một đối tượng với mô hình 3D và cụ thể hơn là với URL của nó.
+
+Bằng cách này, chúng ta sẽ có thể thay thế hộp giới hạn được sử dụng để đại diện cho đối tượng, bằng một kết xuất hấp dẫn và trung thực hơn.
+
+Với mục đích đó, một cấu trúc mới có sẵn trong RoomPlan: ModelProvider.
+
+ModelProvider ánh xạ các danh mục và tập hợp các thuộc tính cho các URL Mô hình.
+
+Từ một đối tượng có danh mục và thuộc tính, bạn có thể yêu cầu ModelProvider cung cấp cho bạn URL mô hình tương ứng.
+
+Bây giờ khái quát hóa nó cho toàn bộ căn phòng, đó là một tập hợp các phần, bề mặt và đối tượng với các danh mục và thuộc tính, một phiên bản ModelProvider được chỉ định trong chức năng xuất có thể liên kết các URL Mô hình 3D với từng đối tượng của căn phòng.
+
+Bây giờ chúng ta đã có một cấu trúc để xử lý liên kết mô hình, hãy xem cách chúng ta có thể làm việc với Nhà cung cấp mô hình.
+
+Có nhiều cách để điền ModelProvider.
+
+Ví dụ, bạn có thể tìm nạp các mô hình phù hợp với một tập hợp các thuộc tính từ cơ sở dữ liệu hoặc chú thích một danh mục hiện có.
+
+Ở đây, chúng tôi sẽ hướng dẫn bạn một ví dụ rất đơn giản về việc tạo danh mục tài sản nhỏ của riêng bạn.
+
+Chúng tôi sẽ tạo và sử dụng một danh mục trong bốn bước.
+
+Đầu tiên, chúng tôi sẽ phân tích các danh mục và thuộc tính mà RoomPlan hỗ trợ.
+
+Sau đó, chúng tôi sẽ liên kết một mô hình cho mỗi danh mục và bộ thuộc tính.
+
+Sau đó, chúng tôi sẽ khởi tạo một ModelProvider.
+
+Và cuối cùng, chúng tôi sẽ sử dụng nó để xuất phòng của chúng tôi.
+
+Hãy xem cách khám phá các thuộc tính và tạo một nhà cung cấp mô hình bằng cách sử dụng một số mô hình.
+
+Đầu tiên, chúng tôi lặp lại tất cả các danh mục mà RoomPlan hỗ trợ.
+
+Sau đó, chúng tôi tạo một thư mục cho mỗi danh mục được hỗ trợ.
+
+Chúng ta có thể thêm các mô hình vào mỗi thư mục sau.
+
+Sau đó, đối với mỗi danh mục, chúng tôi yêu cầu các kết hợp thuộc tính được RoomPlan hỗ trợ.
+
+Đối với mỗi tập hợp các thuộc tính được hỗ trợ, chúng tôi tạo một thư mục.
+
+Trong mỗi thư mục đó, bạn có thể thêm một mô hình 3D tương ứng với danh mục hoặc tập hợp các thuộc tính.
+
+Bây giờ nội dung trong danh mục của chúng tôi đã sẵn sàng, chúng tôi cần tạo một tệp chỉ mục cho nó.
+
+Đây là một cấu trúc ví dụ sẽ xử lý một chỉ mục danh mục.
+
+Nó chứa một mảng các phần tử, mỗi phần tử chứa một danh mục hoặc một tập hợp các thuộc tính.
+
+Mỗi phần tử có một tham chiếu đến đường dẫn của một mô hình tương ứng.
+
+Bây giờ chúng ta có thể lưu tệp chỉ mục của mình dưới dạng danh sách và danh mục của chúng ta dưới dạng một gói.
+
+Mỗi lần chúng tôi muốn xuất một phòng với các mô hình hoặc mỗi lần chúng tôi muốn sử dụng một nhà cung cấp mô hình để liên kết một đối tượng với một mô hình, bây giờ chúng tôi có thể sử dụng gói danh mục này để tạo một ModelProvider.
+
+Tất cả những gì chúng ta phải làm là lặp lại thông qua các danh mục và thuộc tính danh mục của mình, tìm URL mô hình tương ứng, liên kết URL mô hình với một danh mục nếu không có thuộc tính hoặc liên kết URL mô hình với một bộ thuộc tính.
+
+Bước cuối cùng là gọi hàm xuất, chỉ định URL đầu ra, phiên bản nhà cung cấp mô hình và tùy chọn .model.
+
+Et thì đấy! Những gì chúng tôi nhận được là một USDZ với các mô hình 3D tương ứng với bản quét của bạn.
+
+Để tiến xa hơn, bạn có thể tùy ý đưa USDZ vào các công cụ DCC như Blender để thêm ánh sáng và bóng tối để có kết quả thực tế hơn có thể thu được chỉ trong vài phút.
+
+Để giúp bạn tạo ra kết quả hấp dẫn, chúng tôi đã thêm một danh mục được điền sẵn vào mã mẫu của mình.
+
+Quay lại với bạn, Alex!
+
+Alex: Cảm ơn, Antoine.
+
+Hãy cùng xem những gì chúng ta đã chia sẻ hôm nay.
+
+Đầu tiên, hỗ trợ ARSession tùy chỉnh cho phép các trường hợp sử dụng mới như chụp ảnh và video chất lượng cao cùng với quá trình quét để cải thiện danh sách bất động sản.
+
+Bây giờ, bạn cũng có thể quét nhiều phòng và sử dụng StructureBuilder API mới để tạo ra một mô hình 3D hợp nhất của toàn bộ ngôi nhà.
+
+Để cải thiện trải nghiệm quét cho người dùng thị lực kém, RoomPlan hiện hỗ trợ VoiceOver khi sử dụng RoomCaptureView.
+
+Các thuộc tính đối tượng mới của RoomPlan cho phép bạn thể hiện chính xác hơn một căn phòng được quét.
+
+Và cuối cùng, bây giờ bạn có thể sử dụng API xuất mới của chúng tôi để gán các mô hình 3D từ danh mục tùy chỉnh cho các đối tượng được quét tương ứng.
+
+Đó là RoomPlan trong iOS 17.
+
+Chúng tôi nóng lòng muốn xem bạn làm gì với nó.

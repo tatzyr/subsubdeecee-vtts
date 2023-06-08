@@ -1,0 +1,445 @@
+10119
+
+Xin chào, tôi là Nick Gillett, một kỹ sư ở đây tại Apple trong nhóm Core Data.
+
+Trong phiên này, tôi sẽ chỉ cho bạn cách sử dụng các công cụ dành cho nhà phát triển của chúng tôi để tìm hiểu thêm về các ứng dụng của bạn sử dụng NSPersistentCloudKitContainer.
+
+Chúng ta sẽ bắt đầu với một cái nhìn chi tiết về cách khám phá các ứng dụng một cách hiệu quả và mang tính giáo dục.
+
+Sau đó, chúng tôi sẽ sử dụng một số công cụ yêu thích của tôi để phân tích cách các ứng dụng hoạt động.
+
+Và cuối cùng, chúng tôi sẽ xem xét cách bạn có thể cung cấp phản hồi chi tiết, có thể hành động về trải nghiệm của mình với NSPersistentCloudKitContainer.
+
+Tôi thích nghĩ về kỹ thuật giống như chu trình nước.
+
+Thông thường, tôi bắt đầu làm việc trên một tính năng bằng cách khám phá không gian mà tính năng tồn tại.
+
+Sau đó, dựa trên những điều tôi học được, tôi sử dụng kết hợp các công cụ và bài kiểm tra để phân tích công việc của mình trong một môi trường có thể tái tạo.
+
+Cuối cùng, tôi xem lại kết quả với các đồng nghiệp và đồng nghiệp của mình và thu thập phản hồi của họ.
+
+Mục tiêu của chu kỳ này là nắm bắt lâu dài những điều tôi học được khi làm việc.
+
+Các nền tảng của Apple bao gồm nhiều lựa chọn công cụ như Xcode, Instruments và XCTest mà tôi sử dụng để nắm bắt những gì tôi học được.
+
+Những công cụ đó cũng giúp thu thập vô số thông tin chẩn đoán mà tôi có thể sử dụng để cung cấp phản hồi có thể hành động.
+
+Phiên này tham khảo rất nhiều kiến thức từ những năm trước.
+
+Tôi đã thảo luận chi tiết về NSPersistentCloudKitContainer và ứng dụng Core Data CloudKit Sample mà tôi sẽ trình bày chi tiết hôm nay trong các phiên "Xây dựng các ứng dụng chia sẻ dữ liệu thông qua CloudKit và Core Data" và trong phiên "Sử dụng dữ liệu cốt lõi với CloudKit".
+
+Tôi cũng sẽ trình bày cách sử dụng Xcode và Instruments để chạy các bài kiểm tra và trình tổ chức Thiết bị để thu thập dữ liệu từ các thiết bị.
+
+Nếu bạn cần, tôi khuyên bạn nên xem lại các phiên "Bắt đầu với các công cụ" và "Chẩn đoán các vấn đề về hiệu suất với Trình tổ chức Xcode" để tìm hiểu thêm về hai phần quan trọng này của chuỗi công cụ.
+
+Được rồi, hãy bắt đầu với phần đầu tiên của chu kỳ, khám phá.
+
+Đối với tôi, mục tiêu chính của việc khám phá là học hỏi.
+
+Tôi muốn thách thức và xác minh tất cả các giả định mà tôi có về cách một ứng dụng sẽ hoạt động.
+
+Tôi có thể hỏi: Điều gì sẽ xảy ra nếu tôi nhấn vào nút này?
+
+NSPersistentCloudKitContainer có đồng bộ hóa khi tôi lưu dữ liệu vào một cửa hàng liên tục không?
+
+Một ứng dụng có hết bộ nhớ khi làm việc với một tập dữ liệu lớn không?
+
+Từ quan điểm của Core Data, tất cả những câu hỏi này đều bị ảnh hưởng bởi dữ liệu mà ứng dụng làm việc.
+
+Ví dụ, ứng dụng mẫu Core Data CloudKit sử dụng mô hình dữ liệu này.
+
+Nó quản lý một tập hợp các bài đăng có một số trường văn bản cho tiêu đề và nội dung.
+
+Các bài đăng có thể liên quan đến tệp đính kèm, nói chung là hình ảnh, có thể khá lớn.
+
+Do đó, ImageData được lưu trữ trên mối quan hệ 1-1 để nó có thể được tải theo yêu cầu.
+
+Và tôi sẽ tập trung khám phá vào tập dữ liệu đó, cụ thể là những gì xảy ra với ứng dụng mẫu khi tôi thay đổi hình dạng, cấu trúc và phương sai của dữ liệu đó.
+
+Kể từ khi phát hành, ứng dụng mẫu đã bao gồm một cách tích hợp để khám phá nó.
+
+Nút Tạo 1000 Bài đăng thực hiện chính xác những gì nó ghi trên nhãn.
+
+Khi được nhấn, nó sẽ tạo ra một bộ dữ liệu mẫu gồm 1.000 bài đăng với tiêu đề ngắn.
+
+Chế độ xem bảng Bài đăng dễ dàng xử lý mức dữ liệu này.
+
+Vì vậy, câu hỏi tiếp theo tôi sẽ hỏi là, làm thế nào tôi có thể khám phá một tập dữ liệu có hình dạng hoặc kích thước khác nhau trong ứng dụng này?
+
+Nút Tạo 1000 Bài đăng chạy cái mà tôi muốn gọi là trình tạo dữ liệu thuật toán.
+
+Các trình tạo dữ liệu thuật toán tuân theo một tập hợp các quy tắc được xác định trước như "chèn 1000 đối tượng" hoặc "đảm bảo rằng mọi trường đều có giá trị hoặc không có trường nào có giá trị."
+
+Hóa ra, chúng tôi cũng là những người tạo ra dữ liệu.
+
+Chúng ta có thể thủ công các bộ dữ liệu cụ thể trong mã, trong SQL hoặc bằng cách tương tác trực tiếp với một ứng dụng và các bộ dữ liệu được tạo này có thể được bảo toàn để sử dụng hoặc phân tích sau này.
+
+Để khám phá một tập dữ liệu lớn hơn, tôi có thể xác định một trình tạo dữ liệu mới, LargeDataGenerator, và cung cấp cho nó một phương thức duy nhất, generateData, để xây dựng tập dữ liệu mới của tôi.
+
+Chỉ với hai vòng lặp for, tôi có thể tạo ra một bộ 60 bài đăng mà mỗi bài có 11 tệp đính kèm hình ảnh được liên kết với chúng.
+
+Đó là tổng cộng 660 hình ảnh.
+
+Với kích thước trung bình 10-20 megabyte mỗi hình ảnh, tập dữ liệu được tạo ra tiêu thụ gần 10GB dữ liệu.
+
+Với một giao diện đơn giản như vậy, các trình tạo dữ liệu dễ dàng được gọi trong các bài kiểm tra như thế này.
+
+Dòng mã duy nhất này tạo ra hơn 10GB dữ liệu đại diện cho bài kiểm tra này để sử dụng.
+
+Ngoài ra, chúng tôi có thể xây dựng các phương pháp xác thực trong các bài kiểm tra xác minh trình tạo dữ liệu hoạt động chính xác, như khẳng định rằng mỗi bài đăng thực sự nhận được 11 tệp đính kèm hình ảnh.
+
+Tất nhiên, đây sẽ không phải là cuộc nói chuyện về NSPersistentCloudKitContainer nếu chúng ta không đồng bộ hóa dữ liệu này.
+
+Vì vậy, hãy tạo ra một bài kiểm tra mới để làm điều đó.
+
+Điều đầu tiên tôi cần là một phiên bản của NSPersistentCloudKitContainer để sử dụng.
+
+Tôi đã tạo ra một phương pháp trợ giúp để làm điều đó dễ dàng.
+
+Tiếp theo, tôi sử dụng LargeDataGenerator để điền vào vùng chứa với tập dữ liệu mong muốn của tôi.
+
+Và cuối cùng, tôi đợi vùng chứa hoàn thành việc xuất dữ liệu.
+
+Trong bài kiểm tra cụ thể này, tôi đợi tối đa 20 phút để cung cấp thời gian thiết lập dữ liệu lớn để tải lên.
+
+Con đại bàng để mắt trong số các bạn có thể nhận thấy rằng bài kiểm tra này dường như đang chờ đợi rất nhiều loại sự kiện khác nhau.
+
+Ở đây, khi tôi tạo vùng chứa, tôi đợi vùng chứa hoàn tất việc thiết lập.
+
+Và ở đây, tôi sử dụng một phương pháp trợ giúp mà tôi đã viết để tạo XCTestExpectations cho một sự kiện xuất từ vùng chứa.
+
+Hãy xem xét điều đó một cách chi tiết.
+
+Phương pháp này lấy một loại sự kiện mong muốn và một thể hiện của NSPersistentCloudKitContainer làm đối số.
+
+Nó tạo ra một kỳ vọng cho mỗi cửa hàng liên tục trong vùng chứa bằng cách sử dụng phương thức expectationForNotification của XCTestCase để quan sát thông báo eventChanged của NSPersistentCloudKitContainer.
+
+Trong khối trình xử lý thông báo, tôi xác minh rằng sự kiện đến thuộc loại chính xác cho cửa hàng cụ thể mà kỳ vọng này dành cho và nó được kết thúc bằng cách kiểm tra endDate không bằng số không.
+
+Bằng cách sử dụng kỹ thuật này, chúng tôi có thể liên kết mạnh mẽ các điểm kiểm soát trong các bài kiểm tra của mình với các sự kiện từ NSPersistentCloudKitContainer.
+
+Quay lại bài kiểm tra của mình, tôi thêm một vùng chứa mới để nhập dữ liệu vừa được xuất.
+
+Kỹ thuật này sử dụng một thủ thuật.
+
+Nó tạo ra một phiên bản mới của NSPersistentCloudKitContainer với các tệp lưu trữ trống.
+
+Điều này cho phép thử nghiệm tận dụng lợi thế của lần nhập lần đầu tiên của NSPersistentCloudKitContainer để khám phá điều gì sẽ xảy ra khi tất cả dữ liệu này được tải xuống bởi một thiết bị.
+
+Bây giờ, các bài kiểm tra rất tuyệt, nhưng đôi khi tôi muốn cảm nhận cách một tập dữ liệu hoạt động trong một ứng dụng.
+
+Để làm điều đó, tôi có thể liên kết các trình tạo dữ liệu với giao diện người dùng, như chúng tôi đã làm trong ứng dụng mẫu.
+
+Khi tôi nhấn vào nút Tạo Dữ liệu Lớn, tôi có thể xem trình tạo dữ liệu điền vào tập dữ liệu.
+
+Trên thiết bị thứ hai, tôi có thể xem chế độ xem bảng được điền khi NSPersistentCloudKitContainer tiến hành tải xuống dữ liệu đã tạo.
+
+Nhấn vào một bài đăng riêng lẻ cho phép tôi xem các tệp đính kèm tải xuống và điền dần dần, giống như đối với người dùng ứng dụng này.
+
+Giao diện người dùng cụ thể này được điều khiển bởi một bộ điều khiển cảnh báo.
+
+Giao diện đơn giản của LargeDataGenerator giúp dễ dàng thêm một hành động cảnh báo mới chỉ với hai dòng mã này.
+
+Nó rõ ràng, súc tích và dễ hiểu.
+
+Trong phần này, chúng tôi đã khám phá hành vi của một ứng dụng sử dụng khái niệm về trình tạo dữ liệu.
+
+Trình tạo dữ liệu có thể được điều khiển trong các ứng dụng của chúng tôi theo bất kỳ cách nào chúng tôi chọn, cho dù đó là bằng các bài kiểm tra hoặc giao diện người dùng tùy chỉnh, như tôi đã chứng minh, hoặc bằng một cái gì đó giống như đối số dòng lệnh hoặc bất kỳ thứ gì khác xảy ra để hoạt động cho trường hợp sử dụng cụ thể của bạn
+
+Bây giờ chúng tôi đã biết cách điền dữ liệu vào ứng dụng, chúng tôi đã sẵn sàng phân tích cách điều đó thay đổi hành vi của ứng dụng.
+
+Trong phần này, chúng ta sẽ tìm hiểu về một số công cụ và kỹ thuật để phân tích cách một ứng dụng hoạt động với một tập dữ liệu lớn.
+
+Cụ thể, chúng tôi sẽ sử dụng Công cụ để phân tích độ phức tạp về thời gian và bộ nhớ của tập dữ liệu do LargeDataGenerator tạo ra.
+
+Sau đó, chúng tôi sẽ xem xét sự phong phú của thông tin có sẵn cho chúng tôi trong nhật ký hệ thống.
+
+Ở đó chúng ta có thể tìm thấy bản ghi hoạt động từ NSPersistentCloudKitContainer, CloudKit, bộ lập lịch hệ thống và từ các thông báo đẩy.
+
+Hãy nhìn chằm chằm vào Nhạc cụ.
+
+Một lý do tôi thích các bài kiểm tra là Xcode giúp dễ dàng phân tích hành vi của bài kiểm tra.
+
+Trong trường hợp thử nghiệm của tôi, tôi có thể nhấp chuột phải vào tiết lộ thử nghiệm trong máng xối và chọn Hồ sơ.
+
+Xcode sẽ xây dựng các bài kiểm tra và sau đó tự động khởi chạy các công cụ.
+
+Tôi có thể nhấp đúp vào công cụ Time Profiler để kiểm tra xem bài kiểm tra của tôi dành thời gian làm việc ở đâu.
+
+Khi tôi nhấp vào nút ghi, Instruments sẽ khởi chạy ứng dụng và thực hiện bài kiểm tra đã chọn.
+
+Bài kiểm tra này dường như mất khá nhiều thời gian để chạy.
+
+Hãy bỏ qua phía trước và xem tại sao.
+
+Các công cụ đã chọn chủ đề chính và ở phía bên phải, tôi có thể thấy dấu vết ngăn xếp nặng nhất của quá trình chạy thử.
+
+Hãy làm cho nó dễ đọc hơn một chút.
+
+Vậy là xong.
+
+Bây giờ, nếu tôi cuộn xuống dưới cùng, tôi có thể thấy LargeDataGenerator đang dành rất nhiều thời gian để tạo hình thu nhỏ.
+
+Chúng ta sẽ quyết định đây là lỗi hay tính năng như thế nào?
+
+Trong LargeDataGenerator, tôi có dòng mã này tạo ra một hình thu nhỏ mới cho mỗi tệp đính kèm.
+
+Tuy nhiên, tôi biết từ mô hình dữ liệu của ứng dụng rằng hình thu nhỏ rất đặc biệt.
+
+Chúng được tính toán theo yêu cầu từ Dữ liệu hình ảnh liên quan.
+
+Điều đó có nghĩa là dòng này là không cần thiết, và trình tạo dữ liệu của tôi đang lãng phí rất nhiều thời gian cho chúng.
+
+Vì vậy tôi chỉ có thể loại bỏ nó.
+
+Hãy xem điều đó thay đổi hiệu suất của bài kiểm tra như thế nào.
+
+Sau khi xây dựng lại ứng dụng với trình tạo dữ liệu được cập nhật, tôi có thể chạy lại bài kiểm tra trong Instruments.
+
+Và thành thật mà nói tôi không thấy nhiều thay đổi, nhưng sau vài giây nữa, bài kiểm tra sẽ hoàn thành.
+
+Điều đó nhanh hơn rất nhiều so với lần chạy trước.
+
+Hãy xem bài kiểm tra đã dành phần lớn thời gian ở đâu.
+
+Trong ngăn kéo bên phải, bây giờ tôi thấy rằng dấu vết ngăn xếp nặng nhất đang lưu hình ảnh vào cửa hàng liên tục và đó chính xác là những gì tôi mong đợi cho một bài kiểm tra quản lý nhiều dữ liệu này.
+
+Một thay đổi đó đã giảm thời gian chạy của bài kiểm tra generateData từ cái này xuống cái này.
+
+Nó thực hiện trong một phần mười thời gian.
+
+Phân tích các bài kiểm tra theo cách này không phải lúc nào cũng phát hiện ra lỗi, Đôi khi chúng ta chỉ tìm hiểu thêm về nơi một ứng dụng đang dành thời gian khi làm việc với một tập dữ liệu cụ thể.
+
+Nhưng dù bằng cách nào, đó cũng là việc học có giá trị.
+
+Vì vậy, đó là cách công cụ Time Profiler có thể giúp khám phá nơi một ứng dụng dành thời gian với một tập dữ liệu.
+
+Bây giờ, vì kích thước của tập dữ liệu này, tôi cũng tò mò bài kiểm tra sử dụng bao nhiêu bộ nhớ.
+
+Vì vậy, hãy chạy nó bằng cách sử dụng công cụ Phân bổ.
+
+Tôi sẽ sử dụng Xcode để khởi chạy Instruments để lập hồ sơ bài kiểm tra của mình.
+
+Thay vì chọn công cụ Time Profiler, tôi sẽ nhấp đúp vào Phân bổ...
+
+Và sau đó nhấp vào Ghi lại.
+
+Mặc dù bài kiểm tra này đang thực hiện nhanh chóng, nhưng trên thực tế nó đang sử dụng rất nhiều bộ nhớ, trên 10GB.
+
+Điều này cho tôi biết rằng gần như toàn bộ tập dữ liệu đang được lưu giữ trong bộ nhớ trong quá trình chạy thử.
+
+Hãy cùng tìm hiểu tại sao.
+
+Tôi có thể chọn một loạt các phân bổ để xem xét.
+
+Ở khung dưới cùng, tôi có thể thấy rằng có một số phân bổ lớn.
+
+Tôi có thể đào sâu vào những thứ đó bằng cách nhấp vào tiết lộ này, và sau đó nhấp vào một trong những đốm màu dữ liệu lớn đã được phân bổ cho bài kiểm tra.
+
+Đốm màu cụ thể này đã được phân bổ nhưng không được giải phóng trong gần hai giây.
+
+Đó là một sự vĩnh cửu trong thời gian kiểm tra. Tại sao nó lại sống lâu như vậy?
+
+Tôi có thể khám phá điều đó bằng cách mở rộng dấu vết ngăn xếp ở bên phải.
+
+Từ kinh nghiệm, dấu vết ngăn xếp phân bổ và phân bổ vị trí cho tôi biết rằng đối tượng này đã bị CoreData lỗi và sau đó được phát hành khi bối cảnh đối tượng được quản lý hoàn thành công việc của nó.
+
+Đó thường là một dấu hiệu cho thấy đối tượng đã được giữ lại bởi một tìm nạp, một autoreleasepool hoặc một đối tượng trong bài kiểm tra.
+
+Phần mã có vấn đề nằm ở đây trong trình xác minh của tôi.
+
+Tôi tải một hình ảnh từ tệp đính kèm và xác minh nó.
+
+Tuy nhiên, điều này giữ cho tệp đính kèm và dữ liệu hình ảnh liên quan được đăng ký với ngữ cảnh đối tượng được quản lý.
+
+Có một số cách chúng tôi có thể cố gắng giải quyết vấn đề này.
+
+Ví dụ, trong chế độ xem bảng, chúng ta có thể sử dụng tìm nạp theo lô để giải phóng các hình ảnh khi bảng cuộn qua các bài đăng.
+
+Tuy nhiên, bài kiểm tra này đang được thực hiện quá nhanh để nó có hiệu quả.
+
+Tôi cần thay đổi cách tiếp cận của mình.
+
+Thay vì xác minh bằng cách tìm nạp bài đăng, thay vào đó tôi có thể tìm nạp tệp đính kèm.
+
+Nếu tôi cũng chỉ tìm nạp objectIDs, ngữ cảnh đối tượng được quản lý sẽ không nắm bắt bất kỳ đối tượng đã tải nào cho đến khi tôi yêu cầu.
+
+Tôi có thể sử dụng phương thức objectWithID của NSManagedObjectContext để tìm nạp các tệp đính kèm khi tôi xác thực.
+
+Cuối cùng, cứ 10 tệp đính kèm tôi xác thực, tôi đặt lại ngữ cảnh, giải phóng tất cả trạng thái được lưu trong bộ nhớ cache và bộ nhớ liên quan.
+
+Nếu tôi chạy lại bài kiểm tra với sự thay đổi này, tôi có thể thấy rằng nó dẫn đến mức tiêu thụ bộ nhớ có thể dự đoán và điều chỉnh được nhiều hơn.
+
+Trên thực tế, trình xác minh sử dụng ít bộ nhớ hơn LargeDataGenerator khi chèn các đối tượng này.
+
+Hãy đi sâu vào một phân bổ cụ thể để tìm hiểu cách thức hoạt động của bản sửa lỗi.
+
+Đầu tiên, tôi sẽ chọn một loạt các phân bổ để làm việc.
+
+Sau đó, tôi sẽ chọn một kích thước cụ thể để kiểm tra, tôi cần cho phép các đối tượng bị phá hủy tìm những đối tượng đã được giải phóng trong thời gian này và sau đó tôi có thể chọn một phân bổ cụ thể để kiểm tra.
+
+Ở phía bên phải, Instruments hiển thị cho tôi dấu vết ngăn xếp phân bổ, nhưng tôi muốn biết nó được giải phóng ở đâu, vì vậy tôi sẽ chọn sự kiện phân bổ giao dịch.
+
+Tôi tình cờ biết rằng dấu vết ngăn xếp này có nghĩa là NSManagedObjectContext đang phân bổ không đồng bộ đối tượng giữ lại đốm màu này, giải phóng bộ nhớ đã tiêu thụ.
+
+Kỹ thuật này cho phép tôi thiết lập một điểm nước cao cho bài kiểm tra, cho phép nó chạy trên các hệ thống có ít bộ nhớ hơn.
+
+Bằng cách kết hợp các bài kiểm tra với Dụng cụ, tôi đã có thể phát hiện ra rằng bài kiểm tra cụ thể này có một số hành vi không mong muốn.
+
+Tôi đã thực hiện các thay đổi được nhắm mục tiêu để giải quyết trực tiếp hành vi đó và sau đó xác minh kết quả.
+
+Ngoài ra, nhật ký hệ thống cũng chứa rất nhiều thông tin về một ứng dụng và các dịch vụ hệ thống mà nó phụ thuộc vào, như CloudKit, lên lịch và thông báo đẩy.
+
+Tôi sẽ đồng bộ hóa một bài đăng duy nhất giữa MacBook Pro và iPhone của tôi.
+
+Khi tôi chèn một bài đăng mới trên máy Mac của mình, đưa ra một tiêu đề ngắn và để nó tải lên iCloud, nhật ký hệ thống sẽ ghi lại một số sự kiện.
+
+Khi nó đồng bộ hóa với iPhone của tôi, đôi khi thậm chí chụp trạng thái trung gian, nhật ký hệ thống sẽ ghi lại một tập hợp các sự kiện tương ứng.
+
+Trên MacBook Pro, NSPersistentCloudKitContainer hoạt động bên trong quy trình ứng dụng, trong trường hợp này là CoreDataCloudKitDemo.
+
+Khi dữ liệu được ghi vào một cửa hàng liên tục, nó sẽ hỏi một dịch vụ hệ thống được gọi là DASD liệu bây giờ có phải là thời điểm tốt để xuất dữ liệu đó sang CloudKit hay không.
+
+Nếu có, DASD sẽ yêu cầu NSPersistentCloudKitContainer chạy một hoạt động.
+
+NSPersistentCloudKitContainer sau đó sẽ lên lịch làm việc với một quy trình được gọi là cloudd để xuất các đối tượng đã thay đổi sang CloudKit.
+
+Chúng tôi có thể quan sát nhật ký từ từng quy trình này bằng ứng dụng Bảng điều khiển.
+
+Đối với nhật ký ứng dụng, chúng tôi chỉ cần tìm kiếm quy trình ứng dụng, CoreDataCloudKitDemo.
+
+Ở đây, tôi đã chọn một cái hiển thị quá trình xuất hoàn tất.
+
+Để lên lịch nhật ký, chúng tôi muốn xem nhật ký từ quy trình dasd và từ cửa hàng cụ thể của ứng dụng.
+
+Ở đây, tôi đã chọn bắt đầu hoạt động xuất cho cửa hàng riêng của ứng dụng.
+
+Hãy kiểm tra nhật ký này chi tiết hơn một chút.
+
+Các hoạt động được tạo bởi NSPersistentCloudKitContainer với dasd tuân theo một định dạng cụ thể.
+
+Mã định danh hoạt động bao gồm một tiền tố cụ thể mà NSPersistentCloudKitContainer sử dụng cùng với mã định danh cửa hàng cho cửa hàng mà hoạt động thuộc về.
+
+Nhật ký dasd bao gồm thông tin về cách dịch vụ quyết định xem một hoạt động có thể chạy hay không.
+
+Các chính sách ảnh hưởng đến khả năng thực hiện công việc của ứng dụng sẽ được liệt kê trong nhật ký cùng với quyết định cuối cùng.
+
+Cuối cùng, quy trình ghi nhật ký được che mờ thông tin từ CloudKit và tôi muốn lọc các nhật ký này theo mã định danh vùng chứa mà tôi đang làm việc.
+
+Ở đây tôi đã chọn thao tác sửa đổi bản ghi tương ứng cho việc xuất mà tôi đã đề cập trước đó.
+
+Khi các thay đổi được nhập trên thiết bị nhận, có một quy trình bổ sung cần quan sát.
+
+Quá trình apsd chịu trách nhiệm nhận thông báo đẩy và chuyển tiếp chúng đến ứng dụng.
+
+Điều đó khiến NSPersistentCloudKitContainer bắt đầu một loạt các hoạt động tương tự như quy trình xuất.
+
+Nó yêu cầu dasd về thời gian để thực hiện nhập và sau đó hoạt động với cloudd để tìm nạp tất cả các đối tượng được cập nhật từ CloudKit và nhập chúng vào cửa hàng cục bộ.
+
+Apsd ghi lại khi nó nhận được thông báo đẩy cho một ứng dụng và nhật ký này ghi lại một số chi tiết quan trọng.
+
+Thông báo nhật ký bao gồm mã định danh vùng chứa ở đây cũng như tên đăng ký và mã định danh vùng đã kích hoạt thông báo đẩy.
+
+Chúng được quản lý bởi NSPersistentCloudKitContainer và sẽ luôn bắt đầu với tiền tố com.apple.coredata.cloudkit.
+
+Bây giờ ứng dụng bảng điều khiển rất tuyệt.
+
+Nhưng khi tôi đang phát triển trên máy Mac của mình, tôi thích sử dụng lệnh luồng nhật ký trong Terminal để hiển thị các nhật ký này cùng với ứng dụng của mình.
+
+Tôi mở một cửa sổ hoặc tab thiết bị đầu cuối cho mỗi vị ngữ sau, đầu tiên là ứng dụng.
+
+Tiếp theo, nhật ký từ cloudd để tôi có thể thấy những gì đang xảy ra với máy chủ CloudKit.
+
+Tiếp theo, apsd cho nhật ký thông báo đẩy.
+
+Và cuối cùng, dasd để tôi có thể thấy những gì đang xảy ra với các hoạt động mà NSPersistentCloudKitContainer thay mặt tôi lên lịch.
+
+Những vị ngữ này cũng có thể được sử dụng để hướng dẫn các truy vấn của bạn trong ứng dụng bảng điều khiển.
+
+Có rất nhiều thông tin có sẵn cho chúng tôi trên các thiết bị chúng tôi sử dụng.
+
+Thách thức, thực sự, là biết sử dụng công cụ nào để tìm và phân tích nó.
+
+Chỉ với Công cụ, chúng ta có thể tìm hiểu về một loạt các chủ đề như thời gian chạy và hiệu suất bộ nhớ và hơn thế nữa.
+
+Nhật ký hệ thống ghi lại các sự kiện mô tả công việc mà một ứng dụng thực hiện và những gì hệ thống đang làm cho nó đằng sau hậu trường.
+
+Giai đoạn cuối cùng của chu kỳ phát triển của tôi là thu thập và cung cấp phản hồi có thể hành động.
+
+Trong phần này, tôi sẽ trình bày cách thu thập thông tin chẩn đoán từ các thiết bị.
+
+Mục tiêu của chúng tôi là sử dụng thông tin này để tạo ra phản hồi có thể hành động và phù hợp với một mục tiêu cụ thể.
+
+Những kỹ thuật này có thể giúp bạn thu thập phản hồi từ bất kỳ thiết bị nào, cho dù đó là thiết bị bạn sở hữu hay thiết bị của khách hàng.
+
+Có ba bước để thu thập thông tin chẩn đoán từ một thiết bị.
+
+Đầu tiên, chúng ta sẽ cần cài đặt hồ sơ ghi nhật ký CloudKit, cho phép các bản ghi có thể được sử dụng để xác định các vấn đề và phân loại chúng một cách hiệu quả.
+
+Tiếp theo, chúng tôi sẽ thu thập chẩn đoán hệ thống từ thiết bị bị ảnh hưởng.
+
+Và cuối cùng, nếu chúng ta có quyền truy cập vật lý vào thiết bị, chúng ta cũng có thể thu thập các tệp lưu trữ liên tục từ Xcode.
+
+Để cài đặt hồ sơ ghi nhật ký, chúng tôi chỉ cần truy cập trang Hồ sơ và Nhật ký trên cổng thông tin nhà phát triển.
+
+Tôi có thể tìm kiếm hồ sơ CloudKit và nhấn vào liên kết hồ sơ để tải xuống.
+
+Trên một số thiết bị, một thông báo sẽ xuất hiện để cài đặt hồ sơ.
+
+Tuy nhiên, ở đây trên iOS, chúng ta sẽ cần cài đặt nó theo cách thủ công thông qua ứng dụng Cài đặt.
+
+Trong Cài đặt, tôi có thể điều hướng để nhấn vào ô Hồ sơ đã tải xuống.
+
+Sau đó tôi có thể nhấn vào hồ sơ đã tải xuống để cài đặt nó.
+
+Làm theo các bước để hoàn tất cài đặt.
+
+Sau khi hồ sơ được cài đặt, thiết bị có thể được khởi động lại và nó sẽ có hiệu lực.
+
+Khi thiết bị đã khởi động lại, chúng ta có thể tái tạo hành vi mà chúng ta muốn nắm bắt và sau đó thực hiện chẩn đoán hệ thống.
+
+Thực hiện chẩn đoán hệ thống được thực hiện bằng cách sử dụng keychord, một loạt các nút đặc biệt.
+
+Những thứ này được mô tả trong trang hướng dẫn cho hồ sơ.
+
+Tôi tình cờ biết rằng đối với một chiếc iPhone, chúng tôi giữ các nút âm lượng và nút bên trong vài giây và sau đó nhả nó ra.
+
+Sau một thời gian ngắn, chẩn đoán hệ thống sẽ có sẵn trong Cài đặt.
+
+Các hướng dẫn để tìm nó được bao gồm trong tệp hướng dẫn cho một hồ sơ.
+
+Trong Cài đặt, tôi điều hướng đến Quyền riêng tư & Bảo mật, Phân tích và Cải tiến, sau đó chọn Dữ liệu Phân tích và cuộn qua nhật ký cho đến khi tôi tìm thấy chẩn đoán hệ thống.
+
+Nếu tôi nhấn vào chẩn đoán hệ thống và sau đó nhấn vào nút Chia sẻ, tôi có thể chọn một số cách để chia sẻ nó.
+
+Ví dụ, tôi thích AirDrop chúng vào máy Mac của tôi để phân tích.
+
+Cuối cùng, nếu có thể, tôi có thể thu thập các tệp lưu trữ từ Xcode bằng Trình tổ chức thiết bị.
+
+Tôi có thể thu thập các tệp từ iPhone này bằng cách nhấp vào Ứng dụng mẫu trong danh sách ứng dụng đã cài đặt, nhấp vào nút tiết lộ, chọn Bộ chứa tải xuống và lưu nó vào thư mục Tải xuống của tôi.
+
+Với tất cả những điều đó đã hoàn thành, cả nhật ký hệ thống và tệp lưu trữ hiện có sẵn để phân tích.
+
+Chúng ta đã nói về lệnh luồng nhật ký, nhưng với chẩn đoán hệ thống, tôi có thể sử dụng lệnh hiển thị nhật ký để in nhật ký từ chẩn đoán hệ thống.
+
+Ở đây, tôi đã sao chép vị ngữ cho nhật ký apsd mà chúng ta đã nói trước đó.
+
+Đối số cuối cùng cho lệnh hiển thị nhật ký là lưu trữ nhật ký để sử dụng.
+
+Nếu không có gì được chỉ định, nó sẽ hiển thị nhật ký hệ thống từ máy đang chạy.
+
+Ở đây, tôi đã chỉ định system_logs.logarchive để nó đọc nhật ký tôi lấy từ chẩn đoán hệ thống.
+
+Ví dụ, tôi có thể chỉ định một khoảng thời gian chính xác để tập trung vào thời gian khi một sự kiện mà tôi quan tâm xảy ra.
+
+Tôi cũng có thể kết hợp nhiều vị ngữ mà chúng ta đã thảo luận trước đó để tạo thành một nhật ký thống nhất của tất cả các hoạt động liên quan đến một ứng dụng, bắt đầu với nhật ký ứng dụng ở đây, nhật ký cloudd ở đây, nhật ký apsd ở đây và cuối cùng là nhật ký dasd ở đây.
+
+Lệnh mạnh mẽ này có thể được đưa vào báo cáo phản hồi hoặc chia sẻ với đồng đội để cho phép mọi người tập trung vào một bộ nhật ký cụ thể để phân tích.
+
+Trong phiên này, chúng tôi đã nói về cách bạn có thể khám phá hành vi ứng dụng với trình tạo dữ liệu, phân tích ứng dụng với các công cụ và nhật ký hệ thống và cung cấp hoặc thu thập phản hồi có thể hành động từ các ứng dụng sử dụng NSPersistentCloudKitContainer.
+
+Tôi là Nick Gillett, và tôi rất hân hạnh được mang đến cho bạn bài thuyết trình này.
+
+Cảm ơn vì đã xem, duy trì hoạt động, đóng vòng của bạn và có một WWDC tuyệt vời.
+
+.

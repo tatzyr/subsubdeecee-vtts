@@ -1,0 +1,283 @@
+10001
+
+Xin chào, tôi là Lionel Lemarié từ nhóm phần mềm GPU.
+
+Trong phiên này, chúng ta sẽ sử dụng Metal Counter API để có được thời gian GPU chính xác trong thời gian chạy.
+
+Chúng tôi sẽ đề cập đến một vài chủ đề.
+
+Chúng ta sẽ bắt đầu với phần giới thiệu nhanh về Metal Counter API.
+
+Sau đó, chúng ta sẽ xem xét ngắn gọn các tính năng chính của HUD hồ sơ trực tiếp điển hình.
+
+Chúng tôi sẽ sử dụng API từng bước để thu thập thông tin hồ sơ.
+
+Và chúng tôi sẽ kết luận bằng cách xem xét dữ liệu này phù hợp với HUD như thế nào.
+
+Vì vậy, hãy bắt đầu với phần giới thiệu nhanh về API.
+
+Metal Counter API là mới trong iOS 14.
+
+Nó đã có sẵn trong macOS Catalina và đã được mở rộng trong macOS Big Sur.
+
+Trên iOS và macOS với Apple Silicon, nó cho phép bạn truy cập vào thời gian ranh giới sân khấu.
+
+Đó là, thời gian bắt đầu và kết thúc chính xác cho các đường đỉnh, phân đoạn và tính toán.
+
+Trên GPU Intel và AMD, bạn có thể nhận được thời gian ranh giới rút ra, dấu thời gian GPU chính xác ngay cả trong các lần vượt qua riêng lẻ.
+
+Tiếp theo, hãy tóm tắt nhanh các tính năng chính của HUD hồ sơ trực tiếp.
+
+Bạn sẽ sử dụng HUD trực tiếp để theo dõi hiệu suất ứng dụng của mình trong thời gian chạy.
+
+Nó có thể giúp bạn tìm ra các khu vực có vấn đề cần được điều tra ngoại tuyến trong Xcode hoặc Instruments.
+
+Ví dụ, bạn cũng có thể sử dụng chúng để điều chỉnh độ phân giải và cài đặt chất lượng cho mỗi thiết bị.
+
+Ví dụ, một HUD sống điển hình có thể trông giống như thế này.
+
+Thời gian khung hình, dưới dạng biểu đồ đường cuộn, để giúp bạn nắm bắt các mốc khung hình, số liệu thống kê về việc sử dụng bộ nhớ, độ phân giải và hơn thế nữa và dòng thời gian của các sự kiện CPU.
+
+Và hôm nay, chúng ta sẽ thêm các sự kiện GPU vào dòng thời gian.
+
+Thông thường, đối với các điểm đánh dấu CPU của bạn, bạn sẽ thiết bị các chức năng quan trọng nhất của mình bằng cách sử dụng mach_absolute_time để có được dấu thời gian bắt đầu và kết thúc.
+
+Một khởi đầu tốt với các điểm đánh dấu CPU là đặt chúng xung quanh công việc bộ đệm lệnh của bạn - một điểm đánh dấu bắt đầu khi bạn tạo nó và một điểm đánh dấu kết thúc khi bạn cam kết nó.
+
+Điều đó cung cấp cho bạn cái nhìn tổng quan về chi phí CPU của kết xuất của bạn.
+
+Bây giờ chúng tôi muốn thêm các điểm đánh dấu GPU tương đương.
+
+Bạn có thể quen thuộc với các sự kiện GPU trên dòng thời gian Metal System Trace, như chúng ta đang thấy ở đây.
+
+Trên iOS trong ví dụ này, nó cho thấy các giai đoạn khác nhau của kiến trúc kết xuất hoãn lại dựa trên ô.
+
+Ở đây chúng ta thấy công việc xử lý đỉnh và phân mảnh.
+
+Để làm điều này, phần sụn GPU ghi lại sự bắt đầu và kết thúc của giai đoạn đỉnh.
+
+Sau đó, nó ghi lại sự bắt đầu và kết thúc của giai đoạn phân đoạn.
+
+Và Metal System Trace hiển thị các giai đoạn trên dòng thời gian.
+
+Đối với GPU chế độ tức thì, bạn có thể ghi lại các sự kiện cho các nhóm cuộc gọi rút thăm.
+
+Ví dụ, bạn sẽ ghi lại sự bắt đầu của đối tượng kết xuất một trước tất cả các cuộc gọi vẽ của nó và sau đó ghi lại sự bắt đầu của đối tượng kết xuất hai.
+
+Và cuối cùng, phần cuối của đối tượng hai.
+
+Sau đó, bạn có một dòng thời gian hiển thị chính xác thời gian GPU hiển thị từng đối tượng.
+
+Bây giờ hãy sử dụng Metal Counter API để đạt được điều đó.
+
+Chúng tôi sẽ bắt đầu bằng cách kiểm tra chế độ lấy mẫu bộ đếm nào có sẵn.
+
+Chúng ta cần biết liệu GPU có nên ghi ở ranh giới giai đoạn, cho đỉnh, phân đoạn hoặc giai đoạn tính toán hay không, hoặc nếu nó nên ghi ở ranh giới vẽ, như chúng ta vừa thấy.
+
+Chúng tôi chỉ cần sử dụng supportCounterSampling API để kiểm tra xem thiết bị hiện tại có hỗ trợ ranh giới giai đoạn, cho GPU TBDR hay ranh giới cho GPU chế độ không giới hạn.
+
+Tiếp theo chúng tôi kiểm tra xem bộ đếm nào có sẵn trên thiết bị.
+
+Bộ đếm bao gồm dấu thời gian, sử dụng giai đoạn và thống kê đường ống.
+
+Đối với các điểm đánh dấu GPU của chúng tôi, chúng tôi cần bộ đếm thu thập dấu thời gian.
+
+Vì vậy, chúng tôi liệt kê tất cả các bộ đếm có sẵn trên thiết bị và chọn một bộ cho dấu thời gian.
+
+Khi bạn đã đặt bộ đếm phù hợp, hãy kiểm tra nó để đảm bảo rằng nó có dấu thời gian, vì một số thiết bị có thể không hỗ trợ chúng.
+
+Chúng tôi đã hoàn thành thiết lập ban đầu.
+
+Bây giờ hãy xem những gì cần thiết trong thời gian chạy trong mỗi khung hình.
+
+Chỉ có bốn bước đơn giản.
+
+Đầu tiên chúng ta sẽ tạo một bộ đệm mẫu với kích thước, chế độ lưu trữ và bộ đếm mà chúng ta vừa tra cứu.
+
+Sau đó, chúng tôi sẽ thêm bộ đệm mẫu vào bộ mô tả vượt qua.
+
+Lưu ý rằng điều đó có nghĩa là bạn cần ít nhất một bộ đệm cho mỗi lần vượt qua.
+
+Tiếp theo, nếu chúng tôi đang sử dụng lấy mẫu tại ranh giới vẽ, chúng tôi sẽ thêm các lệnh lấy mẫu tại các điểm quan trọng.
+
+Cuối cùng, trong trình xử lý hoàn thành, chúng tôi sẽ giải quyết các bộ đếm.
+
+Và chúng ta sẽ nói về việc căn chỉnh dấu thời gian CPU và GPU nếu cần.
+
+Hãy kiểm tra chi tiết từng bước.
+
+Đầu tiên, chúng tôi tạo một bộ đệm mẫu bằng cách sử dụng bộ mô tả.
+
+Chúng tôi chỉ định số lượng mẫu tối đa mà nó có thể chứa, vì vậy nó có kích thước phù hợp.
+
+Chúng tôi sẽ sử dụng sáu mẫu ở đây, nhưng bạn thường sẽ sử dụng nhiều hơn thế.
+
+Sau đó chúng tôi thiết lập chế độ lưu trữ.
+
+Chế độ chia sẻ ở đây rất tuyệt.
+
+Nó không có nhiều dữ liệu, và nó làm cho việc truy cập các quầy trở nên dễ dàng hơn.
+
+Chúng tôi chỉ định bộ đếm được đặt để sử dụng, bộ đếm cho dấu thời gian.
+
+Cuối cùng, chúng tôi tạo ra bộ đệm mẫu.
+
+Cho đến nay, rất tốt. Bây giờ chúng tôi có một bộ đệm cho sáu mẫu.
+
+Ví dụ, hãy sử dụng nó trong bộ mã hóa kết xuất.
+
+Bạn sẽ làm điều đó tương tự cho các bộ mã hóa tính toán và blit.
+
+Đối với điều này, bạn sử dụng tệp đính kèm bộ đệm mẫu từ bộ mô tả vượt qua kết xuất.
+
+Nếu chúng ta đang sử dụng ranh giới giai đoạn, đây là nơi chúng ta thiết lập nó.
+
+Chúng tôi chỉ định sự bắt đầu và kết thúc của giai đoạn đỉnh.
+
+Chúng tôi đang đặt chúng ở chỉ số 0 và một trong bộ đệm mẫu.
+
+Đó là cách GPU biết nơi để viết từng mẫu và cách bạn biết lấy chúng từ đâu.
+
+Tương tự cho sự bắt đầu và kết thúc của giai đoạn phân đoạn.
+
+Cuối cùng, chúng tôi đã chỉ vào bộ đệm mẫu mà chúng tôi vừa tạo để lưu trữ các mẫu đó.
+
+Để lấy mẫu ranh giới vẽ, bạn thêm các lệnh mẫu tại các điểm chính của luồng lệnh của mình.
+
+Vị trí rõ ràng đầu tiên cho những thứ này là trước và sau tất cả các cuộc gọi rút thăm.
+
+Vì vậy, sau khi bạn đã tạo một bộ mã hóa mới, bạn ngay lập tức thêm một lệnh mẫu.
+
+Chúng tôi sẽ đặt nó ở chỉ số bốn, vì chúng tôi đã đặt trước bốn vị trí đầu tiên cho các mẫu ranh giới giai đoạn.
+
+Sau tất cả các cuộc gọi rút thăm của bạn, ngay trước khi kết thúc bộ mã hóa của bạn, bạn thêm một lệnh mẫu tại chỉ mục năm.
+
+Vì vậy, GPU sẽ ghi lại dấu thời gian trước và sau tất cả công việc cho bộ mã hóa đó.
+
+Bạn có thể thêm nhiều lệnh mẫu hơn giữa các nhóm cuộc gọi vẽ để đánh dấu các cột mốc quan trọng.
+
+Chỉ cần đảm bảo bộ đệm mẫu của bạn được phân bổ trước với đủ dung lượng.
+
+Nói về điều đó, chúng tôi đã phân bổ một bộ đệm đủ lớn cho cả ranh giới giai đoạn và lấy mẫu ranh giới vẽ.
+
+Bạn có thể dễ dàng tối ưu hóa nó bằng cách phân bổ vừa đủ cho việc lấy mẫu giai đoạn hoặc vẽ ranh giới một cách riêng biệt, vì chúng loại trừ lẫn nhau.
+
+Đúng rồi. GPU đã được hướng dẫn lấy mẫu bộ đếm dấu thời gian ở giai đoạn hoặc ranh giới vẽ.
+
+Tiếp theo, chúng tôi đợi kết xuất hoàn tất và trong trình xử lý, chúng tôi thu thập dữ liệu.
+
+Hãy nhớ rằng chúng tôi đã tạo một bộ đệm mẫu cho mỗi bộ mã hóa.
+
+Vì vậy, trong trình xử lý hoàn thành bộ đệm chung, chúng ta có thể cần phân tích nhiều bộ đệm mẫu.
+
+Đối với mỗi người, chúng tôi giải quyết các quầy.
+
+Điều đó dịch các dữ liệu cụ thể khác nhau thành cấu trúc Kim loại thống nhất siêu dễ phân tích cú pháp.
+
+Chỉ cần chỉ vào nó và sử dụng cấu trúc CounterResult.
+
+Như chúng tôi đã chỉ định rằng vertexStart phải ở chỉ mục 0, chúng tôi đọc nó trực tiếp từ đó.
+
+Sau đó chúng tôi sẽ làm điều tương tự cho tất cả các mẫu khác.
+
+Lưu ý rằng một số kiểm tra lỗi là cần thiết ở đây.
+
+Có thể GPU không điền được bộ đệm mẫu, vì vậy bạn cần kiểm tra xem bước kết quả có thu thập được số lượng mẫu dự kiến hay không và mỗi mẫu có hợp lệ hay không.
+
+GPU sẽ sử dụng giá trị lỗi được xác định trước nếu nó không thể nhận được dấu thời gian cụ thể.
+
+Trên các thiết bị iOS và Apple Silicon, dấu thời gian GPU được căn chỉnh với mach_absolute_time để bạn có thể so sánh trực tiếp chúng với dấu thời gian CPU.
+
+Trên GPU Intel và AMD, cần thêm một bước nữa.
+
+Chúng cần được dịch từ miền thời gian cụ thể của nhà cung cấp.
+
+Điều này là do tùy thuộc vào mức độ bận rộn của GPU, mức độ tiêu thụ năng lượng và mức độ nóng của nó khi chạy, tần số xung nhịp của nó được điều chỉnh liên tục theo thời gian, điều này ảnh hưởng đến dấu thời gian.
+
+Để giải quyết vấn đề này trên GPU chế độ tức thì, bạn sử dụng API của dấu thời gian mẫu để truy vấn dấu thời gian CPU và GPU phù hợp tại một thời điểm nhất định.
+
+Bạn làm điều đó đều đặn để tránh trôi dạt và giữ mối tương quan chính xác theo thời gian.
+
+Sau đó, bạn thực hiện nội suy tuyến tính đơn giản của các mẫu được thu thập.
+
+Ví dụ, bạn có thể gọi dấu thời gian mẫu bên trong trình xử lý hoàn thành bộ đệm chung để bạn có được một mối tương quan trên mỗi khung.
+
+Giả sử bạn truy vấn dấu thời gian CPU và GPU tại t0.
+
+Và sau đó ở khung tiếp theo, bạn truy vấn chúng ở t1.
+
+Tất cả các bộ đếm GPU từ bộ đệm mẫu hiện có thể được thu nhỏ và bù đắp trở lại miền CPU.
+
+Và đó là tất cả những gì chúng ta cần. Vì vậy, hãy xem tất cả có thể được hiển thị cùng nhau như thế nào.
+
+Chúng tôi đang thấy các điểm đánh dấu CPU.
+
+Chúng tôi đã bắt chúng bằng mach_absolute_time.
+
+Chúng ta đang thấy các giai đoạn đỉnh, phân đoạn và tính toán đều chồng chéo và phù hợp với hoạt động của CPU.
+
+Bạn thậm chí có thể thu thập mach_absolute_time bên trong trình xử lý được trình bày để căn chỉnh tất cả các điểm đánh dấu với các khung kính thực tế và hiển thị chính xác tất cả các sự kiện trong mỗi khung.
+
+Sử dụng HUD này, bạn sẽ có cái nhìn tuyệt vời về việc bạn bị ràng buộc bởi CPU hay GPU, các phụ thuộc và điểm đồng bộ hóa của bạn, sự phân tích của đỉnh, phân đoạn và công việc tính toán và cách chúng ảnh hưởng lẫn nhau.
+
+Tất cả những điều đó, trực tiếp, ngay bên trong ứng dụng của bạn.
+
+Có một vài điều bạn có thể đề phòng.
+
+Đừng cập nhật HUD quá thường xuyên.
+
+Cũng giống như bộ đếm FPS, dữ liệu trực tiếp có thể khó đọc nếu nó liên tục thay đổi.
+
+Ví dụ, bạn có thể thu thập dấu thời gian mỗi khung hình nhưng chỉ cập nhật các điểm đánh dấu trên màn hình một lần mỗi giây.
+
+Nó làm cho việc theo dõi dễ dàng hơn đáng kể.
+
+Thứ hai, hoạt động của GPU phụ thuộc vào tốc độ xung nhịp của nó.
+
+Nhìn thấy công suất GPU cao không nhất thiết có nghĩa là nó được tối đa hóa.
+
+Vì hệ thống chỉ sử dụng nhiều năng lượng khi cần thiết, nó sẽ cân bằng giữa công suất và hiệu suất.
+
+Kết quả là, bạn có thể thấy GPU đang bận 80% trong HUD.
+
+Nhưng nếu nó đang chạy với tốc độ một nửa tốc độ xung nhịp tối đa, thì nó thực sự sẽ chạy ở mức 40% hiệu suất cao nhất và có nhiều khoảng không.
+
+Và như mọi khi, bạn nên xử lý các lỗi, nhưng bạn cũng nên đề phòng sự không nhất quán.
+
+Ví dụ, bộ đếm có thể tràn, điều này sẽ khiến giá trị mới nhỏ hơn giá trị trước đó và có thể kích hoạt thời lượng âm.
+
+Hoặc đặt thiết bị của bạn vào chế độ ngủ hoặc ngủ đông trong khi lấy mẫu cũng có thể gây ra các ngoại lệ lớn.
+
+Đó là những sự kiện hiếm hoi và bạn nên bỏ qua chúng một cách duyên dáng để tránh trục trặc trong màn hình hoặc nhật ký của mình.
+
+Tóm lại, chúng tôi vừa trải qua các bước sử dụng Metal Counter API để thu thập dấu thời gian GPU.
+
+Để làm điều đó, chúng tôi đã sử dụng thiết bị hỗ trợ phương pháp CounterSampling để tìm ra chế độ lấy mẫu nào được hỗ trợ.
+
+Chúng tôi đã liệt kê các bộ đếm để tìm bộ có dấu thời gian GPU.
+
+Chúng tôi đã tạo một bộ đệm mẫu mới bằng cách sử dụng bộ mô tả của nó và sử dụng nó trong bộ mã hóa lệnh kết xuất.
+
+Bạn cũng sẽ muốn làm điều tương tự với bộ mã hóa blit và tính toán.
+
+Chúng tôi đã thêm các lệnh mẫu cụ thể trước và sau tất cả các lần rút thăm.
+
+Bạn cũng có thể thêm chúng giữa các lần rút thăm, công văn và điểm sáng để có được thời gian trong quá khứ.
+
+Chúng tôi đã giải quyết các bộ đếm vào bộ nhớ CPU.
+
+Và cuối cùng, chúng tôi đã sắp xếp lại chúng nếu cần.
+
+Và với điều đó, bạn có tất cả dữ liệu cần thiết cho một HUD hồ sơ GPU trực tiếp, mạnh mẽ để hiển thị trên ứng dụng của bạn.
+
+Và API này cung cấp cho bạn quyền truy cập vào nhiều thứ hơn là chỉ dấu thời gian GPU.
+
+Bạn có thể nhận được thông tin tóm tắt theo từng giai đoạn, điều này sẽ dễ xử lý hơn nếu bạn không vẽ các sự kiện trên dòng thời gian.
+
+Và quan trọng, bạn có thể nhận được một số thống kê chuyên sâu, chẳng hạn như số lượng lời gọi cho bộ đổ bóng đỉnh và đoạn và hạt nhân tính toán và hơn thế nữa.
+
+Có đủ để khám phá trong Metal Counter API và nó cung cấp cho bạn quyền truy cập vào rất nhiều thông tin để lập hồ sơ hiệu suất GPU của bạn trong thời gian chạy.
+
+Đó là nó cho phiên này.
+
+Cảm ơn vì đã xem.

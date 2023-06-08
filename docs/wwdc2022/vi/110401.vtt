@@ -1,0 +1,479 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ nhạc cụ hip hop ♪
+
+00:00:09.000 --> 00:00:14.000
+Xin chào, tên tôi là Boris, và chào mừng đến với phiên "Tạo plugin gói Swift".
+
+00:00:14.000 --> 00:00:22.000
+Chúng tôi đã giới thiệu hỗ trợ cho các gói Swift trong Xcode 11 để cung cấp một cách tiếp cận đơn giản để phân phối các thư viện dưới dạng mã nguồn.
+
+00:00:22.000 --> 00:00:34.000
+Trong Xcode 14, chúng tôi muốn mang đến cùng một cách tuyệt vời để cấu trúc và chia sẻ các thành phần cho quy trình làm việc phát triển, chẳng hạn như tạo mã nguồn hoặc tự động hóa các tác vụ phát hành, với các plugin gói Swift.
+
+00:00:34.000 --> 00:00:36.000
+Đầu tiên, một cái nhìn tổng quan nhanh về cuộc nói chuyện.
+
+00:00:36.000 --> 00:00:42.000
+Sau khi học những điều cơ bản về plugin, chúng tôi sẽ xây dựng plugin lệnh tùy chỉnh đầu tiên của mình trong bản demo.
+
+00:00:42.000 --> 00:00:51.000
+Tiếp theo, chúng ta sẽ xem xét thêm chi tiết về việc tạo plugin, tiếp theo là xây dựng cả plugin lệnh đang xây dựng và trước khi xây dựng trong các bản trình diễn tiếp theo.
+
+00:00:51.000 --> 00:00:58.000
+Một plugin gói là mã Swift sử dụng PackagePlugin API, tương tự như bản kê khai gói.
+
+00:00:58.000 --> 00:01:06.000
+Các plugin có thể mở rộng chức năng của Xcode hoặc Trình quản lý gói Swift thông qua các điểm mở rộng được xác định rõ ràng.
+
+00:01:06.000 --> 00:01:09.000
+Các plugin gói hoạt động như thế nào?
+
+00:01:09.000 --> 00:01:24.000
+Xcode sẽ biên dịch và chạy plugin của bạn, có thể sử dụng thông tin về các tệp thực thi có sẵn và các tệp đầu vào để xây dựng các lệnh mà nó liên lạc lại với Xcode để thực thi chúng khi cần thiết.
+
+00:01:24.000 --> 00:01:33.000
+Các plugin gói có thể đóng góp các tác vụ xây dựng tùy chỉnh chạy trước hoặc trong quá trình xây dựng, ví dụ, để tạo mã nguồn hoặc tệp tài nguyên.
+
+00:01:33.000 --> 00:01:39.000
+Họ cũng có thể thêm các lệnh tùy chỉnh vào giao diện dòng lệnh hoặc các mục menu của SwiftPM vào Xcode.
+
+00:01:39.000 --> 00:01:53.000
+Để biết thêm thông tin về những điều cơ bản của plugin, tôi khuyên bạn nên xem "Gặp gỡ các plugin gói nhanh" trước và trong trường hợp bạn chưa quen với các gói hoàn toàn, bạn có thể xem phiên WWDC19 Tạo Gói Swift.
+
+00:01:53.000 --> 00:01:58.000
+Hãy xem xét việc xây dựng plugin lệnh tùy chỉnh đầu tiên của chúng tôi.
+
+00:01:58.000 --> 00:02:06.000
+Tôi đang làm việc trên gói công cụ-hỗ trợ-lõi từ nguồn mở Swift và tôi muốn thêm một tệp văn bản liệt kê tất cả những người đóng góp cho dự án.
+
+00:02:06.000 --> 00:02:12.000
+Tôi cũng muốn tái tạo nó khi cần thiết từ lịch sử Git của gói.
+
+00:02:12.000 --> 00:02:22.000
+Trước đây, tôi có thể đã viết một tập lệnh shell hoặc một makefile để làm điều này, nhưng tôi muốn tạo một plugin lệnh tùy chỉnh để tôi có thể tạo lại tệp mà không cần phải rời khỏi Xcode.
+
+00:02:22.000 --> 00:02:26.000
+Đầu tiên, chúng ta phải tạo cấu trúc thư mục cho plugin của mình.
+
+00:02:26.000 --> 00:02:43.000
+Chúng tôi mở menu ngữ cảnh trên gói và chọn Thư mục mới để tạo một thư mục cấp cao nhất được gọi là Plugin tương tự như các Nguồn và Thử nghiệm hiện có.
+
+00:02:43.000 --> 00:02:57.000
+Tiếp theo, chúng tôi sẽ tạo một thư mục lồng nhau khác cho mục tiêu plugin, được gọi là "GenerateContributors".
+
+00:02:57.000 --> 00:03:12.000
+Và bên trong đó, chúng tôi tạo một tệp mới và gọi nó là "plugin.swift."
+
+00:03:12.000 --> 00:03:18.000
+Tiếp theo, chúng ta cần thực hiện một số thay đổi đối với bản kê khai gói để khai báo mục tiêu mới của chúng ta ở đó.
+
+00:03:18.000 --> 00:03:33.000
+Nhưng trước tiên, chúng ta cần tăng phiên bản công cụ cho gói của mình lên 5.6 vì các plugin chỉ khả dụng kể từ phiên bản đó.
+
+00:03:33.000 --> 00:03:44.000
+Tiếp theo, chúng ta có thể chèn mục tiêu plugin của mình.
+
+00:03:44.000 --> 00:03:49.000
+Hãy cùng xem API bản kê khai mới tại đây.
+
+00:03:49.000 --> 00:03:56.000
+Chúng tôi đang tạo một mục tiêu plugin tương ứng với một thư mục bên trong thư mục Plugin, tương tự như các mục tiêu mô-đun nguồn.
+
+00:03:56.000 --> 00:04:03.000
+Nó có một cái tên vừa liên quan đến việc đặt tên cho thư mục cũng như một mục menu trong Xcode.
+
+00:04:03.000 --> 00:04:07.000
+Chúng tôi chỉ định khả năng, vậy chúng tôi muốn sử dụng loại điểm mở rộng nào.
+
+00:04:07.000 --> 00:04:12.000
+Trong trường hợp này, chúng tôi đang thực hiện một lệnh tùy chỉnh.
+
+00:04:12.000 --> 00:04:24.000
+Mục đích có thể xác định một động từ cho dòng lệnh SwiftPM cũng như mô tả về những gì plugin làm và cuối cùng, chúng tôi có thể khai báo các quyền mà plugin yêu cầu.
+
+00:04:24.000 --> 00:04:30.000
+Trong trường hợp này, chúng tôi muốn ghi một tệp mới vào thư mục gốc của gói, vì vậy chúng tôi cần quyền ghi vào thư mục đó.
+
+00:04:30.000 --> 00:04:39.000
+Chuỗi lý do sẽ được hiển thị cho người dùng của plugin để họ biết có cấp quyền hay không, tương tự như cách các quyền hoạt động trong chính hệ điều hành.
+
+00:04:39.000 --> 00:04:45.000
+Bây giờ chúng tôi đã khai báo plugin, hãy quay lại để thực sự triển khai nó.
+
+00:04:45.000 --> 00:04:49.000
+Plugin sẽ bỏ vỏ ra Git để lấy lịch sử cam kết.
+
+00:04:49.000 --> 00:04:59.000
+Nó sẽ đọc lịch sử từ standardout của lệnh Git bên ngoài và phân tích kết quả và cuối cùng ghi chúng ra một tệp văn bản.
+
+00:04:59.000 --> 00:05:09.000
+Chúng tôi sẽ mở tệp nguồn plugin mà chúng tôi đã tạo trước đó và nhập PackagePlugin.
+
+00:05:09.000 --> 00:05:17.000
+Đây là một mô-đun tích hợp, giống như PackageDescription, cho phép chúng tôi truy cập vào các API mà chúng tôi có thể sử dụng để triển khai các plugin.
+
+00:05:17.000 --> 00:05:32.000
+Chúng tôi xác định một cấu trúc GenerateContributors và tuân thủ nó với CommandPlugin.
+
+00:05:32.000 --> 00:05:39.000
+Chúng tôi sẽ chấp nhận sửa chữa ở đây, để lấy cuống còn thiếu để triển khai giao thức.
+
+00:05:39.000 --> 00:05:46.000
+Chúng tôi cũng cần đánh dấu cấu trúc của mình là @main vì nó sẽ là chức năng chính của tệp thực thi plugin.
+
+00:05:46.000 --> 00:06:00.000
+performCommand là điểm vào cho lệnh của chúng tôi và chúng tôi nhận được hai đối số: ngữ cảnh, cho phép chúng tôi truy cập vào biểu đồ gói đã giải quyết và các thông tin khác về ngữ cảnh mà chúng tôi đang được thực thi, cũng như các đối số.
+
+00:06:00.000 --> 00:06:06.000
+Vì các lệnh tùy chỉnh được người dùng gọi, chúng có thể cung cấp đầu vào dưới dạng đối số.
+
+00:06:06.000 --> 00:06:20.000
+Chúng tôi đang tạo một lệnh đơn giản, vì vậy chúng tôi sẽ không thực sự cung cấp bất kỳ tùy chọn nào cho người dùng tại thời điểm này.
+
+00:06:20.000 --> 00:06:35.000
+Vì chúng tôi muốn bỏ tiền ra Git để lấy thông tin về lịch sử cam kết, chúng tôi đang nhập Foundation vì chúng tôi muốn sử dụng API Quy trình để làm như vậy.
+
+00:06:35.000 --> 00:06:45.000
+Tiếp theo, chúng tôi sẽ xác định một ví dụ quy trình và đặt nó để thực thi nhật ký Git với một số đối số định dạng.
+
+00:06:45.000 --> 00:06:48.000
+Chúng ta cần tạo ra một đường ống để nắm bắt đầu ra của quy trình.
+
+00:06:48.000 --> 00:06:55.000
+Sau đó chúng ta có thể chạy nó và đợi cho đến khi nó thoát ra.
+
+00:06:55.000 --> 00:07:05.000
+Sau khi quá trình kết thúc, chúng tôi đọc tất cả dữ liệu từ đường ống và chuyển đổi nó thành một chuỗi sẽ có tất cả đầu ra nhật ký git.
+
+00:07:05.000 --> 00:07:22.000
+Chúng tôi thực hiện một số thao tác chuỗi để cắt đầu ra xuống danh sách không có bản sao và cuối cùng, chúng tôi có thể ghi nó vào một tệp có tên "CONTRIBUTORS.txt" và vì lệnh tùy chỉnh được thực thi trong thư mục gốc của gói, chúng tôi sẽ lưu trữ tệp ở đó.
+
+00:07:22.000 --> 00:07:32.000
+Bây giờ, nếu chúng ta lưu và sau đó nhấp chuột phải vào gói trong trình điều hướng dự án, có một mục nhập mới cho lệnh của chúng ta trong menu ngữ cảnh.
+
+00:07:32.000 --> 00:07:37.000
+Hãy thực hiện nó!
+
+00:07:37.000 --> 00:07:51.000
+Trong hộp thoại sau, chúng ta có thể chọn các gói hoặc mục tiêu nên là đầu vào cho plugin của chúng ta cũng như bất kỳ đối số nào, nhưng vì plugin của chúng ta không phản ứng với các tùy chọn này, chúng ta có thể nhấp vào Chạy.
+
+00:07:51.000 --> 00:07:55.000
+Tiếp theo, chúng tôi sẽ được yêu cầu cấp phép, như chúng tôi đã định nghĩa trong bản kê khai trước đó.
+
+00:07:55.000 --> 00:08:08.000
+Vì chúng tôi vừa tự viết plugin, chúng tôi có thể tiếp tục và chạy nó, nhưng bạn nên đảm bảo rằng bạn chỉ cấp thêm quyền cho các plugin mà bạn tin tưởng.
+
+00:08:08.000 --> 00:08:14.000
+Sau khi chạy, tệp CONTRIBUTORS.txt xuất hiện trong trình duyệt dự án.
+
+00:08:14.000 --> 00:08:26.000
+Vì vậy, bây giờ sau khi chúng tôi mở rộng Xcode với plugin đầu tiên của mình, chúng ta hãy đi sâu hơn một chút về cách các plugin hoạt động và những điều cần chú ý khi tạo một plugin.
+
+00:08:26.000 --> 00:08:31.000
+Các plugin gói chạy trong hộp cát, tương tự như đánh giá của chính bản kê khai gói.
+
+00:08:31.000 --> 00:08:38.000
+Truy cập mạng và ghi vào các vị trí không tạm thời ngoài thư mục công việc riêng của plugin đều bị cấm.
+
+00:08:38.000 --> 00:08:45.000
+Các lệnh tùy chỉnh có thể tùy ý khai báo rằng chúng muốn ghi vào thư mục gốc của gói, như được hiển thị trước đó.
+
+00:08:45.000 --> 00:08:55.000
+Nếu bạn đang gói một công cụ của bên thứ ba hiện có, bạn có thể phải xem xét cách giới hạn nó trong mô hình hộp cát, ví dụ, bằng cách định cấu hình nơi các tệp được tạo được ghi vào.
+
+00:08:55.000 --> 00:09:07.000
+Tôi đã nói về các loại plugin khác nhau trong phần giới thiệu và cần phải rõ ràng liệu một vấn đề được giải quyết tốt hơn bằng lệnh tùy chỉnh hay công cụ xây dựng, nhưng chúng ta hãy xem xét cấu trúc của các plugin công cụ xây dựng.
+
+00:09:07.000 --> 00:09:19.000
+Các plugin này cho phép bạn mở rộng hệ thống xây dựng bằng cách cung cấp mô tả về các tệp thực thi nào sẽ chạy trong quá trình xây dựng và chỉ định đầu vào và đầu ra của chúng giúp lên lịch công việc của bạn vào thời điểm thích hợp trong quá trình xây dựng.
+
+00:09:19.000 --> 00:09:26.000
+Bạn có thể quen thuộc với những điều cơ bản ở đây nếu bạn đã tạo các giai đoạn tập lệnh chạy trong các dự án Xcode.
+
+00:09:26.000 --> 00:09:29.000
+Ngoài ra còn có hai loại plugin công cụ xây dựng khác nhau.
+
+00:09:29.000 --> 00:09:34.000
+Yếu tố phân biệt ở đây là liệu công cụ của bạn có một bộ đầu ra được xác định hay không.
+
+00:09:34.000 --> 00:09:43.000
+Nếu có, bạn nên tạo một lệnh đang xây dựng sẽ tự động được chạy lại bởi hệ thống xây dựng nếu đầu ra của bạn đã lỗi thời so với đầu vào của bạn.
+
+00:09:43.000 --> 00:09:49.000
+Nếu bạn không có một bộ đầu ra rõ ràng, bạn có thể tạo một lệnh xây dựng trước chạy khi bắt đầu mỗi bản dựng.
+
+00:09:49.000 --> 00:10:02.000
+Bởi vì điều này, bạn nên cẩn thận khi thực hiện công việc tốn kém trong các lệnh trước khi xây dựng hoặc đưa ra một chiến lược tùy chỉnh cho kết quả bộ nhớ đệm phù hợp với trường hợp sử dụng của bạn.
+
+00:10:02.000 --> 00:10:11.000
+Đối với bản demo thứ hai của chúng tôi, tôi muốn tạo một thư viện mới gói gọn các biểu tượng mà tôi muốn chia sẻ giữa các công cụ khác nhau mà tôi đang làm việc.
+
+00:10:11.000 --> 00:10:15.000
+Hãy bắt đầu và tạo một gói mới từ mẫu và gọi nó là "IconLibrary".
+
+00:10:15.000 --> 00:10:20.000
+Và tôi sẽ kéo một số tài sản biểu tượng mà tôi đã có vào mục tiêu thư viện của mình.
+
+00:10:20.000 --> 00:10:24.000
+Hãy thêm chế độ xem SwiftUI cơ bản và bản xem trước vào thư viện của tôi.
+
+00:10:24.000 --> 00:10:33.000
+Đầu tiên, chúng ta cần thêm các mục tiêu triển khai tối thiểu cần thiết vào bản kê khai.
+
+00:10:33.000 --> 00:10:37.000
+Tiếp theo, hãy thực sự thêm chế độ xem và xem trước cơ bản đó.
+
+00:10:37.000 --> 00:10:44.000
+Ở đây chúng ta có thể sử dụng tài sản mà chúng ta đã kéo vào trước đó.
+
+00:10:44.000 --> 00:10:52.000
+Tôi nghĩ sẽ thật tuyệt nếu, thay vì phải xử lý các chuỗi ở đây, chúng ta sẽ có một cách an toàn để tham khảo những hình ảnh này.
+
+00:10:52.000 --> 00:10:59.000
+Đây có vẻ như là một trường hợp sử dụng tuyệt vời cho một plugin lệnh đang xây dựng xem xét các danh mục tài sản và tạo ra một số mã Swift dựa trên chúng.
+
+00:10:59.000 --> 00:11:06.000
+Hãy cùng xem danh mục tài sản trong Finder để tìm hiểu cách chúng tôi có thể trích xuất thông tin chúng tôi cần cho plugin.
+
+00:11:06.000 --> 00:11:15.000
+Mỗi hình ảnh có thư mục bộ hình ảnh riêng với tên của tài sản...
+
+00:11:15.000 --> 00:11:21.000
+Và có một tệp JSON mô tả các nội dung cơ bản.
+
+00:11:21.000 --> 00:11:30.000
+Các lệnh trong xây dựng hoạt động hơi khác so với các lệnh tùy chỉnh ở chỗ chúng đang cung cấp mô tả về các tệp thực thi để chạy cũng như đầu vào và đầu ra của chúng.
+
+00:11:30.000 --> 00:11:36.000
+Các tệp thực thi có thể được cung cấp bởi hệ thống, các gói của bên thứ ba hoặc bạn có thể tạo một tệp được thiết kế riêng cho plugin của mình.
+
+00:11:36.000 --> 00:11:40.000
+Chúng tôi muốn thực hiện cách tiếp cận thứ ba ở đây.
+
+00:11:40.000 --> 00:11:46.000
+Các plugin được chạy khi bắt đầu quá trình xây dựng để tham gia vào việc tính toán biểu đồ xây dựng.
+
+00:11:46.000 --> 00:11:52.000
+Dựa trên điều đó, các tệp thực thi được lên lịch như một phần của việc thực thi bản dựng.
+
+00:11:52.000 --> 00:11:54.000
+Bây giờ trở lại với tệp thực thi mà chúng tôi đang xây dựng.
+
+00:11:54.000 --> 00:12:07.000
+Chúng tôi muốn có hằng số thời gian biên dịch cho mỗi hình ảnh trong danh mục nội dung để thay vì cần nhớ các chuỗi chính xác cho mỗi hình ảnh, chúng tôi sẽ tự động hoàn thành chúng dưới dạng ký hiệu Swift.
+
+00:12:07.000 --> 00:12:12.000
+Chúng tôi muốn lặp lại nội dung thư mục của danh mục tài sản để tìm tất cả các bộ hình ảnh.
+
+00:12:12.000 --> 00:12:21.000
+Đối với mỗi bộ hình ảnh, chúng tôi phân tích siêu dữ liệu của nó để xác định xem nó có thực sự chứa bất kỳ hình ảnh nào hay không và do đó sẽ tạo mã cho nó.
+
+00:12:21.000 --> 00:12:24.000
+Sau đó chúng ta có thể tạo mã và ghi vào một tệp.
+
+00:12:24.000 --> 00:12:33.000
+Vì chúng tôi đã khai báo các tệp đó là đầu ra của plugin của chúng tôi, chúng sẽ tự động được tích hợp vào bản dựng của mục tiêu mà plugin đang được áp dụng.
+
+00:12:33.000 --> 00:12:40.000
+Chúng tôi sẽ cần một cách để xử lý các đối số vì đó là cách chúng tôi giao tiếp giữa plugin và tệp thực thi.
+
+00:12:40.000 --> 00:12:51.000
+Đối số đầu tiên sẽ là đường dẫn đến danh mục tài sản mà chúng tôi đang xử lý và đối số thứ hai sẽ là đường dẫn được cung cấp bởi plugin cho mã được tạo của chúng tôi.
+
+00:12:51.000 --> 00:12:57.000
+Tiếp theo chúng ta cần một số đối tượng mô hình để giải mã các tệp contents.json.
+
+00:12:57.000 --> 00:13:02.000
+Chúng tôi sử dụng Decodable để tận dụng giải mã JSON tích hợp sẵn của Swift.
+
+00:13:02.000 --> 00:13:13.000
+Thông tin duy nhất mà chúng tôi quan tâm là danh sách hình ảnh và tên tệp của chúng, là tùy chọn vì có thể không có hình ảnh cho mỗi mật độ điểm ảnh.
+
+00:13:13.000 --> 00:13:17.000
+Chúng tôi sẽ tạo mã một cách đơn giản ở đây chỉ bằng cách xây dựng một chuỗi.
+
+00:13:17.000 --> 00:13:23.000
+Chúng tôi bắt đầu nó với việc nhập khẩu các khuôn khổ chúng tôi cần, Foundation và SwiftUI.
+
+00:13:23.000 --> 00:13:32.000
+Chúng tôi muốn lặp lại nội dung thư mục của danh mục nội dung để tìm tất cả các bộ hình ảnh Chúng tôi cần phân tích cú pháp JSON tiếp theo.
+
+00:13:32.000 --> 00:13:35.000
+Tên tệp sử dụng tham số đầu vào.
+
+00:13:35.000 --> 00:13:41.000
+Và chúng tôi giải mã bằng API 'JSONDecoder' của Foundation.
+
+00:13:41.000 --> 00:13:54.000
+Phần thông tin chính mà chúng tôi quan tâm là liệu có một hình ảnh được xác định cho một bộ hình ảnh nhất định hay không, mà chúng tôi xác định bằng cách kiểm tra xem có ít nhất một hình ảnh có tên tệp không trống hay không.
+
+00:13:54.000 --> 00:14:02.000
+Nếu bộ hình ảnh đã cho có hình ảnh, chúng tôi muốn tạo hình ảnh SwiftUI tải hình ảnh đó từ gói của gói.
+
+00:14:02.000 --> 00:14:13.000
+Chúng tôi làm điều đó bằng cách xây dựng một chuỗi với tên cơ sở của mỗi hình ảnh tải hình ảnh đã cho từ gói mô-đun, đó là gói tài nguyên mà hệ thống xây dựng tạo ra cho mỗi gói với tài nguyên.
+
+00:14:13.000 --> 00:14:21.000
+Chúng ta có thể kết thúc công việc của tệp thực thi bằng cách viết mã được tạo vào một tệp, như được cung cấp cho chúng ta bởi các đối số.
+
+00:14:21.000 --> 00:14:30.000
+Hãy quay lại Xcode và tạo tệp thực thi.
+
+00:14:30.000 --> 00:14:40.000
+Chúng tôi gọi nó là "AssetConstantsExec"...
+
+00:14:40.000 --> 00:14:51.000
+Và thêm một tệp chính.
+
+00:14:51.000 --> 00:15:00.000
+Bây giờ chúng ta phải khai báo nó trong bản kê khai gói.
+
+00:15:00.000 --> 00:15:09.000
+Và chúng ta có thể thêm mã mà chúng ta vừa thảo luận vào tệp chính của nó.
+
+00:15:09.000 --> 00:15:41.000
+Bây giờ chúng ta đã có một tệp thực thi có thể tạo mã, chúng ta có thể đưa nó vào hệ thống xây dựng bằng cách sử dụng một plugin.
+
+00:15:41.000 --> 00:16:09.000
+Hãy thêm mục tiêu bắt buộc và cũng thêm cách sử dụng plugin từ mục tiêu thư viện của chúng tôi.
+
+00:16:09.000 --> 00:16:37.000
+Như trước đây, chúng tôi đang nhập thư viện PackagePlugin và tạo một cấu trúc, lần này phù hợp với giao thức plugin BuildTool.
+
+00:16:37.000 --> 00:16:42.000
+Điểm vào trông giống nhau, nhưng thay vì lập luận của người dùng, chúng tôi đang đưa ra một mục tiêu ở đây.
+
+00:16:42.000 --> 00:16:55.000
+Đây là mục tiêu mà plugin đang được áp dụng và điểm vào sẽ được gọi một lần cho mỗi mục tiêu sử dụng plugin đã cho.
+
+00:16:55.000 --> 00:17:05.000
+Plugin này sẽ đặc biệt quan tâm đến các mục tiêu mô-đun nguồn, đó là bất kỳ mục tiêu nào thực sự mang các tệp nguồn, trái ngược với, ví dụ, mục tiêu nhị phân.
+
+00:17:05.000 --> 00:17:11.000
+Để xây dựng mảng các lệnh xây dựng, chúng tôi lặp lại tất cả các gói xcasset trong mục tiêu.
+
+00:17:11.000 --> 00:17:19.000
+Chúng tôi sẽ trích xuất một chuỗi cho tên hiển thị sẽ hiển thị trong nhật ký xây dựng, cũng như xây dựng các đường dẫn đầu vào và đầu ra phù hợp.
+
+00:17:19.000 --> 00:17:27.000
+Chúng ta cũng có thể tra cứu tệp thực thi của mình ở đây bằng cách sử dụng plugin API và sau đó đặt lệnh build của chúng ta lại với nhau.
+
+00:17:27.000 --> 00:17:29.000
+Với điều này, chúng tôi đã sẵn sàng để xây dựng lại dự án.
+
+00:17:29.000 --> 00:17:40.000
+Chúng ta có thể xem nhật ký xây dựng cho các bước xây dựng mới đang diễn ra.
+
+00:17:40.000 --> 00:17:52.000
+Plugin đang được biên dịch và chạy khi bắt đầu xây dựng, từ đó nó thêm bất kỳ lệnh được tạo nào vào biểu đồ xây dựng.
+
+00:17:52.000 --> 00:17:59.000
+Nhìn vào mục tiêu, lệnh xây dựng mới của chúng tôi đã chạy.
+
+00:17:59.000 --> 00:18:05.000
+Và cuối cùng, tệp nguồn được tạo hiển thị như một phần của việc biên dịch các tệp Swift.
+
+00:18:05.000 --> 00:18:20.000
+Hãy quay lại bản xem trước của chúng tôi, nơi chúng tôi có thể thay thế cấu trúc hình ảnh được nhập chuỗi bằng các hằng số mới của chúng tôi.
+
+00:18:20.000 --> 00:18:28.000
+Chúng tôi cũng nhận được tự động hoàn thành cho các tên hình ảnh khác.
+
+00:18:28.000 --> 00:18:39.000
+Điều này thật tuyệt. Với tương đối ít mã, chúng tôi đã có thể cải thiện quy trình làm việc của mình, tất cả đều sử dụng các API Swift quen thuộc và không cần phải rời khỏi Xcode.
+
+00:18:39.000 --> 00:18:53.000
+Cho đến nay, chúng tôi đã xem xét việc tạo các plugin để sử dụng cho riêng mình, như một phần của thư viện mà chúng tôi đã làm việc, nhưng một thuộc tính mạnh mẽ khác của plugin là chúng tôi có thể chia sẻ chúng một cách đơn giản, tương tự như các thư viện.
+
+00:18:53.000 --> 00:18:59.000
+Đối với bản demo tiếp theo, tôi muốn tự động hóa một số xử lý trước khi xây dựng bằng cách sử dụng công cụ genstrings đi kèm với Xcode.
+
+00:18:59.000 --> 00:19:05.000
+Công cụ trích xuất các chuỗi được bản địa hóa từ mã của bạn vào thư mục bản địa hóa để sử dụng thêm.
+
+00:19:05.000 --> 00:19:12.000
+Vì điều đó nói chung có vẻ hữu ích, tôi muốn biến plugin thành một gói riêng biệt để nó có thể được chia sẻ độc lập.
+
+00:19:12.000 --> 00:19:20.000
+Nếu bạn muốn tìm hiểu thêm về tài nguyên và bản địa hóa trong các gói, tôi muốn giới thiệu phiên WWDC20 về chủ đề đó.
+
+00:19:20.000 --> 00:19:28.000
+Để biết thêm thông tin về bản địa hóa nói chung, hãy xem Bản địa hóa ứng dụng SwiftUI của bạn từ WWDC21.
+
+00:19:28.000 --> 00:19:34.000
+Đối với plugin này, chúng tôi sẽ bắt đầu bằng cách tính toán thư mục đầu ra để bản địa hóa.
+
+00:19:34.000 --> 00:19:46.000
+Chúng tôi sẽ tính toán các tệp đầu vào, đó là tất cả các tệp nguồn Swift hoặc Objective-C trong một mục tiêu nhất định và sau đó xây dựng lệnh xây dựng trước để thực thi công cụ chuỗi gen do Xcode cung cấp.
+
+00:19:46.000 --> 00:19:56.000
+Lưu ý rằng sự khác biệt lớn nhất giữa các lệnh trước và trong bản dựng là chúng tôi không khai báo một tập hợp các đầu ra được xác định rõ ràng, có nghĩa là các lệnh này chạy trên mọi bản dựng.
+
+00:19:56.000 --> 00:20:11.000
+Công cụ sẽ trích xuất tất cả các chuỗi được bản địa hóa từ mã nguồn của người dùng và sau đó ghi tất cả các chuỗi đó vào thư mục bản địa hóa, có thể được sử dụng làm cơ sở cho công việc bản địa hóa thực tế cho dự án của người dùng.
+
+00:20:11.000 --> 00:20:13.000
+Để bắt đầu, tôi đã tạo ra giàn giáo ở đây rồi.
+
+00:20:13.000 --> 00:20:29.000
+Bây giờ trong bản kê khai gói, hãy thêm một mục tiêu như trước đây, nhưng chúng tôi cũng sẽ thêm một sản phẩm plugin.
+
+00:20:29.000 --> 00:20:38.000
+Tương tự như các sản phẩm thư viện, đây là cách để cung cấp plugin cho khách hàng của một gói thay vì chỉ riêng tư.
+
+00:20:38.000 --> 00:20:50.000
+Chúng ta có thể viết mã mà chúng ta đã thảo luận trước đó...
+
+00:20:50.000 --> 00:21:00.000
+Bây giờ chúng tôi đã xây dựng plugin của mình, chúng tôi muốn thử nghiệm nó trong một gói ví dụ riêng biệt.
+
+00:21:00.000 --> 00:21:04.000
+Đối với điều đó, hãy tạo một gói mới từ mẫu.
+
+00:21:04.000 --> 00:21:14.000
+Chúng tôi sẽ thêm một API cung cấp một chuỗi được bản địa hóa vào gói...
+
+00:21:14.000 --> 00:21:35.000
+Và thêm việc sử dụng điều đó trong bài kiểm tra được tạo.
+
+00:21:35.000 --> 00:21:40.000
+Đúng như dự đoán, thử nghiệm hoạt động, vì API của chúng tôi trả về chuỗi "Thế giới".
+
+00:21:40.000 --> 00:21:51.000
+Hãy thêm sự phụ thuộc dựa trên đường dẫn vào gói plugin...
+
+00:21:51.000 --> 00:22:03.000
+Và sử dụng plugin cho mục tiêu thư viện.
+
+00:22:03.000 --> 00:22:10.000
+Bây giờ chúng ta có thể chạy lại...
+
+00:22:10.000 --> 00:22:38.000
+Và nếu chúng tôi nhìn vào nhật ký xây dựng, plugin của chúng tôi được thực thi khi bắt đầu xây dựng và các tệp được tạo được thêm vào mục tiêu của chúng tôi, vì vậy chúng tôi đang xây dựng một gói tài nguyên và một trình truy cập tài nguyên được tạo, giống như thể tài nguyên là một phần của mục tiêu của chúng tôi ngay từ đầu.
+
+00:22:38.000 --> 00:22:53.000
+Bây giờ hãy thay đổi mã của chúng tôi để thực sự sử dụng gói tài nguyên.
+
+00:22:53.000 --> 00:23:10.000
+Cuối cùng, nếu chúng ta thay đổi mã...
+
+00:23:10.000 --> 00:23:26.000
+Và xem qua gói được tạo ra...
+
+00:23:26.000 --> 00:23:30.000
+Chúng ta có thể thấy những thay đổi được phản ánh ở đây.
+
+00:23:30.000 --> 00:23:37.000
+Bây giờ chúng tôi đã có một giường thử nghiệm cho plugin, chúng tôi có thể hoàn thiện bộ thử nghiệm và cuối cùng chia sẻ gói plugin với những người khác.
+
+00:23:37.000 --> 00:23:51.000
+Tóm lại, các plugin có thể được sử dụng để tự động hóa và chia sẻ công cụ dành cho nhà phát triển, các lệnh tùy chỉnh cung cấp một cách để tự động hóa các tác vụ phổ biến và các công cụ xây dựng có thể được sử dụng để tạo các tệp trong quá trình xây dựng.
+
+00:23:51.000 --> 00:23:53.000
+Cảm ơn vì đã lắng nghe!
+
+00:23:53.000 --> 23:59:59.000
+♪ nhạc cụ hip hop ♪
+

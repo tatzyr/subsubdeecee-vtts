@@ -1,0 +1,755 @@
+10040
+
+♪ ♪
+
+Gabriel Ting: Xin chào, và chào mừng đến với phiên của chúng tôi, "Khám phá sự tích hợp và di chuyển mua hàng trong ứng dụng."
+
+Phiên này được chia thành hai phần: một phần dành riêng cho việc di chuyển sang API Máy chủ App Store và một phần dành riêng cho việc di chuyển sang Thông báo Máy chủ App Store Phiên bản 2.
+
+Tên tôi là Gabriel, và tôi đang thảo luận về cách di chuyển sang API Máy chủ App Store.
+
+Alex Baker: Tên tôi là Alex, và tôi sẽ hướng dẫn bạn di chuyển sang App Store Server Notifications Phiên bản 2.
+
+Gabriel: Trước tiên hãy bắt đầu với phần giới thiệu ngắn gọn về API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+Chúng tôi đã giới thiệu App Store Server API vào năm ngoái như một cách mạnh mẽ, an toàn và hiệu quả để lấy dữ liệu và thực hiện các hoạt động từ máy chủ của bạn.
+
+Chúng tôi mong muốn cung cấp cho bạn chỉ dữ liệu mà bạn cần, được ký ở định dạng Chữ ký web JSON hoặc JWS, để bạn có thể xác minh rằng dữ liệu bạn nhận được không bị xáo trộn, dành cho bạn và được ký bởi App Store.
+
+Ví dụ: một trong những điểm cuối API Máy chủ App Store của chúng tôi, điểm cuối Nhận Lịch sử Giao dịch, kết hợp với các tính năng lọc và sắp xếp mới, cho phép bạn tìm nạp bất kỳ tập hợp giao dịch nào mà bạn chỉ định, chỉ với một originalTransactionId.
+
+Trên khung Thông báo Máy chủ App Store Phiên bản 2, với số lượng trạng thái đăng ký có thể được hiển thị tăng lên, Thông báo Phiên bản 2 sẽ cập nhật cho bạn về tất cả các trạng thái có thể có của đăng ký, trong thời gian thực.
+
+Chúng tôi mong muốn chủ động cung cấp tất cả thông tin mà bạn cần biết về những gì đang xảy ra với những người đăng ký của mình mà không cần phải hỏi chúng tôi thông tin.
+
+Alex sẽ hướng dẫn bạn điều này nhiều hơn trong phần của phiên này.
+
+Nếu bạn quan tâm đến việc sử dụng các tính năng này một cách dễ dàng và hiệu quả, phiên này là dành cho bạn.
+
+Chúng tôi sẽ hướng dẫn bạn cách bắt đầu sử dụng API Máy chủ App Store và Thông báo Máy chủ App Store Phiên bản 2, cũng như một số mẹo di chuyển và phương pháp hay nhất.
+
+Để biết thêm thông tin về từng phiên này, vui lòng tham khảo các phiên bổ sung được liệt kê bên dưới.
+
+Vì vậy, hãy bắt đầu thảo luận về việc di chuyển sang API Máy chủ App Store.
+
+Trước hết, chúng ta sẽ thảo luận về cách bắt đầu sử dụng API Máy chủ App Store.
+
+Thứ hai, chúng ta sẽ đi sâu vào một số chi tiết của việc ký JSON Web Tokens.
+
+Thứ ba, chúng tôi sẽ trình bày cách xác minh các giao dịch đã ký mà bạn nhận được từ App Store là chính hãng.
+
+Cuối cùng, chúng ta sẽ thảo luận về cách di chuyển từ verifyReceipt sang App Store Server API.
+
+Hãy bắt đầu nào.
+
+Đầu tiên, chúng ta hãy bắt đầu nói về cách sử dụng API Máy chủ App Store với các phiên bản StoreKit khác nhau, đầu tiên chỉ với StoreKit gốc, sau đó chỉ với StoreKit 2, sau đó thảo luận về các phương pháp hỗ trợ cả hai đồng thời cho cả hai khách hàng sử dụng phiên bản iOS hỗ trợ StoreKit 2, cụ thể là những phiên bản trên
+
+Trước hết, chúng ta hãy xem các yêu cầu đối với API Máy chủ App Store trông như thế nào.
+
+Chúng tôi thấy rằng năm API được liệt kê ở đây sử dụng originalTransactionId làm tham số đường dẫn.
+
+Điều này cho phép bạn dễ dàng gọi các API này bằng cách sử dụng originalTransactionIds mà bạn nhận được từ biên lai, giao dịch đã ký, gia hạn đã ký và thông báo.
+
+Tiếp theo là điểm cuối ID Đơn hàng Tra cứu.
+
+Thay vào đó, điểm cuối này sử dụng orderId do khách hàng cung cấp cho các truy vấn hỗ trợ.
+
+Điều này là để bạn có thể hỗ trợ tốt hơn với các câu hỏi trực tiếp từ khách hàng, vì khách hàng được cung cấp một orderId trong biên lai của khách hàng cho mỗi giao dịch, nhưng không được cung cấp một originalTransactionId.
+
+Điều này đảm bảo rằng bạn có thể trả lời trực tiếp các câu hỏi của khách hàng với dữ liệu mà khách hàng có trong tay.
+
+Các điểm cuối cùng được liệt kê ở đây có liên quan đến thông báo, mà Alex sẽ đề cập đến trong phần của phiên này.
+
+Tiếp theo, hãy xem bạn có thể lấy originalTransactionIds từ đâu trong Original StoreKit.
+
+Khi bạn gọi verifyReceipt với biên lai ứng dụng thống nhất, originalTransactionId bạn sẽ sử dụng khi gọi App Store Server API sẽ quay trở lại trường in_app trong biên lai cho mỗi giao dịch mà người dùng này đã mua, cũng như trong new_receipt_info và pending_renewal_info.
+
+Bây giờ chúng ta đã biết cách lấy originalTransactionId từ các giao dịch Original StoreKit, hãy xem xét toàn bộ luồng giữa khách hàng, Máy chủ App Store và máy chủ của bạn.
+
+Đầu tiên, lấy biên lai ứng dụng trên máy chủ của bạn.
+
+Tiếp theo, lấy biên lai ứng dụng và gọi verifyReceipt với nó từ máy chủ của bạn.
+
+Điều này sẽ trả lại biên lai đã được giải mã.
+
+Từ biên lai được giải mã, thu thập tất cả các bản gốcTransactionIds theo cùng một cách mà tôi đã chỉ ra trước đây.
+
+Tiếp theo, bạn có thể gọi điểm cuối Nhận Lịch sử Giao dịch với bất kỳ một trong các originalTransactionIds được thu thập, điểm cuối này sẽ trả về lịch sử giao dịch cho người dùng này dưới dạng các giao dịch đã ký.
+
+Các giao dịch này bao gồm hàng tiêu dùng không phải hàng tiêu dùng, hàng tiêu dùng được hoàn lại tiền, đăng ký không gia hạn và đăng ký tự động gia hạn.
+
+Sau đó, nếu bạn muốn nhận giao dịch đã ký mới nhất và thông tin gia hạn đã ký cho một đăng ký cụ thể, hãy gọi điểm cuối Nhận tất cả trạng thái đăng ký với originalTransactionId tương ứng.
+
+Điều này sẽ trả lại tất cả các giao dịch đã ký và gia hạn cho đăng ký tương ứng với originalTransactionId đã cho.
+
+Tiếp theo, hãy xem xét vị trí ban đầu của TransactionId trong trường hợp giao dịch StoreKit 2.
+
+Đây là mã trên máy khách để lấy OriginalTransactionId từ một giao dịch.
+
+Trên các thiết bị hỗ trợ StoreKit 2 - cụ thể là các thiết bị trên iOS 15 trở lên - bạn có thể tải thuộc tính originalID trên giao dịch đã được xác minh, giải mã để lấy originalTransactionId.
+
+Bây giờ, nhìn vào phía máy chủ, đây là một ví dụ về giao dịch JWS đã ký, là loại dữ liệu mà bạn nhận được trong các giao dịch đã ký và gia hạn đã ký từ API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+Ở đây, chúng ta thấy rằng originalTransactionId là một lĩnh vực cấp cao nhất.
+
+Tiếp theo, hãy xem xét toàn bộ luồng giữa khách hàng, Máy chủ App Store và máy chủ của bạn cho các giao dịch StoreKit 2.
+
+Đầu tiên, thực hiện giao dịch đã ký trên thiết bị.
+
+Với StoreKit 2, bạn có thể xác minh giao dịch này trên thiết bị.
+
+Sử dụng trình nghe trạng thái trên thiết bị, trình nghe giao dịch hoặc giao dịch cuối cùng sẽ giúp bạn cập nhật các giao dịch, hủy và hoàn tiền mới nhất, sau đó có thể được gửi đến máy chủ của bạn để lưu giữ hồ sơ.
+
+Ví dụ: những thứ này được cập nhật về gia hạn đăng ký, đổi ưu đãi đăng ký, hết hạn và hơn thế nữa.
+
+Gửi giao dịch đến máy chủ của bạn.
+
+Kết hợp với Thông báo Máy chủ App Store, mà Alex sẽ đi sâu hơn vào phần sau, bạn có thể cập nhật trạng thái và trạng thái đăng ký mới nhất mà không cần phải gọi API Máy chủ App Store.
+
+Khi bạn cần thực hiện thao tác trên đăng ký, chẳng hạn như gia hạn ngày gia hạn đăng ký, bạn có thể sử dụng originalTransactionId từ giao dịch đã ký để gọi các điểm cuối tương ứng và lấy lại dữ liệu mà bạn cần.
+
+Bây giờ chúng ta đã thấy cách sử dụng App Store Server API với StoreKit gốc và StoreKit 2, hãy nói về cách hỗ trợ cả StoreKit và StoreKit 2.
+
+Bạn có thể tận dụng App Store Server API mà không cần áp dụng đầy đủ StoreKit 2.
+
+Như đã hiển thị trước đây, bạn có thể lấy originalTransactionId từ biên lai trong Original StoreKit.
+
+Bạn cũng có thể lấy originalTransactionID trong StoreKit 2 từ một giao dịch JWS.
+
+Bạn cũng có thể sử dụng App Store Server API độc lập với bất kỳ API nào khác.
+
+Nó không bị ràng buộc với việc sử dụng một phiên bản cụ thể của các API khác.
+
+Về Thông báo Máy chủ App Store, nó có thể được sử dụng với thông báo phiên bản 1 hoặc phiên bản 2.
+
+Chúng tôi khuyên bạn nên sử dụng phiên bản 2 vì nó thông báo cho bạn về những thay đổi đối với đăng ký khi chúng xảy ra, sử dụng định dạng JWS an toàn và hơn thế nữa, mà Alex sẽ đi sâu vào phần của anh ấy trong phiên này.
+
+Tuy nhiên, bạn có thể sử dụng API Máy chủ App Store riêng biệt, với thông báo phiên bản 1 hoặc hoàn toàn không có thông báo.
+
+Tiếp theo, hãy thảo luận về cách bạn có thể xử lý các giao dịch mua mới sau khi bạn hoàn thành các bước di chuyển mà tôi đã thực hiện trước đó.
+
+Để hỗ trợ các giao dịch mua mới trên các thiết bị sử dụng StoreKit gốc, bạn có thể lấy biên lai mới khi chúng đến, gửi chúng đến máy chủ của mình và thực hiện chính xác các bước tương tự như tôi đã chỉ ra trước đây, trong khi thu thập dữ liệu mới trên đường đi - gọi verifyReceipt với biên lai mới và nhận biên lai được giải
+
+Sau đó, bạn có thể lấy originalTransactionId mới và gọi App Store Server API nếu cần, chẳng hạn như nếu bạn cần gọi điểm cuối Nhận tất cả trạng thái đăng ký để cung ứng trạng thái mới nhất của đăng ký tương ứng.
+
+Bây giờ chúng ta đã đề cập đến cách sử dụng API Máy chủ App Store với cả StoreKit gốc và StoreKit 2, hãy đi sâu vào một số chi tiết về việc ký Mã thông báo web JSON, một yêu cầu để gọi API Máy chủ App Store.
+
+Để xác thực rằng tài khoản nhà phát triển của bạn là người gọi API Máy chủ App Store, chúng tôi sử dụng Mã thông báo web JSON, còn được gọi là JWTs, để xác thực các yêu cầu.
+
+Mã thông báo này phải được bao gồm trong mọi yêu cầu dưới dạng tiêu đề ủy quyền trong các cuộc gọi từ máy chủ của bạn.
+
+JWT bao gồm một tiêu đề, một tải trọng và chữ ký.
+
+Tiếp theo, chúng ta sẽ đi sâu vào cách xây dựng JWT dành riêng cho ứng dụng của bạn.
+
+Ở đây, chúng ta có thể thấy mã thông báo web JSON được cấu tạo như thế nào, cũng như cấu trúc của tiêu đề và tải trọng.
+
+Bản thân mã thông báo có thể được chia thành ba phần, cách nhau theo các khoảng thời gian: tiêu đề được mã hóa cơ sở 64, tải trọng được mã hóa cơ sở 64 và sau đó là chữ ký, bao gồm tiêu đề và tải trọng được mã hóa cơ sở 64, được ký bằng bí mật ký của bạn.
+
+Tiêu đề bao gồm các trường này chứa siêu dữ liệu về cách ký dữ liệu của bạn.
+
+Một trong những trường quan trọng ở đây là ID khóa, đó là ID khóa riêng tư của bạn trong App Store Connect.
+
+Cái này cần khớp với chìa khóa bạn sử dụng để ký JWT.
+
+Tải trọng chứa thông tin bổ sung về ứng dụng cụ thể của bạn.
+
+Vui lòng tham khảo bài viết "Tạo khóa API để sử dụng với API máy chủ App Store" để biết thêm thông tin và hướng dẫn về cách lấy khóa API của bạn.
+
+Để biết chi tiết về từng lĩnh vực này, vui lòng tham khảo bài viết "Tạo mã thông báo cho các yêu cầu API".
+
+Khi bạn có tiêu đề và tải trọng với tất cả các thông tin thích hợp, tiếp theo bạn sẽ ký JWT bằng chứng chỉ tương ứng với keyId.
+
+Đây là mã giả cốt lõi mà bạn có thể sử dụng, bất kể ngôn ngữ.
+
+Đầu tiên, hãy đảm bảo rằng bạn có khóa riêng tương ứng với id khóa được cung cấp trong tiêu đề mà chúng tôi vừa xem xét.
+
+Sau đó, gọi hàm ký mà thư viện JWT của bạn hiển thị với khóa riêng tư, tiêu đề và tải trọng của bạn.
+
+Vì tiêu đề chứa thuật toán ký, thư viện JWT ký nó theo thuật toán được cung cấp.
+
+Cuối cùng, đây là một ví dụ về cách sử dụng mã thông báo này khi xác thực cuộc gọi cURL đến điểm cuối Nhận tất cả trạng thái đăng ký.
+
+Thay thế ${token} và ${originalTransactionId} bằng các giá trị của mã thông báo bạn đã tạo và originalTransactionId mong muốn của bạn, tương ứng.
+
+Tiếp theo, hãy nói về cách xác minh rằng các giao dịch đã ký mà bạn nhận được là dành cho bạn và được ký bởi App Store.
+
+Về bản chất, các giao dịch đã ký là Ký hiệu Đối tượng JavaScript hoặc các đối tượng JSON được ký bằng mật mã sao cho nếu chúng bị giả mạo giữa App Store và máy chủ của bạn, bạn có thể phát hiện ra nó.
+
+Các giao dịch đã ký được ký ở định dạng Chữ ký Web JSON hoặc JWS.
+
+Các giao dịch đã ký mà App Store gửi cho bạn sẽ đến định dạng JWS.
+
+Bằng cách xác minh các JWS bạn nhận được, bạn sẽ xác minh rằng dữ liệu đến từ App Store và nội dung không bị xáo trộn.
+
+Bây giờ, hãy xem cách xác minh một giao dịch đã ký.
+
+Đầu tiên, cơ sở 64 giải mã tiêu đề.
+
+Sau đó, người ta có thể xác định thuật toán ký nào sẽ sử dụng thông qua yêu cầu alg.
+
+Điều này sẽ được sử dụng như một phần của việc xác minh JWS.
+
+Chuỗi chứng chỉ trong yêu cầu x5c do Apple phát hành và việc xác thực yêu cầu chỉ ra rằng dữ liệu được ký đúng cách và không bị xáo trộn.
+
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để biết thêm thông tin về cách xác minh JWS.
+
+Về bản chất, chuỗi x5c là một chuỗi các chứng chỉ.
+
+Xác minh thành công chuỗi chứng chỉ cho bạn biết rằng dữ liệu có thể được tin cậy và dữ liệu được ký bởi Apple.
+
+Vấn đề đặt hàng cho chuỗi chứng chỉ. Đầu tiên là chứng chỉ gốc.
+
+Chứng chỉ gốc này có thể được theo sau bởi các chứng chỉ bổ sung, trong đó mỗi chứng chỉ này được ký bởi chứng chỉ trước đó.
+
+Tôi sẽ gọi chứng chỉ cuối cùng trong chuỗi là chứng chỉ lá.
+
+Chứng chỉ đầu tiên được gọi là chứng chỉ gốc và được tự ký.
+
+Chứng chỉ này phải khớp với chứng chỉ gốc mà bạn nhận được từ Cơ quan cấp chứng chỉ của Apple.
+
+Nếu các chứng chỉ không khớp, chuỗi không đáng tin cậy.
+
+Chứng chỉ lá, chứng chỉ cuối cùng trong chuỗi, là chứng chỉ được sử dụng để ký JWS.
+
+Đây là một ví dụ về tiêu đề của JWS mà App Store gửi có thể trông như thế nào.
+
+Đầu tiên là thuật toán được sử dụng để ký JWS.
+
+Tiếp theo là chuỗi chứng chỉ x5c, với các chứng chỉ được liệt kê theo thứ tự.
+
+Bây giờ, hãy xem việc tạo chuỗi chứng chỉ x5c trông như thế nào từ tổng quan cấp cao.
+
+Chúng tôi bắt đầu với chứng chỉ gốc từ Cơ quan cấp chứng chỉ của Apple.
+
+Sau đó, chứng chỉ gốc được sử dụng để ký chứng chỉ ký trung gian.
+
+Giấy chứng nhận ký trung gian sau đó được sử dụng để ký giấy chứng nhận lá.
+
+Bây giờ chúng ta đã đề cập đến việc tạo chuỗi chứng chỉ x5c trông như thế nào, hãy xem việc xác minh chuỗi trông như thế nào.
+
+Bắt đầu từ chứng chỉ lá, chúng tôi đảm bảo rằng nó đã được ký bởi chứng chỉ ký trung gian.
+
+Sau đó, chúng tôi đảm bảo rằng chứng chỉ ký trung gian đã được ký bởi chứng chỉ gốc.
+
+Ngoài ra, chứng chỉ gốc phải khớp với chứng chỉ từ Cơ quan cấp chứng chỉ Apple.
+
+Nếu tất cả các bước này thành công, thì toàn bộ chuỗi sẽ được xác minh là hợp pháp.
+
+Hãy nói về một phương pháp để xác minh chuỗi chứng chỉ.
+
+Đây là một lệnh để xác minh chuỗi chứng chỉ x5c bằng OpenSSL.
+
+Chia điều này thành nhiều phần, lệnh xác minh, nói chung, cho phép bạn chuyển chứng chỉ để xác minh.
+
+Cờ đáng tin cậy cho phép bạn cung cấp chứng chỉ để tin cậy - nói cách khác, chứng chỉ sẽ được sử dụng để xác minh các chứng chỉ sau.
+
+Trong trường hợp này, chúng tôi đang chuyển chứng chỉ gốc mà bạn có được từ Cơ quan cấp chứng chỉ Apple và do đó có thể được tin cậy.
+
+Chúng tôi sẽ sử dụng cái này để xác minh chứng chỉ WWDR, chứng chỉ tiếp theo trong chuỗi.
+
+Cờ không đáng tin cậy cho phép bạn cung cấp chứng chỉ hoặc chứng chỉ mà bạn muốn xác minh bằng chứng chỉ mà bạn tin tưởng.
+
+Ở đây, trước tiên chúng tôi chuyển chứng chỉ WWDR từ Cơ quan cấp chứng chỉ Apple, được ký bởi chứng chỉ gốc.
+
+Điều này phải khớp với chứng chỉ thứ hai trong chuỗi x5c.
+
+Và cuối cùng, chứng chỉ lá ở đây là chứng chỉ cuối cùng, được ký bởi chứng chỉ trước đó.
+
+Trong trường hợp xác minh thành công, mã thành công sẽ được trả về.
+
+Sau đó bạn có thể tiến hành sử dụng thông tin đã được giải mã.
+
+Trong trường hợp xác minh không thành công, hãy xác định vấn đề dựa trên mã lỗi được trả về.
+
+Nếu không thể xác minh, dữ liệu này có thể bị giả mạo và không nên được sử dụng.
+
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để được hướng dẫn đầy đủ về cách xác minh chuỗi chứng chỉ x5c bằng OpenSSL.
+
+Đây là một số mã giả về cách người ta có thể xác minh một giao dịch đã ký.
+
+Đầu tiên, lấy JWS mà bạn muốn xác minh.
+
+Sau đó, lấy chứng chỉ mà thư viện JWS của bạn yêu cầu để xác minh.
+
+Gọi chức năng xác minh của thư viện JWS của bạn, sử dụng chứng chỉ thích hợp.
+
+Chứng chỉ ký JWS là chứng chỉ lá, mặc dù một số thư viện yêu cầu chuyển toàn bộ chuỗi.
+
+Trong trường hợp cuộc gọi thành công, thì bạn có thể tiếp tục với nhiệm vụ của mình.
+
+Trong trường hợp đây là kết quả của một cuộc gọi đến App Store Server API, thì bạn có thể tiến hành lưu trữ dữ liệu đã được xác thực.
+
+Đối với trường hợp thông báo, Alex sẽ đi sâu hơn vào vấn đề này trong phần của phiên này.
+
+Trong trường hợp JWS không thể được xác thực, đừng sử dụng JWS.
+
+Điều này có thể có nghĩa là nó đã bị giả mạo hoặc không được gửi bởi App Store.
+
+Alex sẽ đi sâu hơn vào cách đảm bảo bảo mật tốt hơn khi sử dụng thông báo.
+
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để được hướng dẫn đầy đủ về cách xác minh và xử lý JWS.
+
+Bây giờ, hãy xem lại một số trường hợp sử dụng để di chuyển từ verifyReceipt sang App Store Server API.
+
+Đầu tiên, hãy xem xét trường hợp bạn muốn kiểm tra trạng thái mới nhất của bất kỳ người đăng ký nào.
+
+Điều này giúp bạn cập nhật mọi thay đổi đối với đăng ký cá nhân.
+
+Trước đây, để có được trạng thái cập nhật nhất của người đăng ký, người ta phải gọi verifyReceipt và xác định trạng thái của đăng ký dựa trên các trường như ý định hết hạn, grace_period_expires_date, v.v.
+
+Giờ đây, với App Store Server API, điểm cuối Nhận tất cả trạng thái đăng ký có thể được gọi để có được trạng thái đăng ký mới nhất, với trường trạng thái chứa trạng thái hiện tại, cũng như thông tin gia hạn và giao dịch đã ký mới nhất, cập nhật nhất.
+
+Hãy xem xét một luồng về cách bạn có thể thực hiện việc này.
+
+Đầu tiên, đối với bất kỳ biên lai được giải mã nào mà bạn có, bạn có thể lấy bản gốcTransactionIds từ nó theo cách mà tôi đã hiển thị trước đó.
+
+Sau đó, bạn có thể gọi điểm cuối Nhận tất cả trạng thái đăng ký cho originalTransactionId đó, điểm cuối này sẽ trả về các giao dịch và gia hạn đã ký mới nhất cho giao dịch đó.
+
+Tiếp theo, hãy xem xét trường hợp có được các giao dịch mới nhất.
+
+Có được các giao dịch mới nhất thông báo cho bạn về những gì người dùng đã mua, những gì đã gia hạn, nếu có bất kỳ thay đổi nào đối với đăng ký của người dùng và hơn thế nữa.
+
+Trước đây, để có được các giao dịch mới nhất cho người dùng, người ta phải gọi verifyReceipt và sử dụng mảng trong ứng dụng và kiểm tra new_receipt_info, chứa tất cả các giao dịch cho người dùng.
+
+Với App Store Server API, để có được các giao dịch mới nhất, điểm cuối Nhận Lịch sử Giao dịch cho phép bạn tìm nạp toàn bộ lịch sử mua hàng cho người dùng.
+
+Hơn nữa, phân trang kết hợp với các tính năng lọc và sắp xếp mới được đề cập trong cuộc nói chuyện WWDC22, "Có gì mới với mua hàng trong ứng dụng", đảm bảo rằng bạn có thể tìm nạp chính xác dữ liệu mà bạn cần một cách hiệu quả.
+
+Hãy xem xét một dòng chảy của những gì điều này có thể đòi hỏi.
+
+Với bất kỳ originalTransactionId nào thuộc về người dùng đó, bạn có thể gọi điểm cuối Nhận Lịch sử Giao dịch, điểm cuối này sẽ trả về lịch sử giao dịch cho người dùng này dưới dạng các giao dịch đã ký, được lọc, sắp xếp và phân trang theo thông số kỹ thuật của bạn.
+
+Cuối cùng, hãy xem xét trường hợp áp dụng appAccountToken.
+
+Trường appAccountToken cho phép bạn cung cấp UUID liên kết giao dịch StoreKit 2 với người dùng.
+
+Sau đó, trên các giao dịch đã ký, gia hạn đã ký và thông báo cho giao dịch đó, appAccountToken sẽ xuất hiện.
+
+Trước đây, không có hỗ trợ cho appAccountToken với StoreKit gốc, vì nó là một tính năng mới đối với StoreKit2.
+
+Bây giờ, chúng tôi đã thêm hỗ trợ cung cấp UUID trong trường applicationUsername trong Original StoreKit để hỗ trợ khả năng tương thích với các máy khách StoreKit gốc.
+
+Trong điều kiện này, UUID đó sẽ hỗ trợ tất cả các chức năng mà appAccountToken thực hiện.
+
+AppAccountToken sau đó quay trở lại verifyReceipt cho người dùng Original StoreKit và cũng xuất hiện cho cả người dùng Original StoreKit và StoreKit 2 trong các cuộc gọi đến App Store Server API và thông báo từ App Store Server Notifications.
+
+Đó là nó cho phần API Máy chủ App Store của phiên này.
+
+Tiếp theo, đây là Alex để trang trải việc di chuyển sang Thông báo Máy chủ App Store Phiên bản 2.
+
+Alex: Cảm ơn, Gabriel.
+
+Tên tôi là Alex, và tôi rất vui khi có mặt ở đây hôm nay để thảo luận về Thông báo Máy chủ App Store Phiên bản 2.
+
+Đầu tiên, chúng tôi sẽ đề cập đến cách bắt đầu với thông báo phiên bản 2.
+
+Tiếp theo, các thông báo phiên bản 2 khác nhau như thế nào và được xây dựng dựa trên các mô hình khác có sẵn.
+
+Thứ ba, chúng ta sẽ nói về việc khôi phục trong trường hợp thông báo bị bỏ lỡ và một số tài nguyên mới có sẵn để giúp hoàn thành nhiệm vụ này.
+
+Cuối cùng, cách các thông báo có thể cung cấp cái nhìn sâu sắc về hành vi của khách hàng và tạo thêm cơ hội để được thông báo về vòng đời đăng ký.
+
+Hãy xem qua phần giới thiệu ngắn gọn về thông báo là gì và ai có thể sử dụng chúng.
+
+Thông báo Máy chủ App Store là tin nhắn chúng tôi gửi cho bạn bất cứ khi nào người dùng ứng dụng của bạn thực hiện một số hành động nhất định.
+
+Những thông báo này thường được chia thành hai loại, cập nhật đăng ký và cập nhật hoàn tiền, mặc dù chúng tôi luôn làm việc để đề cập đến các tình huống bổ sung.
+
+Chúng tôi cung cấp các thông báo này để giúp lấp đầy khoảng trống trong các hành động của người dùng mà bạn có thể không có sẵn trong ứng dụng.
+
+Ví dụ, một trong những trường hợp sử dụng phổ biến nhất của chúng tôi là gia hạn đăng ký.
+
+Người dùng có thể không có mặt trong ứng dụng khi giao dịch này khả dụng.
+
+Thông báo máy chủ App Store giúp giải quyết vấn đề này bằng cách chủ động gửi thông tin giao dịch mới nhất trực tiếp đến máy chủ của bạn khi đăng ký gia hạn.
+
+Thông báo phiên bản 2 chia sẻ nhiều điểm tương đồng với mô hình StoreKit 2 và API Máy chủ App Store mà bạn vừa nghe từ Gabriel.
+
+Tuy nhiên, trong khi chúng hoạt động tốt với nhau, chúng đều là những công cụ độc lập có thể được áp dụng vào những thời điểm khác nhau.
+
+Quan trọng nhất, bạn có thể tiếp tục hỗ trợ các khách hàng nơi StoreKit 2 không khả dụng, trước các khách hàng iOS-15, trong khi sử dụng Thông báo Máy chủ Phiên bản 2.
+
+Chúng tôi đã làm việc để biến thông báo Phiên bản 2 thành một trong những công cụ chuyên sâu và linh hoạt nhất của chúng tôi để cung cấp thông tin về người dùng trong toàn bộ vòng đời đăng ký.
+
+Chúng tôi sẽ đi sâu hơn vào vấn đề này sau trong bài thuyết trình, nhưng các thông báo cung cấp thông tin gần như không thể nắm bắt được cho các hành động được thực hiện bên ngoài ứng dụng.
+
+Tôi hy vọng tôi đã quan tâm đến bạn về khái niệm thông báo và thông báo Phiên bản 2 nói riêng.
+
+Trước khi chúng ta đi xa hơn, trong khi bài thuyết trình này hướng dẫn bạn bắt đầu và các phương pháp hay nhất để nhận thông báo, nó không nói lên toàn bộ câu chuyện.
+
+Vui lòng tham khảo các video gần đây này để biết thêm thông tin về các thông báo và cách chúng có thể đáp ứng các trường hợp sử dụng khác nhau.
+
+Hãy xem xét việc thiết lập thông báo Phiên bản 2.
+
+Chúng tôi sẽ hướng dẫn cách thiết lập thông báo của bạn cho đến khi nhận thông báo đầu tiên của bạn.
+
+Đầu tiên, hãy truy cập trang ứng dụng của bạn trong App Store Connect.
+
+Cuộn xuống, bạn sẽ thấy một phần dành cho Thông báo Máy chủ App Store.
+
+Ở đây bạn sẽ thấy các tùy chọn cho cả sản xuất và hộp cát.
+
+Mỗi môi trường có thể chứa một URL riêng biệt và một phiên bản thông báo riêng biệt.
+
+Đây là một ví dụ về trang tùy chọn cho cài đặt sản xuất.
+
+Cài đặt hộp cát hoàn toàn giống nhau.
+
+Chúng tôi khuyên bạn, đặc biệt nếu bạn là người dùng thông báo Phiên bản 1, trước tiên bạn nên thử thông báo Phiên bản 2 trong môi trường hộp cát.
+
+Đây là một nơi tuyệt vời để trở nên thoải mái với các thông báo mà không ảnh hưởng đến thiết lập sản xuất của bạn.
+
+Chọn nút Thiết lập Hộp cát, cung cấp URL của máy chủ của bạn và chọn Thông báo Phiên bản 2.
+
+Trước khi kích hoạt thông báo, hãy xác nhận bạn có chứng chỉ HTTPS hợp lệ cho điểm cuối máy chủ của mình.
+
+Đồng thời xác nhận rằng bạn đã cho phép IP công cộng của Apple truy cập vào máy chủ của bạn.
+
+Một số lỗi phổ biến nhất khi thiết lập thông báo liên quan đến tường lửa và chứng chỉ.
+
+Đây cũng là những điều tuyệt vời để kiểm tra xem bạn có đột nhiên ngừng nhận thông báo như một bước khắc phục sự cố ban đầu hay không.
+
+Bây giờ bạn đã sẵn sàng để nhận thông báo đầu tiên của mình.
+
+Trong Sandbox, thông báo có thể được kích hoạt bởi nhiều hành động khác nhau, như mua đăng ký trong ứng dụng.
+
+Tuy nhiên, để dễ sử dụng trong khi thử nghiệm, chúng tôi khuyên bạn nên kích hoạt thông báo bằng cách sử dụng điểm cuối Yêu cầu Thông báo Kiểm tra mới, một phần của API Máy chủ App Store.
+
+Điểm cuối này giúp tự động hóa quy trình kiểm tra thông báo.
+
+Sau khi kích hoạt điểm cuối Yêu cầu Thông báo Kiểm tra, bạn sẽ thấy thông báo đến sớm.
+
+Nếu bạn gặp sự cố khi nhận thông báo, vui lòng tham khảo điểm cuối Trạng thái Nhận Thông báo Kiểm tra mới, điểm cuối này có thể cung cấp trạng thái ngắn gọn về lý do tại sao thông báo không được gửi.
+
+Ví dụ, một trạng thái như SSL_ISSUE sẽ là manh mối để kiểm tra lại chứng chỉ HTTPS của bạn.
+
+Chúng tôi khuyên bạn nên kích hoạt thông báo kiểm tra bất cứ khi nào bạn thực hiện thay đổi cấu hình.
+
+Đây là một cách tuyệt vời để xác nhận bạn vẫn có thể nhận được thông báo sau khi thay đổi.
+
+Bây giờ, hãy chuyển sang hiểu thông báo bạn vừa nhận được.
+
+Cũng giống như các giao dịch mà chúng tôi đã thấy trước đó từ Gabriel, các thông báo cũng ở định dạng JWS.
+
+Hãy xem qua cách giải mã và xác minh tải trọng thông báo.
+
+Đầu tiên, khi nhận được thông báo, bạn sẽ muốn trích xuất trường signedPayload của nội dung JSON.
+
+Tiếp theo, bạn sẽ thực hiện chính xác các bước mà Gabriel đã hướng dẫn bạn trước đó để xác minh giao dịch đã ký.
+
+Bạn sẽ làm theo các bước tương tự để xác minh dữ liệu đã ký cho dù đó là tải trọng thông báo đã ký từ thông báo hay giao dịch đã ký từ API Máy chủ App Store.
+
+Tiếp theo, điều quan trọng là phải xác minh thông báo dành cho ứng dụng nào.
+
+Nếu bạn có nhiều ứng dụng chia sẻ cùng một điểm cuối, đây là một nơi tốt để xác định ứng dụng mục tiêu.
+
+Điều quan trọng là phải xác nhận rằng ứng dụng mà thông báo được nhắm mục tiêu là ứng dụng của bạn và thông báo không dành cho nhà phát triển khác.
+
+Cuối cùng, một kiểm tra hữu ích nữa là đảm bảo rằng môi trường của thông báo phù hợp với môi trường mong đợi của bạn, Sản xuất hoặc Hộp cát.
+
+Bởi vì App Store Connect cho phép các URL riêng biệt cho từng môi trường, có thể thực thi yêu cầu này hoặc, nếu các URL được chia sẻ, đảm bảo bạn đang lưu trữ và xử lý các thông báo riêng biệt dựa trên môi trường.
+
+Tại thời điểm này, JWS được xác thực đầy đủ và có thể được lưu trữ để xử lý thêm.
+
+Chúng tôi khuyến nghị, bên cạnh một số kiểm tra cơ bản, máy chủ của bạn nên xử lý thông báo không đồng bộ.
+
+Nếu quá trình xử lý thông báo mất quá nhiều thời gian, máy chủ của chúng tôi sẽ ghi lại thời gian chờ và cho rằng thông báo không được gửi thành công.
+
+Sau đó chúng tôi sẽ gửi lại thông báo.
+
+Do đó, việc xử lý tốn nhiều thời gian bên ngoài chức năng này giúp đảm bảo rằng máy chủ App Store ghi lại các thông báo của bạn đã được gửi thành công và loại bỏ nhu cầu máy chủ của bạn xử lý lại các thông báo khi thử lại.
+
+Bây giờ, hãy xem qua nội dung của thông báo sau khi xác minh.
+
+Các trường đầu tiên là loại thông báo và loại phụ tùy chọn.
+
+Kết hợp lại, những điều này cho bạn biết kịch bản mà thông báo dành cho.
+
+Các trường này cũng giúp hiển thị những gì đã thay đổi kể từ thông báo cuối cùng và cung cấp thông tin về lý do tại sao những thay đổi này xảy ra.
+
+Thông báoUUID là một mã định danh duy nhất cho mỗi thông báo.
+
+Nếu máy chủ thử lại thông báo, thông báo đã thử lại sẽ chứa cùng một thông báoUUID.
+
+Điều này giúp phát hiện các trường hợp máy chủ của bạn xử lý thông báo, nhưng không phản hồi bằng mã phản hồi HTTP thành công một cách kịp thời.
+
+Chúng tôi khuyên bạn nên thêm phát hiện thông báo trùng lặp do thử lại, dựa trên trường này.
+
+Trường signedDate cho bạn biết khi nào thông báo được tạo.
+
+Điều này đặc biệt hữu ích để phát hiện các thông báo đã thử lại.
+
+Tiếp theo, ứng dụng AppleId và bundleId.
+
+Những thứ này rất quan trọng để phát hiện ứng dụng mục tiêu.
+
+Như chúng ta đã thảo luận trước đó, điều quan trọng là bạn phải kiểm tra các trường này và xác nhận chúng khớp với các giá trị dự kiến để ngăn chặn các cuộc tấn công phát lại.
+
+Ngoài ra, hãy đảm bảo môi trường của thông báo phù hợp với môi trường dự kiến, thông báo hộp cát không được ghi lại dưới dạng dữ liệu sản xuất và ngược lại.
+
+Cuối cùng, signedTransactionInfo thực tế và signedRenewalInfo tùy chọn.
+
+Đây sẽ là trạng thái mới nhất của giao dịch mua cơ bản tại thời điểm ký kết.
+
+Tại thời điểm này, sau khi phân tích cú pháp thông báo, bạn còn lại thông tin giao dịch và gia hạn mới nhất và lý do mới nhất cho sự thay đổi trạng thái.
+
+Bây giờ chúng ta đã đề cập đến việc thiết lập và nhận một thông báo cụ thể, hãy kiểm tra mô hình thông báo Phiên bản 2, cách các thông báo có thể khớp với nhau để theo dõi vòng đời đăng ký và các quyết định thiết kế đằng sau thông báo Phiên bản 2 thông qua so sánh với thông báo Phiên bản 1.
+
+Phiên bản 2 áp dụng một triết lý khác khi gửi thông tin về trạng thái mua hàng.
+
+Thay vì gửi toàn bộ lịch sử gần đây mỗi thông báo, thông báo Phiên bản 2 chỉ tập trung vào việc gửi thông tin mới nhất: thông tin giao dịch mới nhất và trong trường hợp đăng ký, thông tin gia hạn đang chờ xử lý.
+
+Với các thông báo, chúng tôi làm việc để cung cấp thông tin về từng bước của vòng đời đăng ký.
+
+Do đó, thông báo chỉ chứa thông tin mới nhất về việc mua hàng hoặc đăng ký.
+
+Cùng với nhau, những thông báo này tạo ra một dòng thời gian hoàn chỉnh về trạng thái đăng ký.
+
+Nếu bạn cần xem toàn bộ lịch sử giao dịch và không có quyền truy cập vào lịch sử thông báo, điều này kết hợp tốt với điểm cuối Nhận Lịch sử Giao dịch cho phép bạn truy vấn toàn bộ lịch sử giao dịch của người dùng trong ngữ cảnh được phân trang và có thể lọc được.
+
+Thứ hai, thông báo phiên bản 1 không yêu cầu khách hàng sử dụng StoreKit 2.
+
+Và đúng vậy, phiên bản 2 cũng vậy.
+
+Trên thực tế, bất kể khuôn khổ nào được sử dụng ở phía khách hàng, bạn có thể bắt đầu tận hưởng những lợi ích của thông báo phiên bản 2 ngay hôm nay.
+
+Cuối cùng, thông báo phiên bản 2 hoạt động để nâng cao mức độ chi tiết được cung cấp và mở rộng các trường hợp được bao phủ bằng cách thêm các loại bổ sung và thêm trường loại phụ mới.
+
+Thông qua điều này, chúng tôi có thể đề cập đến nhiều tình huống hơn và cung cấp thông báo ở mọi bước của vòng đời đăng ký.
+
+Một số tình huống đáng chú ý mà chúng tôi đã thêm vào bao gồm hết hạn, thông tin chi tiết hơn liên quan đến những thay đổi trong trạng thái gia hạn tự động và nhiều kịch bản hơn xung quanh quy trình hoàn tiền.
+
+Bây giờ, để minh họa sự phức tạp của các tình huống được đề cập và cung cấp một ví dụ cụ thể hơn, hãy xem cách các thông báo có thể thông báo cho bạn về từng bước đăng ký thực hiện, từ đầu đến cuối.
+
+Hãy tưởng tượng một người dùng trước khi đăng ký.
+
+Sau khi đăng ký, người dùng chuyển sang trạng thái gia hạn đăng ký và thông báo ĐĂNG KÝ với loại phụ INITIAL_BUY được gửi hoặc ƯU ĐÃI_REDEEMED với loại phụ INITIAL_BUY nếu ưu đãi được sử dụng.
+
+Chứa trong thông báo sẽ là giao dịch đã ký đầu tiên và thông tin gia hạn đã ký.
+
+Thời gian trôi qua, và đăng ký gia hạn, ở trạng thái gia hạn.
+
+Sau mỗi lần gia hạn, chúng tôi gửi thông báo DID_RENEW với thông tin giao dịch đã ký tiếp theo.
+
+Bất cứ khi nào người dùng hủy kích hoạt tự động gia hạn, họ sẽ chuyển sang trạng thái đăng ký hết hạn và bạn sẽ nhận được DID_CHANGE_RENEWAL_STATUS với thông báo AUTO_RENEW_DISABLED loại phụ.
+
+Nếu họ không bật lại tính năng gia hạn tự động, vào cuối khoảng thời gian họ sẽ chuyển sang trạng thái đã hết hạn và bạn sẽ nhận được THÔNG BÁO ĐÃ HẾT HẠN với loại phụ TỰ NGUYỆN.
+
+Bây giờ, bạn có thể tự hỏi, tất cả các loại thông báo khác ở đâu?
+
+Đây là vòng đời đăng ký, như được thấy qua các thông báo.
+
+Có rất nhiều thứ đang diễn ra.
+
+Và sơ đồ này thậm chí không nói lên toàn bộ câu chuyện.
+
+Ví dụ, vòng đời hoàn tiền/thu hồi không được bao gồm ở đây.
+
+Sơ đồ này minh họa một loạt các tình huống mà thông báo phiên bản 2 bao gồm và chúng hoạt động để thông báo cho bạn về từng bước của vòng đời đăng ký.
+
+Một điểm khác mà tôi sẽ đưa ra là chúng tôi làm việc để bao quát mọi trạng thái chuyển tiếp có thể xảy ra.
+
+Điều này giúp tăng tiện ích của thông báo bằng cách trở thành một nguồn duy nhất để theo dõi đăng ký và cải thiện sự tự tin rằng bạn đang nhìn thấy từng bước trong hành trình của người đăng ký.
+
+Tuy nhiên, mặc dù tất cả dữ liệu này đều ở đây, bạn không cần phải làm việc với mọi loại có sẵn.
+
+Ví dụ, ngay cả khi chỉ xử lý các thông báo liên quan đến thay đổi tùy chọn gia hạn cũng có thể cung cấp giá trị.
+
+Đặc biệt nếu bạn chỉ mới bắt đầu, hãy bắt đầu với các loại thông báo hữu ích nhất cho tình huống của bạn.
+
+Bây giờ, hãy đề cập đến những gì xảy ra sau khi bạn đã thiết lập máy chủ của mình, mọi thứ đang chạy trơn tru, nhưng, than ôi, máy chủ của bạn bị hỏng.
+
+Cho dù đó là trong vài ngày, vài phút hay bạn nghĩ rằng bạn có thể đã bỏ lỡ chỉ một ngày, hãy xem qua một số bước để giúp giải quyết vấn đề này.
+
+Hãy hình dung máy chủ của bạn.
+
+Nó được thiết lập thành công và đang nhận được thông báo.
+
+Tại một số thời điểm, máy chủ của bạn gặp sự cố và không thể nhận thông báo.
+
+Chúng tôi vẫn đang cố gắng gửi tin nhắn đến máy chủ của bạn, nhưng bây giờ những yêu cầu đó bắt đầu thất bại.
+
+Có một số cách để đối phó với kịch bản này.
+
+Đầu tiên chỉ là chờ đợi.
+
+Nếu chúng tôi không nhận được mã trạng thái thành công từ máy chủ của bạn hoặc hoàn toàn không thể kết nối với nó, chúng tôi sẽ thử lại thông báo theo chính sách thử lại được ghi lại của chúng tôi.
+
+Đối với thông báo phiên bản 2, chúng tôi thử lại sau mỗi lần thử, đầu tiên sau độ trễ 1 giờ, sau đó là độ trễ 12 giờ, 24-, 48- và cuối cùng là độ trễ 72 giờ.
+
+Chờ đợi hoạt động tốt cho sự cố mất điện dưới một giờ, vì các thông báo sẽ được thử lại một giờ sau lần thất bại đầu tiên.
+
+Tại một số thời điểm, máy chủ của bạn phục hồi và bạn bắt đầu nhận lại thông báo.
+
+Đầu tiên, bạn nhận được một thông báo mới, không liên quan đến các thông báo bị bỏ lỡ.
+
+Thông báo được thử lại với độ trễ, vì vậy ngay khi máy chủ của bạn trực tuyến, bạn sẽ không nhận được ngay lập tức tất cả các thông báo bị bỏ lỡ.
+
+Một thời gian trôi qua và bạn bắt đầu nhận được các thông báo mà bạn đã bỏ lỡ, xen kẽ với các thông báo mới.
+
+Điều này đặt ra câu hỏi, làm thế nào bạn có thể phát hiện xem thông báo là thông báo gốc hay thông báo đã thử lại?
+
+Hãy kiểm tra một thông báo.
+
+Trong thông báo này, chúng tôi chỉ hiển thị một vài trường.
+
+Thông báo chứa một trường signedDate.
+
+Trường này có thể hữu ích để phát hiện các lần thử lại, bằng cách so sánh ngày ký với thời gian nhận được thông báo.
+
+Nếu bạn thấy thông báo có ngày ký sớm hơn đáng kể so với ngày bạn nhận được thông báo, điều này cho thấy bạn có thể đã gặp sự cố ngừng hoạt động.
+
+Hãy tưởng tượng trong trường hợp này, các thông báo có nhãn 6 và 3 dành cho cùng một đăng ký.
+
+Điều này có thể được xác định bằng cách so sánh các TransactionIds ban đầu.
+
+Trong trường hợp này, chỉ vì thông báo 3 được nhận sau thông báo 6 không có nghĩa là nó chứa thông tin mới hơn thông báo 6.
+
+Những lần khác, máy chủ của bạn có thể đã nhận được thông báo, nhưng nó không phản hồi bằng mã trạng thái HTTP 200 thành công.
+
+Điều này có thể khiến thông báo được gửi lại đến máy chủ của bạn.
+
+Như đã thảo luận trước đó, hãy đảm bảo kiểm tra trường thông báoUUID để sao chép các yêu cầu này.
+
+Bạn có thể thấy số lượng đáng kể các thông báo đã thử lại mặc dù bạn đã ghi lại thành công các thông báo.
+
+Trong trường hợp này, hãy đảm bảo rằng bạn đang phản hồi bằng phản hồi HTTP 200 mỗi khi bạn nhận được thông báo.
+
+Ngoài ra, hãy đảm bảo rằng bạn đang làm như vậy một cách kịp thời và không xử lý rộng rãi trước khi phản hồi thành công, để ngăn chúng tôi ghi lại thời gian chờ và gửi lại thông báo.
+
+Đôi khi, đặc biệt là với thời gian ngừng hoạt động lâu hơn, lần thử lại tiếp theo có thể còn vài giờ hoặc vài ngày nữa, hoặc đối với sự cố ngừng hoạt động kéo dài, các lần thử lại có thể đã cạn kiệt.
+
+Tùy chọn tiếp theo để khôi phục từ các thông báo bị bỏ lỡ là điểm cuối Nhận Lịch sử Thông báo.
+
+Chúng tôi vừa công bố điểm cuối Nhận Lịch sử Thông báo mới, cung cấp lịch sử thông báo sáu tháng mà chúng tôi đã gửi cho máy chủ của bạn.
+
+Tham khảo video "Có gì mới khi mua hàng trong ứng dụng" để biết tổng quan về điểm cuối này cùng với các tính năng tuyệt vời khác mà chúng tôi đang công bố.
+
+Ở đây chúng tôi sẽ tập trung vào các phương pháp hay nhất khi sử dụng điểm cuối này và các tình huống mà nó có thể hỗ trợ.
+
+Sau khi sự cố ngừng hoạt động được giải quyết, hãy lưu ý dấu thời gian bắt đầu và kết thúc của sự cố ngừng hoạt động.
+
+Điểm cuối Nhận Lịch sử Thông báo cho phép thực hiện các truy vấn trong một khoảng thời gian cụ thể.
+
+Bằng cách chỉ định thời gian bắt đầu và kết thúc của sự cố ngừng hoạt động, bạn chỉ có thể xử lý các thông báo mà bạn có thể đã bỏ lỡ, thay vì yêu cầu phân trang trong toàn bộ lịch sử.
+
+Điều này sẽ giúp cải thiện tốc độ khôi phục và giảm xử lý lại công việc các thông báo đã được ghi lại.
+
+Tiếp theo, điểm cuối Nhận Lịch sử Thông báo cho phép bạn lọc theo loại thông báo.
+
+Nếu bạn đã gặp phải sự cố ngừng hoạt động kéo dài và mong đợi một số lượng thông báo đáng kể, hãy cân nhắc lọc theo loại và bắt đầu với các loại có thể có tác động ngay lập tức, như DID_RENEW và EXPIRED.
+
+Những điều này sẽ giúp bạn hành động trong những trường hợp phù hợp nhất trước tiên.
+
+Một mẹo khi chuyển các loại thông báo, nếu trường notificationSubtype bị bỏ qua, điều này sẽ chỉ trả về các thông báo cũng không có loại phụ.
+
+Do đó, đối với ví dụ được hiển thị cho DID_RENEW notificationType, điều này sẽ không trả về thông báo DID_RENEW với loại phụ BILLING_RECOVERY.
+
+Cuối cùng, điểm cuối Nhận Lịch sử Thông báo cho phép lọc cho một người dùng cụ thể bằng cách sử dụng originalTransactionId.
+
+Nghĩ lại vòng đời đăng ký, chúng tôi đã làm việc để đảm bảo mọi bước trong hành trình của người dùng đều được bao phủ bởi các thông báo.
+
+Do đó, nếu bạn thấy mình nhảy xung quanh theo những cách bất ngờ, ví dụ như từ việc gia hạn đăng ký trực tiếp đến hết hạn, điều này có thể cho thấy rằng bạn đã bỏ lỡ thông báo cho người dùng đó.
+
+Điều này cũng có thể hữu ích trong bối cảnh hỗ trợ khách hàng nếu tài khoản của người dùng ở trạng thái khác với bạn mong đợi.
+
+Trong những trường hợp này, bạn có thể gửi truy vấn cho lịch sử thông báo của người dùng đó.
+
+Hãy xem qua phản hồi từ điểm cuối Nhận Lịch sử Thông báo.
+
+Chỉ một số giá trị nhất định được hiển thị trong phản hồi cho sự đơn giản.
+
+Các giá trị được trả về trong phản hồi nằm trong mảng notificationHistory.
+
+Mỗi mục nhập trong mảng đại diện cho một thông báo duy nhất.
+
+Trường tải trọng đã ký chứa thông báo chính xác đã được gửi cho bạn.
+
+Thứ hai, chúng tôi có trường firstSendAttemptResult.
+
+Trường này chứa một trong một số giá trị dựa trên kết quả của nỗ lực thông báo ban đầu như được ghi lại bởi các máy chủ của chúng tôi.
+
+Trong trường hợp thành công, đây sẽ là giá trị THÀNH CÔNG.
+
+Tuy nhiên, như chúng ta vừa thảo luận, đôi khi các thông báo không đến được máy chủ của bạn.
+
+Những thông điệp này có nghĩa là một hướng dẫn chung để giúp chỉ cho bạn hướng đi của vấn đề, để đơn giản hóa quá trình giải quyết.
+
+Ví dụ, chúng tôi thấy SSL_ISSUE ở đây.
+
+Điều này cho thấy có vấn đề với chứng chỉ SSL hoặc quy trình trên máy chủ.
+
+Trường này cung cấp khả năng hiển thị được cải thiện để chẩn đoán các sự cố máy chủ ngoài việc thấy thông báo không đến.
+
+Chúng tôi cũng cung cấp trường tương tự này trong điểm cuối Nhận Trạng thái Thông báo Kiểm tra, để cung cấp chức năng này khi sử dụng thông báo kiểm tra.
+
+Những thứ này có thể được sử dụng để trợ giúp trong khi giới thiệu hoặc trong quá trình khắc phục sự cố, hoặc hồi cứu trong quá trình xác định nguyên nhân gốc rễ của sự cố ngừng hoạt động.
+
+Thông báo có thể không bao gồm tất cả các trường hợp lịch sử của người dùng.
+
+Bạn có thể vừa thông qua các thông báo và có những người dùng hiện tại có lịch sử không được đề cập.
+
+Bạn cũng có thể muốn kiểm tra lịch sử lâu hơn thời gian lưu giữ thông báo trong điểm cuối Nhận Lịch sử Thông báo.
+
+Đó là nơi điểm cuối Nhận Lịch sử Giao dịch đi vào hình ảnh.
+
+Điểm cuối này, như chúng ta đã thấy trước đó trong bài thuyết trình từ Gabriel, giải quyết những vấn đề này bằng cách cung cấp lịch sử cho khách hàng của bạn bao gồm các trường hợp trước khi bạn bắt đầu sử dụng thông báo.
+
+Bây giờ, hãy xem xét cách các thông báo có thể cung cấp thông tin chi tiết và cơ hội ở trên và ngoài lịch sử mua hàng.
+
+Một trong những bổ sung mới trong thông báo Phiên bản 2 là trường loại phụ, thêm ngữ cảnh bổ sung vào trường Loại thông báo.
+
+Trường này nhằm cung cấp thêm chi tiết trong một số tình huống nhất định, như EXPIRED hoặc DID_CHANGE_RENEWAL_STATUS.
+
+Ví dụ, với EXPIRED, hành động bạn thực hiện thường giống nhau, đánh dấu đăng ký là không hoạt động và thu hồi quyền truy cập vào sản phẩm.
+
+Tuy nhiên, nó thường có thể hữu ích để hiểu lý do tại sao người dùng hết hạn.
+
+Có phải do vấn đề thanh toán, lựa chọn tự nguyện hay tăng giá mà không bao giờ được chấp nhận?
+
+Một thông báo khác, DID_CHANGE_RENEWAL_STATUS, là một ví dụ tuyệt vời về việc thu thập thông tin và cơ hội bổ sung khi sử dụng thông báo.
+
+Nhìn bề ngoài, nó có vẻ được ưu tiên thấp.
+
+Không cần thực hiện hành động nào ngay lập tức.
+
+Thông báo quan trọng để thu hồi quyền truy cập vào sản phẩm là thông báo ĐÃ HẾT HẠN.
+
+Đừng để bị lừa. Có rất nhiều cơ hội ở đây.
+
+Một, thông báo này là một cơ hội tuyệt vời để cố gắng giành lại khách hàng trước khi đăng ký của họ hết hạn.
+
+Đặc biệt là vì việc hủy kích hoạt tự động gia hạn có thể xảy ra bên ngoài ứng dụng, đây có thể là trình kích hoạt duy nhất được thông báo trong thay đổi trạng thái gia hạn này trước ngày hết hạn.
+
+Thông báo này cũng cung cấp cái nhìn sâu sắc về hành vi của khách hàng.
+
+Thông báo này có thể được sử dụng để xác định khi nào người đăng ký trong thời gian gia hạn hủy.
+
+Có phải là ngày trước khi gia hạn không?
+
+Những người đăng ký mới có hủy kích hoạt tính năng tự động gia hạn ngay sau khi đăng ký dịch vụ của bạn không?
+
+Loại thông tin này có thể quan trọng để hiểu nguyên nhân hủy bỏ và cải thiện sản phẩm của bạn.
+
+Cuối cùng, một số tình huống nhất định có thể không bao giờ được phản ánh trong lịch sử của người dùng mà không có thông báo.
+
+Ví dụ, người dùng có thể hủy kích hoạt nhưng sau đó kích hoạt lại tự động gia hạn, trước khi thời gian đăng ký của họ hết hạn.
+
+Bởi vì tất cả điều này xảy ra trong một khoảng thời gian đăng ký, không ảnh hưởng đến tình trạng dài hạn của đăng ký.
+
+Những quyết định này có thể quan trọng để hiểu khách hàng của bạn và các thông báo cung cấp thông tin để phát hiện và ghi lại các loại tình huống này.
+
+Nhìn chung, các thông báo hoạt động để nâng cao và tạo cơ hội hiểu hành vi của khách hàng bằng cách cung cấp thông tin ở mọi bước trong hành trình của khách hàng, bao gồm nhiều tình huống hơn bao giờ hết.
+
+Tóm lại, hôm nay chúng tôi đã đề cập đến cả API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+Những thứ này có sẵn để cải thiện các khả năng xung quanh việc quản lý và theo dõi các giao dịch mua.
+
+Họ sử dụng các loại tin nhắn được cập nhật và bao gồm nhiều trường hợp hơn bao giờ hết.
+
+Các hệ thống này có sẵn cho tất cả khách hàng và tương thích chéo với cả Original StoreKit và StoreKit 2 và có thể cải thiện khả năng giám sát vòng đời đăng ký của bạn.
+
+Cuối cùng, những công cụ này đã có sẵn trong cả Sandbox và Production và là một bổ sung tuyệt vời cho bất kỳ hệ thống nào.
+
+Cảm ơn bạn đã tham gia cùng chúng tôi, và có một WWDC tuyệt vời.

@@ -1,0 +1,326 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+Xin chào, tôi là Johannes Fortmann từ nhóm Cloud FileProvider.
+
+00:00:05.000 --> 00:00:15.000
+Hôm nay chúng ta sẽ nói về cách sử dụng FileProvider API mới được giới thiệu trong iOS 16 để mang lại đồng bộ hóa lớp máy tính để bàn với iOS.
+
+00:00:15.000 --> 00:00:21.000
+Sau phần giới thiệu, chúng tôi sẽ tóm tắt nhanh về mục tiêu của nhà cung cấp tệp.
+
+00:00:21.000 --> 00:00:29.000
+Chúng tôi sẽ thảo luận về cách tiếp cận tối ưu để kiến trúc ứng dụng của bạn, cũng như các phương pháp hay nhất trở nên đặc biệt quan trọng trên iOS.
+
+00:00:29.000 --> 00:00:34.000
+Cuối cùng, tôi sẽ chỉ cho bạn bản demo nhanh về một nhà cung cấp đang chạy trên iOS.
+
+00:00:34.000 --> 00:00:39.000
+Big Sur đã giới thiệu một API khai báo để đồng bộ hóa các tệp với máy Mac của bạn.
+
+00:00:39.000 --> 00:00:43.000
+API này đã được nhiều nhà cung cấp đám mây áp dụng để thành công lớn.
+
+00:00:43.000 --> 00:00:51.000
+Nhóm của tôi đã làm việc đều đặn để cải thiện API và chúng tôi rất vui khi cũng cung cấp nó trên iOS 16.
+
+00:00:51.000 --> 00:00:58.000
+API này sẽ cho phép các ứng dụng iOS của bạn cung cấp cái mà chúng tôi gọi là "đồng bộ hóa lớp máy tính để bàn".
+
+00:00:58.000 --> 00:01:01.000
+Ý tôi là gì khi nói vậy?
+
+00:01:01.000 --> 00:01:09.000
+Khi các ứng dụng trên iOS trở nên mạnh mẽ hơn, điều quan trọng là chúng có thể truy cập một vị trí được chia sẻ trên hệ thống tệp.
+
+00:01:09.000 --> 00:01:16.000
+Mọi người muốn những ứng dụng mạnh mẽ này có thể truy cập tất cả các loại đối tượng hệ thống tệp.
+
+00:01:16.000 --> 00:01:21.000
+Nếu họ chọn, ứng dụng của họ sẽ có thể truy cập các thư mục và tạo các tệp mới.
+
+00:01:21.000 --> 00:01:26.000
+Chúng tôi muốn tất cả những điều này xảy ra trong khi vẫn đảm bảo tính nhất quán.
+
+00:01:26.000 --> 00:01:28.000
+Tính nhất quán có nghĩa là gì?
+
+00:01:28.000 --> 00:01:34.000
+Trên iOS, thời gian chạy nền trong lịch sử đã bị hạn chế vì những lo ngại về năng lượng.
+
+00:01:34.000 --> 00:01:39.000
+Đồng thời, các thay đổi dự kiến sẽ được tải lên trong nền.
+
+00:01:39.000 --> 00:01:45.000
+FileProvider API hiện đại đã được giới thiệu để giải quyết vấn đề này.
+
+00:01:45.000 --> 00:01:59.000
+Ở cấp độ cơ bản, bạn triển khai tiện ích mở rộng ứng dụng chịu trách nhiệm liệt kê các mục, tìm nạp và tải lên nội dung và cập nhật danh sách các mục nếu chúng thay đổi từ xa.
+
+00:01:59.000 --> 00:02:07.000
+Hệ thống chịu trách nhiệm tiết lộ thông tin bạn cung cấp và duy trì tính nhất quán.
+
+00:02:07.000 --> 00:02:14.000
+Một nhiệm vụ quan trọng của hệ thống là theo dõi các lỗi và thử lại nếu cần thiết.
+
+00:02:14.000 --> 00:02:19.000
+Đối với một số thao tác, chẳng hạn như tìm nạp nội dung, các lần thử lại đến một cách tự nhiên.
+
+00:02:19.000 --> 00:02:26.000
+Người dùng đang tích cực chờ tải xuống và có thể theo dõi chặt chẽ thanh tiến trình.
+
+00:02:26.000 --> 00:02:29.000
+Mặt khác, việc tải lên yêu cầu lên lịch.
+
+00:02:29.000 --> 00:02:36.000
+Bằng cách theo dõi trạng thái của các mục trên đĩa, hệ thống đảm bảo rằng nội dung cập nhật được tải lên.
+
+00:02:36.000 --> 00:02:41.000
+Tiến độ và lỗi được theo dõi để thử tải lên lại nếu cần thiết.
+
+00:02:41.000 --> 00:02:45.000
+Một chủ đề phức tạp khác là tính nhất quán trong quá trình tải lên.
+
+00:02:45.000 --> 00:02:57.000
+Hệ thống quản lý các bản sao của nội dung tệp để đảm bảo rằng trong quá trình tải lên, các lần truy cập tiếp theo vào tệp thành công và hiển thị dữ liệu chính xác.
+
+00:02:57.000 --> 00:03:10.000
+Trong các hoạt động này, hệ thống cũng đảm bảo rằng phiên bản cục bộ luôn nhất quán, ngay cả khi có nhiều ứng dụng truy cập nó và điều đó bao gồm đồng bộ hóa từ máy chủ từ xa.
+
+00:03:10.000 --> 00:03:18.000
+Điều này được triển khai minh bạch cho bạn bằng cách sử dụng các tính năng APFS và phối hợp tệp.
+
+00:03:18.000 --> 00:03:24.000
+Giới hạn lưu trữ là một hạn chế quan trọng đối với các thiết bị di động.
+
+00:03:24.000 --> 00:03:31.000
+Hệ thống sử dụng tính năng APFS để theo dõi nguyên tử trạng thái thay đổi của các tệp cục bộ.
+
+00:03:31.000 --> 00:03:40.000
+Điều này cho phép nó loại bỏ một cách minh bạch các tệp không có thay đổi cục bộ dựa trên việc sử dụng đĩa và trạng thái ít được sử dụng gần đây nhất.
+
+00:03:40.000 --> 00:03:47.000
+Các tệp được tải lên đầy đủ không được tính vào ứng dụng của bạn trong ngăn Quản lý Lưu trữ trong Cài đặt.
+
+00:03:47.000 --> 00:03:53.000
+Bạn có thể nhận thấy rằng cho đến nay chúng ta đã nói về hệ thống và tiện ích mở rộng.
+
+00:03:53.000 --> 00:03:56.000
+Hãy nói về nơi ứng dụng của bạn xuất hiện.
+
+00:03:56.000 --> 00:04:00.000
+Tôi khuyên bạn nên sử dụng một sự tách biệt nghiêm ngặt các mối quan tâm.
+
+00:04:00.000 --> 00:04:07.000
+Hệ thống chịu trách nhiệm quản lý các cấu trúc trên đĩa và lên lịch các nhiệm vụ.
+
+00:04:07.000 --> 00:04:12.000
+Tiện ích mở rộng của bạn chịu trách nhiệm thực hiện các tác vụ đó để đồng bộ hóa lên xuống.
+
+00:04:12.000 --> 00:04:18.000
+Hệ thống theo dõi tất cả trạng thái về hệ thống phân cấp tệp và phần nào yêu cầu đồng bộ hóa.
+
+00:04:18.000 --> 00:04:22.000
+Điều đó có nghĩa là tiện ích mở rộng của bạn có thể rất nhẹ.
+
+00:04:22.000 --> 00:04:26.000
+Nó hoàn toàn không phải theo dõi bất kỳ trạng thái cụ thể nào của mặt hàng.
+
+00:04:26.000 --> 00:04:30.000
+Ứng dụng của bạn không chịu trách nhiệm cho bất kỳ sự đồng bộ hóa nào.
+
+00:04:30.000 --> 00:04:35.000
+Lý tưởng nhất, nó hoàn toàn không cần phải nói chuyện với máy chủ.
+
+00:04:35.000 --> 00:04:41.000
+Thay vào đó, nó tương tác với phần mở rộng của bạn thông qua hai cơ chế.
+
+00:04:41.000 --> 00:04:47.000
+Nó có thể tương tác gián tiếp với tiện ích mở rộng, giống như bất kỳ ứng dụng nào khác trên hệ thống.
+
+00:04:47.000 --> 00:04:53.000
+Có API để tìm nạp URL tệp của bất kỳ mục được quản lý nào, bao gồm cả thư mục gốc.
+
+00:04:53.000 --> 00:05:00.000
+Các vị trí này sau đó có thể truy cập được bằng cách sử dụng API hệ thống tệp thông thường.
+
+00:05:00.000 --> 00:05:06.000
+Ngoài ra, ứng dụng của bạn có thể yêu cầu kết nối dịch vụ XPC trực tiếp với tiện ích mở rộng của bạn.
+
+00:05:06.000 --> 00:05:17.000
+Điều này đặc biệt hữu ích để xử lý các tác vụ không thể được thể hiện dưới dạng thao tác hệ thống tệp, chẳng hạn như chia sẻ tệp hoặc giải quyết xung đột.
+
+00:05:17.000 --> 00:05:26.000
+Cả hai cơ chế này cũng có thể được sử dụng bởi các tiện ích mở rộng giao diện người dùng FileProvider để cung cấp một điểm tích hợp bổ sung trong ứng dụng Tệp.
+
+00:05:26.000 --> 00:05:32.000
+Tôi muốn đề cập đến ba điểm trở nên đặc biệt quan trọng với các nhà cung cấp không quốc tịch.
+
+00:05:32.000 --> 00:05:35.000
+Đầu tiên, hãy nói về việc tải lên.
+
+00:05:35.000 --> 00:05:42.000
+Như tôi đã đề cập trước đó, hệ thống theo dõi các lần tải lên và sẽ cấp thời gian gia hạn của bạn để thực hiện tải lên.
+
+00:05:42.000 --> 00:05:50.000
+Một hệ quả quan trọng của việc này là bạn phải thông báo cho hệ thống rằng quá trình tải lên của bạn đang thực sự tiến triển bằng cách báo cáo tiến độ.
+
+00:05:50.000 --> 00:05:54.000
+Nếu một tác vụ tải lên không tiến triển, nó sẽ bị hủy.
+
+00:05:54.000 --> 00:06:03.000
+Hệ thống cung cấp một khoảng thời gian ân hạn để kết thúc quá trình tải lên một cách sạch sẽ, nhưng nếu việc hủy mất quá nhiều thời gian, phần mở rộng của bạn sẽ bị chấm dứt.
+
+00:06:03.000 --> 00:06:05.000
+Hãy kiểm tra mã.
+
+00:06:05.000 --> 00:06:12.000
+Để thực hiện trình xử lý hủy, chỉ cần đặt nó trên phần hoàn trả tiến độ từ phương thức dành riêng cho nhiệm vụ.
+
+00:06:12.000 --> 00:06:16.000
+Trong trường hợp tải lên, đó là modifyItem.
+
+00:06:16.000 --> 00:06:22.000
+Trong trình xử lý của bạn, bạn hủy công việc tải lên thực tế mà bạn đang thực hiện.
+
+00:06:22.000 --> 00:06:27.000
+Tất nhiên, bạn cũng sẽ cần gọi cho trình xử lý hoàn thành để báo hiệu rằng đã xảy ra lỗi hủy.
+
+00:06:27.000 --> 00:06:37.000
+Ví dụ mã ở đây sử dụng hủy bỏ tác vụ không đồng bộ để thuận tiện cho việc này, nhưng bạn cũng có thể gọi trình xử lý hoàn thành theo cách thủ công.
+
+00:06:37.000 --> 00:06:40.000
+Tiếp theo, hãy nói về con đường đồng bộ hóa xuống.
+
+00:06:40.000 --> 00:06:47.000
+Khi người dùng tương tác với các tệp của họ, ứng dụng chính của bạn sẽ không chạy để nhận các thay đổi từ máy chủ của bạn.
+
+00:06:47.000 --> 00:06:52.000
+Để vẫn thông báo cho hệ thống về những thay đổi từ xa, bạn nên triển khai thông báo đẩy.
+
+00:06:52.000 --> 00:06:57.000
+PushKit hiển thị một loại đẩy cụ thể cho các nhà cung cấp tệp.
+
+00:06:57.000 --> 00:07:01.000
+Bạn có thể đăng ký những lần đẩy này ngay từ tiện ích mở rộng của mình.
+
+00:07:01.000 --> 00:07:05.000
+Trên máy chủ của bạn, bạn gửi các cú đẩy với tải trọng được xác định rõ ràng.
+
+00:07:05.000 --> 00:07:09.000
+Hệ thống sẽ nhận được lực đẩy và làm mới trạng thái hiện tại nếu thích hợp.
+
+00:07:09.000 --> 00:07:22.000
+Cũng như các loại tác vụ khác, hệ thống có thể trì hoãn việc làm mới thực tế tùy thuộc vào tình huống, như trạng thái pin hoặc liệu người dùng hiện đang xem các tệp của họ hay không.
+
+00:07:22.000 --> 00:07:30.000
+Điều cuối cùng này chỉ là điều tôi muốn bạn chú ý đến: hệ thống quản lý hệ thống phân cấp thư mục mà tiện ích mở rộng của bạn báo cáo.
+
+00:07:30.000 --> 00:07:33.000
+Điều này cho phép nó định vị toàn bộ hệ thống phân cấp thư mục.
+
+00:07:33.000 --> 00:07:36.000
+Phần mở rộng của bạn không phải làm gì thêm ở đây.
+
+00:07:36.000 --> 00:07:40.000
+Điều này được bật theo mặc định cho các nhà cung cấp tệp hiện đại.
+
+00:07:40.000 --> 00:07:45.000
+Hãy trình diễn nhanh về loại quy trình làm việc mà tính năng cuối cùng cho phép.
+
+00:07:45.000 --> 00:07:48.000
+Tôi đã thiết lập thiết bị của mình với mã mẫu của phiên này.
+
+00:07:48.000 --> 00:07:51.000
+Chúng tôi đã chuyển mã mẫu của mình sang iOS.
+
+00:07:51.000 --> 00:07:58.000
+Chúng tôi đã xây dựng một ứng dụng iOS để xử lý việc đăng nhập vào máy chủ của mình nhưng tiện ích mở rộng hầu như không thay đổi so với phiên bản macOS.
+
+00:07:58.000 --> 00:08:01.000
+Tôi đang chạy mã mẫu trên iPad của mình ngay bây giờ.
+
+00:08:01.000 --> 00:08:06.000
+Tôi có các tệp đang chạy ở phía bên phải và nó đã đồng bộ hóa các tệp của tôi.
+
+00:08:06.000 --> 00:08:09.000
+Tôi cũng đã viết một ứng dụng tận dụng lợi thế của việc lựa chọn thư mục.
+
+00:08:09.000 --> 00:08:13.000
+Ứng dụng của tôi áp dụng bộ lọc màu nâu đỏ cho tất cả các hình ảnh trong một thư mục.
+
+00:08:13.000 --> 00:08:22.000
+Loại ứng dụng này được hưởng lợi từ việc truy cập thư mục vì nó có thể hoạt động trên tất cả các mục trong thư mục mà không buộc tương tác cho từng mục riêng lẻ.
+
+00:08:22.000 --> 00:08:29.000
+Với đồng bộ hóa lớp máy tính để bàn, tôi có thể chỉ cần kéo một thư mục từ ứng dụng Tệp vào trình chỉnh sửa hàng loạt của mình.
+
+00:08:29.000 --> 00:08:35.000
+Hãy để tôi kéo thư mục và tệp lên để chúng ta có thể theo dõi tiến trình.
+
+00:08:35.000 --> 00:08:40.000
+Sau đó tôi nhấn nút và tất cả ảnh của tôi được tải xuống và sửa đổi.
+
+00:08:40.000 --> 00:08:45.000
+Sau khi sửa đổi, chúng sẽ tự động được tải lên.
+
+00:08:45.000 --> 00:08:53.000
+Tiến trình tải lên được báo cáo bởi tiện ích mở rộng được hiển thị cho người dùng ở cuối ứng dụng Tệp để giữ chúng trong vòng lặp.
+
+00:08:53.000 --> 00:08:57.000
+Giả sử tôi muốn triển khai một cái gì đó như thế này với ứng dụng của mình.
+
+00:08:57.000 --> 00:09:00.000
+Đầu tiên, hãy thực hiện kéo một mục.
+
+00:09:00.000 --> 00:09:04.000
+Để cho phép bắt đầu kéo, bạn triển khai phương thức onDrag.
+
+00:09:04.000 --> 00:09:07.000
+Phương thức sẽ trả về một NSItemProvider.
+
+00:09:07.000 --> 00:09:14.000
+Bạn đăng ký một biểu diễn tệp trên itemProvider với loại tệp bạn sẽ kéo.
+
+00:09:14.000 --> 00:09:17.000
+Trong trường hợp của chúng tôi, đó là một thư mục.
+
+00:09:17.000 --> 00:09:23.000
+Sử dụng phương thức getUserVisibleURL để tìm nạp URL.
+
+00:09:23.000 --> 00:09:30.000
+Ở phía nhận, thực hiện onDrop để đánh dấu chế độ xem là mục tiêu thả.
+
+00:09:30.000 --> 00:09:35.000
+Sau đó, bạn có thể tải URL tệp từ nhà cung cấp mặt hàng thích hợp.
+
+00:09:35.000 --> 00:09:40.000
+Lưu ý rằng đây sẽ là một tệp nằm bên ngoài hộp cát của bạn.
+
+00:09:40.000 --> 00:09:47.000
+Để ứng dụng của bạn truy cập nó, nó sẽ phải sử dụng và giải phóng phạm vi bảo mật của URL.
+
+00:09:47.000 --> 00:09:49.000
+Các bước tiếp theo của bạn là gì?
+
+00:09:49.000 --> 00:09:54.000
+Chúng tôi đã cập nhật mã mẫu để bao gồm một ứng dụng iOS.
+
+00:09:54.000 --> 00:09:59.000
+Tải xuống và thử nghiệm thiết lập một nhà cung cấp không trạng thái đơn giản.
+
+00:09:59.000 --> 00:10:04.000
+Nếu bạn đang bắt đầu lại từ đầu, hãy chắc chắn sử dụng mẫu Xcode được cập nhật.
+
+00:10:04.000 --> 00:10:07.000
+Nó bao gồm một khung cơ bản để giúp bạn bắt đầu.
+
+00:10:07.000 --> 00:10:19.000
+Để tìm hiểu thêm về các nhà cung cấp tệp và cách triển khai chúng, hãy tham khảo "Đồng bộ hóa tệp lên đám mây với FileProvider trên macOS" từ WWDC21.
+
+00:10:19.000 --> 00:10:20.000
+Cảm ơn bạn đã xem.
+
+00:10:20.000 --> 23:59:59.000
+Tôi rất vui khi sử dụng các nhà cung cấp hiệu suất và đáng tin cậy của bạn trên các thiết bị iOS.
+

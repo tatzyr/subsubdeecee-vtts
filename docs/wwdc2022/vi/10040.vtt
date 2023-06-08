@@ -1,0 +1,1133 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:14.000
+Gabriel Ting: Xin chào, và chào mừng đến với phiên của chúng tôi, "Khám phá sự tích hợp và di chuyển mua hàng trong ứng dụng."
+
+00:00:14.000 --> 00:00:22.000
+Phiên này được chia thành hai phần: một phần dành riêng cho việc di chuyển sang API Máy chủ App Store và một phần dành riêng cho việc di chuyển sang Thông báo Máy chủ App Store Phiên bản 2.
+
+00:00:22.000 --> 00:00:27.000
+Tên tôi là Gabriel, và tôi đang thảo luận về cách di chuyển sang API Máy chủ App Store.
+
+00:00:27.000 --> 00:00:33.000
+Alex Baker: Tên tôi là Alex, và tôi sẽ hướng dẫn bạn di chuyển sang App Store Server Notifications Phiên bản 2.
+
+00:00:33.000 --> 00:00:38.000
+Gabriel: Trước tiên hãy bắt đầu với phần giới thiệu ngắn gọn về API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+00:00:38.000 --> 00:00:45.000
+Chúng tôi đã giới thiệu App Store Server API vào năm ngoái như một cách mạnh mẽ, an toàn và hiệu quả để lấy dữ liệu và thực hiện các hoạt động từ máy chủ của bạn.
+
+00:00:45.000 --> 00:00:58.000
+Chúng tôi mong muốn cung cấp cho bạn chỉ dữ liệu mà bạn cần, được ký ở định dạng Chữ ký web JSON hoặc JWS, để bạn có thể xác minh rằng dữ liệu bạn nhận được không bị xáo trộn, dành cho bạn và được ký bởi App Store.
+
+00:00:58.000 --> 00:01:10.000
+Ví dụ: một trong những điểm cuối API Máy chủ App Store của chúng tôi, điểm cuối Nhận Lịch sử Giao dịch, kết hợp với các tính năng lọc và sắp xếp mới, cho phép bạn tìm nạp bất kỳ tập hợp giao dịch nào mà bạn chỉ định, chỉ với một originalTransactionId.
+
+00:01:10.000 --> 00:01:22.000
+Trên khung Thông báo Máy chủ App Store Phiên bản 2, với số lượng trạng thái đăng ký có thể được hiển thị tăng lên, Thông báo Phiên bản 2 sẽ cập nhật cho bạn về tất cả các trạng thái có thể có của đăng ký, trong thời gian thực.
+
+00:01:22.000 --> 00:01:30.000
+Chúng tôi mong muốn chủ động cung cấp tất cả thông tin mà bạn cần biết về những gì đang xảy ra với những người đăng ký của mình mà không cần phải hỏi chúng tôi thông tin.
+
+00:01:30.000 --> 00:01:33.000
+Alex sẽ hướng dẫn bạn điều này nhiều hơn trong phần của phiên này.
+
+00:01:33.000 --> 00:01:37.000
+Nếu bạn quan tâm đến việc sử dụng các tính năng này một cách dễ dàng và hiệu quả, phiên này là dành cho bạn.
+
+00:01:37.000 --> 00:01:46.000
+Chúng tôi sẽ hướng dẫn bạn cách bắt đầu sử dụng API Máy chủ App Store và Thông báo Máy chủ App Store Phiên bản 2, cũng như một số mẹo di chuyển và phương pháp hay nhất.
+
+00:01:46.000 --> 00:01:53.000
+Để biết thêm thông tin về từng phiên này, vui lòng tham khảo các phiên bổ sung được liệt kê bên dưới.
+
+00:01:53.000 --> 00:01:57.000
+Vì vậy, hãy bắt đầu thảo luận về việc di chuyển sang API Máy chủ App Store.
+
+00:01:57.000 --> 00:02:02.000
+Trước hết, chúng ta sẽ thảo luận về cách bắt đầu sử dụng API Máy chủ App Store.
+
+00:02:02.000 --> 00:02:06.000
+Thứ hai, chúng ta sẽ đi sâu vào một số chi tiết của việc ký JSON Web Tokens.
+
+00:02:06.000 --> 00:02:13.000
+Thứ ba, chúng tôi sẽ trình bày cách xác minh các giao dịch đã ký mà bạn nhận được từ App Store là chính hãng.
+
+00:02:13.000 --> 00:02:19.000
+Cuối cùng, chúng ta sẽ thảo luận về cách di chuyển từ verifyReceipt sang App Store Server API.
+
+00:02:19.000 --> 00:02:20.000
+Hãy bắt đầu nào.
+
+00:02:20.000 --> 00:02:39.000
+Đầu tiên, chúng ta hãy bắt đầu nói về cách sử dụng API Máy chủ App Store với các phiên bản StoreKit khác nhau, đầu tiên chỉ với StoreKit gốc, sau đó chỉ với StoreKit 2, sau đó thảo luận về các phương pháp hỗ trợ cả hai đồng thời cho cả hai khách hàng sử dụng phiên bản iOS hỗ trợ StoreKit 2, cụ thể là những phiên bản trên
+
+00:02:39.000 --> 00:02:43.000
+Trước hết, chúng ta hãy xem các yêu cầu đối với API Máy chủ App Store trông như thế nào.
+
+00:02:43.000 --> 00:02:49.000
+Chúng tôi thấy rằng năm API được liệt kê ở đây sử dụng originalTransactionId làm tham số đường dẫn.
+
+00:02:49.000 --> 00:02:58.000
+Điều này cho phép bạn dễ dàng gọi các API này bằng cách sử dụng originalTransactionIds mà bạn nhận được từ biên lai, giao dịch đã ký, gia hạn đã ký và thông báo.
+
+00:02:58.000 --> 00:03:00.000
+Tiếp theo là điểm cuối ID Đơn hàng Tra cứu.
+
+00:03:00.000 --> 00:03:05.000
+Thay vào đó, điểm cuối này sử dụng orderId do khách hàng cung cấp cho các truy vấn hỗ trợ.
+
+00:03:05.000 --> 00:03:16.000
+Điều này là để bạn có thể hỗ trợ tốt hơn với các câu hỏi trực tiếp từ khách hàng, vì khách hàng được cung cấp một orderId trong biên lai của khách hàng cho mỗi giao dịch, nhưng không được cung cấp một originalTransactionId.
+
+00:03:16.000 --> 00:03:21.000
+Điều này đảm bảo rằng bạn có thể trả lời trực tiếp các câu hỏi của khách hàng với dữ liệu mà khách hàng có trong tay.
+
+00:03:21.000 --> 00:03:28.000
+Các điểm cuối cùng được liệt kê ở đây có liên quan đến thông báo, mà Alex sẽ đề cập đến trong phần của phiên này.
+
+00:03:28.000 --> 00:03:33.000
+Tiếp theo, hãy xem bạn có thể lấy originalTransactionIds từ đâu trong Original StoreKit.
+
+00:03:33.000 --> 00:03:48.000
+Khi bạn gọi verifyReceipt với biên lai ứng dụng thống nhất, originalTransactionId bạn sẽ sử dụng khi gọi App Store Server API sẽ quay trở lại trường in_app trong biên lai cho mỗi giao dịch mà người dùng này đã mua, cũng như trong new_receipt_info và pending_renewal_info.
+
+00:03:48.000 --> 00:03:59.000
+Bây giờ chúng ta đã biết cách lấy originalTransactionId từ các giao dịch Original StoreKit, hãy xem xét toàn bộ luồng giữa khách hàng, Máy chủ App Store và máy chủ của bạn.
+
+00:03:59.000 --> 00:04:02.000
+Đầu tiên, lấy biên lai ứng dụng trên máy chủ của bạn.
+
+00:04:02.000 --> 00:04:08.000
+Tiếp theo, lấy biên lai ứng dụng và gọi verifyReceipt với nó từ máy chủ của bạn.
+
+00:04:08.000 --> 00:04:11.000
+Điều này sẽ trả lại biên lai đã được giải mã.
+
+00:04:11.000 --> 00:04:17.000
+Từ biên lai được giải mã, thu thập tất cả các bản gốcTransactionIds theo cùng một cách mà tôi đã chỉ ra trước đây.
+
+00:04:17.000 --> 00:04:27.000
+Tiếp theo, bạn có thể gọi điểm cuối Nhận Lịch sử Giao dịch với bất kỳ một trong các originalTransactionIds được thu thập, điểm cuối này sẽ trả về lịch sử giao dịch cho người dùng này dưới dạng các giao dịch đã ký.
+
+00:04:27.000 --> 00:04:34.000
+Các giao dịch này bao gồm hàng tiêu dùng không phải hàng tiêu dùng, hàng tiêu dùng được hoàn lại tiền, đăng ký không gia hạn và đăng ký tự động gia hạn.
+
+00:04:34.000 --> 00:04:45.000
+Sau đó, nếu bạn muốn nhận giao dịch đã ký mới nhất và thông tin gia hạn đã ký cho một đăng ký cụ thể, hãy gọi điểm cuối Nhận tất cả trạng thái đăng ký với originalTransactionId tương ứng.
+
+00:04:45.000 --> 00:04:52.000
+Điều này sẽ trả lại tất cả các giao dịch đã ký và gia hạn cho đăng ký tương ứng với originalTransactionId đã cho.
+
+00:04:52.000 --> 00:04:58.000
+Tiếp theo, hãy xem xét vị trí ban đầu của TransactionId trong trường hợp giao dịch StoreKit 2.
+
+00:04:58.000 --> 00:05:03.000
+Đây là mã trên máy khách để lấy OriginalTransactionId từ một giao dịch.
+
+00:05:03.000 --> 00:05:15.000
+Trên các thiết bị hỗ trợ StoreKit 2 - cụ thể là các thiết bị trên iOS 15 trở lên - bạn có thể tải thuộc tính originalID trên giao dịch đã được xác minh, giải mã để lấy originalTransactionId.
+
+00:05:15.000 --> 00:05:28.000
+Bây giờ, nhìn vào phía máy chủ, đây là một ví dụ về giao dịch JWS đã ký, là loại dữ liệu mà bạn nhận được trong các giao dịch đã ký và gia hạn đã ký từ API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+00:05:28.000 --> 00:05:34.000
+Ở đây, chúng ta thấy rằng originalTransactionId là một lĩnh vực cấp cao nhất.
+
+00:05:34.000 --> 00:05:41.000
+Tiếp theo, hãy xem xét toàn bộ luồng giữa khách hàng, Máy chủ App Store và máy chủ của bạn cho các giao dịch StoreKit 2.
+
+00:05:41.000 --> 00:05:44.000
+Đầu tiên, thực hiện giao dịch đã ký trên thiết bị.
+
+00:05:44.000 --> 00:05:48.000
+Với StoreKit 2, bạn có thể xác minh giao dịch này trên thiết bị.
+
+00:05:48.000 --> 00:05:58.000
+Sử dụng trình nghe trạng thái trên thiết bị, trình nghe giao dịch hoặc giao dịch cuối cùng sẽ giúp bạn cập nhật các giao dịch, hủy và hoàn tiền mới nhất, sau đó có thể được gửi đến máy chủ của bạn để lưu giữ hồ sơ.
+
+00:05:58.000 --> 00:06:05.000
+Ví dụ: những thứ này được cập nhật về gia hạn đăng ký, đổi ưu đãi đăng ký, hết hạn và hơn thế nữa.
+
+00:06:05.000 --> 00:06:07.000
+Gửi giao dịch đến máy chủ của bạn.
+
+00:06:07.000 --> 00:06:19.000
+Kết hợp với Thông báo Máy chủ App Store, mà Alex sẽ đi sâu hơn vào phần sau, bạn có thể cập nhật trạng thái và trạng thái đăng ký mới nhất mà không cần phải gọi API Máy chủ App Store.
+
+00:06:19.000 --> 00:06:33.000
+Khi bạn cần thực hiện thao tác trên đăng ký, chẳng hạn như gia hạn ngày gia hạn đăng ký, bạn có thể sử dụng originalTransactionId từ giao dịch đã ký để gọi các điểm cuối tương ứng và lấy lại dữ liệu mà bạn cần.
+
+00:06:33.000 --> 00:06:42.000
+Bây giờ chúng ta đã thấy cách sử dụng App Store Server API với StoreKit gốc và StoreKit 2, hãy nói về cách hỗ trợ cả StoreKit và StoreKit 2.
+
+00:06:42.000 --> 00:06:47.000
+Bạn có thể tận dụng App Store Server API mà không cần áp dụng đầy đủ StoreKit 2.
+
+00:06:47.000 --> 00:06:52.000
+Như đã hiển thị trước đây, bạn có thể lấy originalTransactionId từ biên lai trong Original StoreKit.
+
+00:06:52.000 --> 00:06:59.000
+Bạn cũng có thể lấy originalTransactionID trong StoreKit 2 từ một giao dịch JWS.
+
+00:06:59.000 --> 00:07:04.000
+Bạn cũng có thể sử dụng App Store Server API độc lập với bất kỳ API nào khác.
+
+00:07:04.000 --> 00:07:07.000
+Nó không bị ràng buộc với việc sử dụng một phiên bản cụ thể của các API khác.
+
+00:07:07.000 --> 00:07:13.000
+Về Thông báo Máy chủ App Store, nó có thể được sử dụng với thông báo phiên bản 1 hoặc phiên bản 2.
+
+00:07:13.000 --> 00:07:24.000
+Chúng tôi khuyên bạn nên sử dụng phiên bản 2 vì nó thông báo cho bạn về những thay đổi đối với đăng ký khi chúng xảy ra, sử dụng định dạng JWS an toàn và hơn thế nữa, mà Alex sẽ đi sâu vào phần của anh ấy trong phiên này.
+
+00:07:24.000 --> 00:07:31.000
+Tuy nhiên, bạn có thể sử dụng API Máy chủ App Store riêng biệt, với thông báo phiên bản 1 hoặc hoàn toàn không có thông báo.
+
+00:07:31.000 --> 00:07:38.000
+Tiếp theo, hãy thảo luận về cách bạn có thể xử lý các giao dịch mua mới sau khi bạn hoàn thành các bước di chuyển mà tôi đã thực hiện trước đó.
+
+00:07:38.000 --> 00:08:06.000
+Để hỗ trợ các giao dịch mua mới trên các thiết bị sử dụng StoreKit gốc, bạn có thể lấy biên lai mới khi chúng đến, gửi chúng đến máy chủ của mình và thực hiện chính xác các bước tương tự như tôi đã chỉ ra trước đây, trong khi thu thập dữ liệu mới trên đường đi - gọi verifyReceipt với biên lai mới và nhận biên lai được giải
+
+00:08:06.000 --> 00:08:18.000
+Sau đó, bạn có thể lấy originalTransactionId mới và gọi App Store Server API nếu cần, chẳng hạn như nếu bạn cần gọi điểm cuối Nhận tất cả trạng thái đăng ký để cung ứng trạng thái mới nhất của đăng ký tương ứng.
+
+00:08:18.000 --> 00:08:29.000
+Bây giờ chúng ta đã đề cập đến cách sử dụng API Máy chủ App Store với cả StoreKit gốc và StoreKit 2, hãy đi sâu vào một số chi tiết về việc ký Mã thông báo web JSON, một yêu cầu để gọi API Máy chủ App Store.
+
+00:08:29.000 --> 00:08:39.000
+Để xác thực rằng tài khoản nhà phát triển của bạn là người gọi API Máy chủ App Store, chúng tôi sử dụng Mã thông báo web JSON, còn được gọi là JWTs, để xác thực các yêu cầu.
+
+00:08:39.000 --> 00:08:45.000
+Mã thông báo này phải được bao gồm trong mọi yêu cầu dưới dạng tiêu đề ủy quyền trong các cuộc gọi từ máy chủ của bạn.
+
+00:08:45.000 --> 00:08:49.000
+JWT bao gồm một tiêu đề, một tải trọng và chữ ký.
+
+00:08:49.000 --> 00:08:55.000
+Tiếp theo, chúng ta sẽ đi sâu vào cách xây dựng JWT dành riêng cho ứng dụng của bạn.
+
+00:08:55.000 --> 00:09:00.000
+Ở đây, chúng ta có thể thấy mã thông báo web JSON được cấu tạo như thế nào, cũng như cấu trúc của tiêu đề và tải trọng.
+
+00:09:00.000 --> 00:09:16.000
+Bản thân mã thông báo có thể được chia thành ba phần, cách nhau theo các khoảng thời gian: tiêu đề được mã hóa cơ sở 64, tải trọng được mã hóa cơ sở 64 và sau đó là chữ ký, bao gồm tiêu đề và tải trọng được mã hóa cơ sở 64, được ký bằng bí mật ký của bạn.
+
+00:09:16.000 --> 00:09:21.000
+Tiêu đề bao gồm các trường này chứa siêu dữ liệu về cách ký dữ liệu của bạn.
+
+00:09:21.000 --> 00:09:27.000
+Một trong những trường quan trọng ở đây là ID khóa, đó là ID khóa riêng tư của bạn trong App Store Connect.
+
+00:09:27.000 --> 00:09:32.000
+Cái này cần khớp với chìa khóa bạn sử dụng để ký JWT.
+
+00:09:32.000 --> 00:09:37.000
+Tải trọng chứa thông tin bổ sung về ứng dụng cụ thể của bạn.
+
+00:09:37.000 --> 00:09:46.000
+Vui lòng tham khảo bài viết "Tạo khóa API để sử dụng với API máy chủ App Store" để biết thêm thông tin và hướng dẫn về cách lấy khóa API của bạn.
+
+00:09:46.000 --> 00:09:53.000
+Để biết chi tiết về từng lĩnh vực này, vui lòng tham khảo bài viết "Tạo mã thông báo cho các yêu cầu API".
+
+00:09:53.000 --> 00:10:02.000
+Khi bạn có tiêu đề và tải trọng với tất cả các thông tin thích hợp, tiếp theo bạn sẽ ký JWT bằng chứng chỉ tương ứng với keyId.
+
+00:10:02.000 --> 00:10:06.000
+Đây là mã giả cốt lõi mà bạn có thể sử dụng, bất kể ngôn ngữ.
+
+00:10:06.000 --> 00:10:12.000
+Đầu tiên, hãy đảm bảo rằng bạn có khóa riêng tương ứng với id khóa được cung cấp trong tiêu đề mà chúng tôi vừa xem xét.
+
+00:10:12.000 --> 00:10:19.000
+Sau đó, gọi hàm ký mà thư viện JWT của bạn hiển thị với khóa riêng tư, tiêu đề và tải trọng của bạn.
+
+00:10:19.000 --> 00:10:27.000
+Vì tiêu đề chứa thuật toán ký, thư viện JWT ký nó theo thuật toán được cung cấp.
+
+00:10:27.000 --> 00:10:34.000
+Cuối cùng, đây là một ví dụ về cách sử dụng mã thông báo này khi xác thực cuộc gọi cURL đến điểm cuối Nhận tất cả trạng thái đăng ký.
+
+00:10:34.000 --> 00:10:41.000
+Thay thế ${token} và ${originalTransactionId} bằng các giá trị của mã thông báo bạn đã tạo và originalTransactionId mong muốn của bạn, tương ứng.
+
+00:10:41.000 --> 00:10:49.000
+Tiếp theo, hãy nói về cách xác minh rằng các giao dịch đã ký mà bạn nhận được là dành cho bạn và được ký bởi App Store.
+
+00:10:49.000 --> 00:11:00.000
+Về bản chất, các giao dịch đã ký là Ký hiệu Đối tượng JavaScript hoặc các đối tượng JSON được ký bằng mật mã sao cho nếu chúng bị giả mạo giữa App Store và máy chủ của bạn, bạn có thể phát hiện ra nó.
+
+00:11:00.000 --> 00:11:04.000
+Các giao dịch đã ký được ký ở định dạng Chữ ký Web JSON hoặc JWS.
+
+00:11:04.000 --> 00:11:09.000
+Các giao dịch đã ký mà App Store gửi cho bạn sẽ đến định dạng JWS.
+
+00:11:09.000 --> 00:11:16.000
+Bằng cách xác minh các JWS bạn nhận được, bạn sẽ xác minh rằng dữ liệu đến từ App Store và nội dung không bị xáo trộn.
+
+00:11:16.000 --> 00:11:20.000
+Bây giờ, hãy xem cách xác minh một giao dịch đã ký.
+
+00:11:20.000 --> 00:11:23.000
+Đầu tiên, cơ sở 64 giải mã tiêu đề.
+
+00:11:23.000 --> 00:11:27.000
+Sau đó, người ta có thể xác định thuật toán ký nào sẽ sử dụng thông qua yêu cầu alg.
+
+00:11:27.000 --> 00:11:31.000
+Điều này sẽ được sử dụng như một phần của việc xác minh JWS.
+
+00:11:31.000 --> 00:11:39.000
+Chuỗi chứng chỉ trong yêu cầu x5c do Apple phát hành và việc xác thực yêu cầu chỉ ra rằng dữ liệu được ký đúng cách và không bị xáo trộn.
+
+00:11:39.000 --> 00:11:46.000
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để biết thêm thông tin về cách xác minh JWS.
+
+00:11:46.000 --> 00:11:50.000
+Về bản chất, chuỗi x5c là một chuỗi các chứng chỉ.
+
+00:11:50.000 --> 00:11:57.000
+Xác minh thành công chuỗi chứng chỉ cho bạn biết rằng dữ liệu có thể được tin cậy và dữ liệu được ký bởi Apple.
+
+00:11:57.000 --> 00:12:01.000
+Vấn đề đặt hàng cho chuỗi chứng chỉ. Đầu tiên là chứng chỉ gốc.
+
+00:12:01.000 --> 00:12:08.000
+Chứng chỉ gốc này có thể được theo sau bởi các chứng chỉ bổ sung, trong đó mỗi chứng chỉ này được ký bởi chứng chỉ trước đó.
+
+00:12:08.000 --> 00:12:13.000
+Tôi sẽ gọi chứng chỉ cuối cùng trong chuỗi là chứng chỉ lá.
+
+00:12:13.000 --> 00:12:18.000
+Chứng chỉ đầu tiên được gọi là chứng chỉ gốc và được tự ký.
+
+00:12:18.000 --> 00:12:22.000
+Chứng chỉ này phải khớp với chứng chỉ gốc mà bạn nhận được từ Cơ quan cấp chứng chỉ của Apple.
+
+00:12:22.000 --> 00:12:27.000
+Nếu các chứng chỉ không khớp, chuỗi không đáng tin cậy.
+
+00:12:27.000 --> 00:12:33.000
+Chứng chỉ lá, chứng chỉ cuối cùng trong chuỗi, là chứng chỉ được sử dụng để ký JWS.
+
+00:12:33.000 --> 00:12:38.000
+Đây là một ví dụ về tiêu đề của JWS mà App Store gửi có thể trông như thế nào.
+
+00:12:38.000 --> 00:12:42.000
+Đầu tiên là thuật toán được sử dụng để ký JWS.
+
+00:12:42.000 --> 00:12:48.000
+Tiếp theo là chuỗi chứng chỉ x5c, với các chứng chỉ được liệt kê theo thứ tự.
+
+00:12:48.000 --> 00:12:53.000
+Bây giờ, hãy xem việc tạo chuỗi chứng chỉ x5c trông như thế nào từ tổng quan cấp cao.
+
+00:12:53.000 --> 00:12:57.000
+Chúng tôi bắt đầu với chứng chỉ gốc từ Cơ quan cấp chứng chỉ của Apple.
+
+00:12:57.000 --> 00:13:02.000
+Sau đó, chứng chỉ gốc được sử dụng để ký chứng chỉ ký trung gian.
+
+00:13:02.000 --> 00:13:08.000
+Giấy chứng nhận ký trung gian sau đó được sử dụng để ký giấy chứng nhận lá.
+
+00:13:08.000 --> 00:13:14.000
+Bây giờ chúng ta đã đề cập đến việc tạo chuỗi chứng chỉ x5c trông như thế nào, hãy xem việc xác minh chuỗi trông như thế nào.
+
+00:13:14.000 --> 00:13:20.000
+Bắt đầu từ chứng chỉ lá, chúng tôi đảm bảo rằng nó đã được ký bởi chứng chỉ ký trung gian.
+
+00:13:20.000 --> 00:13:25.000
+Sau đó, chúng tôi đảm bảo rằng chứng chỉ ký trung gian đã được ký bởi chứng chỉ gốc.
+
+00:13:25.000 --> 00:13:29.000
+Ngoài ra, chứng chỉ gốc phải khớp với chứng chỉ từ Cơ quan cấp chứng chỉ Apple.
+
+00:13:29.000 --> 00:13:35.000
+Nếu tất cả các bước này thành công, thì toàn bộ chuỗi sẽ được xác minh là hợp pháp.
+
+00:13:35.000 --> 00:13:38.000
+Hãy nói về một phương pháp để xác minh chuỗi chứng chỉ.
+
+00:13:38.000 --> 00:13:43.000
+Đây là một lệnh để xác minh chuỗi chứng chỉ x5c bằng OpenSSL.
+
+00:13:43.000 --> 00:13:49.000
+Chia điều này thành nhiều phần, lệnh xác minh, nói chung, cho phép bạn chuyển chứng chỉ để xác minh.
+
+00:13:49.000 --> 00:13:57.000
+Cờ đáng tin cậy cho phép bạn cung cấp chứng chỉ để tin cậy - nói cách khác, chứng chỉ sẽ được sử dụng để xác minh các chứng chỉ sau.
+
+00:13:57.000 --> 00:14:04.000
+Trong trường hợp này, chúng tôi đang chuyển chứng chỉ gốc mà bạn có được từ Cơ quan cấp chứng chỉ Apple và do đó có thể được tin cậy.
+
+00:14:04.000 --> 00:14:10.000
+Chúng tôi sẽ sử dụng cái này để xác minh chứng chỉ WWDR, chứng chỉ tiếp theo trong chuỗi.
+
+00:14:10.000 --> 00:14:18.000
+Cờ không đáng tin cậy cho phép bạn cung cấp chứng chỉ hoặc chứng chỉ mà bạn muốn xác minh bằng chứng chỉ mà bạn tin tưởng.
+
+00:14:18.000 --> 00:14:25.000
+Ở đây, trước tiên chúng tôi chuyển chứng chỉ WWDR từ Cơ quan cấp chứng chỉ Apple, được ký bởi chứng chỉ gốc.
+
+00:14:25.000 --> 00:14:29.000
+Điều này phải khớp với chứng chỉ thứ hai trong chuỗi x5c.
+
+00:14:29.000 --> 00:14:36.000
+Và cuối cùng, chứng chỉ lá ở đây là chứng chỉ cuối cùng, được ký bởi chứng chỉ trước đó.
+
+00:14:36.000 --> 00:14:41.000
+Trong trường hợp xác minh thành công, mã thành công sẽ được trả về.
+
+00:14:41.000 --> 00:14:44.000
+Sau đó bạn có thể tiến hành sử dụng thông tin đã được giải mã.
+
+00:14:44.000 --> 00:14:49.000
+Trong trường hợp xác minh không thành công, hãy xác định vấn đề dựa trên mã lỗi được trả về.
+
+00:14:49.000 --> 00:14:53.000
+Nếu không thể xác minh, dữ liệu này có thể bị giả mạo và không nên được sử dụng.
+
+00:14:53.000 --> 00:15:02.000
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để được hướng dẫn đầy đủ về cách xác minh chuỗi chứng chỉ x5c bằng OpenSSL.
+
+00:15:02.000 --> 00:15:06.000
+Đây là một số mã giả về cách người ta có thể xác minh một giao dịch đã ký.
+
+00:15:06.000 --> 00:15:10.000
+Đầu tiên, lấy JWS mà bạn muốn xác minh.
+
+00:15:10.000 --> 00:15:14.000
+Sau đó, lấy chứng chỉ mà thư viện JWS của bạn yêu cầu để xác minh.
+
+00:15:14.000 --> 00:15:19.000
+Gọi chức năng xác minh của thư viện JWS của bạn, sử dụng chứng chỉ thích hợp.
+
+00:15:19.000 --> 00:15:27.000
+Chứng chỉ ký JWS là chứng chỉ lá, mặc dù một số thư viện yêu cầu chuyển toàn bộ chuỗi.
+
+00:15:27.000 --> 00:15:31.000
+Trong trường hợp cuộc gọi thành công, thì bạn có thể tiếp tục với nhiệm vụ của mình.
+
+00:15:31.000 --> 00:15:38.000
+Trong trường hợp đây là kết quả của một cuộc gọi đến App Store Server API, thì bạn có thể tiến hành lưu trữ dữ liệu đã được xác thực.
+
+00:15:38.000 --> 00:15:44.000
+Đối với trường hợp thông báo, Alex sẽ đi sâu hơn vào vấn đề này trong phần của phiên này.
+
+00:15:44.000 --> 00:15:48.000
+Trong trường hợp JWS không thể được xác thực, đừng sử dụng JWS.
+
+00:15:48.000 --> 00:15:52.000
+Điều này có thể có nghĩa là nó đã bị giả mạo hoặc không được gửi bởi App Store.
+
+00:15:52.000 --> 00:15:57.000
+Alex sẽ đi sâu hơn vào cách đảm bảo bảo mật tốt hơn khi sử dụng thông báo.
+
+00:15:57.000 --> 00:16:04.000
+Vui lòng tham khảo tài liệu dành cho nhà phát triển App Store để được hướng dẫn đầy đủ về cách xác minh và xử lý JWS.
+
+00:16:04.000 --> 00:16:10.000
+Bây giờ, hãy xem lại một số trường hợp sử dụng để di chuyển từ verifyReceipt sang App Store Server API.
+
+00:16:10.000 --> 00:16:16.000
+Đầu tiên, hãy xem xét trường hợp bạn muốn kiểm tra trạng thái mới nhất của bất kỳ người đăng ký nào.
+
+00:16:16.000 --> 00:16:20.000
+Điều này giúp bạn cập nhật mọi thay đổi đối với đăng ký cá nhân.
+
+00:16:20.000 --> 00:16:32.000
+Trước đây, để có được trạng thái cập nhật nhất của người đăng ký, người ta phải gọi verifyReceipt và xác định trạng thái của đăng ký dựa trên các trường như ý định hết hạn, grace_period_expires_date, v.v.
+
+00:16:32.000 --> 00:16:45.000
+Giờ đây, với App Store Server API, điểm cuối Nhận tất cả trạng thái đăng ký có thể được gọi để có được trạng thái đăng ký mới nhất, với trường trạng thái chứa trạng thái hiện tại, cũng như thông tin gia hạn và giao dịch đã ký mới nhất, cập nhật nhất.
+
+00:16:45.000 --> 00:16:48.000
+Hãy xem xét một luồng về cách bạn có thể thực hiện việc này.
+
+00:16:48.000 --> 00:16:55.000
+Đầu tiên, đối với bất kỳ biên lai được giải mã nào mà bạn có, bạn có thể lấy bản gốcTransactionIds từ nó theo cách mà tôi đã hiển thị trước đó.
+
+00:16:55.000 --> 00:17:04.000
+Sau đó, bạn có thể gọi điểm cuối Nhận tất cả trạng thái đăng ký cho originalTransactionId đó, điểm cuối này sẽ trả về các giao dịch và gia hạn đã ký mới nhất cho giao dịch đó.
+
+00:17:04.000 --> 00:17:08.000
+Tiếp theo, hãy xem xét trường hợp có được các giao dịch mới nhất.
+
+00:17:08.000 --> 00:17:16.000
+Có được các giao dịch mới nhất thông báo cho bạn về những gì người dùng đã mua, những gì đã gia hạn, nếu có bất kỳ thay đổi nào đối với đăng ký của người dùng và hơn thế nữa.
+
+00:17:16.000 --> 00:17:27.000
+Trước đây, để có được các giao dịch mới nhất cho người dùng, người ta phải gọi verifyReceipt và sử dụng mảng trong ứng dụng và kiểm tra new_receipt_info, chứa tất cả các giao dịch cho người dùng.
+
+00:17:27.000 --> 00:17:36.000
+Với App Store Server API, để có được các giao dịch mới nhất, điểm cuối Nhận Lịch sử Giao dịch cho phép bạn tìm nạp toàn bộ lịch sử mua hàng cho người dùng.
+
+00:17:36.000 --> 00:17:48.000
+Hơn nữa, phân trang kết hợp với các tính năng lọc và sắp xếp mới được đề cập trong cuộc nói chuyện WWDC22, "Có gì mới với mua hàng trong ứng dụng", đảm bảo rằng bạn có thể tìm nạp chính xác dữ liệu mà bạn cần một cách hiệu quả.
+
+00:17:48.000 --> 00:17:51.000
+Hãy xem xét một dòng chảy của những gì điều này có thể đòi hỏi.
+
+00:17:51.000 --> 00:18:06.000
+Với bất kỳ originalTransactionId nào thuộc về người dùng đó, bạn có thể gọi điểm cuối Nhận Lịch sử Giao dịch, điểm cuối này sẽ trả về lịch sử giao dịch cho người dùng này dưới dạng các giao dịch đã ký, được lọc, sắp xếp và phân trang theo thông số kỹ thuật của bạn.
+
+00:18:06.000 --> 00:18:09.000
+Cuối cùng, hãy xem xét trường hợp áp dụng appAccountToken.
+
+00:18:09.000 --> 00:18:15.000
+Trường appAccountToken cho phép bạn cung cấp UUID liên kết giao dịch StoreKit 2 với người dùng.
+
+00:18:15.000 --> 00:18:22.000
+Sau đó, trên các giao dịch đã ký, gia hạn đã ký và thông báo cho giao dịch đó, appAccountToken sẽ xuất hiện.
+
+00:18:22.000 --> 00:18:29.000
+Trước đây, không có hỗ trợ cho appAccountToken với StoreKit gốc, vì nó là một tính năng mới đối với StoreKit2.
+
+00:18:29.000 --> 00:18:38.000
+Bây giờ, chúng tôi đã thêm hỗ trợ cung cấp UUID trong trường applicationUsername trong Original StoreKit để hỗ trợ khả năng tương thích với các máy khách StoreKit gốc.
+
+00:18:38.000 --> 00:18:43.000
+Trong điều kiện này, UUID đó sẽ hỗ trợ tất cả các chức năng mà appAccountToken thực hiện.
+
+00:18:43.000 --> 00:18:56.000
+AppAccountToken sau đó quay trở lại verifyReceipt cho người dùng Original StoreKit và cũng xuất hiện cho cả người dùng Original StoreKit và StoreKit 2 trong các cuộc gọi đến App Store Server API và thông báo từ App Store Server Notifications.
+
+00:18:56.000 --> 00:18:59.000
+Đó là nó cho phần API Máy chủ App Store của phiên này.
+
+00:18:59.000 --> 00:19:04.000
+Tiếp theo, đây là Alex để trang trải việc di chuyển sang Thông báo Máy chủ App Store Phiên bản 2.
+
+00:19:04.000 --> 00:19:05.000
+Alex: Cảm ơn, Gabriel.
+
+00:19:05.000 --> 00:19:11.000
+Tên tôi là Alex, và tôi rất vui khi có mặt ở đây hôm nay để thảo luận về Thông báo Máy chủ App Store Phiên bản 2.
+
+00:19:11.000 --> 00:19:15.000
+Đầu tiên, chúng tôi sẽ đề cập đến cách bắt đầu với thông báo phiên bản 2.
+
+00:19:15.000 --> 00:19:21.000
+Tiếp theo, các thông báo phiên bản 2 khác nhau như thế nào và được xây dựng dựa trên các mô hình khác có sẵn.
+
+00:19:21.000 --> 00:19:29.000
+Thứ ba, chúng ta sẽ nói về việc khôi phục trong trường hợp thông báo bị bỏ lỡ và một số tài nguyên mới có sẵn để giúp hoàn thành nhiệm vụ này.
+
+00:19:29.000 --> 00:19:37.000
+Cuối cùng, cách các thông báo có thể cung cấp cái nhìn sâu sắc về hành vi của khách hàng và tạo thêm cơ hội để được thông báo về vòng đời đăng ký.
+
+00:19:37.000 --> 00:19:42.000
+Hãy xem qua phần giới thiệu ngắn gọn về thông báo là gì và ai có thể sử dụng chúng.
+
+00:19:42.000 --> 00:19:49.000
+Thông báo Máy chủ App Store là tin nhắn chúng tôi gửi cho bạn bất cứ khi nào người dùng ứng dụng của bạn thực hiện một số hành động nhất định.
+
+00:19:49.000 --> 00:19:57.000
+Những thông báo này thường được chia thành hai loại, cập nhật đăng ký và cập nhật hoàn tiền, mặc dù chúng tôi luôn làm việc để đề cập đến các tình huống bổ sung.
+
+00:19:57.000 --> 00:20:03.000
+Chúng tôi cung cấp các thông báo này để giúp lấp đầy khoảng trống trong các hành động của người dùng mà bạn có thể không có sẵn trong ứng dụng.
+
+00:20:03.000 --> 00:20:08.000
+Ví dụ, một trong những trường hợp sử dụng phổ biến nhất của chúng tôi là gia hạn đăng ký.
+
+00:20:08.000 --> 00:20:12.000
+Người dùng có thể không có mặt trong ứng dụng khi giao dịch này khả dụng.
+
+00:20:12.000 --> 00:20:20.000
+Thông báo máy chủ App Store giúp giải quyết vấn đề này bằng cách chủ động gửi thông tin giao dịch mới nhất trực tiếp đến máy chủ của bạn khi đăng ký gia hạn.
+
+00:20:20.000 --> 00:20:27.000
+Thông báo phiên bản 2 chia sẻ nhiều điểm tương đồng với mô hình StoreKit 2 và API Máy chủ App Store mà bạn vừa nghe từ Gabriel.
+
+00:20:27.000 --> 00:20:33.000
+Tuy nhiên, trong khi chúng hoạt động tốt với nhau, chúng đều là những công cụ độc lập có thể được áp dụng vào những thời điểm khác nhau.
+
+00:20:33.000 --> 00:20:43.000
+Quan trọng nhất, bạn có thể tiếp tục hỗ trợ các khách hàng nơi StoreKit 2 không khả dụng, trước các khách hàng iOS-15, trong khi sử dụng Thông báo Máy chủ Phiên bản 2.
+
+00:20:43.000 --> 00:20:52.000
+Chúng tôi đã làm việc để biến thông báo Phiên bản 2 thành một trong những công cụ chuyên sâu và linh hoạt nhất của chúng tôi để cung cấp thông tin về người dùng trong toàn bộ vòng đời đăng ký.
+
+00:20:52.000 --> 00:21:01.000
+Chúng tôi sẽ đi sâu hơn vào vấn đề này sau trong bài thuyết trình, nhưng các thông báo cung cấp thông tin gần như không thể nắm bắt được cho các hành động được thực hiện bên ngoài ứng dụng.
+
+00:21:01.000 --> 00:21:06.000
+Tôi hy vọng tôi đã quan tâm đến bạn về khái niệm thông báo và thông báo Phiên bản 2 nói riêng.
+
+00:21:06.000 --> 00:21:14.000
+Trước khi chúng ta đi xa hơn, trong khi bài thuyết trình này hướng dẫn bạn bắt đầu và các phương pháp hay nhất để nhận thông báo, nó không nói lên toàn bộ câu chuyện.
+
+00:21:14.000 --> 00:21:20.000
+Vui lòng tham khảo các video gần đây này để biết thêm thông tin về các thông báo và cách chúng có thể đáp ứng các trường hợp sử dụng khác nhau.
+
+00:21:20.000 --> 00:21:23.000
+Hãy xem xét việc thiết lập thông báo Phiên bản 2.
+
+00:21:23.000 --> 00:21:27.000
+Chúng tôi sẽ hướng dẫn cách thiết lập thông báo của bạn cho đến khi nhận thông báo đầu tiên của bạn.
+
+00:21:27.000 --> 00:21:32.000
+Đầu tiên, hãy truy cập trang ứng dụng của bạn trong App Store Connect.
+
+00:21:32.000 --> 00:21:37.000
+Cuộn xuống, bạn sẽ thấy một phần dành cho Thông báo Máy chủ App Store.
+
+00:21:37.000 --> 00:21:41.000
+Ở đây bạn sẽ thấy các tùy chọn cho cả sản xuất và hộp cát.
+
+00:21:41.000 --> 00:21:47.000
+Mỗi môi trường có thể chứa một URL riêng biệt và một phiên bản thông báo riêng biệt.
+
+00:21:47.000 --> 00:21:50.000
+Đây là một ví dụ về trang tùy chọn cho cài đặt sản xuất.
+
+00:21:50.000 --> 00:21:53.000
+Cài đặt hộp cát hoàn toàn giống nhau.
+
+00:21:53.000 --> 00:22:01.000
+Chúng tôi khuyên bạn, đặc biệt nếu bạn là người dùng thông báo Phiên bản 1, trước tiên bạn nên thử thông báo Phiên bản 2 trong môi trường hộp cát.
+
+00:22:01.000 --> 00:22:07.000
+Đây là một nơi tuyệt vời để trở nên thoải mái với các thông báo mà không ảnh hưởng đến thiết lập sản xuất của bạn.
+
+00:22:07.000 --> 00:22:15.000
+Chọn nút Thiết lập Hộp cát, cung cấp URL của máy chủ của bạn và chọn Thông báo Phiên bản 2.
+
+00:22:15.000 --> 00:22:21.000
+Trước khi kích hoạt thông báo, hãy xác nhận bạn có chứng chỉ HTTPS hợp lệ cho điểm cuối máy chủ của mình.
+
+00:22:21.000 --> 00:22:25.000
+Đồng thời xác nhận rằng bạn đã cho phép IP công cộng của Apple truy cập vào máy chủ của bạn.
+
+00:22:25.000 --> 00:22:30.000
+Một số lỗi phổ biến nhất khi thiết lập thông báo liên quan đến tường lửa và chứng chỉ.
+
+00:22:30.000 --> 00:22:36.000
+Đây cũng là những điều tuyệt vời để kiểm tra xem bạn có đột nhiên ngừng nhận thông báo như một bước khắc phục sự cố ban đầu hay không.
+
+00:22:36.000 --> 00:22:39.000
+Bây giờ bạn đã sẵn sàng để nhận thông báo đầu tiên của mình.
+
+00:22:39.000 --> 00:22:44.000
+Trong Sandbox, thông báo có thể được kích hoạt bởi nhiều hành động khác nhau, như mua đăng ký trong ứng dụng.
+
+00:22:44.000 --> 00:22:54.000
+Tuy nhiên, để dễ sử dụng trong khi thử nghiệm, chúng tôi khuyên bạn nên kích hoạt thông báo bằng cách sử dụng điểm cuối Yêu cầu Thông báo Kiểm tra mới, một phần của API Máy chủ App Store.
+
+00:22:54.000 --> 00:22:57.000
+Điểm cuối này giúp tự động hóa quy trình kiểm tra thông báo.
+
+00:22:57.000 --> 00:23:02.000
+Sau khi kích hoạt điểm cuối Yêu cầu Thông báo Kiểm tra, bạn sẽ thấy thông báo đến sớm.
+
+00:23:02.000 --> 00:23:11.000
+Nếu bạn gặp sự cố khi nhận thông báo, vui lòng tham khảo điểm cuối Trạng thái Nhận Thông báo Kiểm tra mới, điểm cuối này có thể cung cấp trạng thái ngắn gọn về lý do tại sao thông báo không được gửi.
+
+00:23:11.000 --> 00:23:17.000
+Ví dụ, một trạng thái như SSL_ISSUE sẽ là manh mối để kiểm tra lại chứng chỉ HTTPS của bạn.
+
+00:23:17.000 --> 00:23:22.000
+Chúng tôi khuyên bạn nên kích hoạt thông báo kiểm tra bất cứ khi nào bạn thực hiện thay đổi cấu hình.
+
+00:23:22.000 --> 00:23:26.000
+Đây là một cách tuyệt vời để xác nhận bạn vẫn có thể nhận được thông báo sau khi thay đổi.
+
+00:23:26.000 --> 00:23:32.000
+Bây giờ, hãy chuyển sang hiểu thông báo bạn vừa nhận được.
+
+00:23:32.000 --> 00:23:37.000
+Cũng giống như các giao dịch mà chúng tôi đã thấy trước đó từ Gabriel, các thông báo cũng ở định dạng JWS.
+
+00:23:37.000 --> 00:23:42.000
+Hãy xem qua cách giải mã và xác minh tải trọng thông báo.
+
+00:23:42.000 --> 00:23:49.000
+Đầu tiên, khi nhận được thông báo, bạn sẽ muốn trích xuất trường signedPayload của nội dung JSON.
+
+00:23:49.000 --> 00:23:55.000
+Tiếp theo, bạn sẽ thực hiện chính xác các bước mà Gabriel đã hướng dẫn bạn trước đó để xác minh giao dịch đã ký.
+
+00:23:55.000 --> 00:24:04.000
+Bạn sẽ làm theo các bước tương tự để xác minh dữ liệu đã ký cho dù đó là tải trọng thông báo đã ký từ thông báo hay giao dịch đã ký từ API Máy chủ App Store.
+
+00:24:04.000 --> 00:24:09.000
+Tiếp theo, điều quan trọng là phải xác minh thông báo dành cho ứng dụng nào.
+
+00:24:09.000 --> 00:24:15.000
+Nếu bạn có nhiều ứng dụng chia sẻ cùng một điểm cuối, đây là một nơi tốt để xác định ứng dụng mục tiêu.
+
+00:24:15.000 --> 00:24:24.000
+Điều quan trọng là phải xác nhận rằng ứng dụng mà thông báo được nhắm mục tiêu là ứng dụng của bạn và thông báo không dành cho nhà phát triển khác.
+
+00:24:24.000 --> 00:24:32.000
+Cuối cùng, một kiểm tra hữu ích nữa là đảm bảo rằng môi trường của thông báo phù hợp với môi trường mong đợi của bạn, Sản xuất hoặc Hộp cát.
+
+00:24:32.000 --> 00:24:46.000
+Bởi vì App Store Connect cho phép các URL riêng biệt cho từng môi trường, có thể thực thi yêu cầu này hoặc, nếu các URL được chia sẻ, đảm bảo bạn đang lưu trữ và xử lý các thông báo riêng biệt dựa trên môi trường.
+
+00:24:46.000 --> 00:24:50.000
+Tại thời điểm này, JWS được xác thực đầy đủ và có thể được lưu trữ để xử lý thêm.
+
+00:24:50.000 --> 00:24:56.000
+Chúng tôi khuyến nghị, bên cạnh một số kiểm tra cơ bản, máy chủ của bạn nên xử lý thông báo không đồng bộ.
+
+00:24:56.000 --> 00:25:03.000
+Nếu quá trình xử lý thông báo mất quá nhiều thời gian, máy chủ của chúng tôi sẽ ghi lại thời gian chờ và cho rằng thông báo không được gửi thành công.
+
+00:25:03.000 --> 00:25:06.000
+Sau đó chúng tôi sẽ gửi lại thông báo.
+
+00:25:06.000 --> 00:25:19.000
+Do đó, việc xử lý tốn nhiều thời gian bên ngoài chức năng này giúp đảm bảo rằng máy chủ App Store ghi lại các thông báo của bạn đã được gửi thành công và loại bỏ nhu cầu máy chủ của bạn xử lý lại các thông báo khi thử lại.
+
+00:25:19.000 --> 00:25:24.000
+Bây giờ, hãy xem qua nội dung của thông báo sau khi xác minh.
+
+00:25:24.000 --> 00:25:28.000
+Các trường đầu tiên là loại thông báo và loại phụ tùy chọn.
+
+00:25:28.000 --> 00:25:32.000
+Kết hợp lại, những điều này cho bạn biết kịch bản mà thông báo dành cho.
+
+00:25:32.000 --> 00:25:38.000
+Các trường này cũng giúp hiển thị những gì đã thay đổi kể từ thông báo cuối cùng và cung cấp thông tin về lý do tại sao những thay đổi này xảy ra.
+
+00:25:38.000 --> 00:25:43.000
+Thông báoUUID là một mã định danh duy nhất cho mỗi thông báo.
+
+00:25:43.000 --> 00:25:49.000
+Nếu máy chủ thử lại thông báo, thông báo đã thử lại sẽ chứa cùng một thông báoUUID.
+
+00:25:49.000 --> 00:25:57.000
+Điều này giúp phát hiện các trường hợp máy chủ của bạn xử lý thông báo, nhưng không phản hồi bằng mã phản hồi HTTP thành công một cách kịp thời.
+
+00:25:57.000 --> 00:26:03.000
+Chúng tôi khuyên bạn nên thêm phát hiện thông báo trùng lặp do thử lại, dựa trên trường này.
+
+00:26:03.000 --> 00:26:07.000
+Trường signedDate cho bạn biết khi nào thông báo được tạo.
+
+00:26:07.000 --> 00:26:10.000
+Điều này đặc biệt hữu ích để phát hiện các thông báo đã thử lại.
+
+00:26:10.000 --> 00:26:13.000
+Tiếp theo, ứng dụng AppleId và bundleId.
+
+00:26:13.000 --> 00:26:16.000
+Những thứ này rất quan trọng để phát hiện ứng dụng mục tiêu.
+
+00:26:16.000 --> 00:26:23.000
+Như chúng ta đã thảo luận trước đó, điều quan trọng là bạn phải kiểm tra các trường này và xác nhận chúng khớp với các giá trị dự kiến để ngăn chặn các cuộc tấn công phát lại.
+
+00:26:23.000 --> 00:26:33.000
+Ngoài ra, hãy đảm bảo môi trường của thông báo phù hợp với môi trường dự kiến, thông báo hộp cát không được ghi lại dưới dạng dữ liệu sản xuất và ngược lại.
+
+00:26:33.000 --> 00:26:38.000
+Cuối cùng, signedTransactionInfo thực tế và signedRenewalInfo tùy chọn.
+
+00:26:38.000 --> 00:26:43.000
+Đây sẽ là trạng thái mới nhất của giao dịch mua cơ bản tại thời điểm ký kết.
+
+00:26:43.000 --> 00:26:51.000
+Tại thời điểm này, sau khi phân tích cú pháp thông báo, bạn còn lại thông tin giao dịch và gia hạn mới nhất và lý do mới nhất cho sự thay đổi trạng thái.
+
+00:26:51.000 --> 00:27:06.000
+Bây giờ chúng ta đã đề cập đến việc thiết lập và nhận một thông báo cụ thể, hãy kiểm tra mô hình thông báo Phiên bản 2, cách các thông báo có thể khớp với nhau để theo dõi vòng đời đăng ký và các quyết định thiết kế đằng sau thông báo Phiên bản 2 thông qua so sánh với thông báo Phiên bản 1.
+
+00:27:06.000 --> 00:27:10.000
+Phiên bản 2 áp dụng một triết lý khác khi gửi thông tin về trạng thái mua hàng.
+
+00:27:10.000 --> 00:27:24.000
+Thay vì gửi toàn bộ lịch sử gần đây mỗi thông báo, thông báo Phiên bản 2 chỉ tập trung vào việc gửi thông tin mới nhất: thông tin giao dịch mới nhất và trong trường hợp đăng ký, thông tin gia hạn đang chờ xử lý.
+
+00:27:24.000 --> 00:27:30.000
+Với các thông báo, chúng tôi làm việc để cung cấp thông tin về từng bước của vòng đời đăng ký.
+
+00:27:30.000 --> 00:27:36.000
+Do đó, thông báo chỉ chứa thông tin mới nhất về việc mua hàng hoặc đăng ký.
+
+00:27:36.000 --> 00:27:41.000
+Cùng với nhau, những thông báo này tạo ra một dòng thời gian hoàn chỉnh về trạng thái đăng ký.
+
+00:27:41.000 --> 00:27:54.000
+Nếu bạn cần xem toàn bộ lịch sử giao dịch và không có quyền truy cập vào lịch sử thông báo, điều này kết hợp tốt với điểm cuối Nhận Lịch sử Giao dịch cho phép bạn truy vấn toàn bộ lịch sử giao dịch của người dùng trong ngữ cảnh được phân trang và có thể lọc được.
+
+00:27:54.000 --> 00:27:58.000
+Thứ hai, thông báo phiên bản 1 không yêu cầu khách hàng sử dụng StoreKit 2.
+
+00:27:58.000 --> 00:28:01.000
+Và đúng vậy, phiên bản 2 cũng vậy.
+
+00:28:01.000 --> 00:28:09.000
+Trên thực tế, bất kể khuôn khổ nào được sử dụng ở phía khách hàng, bạn có thể bắt đầu tận hưởng những lợi ích của thông báo phiên bản 2 ngay hôm nay.
+
+00:28:09.000 --> 00:28:19.000
+Cuối cùng, thông báo phiên bản 2 hoạt động để nâng cao mức độ chi tiết được cung cấp và mở rộng các trường hợp được bao phủ bằng cách thêm các loại bổ sung và thêm trường loại phụ mới.
+
+00:28:19.000 --> 00:28:24.000
+Thông qua điều này, chúng tôi có thể đề cập đến nhiều tình huống hơn và cung cấp thông báo ở mọi bước của vòng đời đăng ký.
+
+00:28:24.000 --> 00:28:34.000
+Một số tình huống đáng chú ý mà chúng tôi đã thêm vào bao gồm hết hạn, thông tin chi tiết hơn liên quan đến những thay đổi trong trạng thái gia hạn tự động và nhiều kịch bản hơn xung quanh quy trình hoàn tiền.
+
+00:28:34.000 --> 00:28:45.000
+Bây giờ, để minh họa sự phức tạp của các tình huống được đề cập và cung cấp một ví dụ cụ thể hơn, hãy xem cách các thông báo có thể thông báo cho bạn về từng bước đăng ký thực hiện, từ đầu đến cuối.
+
+00:28:45.000 --> 00:28:49.000
+Hãy tưởng tượng một người dùng trước khi đăng ký.
+
+00:28:49.000 --> 00:29:00.000
+Sau khi đăng ký, người dùng chuyển sang trạng thái gia hạn đăng ký và thông báo ĐĂNG KÝ với loại phụ INITIAL_BUY được gửi hoặc ƯU ĐÃI_REDEEMED với loại phụ INITIAL_BUY nếu ưu đãi được sử dụng.
+
+00:29:00.000 --> 00:29:06.000
+Chứa trong thông báo sẽ là giao dịch đã ký đầu tiên và thông tin gia hạn đã ký.
+
+00:29:06.000 --> 00:29:10.000
+Thời gian trôi qua, và đăng ký gia hạn, ở trạng thái gia hạn.
+
+00:29:10.000 --> 00:29:16.000
+Sau mỗi lần gia hạn, chúng tôi gửi thông báo DID_RENEW với thông tin giao dịch đã ký tiếp theo.
+
+00:29:16.000 --> 00:29:28.000
+Bất cứ khi nào người dùng hủy kích hoạt tự động gia hạn, họ sẽ chuyển sang trạng thái đăng ký hết hạn và bạn sẽ nhận được DID_CHANGE_RENEWAL_STATUS với thông báo AUTO_RENEW_DISABLED loại phụ.
+
+00:29:28.000 --> 00:29:36.000
+Nếu họ không bật lại tính năng gia hạn tự động, vào cuối khoảng thời gian họ sẽ chuyển sang trạng thái đã hết hạn và bạn sẽ nhận được THÔNG BÁO ĐÃ HẾT HẠN với loại phụ TỰ NGUYỆN.
+
+00:29:36.000 --> 00:29:43.000
+Bây giờ, bạn có thể tự hỏi, tất cả các loại thông báo khác ở đâu?
+
+00:29:43.000 --> 00:29:46.000
+Đây là vòng đời đăng ký, như được thấy qua các thông báo.
+
+00:29:46.000 --> 00:29:49.000
+Có rất nhiều thứ đang diễn ra.
+
+00:29:49.000 --> 00:29:52.000
+Và sơ đồ này thậm chí không nói lên toàn bộ câu chuyện.
+
+00:29:52.000 --> 00:29:57.000
+Ví dụ, vòng đời hoàn tiền/thu hồi không được bao gồm ở đây.
+
+00:29:57.000 --> 00:30:06.000
+Sơ đồ này minh họa một loạt các tình huống mà thông báo phiên bản 2 bao gồm và chúng hoạt động để thông báo cho bạn về từng bước của vòng đời đăng ký.
+
+00:30:06.000 --> 00:30:10.000
+Một điểm khác mà tôi sẽ đưa ra là chúng tôi làm việc để bao quát mọi trạng thái chuyển tiếp có thể xảy ra.
+
+00:30:10.000 --> 00:30:20.000
+Điều này giúp tăng tiện ích của thông báo bằng cách trở thành một nguồn duy nhất để theo dõi đăng ký và cải thiện sự tự tin rằng bạn đang nhìn thấy từng bước trong hành trình của người đăng ký.
+
+00:30:20.000 --> 00:30:25.000
+Tuy nhiên, mặc dù tất cả dữ liệu này đều ở đây, bạn không cần phải làm việc với mọi loại có sẵn.
+
+00:30:25.000 --> 00:30:31.000
+Ví dụ, ngay cả khi chỉ xử lý các thông báo liên quan đến thay đổi tùy chọn gia hạn cũng có thể cung cấp giá trị.
+
+00:30:31.000 --> 00:30:37.000
+Đặc biệt nếu bạn chỉ mới bắt đầu, hãy bắt đầu với các loại thông báo hữu ích nhất cho tình huống của bạn.
+
+00:30:37.000 --> 00:30:44.000
+Bây giờ, hãy đề cập đến những gì xảy ra sau khi bạn đã thiết lập máy chủ của mình, mọi thứ đang chạy trơn tru, nhưng, than ôi, máy chủ của bạn bị hỏng.
+
+00:30:44.000 --> 00:30:50.000
+Cho dù đó là trong vài ngày, vài phút hay bạn nghĩ rằng bạn có thể đã bỏ lỡ chỉ một ngày, hãy xem qua một số bước để giúp giải quyết vấn đề này.
+
+00:30:50.000 --> 00:30:52.000
+Hãy hình dung máy chủ của bạn.
+
+00:30:52.000 --> 00:30:56.000
+Nó được thiết lập thành công và đang nhận được thông báo.
+
+00:30:56.000 --> 00:31:01.000
+Tại một số thời điểm, máy chủ của bạn gặp sự cố và không thể nhận thông báo.
+
+00:31:01.000 --> 00:31:06.000
+Chúng tôi vẫn đang cố gắng gửi tin nhắn đến máy chủ của bạn, nhưng bây giờ những yêu cầu đó bắt đầu thất bại.
+
+00:31:06.000 --> 00:31:08.000
+Có một số cách để đối phó với kịch bản này.
+
+00:31:08.000 --> 00:31:10.000
+Đầu tiên chỉ là chờ đợi.
+
+00:31:10.000 --> 00:31:18.000
+Nếu chúng tôi không nhận được mã trạng thái thành công từ máy chủ của bạn hoặc hoàn toàn không thể kết nối với nó, chúng tôi sẽ thử lại thông báo theo chính sách thử lại được ghi lại của chúng tôi.
+
+00:31:18.000 --> 00:31:28.000
+Đối với thông báo phiên bản 2, chúng tôi thử lại sau mỗi lần thử, đầu tiên sau độ trễ 1 giờ, sau đó là độ trễ 12 giờ, 24-, 48- và cuối cùng là độ trễ 72 giờ.
+
+00:31:28.000 --> 00:31:36.000
+Chờ đợi hoạt động tốt cho sự cố mất điện dưới một giờ, vì các thông báo sẽ được thử lại một giờ sau lần thất bại đầu tiên.
+
+00:31:36.000 --> 00:31:41.000
+Tại một số thời điểm, máy chủ của bạn phục hồi và bạn bắt đầu nhận lại thông báo.
+
+00:31:41.000 --> 00:31:46.000
+Đầu tiên, bạn nhận được một thông báo mới, không liên quan đến các thông báo bị bỏ lỡ.
+
+00:31:46.000 --> 00:31:53.000
+Thông báo được thử lại với độ trễ, vì vậy ngay khi máy chủ của bạn trực tuyến, bạn sẽ không nhận được ngay lập tức tất cả các thông báo bị bỏ lỡ.
+
+00:31:53.000 --> 00:32:01.000
+Một thời gian trôi qua và bạn bắt đầu nhận được các thông báo mà bạn đã bỏ lỡ, xen kẽ với các thông báo mới.
+
+00:32:01.000 --> 00:32:07.000
+Điều này đặt ra câu hỏi, làm thế nào bạn có thể phát hiện xem thông báo là thông báo gốc hay thông báo đã thử lại?
+
+00:32:07.000 --> 00:32:10.000
+Hãy kiểm tra một thông báo.
+
+00:32:10.000 --> 00:32:14.000
+Trong thông báo này, chúng tôi chỉ hiển thị một vài trường.
+
+00:32:14.000 --> 00:32:17.000
+Thông báo chứa một trường signedDate.
+
+00:32:17.000 --> 00:32:23.000
+Trường này có thể hữu ích để phát hiện các lần thử lại, bằng cách so sánh ngày ký với thời gian nhận được thông báo.
+
+00:32:23.000 --> 00:32:32.000
+Nếu bạn thấy thông báo có ngày ký sớm hơn đáng kể so với ngày bạn nhận được thông báo, điều này cho thấy bạn có thể đã gặp sự cố ngừng hoạt động.
+
+00:32:32.000 --> 00:32:38.000
+Hãy tưởng tượng trong trường hợp này, các thông báo có nhãn 6 và 3 dành cho cùng một đăng ký.
+
+00:32:38.000 --> 00:32:41.000
+Điều này có thể được xác định bằng cách so sánh các TransactionIds ban đầu.
+
+00:32:41.000 --> 00:32:51.000
+Trong trường hợp này, chỉ vì thông báo 3 được nhận sau thông báo 6 không có nghĩa là nó chứa thông tin mới hơn thông báo 6.
+
+00:32:51.000 --> 00:32:58.000
+Những lần khác, máy chủ của bạn có thể đã nhận được thông báo, nhưng nó không phản hồi bằng mã trạng thái HTTP 200 thành công.
+
+00:32:58.000 --> 00:33:02.000
+Điều này có thể khiến thông báo được gửi lại đến máy chủ của bạn.
+
+00:33:02.000 --> 00:33:08.000
+Như đã thảo luận trước đó, hãy đảm bảo kiểm tra trường thông báoUUID để sao chép các yêu cầu này.
+
+00:33:08.000 --> 00:33:14.000
+Bạn có thể thấy số lượng đáng kể các thông báo đã thử lại mặc dù bạn đã ghi lại thành công các thông báo.
+
+00:33:14.000 --> 00:33:19.000
+Trong trường hợp này, hãy đảm bảo rằng bạn đang phản hồi bằng phản hồi HTTP 200 mỗi khi bạn nhận được thông báo.
+
+00:33:19.000 --> 00:33:30.000
+Ngoài ra, hãy đảm bảo rằng bạn đang làm như vậy một cách kịp thời và không xử lý rộng rãi trước khi phản hồi thành công, để ngăn chúng tôi ghi lại thời gian chờ và gửi lại thông báo.
+
+00:33:30.000 --> 00:33:39.000
+Đôi khi, đặc biệt là với thời gian ngừng hoạt động lâu hơn, lần thử lại tiếp theo có thể còn vài giờ hoặc vài ngày nữa, hoặc đối với sự cố ngừng hoạt động kéo dài, các lần thử lại có thể đã cạn kiệt.
+
+00:33:39.000 --> 00:33:45.000
+Tùy chọn tiếp theo để khôi phục từ các thông báo bị bỏ lỡ là điểm cuối Nhận Lịch sử Thông báo.
+
+00:33:45.000 --> 00:33:52.000
+Chúng tôi vừa công bố điểm cuối Nhận Lịch sử Thông báo mới, cung cấp lịch sử thông báo sáu tháng mà chúng tôi đã gửi cho máy chủ của bạn.
+
+00:33:52.000 --> 00:33:58.000
+Tham khảo video "Có gì mới khi mua hàng trong ứng dụng" để biết tổng quan về điểm cuối này cùng với các tính năng tuyệt vời khác mà chúng tôi đang công bố.
+
+00:33:58.000 --> 00:34:04.000
+Ở đây chúng tôi sẽ tập trung vào các phương pháp hay nhất khi sử dụng điểm cuối này và các tình huống mà nó có thể hỗ trợ.
+
+00:34:04.000 --> 00:34:08.000
+Sau khi sự cố ngừng hoạt động được giải quyết, hãy lưu ý dấu thời gian bắt đầu và kết thúc của sự cố ngừng hoạt động.
+
+00:34:08.000 --> 00:34:13.000
+Điểm cuối Nhận Lịch sử Thông báo cho phép thực hiện các truy vấn trong một khoảng thời gian cụ thể.
+
+00:34:13.000 --> 00:34:21.000
+Bằng cách chỉ định thời gian bắt đầu và kết thúc của sự cố ngừng hoạt động, bạn chỉ có thể xử lý các thông báo mà bạn có thể đã bỏ lỡ, thay vì yêu cầu phân trang trong toàn bộ lịch sử.
+
+00:34:21.000 --> 00:34:27.000
+Điều này sẽ giúp cải thiện tốc độ khôi phục và giảm xử lý lại công việc các thông báo đã được ghi lại.
+
+00:34:27.000 --> 00:34:32.000
+Tiếp theo, điểm cuối Nhận Lịch sử Thông báo cho phép bạn lọc theo loại thông báo.
+
+00:34:32.000 --> 00:34:42.000
+Nếu bạn đã gặp phải sự cố ngừng hoạt động kéo dài và mong đợi một số lượng thông báo đáng kể, hãy cân nhắc lọc theo loại và bắt đầu với các loại có thể có tác động ngay lập tức, như DID_RENEW và EXPIRED.
+
+00:34:42.000 --> 00:34:46.000
+Những điều này sẽ giúp bạn hành động trong những trường hợp phù hợp nhất trước tiên.
+
+00:34:46.000 --> 00:34:55.000
+Một mẹo khi chuyển các loại thông báo, nếu trường notificationSubtype bị bỏ qua, điều này sẽ chỉ trả về các thông báo cũng không có loại phụ.
+
+00:34:55.000 --> 00:35:05.000
+Do đó, đối với ví dụ được hiển thị cho DID_RENEW notificationType, điều này sẽ không trả về thông báo DID_RENEW với loại phụ BILLING_RECOVERY.
+
+00:35:05.000 --> 00:35:11.000
+Cuối cùng, điểm cuối Nhận Lịch sử Thông báo cho phép lọc cho một người dùng cụ thể bằng cách sử dụng originalTransactionId.
+
+00:35:11.000 --> 00:35:18.000
+Nghĩ lại vòng đời đăng ký, chúng tôi đã làm việc để đảm bảo mọi bước trong hành trình của người dùng đều được bao phủ bởi các thông báo.
+
+00:35:18.000 --> 00:35:27.000
+Do đó, nếu bạn thấy mình nhảy xung quanh theo những cách bất ngờ, ví dụ như từ việc gia hạn đăng ký trực tiếp đến hết hạn, điều này có thể cho thấy rằng bạn đã bỏ lỡ thông báo cho người dùng đó.
+
+00:35:27.000 --> 00:35:33.000
+Điều này cũng có thể hữu ích trong bối cảnh hỗ trợ khách hàng nếu tài khoản của người dùng ở trạng thái khác với bạn mong đợi.
+
+00:35:33.000 --> 00:35:38.000
+Trong những trường hợp này, bạn có thể gửi truy vấn cho lịch sử thông báo của người dùng đó.
+
+00:35:38.000 --> 00:35:42.000
+Hãy xem qua phản hồi từ điểm cuối Nhận Lịch sử Thông báo.
+
+00:35:42.000 --> 00:35:46.000
+Chỉ một số giá trị nhất định được hiển thị trong phản hồi cho sự đơn giản.
+
+00:35:46.000 --> 00:35:52.000
+Các giá trị được trả về trong phản hồi nằm trong mảng notificationHistory.
+
+00:35:52.000 --> 00:35:56.000
+Mỗi mục nhập trong mảng đại diện cho một thông báo duy nhất.
+
+00:35:56.000 --> 00:36:02.000
+Trường tải trọng đã ký chứa thông báo chính xác đã được gửi cho bạn.
+
+00:36:02.000 --> 00:36:05.000
+Thứ hai, chúng tôi có trường firstSendAttemptResult.
+
+00:36:05.000 --> 00:36:11.000
+Trường này chứa một trong một số giá trị dựa trên kết quả của nỗ lực thông báo ban đầu như được ghi lại bởi các máy chủ của chúng tôi.
+
+00:36:11.000 --> 00:36:14.000
+Trong trường hợp thành công, đây sẽ là giá trị THÀNH CÔNG.
+
+00:36:14.000 --> 00:36:19.000
+Tuy nhiên, như chúng ta vừa thảo luận, đôi khi các thông báo không đến được máy chủ của bạn.
+
+00:36:19.000 --> 00:36:25.000
+Những thông điệp này có nghĩa là một hướng dẫn chung để giúp chỉ cho bạn hướng đi của vấn đề, để đơn giản hóa quá trình giải quyết.
+
+00:36:25.000 --> 00:36:28.000
+Ví dụ, chúng tôi thấy SSL_ISSUE ở đây.
+
+00:36:28.000 --> 00:36:33.000
+Điều này cho thấy có vấn đề với chứng chỉ SSL hoặc quy trình trên máy chủ.
+
+00:36:33.000 --> 00:36:39.000
+Trường này cung cấp khả năng hiển thị được cải thiện để chẩn đoán các sự cố máy chủ ngoài việc thấy thông báo không đến.
+
+00:36:39.000 --> 00:36:45.000
+Chúng tôi cũng cung cấp trường tương tự này trong điểm cuối Nhận Trạng thái Thông báo Kiểm tra, để cung cấp chức năng này khi sử dụng thông báo kiểm tra.
+
+00:36:45.000 --> 00:36:52.000
+Những thứ này có thể được sử dụng để trợ giúp trong khi giới thiệu hoặc trong quá trình khắc phục sự cố, hoặc hồi cứu trong quá trình xác định nguyên nhân gốc rễ của sự cố ngừng hoạt động.
+
+00:36:52.000 --> 00:36:55.000
+Thông báo có thể không bao gồm tất cả các trường hợp lịch sử của người dùng.
+
+00:36:55.000 --> 00:37:00.000
+Bạn có thể vừa thông qua các thông báo và có những người dùng hiện tại có lịch sử không được đề cập.
+
+00:37:00.000 --> 00:37:06.000
+Bạn cũng có thể muốn kiểm tra lịch sử lâu hơn thời gian lưu giữ thông báo trong điểm cuối Nhận Lịch sử Thông báo.
+
+00:37:06.000 --> 00:37:09.000
+Đó là nơi điểm cuối Nhận Lịch sử Giao dịch đi vào hình ảnh.
+
+00:37:09.000 --> 00:37:18.000
+Điểm cuối này, như chúng ta đã thấy trước đó trong bài thuyết trình từ Gabriel, giải quyết những vấn đề này bằng cách cung cấp lịch sử cho khách hàng của bạn bao gồm các trường hợp trước khi bạn bắt đầu sử dụng thông báo.
+
+00:37:18.000 --> 00:37:25.000
+Bây giờ, hãy xem xét cách các thông báo có thể cung cấp thông tin chi tiết và cơ hội ở trên và ngoài lịch sử mua hàng.
+
+00:37:25.000 --> 00:37:32.000
+Một trong những bổ sung mới trong thông báo Phiên bản 2 là trường loại phụ, thêm ngữ cảnh bổ sung vào trường Loại thông báo.
+
+00:37:32.000 --> 00:37:38.000
+Trường này nhằm cung cấp thêm chi tiết trong một số tình huống nhất định, như EXPIRED hoặc DID_CHANGE_RENEWAL_STATUS.
+
+00:37:38.000 --> 00:37:45.000
+Ví dụ, với EXPIRED, hành động bạn thực hiện thường giống nhau, đánh dấu đăng ký là không hoạt động và thu hồi quyền truy cập vào sản phẩm.
+
+00:37:45.000 --> 00:37:49.000
+Tuy nhiên, nó thường có thể hữu ích để hiểu lý do tại sao người dùng hết hạn.
+
+00:37:49.000 --> 00:37:53.000
+Có phải do vấn đề thanh toán, lựa chọn tự nguyện hay tăng giá mà không bao giờ được chấp nhận?
+
+00:37:53.000 --> 00:38:01.000
+Một thông báo khác, DID_CHANGE_RENEWAL_STATUS, là một ví dụ tuyệt vời về việc thu thập thông tin và cơ hội bổ sung khi sử dụng thông báo.
+
+00:38:01.000 --> 00:38:04.000
+Nhìn bề ngoài, nó có vẻ được ưu tiên thấp.
+
+00:38:04.000 --> 00:38:06.000
+Không cần thực hiện hành động nào ngay lập tức.
+
+00:38:06.000 --> 00:38:11.000
+Thông báo quan trọng để thu hồi quyền truy cập vào sản phẩm là thông báo ĐÃ HẾT HẠN.
+
+00:38:11.000 --> 00:38:14.000
+Đừng để bị lừa. Có rất nhiều cơ hội ở đây.
+
+00:38:14.000 --> 00:38:20.000
+Một, thông báo này là một cơ hội tuyệt vời để cố gắng giành lại khách hàng trước khi đăng ký của họ hết hạn.
+
+00:38:20.000 --> 00:38:29.000
+Đặc biệt là vì việc hủy kích hoạt tự động gia hạn có thể xảy ra bên ngoài ứng dụng, đây có thể là trình kích hoạt duy nhất được thông báo trong thay đổi trạng thái gia hạn này trước ngày hết hạn.
+
+00:38:29.000 --> 00:38:32.000
+Thông báo này cũng cung cấp cái nhìn sâu sắc về hành vi của khách hàng.
+
+00:38:32.000 --> 00:38:36.000
+Thông báo này có thể được sử dụng để xác định khi nào người đăng ký trong thời gian gia hạn hủy.
+
+00:38:36.000 --> 00:38:37.000
+Có phải là ngày trước khi gia hạn không?
+
+00:38:37.000 --> 00:38:42.000
+Những người đăng ký mới có hủy kích hoạt tính năng tự động gia hạn ngay sau khi đăng ký dịch vụ của bạn không?
+
+00:38:42.000 --> 00:38:47.000
+Loại thông tin này có thể quan trọng để hiểu nguyên nhân hủy bỏ và cải thiện sản phẩm của bạn.
+
+00:38:47.000 --> 00:38:52.000
+Cuối cùng, một số tình huống nhất định có thể không bao giờ được phản ánh trong lịch sử của người dùng mà không có thông báo.
+
+00:38:52.000 --> 00:38:59.000
+Ví dụ, người dùng có thể hủy kích hoạt nhưng sau đó kích hoạt lại tự động gia hạn, trước khi thời gian đăng ký của họ hết hạn.
+
+00:38:59.000 --> 00:39:05.000
+Bởi vì tất cả điều này xảy ra trong một khoảng thời gian đăng ký, không ảnh hưởng đến tình trạng dài hạn của đăng ký.
+
+00:39:05.000 --> 00:39:13.000
+Những quyết định này có thể quan trọng để hiểu khách hàng của bạn và các thông báo cung cấp thông tin để phát hiện và ghi lại các loại tình huống này.
+
+00:39:13.000 --> 00:39:23.000
+Nhìn chung, các thông báo hoạt động để nâng cao và tạo cơ hội hiểu hành vi của khách hàng bằng cách cung cấp thông tin ở mọi bước trong hành trình của khách hàng, bao gồm nhiều tình huống hơn bao giờ hết.
+
+00:39:23.000 --> 00:39:29.000
+Tóm lại, hôm nay chúng tôi đã đề cập đến cả API Máy chủ App Store và Thông báo Máy chủ App Store.
+
+00:39:29.000 --> 00:39:33.000
+Những thứ này có sẵn để cải thiện các khả năng xung quanh việc quản lý và theo dõi các giao dịch mua.
+
+00:39:33.000 --> 00:39:37.000
+Họ sử dụng các loại tin nhắn được cập nhật và bao gồm nhiều trường hợp hơn bao giờ hết.
+
+00:39:37.000 --> 00:39:46.000
+Các hệ thống này có sẵn cho tất cả khách hàng và tương thích chéo với cả Original StoreKit và StoreKit 2 và có thể cải thiện khả năng giám sát vòng đời đăng ký của bạn.
+
+00:39:46.000 --> 00:39:51.000
+Cuối cùng, những công cụ này đã có sẵn trong cả Sandbox và Production và là một bổ sung tuyệt vời cho bất kỳ hệ thống nào.
+
+00:39:51.000 --> 23:59:59.000
+Cảm ơn bạn đã tham gia cùng chúng tôi, và có một WWDC tuyệt vời.
+

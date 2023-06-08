@@ -1,0 +1,485 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:13.000
+David Stites: Xin chào, và chào mừng đến với "Evolve Your Core Data Schema."
+
+00:00:13.000 --> 00:00:17.000
+Tên tôi là David Stites và tôi là một kỹ sư trong nhóm Core Data.
+
+00:00:17.000 --> 00:00:24.000
+Trong phiên này, tôi rất vui được nói chuyện với bạn về cách cập nhật và di chuyển lược đồ Dữ liệu Cốt lõi trong ứng dụng của bạn.
+
+00:00:24.000 --> 00:00:41.000
+Chương trình nghị sự cho phiên này là tìm hiểu di chuyển lược đồ là gì và tại sao ứng dụng của bạn phải thực hiện nó sau khi cập nhật mô hình dữ liệu của nó, cách di chuyển lược đồ hiện có và cách CloudKit và di chuyển lược đồ tương tác.
+
+00:00:41.000 --> 00:00:49.000
+Đầu tiên, di chuyển lược đồ là gì và tại sao ứng dụng của bạn phải di chuyển khi bạn cập nhật mô hình dữ liệu của mình.
+
+00:00:49.000 --> 00:00:54.000
+Khi ứng dụng của bạn phát triển, có thể cần phải thay đổi mô hình dữ liệu của bạn.
+
+00:00:54.000 --> 00:01:00.000
+Việc cập nhật mô hình dữ liệu yêu cầu những thay đổi đó được hiện thực hóa trong lược đồ lưu trữ cơ bản.
+
+00:01:00.000 --> 00:01:02.000
+Hãy xem xét mô hình dữ liệu này.
+
+00:01:02.000 --> 00:01:09.000
+Nó có một thực thể Máy bay với hai thuộc tính, loại và số lượng động cơ.
+
+00:01:09.000 --> 00:01:13.000
+Những thuộc tính này được phản ánh trong bộ lưu trữ cơ bản.
+
+00:01:13.000 --> 00:01:20.000
+Nếu tôi thêm một thuộc tính số hành khách, tôi cần thêm bộ nhớ tương ứng.
+
+00:01:20.000 --> 00:01:25.000
+Sau khi di chuyển, những thay đổi được phản ánh đầy đủ trong bộ nhớ cơ bản.
+
+00:01:25.000 --> 00:01:36.000
+Nếu không di chuyển các thay đổi trong bộ nhớ cơ bản, Core Data sẽ từ chối mở cửa hàng liên tục của bạn vì mô hình mới thay đổi không khớp với mô hình được sử dụng để lưu trữ.
+
+00:01:36.000 --> 00:01:45.000
+Cố gắng mở một cửa hàng không tương thích sẽ dẫn đến lỗi với mã NSPersistentStore- IncompatibleVersionHashError.
+
+00:01:45.000 --> 00:01:51.000
+Nếu bạn nhận được lỗi này, nó sẽ là một dấu hiệu cho bạn rằng cần phải di chuyển.
+
+00:01:51.000 --> 00:01:59.000
+Bây giờ tôi đã giải thích di chuyển lược đồ là gì và tại sao nó lại cần thiết để phát triển ứng dụng của bạn, hãy để tôi cho bạn biết cách di chuyển được thực hiện.
+
+00:01:59.000 --> 00:02:08.000
+Core Data có các công cụ di chuyển dữ liệu tích hợp để giúp cập nhật lưu trữ dữ liệu của ứng dụng của bạn với mô hình dữ liệu hiện tại.
+
+00:02:08.000 --> 00:02:14.000
+Nói chung, những công cụ này được gọi là "di chuyển nhẹ".
+
+00:02:14.000 --> 00:02:17.000
+Di chuyển nhẹ là phương pháp di chuyển ưa thích.
+
+00:02:17.000 --> 00:02:27.000
+Di chuyển nhẹ tự động phân tích và suy ra sự di chuyển từ sự khác biệt giữa các mô hình đối tượng được quản lý nguồn và đích.
+
+00:02:27.000 --> 00:02:36.000
+Trong thời gian chạy, Core Data tìm kiếm các mô hình trong các gói được trả về bởi các phương thức .allBundles và .allFrameworks của lớp NSBundle.
+
+00:02:36.000 --> 00:02:45.000
+Di chuyển nhẹ sau đó tạo ra một mô hình ánh xạ để hiện thực hóa những thay đổi bạn đã thực hiện trong ứng dụng của mình trong lược đồ cơ sở dữ liệu của bạn.
+
+00:02:45.000 --> 00:02:54.000
+Sử dụng di chuyển nhẹ đòi hỏi những thay đổi đối với mô hình dữ liệu để phù hợp với mô hình di chuyển rõ ràng.
+
+00:02:54.000 --> 00:03:11.000
+Các hoạt động nhẹ liên quan đến các thuộc tính bao gồm thêm thuộc tính, xóa thuộc tính, làm cho thuộc tính không tùy chọn trở thành tùy chọn, làm cho thuộc tính tùy chọn không tùy chọn và xác định giá trị mặc định và đổi tên thuộc tính.
+
+00:03:11.000 --> 00:03:20.000
+Nếu bạn muốn đổi tên một thuộc tính, hãy đặt mã định danh đổi tên trong mô hình đích thành tên của thuộc tính tương ứng trong mô hình nguồn.
+
+00:03:20.000 --> 00:03:26.000
+Mã định danh đổi tên được tìm thấy trong trình kiểm tra thuộc tính của Trình chỉnh sửa mô hình dữ liệu Xcode.
+
+00:03:26.000 --> 00:03:32.000
+Ví dụ, bạn có thể đổi tên thuộc tính màu thực thể Máy bay thành paintColor.
+
+00:03:32.000 --> 00:03:43.000
+Mã định danh đổi tên tạo tên chuẩn, vì vậy hãy đặt mã định danh đổi tên thành tên của thuộc tính trong mô hình nguồn, trừ khi thuộc tính đó đã có mã định danh đổi tên.
+
+00:03:43.000 --> 00:03:50.000
+Điều này có nghĩa là bạn có thể đổi tên một thuộc tính trong phiên bản 2 của mô hình, và sau đó đổi tên nó một lần nữa trong phiên bản 3.
+
+00:03:50.000 --> 00:04:00.000
+Việc đổi tên sẽ hoạt động chính xác từ phiên bản 2 sang phiên bản 3 hoặc từ phiên bản 1 đến phiên bản 3.
+
+00:04:00.000 --> 00:04:05.000
+Di chuyển nhẹ cũng có thể xử lý những thay đổi đối với các mối quan hệ mà không đổ mồ hôi.
+
+00:04:05.000 --> 00:04:10.000
+Bạn có thể thêm một mối quan hệ mới hoặc xóa một mối quan hệ hiện có.
+
+00:04:10.000 --> 00:04:16.000
+Bạn cũng có thể đổi tên một mối quan hệ bằng cách sử dụng mã định danh đổi tên, giống như một thuộc tính.
+
+00:04:16.000 --> 00:04:29.000
+Ngoài ra, bạn có thể thay đổi lực lượng mối quan hệ, ví dụ, di chuyển từ một sang nhiều hoặc nhiều không được đặt hàng sang nhiều thứ tự sang nhiều thứ tự và ngược lại.
+
+00:04:29.000 --> 00:04:34.000
+Nếu bạn đoán rằng các thực thể cũng đủ điều kiện để di chuyển nhẹ, bạn đã đúng.
+
+00:04:34.000 --> 00:04:40.000
+Bạn có thể thêm một thực thể mới, xóa một thực thể hiện có và đổi tên các thực thể.
+
+00:04:40.000 --> 00:04:48.000
+Bạn cũng có thể tạo một thực thể mẹ hoặc con mới và di chuyển các thuộc tính lên xuống trong hệ thống phân cấp thực thể.
+
+00:04:48.000 --> 00:04:53.000
+Bạn có thể di chuyển các thực thể vào hoặc ra khỏi một hệ thống phân cấp.
+
+00:04:53.000 --> 00:04:56.000
+Tuy nhiên, bạn không thể hợp nhất hệ thống phân cấp thực thể.
+
+00:04:56.000 --> 00:05:03.000
+Nếu hai thực thể hiện có không chia sẻ cha mẹ chung trong nguồn, chúng không thể chia sẻ cha mẹ chung ở đích đến.
+
+00:05:03.000 --> 00:05:16.000
+Di chuyển nhẹ được kiểm soát bởi hai phím tùy chọn: NSMigratePersistent- StoresAutomaticallyOption và NSInferMappingModelAutomaticallyOption.
+
+00:05:16.000 --> 00:05:31.000
+Sự hiện diện của hai khóa này được đặt thành giá trị thực khi cửa hàng được thêm vào điều phối viên liên tục sẽ khiến Dữ liệu cốt lõi tự động thực hiện di chuyển nhẹ nếu phát hiện cửa hàng liên tục không còn khớp với mô hình hiện tại.
+
+00:05:31.000 --> 00:05:41.000
+Nếu bạn đang sử dụng NSPersistentContainer hoặc NSPersistentStoreDescription, các tùy chọn này được đặt tự động cho bạn và bạn không cần phải làm gì cả.
+
+00:05:41.000 --> 00:06:08.000
+Nếu bạn đang sử dụng một API thay thế như NSPersistentStoreCoordinator .addPersistentStore (type:configuration:at:options:), di chuyển nhẹ có thể được yêu cầu bằng cách cài đặt và chuyển từ điển tùy chọn với các khóa NSMigratePersistent- StoresAutomaticallyOption và NSInferMa
+
+00:06:08.000 --> 00:06:16.000
+Core Data sẽ tự động thực hiện di chuyển nhẹ nếu nó phát hiện cửa hàng liên tục không còn khớp với mô hình hiện tại.
+
+00:06:16.000 --> 00:06:19.000
+Đây là cách điều này hoạt động trong mã.
+
+00:06:19.000 --> 00:06:23.000
+Đầu tiên, tôi sẽ nhập CoreData và tạo một mô hình đối tượng được quản lý.
+
+00:06:23.000 --> 00:06:29.000
+Sau đó, tôi sẽ tạo một điều phối viên cửa hàng liên tục bằng cách sử dụng mô hình tôi vừa tạo.
+
+00:06:29.000 --> 00:06:36.000
+Lưu ý từ điển tùy chọn mà tôi đã tạo và tôi sẽ vượt qua khi tôi thêm cửa hàng cho điều phối viên liên tục.
+
+00:06:36.000 --> 00:06:43.000
+Cuối cùng, tôi sẽ thêm cửa hàng vào điều phối viên nơi việc di chuyển sẽ tự động xảy ra nếu cần thiết.
+
+00:06:43.000 --> 00:06:52.000
+Bất kể bạn sử dụng API nào, những thay đổi đối với mô hình dữ liệu của bạn có thể được thực hiện trực tiếp trong cùng một mô hình đang được vận chuyển cùng với ứng dụng.
+
+00:06:52.000 --> 00:06:56.000
+Không cần phải tạo một phiên bản mới của mô hình để thực hiện các thay đổi.
+
+00:06:56.000 --> 00:07:11.000
+Nếu bạn muốn xác định trước liệu Dữ liệu cốt lõi có thể suy ra mô hình ánh xạ giữa mô hình nguồn và mô hình đích mà không thực sự thực hiện công việc di chuyển hay không, bạn có thể sử dụng phương pháp NSMappingModel .inferredMappingModel.
+
+00:07:11.000 --> 00:07:16.000
+Phương thức trả về mô hình suy ra nếu Core Data có thể tạo ra nó.
+
+00:07:16.000 --> 00:07:19.000
+Nếu không, nó trả về số không.
+
+00:07:19.000 --> 00:07:25.000
+Đôi khi, những thay đổi kết hợp đối với lược đồ có thể vượt quá khả năng di chuyển nhẹ.
+
+00:07:25.000 --> 00:07:31.000
+Tôi sẽ mô tả cho bạn cách giải quyết vấn đề đó và vẫn sử dụng di chuyển nhẹ.
+
+00:07:31.000 --> 00:07:46.000
+Quay trở lại mô hình ví dụ trước đây của chúng tôi, giả sử rằng trước đây chúng tôi đã thêm một thuộc tính gọi là "flightData" sử dụng bộ nhớ ngoài cho dữ liệu nhị phân, được biểu thị bằng đường dẫn tệp được lưu trữ trong FLIGHT_DATA.
+
+00:07:46.000 --> 00:07:53.000
+Hơn nữa, giả sử cần phải thay đổi thuộc tính đó để lưu trữ dữ liệu bên trong và xóa bộ nhớ ngoài.
+
+00:07:53.000 --> 00:08:00.000
+Kiểm tra xem liệu việc di chuyển này có phù hợp với bất kỳ khả năng nào của di chuyển nhẹ hay không, người ta phát hiện ra rằng nó không phù hợp.
+
+00:08:00.000 --> 00:08:05.000
+Nhìn bề ngoài, có vẻ như chúng ta đang bị mắc kẹt, không thể thực hiện thay đổi này.
+
+00:08:05.000 --> 00:08:06.000
+Tuy nhiên, đừng sợ!
+
+00:08:06.000 --> 00:08:16.000
+Di chuyển nhẹ vẫn có thể được sử dụng để thực hiện các di chuyển phức tạp hơn, không phù hợp hơn, mặc dù theo nhiều bước.
+
+00:08:16.000 --> 00:08:28.000
+Mục tiêu trở thành phân tách các nhiệm vụ di chuyển không đủ điều kiện để di chuyển nhẹ thành một chuỗi di chuyển tối thiểu đủ điều kiện cho di chuyển nhẹ.
+
+00:08:28.000 --> 00:08:46.000
+Nói chung, nếu mô hình ban đầu là A và mô hình mục tiêu là B, nhưng mô hình B có những thay đổi không đủ điều kiện để di chuyển nhẹ, một cầu nối có thể được tạo bằng cách giới thiệu một hoặc nhiều phiên bản mô hình phân tách những thay đổi đó.
+
+00:08:46.000 --> 00:08:55.000
+Mỗi mô hình được giới thiệu sẽ có một hoặc nhiều hoạt động nằm trong khả năng tạo nên những thay đổi không phù hợp.
+
+00:08:55.000 --> 00:09:05.000
+Điều này dẫn đến một loạt các lần di chuyển trong đó mỗi mô hình hiện có thể di chuyển nhẹ nhưng tương đương với di chuyển không phù hợp.
+
+00:09:05.000 --> 00:09:11.000
+Quay trở lại ví dụ của tôi không đủ điều kiện để di chuyển nhẹ, mô hình ban đầu của chúng tôi là mô hình A.
+
+00:09:11.000 --> 00:09:26.000
+Tôi sẽ bắt đầu phân tích nhiệm vụ bằng cách giới thiệu một phiên bản mô hình mới, A prime và thêm một thuộc tính mới "tmpStorage" sẽ được sử dụng tạm thời để lưu trữ dữ liệu được nhập từ các tệp bên ngoài.
+
+00:09:26.000 --> 00:09:31.000
+Tiếp theo, tôi sẽ nhập dữ liệu từ các tệp bên ngoài vào thuộc tính mới của chúng tôi.
+
+00:09:31.000 --> 00:09:37.000
+Mã để nhập dữ liệu này tách biệt với chức năng được cung cấp bởi Core Data.
+
+00:09:37.000 --> 00:09:42.000
+Việc thực hiện nhập khẩu này được xen kẽ giữa các lần di chuyển.
+
+00:09:42.000 --> 00:09:50.000
+Khi dữ liệu đã được nhập an toàn, tôi sẽ tạo một phiên bản mới khác của mô hình A double-prime từ A prime.
+
+00:09:50.000 --> 00:09:58.000
+Trong A double-prime, tôi sẽ xóa thuộc tính lưu trữ bên ngoài cũ trong khi đồng thời đổi tên thuộc tính mới.
+
+00:09:58.000 --> 00:10:04.000
+Mỗi bước được mô tả đều nằm trong khả năng di chuyển nhẹ.
+
+00:10:04.000 --> 00:10:19.000
+Theo trực giác, một vòng lặp sự kiện có thể được xây dựng để mở cửa hàng liên tục với các tùy chọn di chuyển nhẹ được đặt và lặp đi lặp lại qua từng mô hình chưa được xử lý theo thứ tự nối tiếp và Dữ liệu cốt lõi sẽ di chuyển cửa hàng.
+
+00:10:19.000 --> 00:10:34.000
+Nếu bạn thực hiện logic dành riêng cho ứng dụng trong quá trình di chuyển của mình, chẳng hạn như cách tôi nhập dữ liệu từ các tệp bên ngoài trong ví dụ trước, logic đó phải "có thể khởi động lại" trong trường hợp quá trình di chuyển bị gián đoạn do quá trình kết thúc.
+
+00:10:34.000 --> 00:10:42.000
+Nếu ứng dụng của bạn sử dụng Core Data và CloudKit, có một số điểm quan trọng bạn nên ghi nhớ khi thiết kế mô hình dữ liệu của mình trong Core Data.
+
+00:10:42.000 --> 00:10:51.000
+Để chuyển các bản ghi giữa kho Dữ liệu Cốt lõi và cơ sở dữ liệu CloudKit, chúng yêu cầu sự hiểu biết chung về mô hình dữ liệu.
+
+00:10:51.000 --> 00:10:55.000
+Bạn xác định mô hình này trong trình chỉnh sửa mô hình Dữ liệu cốt lõi.
+
+00:10:55.000 --> 00:10:59.000
+Mô hình đó sau đó được sử dụng để tạo lược đồ CloudKit.
+
+00:10:59.000 --> 00:11:07.000
+Lược đồ được tạo ra ban đầu được tạo ra trong môi trường Phát triển, và sau đó được thăng cấp lên Sản xuất.
+
+00:11:07.000 --> 00:11:12.000
+Bạn nên lưu ý rằng CloudKit không hỗ trợ tất cả các tính năng của mô hình Dữ liệu Cốt lõi.
+
+00:11:12.000 --> 00:11:18.000
+Khi bạn thiết kế mô hình của mình, hãy nhận biết những hạn chế sau và tạo ra một mô hình dữ liệu tương thích.
+
+00:11:18.000 --> 00:11:23.000
+Ví dụ, các ràng buộc duy nhất đối với các thực thể không được hỗ trợ.
+
+00:11:23.000 --> 00:11:28.000
+Loại thuộc tính không xác định và objectID không được hỗ trợ dưới dạng loại thuộc tính.
+
+00:11:28.000 --> 00:11:34.000
+Và các mối quan hệ phải là tùy chọn và có mối quan hệ nghịch đảo.
+
+00:11:34.000 --> 00:11:38.000
+Ngoài ra, CloudKit không hỗ trợ quy tắc từ chối xóa.
+
+00:11:38.000 --> 00:11:43.000
+Khi bạn đang phát triển ứng dụng của mình, bạn sẽ sử dụng môi trường Phát triển.
+
+00:11:43.000 --> 00:11:48.000
+Lược đồ CloudKit có thể được sửa đổi tự do trong môi trường này.
+
+00:11:48.000 --> 00:11:54.000
+Tuy nhiên, sau khi bạn quảng bá lược đồ của mình lên Sản xuất, các loại bản ghi và trường của chúng là bất biến.
+
+00:11:54.000 --> 00:12:02.000
+Trong khi di chuyển nhẹ xử lý nhiều tình huống khác nhau, CloudKit bị hạn chế hơn trong những gì nó hỗ trợ.
+
+00:12:02.000 --> 00:12:07.000
+Nhiều hoạt động nhẹ mà tôi đã mô tả trước đó không được hỗ trợ.
+
+00:12:07.000 --> 00:12:16.000
+Cụ thể, những gì được hỗ trợ trong CloudKit là thêm các trường mới vào các loại bản ghi hiện có và thêm các loại bản ghi mới.
+
+00:12:16.000 --> 00:12:21.000
+Bạn không thể sửa đổi hoặc xóa các loại hoặc trường bản ghi hiện có.
+
+00:12:21.000 --> 00:12:26.000
+Xem xét những hạn chế này khi sửa đổi lược đồ mô hình.
+
+00:12:26.000 --> 00:12:35.000
+Khi đến lúc cập nhật mô hình dữ liệu của bạn, hãy nhớ rằng di chuyển nhẹ chỉ hiện thực hóa các thay đổi lược đồ trong tệp cửa hàng cục bộ.
+
+00:12:35.000 --> 00:12:45.000
+Bất kể một cửa hàng cụ thể có được sử dụng với CloudKit hay không, việc di chuyển sẽ chỉ thay đổi cửa hàng trên đĩa và không thực hiện thay đổi đối với lược đồ CloudKit.
+
+00:12:45.000 --> 00:12:58.000
+Bạn vẫn cần hiện thực hóa những thay đổi đó trong cơ sở dữ liệu Phát triển bằng cách chạy trình khởi tạo lược đồ và sau đó quảng bá những thay đổi đó trong Phát triển thành Sản xuất bằng Bảng điều khiển CloudKit.
+
+00:12:58.000 --> 00:13:04.000
+Hãy nhớ rằng người dùng ứng dụng của bạn sẽ sử dụng các phiên bản cũ cũng như các phiên bản mới.
+
+00:13:04.000 --> 00:13:09.000
+Phiên bản mới nhất của ứng dụng tất nhiên sẽ biết về bất kỳ bổ sung mới nào cho lược đồ.
+
+00:13:09.000 --> 00:13:15.000
+Các phiên bản cũ của ứng dụng sẽ không biết về các trường hoặc loại bản ghi mới.
+
+00:13:15.000 --> 00:13:24.000
+Vì lược đồ CloudKit về cơ bản là phụ gia, hãy xem xét các tác động của việc di chuyển lược đồ sang các thiết bị chạy các phiên bản cũ hơn của ứng dụng của bạn.
+
+00:13:24.000 --> 00:13:33.000
+Ví dụ, một cạm bẫy phổ biến là quên cập nhật các trường cũ mà các phiên bản cũ hơn của ứng dụng của bạn sử dụng nhưng các phiên bản mới hơn thì không.
+
+00:13:33.000 --> 00:13:37.000
+Đây là một số chiến lược để di chuyển lược đồ CloudKit.
+
+00:13:37.000 --> 00:13:43.000
+Tùy chọn đầu tiên là thêm dần các trường mới vào các loại bản ghi hiện có.
+
+00:13:43.000 --> 00:13:52.000
+Nếu bạn áp dụng cách tiếp cận này, các phiên bản cũ hơn của ứng dụng của bạn sẽ có quyền truy cập vào mọi bản ghi mà người dùng tạo ra, nhưng không phải mọi lĩnh vực.
+
+00:13:52.000 --> 00:14:04.000
+Tùy chọn thứ hai là lập phiên bản các thực thể của bạn bằng cách bao gồm thuộc tính phiên bản và sau đó sử dụng yêu cầu tìm nạp để chỉ chọn các bản ghi tương thích với phiên bản hiện tại của ứng dụng.
+
+00:14:04.000 --> 00:14:15.000
+Nếu bạn áp dụng cách tiếp cận này, các phiên bản cũ hơn của ứng dụng của bạn sẽ không tìm nạp các bản ghi mà người dùng tạo với phiên bản mới hơn, ẩn chúng một cách hiệu quả trên thiết bị đó.
+
+00:14:15.000 --> 00:14:25.000
+Chiến lược cuối cùng là tạo một vùng chứa hoàn toàn mới, sử dụng NSPersistentCloudKitContainerOptions, để liên kết cửa hàng mới với một vùng chứa mới.
+
+00:14:25.000 --> 00:14:33.000
+Lưu ý rằng nếu người dùng có một tập dữ liệu lớn, việc tải tập dữ liệu lên iCloud có thể mất một khoảng thời gian dài.
+
+00:14:33.000 --> 00:14:37.000
+Dù bạn sử dụng phương pháp nào, hãy cẩn thận trong việc thiết kế mô hình dữ liệu của bạn.
+
+00:14:37.000 --> 00:14:44.000
+Hãy chắc chắn xem xét các vấn đề tương thích phiên bản chéo và kiểm tra các phiên bản khác nhau của mô hình dữ liệu của bạn cùng nhau.
+
+00:14:44.000 --> 00:14:51.000
+Bây giờ chúng ta đã thảo luận kỹ lưỡng về các mô hình dữ liệu, di chuyển và CloudKit, tôi sẽ chứng minh điều này trong hành động.
+
+00:14:51.000 --> 00:14:54.000
+Như bạn có thể đoán, tôi là một phi công.
+
+00:14:54.000 --> 00:14:57.000
+Tôi đã tạo một ứng dụng nhỏ để ghi lại thời gian bay của mình.
+
+00:14:57.000 --> 00:14:59.000
+Đây là mô hình dữ liệu cho ứng dụng đó.
+
+00:14:59.000 --> 00:15:14.000
+Tôi có một thực thể duy nhất được gọi là "LogEntry" và đã thêm một số thuộc tính, chẳng hạn như loại máy bay, thời gian bay, nguồn gốc, điểm đến và số đuôi để cho phép tôi ghi lại thông tin kinh nghiệm cần thiết.
+
+00:15:14.000 --> 00:15:21.000
+Khi tôi chạy ứng dụng này lần đầu tiên, Core Data sẽ tạo ra cửa hàng và hiện thực hóa lược đồ trong cửa hàng đó.
+
+00:15:21.000 --> 00:15:34.000
+Trước khi tôi chạy ứng dụng, tôi sẽ bật các biến môi trường com.apple.CoreData.SQLDebug và com.apple.CoreData.MigrationDebug.
+
+00:15:34.000 --> 00:15:37.000
+Điều này sẽ khiến Dữ liệu cốt lõi ghi lại các bước mà nó đang thực hiện.
+
+00:15:37.000 --> 00:15:42.000
+Với những lập luận này, tôi sẽ chạy ứng dụng.
+
+00:15:42.000 --> 00:15:52.000
+Khi ứng dụng khởi chạy, Core Data đang ghi lại các bước mà nó đang thực hiện: tạo tệp, tạo siêu dữ liệu cho cửa hàng và hiện thực hóa lược đồ.
+
+00:15:52.000 --> 00:15:56.000
+SQLite đã tạo bảng ZLOGENTRY với lược đồ của chúng tôi trong đó.
+
+00:15:56.000 --> 00:16:02.000
+Điều này cũng có thể được xác nhận bằng cách xem tệp lưu trữ bằng công cụ dòng lệnh sqlite3.
+
+00:16:02.000 --> 00:16:10.000
+Ở đây, tôi có bảng LogEntry và nó có các cột tương ứng với các thuộc tính tôi đã tạo trong mô hình dữ liệu.
+
+00:16:10.000 --> 00:16:14.000
+Bây giờ tôi sẽ thực hiện một số thay đổi nhẹ.
+
+00:16:14.000 --> 00:16:18.000
+Tôi đang thêm một số thực thể mới, Máy bay, Phi công và Sân bay.
+
+00:16:18.000 --> 00:16:21.000
+Điều này sẽ giúp tôi bình thường hóa lược đồ.
+
+00:16:21.000 --> 00:16:26.000
+Tôi đang thay đổi một số thuộc tính trong thực thể LogEntry thành các mối quan hệ.
+
+00:16:26.000 --> 00:16:34.000
+Ví dụ, điểm đến và nguồn gốc chuyển từ thuộc tính chuỗi sang mối quan hệ giữa Sân bay.
+
+00:16:34.000 --> 00:16:40.000
+Thực thể Sân bay cũng có hai thuộc tính mới, icaoIdentifier và faaIdentifier.
+
+00:16:40.000 --> 00:16:49.000
+Thuộc tính kiểu được thăng cấp thành một thực thể mới; Máy bay và tôi đang thêm hai thuộc tính mới, tailNumber và registrationNumber.
+
+00:16:49.000 --> 00:16:56.000
+Trên LogEntry, tôi đang tạo mối quan hệ 1-1 với Máy bay từ LogEntry.
+
+00:16:56.000 --> 00:17:02.000
+Cuối cùng, tôi đã thêm một thực thể Thí điểm có tên và ID chứng chỉ.
+
+00:17:02.000 --> 00:17:06.000
+Mỗi mục nhật ký sẽ liên quan đến một thực thể Thí điểm.
+
+00:17:06.000 --> 00:17:15.000
+Bây giờ tôi đã hoàn thành các thay đổi của mình đối với mô hình dữ liệu, tôi sẽ chạy lại ứng dụng.
+
+00:17:15.000 --> 00:17:19.000
+Rất tiếc! Tôi nhận được lỗi khi chạy ứng dụng.
+
+00:17:19.000 --> 00:17:24.000
+Kiểm tra mã, đó là NSPersistentStore- IncompatibleVersionHashError.
+
+00:17:24.000 --> 00:17:30.000
+Lỗi đó có nghĩa là mô hình hiện tại của tôi không còn khớp với lược đồ cho mô hình trong cửa hàng.
+
+00:17:30.000 --> 00:17:32.000
+Tôi cần di chuyển lược đồ cửa hàng.
+
+00:17:32.000 --> 00:17:35.000
+Tôi có thể làm điều đó theo một trong ba cách.
+
+00:17:35.000 --> 00:17:45.000
+Sử dụng phương pháp đầu tiên, tôi có thể chuyển đổi mã của mình để sử dụng NSPersistentContainer vì các tùy chọn di chuyển nhẹ được tự động đặt cho tôi.
+
+00:17:45.000 --> 00:17:55.000
+Sử dụng phương pháp thứ hai, tôi có thể sử dụng NSPersistentStoreDescription, vì, một lần nữa, các tùy chọn di chuyển nhẹ được tự động đặt cho tôi.
+
+00:17:55.000 --> 00:18:06.000
+Cuối cùng, sử dụng phương pháp thứ ba, tôi có thể đặt thủ công các tùy chọn di chuyển nhẹ trên từ điển tùy chọn và chuyển từ điển đó cho điều phối viên khi mở cửa hàng.
+
+00:18:06.000 --> 00:18:11.000
+Tôi nghĩ tôi sẽ chọn tùy chọn đầu tiên, sử dụng NSPersistentContainer.
+
+00:18:11.000 --> 00:18:32.000
+Bây giờ tôi đã chuyển đổi mã để sử dụng NSPersistentContainer, tôi sẽ khởi chạy ứng dụng và một lần nữa quan sát thấy rằng Dữ liệu cốt lõi đang di chuyển lược đồ trong tệp lưu trữ.
+
+00:18:32.000 --> 00:18:36.000
+Một lần nữa, điều này có thể được xác nhận bằng cách sử dụng công cụ dòng lệnh sqlite3.
+
+00:18:36.000 --> 00:18:42.000
+Lưu ý rằng lược đồ mới đã được Core Data hiện thực hóa một cách tự động, sử dụng di chuyển nhẹ.
+
+00:18:42.000 --> 00:18:44.000
+Điều gì có thể dễ dàng hơn?
+
+00:18:44.000 --> 00:18:48.000
+Trước khi kết thúc bản demo của mình, tôi muốn hiển thị tùy chọn số 3.
+
+00:18:48.000 --> 00:18:58.000
+Nhớ lại trong tùy chọn này, tôi đang cài đặt thủ công các tùy chọn di chuyển nhẹ trên từ điển tùy chọn và sau đó chuyển từ điển đó cho điều phối viên khi mở cửa hàng.
+
+00:18:58.000 --> 00:19:03.000
+Kết quả cuối cùng giống nhau ở chỗ cửa hàng được chuyển sang lược đồ mới.
+
+00:19:03.000 --> 00:19:07.000
+Khi bạn thực hiện thay đổi đối với mô hình dữ liệu của mình, hãy sử dụng di chuyển nhẹ để giúp bạn.
+
+00:19:07.000 --> 00:19:14.000
+Di chuyển nhẹ rất linh hoạt và dễ sử dụng cho phần lớn các thay đổi mô hình dữ liệu.
+
+00:19:14.000 --> 00:19:22.000
+Nếu bạn có các mô hình dữ liệu phức tạp hơn, hãy chia mô hình đó thành những mô hình bao gồm các thay đổi nhẹ.
+
+00:19:22.000 --> 00:19:29.000
+Cuối cùng, nếu bạn sử dụng CloudKit với ứng dụng của mình, hãy xem xét cẩn thận ý nghĩa của những thay đổi mô hình dữ liệu.
+
+00:19:29.000 --> 00:19:32.000
+Kiểm tra kỹ lưỡng bất kỳ thay đổi mô hình dữ liệu nào.
+
+00:19:32.000 --> 00:19:40.000
+Tôi hy vọng bạn thấy thông tin này hữu ích và bạn sẽ cân nhắc cập nhật mô hình trong dự án của mình để xây dựng một số tính năng mới tuyệt vời.
+
+00:19:40.000 --> 23:59:59.000
+Cảm ơn vì đã bay cùng tôi, và có một WWDC tuyệt vời.
+

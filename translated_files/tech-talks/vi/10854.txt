@@ -1,0 +1,649 @@
+10854
+
+Xin chào. Tôi là Jeri Mason. Tôi là một kỹ sư phần mềm trong nhóm HomePod.
+
+Và tôi sẽ hướng dẫn bạn cách đưa dịch vụ truyền thông của bạn vào nhà với SiriKit Media Intents, hiện được cung cấp bởi Cloud Extensions.
+
+Hãy bắt đầu với mọi thứ bạn cần để bắt đầu phát triển.
+
+Đầu tiên, chúng tôi sẽ đề cập đến một số điều kiện tiên quyết quan trọng để phát triển dịch vụ một cách hiệu quả: cách định cấu hình nhà thử nghiệm, cách thiết lập HomePod của bạn để thử nghiệm, cách thiết lập thiết bị iOS của bạn để phát triển và cuối cùng, áp dụng khung MediaSetup trong ứng dụng của bạn để đưa dịch vụ của bạn vào
+
+Khi bạn đã thực hiện các bước này, bạn đang trên đường tạo ra trải nghiệm phát lại tuyệt vời trên HomePod cho những người yêu thích nội dung của bạn.
+
+Hãy đi sâu vào các điều kiện tiên quyết.
+
+Để hỗ trợ SiriKit Media Intents trên HomePod, dịch vụ của bạn phải hỗ trợ Media Intents trong ứng dụng iOS của bạn.
+
+Bạn sẽ cần đăng ký chương trình trên developer.apple.com/siri.
+
+Sau khi bạn đăng ký, bạn sẽ nhận được thêm thông tin chi tiết về việc truy cập thông số kỹ thuật API Mở rộng Đám mây mà dịch vụ của bạn phải triển khai.
+
+Sau đó, bạn có thể đăng ký dịch vụ của mình với chúng tôi để có được các quyền và hồ sơ để bắt đầu phát triển.
+
+Và cuối cùng, trước khi HomePod có thể liên hệ với dịch vụ của bạn thông qua Cloud Extension APIs, bạn phải triển khai luồng OAuth và Dịch vụ Web Cấu hình được xác định trong thông số kỹ thuật của chúng tôi.
+
+Hãy nói nhiều hơn về việc đăng ký.
+
+Để đăng ký dịch vụ của mình, bạn sẽ cần cung cấp tên dịch vụ của mình, khóa ký công khai mà bạn tạo để xác minh dịch vụ trên thiết bị, URL tĩnh để truy xuất biểu tượng cho dịch vụ của bạn từ các thiết bị iOS trong nhà và danh sách ID gói của các ứng dụng đang sử dụng dịch vụ.
+
+Thông tin này sẽ được sử dụng để tạo hồ sơ phát triển mà bạn có thể cài đặt trên các thiết bị thử nghiệm và phát triển của mình.
+
+Chỉ những thiết bị có hồ sơ mới có thể kiểm tra dịch vụ của bạn.
+
+Không có gì ngạc nhiên, vì Cloud Extension APIs sử dụng công nghệ Web, chúng tôi đã áp dụng xác thực bằng điểm cuối OAuth 2.0.
+
+Nhưng vì ứng dụng của bạn đóng vai trò của một khách hàng đáng tin cậy, một dịch vụ triển khai luồng thông tin đăng nhập của khách hàng là bắt buộc.
+
+Cần có một ClientID và ClientSecret duy nhất cho mỗi tài khoản dịch vụ được thêm vào nhà.
+
+Mặc dù không phổ biến đối với luồng này, nhưng nên phát hành mã thông báo gia hạn, để tránh việc sử dụng lại phổ biến các thông tin đăng nhập này được cung cấp trực tiếp cho dịch vụ Xác thực.
+
+Điều này là do nếu không có luồng mã thông báo gia hạn, ClientID và ClientSecret có thể tồn tại lâu dài.
+
+Miễn là ai đó đang sử dụng dịch vụ của bạn từ nhà, mã thông báo gia hạn hoặc xác thực ban đầu phải được hỗ trợ.
+
+Ứng dụng iOS của bạn phải có khả năng cung cấp các thông tin đăng nhập này bằng cách yêu cầu chúng từ dịch vụ của bạn và cung cấp chúng cho các API thiết lập phương tiện iOS.
+
+HomePods liên hệ với dịch vụ của bạn để giải quyết ý định.
+
+Trên iOS, chi tiết về ý định bạn hỗ trợ là một phần trong gói ứng dụng của bạn.
+
+Trong Cloud Extension, bạn phải triển khai một hoặc nhiều điểm cuối tài nguyên cấu hình để xác định các điểm cuối được hỗ trợ và URL nào bạn sử dụng để tiếp cận chúng.
+
+Có rất nhiều sự linh hoạt ở đây.
+
+Bạn có thể có nhiều URL tĩnh hoặc triển khai một điểm cuối tạo chúng một cách linh hoạt, tất cả đều hữu ích cho việc phát triển và dàn dựng các cấu hình thử nghiệm.
+
+Điểm cuối của bạn thậm chí có thể kiểm tra tiêu đề ủy quyền yêu cầu, xác định tài khoản truy xuất cấu hình.
+
+Phần thân của cấu hình được mã hóa bằng cách sử dụng các tiêu chuẩn Mã hóa và Ký đối tượng JavaScript và nó phải được ký đúng cách để thiết bị chấp nhận nó.
+
+Tuy nhiên bạn phục vụ tài nguyên, nó phải cung cấp các tiêu đề điều khiển bộ nhớ cache HTTP tiêu chuẩn để khách hàng không phải truy xuất nó thường xuyên.
+
+Mỗi khi ứng dụng của bạn thêm dịch vụ của bạn vào nhà, nó sẽ cung cấp URL cho tài nguyên này cũng như thông tin đăng nhập của khách hàng.
+
+Với những điều kiện tiên quyết này được đáp ứng, hãy nói về việc cấu hình một ngôi nhà thử nghiệm.
+
+Trong khi bạn đang phát triển và thử nghiệm dịch vụ của mình, nên có một trang chủ thử nghiệm chuyên dụng trong ứng dụng Apple Home.
+
+Bằng cách đó, bạn sẽ không ảnh hưởng đến bất kỳ ngôi nhà HomeKit nào mà bạn có thể sử dụng cá nhân và bạn chỉ phải quản lý cấu hình của các thiết bị trong ngôi nhà thử nghiệm của mình.
+
+Bạn cũng sẽ muốn có nhiều tài khoản iCloud thử nghiệm để bạn có thể kiểm tra dịch vụ của mình với các tài khoản khác nhau trong cùng một ngôi nhà.
+
+Và một cách tự nhiên, bạn muốn đảm bảo rằng bạn đang sử dụng cùng một tài khoản trên HomePod và các thiết bị thử nghiệm iOS của mình.
+
+Tạo một ngôi nhà mới trong ứng dụng Home thật dễ dàng.
+
+Đầu tiên, nhấn vào Cài đặt Trang chủ, thêm một ngôi nhà, nhập tên của ngôi nhà.
+
+Bây giờ bạn có thể thêm những người là những người dùng thử nghiệm khác của bạn.
+
+Được rồi. Bây giờ bạn đã thiết lập trang chủ thử nghiệm của mình, bạn sẽ cần thêm HomePod vào đó và sau đó thiết lập nó.
+
+Bạn thường sẽ muốn cài đặt bản phát hành tvOS Developer Beta mới nhất trên HomePod của mình hoặc bản phát hành mà Apple hiện đang tư vấn để phát triển.
+
+Điều quan trọng cần biết là bạn không thể sử dụng bản phát hành tvOS thông thường cho đến khi bạn sẵn sàng gửi ứng dụng của mình.
+
+Cho đến lúc đó, bạn cũng sẽ cần cài đặt hồ sơ phát triển do Apple cung cấp cho dịch vụ của mình trong ứng dụng Home trên iOS.
+
+Hãy chắc chắn lặp lại quy trình này cho mỗi thiết bị bạn dự định thử nghiệm tại nhà.
+
+Khi bạn cập nhật lên phiên bản tvOS mới, bạn có thể phải cài đặt lại hồ sơ.
+
+Để cài đặt hồ sơ trên HomePod, trước tiên hãy đảm bảo rằng nhà thử nghiệm của bạn được chọn trong ứng dụng Home.
+
+Mở hồ sơ trên thiết bị iOS.
+
+Chọn HomePod làm loại thiết bị để cài đặt.
+
+Nhấn Cài đặt, nhập mật mã của bạn, đồng ý với các thỏa thuận và nhấn Cài đặt để hoàn tất cài đặt.
+
+Sau đó, bạn có thể chọn HomePod nào trong nhà thử nghiệm của mình để cài đặt hồ sơ.
+
+Thế là xong.
+
+Bạn cũng sẽ cần thiết lập các thiết bị iOS của mình để thử nghiệm và phát triển.
+
+Bạn sẽ cần sử dụng bản beta dành cho nhà phát triển trên thiết bị iOS của mình.
+
+Thông thường, bạn sẽ muốn phiên bản được phát hành cùng lúc với tvOS, nhưng hãy kiểm tra với Apple để biết phiên bản được đề xuất mới nhất.
+
+Giống như HomePod, bạn sẽ cần cài đặt hồ sơ phát triển của mình.
+
+Nhấn vào gói cấu hình di động trong tệp đính kèm e-mail hoặc iMessage, chọn cài đặt nó trên thiết bị iOS của bạn và làm theo quy trình điển hình để chấp nhận và cài đặt hồ sơ trong Cài đặt.
+
+Bạn nên kiểm tra xem thiết bị iOS và thiết bị HomePod của bạn có đang chạy các bản phát hành dự kiến vào thời điểm này hay không.
+
+Bạn có thể lặp lại thiết lập này cho bất kỳ thiết bị kiểm tra nào bạn có thể cần.
+
+Chúng có thể là thiết bị iPhone hoặc iPad.
+
+Với các thiết bị của bạn được cấu hình, bây giờ bạn có thể áp dụng khung MediaSetup trong ứng dụng của mình.
+
+Đây là những gì, cuối cùng, sẽ cho phép mọi người thiết lập dịch vụ của bạn để sử dụng trong nhà của họ.
+
+Để sử dụng MediaSetup, bạn sẽ cần triển khai chức năng trong ứng dụng của mình để truy xuất hoặc tạo tài liệu OAuth, chọn URL Tài nguyên Cấu hình phù hợp với tài khoản đang được tích hợp và sau đó bạn sẽ phải thêm Quyền lợi mà bạn nhận được sau khi đăng ký dịch vụ của mình với Apple.
+
+Nếu không, bạn sẽ không thể sử dụng khuôn khổ.
+
+Đảm bảo thêm ngữ cảnh trình bày giới thiệu nổi bật, có thể khám phá được trong ứng dụng của bạn để kích hoạt quy trình cài đặt tài khoản bằng MSSetupSession.
+
+Mọi người sẽ được hướng dẫn thông qua quá trình thiết lập tài khoản gia đình.
+
+Quá trình thiết lập sẽ sử dụng dịch vụ OAuth của bạn để truy xuất mã thông báo API và xác minh URL Tài nguyên Cấu hình của bạn đã được ký và phân tích cú pháp đúng cách.
+
+Vì vậy, tất cả các điều kiện tiên quyết mà tôi đã đề cập trước đó phải được đáp ứng trước khi thiết lập thành công hoàn tất.
+
+Bạn có thể biết thêm chi tiết tại developer.apple.com.
+
+Bây giờ môi trường phát triển và thử nghiệm của bạn đã sẵn sàng, HomePod trong nhà thử nghiệm của bạn có thể liên hệ với dịch vụ của bạn.
+
+Hãy xem qua kiến trúc hệ thống xử lý ý định trên đám mây.
+
+Trên iPhone, iPad hoặc Apple TV, khi bạn yêu cầu Siri phát phương tiện trong ứng dụng iOS của mình, bạn có thể xử lý ý định trực tiếp hoặc thông qua tiện ích mở rộng trong gói ứng dụng của mình.
+
+Thông thường, khi ai đó yêu cầu Siri phát nội dung từ ứng dụng của bạn, Siri xử lý yêu cầu này, xác định gói ứng dụng của bạn là mục tiêu của ý định và tải tiện ích mở rộng ứng dụng của bạn, triển khai độ phân giải ý định.
+
+Tiện ích mở rộng của bạn có thể giao tiếp với các dịch vụ của bạn và việc xử lý ý định sẽ kích hoạt khởi chạy ứng dụng của bạn để bắt đầu phát lại hoặc chỉ báo hiệu cho nó xử lý các thay đổi.
+
+Với Cloud Extension, quá trình giải quyết những ý định đó chuyển từ việc triển khai tiện ích mở rộng của bạn trên thiết bị sang API trên dịch vụ của bạn khi HomePod trực tiếp cận với các điểm cuối Cloud Extension Intent của bạn thay thế.
+
+Cloud Extension API là một đặc tả Web API được thiết kế để xử lý Intent.
+
+Nó sử dụng lược đồ OpenAPI để xác định các đối tượng tuân thủ chặt chẽ các API Ý định SiriKit mà bạn đã quen thuộc trên iOS.
+
+Các URL cấu hình mà tôi đã thảo luận khi chúng tôi bắt đầu cũng là một phần của thông số kỹ thuật và nội dung của chúng được xác định trong đó.
+
+Mỗi loại SiriKit Media Intent có cấu hình điểm cuối giao thức và chúng tôi có thể liên hệ với các URL khác nhau khi cần thiết cho việc triển khai của bạn.
+
+Các giao thức được hỗ trợ là: phát phương tiện, thêm phương tiện và cập nhật mối quan hệ phương tiện.
+
+Bạn có thể nhận thấy giao thức tìm kiếm không được cung cấp trên HomePod vì không có ngữ cảnh để hiển thị kết quả trên HomePod, không giống như trên các thiết bị iOS.
+
+Hãy xem điều gì sẽ xảy ra khi tôi bảo Siri phát nội dung.
+
+Khi tôi nói với Siri, "Phát 'Strange' của Celeste", điều này kích hoạt luồng PlayMediaIntentHandling.
+
+HomePod bắt đầu giải quyết PlayMediaIntent với một đối tượng tìm kiếm phương tiện.
+
+Nó được đăng nhiều kỳ trong JSON và được gửi đến dịch vụ của bạn.
+
+Khi bạn khớp tìm kiếm phương tiện với thứ gì đó phù hợp trong danh mục của mình, nó sẽ tạo ra một đối tượng phản hồi.
+
+Mục phương tiện có mã định danh, loại và siêu dữ liệu bổ sung mà Siri có thể sử dụng để xây dựng hộp thoại để nói với người dùng, "Hiện đang phát 'Strange' của Celeste."
+
+Ngoài ra, giao thức này có một phương thức xử lý được gọi sau khi giải quyết các trường khác theo ý định.
+
+Nếu các trường trên ý định đã được chấp nhận, không có lý do gì để trì hoãn việc trả lại phương thức xử lý cuối cùng.
+
+Vì vậy, hãy bao gồm nó trong phản hồi của bạn cho yêu cầu ban đầu.
+
+Không làm như vậy gây ra các chuyến đi khứ hồi bổ sung đến dịch vụ của bạn một cách không cần thiết và làm chậm thời gian phản hồi có ý định.
+
+Bên trong phản hồi xử lý, bạn có thể bao gồm một đối tượng được gọi là UserActivity, chứa persistentIdentifier và userInfo sẽ được trả lại cho dịch vụ của bạn khi HomePod bắt đầu phát nội dung của bạn.
+
+Dịch vụ của bạn trả lời với những kết quả này và có thể bắt đầu tạo thành một hàng đợi nội dung để phát dựa trên yêu cầu khi HomePod xử lý các kết quả này và bắt đầu phiên phát lại.
+
+Bây giờ, khi phương tiện đang phát từ dịch vụ của bạn, hãy xem xét điều gì sẽ xảy ra khi tôi nói với Siri, "Thêm cái này vào thư viện của tôi."
+
+Luồng AddMediaIntentHandling bắt đầu bằng việc giải quyết các mục phương tiện, như trước đây, ngoại trừ bây giờ Siri biết những gì hiện đang phát từ dịch vụ của bạn, số nhận dạng cho nội dung hiện đang phát cũng là một phần của các thông số tìm kiếm phương tiện.
+
+Như trước đây, dịch vụ của bạn phải xác định nội dung đang phát và thêm nó vào thư viện của tài khoản được sử dụng để thực hiện yêu cầu.
+
+Sau đó, bạn sẽ tạo một đối tượng để đại diện cho ResolveMediaItem và kết hợp kết quả phương thức xử lý cho thấy thao tác này đã thành công.
+
+Sau đó, bạn sẽ trả lại phản hồi đó cho HomePod, nơi Siri sẽ xác nhận kết quả.
+
+Và cuối cùng, khi tôi nói với Siri, "Tôi thích điều này!"
+
+UpdateMediaAffinityIntentHandling bắt đầu, một lần nữa với việc giải quyết các mục phương tiện như trước đây và dịch vụ của bạn sẽ xác định nội dung, tạo kết quả ResolveMediaItem, đăng ký mối quan hệ này với hồ sơ sở thích mà tài khoản đã sử dụng để xác thực yêu cầu và giống như các ví dụ trước, bao gồm kết quả
+
+Các yêu cầu cụ thể theo ngữ cảnh này sẽ chỉ bao gồm mã định danh nội dung nếu dịch vụ của bạn là dịch vụ đang phát trên HomePod khi yêu cầu được thực hiện.
+
+Ngoài ra, đừng quên rằng người nghe chỉ có thể nói rằng họ muốn thêm thứ gì đó hiện không phát vào thư viện của họ.
+
+Trong trường hợp này, bạn sẽ được cung cấp tên phương tiện và tên nghệ sĩ để giải quyết.
+
+Tuy nhiên, đây là một trường hợp sử dụng ít phổ biến hơn.
+
+Hãy xem một yêu cầu và phản hồi phương tiện phát cơ bản vì nó trông giống như trong giao thức dưới dạng JSON.
+
+Nếu tôi yêu cầu HomePod của mình yêu cầu cơ bản nhất, để phát nhạc trên dịch vụ của bạn, mọi yêu cầu đến các điểm cuối ý định trên dịch vụ của bạn sẽ cung cấp mô tả phiên trước mục đầu tiên cần giải quyết.
+
+Hầu hết các đối tượng trong thông số kỹ thuật bao gồm số phiên bản Cloud Extension của đối tượng đang được trình bày.
+
+Dịch vụ của bạn nên hỗ trợ các phiên bản cũ hơn của các đối tượng này khi có thể.
+
+Các phiên bản mới hơn cũng nên tương thích ngược với số phiên bản chính mới.
+
+Phiên giải quyết ý định có một mã định danh, cũng được mang trong một tiêu đề trên các yêu cầu HTTPS.
+
+Nó sẽ vẫn giữ nguyên trong quá trình giải quyết tương tác ý định và nếu nhiều yêu cầu được thực hiện để giải quyết ý định này, mã định danh này sẽ nhất quán giữa chúng.
+
+Hai dấu thời gian được cung cấp - thời gian UTC khi yêu cầu được chuẩn bị và thời hạn chót sau đó khách hàng sẽ hết thời gian yêu cầu.
+
+Nếu thời hạn bị bỏ lỡ, Siri sẽ giải thích dịch vụ không thể giải quyết được ý định.
+
+Cung cấp phản hồi kịp thời là rất quan trọng.
+
+Thời gian chờ xảy ra sau mười giây, vì vậy hãy xem xét cách bạn có thể chia nhỏ công việc trả lại kết quả ý định và chuẩn bị nội dung để phát lại để dịch vụ của bạn có thể tận dụng thời gian giữa các yêu cầu từ HomePod.
+
+Những ràng buộc này và các đối tượng ngữ cảnh của người chơi sẽ được thảo luận sâu hơn sau.
+
+Họ cung cấp thông tin quan trọng về những gì đang xảy ra trên HomePod khi yêu cầu được thực hiện.
+
+Hầu hết các yêu cầu bắt đầu với phương thức resolveMediaItems trên giao thức.
+
+Phần quan trọng nhất của yêu cầu này nằm trong tham số và đối tượng ý định.
+
+Đây là PlayMediaIntent và tất cả các đối tượng PlayMediaIntent đều có Tìm kiếm phương tiện xác định các thuộc tính của phương tiện được Siri phân tích cú pháp từ lời nói.
+
+Các thông số khác của ý định bao gồm thông tin về việc tôi đã yêu cầu phát nội dung bị xáo trộn hoặc lặp lại, hoặc tiếp tục phát nội dung, hoặc liệu tôi đã nói chơi thứ gì đó tiếp theo hay sau đó thay vì bây giờ.
+
+Đối tượng này sẽ xuất hiện quen thuộc với bạn nếu bạn đã xử lý PlayMediaIntents trên iOS.
+
+Phản hồi bạn trả lời từ yêu cầu này cũng sẽ trông quen thuộc, nhưng có một vài bước ngoặt mới.
+
+Bên trong một mảng kết quả, bạn cung cấp tên phương thức, một đối tượng kết quả, trong trường hợp này là một mảng resolutionResult với một mục, lớp resolutionResult phù hợp với phương thức này, trong trường hợp này, là một thuộc tính thành công.
+
+Và như bạn có thể thấy, MediaItem đã được giải quyết này đại diện cho Mục yêu thích của bạn, một đài dựa trên hồ sơ sở thích của tôi.
+
+Đây là một cái gì đó mới cho Cloud Extension.
+
+Mỗi phương pháp bạn xử lý sẽ trả về một đối tượng số liệu mô tả thời gian tính bằng giây để dịch vụ của bạn cung cấp kết quả.
+
+Apple có thể sử dụng dữ liệu này tổng hợp để xác định đại khái trải nghiệm của người nghe và đánh giá tốt hơn khi nào sự chậm trễ do kết nối mạng gây ra.
+
+Bạn có thể thấy mục kết quả tiếp theo đang nhìn trộm xung quanh khoảng nghỉ ở đây - phương thức xử lý cho giao thức này.
+
+Kết quả của phương thức xử lý là một đối tượng phản hồi phù hợp với mục đích đó, có mã trạng thái và sau đó là mô tả về đối tượng UserActivity.
+
+Hãy nghĩ về các hoạt động của người dùng như một vật lưu niệm đại diện cho kết quả ý định.
+
+Để phát kết quả MediaIntent, UserActivity được sử dụng khi bắt đầu hoặc sửa đổi phát lại nội dung của bạn, trong khi trên các thiết bị iOS, đối tượng UserActivity được cung cấp cho ứng dụng của bạn khi nó được khởi chạy.
+
+Trên HomePod, dịch vụ của bạn xác định trải nghiệm nghe với một API mở rộng đám mây khác để phát lại khối phương tiện.
+
+Cho đến thời điểm này, việc xử lý ý định nên cực kỳ quen thuộc nếu bạn đã triển khai SiriKit Media Intents trên iOS trước đây.
+
+Phát phương tiện từ dịch vụ đám mây của bạn là tính năng thúc đẩy của Cloud Extension.
+
+Và trong phần này, tôi sẽ cung cấp cho bạn các khái niệm và chi tiết cụ thể để triển khai hàng đợi phương tiện trên đám mây.
+
+Hãy xem lại điều gì sẽ xảy ra khi một người yêu cầu Siri phát đa phương tiện trên HomePod.
+
+Yêu cầu được xử lý bởi Siri và tiện ích mở rộng Dịch vụ Truyền thông Đám mây của chúng tôi được chọn để xử lý nó thay mặt cho dịch vụ của bạn.
+
+HomePod sử dụng Cloud Extension APIs được triển khai bởi dịch vụ của bạn để giải quyết một ý định.
+
+Khi chúng tôi đã giải quyết được ý định, một thành phần Cloud Media Player sẽ liên hệ với các điểm cuối hàng đợi của dịch vụ của bạn và đó là những điểm cuối hàng đợi xác định nội dung cần phát.
+
+Trong hầu hết các dịch vụ, dịch vụ phân phối nội dung thường cung cấp các tệp âm thanh thực tế để phát.
+
+Bạn có thể nhận thấy rằng có hai HomePods được mô tả ở đây.
+
+Trong một số tình huống nhất định, HomePod giải quyết ý định có thể không giống HomePod đang phát nội dung của bạn.
+
+Nếu một gia đình có nhiều HomePods, HomePod gần nhất với ai đó trong phòng khách có thể đáp ứng yêu cầu của họ ngay cả khi dịch vụ của bạn đã phát ở nhiều địa điểm trong nhà và phiên đó đã bắt đầu trong nhà bếp.
+
+Hãy xem dịch vụ của bạn cung cấp nội dung thông qua hàng đợi như thế nào.
+
+Tôi sẽ hướng dẫn bạn một số khái niệm cấp cao về hàng đợi phương tiện, bao gồm các thành ngữ và trường hợp sử dụng khác nhau cho các trải nghiệm nghe khác nhau.
+
+Và sau đó đi sâu vào chi tiết về việc quản lý hàng đợi và vòng đời của chúng.
+
+Và cuối cùng, tôi sẽ giải thích cách dịch vụ của bạn xác định các điều khiển phát lại trên HomePod.
+
+Được rồi, hãy cùng khám phá ý nghĩa của việc cung cấp một hàng đợi từ dịch vụ của bạn.
+
+Tất cả các trải nghiệm nghe được hỗ trợ bởi Cloud Extension được xác định bằng cách phát các mục Hàng đợi Nội dung.
+
+Hàng đợi được tạo hoặc sửa đổi bằng cách gửi các đối tượng Hoạt động Người dùng do giải quyết ý định cho dịch vụ của bạn.
+
+Dịch vụ của bạn trả về một Hàng đợi các mục Nội dung cùng một lúc hoặc, nhiều khả năng hơn, trong các phân đoạn.
+
+Hãy xem xét một số trường hợp sử dụng và cách khái niệm hóa chúng như một hàng đợi.
+
+Nội dung radio trên Internet thường bắt đầu bằng một bản nhạc quảng cáo, sau đó là nhiều bài hát, thường là quảng cáo, nhiều bài hát hơn và sau đó nó tiếp tục vô thời hạn cho đến khi người nghe ngừng phát lại.
+
+Các yêu cầu âm nhạc theo yêu cầu có thể giải quyết thành một album duy nhất hoặc bộ sưu tập khác như danh sách phát và bị giới hạn trong một hàng đợi hữu hạn.
+
+Và nội dung phát trực tiếp thường sẽ có một mục nội dung duy nhất tạo thành phản hồi hàng đợi tối thiểu có một phần nội dung tham chiếu đến nguồn phát trực tiếp.
+
+Các mục nội dung trong hàng đợi có thể được mô tả bằng mã định danh, URL và các thuộc tính mô tả khác nhau như tên của nội dung, nghệ sĩ, v.v.
+
+Lựa chọn nội dung có thể lấy bất kỳ số lượng biểu mẫu thuật toán nào trong dịch vụ của bạn từ thứ tự bản nhạc album cứng nhắc đến lựa chọn hoàn toàn động.
+
+Hàng đợi nhằm hỗ trợ tất cả các trường hợp sử dụng này.
+
+Bây giờ hãy nói về những cách khác nhau mà bạn có thể thể hiện chuỗi các mục nội dung của mình trong một hàng đợi một cách thành ngữ.
+
+Các thành ngữ tôi sẽ mô tả là các biến thể của việc sử dụng hàng đợi được chia thành các phân đoạn cho các mục đích khác nhau.
+
+Vì vậy, ở đây chúng tôi có nội dung của chúng tôi được hiện thực hóa về mặt khái niệm theo thời gian được mô tả bởi các đối tượng.
+
+Giả sử bốn phần nội dung này là trải nghiệm nghe hoàn chỉnh mà bạn muốn thể hiện như là kết quả của một giải pháp có ý định.
+
+Bạn có thể đóng gói chúng vào một đối tượng hàng đợi có số nhận dạng riêng và một mảng đơn giản của tất cả các mục nội dung này.
+
+Đó là một đối tượng hàng đợi khá cơ bản.
+
+Đây là thành ngữ nội dung tĩnh trong đó một hàng đợi chứa một danh sách nội dung hữu hạn, không thay đổi.
+
+Nó có thể phù hợp với một phân đoạn hàng đợi hoặc có thể không, nhưng về mặt khái niệm, nó là một danh sách cứng nhắc các mục nội dung có thể được phát theo thứ tự.
+
+Các trường hợp sử dụng cho thành ngữ này bao gồm yêu cầu nhạc theo yêu cầu cho album hoặc danh sách phát hoặc trường hợp sử dụng phát trực tiếp, trong đó hàng đợi là trình bao bọc đơn giản cho một phần nội dung phát trực tuyến vô thời hạn.
+
+Tuy nhiên, dịch vụ của bạn có thể có hàng đợi phức tạp hơn.
+
+Hàng đợi có thể được chia thành các phân đoạn và chúng liên kết nội bộ đến nội dung tiếp theo và các mục nội dung trước đó thông qua các tham chiếu URL.
+
+HomePod sẽ truy xuất các phân đoạn này khi dịch vụ của bạn xác định chúng và bất kỳ phân đoạn cụ thể nào cũng có thể được tạo động và trả về các kết quả khác nhau khi phiên nghe chuyển sang phân đoạn mới, bằng cách chuyển đổi tự nhiên hoặc bằng cách bỏ qua tiến hoặc lùi qua các mục nội dung của bạn.
+
+Ví dụ cụ thể này có thể phù hợp với trường hợp sử dụng trong đó một dịch vụ cung cấp quảng cáo bên trong một tập hợp các phân đoạn nội dung cố định.
+
+Và mỗi khi người chơi gặp Queue segment B, một quảng cáo khác nhau có thể phát.
+
+Điều này có nghĩa là nội dung hàng đợi dịch vụ của bạn được truy xuất động, vì vậy dịch vụ của bạn sẽ nhận được nhiều yêu cầu hơn cho mỗi phân đoạn hàng đợi hơn là như thể nó được nhập.
+
+Dịch vụ của bạn có thể muốn có quyền kiểm soát rời rạc nhất đối với nội dung và các tùy chọn phát lại.
+
+Và trong thành ngữ hoàn toàn động, mỗi phân đoạn hàng đợi chứa một mục nội dung và một nội dung mới cho hàng đợi có thể được truy xuất động khi người nghe tiếp tục thông qua nó.
+
+Đây là một thành ngữ phổ biến cho các trường hợp sử dụng radio trên Internet vì hàng đợi thường có kích thước không xác định.
+
+Và cũng bởi vì bản thân nội dung hàng đợi là một chức năng của hành vi lắng nghe.
+
+Bỏ qua các bản nhạc và cung cấp mối quan hệ nội dung thông qua ý định của Siri có thể thay đổi hồ sơ sở thích được liên kết với tài khoản và do đó, các mục nội dung sắp tới có thể được chọn khác nhau.
+
+Đương nhiên, đây cũng là thành ngữ đại diện cho việc xử lý yêu cầu nhiều nhất trên dịch vụ của bạn.
+
+Vì các thành ngữ này là những cách khác nhau để sử dụng cùng một kiến trúc hàng đợi, dịch vụ của bạn có thể cung cấp hàng đợi bằng cách sử dụng bất kỳ sự kết hợp nào của các thành ngữ này và thậm chí bạn có thể chọn các thành ngữ thay thế để triển khai cho một loại yêu cầu cụ thể.
+
+Chúng rất hữu ích để xem xét sự đánh đổi về độ phức tạp và khả năng.
+
+Đủ lý thuyết rồi. Hãy nói về cách dịch vụ của bạn tạo và quản lý các hàng đợi này.
+
+Khi yêu cầu PlayMediaIntentHandling trả về từ điểm cuối ý định của bạn, dịch vụ của bạn sẽ bắt đầu tạo biểu diễn hàng đợi của bạn, bởi vì ngay sau đó, một yêu cầu trên điểm cuối phương tiện phát hàng đợi của bạn sẽ được thực hiện để truy xuất phân đoạn hàng đợi ban đầu hoặc hoàn chỉnh.
+
+Mỗi phân đoạn có thể liên kết đến phân đoạn tiếp theo và trước đó theo mong muốn dịch vụ của bạn, cung cấp một tập hợp nội dung có khả năng vô tận hoặc tròn trịa.
+
+Thông thường, một hàng đợi mới được truy xuất bắt đầu phát từ mục nội dung đầu tiên.
+
+Để hỗ trợ tiếp tục phát lại từ phiên trước, một đối tượng playPointer có thể được cung cấp trong phân đoạn hàng đợi ban đầu và phát lại bắt đầu từ mục nội dung được chỉ định tại thời gian bù đắp mà bạn cung cấp.
+
+Để hỗ trợ phát lại mượt mà, không có khoảng trống, vì điểm nghe ở gần cuối mục nội dung cuối cùng trong phân đoạn hàng đợi, phân đoạn tiếp theo sẽ được truy xuất và thêm vào trong khoảng thời gian cuộn trước có thể định cấu hình.
+
+Hãy cùng xem xét các đối tượng JSON thực tế được trao đổi với dịch vụ của bạn sau khi xử lý PlayMusicIntent thành công.
+
+Giống như tất cả các yêu cầu, chúng tôi bắt đầu với phiên bản của khách hàng.
+
+Có thể có một bộ thiết bị không đồng nhất trong nhà, vì vậy phiên bản được hỗ trợ bởi thiết bị phát nội dung của bạn thực sự có thể cũ hơn hoặc mới hơn phiên bản đã giải quyết ý định.
+
+Mã định danh cho yêu cầu PlayMedia kế thừa mã định danh được sử dụng trong độ phân giải ý định.
+
+Tuy nhiên, nếu vì lý do nào đó mà việc phát lại phải khởi động lại, mã định danh này có thể là một mã định danh mới, duy nhất.
+
+Bạn không nên dựa vào điều này để liên kết kết quả ý định của mình với hàng đợi, nơi hoạt động của người dùng phù hợp hơn nhiều, mặc dù những số nhận dạng này có thể hữu ích cho việc gỡ lỗi.
+
+Một đối tượng ràng buộc xác định những giới hạn nhất định để phát lại trên thiết bị.
+
+Bạn có thể nhớ nó cũng được cung cấp trên các điểm cuối ý định và tôi sẽ đi vào chi tiết hơn về những điều này sau.
+
+Cuối cùng, nếu độ phân giải ý định của bạn trả về một đối tượng UserActivity, đối tượng đó được bao gồm để cung cấp ngữ cảnh cho cách điểm cuối hàng đợi của bạn sẽ chuẩn bị các mục nội dung cho phiên này.
+
+Dịch vụ của bạn đáp ứng yêu cầu bằng một đối tượng hàng đợi.
+
+Nó có một mã định danh sẽ được trình bày sau trong báo cáo và cho ngữ cảnh và ý định và thường sẽ giữ nguyên giữa các phân đoạn khác nhau của cùng một hàng đợi.
+
+Bạn có thể cung cấp một loạt các mục nội dung để chơi qua, mặc dù trong ví dụ nhỏ này, chỉ có một mục được cung cấp.
+
+Có các thuộc tính mô tả từng mục nội dung, số nhận dạng cho mỗi mục, phải là duy nhất cho hàng đợi này, nếu không phải là toàn bộ danh mục của bạn và URL đến nội dung của nội dung.
+
+Đây là nơi các liên kết nội dung trước đó và tiếp theo được mô tả cho phân đoạn.
+
+Nội dung của phản hồi từ các URL này là một định nghĩa phân đoạn hàng đợi khác giống như định nghĩa này.
+
+Cuối cùng, bằng cách chỉ định cuộn trước năm giây, khoảng năm giây trước khi kết thúc phát lại mục nội dung cuối cùng trong mảng, URL nội dung tiếp theo sẽ được truy xuất để mở rộng nội dung hàng đợi về phía trước.
+
+Đó là tất cả những gì HomePod cần để bắt đầu phát lại nội dung của bạn.
+
+Bây giờ, điều gì sẽ xảy ra nếu ai đó yêu cầu Siri phát một bản nhạc khác tiếp theo trong khi đã nghe hàng đợi của bạn?
+
+Điều này được chỉ ra trong giao thức PlayMediaIntentHandling bằng cách phân giải vị trí hàng đợi phát lại tiếp theo.
+
+Nếu HomePod đang phát mục nội dung thứ hai trong hàng đợi ví dụ này, bạn có thể không muốn cung cấp kết quả hàng đợi hoàn toàn mới.
+
+Trong trường hợp này, bạn thực sự muốn chèn một hoặc nhiều mục nội dung vào hàng đợi này.
+
+Bạn làm điều này bằng cách cung cấp một phân đoạn hàng đợi từ điểm cuối PlayMedia của bạn có cùng số nhận dạng hàng đợi như những gì hiện đang phát và một đối tượng insertPointer về nơi nội dung được mang trong phân đoạn nên được chèn vào phân đoạn hàng đợi hiện tại.
+
+Nếu không có mã định danh nội dung cụ thể nào được cung cấp cho điểm chèn, các mục đó cũng được chèn sau mục hiện đang phát.
+
+Hành vi này làm giảm tác động của các điều kiện chủng tộc khi nội dung chơi trong quá trình chuyển đổi giữa việc giải quyết ý định và cập nhật hàng đợi.
+
+Nên sử dụng kỹ thuật này ngay cả khi dịch vụ của bạn sử dụng thành ngữ hàng đợi hoàn toàn động.
+
+Cuối cùng, hãy đề cập đến một số sắc thái của quản lý hàng đợi.
+
+Mặc dù nó sẽ dẫn đến số lượng yêu cầu lớn nhất trên các điểm cuối dịch vụ của bạn, nhưng thành ngữ hoàn toàn động có cách cung cấp nội dung linh hoạt nhất cho hầu hết các dịch vụ truyền thông và dễ quản lý hơn về mặt khái niệm nếu nội dung của bạn không hoàn toàn tĩnh trong tự nhiên.
+
+Mặc dù giao thức hàng đợi đủ linh hoạt để cung cấp bất kỳ bộ nội dung nào khi điều hướng hàng đợi, tốt nhất bạn nên duy trì tính nhất quán trong lịch sử hàng đợi của mình nếu bạn cho phép người nghe điều hướng ngược lại trong hàng đợi.
+
+Để thực hiện hành vi lặp lại và xáo trộn, dịch vụ của bạn phải xác định các tùy chọn này từ mục đích xử lý và cung cấp nội dung hàng đợi theo thứ tự xáo trộn hoặc lặp lại vô thời hạn bằng các kỹ thuật như URL nội dung tiếp theo dẫn đến các mục đã chơi trước đó trong hàng đợi.
+
+Những hành vi này không thể thực hiện được nếu không có kiến thức đầy đủ về phạm vi hàng đợi nên HomePod thậm chí không cố gắng hỗ trợ chúng một cách tự nhiên.
+
+Các URL nội dung tiếp theo và trước đó có thể được tạo mẫu để một lượng nhỏ ngữ cảnh có thể được cung cấp cho việc triển khai của bạn, chẳng hạn như mục nội dung cuối cùng trong phân đoạn hàng đợi hoặc hàng đợi hoạt động hiện đang phát hoặc số nhận dạng nội dung.
+
+Nếu dịch vụ của bạn triển khai điểm cuối hoạt động của người dùng cập nhật hàng đợi, bạn thậm chí có thể cập nhật hàng đợi đang phát thông qua các sự kiện báo cáo.
+
+Tôi sẽ nói về việc báo cáo trong thời gian ngắn.
+
+Tôi hy vọng bạn nắm vững bộ công cụ quản lý hàng đợi phong phú mà dịch vụ của bạn có thể sử dụng để cung cấp khả năng truy xuất và cập nhật nội dung linh hoạt và kịp thời.
+
+Cuối cùng, trong phần này, tôi sẽ mở rộng việc kiểm soát phát lại và xác định cách người nghe tương tác với dịch vụ của bạn.
+
+Không phải mọi loại hàng đợi đều giống nhau, và không phải tất cả nội dung trong một hàng đợi đều có thể được xử lý giống nhau.
+
+Ví dụ, trường hợp sử dụng radio Internet thường chỉ hỗ trợ chuyển động chuyển tiếp qua hàng đợi.
+
+Ngoài ra, khi một quảng cáo đang phát, bạn có thể không muốn hỗ trợ bỏ qua nội dung đó chút nào.
+
+Bỏ qua hàng đợi đài phát thanh có thể bị giới hạn bởi nhiều biến số - đăng ký trả phí, mô hình freemium, các giới hạn bí truyền khác.
+
+Thành ngữ hoàn toàn năng động thường là cách duy nhất để hỗ trợ những yêu cầu này.
+
+Việc di chuyển giữa các nội dung khác nhau trong hàng đợi có thể bị giới hạn tùy ý.
+
+Hãy nói về cách bạn định nghĩa sự tương tác này.
+
+API hàng đợi mở rộng đám mây cho phép dịch vụ của bạn xác định tương tác với các đối tượng PlayMediaControl mà bạn cung cấp trong đối tượng hàng đợi.
+
+Mỗi đối tượng PlayMediaControl có thể chọn một sơ đồ được xác định trước hỗ trợ một số trường hợp sử dụng phổ biến.
+
+Tập hợp các tương tác được xác định này có thể được chỉ định trên mỗi mục nội dung với thuộc tính điều khiển.
+
+Hãy xem xét một định nghĩa kiểm soát ví dụ có thể phù hợp với dịch vụ theo yêu cầu với các quảng cáo xen kẽ với các bài hát.
+
+Bạn bao gồm các định nghĩa này bên trong thuộc tính điều khiển cho mọi đối tượng hàng đợi.
+
+Trong ví dụ này, có hai định nghĩa - định nghĩa mặc định bắt buộc, được sử dụng khi bất kỳ mục nội dung nào không chỉ định điều khiển và định nghĩa quảng cáo được chỉ định trên tất cả các mục nội dung là quảng cáo.
+
+Tất cả các định nghĩa kiểm soát đều có sơ đồ nguyên mẫu.
+
+Theo mặc định, các mục nội dung trong hàng đợi sẽ là sơ đồ theo yêu cầu và đối với nội dung quảng cáo, sơ đồ quảng cáo.
+
+Sơ đồ sửa đổi hộp thoại Siri khi người dùng yêu cầu chuyển sang mục nội dung tiếp theo.
+
+Siri sau đó có thể trả lời rằng không được phép bỏ qua quảng cáo.
+
+Sơ đồ cũng mặc định tất cả các lệnh điều hướng bị vô hiệu hóa, mặc dù bạn có thể bật lại chúng một cách có chọn lọc.
+
+Một ví dụ về các lệnh bật cũng được cung cấp ở đây, trong đó các lệnh dislikeTrack và likeTrack, thường bị tắt theo mặc định, đang được bật bởi nội dung theo yêu cầu của bạn.
+
+Bạn có thể thấy cách, với một tập hợp nhỏ các định nghĩa kiểm soát được liên kết với các mục trong hàng đợi của bạn, bạn có thể tùy chỉnh đáng kể các tương tác với nội dung của mình.
+
+Cuối cùng, các định nghĩa kiểm soát cũng cho phép chỉ định các tùy chọn để báo cáo hoạt động của người dùng, đó là cách dịch vụ của bạn nhận được các sự kiện lệnh tùy chọn, thông tin điều hướng và trạng thái phát nội dung của bạn.
+
+Đây là tất cả các chủ đề tôi sắp đề cập tiếp theo.
+
+Cho đến nay, bạn đã thấy cách HomePod liên hệ với dịch vụ của bạn để giải quyết ý định và quản lý hàng đợi nội dung để phát.
+
+Bây giờ tôi sẽ nói về cách dịch vụ của bạn được nhận thức về các sự kiện phát lại và có thể bối cảnh hóa các yêu cầu theo thời gian, bắt đầu với cách hoạt động nghe có thể được báo cáo cho dịch vụ của bạn, cách ngữ cảnh phát lại được cung cấp khi đã phát bất kỳ hàng đợi nào từ dịch vụ của bạn và cuối cùng, cách dịch vụ của
+
+Vậy hãy bắt đầu với báo cáo.
+
+Hoạt động của người nghe được báo cáo bằng cách sử dụng hàng đợi phương tiện Cập nhật điểm cuối Hoạt động trong API Mở rộng Đám mây.
+
+Điểm cuối này là tùy chọn về mặt kỹ thuật, nhưng hầu hết các dịch vụ đều triển khai nó để nhận báo cáo trạng thái từ HomePod khi mọi người nghe nội dung.
+
+Dịch vụ của bạn nhận được báo cáo về quá trình chuyển đổi và các sự kiện kiểm soát phương tiện như bỏ qua, tạm dừng, tiếp tục phát lại và xóa trong một bản nhạc.
+
+Nội dung hàng đợi của bạn có thể bị ảnh hưởng bởi các báo cáo này, đặc biệt nếu bạn đã triển khai thành ngữ hàng đợi động một phần hoặc toàn bộ.
+
+Dịch vụ của bạn thậm chí có thể trả về các phân đoạn hàng đợi mới dưới dạng phản hồi.
+
+Vì các yêu cầu hoạt động cập nhật được thực hiện không đồng bộ từ việc truy xuất nội dung cho hàng đợi của bạn, việc trả lại hàng đợi mới trên báo cáo bỏ qua bản nhạc có thể không hiển thị nội dung hàng đợi của bạn một cách sạch sẽ và có thể chống lại logic chuyển tiếp thông thường, một số bước nhảy trong phát lại có thể xảy ra.
+
+Chỉ sử dụng phản hồi hàng đợi từ báo cáo để thay đổi hoàn toàn việc phát lại hoặc chèn nội dung mới.
+
+Sử dụng nội dung URL tạo mẫu để có thêm ngữ cảnh về lý do tại sao một phân đoạn hàng đợi được truy xuất.
+
+Hãy xem xét một yêu cầu ví dụ được thực hiện cho điểm cuối hoạt động cập nhật.
+
+Trong ví dụ này, tôi đã yêu cầu Siri chuyển sang bản nhạc tiếp theo.
+
+Những tương tác đơn giản này không phải là ý định mà là sự kiểm soát của phương tiện truyền thông.
+
+Trong JSON, báo cáo trông như thế này.
+
+Như bạn có thể thấy, loại báo cáo đang được thực hiện được gắn thẻ là bỏ qua_tiếp theo.
+
+Tập hợp đầy đủ các loại báo cáo được xác định trong thông số kỹ thuật và bao gồm các chuyển tiếp tự nhiên giữa các bản nhạc, cọ rửa trong một bản nhạc và khi một hàng đợi mới thay thế hàng đợi hiện có.
+
+Bối cảnh nowPlaying được cung cấp, bao gồm hoạt động, hàng đợi và số nhận dạng nội dung và phần bù vào nội dung hiện đang được phát.
+
+Đối với quá trình chuyển đổi, một ngữ cảnh chơi trước đó cũng được cung cấp.
+
+Nó đại diện cho các số nhận dạng liên quan đến nội dung cuối cùng đang được phát và độ lệch bên trong nội dung khi chuyển đổi phát lại.
+
+Bạn có thể sử dụng cái này để cập nhật hồ sơ sở thích của người nghe nếu họ bỏ qua nhanh chóng.
+
+Nhưng trong trường hợp này, tôi đã nghe một phần hay của bài hát đó, như bạn có thể thấy trong giá trị offsetInMillis.
+
+Vì vậy, dịch vụ của bạn có thể cho rằng tôi có thể thích nó, ít nhất là đủ để không hạ thấp xếp hạng tương đối của nó.
+
+Và giống như các điểm cuối khác trong API hàng đợi, đối tượng hoạt động của người dùng được trình bày đầy đủ trong trường hợp dữ liệu thông tin người dùng hữu ích cho dịch vụ của bạn để khôi phục trạng thái và nhanh chóng xử lý thông tin này.
+
+Dịch vụ của bạn cũng có thể sử dụng nhiều khả năng nâng cao hơn.
+
+Ví dụ: bạn có thể yêu cầu báo cáo khoảng thời gian phát lại khi nội dung đang phát để biết rằng một điểm nhất định đã đạt được hoặc mỗi lần một khoảng thời gian lặp lại cụ thể đã trôi qua.
+
+Bạn có thể bật và nhận báo cáo về một số lệnh MPRemoteCommandCenter nhất định khi các thiết bị iOS điều khiển phát lại trên HomePod.
+
+Lưu ý rằng các lệnh từ xa cho likeTrack và dislikeTrack không giống như việc xử lý ý định mối quan hệ phương tiện cập nhật.
+
+Chúng không phải là ý định bằng giọng nói, mà là những cú chạm đơn giản từ một thiết bị iOS ở bất cứ đâu trong nhà.
+
+Trong khi tôi đã thảo luận về việc trả lại hàng đợi mới trước đó, bạn cũng có thể cập nhật các đối tượng Hoạt động của Người dùng trong khi phát lại bằng cách trả lại phiên bản cập nhật của đối tượng.
+
+Đây là một ví dụ mà chúng ta đã thấy trước đó về các sơ đồ kiểm soát tùy chỉnh bao gồm các định nghĩa hoạt động.
+
+Điều khiển mặc định bao gồm playElapsedInterval là 60 giây, có nghĩa là một báo cáo được tạo sau mỗi 60 giây dưới dạng các mục nội dung không có thuộc tính điều khiển được phát.
+
+Nhưng đối với các mục có thuộc tính kiểm soát của quảng cáo, ngay sau khi năm giây của nội dung trôi qua, một báo cáo được tạo ra và sau đó một báo cáo khác được tạo ra cứ sau mười giây.
+
+Có một số giới hạn về khoảng thời gian báo cáo được xác định trong thông số kỹ thuật.
+
+Báo cáo cung cấp cho dịch vụ của bạn rất nhiều dữ liệu, nhưng việc theo dõi bối cảnh đó trong dịch vụ của bạn có thể tốn kém vì hàng triệu người nghe xử lý ý định.
+
+Một ngữ cảnh phiên có thể được cung cấp cho dịch vụ của bạn để giúp kết nối phát lại hàng đợi và ngữ cảnh điểm cuối xử lý ý định.
+
+Ngữ cảnh phiên chỉ khả dụng nếu HomePod hiện đang phát phương tiện từ dịch vụ của bạn.
+
+Khi tôi nói với Siri rằng tôi thích một phần nội dung cụ thể, điểm cuối dịch vụ ý định của bạn nhận được một đối tượng playerContext, giống như cách đối tượng nowPlaying được thảo luận trong phần báo cáo được gửi trên mọi báo cáo.
+
+Bối cảnh người chơi bao gồm Nội dung, Hàng đợi và Hoạt động Người dùng persistentIdentifier values.
+
+Chúng bao gồm ba cấp độ định nghĩa mà tôi đã giới thiệu trước đây - Mã định danh liên tục hoạt động, xác định một phiên nghe có khả năng tồn tại lâu dài, Hàng đợi, xác định trải nghiệm của người nghe hiện tại và nội dung cụ thể hiện đang phát tại thời điểm giải quyết ý định.
+
+Mục này cũng được mang trong đối tượng tìm kiếm phương tiện có ý định và bạn có thể đã quen với việc sử dụng nó trên các thiết bị iOS.
+
+Xem xét liệu bối cảnh phiên có đủ thông tin cho dịch vụ của bạn để tránh nhu cầu triển khai điểm cuối hoạt động cập nhật và xử lý các sự kiện báo cáo phức tạp hơn hay không.
+
+Trong ví dụ này, yêu cầu UpdateMediaAffinityIntentHandling, HomePod đã phát một hàng đợi từ dịch vụ của bạn, vì vậy một đối tượng playerContext được cung cấp cho điểm cuối ý định.
+
+Bên trong đối tượng phiên, bạn sẽ tìm thấy playerContext hoặc một giá trị null nếu dịch vụ của bạn hiện không phát.
+
+Nếu hồ sơ sở thích của dịch vụ của bạn rõ ràng chỉ được thúc đẩy bởi mối quan hệ truyền thông và phát các yêu cầu phương tiện, ngữ cảnh trình phát có thể xử lý tất cả các yêu cầu của bạn mà không cần thực hiện báo cáo đầy đủ.
+
+Nhưng trước khi dịch vụ của bạn sử dụng thông tin hồ sơ sở thích từ các công cụ này, nó cũng phải tôn trọng các ràng buộc về việc sử dụng được gửi với mọi yêu cầu.
+
+Trong một ngôi nhà, có một loại nhận thức theo ngữ cảnh khác mà dịch vụ của bạn phải biết và tôn trọng.
+
+Mỗi HomePod có thể được cấu hình với các tùy chọn nhất định tạo thành các ràng buộc đối với dịch vụ của bạn.
+
+Ví dụ, HomePod trong phòng trẻ em có thể có tùy chọn loại trừ nội dung khiêu dâm khỏi kết quả.
+
+Bất cứ khi nào một yêu cầu được thực hiện trên HomePod này, nó sẽ không trả về nội dung khiêu dâm.
+
+Nhưng một yêu cầu đến HomePod trong phòng ngủ không bật cài đặt nên được phép trả lại nội dung khiêu dâm.
+
+Ràng buộc không phải là tùy chọn.
+
+Dịch vụ của bạn phải tuân theo ý nghĩa của các ràng buộc được trình bày.
+
+Khi một vị khách trong nhà tôi yêu cầu phát một số loại nội dung, họ có thể đưa ra yêu cầu trên dịch vụ của bạn và họ tạm thời sử dụng tài khoản của tôi, nhưng sự tương tác này sẽ không ảnh hưởng đến hồ sơ sở thích của tôi.
+
+Vì Siri có một ý tưởng khá hay về âm thanh của tôi, chúng tôi phát hiện ra rằng yêu cầu không phải do tôi đưa ra và yêu cầu dịch vụ của bạn không sử dụng yêu cầu này để thay đổi hồ sơ sở thích của tôi.
+
+Các giá trị ràng buộc chỉ phải hạn chế hơn nữa các giới hạn hiện có của cài đặt tài khoản dịch vụ của bạn.
+
+Nếu dịch vụ của bạn có các điều khiển dành riêng cho tài khoản cho các hạn chế tương tự, chúng nên được kết hợp để cung cấp những gì người nghe mong đợi từ dịch vụ của bạn.
+
+Đây là một ví dụ nữa về yêu cầu ý định bắt đầu bằng một đối tượng phiên và các định nghĩa ràng buộc.
+
+Chúng là những đồ vật nhỏ, nhưng có tác động đáng kể đến cách dịch vụ của bạn tương tác trong môi trường gia đình.
+
+updateUserTasteProfile là một ràng buộc Boolean cho biết liệu việc giải quyết ý định này có được sử dụng để theo dõi lượt thích, không thích, số lượt phát và bất kỳ lịch sử nghe hiển thị nào mà dịch vụ của bạn đã liên kết với tài khoản của tôi hay không.
+
+Khi nó sai, dịch vụ của bạn không thể cho rằng tài khoản được sử dụng là của người kiểm soát hoặc bắt đầu phát lại.
+
+Nó cũng có thể sai vì HomePod này có thể đã được định cấu hình để không bao giờ đóng góp vào hồ sơ sở thích tài khoản của tôi, ngay cả khi nhận ra giọng nói của tôi.
+
+Hãy tưởng tượng tôi có một chiếc HomePod trong phòng gia đình của mình và tôi thường xuyên yêu cầu nó chơi nhạc thay mặt cho trẻ nhỏ.
+
+Nếu tôi không có cách nào để thiết lập tùy chọn này, đài âm nhạc yêu thích của tôi có thể chiết trung hơn tôi thích.
+
+allowExplicitContent là một ràng buộc Boolean khác phản ánh cài đặt trên ứng dụng HomePod và Home.
+
+Và dịch vụ của bạn phải xem xét nó để lọc nội dung rõ ràng trong kết quả từ ý định.
+
+Trên thực tế, nếu một yêu cầu ý định cụ thể không thể được thực hiện do thiếu bất kỳ nội dung không rõ ràng nào phù hợp với tìm kiếm, kết quả lỗi cụ thể cho các phương thức MediaItem đã được giải quyết sẽ được cung cấp trong SiriKit Media Intents.
+
+Cuối cùng, ngay cả phần cứng cũng có những hạn chế.
+
+Các phân đoạn hàng đợi chỉ có thể có kích thước hữu hạn và giá trị đó là động trên mỗi thiết bị.
+
+Nếu hàng đợi của bạn lớn hơn giá trị này, bạn phải triển khai thành ngữ hàng đợi được phân đoạn để tuân thủ giới hạn này.
+
+Kích thước tối thiểu là một trăm mục nội dung trên mỗi phân đoạn.
+
+Hôm nay tôi đã đề cập rất nhiều, và bạn có thể mất một thời gian để tiêu hóa tất cả.
+
+Khi bạn có quyền truy cập, tôi khuyến khích bạn khám phá thêm thông số kỹ thuật.
+
+Nó đi vào chi tiết hơn nhiều về tất cả các điểm cuối mà tôi đã đề cập hôm nay.
+
+Thông số kỹ thuật có định nghĩa API mở cho các điểm cuối dịch vụ bạn cần triển khai và nó đủ hoàn chỉnh để tạo mã xác minh và phân tích cú pháp mô hình dữ liệu cơ bản khi bạn phát triển dịch vụ của mình.
+
+Điều đó cực kỳ hữu ích.
+
+Định nghĩa Cloud Extension API theo dõi những thay đổi trong iOS SiriKit Media APIs với mỗi bản phát hành mới.
+
+Chỉ với một vài ngoại lệ, hầu hết mọi thứ có sẵn thông qua SiriKit Media APIs trên thiết bị đều có sẵn thông qua Cloud Extension APIs.
+
+Và các API hàng đợi cung cấp định nghĩa phát lại mạnh mẽ, kiểm soát và báo cáo trực tiếp cho các dịch vụ của bạn.
+
+Cảm ơn bạn đã quan tâm đến SiriKit Media Intents và luôn cập nhật các thay đổi API SiriKit Media trong tương lai tại developer.apple.com/siri.

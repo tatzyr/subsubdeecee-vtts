@@ -1,0 +1,217 @@
+10067
+
+Xin chào, tôi là Johannes Fortmann từ nhóm Cloud FileProvider.
+
+Hôm nay chúng ta sẽ nói về cách sử dụng FileProvider API mới được giới thiệu trong iOS 16 để mang lại đồng bộ hóa lớp máy tính để bàn với iOS.
+
+Sau phần giới thiệu, chúng tôi sẽ tóm tắt nhanh về mục tiêu của nhà cung cấp tệp.
+
+Chúng tôi sẽ thảo luận về cách tiếp cận tối ưu để kiến trúc ứng dụng của bạn, cũng như các phương pháp hay nhất trở nên đặc biệt quan trọng trên iOS.
+
+Cuối cùng, tôi sẽ chỉ cho bạn bản demo nhanh về một nhà cung cấp đang chạy trên iOS.
+
+Big Sur đã giới thiệu một API khai báo để đồng bộ hóa các tệp với máy Mac của bạn.
+
+API này đã được nhiều nhà cung cấp đám mây áp dụng để thành công lớn.
+
+Nhóm của tôi đã làm việc đều đặn để cải thiện API và chúng tôi rất vui khi cũng cung cấp nó trên iOS 16.
+
+API này sẽ cho phép các ứng dụng iOS của bạn cung cấp cái mà chúng tôi gọi là "đồng bộ hóa lớp máy tính để bàn".
+
+Ý tôi là gì khi nói vậy?
+
+Khi các ứng dụng trên iOS trở nên mạnh mẽ hơn, điều quan trọng là chúng có thể truy cập một vị trí được chia sẻ trên hệ thống tệp.
+
+Mọi người muốn những ứng dụng mạnh mẽ này có thể truy cập tất cả các loại đối tượng hệ thống tệp.
+
+Nếu họ chọn, ứng dụng của họ sẽ có thể truy cập các thư mục và tạo các tệp mới.
+
+Chúng tôi muốn tất cả những điều này xảy ra trong khi vẫn đảm bảo tính nhất quán.
+
+Tính nhất quán có nghĩa là gì?
+
+Trên iOS, thời gian chạy nền trong lịch sử đã bị hạn chế vì những lo ngại về năng lượng.
+
+Đồng thời, các thay đổi dự kiến sẽ được tải lên trong nền.
+
+FileProvider API hiện đại đã được giới thiệu để giải quyết vấn đề này.
+
+Ở cấp độ cơ bản, bạn triển khai tiện ích mở rộng ứng dụng chịu trách nhiệm liệt kê các mục, tìm nạp và tải lên nội dung và cập nhật danh sách các mục nếu chúng thay đổi từ xa.
+
+Hệ thống chịu trách nhiệm tiết lộ thông tin bạn cung cấp và duy trì tính nhất quán.
+
+Một nhiệm vụ quan trọng của hệ thống là theo dõi các lỗi và thử lại nếu cần thiết.
+
+Đối với một số thao tác, chẳng hạn như tìm nạp nội dung, các lần thử lại đến một cách tự nhiên.
+
+Người dùng đang tích cực chờ tải xuống và có thể theo dõi chặt chẽ thanh tiến trình.
+
+Mặt khác, việc tải lên yêu cầu lên lịch.
+
+Bằng cách theo dõi trạng thái của các mục trên đĩa, hệ thống đảm bảo rằng nội dung cập nhật được tải lên.
+
+Tiến độ và lỗi được theo dõi để thử tải lên lại nếu cần thiết.
+
+Một chủ đề phức tạp khác là tính nhất quán trong quá trình tải lên.
+
+Hệ thống quản lý các bản sao của nội dung tệp để đảm bảo rằng trong quá trình tải lên, các lần truy cập tiếp theo vào tệp thành công và hiển thị dữ liệu chính xác.
+
+Trong các hoạt động này, hệ thống cũng đảm bảo rằng phiên bản cục bộ luôn nhất quán, ngay cả khi có nhiều ứng dụng truy cập nó và điều đó bao gồm đồng bộ hóa từ máy chủ từ xa.
+
+Điều này được triển khai minh bạch cho bạn bằng cách sử dụng các tính năng APFS và phối hợp tệp.
+
+Giới hạn lưu trữ là một hạn chế quan trọng đối với các thiết bị di động.
+
+Hệ thống sử dụng tính năng APFS để theo dõi nguyên tử trạng thái thay đổi của các tệp cục bộ.
+
+Điều này cho phép nó loại bỏ một cách minh bạch các tệp không có thay đổi cục bộ dựa trên việc sử dụng đĩa và trạng thái ít được sử dụng gần đây nhất.
+
+Các tệp được tải lên đầy đủ không được tính vào ứng dụng của bạn trong ngăn Quản lý Lưu trữ trong Cài đặt.
+
+Bạn có thể nhận thấy rằng cho đến nay chúng ta đã nói về hệ thống và tiện ích mở rộng.
+
+Hãy nói về nơi ứng dụng của bạn xuất hiện.
+
+Tôi khuyên bạn nên sử dụng một sự tách biệt nghiêm ngặt các mối quan tâm.
+
+Hệ thống chịu trách nhiệm quản lý các cấu trúc trên đĩa và lên lịch các nhiệm vụ.
+
+Tiện ích mở rộng của bạn chịu trách nhiệm thực hiện các tác vụ đó để đồng bộ hóa lên xuống.
+
+Hệ thống theo dõi tất cả trạng thái về hệ thống phân cấp tệp và phần nào yêu cầu đồng bộ hóa.
+
+Điều đó có nghĩa là tiện ích mở rộng của bạn có thể rất nhẹ.
+
+Nó hoàn toàn không phải theo dõi bất kỳ trạng thái cụ thể nào của mặt hàng.
+
+Ứng dụng của bạn không chịu trách nhiệm cho bất kỳ sự đồng bộ hóa nào.
+
+Lý tưởng nhất, nó hoàn toàn không cần phải nói chuyện với máy chủ.
+
+Thay vào đó, nó tương tác với phần mở rộng của bạn thông qua hai cơ chế.
+
+Nó có thể tương tác gián tiếp với tiện ích mở rộng, giống như bất kỳ ứng dụng nào khác trên hệ thống.
+
+Có API để tìm nạp URL tệp của bất kỳ mục được quản lý nào, bao gồm cả thư mục gốc.
+
+Các vị trí này sau đó có thể truy cập được bằng cách sử dụng API hệ thống tệp thông thường.
+
+Ngoài ra, ứng dụng của bạn có thể yêu cầu kết nối dịch vụ XPC trực tiếp với tiện ích mở rộng của bạn.
+
+Điều này đặc biệt hữu ích để xử lý các tác vụ không thể được thể hiện dưới dạng thao tác hệ thống tệp, chẳng hạn như chia sẻ tệp hoặc giải quyết xung đột.
+
+Cả hai cơ chế này cũng có thể được sử dụng bởi các tiện ích mở rộng giao diện người dùng FileProvider để cung cấp một điểm tích hợp bổ sung trong ứng dụng Tệp.
+
+Tôi muốn đề cập đến ba điểm trở nên đặc biệt quan trọng với các nhà cung cấp không quốc tịch.
+
+Đầu tiên, hãy nói về việc tải lên.
+
+Như tôi đã đề cập trước đó, hệ thống theo dõi các lần tải lên và sẽ cấp thời gian gia hạn của bạn để thực hiện tải lên.
+
+Một hệ quả quan trọng của việc này là bạn phải thông báo cho hệ thống rằng quá trình tải lên của bạn đang thực sự tiến triển bằng cách báo cáo tiến độ.
+
+Nếu một tác vụ tải lên không tiến triển, nó sẽ bị hủy.
+
+Hệ thống cung cấp một khoảng thời gian ân hạn để kết thúc quá trình tải lên một cách sạch sẽ, nhưng nếu việc hủy mất quá nhiều thời gian, phần mở rộng của bạn sẽ bị chấm dứt.
+
+Hãy kiểm tra mã.
+
+Để thực hiện trình xử lý hủy, chỉ cần đặt nó trên phần hoàn trả tiến độ từ phương thức dành riêng cho nhiệm vụ.
+
+Trong trường hợp tải lên, đó là modifyItem.
+
+Trong trình xử lý của bạn, bạn hủy công việc tải lên thực tế mà bạn đang thực hiện.
+
+Tất nhiên, bạn cũng sẽ cần gọi cho trình xử lý hoàn thành để báo hiệu rằng đã xảy ra lỗi hủy.
+
+Ví dụ mã ở đây sử dụng hủy bỏ tác vụ không đồng bộ để thuận tiện cho việc này, nhưng bạn cũng có thể gọi trình xử lý hoàn thành theo cách thủ công.
+
+Tiếp theo, hãy nói về con đường đồng bộ hóa xuống.
+
+Khi người dùng tương tác với các tệp của họ, ứng dụng chính của bạn sẽ không chạy để nhận các thay đổi từ máy chủ của bạn.
+
+Để vẫn thông báo cho hệ thống về những thay đổi từ xa, bạn nên triển khai thông báo đẩy.
+
+PushKit hiển thị một loại đẩy cụ thể cho các nhà cung cấp tệp.
+
+Bạn có thể đăng ký những lần đẩy này ngay từ tiện ích mở rộng của mình.
+
+Trên máy chủ của bạn, bạn gửi các cú đẩy với tải trọng được xác định rõ ràng.
+
+Hệ thống sẽ nhận được lực đẩy và làm mới trạng thái hiện tại nếu thích hợp.
+
+Cũng như các loại tác vụ khác, hệ thống có thể trì hoãn việc làm mới thực tế tùy thuộc vào tình huống, như trạng thái pin hoặc liệu người dùng hiện đang xem các tệp của họ hay không.
+
+Điều cuối cùng này chỉ là điều tôi muốn bạn chú ý đến: hệ thống quản lý hệ thống phân cấp thư mục mà tiện ích mở rộng của bạn báo cáo.
+
+Điều này cho phép nó định vị toàn bộ hệ thống phân cấp thư mục.
+
+Phần mở rộng của bạn không phải làm gì thêm ở đây.
+
+Điều này được bật theo mặc định cho các nhà cung cấp tệp hiện đại.
+
+Hãy trình diễn nhanh về loại quy trình làm việc mà tính năng cuối cùng cho phép.
+
+Tôi đã thiết lập thiết bị của mình với mã mẫu của phiên này.
+
+Chúng tôi đã chuyển mã mẫu của mình sang iOS.
+
+Chúng tôi đã xây dựng một ứng dụng iOS để xử lý việc đăng nhập vào máy chủ của mình nhưng tiện ích mở rộng hầu như không thay đổi so với phiên bản macOS.
+
+Tôi đang chạy mã mẫu trên iPad của mình ngay bây giờ.
+
+Tôi có các tệp đang chạy ở phía bên phải và nó đã đồng bộ hóa các tệp của tôi.
+
+Tôi cũng đã viết một ứng dụng tận dụng lợi thế của việc lựa chọn thư mục.
+
+Ứng dụng của tôi áp dụng bộ lọc màu nâu đỏ cho tất cả các hình ảnh trong một thư mục.
+
+Loại ứng dụng này được hưởng lợi từ việc truy cập thư mục vì nó có thể hoạt động trên tất cả các mục trong thư mục mà không buộc tương tác cho từng mục riêng lẻ.
+
+Với đồng bộ hóa lớp máy tính để bàn, tôi có thể chỉ cần kéo một thư mục từ ứng dụng Tệp vào trình chỉnh sửa hàng loạt của mình.
+
+Hãy để tôi kéo thư mục và tệp lên để chúng ta có thể theo dõi tiến trình.
+
+Sau đó tôi nhấn nút và tất cả ảnh của tôi được tải xuống và sửa đổi.
+
+Sau khi sửa đổi, chúng sẽ tự động được tải lên.
+
+Tiến trình tải lên được báo cáo bởi tiện ích mở rộng được hiển thị cho người dùng ở cuối ứng dụng Tệp để giữ chúng trong vòng lặp.
+
+Giả sử tôi muốn triển khai một cái gì đó như thế này với ứng dụng của mình.
+
+Đầu tiên, hãy thực hiện kéo một mục.
+
+Để cho phép bắt đầu kéo, bạn triển khai phương thức onDrag.
+
+Phương thức sẽ trả về một NSItemProvider.
+
+Bạn đăng ký một biểu diễn tệp trên itemProvider với loại tệp bạn sẽ kéo.
+
+Trong trường hợp của chúng tôi, đó là một thư mục.
+
+Sử dụng phương thức getUserVisibleURL để tìm nạp URL.
+
+Ở phía nhận, thực hiện onDrop để đánh dấu chế độ xem là mục tiêu thả.
+
+Sau đó, bạn có thể tải URL tệp từ nhà cung cấp mặt hàng thích hợp.
+
+Lưu ý rằng đây sẽ là một tệp nằm bên ngoài hộp cát của bạn.
+
+Để ứng dụng của bạn truy cập nó, nó sẽ phải sử dụng và giải phóng phạm vi bảo mật của URL.
+
+Các bước tiếp theo của bạn là gì?
+
+Chúng tôi đã cập nhật mã mẫu để bao gồm một ứng dụng iOS.
+
+Tải xuống và thử nghiệm thiết lập một nhà cung cấp không trạng thái đơn giản.
+
+Nếu bạn đang bắt đầu lại từ đầu, hãy chắc chắn sử dụng mẫu Xcode được cập nhật.
+
+Nó bao gồm một khung cơ bản để giúp bạn bắt đầu.
+
+Để tìm hiểu thêm về các nhà cung cấp tệp và cách triển khai chúng, hãy tham khảo "Đồng bộ hóa tệp lên đám mây với FileProvider trên macOS" từ WWDC21.
+
+Cảm ơn bạn đã xem.
+
+Tôi rất vui khi sử dụng các nhà cung cấp hiệu suất và đáng tin cậy của bạn trên các thiết bị iOS.

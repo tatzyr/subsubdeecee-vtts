@@ -1,0 +1,455 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ nhạc cụ hip hop ♪
+
+00:00:09.000 --> 00:00:14.000
+Chào mừng mọi người. Tên tôi là David Hayward, và tôi là một kỹ sư phần mềm trong nhóm Core Image.
+
+00:00:14.000 --> 00:00:20.000
+Hôm nay tôi sẽ mô tả cách bạn có thể hiển thị nội dung Dải động mở rộng trong ứng dụng Core Image của mình.
+
+00:00:20.000 --> 00:00:23.000
+Bài nói chuyện của tôi sẽ được chia thành bốn phần.
+
+00:00:23.000 --> 00:00:29.000
+Đầu tiên, tôi sẽ giới thiệu một số thuật ngữ quan trọng cho EDR trên nền tảng của chúng tôi.
+
+00:00:29.000 --> 00:00:38.000
+Thứ hai, tôi sẽ mô tả một dự án mẫu Core Image mới, sau đó tôi sẽ sử dụng để chứng minh cách thêm hỗ trợ cho EDR.
+
+00:00:38.000 --> 00:00:47.000
+Cuối cùng, tôi sẽ chỉ cho bạn cách sử dụng CIFilters để tạo ra hình ảnh tạo ra nội dung EDR.
+
+00:00:47.000 --> 00:00:50.000
+Vì vậy, hãy bắt đầu với một số thuật ngữ chính.
+
+00:00:50.000 --> 00:01:00.000
+SDR, hay Dải động tiêu chuẩn, là cách truyền thống để thể hiện màu RGB bằng cách sử dụng phạm vi chuẩn hóa từ 0 cho màu đen đến 1 cho màu trắng.
+
+00:01:00.000 --> 00:01:09.000
+Ngược lại, EDR, hay Dải động mở rộng, là cách được đề xuất để thể hiện màu RGB vượt quá phạm vi bình thường.
+
+00:01:09.000 --> 00:01:16.000
+Như với SDR, 0 đại diện cho màu đen và 1 đại diện cho cùng độ sáng với SDR trắng.
+
+00:01:16.000 --> 00:01:22.000
+Nhưng với EDR, các giá trị lớn hơn 1 có thể được sử dụng để biểu diễn các điểm ảnh thậm chí còn sáng hơn.
+
+00:01:22.000 --> 00:01:30.000
+Nhưng hãy nhớ rằng, trong khi các giá trị lớn hơn một được cho phép, các giá trị trên khoảng không sẽ bị cắt bớt.
+
+00:01:30.000 --> 00:01:37.000
+Khoảng không có nguồn gốc từ Nits tối đa hiện tại của màn hình chia cho Nits của SDR màu trắng.
+
+00:01:37.000 --> 00:01:44.000
+Lưu ý rằng giá trị khoảng không có thể khác nhau giữa các màn hình hoặc khi điều kiện môi trường xung quanh hoặc độ sáng màn hình thay đổi.
+
+00:01:44.000 --> 00:01:52.000
+Tôi khuyên bạn nên xem bài thuyết trình "Khám phá EDR trên iOS" để thảo luận sâu hơn về những khái niệm này.
+
+00:01:52.000 --> 00:01:57.000
+Có một số nguồn cho nội dung EDR mà bạn có thể trình bày trong ứng dụng của mình.
+
+00:01:57.000 --> 00:02:05.000
+Đầu tiên, một số định dạng tệp, chẳng hạn như TIFF và OpenEXR, có thể lưu trữ các giá trị dấu phẩy động cho EDR.
+
+00:02:05.000 --> 00:02:12.000
+Ngoài ra, bạn có thể sử dụng AVFoundation để lấy khung hình từ các định dạng video HDR.
+
+00:02:12.000 --> 00:02:17.000
+Metal APIs có thể được sử dụng để kết xuất môi trường EDR thành một kết cấu.
+
+00:02:17.000 --> 00:02:23.000
+Ngoài ra, các tệp ProRAW DNG có thể được hiển thị để hiển thị các điểm nổi bật của EDR.
+
+00:02:23.000 --> 00:02:30.000
+Bài thuyết trình năm 2021 "Chụp và xử lý hình ảnh ProRAW" mô tả chi tiết điều này.
+
+00:02:30.000 --> 00:02:38.000
+Đối với phần tiếp theo của bài thuyết trình của tôi, tôi sẽ mô tả cách sử dụng Core Image với Metal trong ứng dụng SwiftUI.
+
+00:02:38.000 --> 00:02:43.000
+Sau đó, tôi sẽ phác thảo cách thêm hỗ trợ EDR cho ứng dụng này.
+
+00:02:43.000 --> 00:02:54.000
+Gần đây chúng tôi đã phát hành một dự án mã mẫu mới thể hiện các phương pháp hay nhất về cách kết hợp Core Image và Metal Kit View trong ứng dụng đa nền tảng SwiftUI.
+
+00:02:54.000 --> 00:03:01.000
+Tôi khuyên bạn nên tải xuống mẫu và xem mã, nhưng hãy để tôi nhân cơ hội này để cho bạn thấy nó trông và hoạt động như thế nào.
+
+00:03:01.000 --> 00:03:08.000
+Mẫu vẽ một CIImage hoạt hình, thủ tục được hiển thị thành chế độ xem Kim loại.
+
+00:03:08.000 --> 00:03:12.000
+Để có hiệu suất tối ưu, mẫu sử dụng MTKView.
+
+00:03:12.000 --> 00:03:22.000
+Để giữ cho mã đơn giản, ứng dụng hiển thị bảng kiểm hoạt hình CIImage dưới dạng proxy cho bất kỳ nội dung nào mà ứng dụng của bạn mong muốn.
+
+00:03:22.000 --> 00:03:32.000
+Ngoài ra, ứng dụng sử dụng SwiftUI để có thể sử dụng cơ sở mã chung trên các nền tảng macOS, iOS và iPadOS.
+
+00:03:32.000 --> 00:03:39.000
+Dự án được xây dựng từ một vài tệp nguồn ngắn, vì vậy hãy để tôi mô tả cách các lớp tương tác.
+
+00:03:39.000 --> 00:03:42.000
+Có ba phần quan trọng trong ứng dụng này.
+
+00:03:42.000 --> 00:03:45.000
+Đầu tiên và quan trọng nhất là "MetalView".
+
+00:03:45.000 --> 00:03:53.000
+Nó cung cấp một triển khai Chế độ xem tương thích SwiftUI bao bọc lớp MTKView.
+
+00:03:53.000 --> 00:04:09.000
+Bởi vì lớp MTKView dựa trên NSView trên macOS và UIView trên các nền tảng khác, việc triển khai MetalView sử dụng ViewRepresentable để kết nối giữa SwiftUI và các lớp MTKView dành riêng cho nền tảng.
+
+00:04:09.000 --> 00:04:14.000
+Tuy nhiên, MTKView không chịu trách nhiệm trực tiếp về việc kết xuất.
+
+00:04:14.000 --> 00:04:18.000
+Thay vào đó, nó sử dụng đại diện của mình để thực hiện công việc đó.
+
+00:04:18.000 --> 00:04:23.000
+Trong ứng dụng này, lớp Renderer là đại diện cho MTKView.
+
+00:04:23.000 --> 00:04:30.000
+Nó chịu trách nhiệm khởi tạo các đối tượng trạng thái đồ họa như hàng đợi lệnh Metal và bối cảnh Core Image.
+
+00:04:30.000 --> 00:04:37.000
+Nó cũng triển khai phương thức draw() được yêu cầu phải là đại diện MetalView.
+
+00:04:37.000 --> 00:04:43.000
+Tuy nhiên, Trình kết xuất không chịu trách nhiệm trực tiếp trong việc xác định hình ảnh nào cần vẽ.
+
+00:04:43.000 --> 00:04:49.000
+Thay vào đó, nó sử dụng khối imageProvider của nó để có được một CIImage để vẽ.
+
+00:04:49.000 --> 00:04:58.000
+Trong ứng dụng này, lớp ContentView triển khai khối mã cung cấp CIImage sẽ được hiển thị.
+
+00:04:58.000 --> 00:05:03.000
+Tóm lại ngắn gọn, MetalView kêu gọi đại diện của mình rút thăm.
+
+00:05:03.000 --> 00:05:09.000
+Phương thức Renderer draw() gọi ContentView để cung cấp hình ảnh để vẽ.
+
+00:05:09.000 --> 00:05:17.000
+Hãy để tôi nói chi tiết hơn một chút về mã trong ba lớp này, bắt đầu với mã makeView() trong lớp MetalView.
+
+00:05:17.000 --> 00:05:24.000
+Khi makeView() được gọi để tạo MTKView, nó sẽ đặt đại diện của chế độ xem thành đối tượng trạng thái Renderer.
+
+00:05:24.000 --> 00:05:31.000
+Đây là cách tiếp cận chuẩn để triển khai chế độ xem SwiftUI bao bọc NSView hoặc UIView.
+
+00:05:31.000 --> 00:05:37.000
+Tiếp theo, nó đặt khung ưa thích PerSecond để chỉ định tần suất hiển thị chế độ xem.
+
+00:05:37.000 --> 00:05:42.000
+Thuộc tính này rất quan trọng vì nó xác định điều gì thúc đẩy bản vẽ của chế độ xem.
+
+00:05:42.000 --> 00:05:45.000
+Hãy để tôi mô tả cách thức hoạt động của nó.
+
+00:05:45.000 --> 00:05:53.000
+Mẫu này là một ứng dụng hoạt hình, vì vậy mã đặt view.preferredFramesPerSecond thành tốc độ khung hình mong muốn.
+
+00:05:53.000 --> 00:06:00.000
+Bằng cách cài đặt điều này, MTKView được cấu hình sao cho chính chế độ xem điều khiển thời gian của các sự kiện vẽ.
+
+00:06:00.000 --> 00:06:11.000
+Điều này khiến đại diện kết xuất của chế độ xem vẽ () theo định kỳ, do đó, sẽ yêu cầu nhà cung cấp nội dung tạo CIImage cho thời gian hiện tại.
+
+00:06:11.000 --> 00:06:18.000
+Và quá trình sẽ lặp lại và lặp lại cho đến khi hoạt ảnh bị tạm dừng.
+
+00:06:18.000 --> 00:06:27.000
+Trong các trường hợp khác, chẳng hạn như đối với ứng dụng chỉnh sửa hình ảnh, tốt nhất là các tương tác của người dùng với các điều khiển để điều khiển khi chế độ xem nên được vẽ.
+
+00:06:27.000 --> 00:06:36.000
+Bằng cách đặt enableSetNeedsDisplay thành true, MTKView được cấu hình để các điều khiển có thể điều khiển thời gian của các sự kiện vẽ.
+
+00:06:36.000 --> 00:06:41.000
+Khi một điều khiển được di chuyển, phương thức updateView() sẽ được gọi.
+
+00:06:41.000 --> 00:06:46.000
+Sau đó, đại diện của chế độ xem sẽ được gọi để vẽ() một lần.
+
+00:06:46.000 --> 00:06:55.000
+Và mỗi lần rút thăm sẽ yêu cầu nhà cung cấp nội dung tạo CIImage cho trạng thái kiểm soát hiện tại.
+
+00:06:55.000 --> 00:07:02.000
+Cách tiếp cận này cũng phù hợp khi sự xuất hiện của các khung hình video sẽ thúc đẩy các sự kiện bốc thăm.
+
+00:07:02.000 --> 00:07:05.000
+Điều đó kết thúc cuộc thảo luận của tôi về lớp MetalView.
+
+00:07:05.000 --> 00:07:12.000
+Tiếp tục, mã quan trọng nhất trong đại diện Renderer là phương thức draw().
+
+00:07:12.000 --> 00:07:16.000
+Phương thức draw() của trình kết xuất được gọi ở tốc độ khung hình tuần hoàn.
+
+00:07:16.000 --> 00:07:23.000
+Khi phương thức draw() được gọi, nó cần xác định hệ số tỷ lệ nội dung phản ánh độ phân giải của màn hình mà chế độ xem đang bật.
+
+00:07:23.000 --> 00:07:28.000
+Điều này là cần thiết vì CIImages được đo bằng pixel, không phải điểm.
+
+00:07:28.000 --> 00:07:38.000
+Điều quan trọng là phải làm điều này mỗi khi phương thức draw() được gọi vì thuộc tính này có thể thay đổi nếu chế độ xem được chuyển đến một màn hình khác.
+
+00:07:38.000 --> 00:07:43.000
+Tiếp theo, nó tạo ra một CIRenderDestination với mtlTextureProvider.
+
+00:07:43.000 --> 00:07:49.000
+Sau đó, nó gọi nhà cung cấp nội dung để tạo CIImage để sử dụng cho thời gian hiện tại và hệ số quy mô.
+
+00:07:49.000 --> 00:08:02.000
+Hình ảnh trả về này sau đó được căn giữa trong khu vực hiển thị của chế độ xem và được trộn lẫn trên nền mờ đục, và sau đó chúng tôi bắt đầu nhiệm vụ hiển thị CIImage đến đích xem.
+
+00:08:02.000 --> 00:08:07.000
+Mã quan trọng nhất trong lớp ContentView là phương thức init().
+
+00:08:07.000 --> 00:08:12.000
+Phương thức init() chịu trách nhiệm tạo nội dung của chế độ xem Nội dung.
+
+00:08:12.000 --> 00:08:17.000
+Làm điều này sẽ thiết lập các kết nối với các lớp Renderer và MetalView.
+
+00:08:17.000 --> 00:08:23.000
+Đầu tiên, nó tạo ra một đối tượng Renderer với một khối nhà cung cấp hình ảnh.
+
+00:08:23.000 --> 00:08:30.000
+Khối đó chịu trách nhiệm trả lại CIImage cho thời gian và quy mô được yêu cầu.
+
+00:08:30.000 --> 00:08:37.000
+Và cuối cùng, nó đặt phần thân của ContentView thành MetalView sử dụng Trình kết xuất đó.
+
+00:08:37.000 --> 00:08:44.000
+Được rồi, bây giờ đã xong, chúng tôi có một ứng dụng SwiftUI đơn giản có thể hiển thị bằng Core Image.
+
+00:08:44.000 --> 00:08:50.000
+Tiếp theo, hãy xem cách bạn có thể sửa đổi ứng dụng này để hỗ trợ kết xuất với khoảng trống EDR.
+
+00:08:50.000 --> 00:08:54.000
+Thật dễ dàng để thêm hỗ trợ EDR cho ứng dụng này.
+
+00:08:54.000 --> 00:09:06.000
+Bước 1 là khởi tạo chế độ xem cho EDR, bước 2 là tính toán khoảng không trước mỗi lần kết xuất và bước 3 là xây dựng CIImage sử dụng khoảng không có sẵn.
+
+00:09:06.000 --> 00:09:10.000
+Hãy để tôi chỉ cho bạn mã thực tế cho những bổ sung này.
+
+00:09:10.000 --> 00:09:14.000
+Đầu tiên, một bổ sung nhỏ là cần thiết trong lớp MetalView.
+
+00:09:14.000 --> 00:09:29.000
+Khi bạn thực hiện chế độ xem, bạn cần nói với lớp mà nó muốn ExtendedDynamicRangeContent và cho chế độ xem biết rằng pixelFormat của nó phải là .rgba16Float và không gian màu của nó phải được mở rộng và tuyến tính.
+
+00:09:29.000 --> 00:09:35.000
+Thứ hai, một số thay đổi là cần thiết trong phương thức draw() của lớp Renderer.
+
+00:09:35.000 --> 00:09:45.000
+Trong phương thức draw(), chúng ta cần thêm mã lấy màn hình hiện tại cho chế độ xem và sau đó hỏi màn hình về khoảng trống EDR hiện tại.
+
+00:09:45.000 --> 00:09:49.000
+Sau đó, khoảng không được chuyển như một tham số cho khối nhà cung cấp hình ảnh.
+
+00:09:49.000 --> 00:09:54.000
+Lưu ý rằng điều quan trọng là phải làm điều này mỗi khi phương thức draw() được gọi.
+
+00:09:54.000 --> 00:10:01.000
+Khoảng không là một thuộc tính năng động sẽ thay đổi tùy thuộc vào điều kiện môi trường xung quanh hoặc độ sáng màn hình thay đổi như thế nào.
+
+00:10:01.000 --> 00:10:06.000
+Và thay đổi thứ ba là khối nhà cung cấp trong lớp ContentView.
+
+00:10:06.000 --> 00:10:10.000
+Ở đây chúng ta cần thêm đối số khoảng trống vào khai báo khối nhà cung cấp hình ảnh.
+
+00:10:10.000 --> 00:10:19.000
+Sau đó, chúng ta có thể sử dụng khoảng không với CIFilters để trả lại CIImage trông tuyệt vời trên màn hình EDR của người dùng.
+
+00:10:19.000 --> 00:10:34.000
+Vì vậy, tóm lại, đây là ba bước đơn giản để thêm hỗ trợ EDR cho ứng dụng này: khởi tạo chế độ xem cho EDR, xác định khoảng không trước mỗi lần kết xuất và xây dựng CIImage để hiển thị khoảng không đã cho.
+
+00:10:34.000 --> 00:10:37.000
+Đây sẽ là chủ đề của phần còn lại của bài thuyết trình này.
+
+00:10:37.000 --> 00:10:46.000
+Bây giờ ứng dụng hỗ trợ EDR, hãy làm cho nó hiển thị một số nội dung EDR bằng cách sử dụng CIFilters để tạo CIImages.
+
+00:10:46.000 --> 00:10:50.000
+Hơn 150 bộ lọc được tích hợp trong Core Image hỗ trợ EDR.
+
+00:10:50.000 --> 00:10:59.000
+Điều này có nghĩa là tất cả các bộ lọc này có thể tạo ra hình ảnh với nội dung EDR hoặc xử lý hình ảnh có chứa nội dung EDR.
+
+00:10:59.000 --> 00:11:12.000
+Ví dụ, các bộ lọc CIColorControls và CIExposureAdjust có thể cho phép ứng dụng của bạn thay đổi độ sáng, màu sắc, độ bão hòa và độ tương phản của hình ảnh với màu EDR.
+
+00:11:12.000 --> 00:11:19.000
+Và một số bộ lọc, chẳng hạn như bộ lọc gradient, có thể tạo ra hình ảnh với các thông số màu EDR.
+
+00:11:19.000 --> 00:11:23.000
+Ba bộ lọc mới mà chúng tôi đã thêm vào trong năm nay cũng hỗ trợ hình ảnh EDR.
+
+00:11:23.000 --> 00:11:31.000
+Đáng chú ý nhất, CIAreaLogarithmicHistogram có thể tạo ra một biểu đồ cho một phạm vi giá trị độ sáng tùy ý.
+
+00:11:31.000 --> 00:11:40.000
+Bộ lọc CIColorCube là ví dụ về bộ lọc mà chúng tôi đã cập nhật trong năm nay để hoạt động tốt hơn với hình ảnh đầu vào EDR.
+
+00:11:40.000 --> 00:11:51.000
+Tất cả các bộ lọc tích hợp này chỉ hoạt động vì không gian màu làm việc của Core Image không bị kẹp và tuyến tính, cho phép các giá trị RGB nằm ngoài phạm vi 0 đến 1.
+
+00:11:51.000 --> 00:11:57.000
+Khi bạn phát triển ứng dụng của mình, bạn có thể kiểm tra xem một bộ lọc nhất định có hỗ trợ EDR hay không.
+
+00:11:57.000 --> 00:12:09.000
+Để làm điều này, bạn tạo một phiên bản của bộ lọc, sau đó hỏi các thuộc tính của bộ lọc cho các danh mục của nó và sau đó kiểm tra xem mảng có chứa kCICategoryHighDynamicRange hay không.
+
+00:12:09.000 --> 00:12:16.000
+Ngoài ra, một tính năng mới mà chúng tôi đã thêm vào là hỗ trợ gỡ lỗi Xcode QuickLook cho các biến CIFilter.
+
+00:12:16.000 --> 00:12:25.000
+Điều này sẽ hiển thị tài liệu cho từng lớp Bộ lọc, bao gồm các danh mục và yêu cầu của mỗi tham số đầu vào.
+
+00:12:25.000 --> 00:12:32.000
+Với tất cả các bộ lọc EDR này, có vô số hiệu ứng mà ứng dụng của bạn có thể áp dụng cho nội dung của nó.
+
+00:12:32.000 --> 00:12:42.000
+Trong ví dụ mà tôi sẽ mô tả hôm nay, tôi sẽ thêm hiệu ứng gợn sóng với phản xạ gương sáng vào mẫu bàn cờ từ ứng dụng mẫu.
+
+00:12:42.000 --> 00:12:48.000
+Để tạo hiệu ứng này, chúng ta cần một ví dụ của bộ lọc rippleTransition.
+
+00:12:48.000 --> 00:12:54.000
+Tiếp theo, chúng tôi đặt cả hình ảnh đầu vào và hình ảnh mục tiêu là hình ảnh kiểm tra.
+
+00:12:54.000 --> 00:13:02.000
+Sau đó, chúng tôi đặt các đầu vào bộ lọc điều khiển trung tâm và thời gian chuyển tiếp của gợn sóng...
+
+00:13:02.000 --> 00:13:09.000
+Và đặt hình ảnh đổ bóng thành một gradient sẽ tạo ra một điểm nhấn gương trên gợn sóng.
+
+00:13:09.000 --> 00:13:15.000
+Và cuối cùng, chúng tôi yêu cầu bộ lọc cho outputImage với tất cả các đầu vào bộ lọc mà chúng tôi đã đặt.
+
+00:13:15.000 --> 00:13:24.000
+Hãy để tôi cũng mô tả cách tạo Hình ảnh đổ bóng sẽ được sử dụng để tạo điểm nổi bật gương cho hiệu ứng gợn sóng.
+
+00:13:24.000 --> 00:13:33.000
+Chúng tôi có thể tạo hình ảnh này từ dữ liệu bitmap, nhưng để có hiệu suất tốt hơn, chúng tôi có thể tạo CIImage này theo thủ tục.
+
+00:13:33.000 --> 00:13:38.000
+Để làm điều này, chúng tôi tạo ra một thể hiện của bộ lọc linearGradient.
+
+00:13:38.000 --> 00:13:44.000
+Bộ lọc này tạo ra một gradient cho hai điểm và hai CIColors.
+
+00:13:44.000 --> 00:13:51.000
+Chúng tôi muốn gương có màu trắng, với độ sáng dựa trên khoảng không hiện tại nhưng giới hạn ở mức tối đa hợp lý.
+
+00:13:51.000 --> 00:13:58.000
+Giới hạn mà bạn sử dụng sẽ phụ thuộc vào giao diện của hiệu ứng mà bạn muốn áp dụng.
+
+00:13:58.000 --> 00:14:05.000
+Màu0 nên được tạo ra bằng cách sử dụng mức độ trắng đó trong một không gian màu tuyến tính không bị kẹp.
+
+00:14:05.000 --> 00:14:09.000
+Màu 1 được đặt thành màu rõ ràng.
+
+00:14:09.000 --> 00:14:16.000
+Điểm 0 và điểm 1 được đặt thành tọa độ sao cho gương sẽ xuất hiện từ hướng trên bên trái.
+
+00:14:16.000 --> 00:14:22.000
+Và sau đó hình ảnh đầu ra của bộ lọc được cắt theo kích thước cần thiết cho bộ lọc gợn sóng.
+
+00:14:22.000 --> 00:14:29.000
+Kết quả gợn sóng với hiệu ứng gương chỉ là một proxy đơn giản cho những gì bạn có thể làm trong ứng dụng của mình.
+
+00:14:29.000 --> 00:14:32.000
+Tuy nhiên, nó minh họa một nguyên tắc quan trọng.
+
+00:14:32.000 --> 00:14:36.000
+Tốt nhất là sử dụng các điểm ảnh sáng ở mức độ vừa phải.
+
+00:14:36.000 --> 00:14:37.000
+Ít hơn là nhiều hơn.
+
+00:14:37.000 --> 00:14:41.000
+Các điểm ảnh sáng sẽ có tác động nhiều hơn theo cách đó.
+
+00:14:41.000 --> 00:14:48.000
+Bây giờ chúng tôi có một ứng dụng hoạt động sử dụng hai CIFilters tích hợp cho hiệu ứng EDR.
+
+00:14:48.000 --> 00:14:53.000
+Vui lòng thử nghiệm với các bộ lọc EDR tích hợp khác.
+
+00:14:53.000 --> 00:15:03.000
+Tiếp theo, tôi muốn dành vài phút để thảo luận về cách tốt nhất để sử dụng bộ lọc CIColorCube cũng như một số điều nên và không nên khi viết bộ lọc tùy chỉnh của riêng bạn.
+
+00:15:03.000 --> 00:15:08.000
+Một bộ lọc rất phổ biến là CIColorCubeWithColorSpace.
+
+00:15:08.000 --> 00:15:13.000
+Theo truyền thống, bộ lọc này được sử dụng để áp dụng giao diện cho hình ảnh SDR.
+
+00:15:13.000 --> 00:15:21.000
+Bộ lọc này thậm chí còn được sử dụng để triển khai các hiệu ứng trong ứng dụng Ảnh như Process, Instant và Tonal.
+
+00:15:21.000 --> 00:15:32.000
+Theo truyền thống, dữ liệu khối lập phương được sử dụng trông như thế này có một hạn chế quan trọng: dữ liệu chỉ nhập và xuất ra các màu RGB trong phạm vi 0-to 1.
+
+00:15:32.000 --> 00:15:43.000
+Một cách để tránh giới hạn này là yêu cầu bộ lọc CIColorCubeWithColorSpace sử dụng không gian màu EDR như HLG hoặc PQ.
+
+00:15:43.000 --> 00:15:52.000
+Điều này có thể mang lại kết quả tốt nhất cho nội dung EDR, nhưng điều này sẽ yêu cầu tạo dữ liệu khối lập phương mới hợp lệ trong phạm vi không gian màu.
+
+00:15:52.000 --> 00:15:56.000
+Ngoài ra, bạn có thể cần tăng kích thước khối lập phương.
+
+00:15:56.000 --> 00:16:07.000
+Thay vào đó, bạn có thể muốn tiếp tục sử dụng dữ liệu khối lập phương SDR trên hình ảnh EDR: Mới trong năm nay, bạn có thể yêu cầu bộ lọc ngoại suy dữ liệu khối lập phương SDR.
+
+00:16:07.000 --> 00:16:12.000
+Để kích hoạt tính năng này, hãy đặt dữ liệu khối lập phương SDR như bình thường.
+
+00:16:12.000 --> 00:16:17.000
+Sau đó đặt thuộc tính ngoại suy mới của bộ lọc.
+
+00:16:17.000 --> 00:16:25.000
+Với điều này được đặt thành 'true', bạn có thể cung cấp cho bộ lọc một hình ảnh đầu vào EDR và nhận được một hình ảnh đầu ra EDR.
+
+00:16:25.000 --> 00:16:33.000
+Chủ đề cuối cùng tôi muốn đề cập hôm nay là một số phương pháp hay nhất nếu bạn đang tạo CIKernels tùy chỉnh của riêng mình.
+
+00:16:33.000 --> 00:16:44.000
+Đầu tiên, hãy xem lại mã hạt nhân của bạn cho toán học giới hạn các giá trị RGB trong phạm vi 0 đến 1 bằng cách sử dụng các hàm như kẹp, tối thiểu hoặc tối đa.
+
+00:16:44.000 --> 00:16:50.000
+Trong nhiều trường hợp, các giới hạn này có thể được loại bỏ một cách an toàn và hạt nhân sẽ hoạt động chính xác.
+
+00:16:50.000 --> 00:17:03.000
+Thứ hai, mặc dù các giá trị RGB có thể vượt quá phạm vi 0 đến 1, giá trị alpha phải nằm trong khoảng từ 0 đến 1, nếu không bạn sẽ nhận được hành vi không xác định khi pha trộn hoặc hiển thị hình ảnh.
+
+00:17:03.000 --> 00:17:15.000
+Trong ví dụ này, hạt nhân vô tình nhân kênh alpha với 5, khi hành vi chính xác là chỉ nhân các giá trị RGB với 5.
+
+00:17:15.000 --> 00:17:16.000
+Điều đó kết thúc bài thuyết trình của tôi.
+
+00:17:16.000 --> 00:17:31.000
+Để kết thúc, hôm nay chúng tôi đã học cách thêm hỗ trợ cho khoảng trống EDR vào ứng dụng Core Image SwiftUI cũng như cách sử dụng nhiều loại CIFilters tích hợp để tạo và sửa đổi nội dung EDR.
+
+00:17:31.000 --> 00:17:33.000
+Cảm ơn bạn đã xem!
+
+00:17:33.000 --> 23:59:59.000
+♪ nhạc cụ hip hop ♪
+

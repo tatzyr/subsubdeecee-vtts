@@ -1,0 +1,302 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:11.000
+Xin chào. Tên tôi là Charles Circlaeys, và trong bài nói chuyện này, chúng ta sẽ đi sâu vào việc cuộn trong các quá giang hoạt hình trong giai đoạn cam kết của Vòng lặp kết xuất.
+
+00:00:11.000 --> 00:00:14.000
+iOS sử dụng Render Loop để hiển thị lượt xem của bạn.
+
+00:00:14.000 --> 00:00:24.000
+Các sự kiện cảm ứng được gửi đến ứng dụng của bạn, nó phản hồi bằng cách thay đổi chế độ xem và những chế độ xem đó được hiển thị trên màn hình bởi iOS.
+
+00:00:24.000 --> 00:00:30.000
+Chúng tôi sẽ tập trung vào việc tìm kiếm và sửa chữa các trở ngại hoạt hình trong giai đoạn cam kết của Vòng lặp kết xuất.
+
+00:00:30.000 --> 00:00:40.000
+Để tìm hiểu về toàn bộ Render Loop và trở ngại là gì, vui lòng xem video "Khám phá Hitches hoạt hình UI và Render Loop."
+
+00:00:40.000 --> 00:00:44.000
+Đầu tiên chúng ta sẽ xem xét điều gì định nghĩa một giao dịch cam kết...
+
+00:00:44.000 --> 00:00:48.000
+Sử dụng các nhạc cụ để tìm ra những trở ngại...
+
+00:00:48.000 --> 00:00:52.000
+Và chúng tôi sẽ chia sẻ các đề xuất của mình để tránh những trở ngại.
+
+00:00:52.000 --> 00:00:54.000
+Hãy bắt đầu bằng cách xác định một giao dịch cam kết.
+
+00:00:54.000 --> 00:01:01.000
+Ở đây, chúng tôi có một ví dụ về hệ thống phân cấp chế độ xem ứng dụng hiện đang chờ các sự kiện.
+
+00:01:01.000 --> 00:01:10.000
+Sau khi nó nhận được một sự kiện cảm ứng, một chế độ xem phản hồi và xử lý sự kiện bằng cách thay đổi màu nền hoặc khung cho một số chế độ xem phụ của nó.
+
+00:01:10.000 --> 00:01:18.000
+Hệ thống ghi lại rằng các chế độ xem phụ này sẽ yêu cầu bố cục hoặc hiển thị trong giao dịch cam kết tiếp theo.
+
+00:01:18.000 --> 00:01:28.000
+Trong quá trình giao dịch cam kết, các chế độ xem cần hiển thị hoặc bố cục sẽ được cập nhật tương ứng bằng cách gọi drawRect hoặc layoutSubviews.
+
+00:01:28.000 --> 00:01:32.000
+Chúng ta hãy xem xét các giai đoạn khác nhau liên quan trong một giao dịch cam kết.
+
+00:01:32.000 --> 00:01:41.000
+Có bốn bước: giai đoạn bố trí, giai đoạn hiển thị, giai đoạn chuẩn bị và cuối cùng là giai đoạn cam kết.
+
+00:01:41.000 --> 00:01:46.000
+Trong giai đoạn bố cục, layoutSubviews sẽ được gọi cho mọi chế độ xem yêu cầu bố cục.
+
+00:01:46.000 --> 00:01:56.000
+Bạn có thể đánh dấu bố cục cần thiết bằng cách thay đổi vị trí chế độ xem, thêm hoặc xóa chế độ xem hoặc gọi rõ ràng setNeedsLayout trên chế độ xem.
+
+00:01:56.000 --> 00:02:01.000
+Trong giai đoạn hiển thị, drawRect sẽ được gọi cho mọi chế độ xem yêu cầu hiển thị.
+
+00:02:01.000 --> 00:02:11.000
+Bạn có thể chỉ ra rằng hiển thị là cần thiết bằng cách thêm các chế độ xem vào hệ thống phân cấp chế độ xem ghi đè drawRect hoặc bằng cách gọi setNeedsDisplay một cách rõ ràng.
+
+00:02:11.000 --> 00:02:18.000
+Trong giai đoạn chuẩn bị, những hình ảnh chưa được giải mã sẽ được giải mã trong bước này.
+
+00:02:18.000 --> 00:02:23.000
+Loại thao tác này có thể mất thời gian đáng kể cho những hình ảnh lớn.
+
+00:02:23.000 --> 00:02:31.000
+Ngoài ra, nếu một hình ảnh ở định dạng màu mà GPU không thể làm việc trực tiếp, nó sẽ được chuyển đổi trong bước này.
+
+00:02:31.000 --> 00:02:40.000
+Điều này sẽ yêu cầu sao chép hình ảnh thay vì gửi con trỏ đến bản gốc, điều này sẽ tốn thêm thời gian và bộ nhớ.
+
+00:02:40.000 --> 00:02:48.000
+Để tìm hiểu thêm về việc tối ưu hóa hình ảnh trong ứng dụng của bạn, hãy xem video "Thực tiễn tốt nhất về hình ảnh và đồ họa".
+
+00:02:48.000 --> 00:02:56.000
+Cuối cùng, trong giai đoạn cam kết, hệ thống phân cấp chế độ xem sẽ được đóng gói đệ quy và gửi đến máy chủ kết xuất.
+
+00:02:56.000 --> 00:03:01.000
+Lưu ý rằng hệ thống phân cấp chế độ xem sâu sẽ mất nhiều thời gian hơn để được đóng gói.
+
+00:03:01.000 --> 00:03:10.000
+Bây giờ chúng ta đã mô tả chi tiết của một giao dịch cam kết, hãy chuyển sang chủ đề thứ hai của chúng ta: tìm kiếm các trở ngại với Công cụ.
+
+00:03:10.000 --> 00:03:16.000
+Trong Xcode 12, chúng tôi đã phát hành một mẫu Nhạc cụ mới để lập hồ sơ các trở ngại trong ứng dụng của bạn.
+
+00:03:16.000 --> 00:03:23.000
+Điều này sẽ giúp bạn hình dung và điều tra Vòng lặp kết xuất cho các khung hình quá giang được phát hiện.
+
+00:03:23.000 --> 00:03:26.000
+Hãy xem xét một số trở ngại trong ứng dụng ví dụ của chúng tôi.
+
+00:03:26.000 --> 00:03:31.000
+Chúng tôi sẽ ghi lại một dấu vết trong Nhạc cụ khi chúng tôi cuộn trong ứng dụng của mình.
+
+00:03:31.000 --> 00:03:43.000
+Vì vậy, ở đây chúng tôi có một dấu vết được ghi lại về hiệu suất cuộn của mình và chúng tôi có thể thấy tất cả các trở ngại được phát hiện.
+
+00:03:43.000 --> 00:03:48.000
+Chúng ta hãy xem xét kỹ hơn về quá giang 16.
+
+00:03:48.000 --> 00:03:56.000
+Chúng ta có thể thấy ở bên trái tất cả các bản nhạc tương ứng với các giai đoạn Vòng lặp Kết xuất cần thiết để soạn các khung.
+
+00:03:56.000 --> 00:04:01.000
+Bản nhạc Hitches hiển thị các hitches và thời lượng của chúng.
+
+00:04:01.000 --> 00:04:08.000
+Theo dõi Sự kiện Người dùng hiển thị các sự kiện người dùng đã nhận được với khung quá giang.
+
+00:04:08.000 --> 00:04:14.000
+Theo dõi Cam kết hiển thị các giai đoạn cam kết và các quy trình cam kết trong giai đoạn này.
+
+00:04:14.000 --> 00:04:22.000
+Patrick sẽ nói nhiều hơn về các bản nhạc Renders và GPU trong "Demysify and Eliminate Hitches in the Render Phase."
+
+00:04:22.000 --> 00:04:28.000
+Bản nhạc Frame Lifetimes hiển thị toàn bộ thời lượng để soạn khung quá giang.
+
+00:04:28.000 --> 00:04:36.000
+Bản nhạc Hiển thị Tích hợp hiển thị tất cả các khung hình xuất hiện trên màn hình cùng với các sự kiện VSYNC.
+
+00:04:36.000 --> 00:04:46.000
+Bạn có thể so sánh tuổi thọ khung hình với thời gian bắt đầu quá giang để hình dung khoảng thời gian dự kiến mà các khung hình lẽ ra đã sẵn sàng để hiển thị.
+
+00:04:46.000 --> 00:04:49.000
+Khoảng thời gian này được gọi là Độ trễ chấp nhận được.
+
+00:04:49.000 --> 00:04:53.000
+Tất cả thời gian sau đó là thời gian quá giang.
+
+00:04:53.000 --> 00:04:59.000
+Bên dưới các bản nhạc, chúng ta có thể thấy các số liệu chi tiết cho quá giang khi bản nhạc Hitches được chọn.
+
+00:04:59.000 --> 00:05:06.000
+Có rất nhiều trở ngại trong ứng dụng demo của chúng tôi, nhưng chúng tôi đã tập trung vào quá giang 16 ở đây.
+
+00:05:06.000 --> 00:05:09.000
+Chúng ta có thể thấy thời lượng quá giang...
+
+00:05:09.000 --> 00:05:12.000
+Độ trễ chấp nhận được...
+
+00:05:12.000 --> 00:05:15.000
+Và loại quá giang.
+
+00:05:15.000 --> 00:05:22.000
+Loại quá giang rất hữu ích để có được gợi ý trong giai đoạn nào khung hình bị trì hoãn và bắt đầu điều tra từ đâu.
+
+00:05:22.000 --> 00:05:31.000
+Đối với ví dụ này, chúng ta có thể thấy rằng khung quá giang được chọn là do cam kết và pha GPU gây ra.
+
+00:05:31.000 --> 00:05:43.000
+Tôi muốn tìm mã nào mất quá nhiều thời gian trong giai đoạn cam kết và may mắn thay, mẫu quá giang hoạt hình bao gồm Time Profiler, vì vậy chúng ta có thể xem mã nào đang chạy khi quá giang này xảy ra.
+
+00:05:43.000 --> 00:05:50.000
+Từ đây, tôi có thể chọn khoảng thời gian tôi muốn điều tra và tìm kiếm quy trình đã cam kết.
+
+00:05:50.000 --> 00:05:54.000
+Tôi có thể chọn chủ đề chính của quá trình này...
+
+00:05:54.000 --> 00:05:58.000
+Và hiển thị cây cuộc gọi của nó.
+
+00:05:58.000 --> 00:06:02.000
+Bây giờ chúng tôi có thể phân tích cuộc gọi nào có thể tốn kém.
+
+00:06:02.000 --> 00:06:14.000
+Chúng ta có thể thấy rằng cây cuộc gọi này có nguồn gốc từ một giao dịch cam kết và nó cho thấy rằng chúng ta đã dành khoảng mười mili giây bên trong một phương thức được gọi là updateTags trong QSTEM CollectionViewCell của chúng ta.
+
+00:06:14.000 --> 00:06:17.000
+Hãy xem có gì trong ứng dụng này.
+
+00:06:17.000 --> 00:06:32.000
+Nó bao gồm một CollectionView chung và mỗi ô hiển thị hình thu nhỏ ảnh sử dụng UIImageView, một số văn bản sử dụng UILabel và một số thẻ sử dụng chế độ xem TagLabel tùy chỉnh.
+
+00:06:32.000 --> 00:06:40.000
+Hãy xem xét việc triển khai lớp QSTEM CollectionViewCell của chúng tôi và đặc biệt hơn, nơi phương thức này đang được gọi.
+
+00:06:40.000 --> 00:06:45.000
+Ở đây chúng ta thấy rằng chúng ta có một người quan sát tài sản trên menuItem.
+
+00:06:45.000 --> 00:06:54.000
+Người quan sát thuộc tính này sẽ gọi updateTags trong hai tình huống: Một menuItem hợp lệ đã được đặt hoặc nó được đặt thành nil.
+
+00:06:54.000 --> 00:06:58.000
+Trong kịch bản đầu tiên, chúng tôi phân tích cú pháp một mảng các thẻ mà chúng tôi muốn hiển thị.
+
+00:06:58.000 --> 00:07:03.000
+Trong kịch bản thứ hai, chúng tôi phân tích cú pháp một mảng trống để loại bỏ bất kỳ thẻ nào còn lại.
+
+00:07:03.000 --> 00:07:08.000
+Hãy cùng xem bên trong việc triển khai phương thức updateTags ngay bây giờ.
+
+00:07:08.000 --> 00:07:15.000
+Đúng như dự đoán, chúng tôi xóa tất cả các chế độ xem khỏi hệ thống phân cấp chế độ xem trong trường hợp có một mảng thẻ trống.
+
+00:07:15.000 --> 00:07:19.000
+Nếu không, chúng tôi sẽ tạo StackView nếu cần.
+
+00:07:19.000 --> 00:07:24.000
+Sau đó, chúng tôi tạo hoặc sử dụng lại Nhãn thẻ hiện có cho mỗi thẻ.
+
+00:07:24.000 --> 00:07:33.000
+Sau đó, chúng tôi xóa bất kỳ TagLabels không sử dụng hiện có nào trong trường hợp việc sử dụng ô này trước đó có nhiều thẻ hơn ô mới.
+
+00:07:33.000 --> 00:07:41.000
+Hãy quay trở lại phạm vi cuộc gọi của chúng ta và hãy xem xét các vấn đề tiềm ẩn ngay bây giờ khi chúng ta có kiến thức tốt hơn về cách mọi thứ được thực hiện.
+
+00:07:41.000 --> 00:07:48.000
+QSTEM CollectionViewCell ghi đè lên phương thức prepareForReuse được gọi khi một ô được xếp hàng để tái sử dụng.
+
+00:07:48.000 --> 00:07:52.000
+Và bên trong phương pháp này, chúng tôi đặt menuItem thành nil.
+
+00:07:52.000 --> 00:08:04.000
+Làm như vậy sẽ khiến kịch bản thứ hai xảy ra, loại bỏ tất cả các TagLabels trước đó khỏi hệ thống phân cấp chế độ xem ô mà không tận dụng logic triển khai tái sử dụng của chúng tôi.
+
+00:08:04.000 --> 00:08:15.000
+Điều này có nghĩa là đối với mỗi ô được xếp hàng, chúng tôi sẽ xóa tất cả các chế độ xem phụ nhãn trước đó và chèn lại mọi chế độ xem cần thiết để hiển thị tất cả các nhãn.
+
+00:08:15.000 --> 00:08:19.000
+Điều này không phải là tối ưu, và điều này có thể gây ra trở ngại.
+
+00:08:19.000 --> 00:08:22.000
+Giải pháp cho điều này khá đơn giản.
+
+00:08:22.000 --> 00:08:28.000
+Chúng tôi không cần xóa menuItem của mình và chúng tôi có thể chỉ cần xóa phương thức prepareForReuse khỏi việc triển khai.
+
+00:08:28.000 --> 00:08:37.000
+Bây giờ khi chúng tôi đặt menu ô mới, chúng tôi có thể tận dụng logic có thể tái sử dụng và tránh các hoạt động phân cấp chế độ xem tốn kém.
+
+00:08:37.000 --> 00:08:46.000
+Nếu chúng tôi ghi lại một dấu vết mới sau khi sửa chữa, chúng tôi nhận thấy rằng chúng tôi đã cải thiện đáng kể số lần truy cập được phát hiện so với dấu vết đầu tiên.
+
+00:08:46.000 --> 00:08:53.000
+Time Profiler trong Instruments rất hữu ích cho việc tìm ra mã nào mất quá nhiều thời gian và gây ra trở ngại.
+
+00:08:53.000 --> 00:08:59.000
+Để tìm hiểu thêm về Time Profiler, hãy xem video "Sử dụng Time Profiler trong Instruments".
+
+00:08:59.000 --> 00:09:07.000
+Sau khi học cách lập hồ sơ các ứng dụng với Instruments, hãy thảo luận về một số khuyến nghị để tránh gặp trở ngại trong giai đoạn cam kết.
+
+00:09:07.000 --> 00:09:10.000
+Quy tắc số một là giữ cho tầm nhìn của bạn nhẹ.
+
+00:09:10.000 --> 00:09:21.000
+Để làm như vậy, hãy cố gắng tận dụng tối đa càng tốt từ các thuộc tính có sẵn trên CALayer được tăng tốc GPU và tránh vẽ tùy chỉnh CPU.
+
+00:09:21.000 --> 00:09:25.000
+Trong trường hợp nó hợp lý, hãy đảm bảo đo lường hiệu suất của nó.
+
+00:09:25.000 --> 00:09:35.000
+Tránh bất kỳ triển khai trống nào của drawRect vì hệ thống phải thực hiện thêm công việc, điều này sẽ yêu cầu sử dụng thêm thời gian và bộ nhớ trong giao dịch sắp tới.
+
+00:09:35.000 --> 00:09:42.000
+Cố gắng sử dụng lại các chế độ xem càng nhiều càng tốt để tránh các hoạt động phân cấp chế độ xem tốn kém như thêm và xóa.
+
+00:09:42.000 --> 00:09:51.000
+Liên quan đến việc xóa chế độ xem, hãy cố gắng tận dụng thuộc tính chế độ xem "ẩn" nếu bạn cần ngừng hiển thị một chế độ xem cụ thể trong quá trình hoạt ảnh.
+
+00:09:51.000 --> 00:09:53.000
+Cái này rẻ hơn rất nhiều.
+
+00:09:53.000 --> 00:09:58.000
+Quy tắc số hai là giảm bố cục đắt tiền và dư thừa.
+
+00:09:58.000 --> 00:10:02.000
+Cố gắng chỉ dựa vào setNeedsLayout khi bạn cần cập nhật bố cục của mình.
+
+00:10:02.000 --> 00:10:07.000
+layoutIfNeeded sẽ sử dụng hết thời gian giao dịch hiện tại và có thể gây ra trở ngại.
+
+00:10:07.000 --> 00:10:11.000
+Hầu hết thời gian, bạn có thể đợi vòng lặp chạy tiếp theo để cập nhật bố cục của mình.
+
+00:10:11.000 --> 00:10:17.000
+Cố gắng sử dụng số lượng ràng buộc tối thiểu để tránh làm tăng độ phức tạp để giải quyết vấn đề này.
+
+00:10:17.000 --> 00:10:25.000
+Cuối cùng, một quan điểm sẽ chỉ làm mất hiệu lực của chính nó hoặc con cái của nó, nhưng không làm anh chị em của nó hoặc quan điểm cha mẹ của nó.
+
+00:10:25.000 --> 00:10:29.000
+Nếu không, bố cục của chế độ xem sẽ bị vô hiệu hóa đệ quy một lần nữa.
+
+00:10:29.000 --> 00:10:38.000
+Tôi khuyên bạn nên xem hai cuộc nói chuyện WWDC được đề cập bên dưới để tìm hiểu thêm chi tiết về bố cục hiệu suất và các phương pháp hay nhất về hình ảnh và đồ họa.
+
+00:10:38.000 --> 00:10:49.000
+Bây giờ bạn đã hiểu đường ống giao dịch cam kết, bạn có thể tránh các cam kết đắt tiền, bạn có thể sử dụng mẫu Animation Hitches mới trong Instruments để phát hiện và điều tra các trở ngại.
+
+00:10:49.000 --> 00:11:03.000
+Bạn đã học được một số chiến lược để ngăn chặn các trở ngại cam kết như đảm bảo prepareForReuse không phải chịu thêm công việc, giữ cho hệ thống phân cấp quan điểm của bạn nông và nhẹ và tránh bố cục đắt tiền và dư thừa.
+
+00:11:03.000 --> 00:11:13.000
+Ngoài ra, hãy chắc chắn tìm hiểu về giai đoạn tiếp theo của Vòng lặp kết xuất trong video "làm sáng tỏ và loại bỏ các cú quá giang trong giai đoạn kết xuất."
+
+00:11:13.000 --> 23:59:59.000
+Cảm ơn bạn.
+

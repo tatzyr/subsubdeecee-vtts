@@ -1,0 +1,235 @@
+10135
+
+Yann Ly-Gagnon: Xin chào. tên tôi là Yann.
+
+Tôi là một kỹ sư Bluetooth cốt lõi.
+
+Hôm nay, tôi muốn nói chuyện với bạn về các cảnh báo kịp thời cho các thiết bị Bluetooth của bạn trên Apple Watch.
+
+Đầu tiên, chúng tôi sẽ xem xét cách cập nhật một biến chứng trong khi Ứng dụng watchOS của bạn ở chế độ nền.
+
+Sau đó, chúng tôi sẽ đi sâu vào cách lắng nghe thông báo kịp thời trên Ứng dụng watchOS của bạn.
+
+Chúng tôi cũng sẽ thấy những cách mới để bạn có thể khám phá các thiết bị ngoại vi trên watchOS 9.
+
+Cuối cùng, chúng tôi sẽ cung cấp các phương pháp và đề xuất tốt nhất để giúp bạn thiết kế phụ kiện Bluetooth của mình.
+
+Hãy chuyển sang chủ đề đầu tiên của chúng ta: cách cập nhật một biến chứng trong nền cho Ứng dụng watchOS của bạn.
+
+Năm ngoái, trong watchOS 8, chúng tôi đã giới thiệu một cách để cập nhật các biến chứng với phụ kiện Bluetooth của bạn trong quá trình làm mới ứng dụng Background.
+
+Điều này rất tốt cho dữ liệu có thể được cập nhật định kỳ, như trong ví dụ này cho tôi thấy nhiệt độ không khí hiện tại.
+
+Để làm mới nhanh chóng, năm ngoái watchOS cho phép bạn cập nhật sự phức tạp của mình và sử dụng làm mới ứng dụng Nền, chạy định kỳ trong nền.
+
+Bất cứ khi nào việc làm mới ứng dụng Background diễn ra, nó cho phép ứng dụng của bạn kết nối lại với thiết bị ngoại vi Bluetooth của bạn, truy xuất dữ liệu và sau đó ngắt kết nối khỏi thiết bị ngoại vi của bạn.
+
+Để biết thêm chi tiết về điều này, hãy xem video có tên "Kết nối các thiết bị Bluetooth với Apple Watch."
+
+Nhưng điều gì sẽ xảy ra nếu một sự kiện nhạy cảm với thời gian xảy ra trên thiết bị ngoại vi Bluetooth của bạn mà người dùng muốn biết?
+
+Trong watchOS 9, chúng tôi đang giới thiệu một cách để nghe các cảnh báo từ các phụ kiện Bluetooth của bạn trong nền.
+
+Đây là cách nó hoạt động.
+
+Bạn sẽ kết nối thiết bị của mình khi ứng dụng của bạn đang chạy và bắt đầu theo dõi một đặc điểm.
+
+Khi ứng dụng của bạn ngừng chạy, Core Bluetooth sẽ thay mặt bạn duy trì kết nối với thiết bị của bạn và tiếp tục lắng nghe những thay đổi đối với đặc tính của bạn.
+
+Khi thiết bị của bạn thay đổi giá trị của đặc tính đó, ứng dụng của bạn sẽ có thời gian chạy để xử lý sự kiện đó.
+
+Ví dụ, bạn có thể đăng thông báo cục bộ hoặc gửi yêu cầu mạng.
+
+Điều này nhằm cung cấp cho người dùng thông tin nhạy cảm về thời gian mà họ quan tâm.
+
+Giả sử tôi có một nhiệt kế thực phẩm.
+
+Tôi có thể đặt nhiệt độ nấu mong muốn để được cảnh báo khi nào tôi nên lấy thức ăn ra khỏi lò.
+
+Khi nhiệt độ đạt đến nhiệt độ mong muốn, nhiệt kế sẽ thay đổi giá trị của một đặc tính và ứng dụng đăng thông báo cục bộ rằng thực phẩm gần như đã sẵn sàng.
+
+Khi đồ ăn xong, tôi nhận được thông báo mong muốn.
+
+Và nếu nhiệt độ tiếp tục tăng, tôi sẽ nhận được một thông báo cuối cùng.
+
+Đầu tiên, hãy xem lại cách cấu hình các chế độ Nền.
+
+Thêm Bluetooth-central vào UIBackgroundModes trong Info.plist của ứng dụng Đồng hồ của bạn.
+
+Trong Xcode, nó được gọi là "Chế độ nền bắt buộc" và bạn nên thêm "Ứng dụng giao tiếp bằng CoreBluetooth."
+
+Lưu ý rằng các mục nhập Info.plist đó giống như ứng dụng của bạn dành cho iOS nếu bạn muốn sử dụng thực thi nền làm trung tâm.
+
+Bạn sẽ cần chỉnh sửa watchApp info.plist của mình theo cách thủ công và không dựa vào "Khả năng ký" của iOS.
+
+Hãy nhìn vào mã.
+
+Giả sử bạn đã kết nối, bạn đã tìm thấy một dịch vụ GATT và vừa phát hiện ra một đặc tính GATT.
+
+Bạn sẽ nhận được cuộc gọi lại didDiscoverCharacteristicFor.
+
+Bên trong cuộc gọi lại, bạn có thể quyết định nhận thông báo mỗi khi giá trị thay đổi.
+
+Đây là API giống như trong watchOS 8, với sự khác biệt là nó cũng sẽ hoạt động trong khi ứng dụng của bạn ở chế độ nền.
+
+Sau đó triển khai phương thức đại diện để xử lý các thay đổi đối với giá trị của đặc tính với didUpdateValueFor.
+
+Khi đặc điểm thay đổi, bạn có thể đăng thông báo cục bộ tại đây, gửi yêu cầu mạng hoặc bất cứ điều gì có ý nghĩa đối với ứng dụng của bạn.
+
+Phương pháp này sẽ được gọi cả ở phía trước và phía sau, vì vậy hãy đảm bảo bạn thực hiện hành động chính xác trong cả hai trường hợp.
+
+Bây giờ, hãy nói về một số tình huống bạn cần cân nhắc.
+
+Đầu tiên, về chủ đề kết nối lại Bluetooth.
+
+Nếu thiết bị của bạn nằm ngoài phạm vi, kết nối Bluetooth sẽ ngắt kết nối sau một thời gian chờ.
+
+Nếu điều này xảy ra, ứng dụng của bạn sẽ nhanh chóng có thời gian chạy nền để gọi "connectPeripheral" để thử kết nối lại.
+
+Điều này cũng giống như những gì xảy ra trên iOS.
+
+Ngay khi thiết bị hoạt động trở lại, Core Bluetooth sẽ kết nối lại với nó.
+
+Bây giờ, hãy nói về một số giới hạn.
+
+Những giới hạn này rất quan trọng để duy trì thời lượng pin tối ưu cho người dùng Apple Watch.
+
+Nếu thiết bị của bạn ở rìa của phạm vi Bluetooth và liên tục ngắt kết nối trong khi ở kết nối Background BLE, phạm vi kết nối lại sẽ bị giảm.
+
+Điều này có nghĩa là chỉ những thiết bị gần Apple Watch mới kết nối lại.
+
+Những giới hạn đó được tính trên cửa sổ quay 24 giờ và được đặt lại bất cứ khi nào người dùng tương tác trên Ứng dụng của bạn.
+
+Một hạn chế khác là liên quan đến số lượng cơ hội thời gian chạy nền cho các cảnh báo kịp thời.
+
+Chỉ giám sát các đặc điểm sẽ thay đổi khi có điều gì đó quan trọng đối với người dùng xảy ra.
+
+Nếu bạn cần thu thập dữ liệu định kỳ từ thiết bị của mình, điều này nên được thực hiện với việc làm mới ứng dụng Nền.
+
+Khi ứng dụng của bạn sắp vượt quá giới hạn, thông báo LeGattNearBackgroundNotificationLimit sẽ được đăng.
+
+Ứng dụng của bạn nên theo dõi lỗi đó và nhận ra rằng người dùng không tương tác với ứng dụng watchOS.
+
+Nếu cảnh báo này quan trọng, đây có thể là thời điểm thích hợp để tìm một cách khác để giao tiếp với người dùng của bạn, chẳng hạn như thông qua yêu cầu mạng hoặc thay đổi giao diện người dùng trên thiết bị ngoại vi Bluetooth của bạn.
+
+Sau khi vượt quá giới hạn, thông báo có tên LeGattExceededBackgroundNotificationLimit sẽ được đăng.
+
+Sau thời điểm này, ứng dụng của bạn sẽ không còn nhận được thời gian chạy nền và sẽ quay trở lại hành vi watchOS 8, nơi sẽ không có kết nối nền và chỉ làm mới ứng dụng nền.
+
+Bạn có thể truy xuất hai thông báo đó trong trường lỗi của Cập nhật Thông báo GATT.
+
+Đối với kết nối BLE nền, chúng tôi khuyên bạn nên sử dụng lỗi để biết khi nào đạt đến giới hạn thay vì đếm ngược.
+
+Đối với watchOS 9, giới hạn thời gian chạy nền được đặt thành 5.
+
+Cả hai giới hạn này đều được đặt lại bất cứ khi nào người dùng tương tác với ứng dụng của bạn.
+
+Họ cũng đặt lại 24 giờ sau khi đạt đến giới hạn trong trường hợp không có tương tác người dùng với ứng dụng của bạn.
+
+Lưu ý: Những giới hạn này chỉ áp dụng cho các kết nối Bluetooth Background LE.
+
+Việc làm mới ứng dụng nền sẽ tiếp tục xảy ra nếu biến chứng của bạn nằm trên mặt đồng hồ đang hoạt động, bất kể những giới hạn này.
+
+Lượng thời gian bạn xử lý mỗi sự kiện rất ngắn.
+
+Có thể không có đủ thời gian để thực hiện quá trình xử lý cực kỳ phức tạp, nhưng đủ để cảnh báo người dùng điều gì đó quan trọng đang xảy ra.
+
+Cuối cùng, việc lắng nghe các cảnh báo kịp thời trong nền yêu cầu Apple Watch Series 6 trở lên.
+
+Lắng nghe các cảnh báo không phải là điều duy nhất bạn có thể làm trong nền.
+
+Trong watchOS 9, bạn có thể khám phá các thiết bị ngoại vi trong khi ứng dụng của bạn ở chế độ nền.
+
+Giả sử tôi có một thiết bị y tế Bluetooth và một ứng dụng watchOS phát hiện mọi cảnh báo kịp thời từ nó.
+
+Để tiết kiệm năng lượng, thiết bị ngoại vi không quảng cáo cho đến khi nó phát hiện ra một tình trạng nghiêm trọng.
+
+Do đó, chưa có kết nối giữa thiết bị và Apple Watch.
+
+Tại đây, Ứng dụng watchOS sẽ quét UUID Dịch vụ duy nhất từ thiết bị y tế.
+
+Bây giờ, khi thiết bị y tế phát hiện ra điều gì đó nghiêm trọng, nó bắt đầu quảng cáo.
+
+Apple Watch phát hiện ra thiết bị ngoại vi này và khởi chạy ứng dụng trong nền.
+
+Ứng dụng sau đó có thể cảnh báo người dùng về tình trạng được phát hiện.
+
+Đây là cách nó hoạt động: Ứng dụng Watch sẽ bắt đầu quét các thiết bị ngoại vi và Core Bluetooth sẽ tiếp tục quét trong nền.
+
+Khi quảng cáo của thiết bị ngoại vi được phát hiện, ứng dụng sẽ được cung cấp thời gian chạy nền và có thể bắt đầu kết nối.
+
+Hãy đi sâu vào mã để biến điều này thành hiện thực.
+
+API không thay đổi từ watchOS 8, nhưng việc quét sẽ được tôn trọng ngay cả khi ứng dụng ở chế độ nền.
+
+Gọi "scanForPeripherals" với dịch vụ UUID mà bạn muốn xem.
+
+Bạn có thể làm điều này trong khi ứng dụng của bạn ở phía trước và nó sẽ tiếp tục trong khi ứng dụng ở chế độ nền.
+
+Lưu ý rằng nếu bạn yêu cầu tùy chọn "allowDuplicatesKey", nó sẽ chỉ khả dụng khi ứng dụng ở phía trước.
+
+Bây giờ, hãy nói về một số giới hạn.
+
+Có giới hạn về số lần ứng dụng của bạn sẽ được cung cấp thời gian chạy nền giữa các lần khởi chạy ứng dụng.
+
+Giới hạn này được kết hợp với thời gian chạy nền mà chúng ta đã thấy trước đây khi đặc tính GATT thay đổi.
+
+Ngoài ra, việc quét các thiết bị ngoại vi trong nền yêu cầu Apple Watch Series 6 trở lên.
+
+Tóm lại, bây giờ chúng ta có thể quét một số lượng hạn chế dịch vụ Bluetooth UUID trong khi đồng hồ đang quét ở chế độ nền.
+
+Bây giờ hãy nói về cách thiết kế phụ kiện của bạn để tận dụng tối đa các tính năng này.
+
+Có một sự đánh đổi năng lượng mà bạn cần cân nhắc khi thiết kế phụ kiện Bluetooth của mình.
+
+Nếu mức tiêu thụ điện năng là một mối quan tâm, bạn nên chọn cấu trúc liên kết nơi thiết bị của bạn có thể ngủ sâu và chỉ quảng cáo thông tin liên quan khi cảnh báo xảy ra.
+
+Sự đánh đổi là, bạn sẽ có thêm độ trễ với thời gian khám phá Bluetooth ở mỗi cảnh báo kịp thời, nhưng bạn sẽ có thể tiết kiệm nhiều năng lượng hơn.
+
+Đây là cấu trúc liên kết được cung cấp trong ví dụ với thiết bị y tế.
+
+Mặt khác, nếu bạn cần độ trễ thấp cho các cảnh báo kịp thời của mình, nhưng sức mạnh không quá đáng lo ngại, bạn có thể cân nhắc sử dụng kết nối Background LE và gửi cảnh báo của mình với các chỉ báo GATT.
+
+Lưu ý rằng có giới hạn hai kết nối Bluetooth cho mỗi ứng dụng.
+
+Đây là cấu trúc liên kết mà chúng ta đã thấy trong ví dụ về cảm biến nhiệt độ.
+
+Để người dùng của bạn có trải nghiệm tốt nhất với các cảnh báo kịp thời, hãy cân nhắc thêm càng nhiều xử lý và trí thông minh trên thiết bị ngoại vi của bạn để lọc dữ liệu quan trọng về thời gian so với không quan trọng về thời gian.
+
+Quay trở lại ví dụ nhiệt độ của chúng tôi, thay vì truyền mọi nhiệt độ, bạn chỉ có thể gửi các sự kiện liên quan hoặc khi nhiệt độ thay đổi.
+
+Lợi ích của cách tiếp cận này là, nếu bạn tách biệt đúng các sự kiện quan trọng về thời gian khỏi dữ liệu định kỳ, cả thiết bị ngoại vi của bạn và người dùng Apple Watch sẽ tiết kiệm năng lượng, do đó trải nghiệm tổng thể tốt hơn.
+
+Khi thiết bị của bạn ngắt kết nối, chúng tôi khuyên bạn nên thiết lập lại kết nối.
+
+Khoảng thời gian quảng cáo phụ thuộc vào yêu cầu của thiết bị ngoại vi Bluetooth của bạn, chẳng hạn như tốc độ cần kết nối lại, thời lượng pin, v.v.
+
+Trong hướng dẫn phụ kiện, chúng tôi cung cấp một vài giá trị khác nhau mà bạn có thể sử dụng.
+
+Ví dụ, nếu thiết bị của bạn bị hạn chế pin, bạn có thể sử dụng giá trị 1022,5 mili giây.
+
+Một ví dụ khác: nếu bạn quảng cáo với tốc độ 20 mili giây, nó sẽ cho phép phát hiện trong vòng một giây trong điều kiện lý tưởng.
+
+Bạn có thể thiết kế sao cho tỷ lệ quảng cáo cao này chỉ có thể được sử dụng khi một sự kiện quan trọng xảy ra.
+
+Bây giờ hãy nói về khoảng thời gian kết nối.
+
+Nếu bạn chọn cấu trúc liên kết nơi thiết bị của bạn vẫn được kết nối trong nền, chúng tôi thực sự khuyên bạn nên sử dụng khoảng thời gian kết nối dài, chẳng hạn như ít nhất 150 mili giây.
+
+Điều này sẽ cho phép tiết kiệm pin trên thiết bị ngoại vi của bạn và cung cấp trải nghiệm người dùng tốt nhất trên Apple Watch.
+
+Bluetooth 5.3 đang đến với Apple Watch, cùng với xếp hạng phụ kết nối.
+
+Điều này sẽ cho phép tăng khoảng thời gian kết nối trong khi thiết bị ngoại vi Bluetooth không hoạt động và nhanh chóng thay đổi thành khoảng kết nối nhỏ hơn khi bạn cần độ trễ thấp hơn.
+
+Đây là bảng hiển thị sự khác biệt giữa các nền tảng.
+
+Đây là những cấu hình hiện được hỗ trợ cho Bluetooth Low Energy.
+
+Năm ngoái chúng tôi đã giới thiệu làm mới ứng dụng Background cho watchOS như một chế độ thực thi nền mới.
+
+Năm nay, nếu bạn sở hữu Series 6 trở lên, chúng tôi đã cải thiện việc thực hiện nền với các cảnh báo kịp thời như chúng tôi đã mô tả ngày hôm nay.
+
+Cảm ơn vì đã xem!
+
+.

@@ -1,0 +1,807 @@
+10167
+
+♪ ♪
+
+Becca: Xin chào, tôi là Becca từ nhóm Swift.
+
+Hôm nay chúng ta sẽ nói về macro Swift, một tính năng mới thú vị cho phép bạn tùy chỉnh ngôn ngữ Swift theo nhu cầu của mình.
+
+Chúng ta sẽ bắt đầu bằng cách nói về macro dùng để làm gì.
+
+Sau đó, chúng ta sẽ nói về một số nguyên tắc mà chúng ta đã ghi nhớ khi thiết kế macro Swift.
+
+Và sau đó chúng tôi sẽ đề cập đến cách các macro Swift hoạt động và những cách cụ thể mà chúng có thể tương tác với mã khác trong dự án của bạn.
+
+Sau đó, chúng ta sẽ nói về cách triển khai macro và kết thúc bằng cách thảo luận về cách đảm bảo macro của bạn hoạt động chính xác.
+
+Vì vậy, hãy bắt đầu bằng cách nói về lý do tại sao Swift hỗ trợ macro.
+
+Swift thích cho phép người dùng viết mã biểu cảm và API.
+
+Đó là lý do tại sao nó cung cấp các tính năng như sự phù hợp có nguồn gốc và trình tạo kết quả, giúp người dùng tránh viết bản mẫu lặp đi lặp lại.
+
+Các tính năng này về cơ bản đều hoạt động theo cùng một cách.
+
+Ví dụ, khi bạn tuân thủ Codable mà không cung cấp triển khai cho các thành viên của nó, Swift sẽ tự động mở rộng sự phù hợp thành một tập hợp các thành viên mà nó chèn vào chương trình.
+
+Tôi đã chỉ ra sự mở rộng cho sự phù hợp trong hộp màu xám.
+
+Tạo mã này cho bạn cho phép bạn sử dụng Codable mà không cần phải biết chính xác nó hoạt động như thế nào và làm cho nó để bạn không phải quyết định xem việc thêm hỗ trợ Codable có đáng để viết một màn hình mã hay không.
+
+Swift có nhiều tính năng hoạt động theo cách này.
+
+Bạn viết một số cú pháp đơn giản và trình biên dịch sẽ tự động mở rộng nó thành một đoạn mã phức tạp hơn.
+
+Nhưng điều gì sẽ xảy ra nếu các tính năng hiện có không thể làm những gì bạn muốn?
+
+Chà, bạn có thể thêm một tính năng vào trình biên dịch Swift, vì nó là mã nguồn mở.
+
+Nhưng điều đó thực sự liên quan đến cá nhân tôi, tham gia một cuộc họp video và thảo luận về tính năng của bạn với các nhà lãnh đạo dự án Swift khác, vì vậy nó không chính xác là một quá trình có quy mô.
+
+Đó là lý do tại sao chúng tôi giới thiệu macro.
+
+Chúng cho phép bạn thêm các tính năng ngôn ngữ của riêng mình vào Swift, loại bỏ sự tẻ nhạt và mẫu, theo cách bạn có thể phân phối trong gói Swift mà không cần sửa đổi trình biên dịch.
+
+Một số bạn chưa sử dụng macro bằng các ngôn ngữ khác.
+
+Nhưng nếu bạn có, bạn có thể có cảm xúc lẫn lộn về chúng.
+
+Điều đó một phần là do rất nhiều nhà phát triển Swift đã quen thuộc với Objective-C hoặc các ngôn ngữ khác sử dụng bộ tiền xử lý C và họ biết về những hạn chế và cạm bẫy của macro C.
+
+Nhưng các macro Swift rất khác nhau theo những cách để tránh được nhiều vấn đề đó.
+
+Chúng tôi đã thiết kế chúng với bốn mục tiêu trong tâm trí.
+
+Mục tiêu đầu tiên là nó phải khá rõ ràng khi bạn đang sử dụng macro.
+
+Có hai loại macro: Macro độc lập thay thế cho thứ khác trong mã của bạn.
+
+Họ luôn bắt đầu bằng dấu pound (#).
+
+Và các macro đính kèm được sử dụng làm thuộc tính trên các khai báo trong mã của bạn.
+
+Họ luôn bắt đầu với một dấu hiệu at (@).
+
+Swift đã sử dụng dấu pound (#) và at (@) để chỉ ra hành vi biên dịch đặc biệt.
+
+Macro chỉ làm cho điều đó có thể mở rộng được.
+
+Và nếu bạn không thấy #'s hoặc @'s, bạn có thể tự tin rằng không có bất kỳ macro nào liên quan.
+
+Mục tiêu thứ hai là cả mã được chuyển vào macro và mã được gửi lại từ nó phải được hoàn thành và kiểm tra lỗi.
+
+Bạn không thể chuyển "1 +" cho một macro vì các đối số phải là các biểu thức hoàn chỉnh.
+
+Bạn cũng không thể chuyển một đối số với loại sai vì các đối số vĩ mô và kết quả được kiểm tra kiểu, giống như các đối số hàm.
+
+Và việc triển khai macro có thể xác thực đầu vào của nó và phát ra cảnh báo hoặc lỗi trình biên dịch nếu có sự cố, vì vậy sẽ dễ dàng hơn để chắc chắn rằng bạn đang sử dụng macro một cách chính xác.
+
+Mục tiêu thứ ba là các mở rộng vĩ mô nên được kết hợp vào chương trình theo những cách bổ sung, có thể dự đoán được.
+
+Một macro chỉ có thể thêm vào mã hiển thị trong chương trình của bạn.
+
+Nó không thể loại bỏ nó hoặc thay đổi nó.
+
+Vì vậy, ngay cả khi bạn không biết "someUnknownMacro" làm gì, bạn vẫn có thể chắc chắn rằng nó không xóa lệnh gọi "finishDoingThingy" hoặc chuyển nó sang một hàm mới.
+
+Điều đó làm cho việc đọc mã sử dụng macro dễ dàng hơn rất nhiều.
+
+Và mục tiêu cuối cùng là macro không nên là phép thuật không thể xuyên thủng.
+
+Macro chỉ cần thêm nhiều mã hơn vào chương trình của bạn và đó là thứ bạn có thể thấy ngay trong Xcode.
+
+Bạn có thể nhấp chuột phải vào trang web sử dụng của macro và yêu cầu xem nó mở rộng thành gì.
+
+Bạn có thể đặt các điểm dừng trong bản mở rộng hoặc bước vào nó bằng trình gỡ lỗi.
+
+Khi mã bên trong bản mở rộng vĩ mô không được biên dịch, bạn sẽ thấy cả lỗi trong bản mở rộng và bản mở rộng đó nằm ở đâu trong mã nguồn của bạn.
+
+Và tất cả các công cụ này hoạt động ngay cả khi macro được cung cấp bởi một thư viện nguồn đóng.
+
+Các tác giả vĩ mô thậm chí có thể viết các bài kiểm tra đơn vị cho các macro của họ để đảm bảo chúng hoạt động như mong đợi; điều mà chúng tôi rất khuyến khích họ làm.
+
+Chúng tôi nghĩ rằng những mục tiêu này giúp các macro Swift dễ dàng cho các nhà phát triển hiểu và duy trì.
+
+Vì vậy, bây giờ chúng ta đã hiểu những gì các macro Swift đang cố gắng đạt được, hãy nói về cách họ làm điều đó.
+
+Trước khi chúng ta bị lạc trong các chi tiết, chúng ta hãy lấy khái niệm cơ bản xuống.
+
+Khi Swift thấy bạn gọi một macro trong mã của mình, như macro "stringify" từ mẫu gói macro Xcode, nó sẽ trích xuất việc sử dụng từ mã và gửi nó đến một trình cắm trình biên dịch đặc biệt có chứa việc triển khai cho macro đó.
+
+Trình cắm chạy như một quy trình riêng biệt trong một hộp cát an toàn và nó chứa mã Swift tùy chỉnh được viết bởi tác giả của macro.
+
+Nó xử lý việc sử dụng macro và trả về một "mở rộng", một đoạn mã mới được tạo bởi macro.
+
+Trình biên dịch Swift sau đó thêm bản mở rộng đó vào chương trình của bạn và biên dịch mã của bạn và bản mở rộng cùng nhau.
+
+Vì vậy, khi bạn chạy chương trình, nó hoạt động giống như thể bạn đã tự viết bản mở rộng thay vì gọi macro.
+
+Bây giờ, có một điểm quan trọng mà tôi đã che đậy ở đây.
+
+Làm thế nào Swift biết rằng macro "stringify" tồn tại?
+
+Và câu trả lời là, nó xuất phát từ một tuyên bố vĩ mô.
+
+Một khai báo vĩ mô cung cấp API cho một vĩ mô.
+
+Bạn có thể viết khai báo ngay trong mô-đun của riêng bạn hoặc bạn có thể nhập nó từ thư viện hoặc khuôn khổ.
+
+Nó chỉ định tên và chữ ký của macro, số lượng tham số cần thiết, nhãn và loại của chúng và loại kết quả nếu macro có, giống như khai báo hàm.
+
+Và nó cũng có một hoặc nhiều thuộc tính xác định vai trò của macro.
+
+Không thể viết một macro mà không suy nghĩ về vai trò của nó là gì.
+
+Vì vậy, hãy nói về vai trò là gì và cách bạn có thể sử dụng các vai trò khác nhau để viết các loại macro khác nhau.
+
+Vai trò là một tập hợp các quy tắc cho một vĩ mô.
+
+Nó chi phối vị trí và cách bạn áp dụng macro, loại mã nào nó mở rộng thành và nơi mở rộng đó được chèn vào mã của bạn.
+
+Cuối cùng, đó là các vai trò vĩ mô chịu trách nhiệm đạt được mục tiêu của chúng tôi là chèn các bản mở rộng theo những cách bổ sung, có thể dự đoán được.
+
+Có hai vai trò tạo ra các macro độc lập: Biểu thức và khai báo.
+
+Và có năm vai trò tạo ra các macro đính kèm: Ngang hàng, người truy cập, thuộc tính thành viên, thành viên và sự phù hợp.
+
+Hãy xem xét những vai trò này và khi nào bạn có thể sử dụng chúng.
+
+Chúng ta sẽ bắt đầu với vai trò "biểu hiện độc lập".
+
+Nếu thuật ngữ "biểu thức" không rung chuông, một biểu thức là cái mà chúng ta gọi là một đơn vị mã thực thi và tạo ra kết quả.
+
+Trong câu lệnh "let" này, số học sau dấu bằng là một biểu thức.
+
+Nhưng các biểu thức có cấu trúc đệ quy - chúng thường được tạo thành từ các biểu thức nhỏ hơn.
+
+Vì vậy, chỉ riêng "x + chiều rộng" cũng là một biểu thức.
+
+Và từ "chiều rộng" cũng vậy.
+
+Một macro "biểu thức độc lập" sau đó là một vĩ mô mở rộng thành một biểu thức.
+
+Bạn sẽ sử dụng một cái như thế nào?
+
+Hãy tưởng tượng bạn cần buộc mở gói một tùy chọn.
+
+Swift cung cấp một nhà điều hành force-unwrap, nhưng một số nhóm cảm thấy rằng hơi quá dễ dàng để ném vào force-unwrap mà không nghĩ về sự an toàn của nó, vì vậy hướng dẫn phong cách của họ yêu cầu các nhà phát triển viết một cái gì đó phức tạp hơn chỉ ra lý do tại sao giá trị không bao giờ nên bằng không.
+
+Nhưng hầu hết các lựa chọn thay thế này, chẳng hạn như sử dụng "bảo vệ" và sau đó gọi "preconditionFailure" trong nhánh "khác", là một chút quá nhiều nghi lễ.
+
+Hãy thiết kế một macro đạt được sự cân bằng tốt hơn giữa các thái cực này.
+
+Chúng tôi muốn macro này tính toán và trả về một giá trị, vì vậy chúng tôi biến nó thành macro "tự do (biểu thức)".
+
+Chúng tôi đặt cho nó tên "unwrap" và một loại chung trong đó giá trị được truyền vào là tùy chọn, nhưng giá trị trả về không phải là tùy chọn.
+
+Và chúng tôi cũng chuyển một chuỗi là một phần của tin nhắn được in nếu việc mở gói không thành công.
+
+Vì vậy, chúng tôi kết thúc với một macro mà chúng tôi gọi giống như một hàm, nhưng nó mở rộng thành một biểu thức có chứa "guard let" được bọc trong một đóng.
+
+Thông báo lỗi thậm chí còn bao gồm tên biến, điều không thể thực hiện được với một hàm bình thường.
+
+Bây giờ chúng ta đã thấy vai trò biểu đạt độc lập, hãy xem xét vai trò tuyên bố độc lập.
+
+Nó mở rộng thành một hoặc nhiều khai báo, như hàm, biến hoặc loại.
+
+Bạn có thể dùng nó để làm gì?
+
+Hãy tưởng tượng bạn đang viết một số loại phân tích thống kê cần một loại mảng 2D.
+
+Bạn muốn tất cả các hàng trong mảng có cùng số lượng cột, vì vậy bạn không muốn một mảng của mảng.
+
+Thay vào đó, bạn muốn lưu trữ các phần tử trong một mảng phẳng, một chiều và sau đó tính chỉ mục một chiều từ các chỉ số hai chiều do nhà phát triển truyền vào.
+
+Để làm điều đó, bạn có thể viết một kiểu như thế này.
+
+Hàm "makeIndex" lấy hai số nguyên cần thiết cho chỉ mục 2D, và sau đó thực hiện một số học nhỏ để biến chúng thành chỉ mục 1D.
+
+Nhưng sau đó bạn thấy rằng, trong một phần khác của chương trình, bạn cần một mảng ba chiều.
+
+Nó gần giống hệt như mảng 2D.
+
+Chỉ có một vài chỉ số nữa, và việc tính toán phức tạp hơn một chút.
+
+Và sau đó bạn cần một mảng 4D và sau đó là một mảng 5D, và chẳng mấy chốc bạn sẽ bơi trong các loại mảng gần như giống hệt nhau, nhưng không đủ gần để sử dụng generic, hoặc các phần mở rộng giao thức, hoặc các lớp con, hoặc bất kỳ tính năng nào khác mà Swift cung cấp cho loại điều này.
+
+May mắn thay, mỗi cấu trúc này là một khai báo, vì vậy chúng ta có thể sử dụng macro khai báo để tạo chúng.
+
+Vì vậy, hãy khai báo một macro khai báo độc lập với tên "makeArrayND", vì nó sẽ tạo ra một loại mảng N chiều.
+
+Chúng tôi sẽ chuyển số lượng kích thước làm tham số Int và chúng tôi sẽ không khai báo loại kết quả vì macro này sẽ thêm khai báo vào chương trình của chúng tôi, không tính toán kết quả được sử dụng bởi mã khác.
+
+Bây giờ chúng ta có thể gọi macro bốn lần với hai, ba, bốn và năm chiều, và mỗi cuộc gọi đó sẽ mở rộng thành toàn bộ loại mảng đa chiều với số lượng đối số phù hợp và tính toán phù hợp cho kích thước đó.
+
+Cho đến nay, chúng tôi chỉ xem xét các macro độc lập.
+
+Bây giờ hãy chuyển sang vai trò cho các macro đính kèm.
+
+Các macro đính kèm, như tên cho thấy, được đính kèm với một tuyên bố cụ thể.
+
+Điều đó có nghĩa là họ có nhiều thông tin hơn để làm việc.
+
+Các macro độc lập chỉ được cung cấp các đối số mà chúng được truyền, nhưng các macro đính kèm cũng có thể truy cập vào tuyên bố mà chúng được đính kèm.
+
+Họ thường kiểm tra tờ khai đó và lấy ra tên, loại và các thông tin khác từ bên trong chúng.
+
+Chúng ta sẽ bắt đầu với vai trò ngang hàng đính kèm.
+
+Một macro ngang hàng có thể được đính kèm với bất kỳ khai báo nào, không chỉ các biến, hàm và loại, mà ngay cả những thứ như khai báo nhập và khai báo toán tử, và có thể chèn các khai báo mới cùng với nó.
+
+Vì vậy, nếu bạn sử dụng nó trên một phương thức hoặc thuộc tính, cuối cùng bạn sẽ tạo các thành viên của loại, nhưng nếu bạn sử dụng nó trên hàm hoặc loại cấp cao nhất, cuối cùng bạn sẽ tạo các khai báo cấp cao nhất mới.
+
+Điều đó khiến họ cực kỳ linh hoạt.
+
+Đây là một cách bạn có thể sử dụng chúng.
+
+Giả sử bạn đang viết một thư viện sử dụng Swift concurrency, nhưng bạn biết rằng một số khách hàng của bạn vẫn đang sử dụng các kỹ thuật đồng thời cũ hơn, vì vậy bạn muốn cung cấp cho họ các phiên bản API của bạn sử dụng trình xử lý hoàn thành.
+
+Không khó để viết những phương pháp này.
+
+Bạn chỉ cần xóa từ khóa "không đồng bộ", thêm tham số trình xử lý hoàn thành, di chuyển loại kết quả vào danh sách tham số và gọi phiên bản không đồng bộ trong một tác vụ tách rời.
+
+Nhưng bạn đang làm điều này rất nhiều, và bạn không muốn phải viết nó bằng tay.
+
+Đó là một công việc tuyệt vời cho một macro ngang hàng đính kèm.
+
+Chúng tôi sẽ khai báo một cái được gọi là "AddCompletionHandler" và cung cấp cho nó một tham số cho nhãn đối số của trình xử lý hoàn thành, sau đó đính kèm macro đó vào phiên bản không đồng bộ của phương thức.
+
+Macro sẽ tạo ra một chữ ký dựa trên trình xử lý hoàn thành tương đương với bản gốc, viết nội dung phương thức và thậm chí đính kèm nhận xét tài liệu với văn bản bổ sung cho trình xử lý hoàn thành.
+
+Khá tuyệt.
+
+Tiếp theo, hãy xem xét vai trò truy cập đính kèm.
+
+Chúng có thể được đính kèm với các biến và chỉ số con, và chúng có thể cài đặt các trình truy cập vào chúng, như "get", "set", "willSet" hoặc "didSet".
+
+Vậy điều đó có thể hữu ích như thế nào?
+
+Giả sử bạn có một loạt các loại về cơ bản bao quanh từ điển và cho phép bạn truy cập nội dung của chúng bằng các thuộc tính.
+
+Vì vậy, ví dụ, cấu trúc "Người" này cho phép bạn truy cập các trường "tên", "chiều cao" và "ngày_sinh", nhưng nếu có thông tin khác trong từ điển ngoài ba trường đó, nó sẽ được chương trình của bạn bảo quản và bỏ qua.
+
+Ba thuộc tính này cần getters và setters được tính toán, nhưng việc viết chúng bằng tay rất tẻ nhạt và chúng tôi không thể sử dụng trình bao bọc thuộc tính vì trình bao bọc thuộc tính không thể truy cập các thuộc tính được lưu trữ khác theo loại mà chúng được sử dụng.
+
+Vì vậy, hãy viết một macro truy cập đính kèm có thể giúp với điều này.
+
+Chúng tôi sẽ gọi nó là "DictionaryStorage."
+
+Chúng tôi sẽ cung cấp cho nó một tham số "khóa" vì từ điển đánh vần "birth_date" với dấu gạch dưới, nhưng bạn cũng có thể chỉ cần bỏ khóa ra và nó sẽ mặc định là nil, điều này sẽ làm cho macro sử dụng tên của thuộc tính làm khóa.
+
+Vì vậy, bây giờ, thay vì viết khối truy cập lớn đó, bạn chỉ có thể đặt “@DictionaryStorage” trước mỗi thuộc tính và macro sẽ tạo ra các trình truy cập cho bạn.
+
+Đó là một cải tiến tốt, nhưng vẫn còn một số bản mẫu ở đây: Các thuộc tính "DictionaryStorage" giống hệt nhau.
+
+Chúng ít được soạn sẵn hơn, nhưng chúng vẫn là nồi hơi.
+
+Một số thuộc tính tích hợp cho phép bạn giải quyết loại tình huống này bằng cách áp dụng chúng cho toàn bộ loại hoặc tiện ích mở rộng.
+
+Vai trò "thuộc tính thành viên đính kèm" cũng có thể khiến macro của bạn hoạt động như vậy.
+
+Macro được gắn vào một loại hoặc tiện ích mở rộng và nó có thể thêm các thuộc tính cho các thành viên của bất kỳ thứ gì nó được đính kèm.
+
+Hãy xem nó được thực hiện như thế nào.
+
+Chúng ta sẽ làm điều gì đó hơi khác một chút ở đây.
+
+Thay vì khai báo một macro mới, chúng tôi sẽ thêm một thuộc tính vai trò khác vào macro "DictionaryStorage", cùng với vai trò "truy cập đính kèm" mà nó đã có.
+
+Đây là một kỹ thuật thực sự hữu ích để tạo macro.
+
+Bạn được phép soạn bất kỳ sự kết hợp vai trò nào ngoại trừ hai vai trò độc lập vì có những nơi Swift không biết nên sử dụng vai trò nào.
+
+Swift sẽ mở rộng tất cả các vai trò có ý nghĩa ở bất cứ nơi nào bạn áp dụng chúng, nhưng ít nhất một trong các vai trò phải hoạt động ở đó.
+
+Vì vậy, nếu bạn đính kèm "DictionaryStorage" vào một loại, Swift sẽ mở rộng vai trò "thuộc tính thành viên".
+
+Nếu bạn đính kèm nó vào một thuộc tính, Swift sẽ mở rộng vai trò "người truy cập".
+
+Nhưng nếu bạn đính kèm nó vào một hàm, bạn sẽ gặp lỗi biên dịch vì "DictionaryStorage" không có bất kỳ vai trò nào có thể gắn vào một hàm.
+
+Với vai trò thứ hai này được thêm vào "DictionaryStorage", thay vì đính kèm nó riêng biệt vào mọi thuộc tính, bạn chỉ có thể đính kèm nó vào toàn bộ loại.
+
+Macro sẽ có logic để bỏ qua một số thành viên nhất định, như trình khởi tạo, thuộc tính "dictionary" và các thuộc tính như "birth_date" đã có thuộc tính "DictionaryStorage".
+
+Nhưng nó sẽ thêm thuộc tính "DictionaryStorage" vào bất kỳ thuộc tính được lưu trữ nào khác, và sau đó các thuộc tính đó sẽ mở rộng thành các trình truy cập mà chúng ta đã thấy.
+
+Đó là một cải tiến tốt, nhưng vẫn còn nhiều bản mẫu mà chúng ta có thể loại bỏ: Trình khởi tạo và tài sản được lưu trữ.
+
+Chúng được yêu cầu bởi giao thức "DictionaryRepresentable" và thuộc tính được sử dụng bởi các trình truy cập, nhưng chúng hoàn toàn giống nhau trong bất kỳ loại nào sử dụng DictionaryStorage.
+
+Hãy làm cho macro DictionaryStorage tự động thêm chúng, để chúng ta không phải viết chúng bằng tay.
+
+Chúng ta có thể làm điều đó bằng cách sử dụng vai trò "thành viên đính kèm".
+
+Giống như các macro thuộc tính thành viên, bạn có thể áp dụng các macro này cho các loại và tiện ích mở rộng, nhưng thay vì thêm các thuộc tính cho các thành viên hiện tại, họ thêm các thành viên hoàn toàn mới.
+
+Vì vậy, bạn có thể thêm các phương thức, thuộc tính, trình khởi tạo, v.v.
+
+Bạn thậm chí có thể thêm các thuộc tính được lưu trữ vào các lớp và cấu trúc, hoặc các trường hợp vào liệt kê.
+
+Một lần nữa, chúng tôi sẽ thêm một vai trò "thành viên đính kèm" mới vào macro DictionaryStorage, soạn nó với hai vai trò còn lại.
+
+Vai trò mới này sẽ thêm một trình khởi tạo và một thuộc tính được gọi là "tác điển".
+
+Bạn có thể tự hỏi, khi hai macro khác nhau được áp dụng cho cùng một mã, cái nào được mở rộng trước?
+
+Sau đó câu trả lời là, nó không thực sự quan trọng.
+
+Mỗi người sẽ thấy phiên bản gốc của tuyên bố mà không có bản mở rộng do những người khác cung cấp.
+
+Vì vậy bạn không cần phải lo lắng về việc đặt hàng.
+
+Bạn sẽ thấy điều tương tự bất kể khi nào trình biên dịch mở rộng macro của bạn.
+
+Với vai trò thành viên đính kèm được thêm vào, chúng tôi thậm chí không phải viết hai thành viên đó nữa.
+
+Chỉ cần sử dụng DictionaryStorage trên loại sẽ tự động thêm chúng cho chúng tôi.
+
+Và sau đó vai trò khác sẽ thêm các thuộc tính DictionaryStorage trên các thuộc tính và các thuộc tính đó sẽ mở rộng thành các trình truy cập, v.v.
+
+Nhưng vẫn còn một chút cuối cùng của bản mẫu để loại bỏ: Sự phù hợp với giao thức DictionaryRepresentable.
+
+Vai trò "sự phù hợp đính kèm" là hoàn hảo cho việc này.
+
+Nó có thể thêm sự phù hợp với một loại hoặc phần mở rộng.
+
+Chúng tôi sẽ thêm một vai trò "sự phù hợp đính kèm" cuối cùng vào macro "DictionaryStorage", sáng tác nó với ba vai trò còn lại.
+
+Vai trò mới này sẽ bổ sung sự phù hợp cho "Đại diện từ điển".
+
+Vì vậy, bây giờ chúng ta không cần phải viết sự phù hợp theo cách thủ công.
+
+Thuộc tính DictionaryStorage mà chúng tôi đã thêm cho các trình truy cập và các thành viên được tạo giờ đây cũng sẽ tự động thêm sự phù hợp, cùng với tất cả những thứ khác mà nó đã làm.
+
+Đã lâu rồi kể từ khi chúng tôi nhìn thấy điểm khởi đầu của mình, vì vậy chỉ để nhắc nhở bạn, chúng tôi đã lấy một loại lớn, ngang bướng chứa đầy mã lặp đi lặp lại và chuyển hầu hết mã đó vào một số vai trò của một macro siêu mạnh để những gì còn lại chỉ xác định ngắn gọn những gì đặc biệt về loại cụ thể này.
+
+Hãy tưởng tượng nếu bạn có 10 hoặc 20 loại có thể sử dụng DictionaryStorage.
+
+Làm việc với tất cả chúng sẽ dễ dàng hơn bao nhiêu?
+
+Bây giờ chúng tôi đã dành rất nhiều thời gian để nói về các tuyên bố và vai trò, nhưng cho đến nay, mã mà họ mở rộng dường như đã xuất hiện một cách kỳ diệu.
+
+Hãy lấp đầy khoảng trống đó ngay bây giờ và nói về cách bạn triển khai macro của mình.
+
+Khi tôi cho bạn xem các khai báo vĩ mô cho đến nay, tôi đã bỏ qua một điều rất quan trọng: việc triển khai.
+
+Đó là sau một dấu bằng nhau, và nó luôn là một vĩ mô khác.
+
+Đôi khi đó là một macro khác mà bạn đã viết, chỉ với các tham số được sắp xếp lại hoặc với các tham số bổ sung được chỉ định dưới dạng chữ cái.
+
+Nhưng thông thường, bạn sẽ sử dụng một macro bên ngoài.
+
+Macro bên ngoài là macro được thực hiện bởi trình cắm trình biên dịch.
+
+Bạn có thể nhớ rằng tôi đã nói về các trình cắm trình biên dịch trước đó.
+
+Tôi đã nói rằng khi trình biên dịch thấy một macro đang được sử dụng, nó sẽ bắt đầu một trình cắm trong một quy trình riêng biệt và yêu cầu nó mở rộng macro.
+
+"#externalMacro" là những gì định nghĩa mối quan hệ đó.
+
+Nó chỉ định trình cắm mà trình biên dịch sẽ khởi chạy và tên của một loại bên trong trình cắm đó.
+
+Vì vậy, khi Swift mở rộng macro này, nó sẽ khởi chạy một trình cắm có tên "MyLibMacros" và yêu cầu một loại gọi là "StringifyMacro" mở rộng nó.
+
+Vì vậy, khai báo vĩ mô đi vào thư viện bình thường của bạn cùng với các API khác của bạn, nhưng việc triển khai vĩ mô đi vào một mô-đun trình cắm trình biên dịch riêng biệt.
+
+Và "#externalMacro" tạo ra liên kết giữa khai báo và loại triển khai nó.
+
+Việc triển khai vĩ mô trông như thế nào?
+
+Chà, chúng ta hãy xem DictionaryStorage có thể được triển khai như thế nào.
+
+Nếu bạn nhớ lại, macro "DictionaryStorage" của chúng tôi có vai trò "thành viên đính kèm" đã thêm thuộc tính được lưu trữ và trình khởi tạo vào loại.
+
+Đây là một cách thực hiện đơn giản của vai trò đó.
+
+Chúng ta sẽ xem xét từng bước một và tìm hiểu cách thức hoạt động của nó.
+
+Ngay trên cùng, chúng tôi bắt đầu bằng cách nhập một thư viện có tên SwiftSyntax.
+
+SwiftSyntax là một gói được duy trì bởi dự án Swift giúp bạn phân tích cú pháp, kiểm tra, thao tác và tạo mã nguồn Swift.
+
+Những người đóng góp Swift luôn cập nhật SwiftSyntax khi ngôn ngữ phát triển, vì vậy nó hỗ trợ mọi tính năng mà trình biên dịch Swift thực hiện.
+
+SwiftSyntax đại diện cho mã nguồn như một cấu trúc cây đặc biệt.
+
+Ví dụ, cấu trúc "Người" trong mẫu mã này được biểu diễn dưới dạng một thể hiện của một loại được gọi là "StructDeclSyntax."
+
+Nhưng trường hợp đó có các thuộc tính và mỗi thuộc tính đó đại diện cho một số phần của khai báo cấu trúc.
+
+Danh sách các thuộc tính nằm trong thuộc tính "thuộc tính".
+
+Từ khóa thực tế "cấu trúc" nằm trong thuộc tính "structKeyword".
+
+Tên của cấu trúc nằm trong thuộc tính "định danh".
+
+Và phần thân với niềng răng xoăn và các thành viên của cấu trúc nằm trong thuộc tính "memberBlock".
+
+Ngoài ra còn có các thuộc tính như "modifiers" đại diện cho những thứ mà một số khai báo cấu trúc có.
+
+Nhưng cái này thì không. Đây là số không.
+
+Một số nút cú pháp trong các thuộc tính này được gọi là "mã thông báo".
+
+Chúng đại diện cho một đoạn văn bản cụ thể trong tệp nguồn, như tên hoặc từ khóa hoặc một chút dấu câu và chúng chỉ chứa văn bản đó và bất kỳ câu đố nào xung quanh, như dấu cách và nhận xét.
+
+Nếu bạn đi sâu vào cây cú pháp, bạn sẽ tìm thấy một nút mã thông báo bao phủ mọi byte của tệp nguồn.
+
+Nhưng một số nút đó, như nút "AttributeListSyntax" trong thuộc tính "thuộc tính" và nút "MemberDeclBlockSyntax" trong thuộc tính "memberBlock", không phải là mã thông báo.
+
+Chúng có các nút con trong thuộc tính riêng của chúng.
+
+Ví dụ: nếu chúng ta nhìn vào bên trong thuộc tính "memberBlock", chúng ta sẽ tìm thấy mã thông báo cho dấu ngoặc nhọn mở, nút "MemberDeclListSyntax" cho danh sách thành viên và mã thông báo cho dấu ngoặc nhọn đóng.
+
+Và nếu bạn tiếp tục khám phá nội dung của nút "MemberDeclListSyntax" đó, cuối cùng bạn sẽ tìm thấy một nút cho mỗi thuộc tính, v.v.
+
+Làm việc với SwiftSyntax là một chủ đề lớn của riêng nó, vì vậy thay vì làm video này dài gấp đôi, tôi sẽ giới thiệu cho bạn hai tài nguyên khác.
+
+Một là phiên "Viết Macro Swift" đồng hành, bao gồm các mẹo thiết thực để tìm ra cách một đoạn mã nguồn cụ thể được biểu diễn dưới dạng cây cú pháp.
+
+Cái còn lại là tài liệu của gói SwiftSyntax.
+
+Bạn có thể tìm thấy nó trực tuyến hoặc nếu bạn sử dụng lệnh Xây dựng Tài liệu của Xcode trong gói macro của mình, tài liệu SwiftSyntax sẽ xuất hiện trong cửa sổ Tài liệu dành cho Nhà phát triển.
+
+Ngoài thư viện SwiftSyntax chính, chúng tôi cũng nhập hai mô-đun khác.
+
+Một là "SwiftSyntaxMacros", cung cấp các giao thức và loại cần thiết để viết macro.
+
+Cái còn lại được gọi là "SwiftSyntaxBuilder".
+
+Thư viện này cung cấp các API tiện lợi để xây dựng cây cú pháp để đại diện cho mã mới được tạo.
+
+Bạn có thể viết một macro mà không cần sử dụng nó, nhưng nó cực kỳ tiện dụng và chúng tôi thực sự khuyên bạn nên tận dụng nó.
+
+Bây giờ chúng tôi đã nhập các thư viện này, chúng tôi sẽ bắt đầu thực sự viết loại "DictionaryStorageMacro" mà trình cắm của chúng tôi được cho là cung cấp.
+
+Lưu ý rằng nó phù hợp với một giao thức được gọi là "MemberMacro."
+
+Mỗi vai trò có một giao thức tương ứng và việc triển khai phải phù hợp với giao thức cho từng vai trò mà macro cung cấp.
+
+Macro "DictionaryStorage" có bốn trong số các vai trò này, vì vậy loại "DictionaryStorageMacro" sẽ cần phải phù hợp với bốn giao thức tương ứng.
+
+Nhưng để giữ mọi thứ đơn giản, chúng tôi chỉ lo lắng về sự phù hợp của "MemberMacro" ngay bây giờ.
+
+Chuyển sang phần thân của loại này, chúng ta thấy một phương pháp được gọi là "mở rộng, cung cấp thành viên của, trong."
+
+Phương pháp này được yêu cầu bởi giao thức MemberMacro và đó là những gì trình biên dịch Swift gọi để mở rộng vai trò thành viên khi macro được sử dụng.
+
+Chúng tôi chưa sử dụng các lập luận, nhưng chúng tôi sẽ nói về chúng sau.
+
+Hiện tại, hãy lưu ý rằng đó là một phương pháp tĩnh.
+
+Tất cả các phương thức mở rộng đều tĩnh, vì vậy Swift không thực sự tạo ra một phiên bản của loại DictionaryStorageMacro.
+
+Nó chỉ sử dụng nó như một vùng chứa cho các phương thức.
+
+Mỗi phương thức mở rộng trả về các nút SwiftSyntax được chèn vào mã nguồn.
+
+Một macro thành viên mở rộng thành một danh sách các khai báo để thêm dưới dạng thành viên vào loại, vì vậy phương thức mở rộng cho một macro thành viên trả về một mảng các nút "DeclSyntax".
+
+Nếu chúng ta nhìn vào bên trong cơ thể, chúng ta sẽ thấy mảng đó đang được tạo ra.
+
+Nó có trình khởi tạo và thuộc tính được lưu trữ mà chúng tôi muốn macro này thêm vào.
+
+Bây giờ, phần "từ điển var" ở đây trông giống như một chuỗi thông thường, nhưng thực tế thì không.
+
+Chuỗi ký tự này đang được viết trong đó một DeclSyntax được mong đợi, vì vậy Swift thực sự coi nó như một đoạn mã nguồn và yêu cầu trình phân tích cú pháp Swift biến nó thành một nút DeclSyntax.
+
+Đây là một trong những tiện ích mà thư viện SwiftSyntaxBuilder cung cấp.
+
+Đó là một điều tốt khi chúng tôi đã nhập nó sớm hơn.
+
+Vì vậy, với điều đó và với sự phù hợp với các giao thức cho ba vai trò còn lại, chúng tôi sẽ có một triển khai hoạt động của macro DictionaryStorage của chúng tôi.
+
+Nhưng mặc dù macro này bây giờ sẽ hoạt động khi bạn sử dụng nó một cách chính xác, điều gì sẽ xảy ra nếu bạn sử dụng nó sai?
+
+Ví dụ, điều gì sẽ xảy ra nếu bạn cố gắng áp dụng nó vào một enum thay vì cho một cấu trúc?
+
+Chà, vai trò "thành viên đính kèm" sẽ cố gắng thêm một thuộc tính "tác điển" được lưu trữ.
+
+Nhưng một enum không thể có các thuộc tính được lưu trữ, vì vậy Swift sẽ tạo ra lỗi: "Enums không được chứa các thuộc tính được lưu trữ."
+
+Thật tuyệt khi Swift sẽ ngăn mã này biên dịch, nhưng thông báo lỗi hơi khó hiểu, phải không?
+
+Không thực sự rõ ràng tại sao macro DictionaryStorage lại cố gắng tạo một thuộc tính được lưu trữ hoặc những gì bạn nên làm khác đi.
+
+Tôi đã nói trước đó rằng một trong những mục tiêu của Swift là cho phép các macro phát hiện lỗi trong đầu vào của chúng và phát ra các lỗi tùy chỉnh.
+
+Vì vậy, hãy sửa đổi việc triển khai macro của chúng tôi để tạo ra thông báo lỗi rõ ràng hơn nhiều cho việc này: “@DictionaryStorage chỉ có thể được áp dụng cho một cấu trúc."
+
+Điều đó sẽ cung cấp cho các nhà phát triển ý tưởng tốt hơn về những gì họ đã làm sai.
+
+Chìa khóa để làm điều này sẽ là các tham số cho phương pháp mở rộng, mà chúng tôi đã bỏ qua cho đến nay.
+
+Các đối số chính xác hơi khác nhau đối với các vai trò khác nhau, nhưng đối với vĩ mô thành viên, có ba.
+
+Đầu tiên được gọi là "thuộc tính", và loại của nó là AttributeSyntax.
+
+Đây là thuộc tính DictionaryStorage thực tế mà nhà phát triển đã viết để sử dụng macro.
+
+Đối số thứ hai được gọi là "tuyên bố" và là một loại phù hợp với "DeclGroupSyntax."
+
+DeclGroupSyntax là một giao thức mà các nút cho cấu trúc, enums, lớp, diễn viên, giao thức và phần mở rộng đều tuân thủ.
+
+Vì vậy, tham số này cung cấp cho chúng tôi tuyên bố mà nhà phát triển đã đính kèm thuộc tính vào.
+
+Và tham số cuối cùng được gọi là "bối cảnh" và thuộc loại phù hợp với "MacroExpansionContext".
+
+Đối tượng ngữ cảnh được sử dụng khi việc triển khai vĩ mô muốn giao tiếp với trình biên dịch.
+
+Nó có thể làm một vài việc khác nhau, bao gồm phát ra lỗi và cảnh báo.
+
+Chúng tôi sẽ sử dụng cả ba tham số này để phát ra lỗi của chúng tôi.
+
+Hãy xem nó được thực hiện như thế nào.
+
+Đầu tiên, chúng ta cần phát hiện ra vấn đề.
+
+Chúng tôi sẽ làm điều đó bằng cách kiểm tra loại tham số "tuyên bố".
+
+Mỗi loại khai báo có một loại khác nhau, vì vậy nếu đó là một cấu trúc, loại của nó sẽ là "StructDeclSyntax", nếu nó là một enum, nó sẽ là "EnumDeclSyntax", v.v.
+
+Vì vậy, chúng tôi sẽ viết một guard-else gọi phương thức "is" của tham số "declaration" và chuyển "StructDeclSyntax".
+
+Nếu khai báo không phải là một cấu trúc, chúng ta sẽ kết thúc trong khối "khác".
+
+Hiện tại, chúng tôi sẽ trả về một mảng trống, vì vậy macro không thêm bất kỳ mã nào vào dự án, nhưng những gì chúng tôi thực sự muốn làm là phát ra lỗi.
+
+Bây giờ, cách dễ dàng để làm điều đó là chỉ ném một lỗi Swift thông thường, nhưng điều đó không cho phép bạn kiểm soát nhiều đầu ra.
+
+Vì vậy, thay vào đó, tôi sẽ chỉ cho bạn cách phức tạp hơn cho phép bạn tạo ra các lỗi phức tạp hơn.
+
+Bước đầu tiên là tạo ra một ví dụ của một loại được gọi là "Chẩn đoán".
+
+Đây là một chút biệt ngữ trình biên dịch.
+
+Giống như một bác sĩ đang xem X-quang chân bị gãy của bạn chẩn đoán gãy xương, trình biên dịch hoặc macro nhìn vào cây cú pháp của mã bị hỏng của bạn sẽ chẩn đoán lỗi hoặc cảnh báo.
+
+Vì vậy, chúng tôi gọi trường hợp đại diện cho lỗi là "Chẩn đoán".
+
+Chẩn đoán chứa ít nhất hai mẩu thông tin.
+
+Đầu tiên là nút cú pháp mà lỗi xảy ra, vì vậy trình biên dịch biết dòng nào cần đánh dấu là không chính xác.
+
+Ở đây, chúng tôi muốn trỏ đến thuộc tính DictionaryStorage mà người dùng đã viết, rất vui, được cung cấp bởi tham số "thuộc tính" mà phương thức đã được truyền.
+
+Thứ hai là thông báo thực tế mà bạn muốn trình biên dịch tạo ra.
+
+Bạn cung cấp điều này bằng cách tạo một loại tùy chỉnh và sau đó chuyển một phiên bản của nó.
+
+Hãy xem nhanh nó.
+
+Loại "MyLibDiagnostic" xác định tất cả các chẩn đoán mà mô-đun này có thể tạo ra.
+
+Chúng tôi đã chọn sử dụng một enum và cung cấp một trường hợp cho mỗi chẩn đoán, nhưng bạn có thể sử dụng một loại khác nếu bạn muốn.
+
+Loại này hoạt động giống như một lỗi Swift có thể ném được.
+
+Nó phù hợp với giao thức "DiagnosticMessage", và nó có một loạt các thuộc tính cung cấp thông tin về chẩn đoán.
+
+Một trong những điều quan trọng nhất là tài sản "mệu trọng".
+
+Nó xác định liệu chẩn đoán là lỗi hay cảnh báo.
+
+Sau đó là thuộc tính "tin nhắn", tạo ra thông báo lỗi thực tế và thuộc tính "diagnosticID".
+
+Bạn nên sử dụng tên mô-đun của trình cắm cho miền và một số loại chuỗi duy nhất cho ID.
+
+Tôi đã chọn sử dụng các giá trị thô chuỗi cho enum này, nhưng đó chỉ là một sự tiện lợi.
+
+Vì vậy, với thông điệp trong tay, bạn có thể tạo chẩn đoán.
+
+Sau đó, bạn nói với bối cảnh để chẩn đoán nó, và bạn đã hoàn tất.
+
+Đó là một chẩn đoán khá cơ bản, nhưng nếu bạn muốn, bạn có thể thích thú hơn rất nhiều với chúng.
+
+Ví dụ, bạn có thể thêm Fix-Its vào chẩn đoán được áp dụng tự động bởi nút Xcode Fix.
+
+Bạn cũng có thể thêm điểm nổi bật và đính kèm ghi chú trỏ đến các vị trí khác trong mã.
+
+Vì vậy, bạn thực sự có thể cung cấp trải nghiệm lỗi hạng nhất cho các nhà phát triển của mình.
+
+Nhưng một khi bạn đã đảm bảo rằng macro của mình đang được áp dụng chính xác, bạn vẫn cần phải thực sự tạo bản mở rộng.
+
+SwiftSyntax cung cấp cho bạn một số công cụ khác nhau để làm điều đó.
+
+Các nút cú pháp là bất biến, nhưng chúng có rất nhiều API tạo các nút mới hoặc trả về các phiên bản sửa đổi của các nút hiện có.
+
+Thư viện SwiftSyntaxBuilder thêm các trình tạo cú pháp kiểu SwiftUI trong đó một số nút con được chỉ định bằng cách đóng cuối.
+
+Ví dụ, macro mảng đa chiều có thể sử dụng trình tạo cú pháp để tạo bất kỳ số lượng tham số nào phù hợp với loại mà nó đang tạo.
+
+Và tính năng chuỗi theo nghĩa đen mà chúng tôi đã sử dụng để tạo thuộc tính DictionaryStorage và trình khởi tạo cũng hỗ trợ nội suy.
+
+Tất cả các tính năng này đều hữu ích trong các tình huống khác nhau và bạn có thể sẽ thấy mình kết hợp một số trong các macro đặc biệt phức tạp.
+
+Nhưng tính năng chuỗi theo nghĩa đen đặc biệt tốt trong việc tạo ra cây cú pháp cho một lượng lớn mã và có một chút để tìm hiểu về các tính năng nội suy của nó.
+
+Vì vậy, hãy xem cách bạn có thể sử dụng chúng để tạo ra một số mã.
+
+Trước đó, chúng tôi đã nói về macro "unwrap".
+
+Nó lấy một giá trị tùy chọn và một chuỗi tin nhắn và mở rộng thành một "bảo vệ" được bọc trong một đóng.
+
+Hình dạng chung của mã này sẽ luôn giống nhau, nhưng rất nhiều nội dung được tùy chỉnh cho trang web sử dụng cụ thể.
+
+Hãy tập trung vào câu lệnh "guard let" và xem cách chúng ta có thể viết một hàm để tạo ra câu lệnh đó.
+
+Để bắt đầu, chúng tôi sẽ chỉ lấy mẫu mã chính xác mà chúng tôi vừa thấy và đặt nó vào một phương thức trợ giúp được gọi là "makeGuardStatement" trả về một nút Cú pháp Câu lệnh.
+
+Sau đó, chúng tôi sẽ từ từ thêm phép nội suy để thay thế tất cả những thứ cần phải khác nhau tùy thuộc vào nơi nó được sử dụng.
+
+Điều đầu tiên chúng ta sẽ làm là thêm chuỗi tin nhắn phù hợp.
+
+Chuỗi tin nhắn là một biểu thức tùy ý, vì vậy chúng tôi sẽ chuyển nó dưới dạng nút ExprSyntax và sau đó nội suy nó vào.
+
+Một phép nội suy thông thường như thế này có thể thêm một nút cú pháp vào mã, nhưng nó không thể thêm một Chuỗi đơn giản.
+
+Đó là một tính năng an toàn giúp bạn không vô tình chèn mã không hợp lệ.
+
+Điều kiện guard-let tương tự nhau, ngoại trừ việc nó chỉ là một tên biến, vì vậy nó là một mã thông báo, không phải là một biểu thức.
+
+Không có vấn đề gì, chúng tôi thêm một tham số TokenSyntax và nội suy nó vào, giống như chúng tôi nội suy biểu thức.
+
+Có một trường hợp phức tạp hơn khi bạn thêm biểu thức không được gói vào thông báo lỗi.
+
+Một trong những tính năng của macro của chúng tôi là khi nó không thành công, nó sẽ in ra mã bạn đang cố gắng mở gói.
+
+Điều đó có nghĩa là chúng ta cần tạo một chuỗi theo nghĩa đen có chứa phiên bản chuỗi của nút cú pháp.
+
+Hãy bắt đầu bằng cách kéo tiền tố ra khỏi cú pháp câu lệnh theo nghĩa đen và vào một biến chỉ là một chuỗi đơn giản.
+
+Chúng tôi sẽ nội suy chuỗi đó, nhưng chúng tôi sẽ sử dụng một phép nội suy đặc biệt bắt đầu bằng "nghĩa đen:".
+
+Khi bạn làm điều này, SwiftSyntax sẽ thêm nội dung của chuỗi dưới dạng chuỗi theo nghĩa đen.
+
+Điều này cũng hoạt động để tạo các ký tự từ các loại thông tin khác được tính toán bởi macro, số, Booleans, mảng, từ điển và thậm chí cả tùy chọn.
+
+Bây giờ chúng ta đang xây dựng chuỗi trong một biến, chúng ta có thể thay đổi nó để có mã phù hợp trong tin nhắn.
+
+Chỉ cần thêm một tham số cho biểu thức ban đầu và nội suy thuộc tính "mô tả" của nó vào chuỗi.
+
+Bạn không cần phải làm bất cứ điều gì đặc biệt để thoát khỏi nó.
+
+Phép nội suy "nghĩa đen:" sẽ tự động phát hiện xem chuỗi có chứa các ký tự đặc biệt hay không và thêm lối thoát hoặc chuyển sang ký tự thô để đảm bảo mã hợp lệ.
+
+Vì vậy, phép nội suy "theo nghĩa đen:" giúp việc làm điều đúng đắn trở nên cực kỳ dễ dàng.
+
+Điều cuối cùng cần giải quyết là tệp và số dòng.
+
+Những điều này hơi phức tạp vì trình biên dịch không cho macro biết vị trí nguồn mà nó đang mở rộng vào.
+
+Tuy nhiên, ngữ cảnh mở rộng vĩ mô có một API mà bạn có thể sử dụng để tạo các nút cú pháp đặc biệt mà trình biên dịch sẽ biến thành các ký tự với thông tin vị trí nguồn.
+
+Vậy hãy xem điều đó được thực hiện như thế nào.
+
+Chúng tôi sẽ thêm một đối số khác cho bối cảnh mở rộng vĩ mô, và sau đó chúng tôi sẽ sử dụng phương thức "vị trí của" của nó.
+
+Điều này trả về một đối tượng có thể tạo ra các nút cú pháp cho vị trí của bất kỳ nút nào bạn cung cấp.
+
+Nó sẽ trả về nil nếu nút là nút mà macro của bạn đã tạo, thay vì nút mà trình biên dịch đã chuyển cho bạn, nhưng chúng tôi biết rằng "originalWrapped" là một trong những đối số mà người dùng đã viết, vì vậy vị trí của nó sẽ không bao giờ là nil và chúng tôi có thể buộc mở gói kết quả một cách an toàn.
+
+Bây giờ tất cả những gì bạn phải làm là nội suy các nút cú pháp cho tệp và số dòng, và bạn đã hoàn tất.
+
+Chúng tôi hiện đang tạo ra tuyên bố "bảo vệ" đúng đắn.
+
+Cho đến nay, chúng tôi đã thảo luận về cách làm cho macro hoạt động.
+
+Nhưng hãy tiếp tục và nói về cách làm cho chúng hoạt động tốt.
+
+Và chúng ta sẽ bắt đầu bằng cách nói về va chạm tên.
+
+Khi chúng tôi xem xét macro "unwrap" trước đây, chúng tôi đã xem xét một ví dụ trong đó chúng tôi đã mở một tên biến đơn giản.
+
+Nhưng nếu chúng ta cố gắng mở một biểu thức phức tạp hơn, macro phải mở rộng khác đi.
+
+Nó tạo ra mã ghi lại kết quả của biểu thức thành một biến được gọi là "wrappedValue", và sau đó mở gói đó.
+
+Nhưng điều gì sẽ xảy ra nếu bạn cố gắng sử dụng một biến được gọi là "wrappedValue" trong tin nhắn?
+
+Khi trình biên dịch tìm kiếm "wrappedValue", cuối cùng nó sẽ tìm thấy cái gần hơn, vì vậy nó sẽ sử dụng cái đó thay vì cái mà bạn thực sự muốn nói.
+
+Bạn có thể cố gắng khắc phục điều này bằng cách chọn một cái tên mà bạn nghĩ rằng người dùng của bạn có thể sẽ không sử dụng một cách tình cờ, nhưng sẽ không tốt hơn nếu làm điều này trở nên bất khả thi?
+
+Đó là những gì phương thức "makeUniqueName" trên Macro Expansion Context làm.
+
+Nó trả về một tên biến được đảm bảo không được sử dụng trong mã người dùng hoặc trong bất kỳ bản mở rộng vĩ mô nào khác, vì vậy bạn có thể chắc chắn rằng chuỗi tin nhắn sẽ không vô tình đề cập đến nó.
+
+Một số bạn có thể tự hỏi, tại sao Swift không tự động ngăn điều đó xảy ra?
+
+Một số ngôn ngữ có cái gọi là hệ thống vĩ mô "vệ sinh", trong đó các tên bên trong vĩ mô khác biệt với các tên bên ngoài, vì vậy chúng không thể xung đột với nhau.
+
+Swift không phải như vậy bởi vì chúng tôi đã phát hiện ra rằng rất nhiều macro cần sử dụng tên từ bên ngoài.
+
+Hãy nghĩ về macro DictionaryStorage, sử dụng thuộc tính "từ điển" trên loại.
+
+Nếu "từ điển" bên trong một vĩ mô có nghĩa là một cái gì đó khác với "từ điển" bên ngoài, thì sẽ khá khó để làm cho nó hoạt động.
+
+Và đôi khi, bạn thậm chí muốn giới thiệu một cái tên hoàn toàn mới mà mã không phải vĩ mô có thể truy cập.
+
+Macro ngang hàng, macro thành viên và macro khai báo về cơ bản tồn tại hoàn toàn để làm điều này.
+
+Nhưng khi họ làm vậy, họ cần khai báo những cái tên mà họ đang thêm, để trình biên dịch biết về chúng.
+
+Và họ làm điều đó bên trong thuộc tính vai trò của họ.
+
+Bạn có thể không nhận thấy nó trước đây, nhưng chúng tôi thực sự đã thấy những tuyên bố này từ lâu.
+
+Vai trò "thành viên" trên macro DictionaryStorage có tham số "tên:" chỉ định tên "từ điển" và "init".
+
+Và trên thực tế, hầu hết các macro mà chúng tôi đã xem xét trong phiên này đều có ít nhất một vai trò với đối số "tên".
+
+Có năm công cụ chỉ định tên bạn có thể sử dụng: "Quá tải" có nghĩa là macro thêm các khai báo có cùng tên cơ sở chính xác với bất kỳ macro nào được đính kèm.
+
+"Tiền tố" có nghĩa là macro thêm các khai báo có cùng tên cơ sở, ngoại trừ với tiền tố được chỉ định được thêm vào.
+
+"Suffixed" là cùng một thứ, ngoại trừ với hậu tố thay vì tiền tố.
+
+"Được đặt tên" có nghĩa là macro thêm các khai báo với một tên cơ sở cụ thể, cố định.
+
+Và "tùy ý" có nghĩa là macro thêm các khai báo với một số tên khác không thể được mô tả bằng bất kỳ quy tắc nào trong số này.
+
+Nó thực sự phổ biến để sử dụng "tùy tiện".
+
+Ví dụ, macro mảng đa chiều của chúng tôi khai báo một loại có tên được tính toán từ một trong các tham số của nó, vì vậy nó cần chỉ định "tùy ý".
+
+Nhưng khi bạn có thể sử dụng một trong những chỉ định khác, vui lòng làm như vậy.
+
+Nó sẽ làm cho cả trình biên dịch và các công cụ khác như hoàn thành mã nhanh hơn.
+
+Bây giờ, tại thời điểm này trong phiên, tôi đoán tất cả các bạn đang muốn viết macro đầu tiên của mình.
+
+Và bạn có thể có một ý tưởng tuyệt vời về cách bắt đầu: Chỉ cần viết một macro chèn ngày và giờ khi nó được mở rộng.
+
+Ý tưởng tuyệt vời, phải không?
+
+Sai rồi.
+
+Hóa ra, bạn không được viết macro này.
+
+Hãy để tôi giải thích tại sao.
+
+Macro chỉ cần sử dụng thông tin mà trình biên dịch cung cấp cho họ.
+
+Trình biên dịch giả định rằng việc triển khai vĩ mô là các chức năng thuần túy và nếu dữ liệu mà nó cung cấp không thay đổi, thì việc mở rộng cũng không thể thay đổi.
+
+Nếu bạn phá vỡ điều đó, bạn có thể thấy hành vi không nhất quán.
+
+Bây giờ, hệ thống vĩ mô được thiết kế để ngăn chặn một số loại hành vi có thể vi phạm quy tắc này.
+
+Các trình cắm trình biên dịch chạy trong hộp cát ngăn việc triển khai macro đọc tệp trên đĩa hoặc truy cập mạng.
+
+Nhưng hộp cát không chặn mọi hành động xấu.
+
+Bạn có thể sử dụng API để lấy thông tin như ngày tháng hoặc số ngẫu nhiên, hoặc bạn có thể lưu thông tin từ một bản mở rộng trong một biến toàn cầu và sử dụng nó trong một bản mở rộng khác.
+
+Nhưng nếu bạn làm những điều này, vĩ mô của bạn có thể hoạt động sai.
+
+Vì vậy đừng.
+
+Cuối cùng, nhưng hoàn toàn không kém phần quan trọng, hãy nói về việc kiểm tra.
+
+Trình cắm macro của bạn chỉ là một mô-đun Swift thông thường, có nghĩa là bạn có thể, và chắc chắn nên viết các bài kiểm tra đơn vị bình thường cho nó.
+
+Phát triển theo hướng thử nghiệm là một cách tiếp cận cực kỳ hiệu quả để phát triển các macro Swift.
+
+Trình trợ giúp "assertMacroExpansion" từ SwiftSyntaxMacrosTestSupport sẽ kiểm tra xem macro có tạo ra bản mở rộng phù hợp hay không.
+
+Chỉ cần cho nó một ví dụ về macro và mã mà nó sẽ mở rộng thành, và nó sẽ đảm bảo chúng khớp.
+
+Vì vậy, chúng tôi đã học được rất nhiều về macro Swift ngày hôm nay.
+
+Macro cho phép bạn giảm bản mẫu bằng cách thiết kế các tính năng ngôn ngữ mới "mở rộng" một trang web sử dụng nhỏ thành một đoạn mã phức tạp hơn.
+
+Bạn khai báo một macro cùng với các API khác, thường là trong thư viện, nhưng bạn thực sự triển khai nó trong một trình cắm riêng biệt chạy mã Swift trong một hộp cát an toàn.
+
+Vai trò của macro thể hiện nơi bạn có thể sử dụng nó và cách mở rộng của nó được tích hợp vào phần còn lại của chương trình.
+
+Và bạn có thể, và chắc chắn nên, viết các bài kiểm tra đơn vị cho các macro của mình để đảm bảo chúng hoạt động như mong đợi.
+
+Nếu bạn chưa xem nó, phiên "Viết Macro Swift" sẽ là điểm dừng chân tiếp theo của bạn.
+
+Nó sẽ chỉ cho bạn cách làm việc với các công cụ phát triển vĩ mô và mẫu gói vĩ mô của Xcode, cách kiểm tra cây SwiftSyntax và lấy thông tin ra khỏi chúng và cách xây dựng quy trình phát triển vĩ mô xung quanh các bài kiểm tra đơn vị của bạn.
+
+Vì vậy, cảm ơn vì đã xem, và mã hóa vui vẻ.
+
+♪ ♪

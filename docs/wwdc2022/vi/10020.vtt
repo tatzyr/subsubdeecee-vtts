@@ -1,0 +1,440 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+♪ nhạc cụ hip hop ♪
+
+00:00:03.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:14.000
+Xin chào, tên tôi là David Findlay, và tôi là một kỹ sư trong nhóm Create ML.
+
+00:00:14.000 --> 00:00:20.000
+Phiên này là tất cả về Tạo Thành phần ML, một cách mới mạnh mẽ để xây dựng các tác vụ học máy của riêng bạn.
+
+00:00:20.000 --> 00:00:25.000
+Đồng nghiệp Alejandro của tôi đã giới thiệu trong phiên "Tìm hiểu Tạo Thành phần ML."
+
+00:00:25.000 --> 00:00:31.000
+Anh ấy khám phá việc giải cấu trúc các tác vụ Tạo ML thành các thành phần và tiết lộ việc xây dựng các mô hình tùy chỉnh dễ dàng như thế nào.
+
+00:00:31.000 --> 00:00:40.000
+Máy biến áp và công cụ ước tính là các khối xây dựng chính mà bạn có thể soạn lại với nhau để xây dựng các mô hình tùy chỉnh như hồi quy hình ảnh.
+
+00:00:40.000 --> 00:00:46.000
+Trong phiên này, tôi muốn vượt xa những điều cơ bản và chứng minh những gì có thể với Tạo Thành phần ML.
+
+00:00:46.000 --> 00:00:49.000
+Hãy xem qua chương trình nghị sự; có rất nhiều thứ để trang trải.
+
+00:00:49.000 --> 00:00:57.000
+Tôi sẽ bắt đầu bằng cách nói về dữ liệu video và đi vào chi tiết về các thành phần mới được thiết kế để xử lý các giá trị theo thời gian.
+
+00:00:57.000 --> 00:01:03.000
+Sau đó, tôi sẽ đưa những khái niệm đó vào hoạt động và xây dựng một bộ đếm lặp lại hành động của con người chỉ sử dụng máy biến áp.
+
+00:01:03.000 --> 00:01:07.000
+Cuối cùng, tôi sẽ chuyển sang đào tạo một mô hình phân loại âm thanh tùy chỉnh.
+
+00:01:07.000 --> 00:01:13.000
+Tôi sẽ thảo luận về sự phù hợp gia tăng cho phép bạn cập nhật mô hình của mình theo lô, ngừng đào tạo sớm và kiểm tra mô hình của bạn.
+
+00:01:13.000 --> 00:01:17.000
+Có rất nhiều cơ hội với mức độ linh hoạt này.
+
+00:01:17.000 --> 00:01:19.000
+Tôi nóng lòng muốn đi sâu vào.
+
+00:01:19.000 --> 00:01:21.000
+Hãy bắt đầu nào.
+
+00:01:21.000 --> 00:01:28.000
+Tại WWDC 2020, chúng tôi đã giới thiệu Phân loại Hành động trong Tạo ML, cho phép bạn phân loại các hành động từ video.
+
+00:01:28.000 --> 00:01:37.000
+Và chúng tôi đã chứng minh cách bạn có thể tạo ra một bộ phân loại thể dục để nhận ra thói quen tập luyện của một người, chẳng hạn như nhảy jack, lunges và squats.
+
+00:01:37.000 --> 00:01:44.000
+Ví dụ, bạn có thể sử dụng trình phân loại hành động để nhận ra hành động trong video này dưới dạng giắc nhảy.
+
+00:01:44.000 --> 00:01:47.000
+Nhưng nếu bạn muốn đếm giắc cắm nhảy của mình thì sao?
+
+00:01:47.000 --> 00:01:55.000
+Điều đầu tiên bạn cần xem xét là một giắc nhảy kéo dài các khung hình liên tiếp và bạn sẽ cần một cách để xử lý các giá trị theo thời gian.
+
+00:01:55.000 --> 00:01:59.000
+Rất may, AsyncSequence của Swift làm cho điều này thực sự dễ dàng.
+
+00:01:59.000 --> 00:02:06.000
+Nếu bạn không quen với các chuỗi không đồng bộ, bạn nên xem phiên "Gặp gỡ chuỗi không đồng bộ".
+
+00:02:06.000 --> 00:02:13.000
+Với Create ML Components, bạn có thể đọc video của mình dưới dạng một chuỗi khung hình không đồng bộ, sử dụng trình đọc video.
+
+00:02:13.000 --> 00:02:19.000
+Và AsyncSequence cung cấp một cách lặp lại các khung hình khi chúng được nhận từ video.
+
+00:02:19.000 --> 00:02:26.000
+Ví dụ, tôi có thể dễ dàng chuyển đổi từng khung hình video không đồng bộ bằng phương pháp bản đồ.
+
+00:02:26.000 --> 00:02:30.000
+Điều này rất hữu ích khi bạn muốn xử lý từng khung một.
+
+00:02:30.000 --> 00:02:34.000
+Nhưng nếu bạn muốn xử lý nhiều khung hình cùng một lúc thì sao?
+
+00:02:34.000 --> 00:02:36.000
+Đó là nơi các máy biến áp thời gian xuất hiện.
+
+00:02:36.000 --> 00:02:42.000
+Ví dụ, bạn có thể muốn giảm các khung hình mẫu để tăng tốc hành động trong video.
+
+00:02:42.000 --> 00:02:48.000
+Bạn có thể sử dụng bộ lấy mẫu xuống cho trình lấy một chuỗi không đồng bộ và trả về một chuỗi không đồng bộ được lấy mẫu xuống.
+
+00:02:48.000 --> 00:02:54.000
+Hoặc bạn có thể muốn nhóm các khung thành các cửa sổ, điều này rất quan trọng để đếm các lần lặp lại hành động.
+
+00:02:54.000 --> 00:02:58.000
+Đó là nơi bạn có thể sử dụng máy biến áp cửa sổ trượt.
+
+00:02:58.000 --> 00:03:06.000
+Bạn có thể chỉ định độ dài cửa sổ, đó là số khung hình bạn muốn nhóm trong một cửa sổ và sải chân, đó là cách bạn điều khiển khoảng trượt.
+
+00:03:06.000 --> 00:03:15.000
+Đầu vào, một lần nữa, là một chuỗi không đồng bộ và đầu ra trong trường hợp này là một chuỗi không đồng bộ có cửa sổ.
+
+00:03:15.000 --> 00:03:22.000
+Nói chung, một máy biến áp thời gian cung cấp một cách để xử lý một chuỗi không đồng bộ thành một chuỗi không đồng bộ mới.
+
+00:03:22.000 --> 00:03:25.000
+Vì vậy, hãy đưa những khái niệm này vào hoạt động.
+
+00:03:25.000 --> 00:03:30.000
+Tôi không biết bạn thế nào, nhưng khi tôi tập thể dục, tôi luôn mất số lượng đại diện của mình.
+
+00:03:30.000 --> 00:03:36.000
+Vì vậy, tôi quyết định thay đổi mọi thứ một chút và xây dựng một bộ đếm lặp lại hành động với Tạo Thành phần ML.
+
+00:03:36.000 --> 00:03:42.000
+Trong ví dụ này, tôi sẽ xem xét cách soạn máy biến áp và máy biến áp thời gian với nhau.
+
+00:03:42.000 --> 00:03:45.000
+Hãy bắt đầu với việc trích xuất tư thế.
+
+00:03:45.000 --> 00:03:49.000
+Tôi có thể trích xuất tư thế bằng cách sử dụng máy chiết xuất tư thế cơ thể con người.
+
+00:03:49.000 --> 00:03:54.000
+Đầu vào là một hình ảnh và đầu ra là một loạt các tư thế cơ thể con người.
+
+00:03:54.000 --> 00:03:59.000
+Đằng sau hậu trường, chúng tôi tận dụng khung Tầm nhìn để trích xuất các tư thế.
+
+00:03:59.000 --> 00:04:05.000
+Lưu ý rằng hình ảnh có thể chứa nhiều người, điều này phổ biến đối với các bài tập nhóm.
+
+00:04:05.000 --> 00:04:08.000
+Đó là lý do tại sao đầu ra là một loạt các tư thế.
+
+00:04:08.000 --> 00:04:13.000
+Nhưng tôi chỉ quan tâm đến việc đếm số lần lặp lại hành động cho một người tại một thời điểm.
+
+00:04:13.000 --> 00:04:19.000
+Vì vậy, tôi sẽ soạn công cụ trích xuất tư thế cơ thể con người với bộ chọn tư thế.
+
+00:04:19.000 --> 00:04:26.000
+Bộ chọn tư thế lấy một loạt các tư thế cũng như chiến lược lựa chọn và trả về một tư thế duy nhất.
+
+00:04:26.000 --> 00:04:33.000
+Có một vài chiến lược lựa chọn để lựa chọn, nhưng đối với ví dụ này, tôi sẽ sử dụng chiến lược đúng MostJointLocation.
+
+00:04:33.000 --> 00:04:38.000
+Bước tiếp theo là nhóm các tư thế vào cửa sổ.
+
+00:04:38.000 --> 00:04:42.000
+Tôi sẽ thêm một máy biến áp cửa sổ trượt cho điều đó.
+
+00:04:42.000 --> 00:04:49.000
+Và tôi sẽ sử dụng chiều dài cửa sổ và sải chân 90, điều này sẽ tạo ra các cửa sổ không chồng chéo 90 tư thế.
+
+00:04:49.000 --> 00:05:00.000
+Nhớ lại rằng một máy biến áp cửa sổ trượt là tạm thời, làm cho toàn bộ nhiệm vụ trở nên tạm thời và đầu vào dự kiến bây giờ là một chuỗi các khung không đồng bộ.
+
+00:05:00.000 --> 00:05:05.000
+Cuối cùng, tôi sẽ thêm một bộ đếm hành động cơ thể con người.
+
+00:05:05.000 --> 00:05:14.000
+Máy biến áp thời gian này tiêu thụ một chuỗi các tư thế không đồng bộ có cửa sổ và trả về số lần lặp lại hành động tích lũy cho đến nay.
+
+00:05:14.000 --> 00:05:18.000
+Đến bây giờ, bạn có thể nhận thấy rằng số đếm là một số dấu phẩy động.
+
+00:05:18.000 --> 00:05:21.000
+Và đó là bởi vì nhiệm vụ cũng tính các hành động một phần.
+
+00:05:21.000 --> 00:05:23.000
+Thật dễ dàng.
+
+00:05:23.000 --> 00:05:27.000
+Bây giờ tôi có thể đếm số đại diện của mình trong các video tập luyện của mình và đảm bảo rằng tôi không gian lận.
+
+00:05:27.000 --> 00:05:35.000
+Nhưng sẽ tốt hơn nếu đếm số lần lặp lại trực tiếp trong một ứng dụng, để tôi có thể theo dõi các bài tập hiện tại của mình.
+
+00:05:35.000 --> 00:05:38.000
+Hãy để tôi chỉ cho bạn cách bạn có thể làm điều đó.
+
+00:05:38.000 --> 00:05:45.000
+Đầu tiên, tôi sẽ sử dụng phương pháp readCamera lấy cấu hình máy ảnh và trả về một chuỗi khung máy ảnh không đồng bộ.
+
+00:05:45.000 --> 00:05:52.000
+Tiếp theo, tôi sẽ điều chỉnh tham số sải chân thành 15 khung hình để tôi nhận được số lượng cập nhật thường xuyên hơn.
+
+00:05:52.000 --> 00:05:58.000
+Nếu máy ảnh của tôi chụp khung hình với tốc độ 30 khung hình mỗi giây, thì tôi sẽ đếm được mỗi nửa giây.
+
+00:05:58.000 --> 00:06:03.000
+Bây giờ tôi có thể tập luyện và không lo lắng về việc bỏ lỡ một đại diện.
+
+00:06:03.000 --> 00:06:08.000
+Cho đến nay, tôi đã khám phá các thành phần thời gian để chuyển đổi các chuỗi không đồng bộ.
+
+00:06:08.000 --> 00:06:14.000
+Tiếp theo, tôi muốn tập trung vào việc đào tạo các mô hình tùy chỉnh dựa trên dữ liệu thời gian.
+
+00:06:14.000 --> 00:06:19.000
+Vào năm 2019, chúng tôi đã trình diễn cách bạn có thể đào tạo trình phân loại âm thanh trong Create ML.
+
+00:06:19.000 --> 00:06:24.000
+Sau đó vào năm 2021, chúng tôi đã giới thiệu các cải tiến để phân loại âm thanh.
+
+00:06:24.000 --> 00:06:30.000
+Tôi muốn đi xa hơn nữa và đào tạo một bộ phân loại âm thanh tùy chỉnh từng bước.
+
+00:06:30.000 --> 00:06:36.000
+MLSoundClassifier trong khung Create ML vẫn là cách dễ nhất để đào tạo một mô hình phân loại âm thanh tùy chỉnh.
+
+00:06:36.000 --> 00:06:42.000
+Nhưng khi bạn cần khả năng tùy chỉnh và kiểm soát nhiều hơn, bạn có thể sử dụng các thành phần dưới mui xe.
+
+00:06:42.000 --> 00:06:51.000
+Ở dạng đơn giản nhất, trình phân loại âm thanh có hai thành phần: trình trích xuất tính năng Audio Feature Print và trình phân loại bạn chọn.
+
+00:06:51.000 --> 00:06:59.000
+AudioFeaturePrint là một bộ biến áp thời gian trích xuất các tính năng âm thanh từ một chuỗi các bộ đệm âm thanh không đồng bộ.
+
+00:06:59.000 --> 00:07:07.000
+Tương tự như máy biến áp cửa sổ trượt, AudioFeaturePrint cửa sổ trình tự không đồng bộ sau đó trích xuất các tính năng.
+
+00:07:07.000 --> 00:07:20.000
+Có một vài trình phân loại để lựa chọn, nhưng đối với ví dụ này, tôi sẽ sử dụng trình phân loại hồi quy logistic và sau đó soạn nó cùng với trình trích xuất tính năng để xây dựng trình phân loại âm thanh tùy chỉnh.
+
+00:07:20.000 --> 00:07:25.000
+Bước tiếp theo là lắp bộ phân loại âm thanh tùy chỉnh vào dữ liệu đào tạo được gắn nhãn.
+
+00:07:25.000 --> 00:07:32.000
+Để biết thêm thông tin về việc thu thập dữ liệu đào tạo, phiên "Tìm hiểu Tạo thành phần ML" là một nơi tốt để bắt đầu.
+
+00:07:32.000 --> 00:07:34.000
+Cho đến nay, tôi đã đi qua con đường hạnh phúc.
+
+00:07:34.000 --> 00:07:39.000
+Nhưng xây dựng các mô hình học máy có thể là một quá trình lặp đi lặp lại.
+
+00:07:39.000 --> 00:07:46.000
+Ví dụ, bạn có thể khám phá và thu thập dữ liệu đào tạo mới theo thời gian và muốn làm mới mô hình của mình.
+
+00:07:46.000 --> 00:07:49.000
+Có thể bạn có thể cải thiện chất lượng mô hình.
+
+00:07:49.000 --> 00:07:53.000
+Nhưng việc đào tạo lại mô hình của bạn từ đầu rất tốn thời gian.
+
+00:07:53.000 --> 00:07:58.000
+Đó là bởi vì bạn cần làm lại việc trích xuất tính năng cho tất cả dữ liệu trước đó của mình.
+
+00:07:58.000 --> 00:08:04.000
+Hãy để tôi cho bạn một ví dụ về cách bạn có thể tiết kiệm thời gian khi đào tạo các mô hình của mình với dữ liệu mới được phát hiện.
+
+00:08:04.000 --> 00:08:09.000
+Điều quan trọng là xử lý trước dữ liệu đào tạo của bạn tách biệt với việc phù hợp với mô hình của bạn.
+
+00:08:09.000 --> 00:08:15.000
+Trong ví dụ này, tôi có thể trích xuất các tính năng âm thanh riêng biệt với khớp nối phân loại.
+
+00:08:15.000 --> 00:08:17.000
+Và điều này cũng hoạt động nói chung.
+
+00:08:17.000 --> 00:08:26.000
+Bất cứ khi nào bạn có một loạt các máy biến áp theo sau là một công cụ ước tính, bạn có thể xử lý trước đầu vào thông qua các máy biến áp dẫn đến máy ước tính.
+
+00:08:26.000 --> 00:08:33.000
+Tất cả những gì bạn cần làm là gọi phương thức tiền xử lý và sau đó lắp mô hình vào các tính năng được xử lý trước.
+
+00:08:33.000 --> 00:08:38.000
+Tôi thấy điều này thuận tiện vì tôi không cần thay đổi thành phần bộ phân loại âm thanh.
+
+00:08:38.000 --> 00:08:46.000
+Bây giờ tôi đã trích xuất các tính năng riêng biệt, tôi có thể linh hoạt chỉ trích xuất các tính năng âm thanh cho dữ liệu mới.
+
+00:08:46.000 --> 00:08:51.000
+Khi bạn khám phá dữ liệu đào tạo mới cho mô hình của mình, bạn có thể dễ dàng xử lý trước dữ liệu này một cách riêng biệt.
+
+00:08:51.000 --> 00:08:56.000
+Và sau đó thêm các tính năng bổ sung vào các tính năng đã được trích xuất trước đó.
+
+00:08:56.000 --> 00:09:01.000
+Đây chỉ là ví dụ đầu tiên về nơi tiền xử lý có thể giúp bạn tiết kiệm thời gian.
+
+00:09:01.000 --> 00:09:04.000
+Hãy quay trở lại vòng đời xây dựng mô hình.
+
+00:09:04.000 --> 00:09:09.000
+Bạn có thể cần điều chỉnh các thông số ước tính của mình cho đến khi bạn hài lòng với chất lượng mô hình của mình.
+
+00:09:09.000 --> 00:09:18.000
+Bằng cách tách trích xuất tính năng khỏi khớp nối, bạn chỉ có thể trích xuất các tính năng của mình một lần và sau đó phù hợp với mô hình của mình với các tham số ước tính khác nhau.
+
+00:09:18.000 --> 00:09:24.000
+Hãy xem qua một ví dụ về việc thay đổi các tham số phân loại mà không cần trích xuất lại tính năng.
+
+00:09:24.000 --> 00:09:30.000
+Giả sử rằng tôi đã trích xuất các tính năng, tôi sẽ sửa đổi tham số hình phạt L2 của trình phân loại.
+
+00:09:30.000 --> 00:09:35.000
+Và sau đó tôi sẽ cần thêm bộ phân loại mới vào trình trích xuất tính năng cũ.
+
+00:09:35.000 --> 00:09:43.000
+Điều quan trọng là không thay đổi trình trích xuất tính năng khi điều chỉnh công cụ ước tính của bạn, bởi vì điều đó sẽ làm mất hiệu lực các tính năng được trích xuất trước đó.
+
+00:09:43.000 --> 00:09:47.000
+Hãy chuyển sang từng bước lắp mô hình của bạn với các lô.
+
+00:09:47.000 --> 00:09:51.000
+Các mô hình học máy nói chung được hưởng lợi từ một lượng lớn dữ liệu đào tạo.
+
+00:09:51.000 --> 00:09:55.000
+Tuy nhiên, ứng dụng của bạn có thể có những hạn chế về bộ nhớ.
+
+00:09:55.000 --> 00:09:56.000
+Vậy bạn làm gì?
+
+00:09:56.000 --> 00:10:02.000
+Bạn có thể sử dụng Create ML Components để đào tạo một mô hình bằng cách chỉ tải một lô dữ liệu vào bộ nhớ tại một thời điểm.
+
+00:10:02.000 --> 00:10:07.000
+Điều đầu tiên tôi cần làm là thay thế bộ phân loại bằng bộ phân loại có thể cập nhật.
+
+00:10:07.000 --> 00:10:12.000
+Để đào tạo một mô hình tùy chỉnh với các lô, trình phân loại của bạn cần phải được cập nhật.
+
+00:10:12.000 --> 00:10:25.000
+Ví dụ, bộ phân loại mạng thần kinh được kết nối đầy đủ, mà tôi có thể dễ dàng sử dụng thay vì bộ phân loại hồi quy logistic không thể cập nhật được.
+
+00:10:25.000 --> 00:10:28.000
+Được rồi, bây giờ tôi sẽ viết một vòng lặp đào tạo.
+
+00:10:28.000 --> 00:10:32.000
+Tôi sẽ bắt đầu bằng cách tạo một mô hình khởi tạo mặc định.
+
+00:10:32.000 --> 00:10:37.000
+Bạn sẽ chưa thể đưa ra dự đoán; đó là bởi vì đây chỉ là điểm khởi đầu cho việc đào tạo.
+
+00:10:37.000 --> 00:10:41.000
+Sau đó tôi sẽ trích xuất các tính năng âm thanh trước khi khóa đào tạo bắt đầu.
+
+00:10:41.000 --> 00:10:46.000
+Đây là một bước quan trọng vì tôi không muốn trích xuất các tính năng mỗi lần lặp lại.
+
+00:10:46.000 --> 00:10:53.000
+Bước tiếp theo là xác định vòng lặp đào tạo và chỉ định số lần lặp bạn muốn đào tạo.
+
+00:10:53.000 --> 00:10:57.000
+Trước khi tôi tiếp tục, tôi sẽ nhập gói Swift của thuật toán.
+
+00:10:57.000 --> 00:11:01.000
+Tôi sẽ cần nó để tạo ra các lô dữ liệu đào tạo.
+
+00:11:01.000 --> 00:11:10.000
+Đảm bảo kiểm tra phiên "Gặp gỡ các gói Thuật toán và Bộ sưu tập Swift" từ WWDC 2021 để tìm hiểu thêm.
+
+00:11:10.000 --> 00:11:13.000
+Trong vòng lặp đào tạo là nơi xảy ra đợt.
+
+00:11:13.000 --> 00:11:18.000
+Tôi sẽ sử dụng phương pháp chunks để nhóm các tính năng thành các đợt để đào tạo.
+
+00:11:18.000 --> 00:11:23.000
+Kích thước đoạn là số lượng tính năng được tải vào bộ nhớ cùng một lúc.
+
+00:11:23.000 --> 00:11:31.000
+Sau đó, tôi có thể cập nhật mô hình bằng cách lặp lại các lô và gọi phương thức cập nhật.
+
+00:11:31.000 --> 00:11:35.000
+Khi bạn đào tạo mô hình của mình từng bước, bạn có thể mở khóa thêm một vài kỹ thuật đào tạo.
+
+00:11:35.000 --> 00:11:42.000
+Ví dụ, trong biểu đồ đào tạo này, sau khoảng 10 lần lặp lại, độ chính xác của mô hình ổn định ở mức 95%.
+
+00:11:42.000 --> 00:11:46.000
+Tại thời điểm này, mô hình đã hội tụ và bạn có thể dừng lại sớm.
+
+00:11:46.000 --> 00:11:50.000
+Hãy thực hiện dừng sớm trong vòng lặp đào tạo.
+
+00:11:50.000 --> 00:11:54.000
+Điều đầu tiên tôi cần làm là đưa ra dự đoán cho bộ xác thực của mình.
+
+00:11:54.000 --> 00:12:01.000
+Tôi đang sử dụng phương pháp mapFeatures ở đây vì tôi cần ghép nối các dự đoán xác thực với các chú thích của nó.
+
+00:12:01.000 --> 00:12:04.000
+Bước tiếp theo là đo lường chất lượng của mô hình.
+
+00:12:04.000 --> 00:12:10.000
+Tôi sẽ sử dụng các số liệu tích hợp sẵn ngay bây giờ, nhưng không có gì ngăn cản bạn triển khai các số liệu tùy chỉnh của riêng mình.
+
+00:12:10.000 --> 00:12:16.000
+Và cuối cùng, tôi sẽ ngừng đào tạo khi mô hình của tôi đạt độ chính xác 95 phần trăm.
+
+00:12:16.000 --> 00:12:22.000
+Bên ngoài vòng lặp đào tạo, tôi sẽ ghi mô hình ra đĩa để tôi có thể sử dụng nó sau này để đưa ra dự đoán.
+
+00:12:22.000 --> 00:12:28.000
+Ngoài việc dừng lại sớm, tôi muốn nói về việc kiểm tra mô hình.
+
+00:12:28.000 --> 00:12:33.000
+Bạn có thể lưu tiến trình của người mẫu của mình trong quá trình đào tạo thay vì đợi đến khi kết thúc.
+
+00:12:33.000 --> 00:12:41.000
+Và bạn thậm chí có thể sử dụng điểm kiểm tra để tiếp tục đào tạo, điều này thuận tiện đặc biệt là khi mô hình của bạn mất nhiều thời gian để đào tạo.
+
+00:12:41.000 --> 00:12:45.000
+Tất cả những gì bạn cần làm là viết ra mô hình của mình trong vòng lặp đào tạo.
+
+00:12:45.000 --> 00:12:49.000
+Chúng tôi khuyên bạn nên thực hiện điều này sau mỗi vài lần lặp lại bằng cách xác định khoảng thời gian điểm kiểm tra.
+
+00:12:49.000 --> 00:12:51.000
+Thật dễ dàng.
+
+00:12:51.000 --> 00:13:00.000
+Trong phiên này, tôi đã giới thiệu các thành phần thời gian, một cách mới để xây dựng các tác vụ học máy với dữ liệu thời gian như âm thanh và video.
+
+00:13:00.000 --> 00:13:05.000
+Tôi đã sáng tác các thành phần thời gian lại với nhau để tạo ra một bộ đếm lặp lại hành động của con người.
+
+00:13:05.000 --> 00:13:08.000
+Và cuối cùng, tôi đã nói về sự phù hợp gia tăng.
+
+00:13:08.000 --> 00:13:13.000
+Điều này sẽ mở ra những khả năng mới để bạn xây dựng máy học vào các ứng dụng của mình.
+
+00:13:13.000 --> 00:13:16.000
+Cảm ơn vì đã tham gia cùng tôi và tận hưởng phần còn lại của WWDC.
+
+00:13:16.000 --> 23:59:59.000
+♪
+

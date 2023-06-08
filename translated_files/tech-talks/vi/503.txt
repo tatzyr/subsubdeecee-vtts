@@ -1,0 +1,73 @@
+503
+
+Bắt đầu với tvOS 11.2, Apple TV 4K có thể tự động chuyển đổi chế độ hiển thị video để phù hợp với tốc độ khung hình gốc và dải động của nội dung video.
+
+Phần Video và Âm thanh của ứng dụng Cài đặt cho phép cài đặt tốc độ khung hình phù hợp và hành vi dải động một cách độc lập và cho phép xem nội dung với tốc độ khung hình và dải động ban đầu.
+
+Theo mặc định, các tùy chọn này bị vô hiệu hóa.
+
+Khi được bật và nội dung video được phát lại trong một ứng dụng tương thích, tvOS sẽ tự động chuyển cài đặt hiển thị video để phù hợp với cài đặt của nội dung.
+
+Ví dụ, nếu nội dung ở 24 khung hình mỗi giây và dải động tiêu chuẩn, thiết bị sẽ chuyển từ chế độ hệ thống sang 24 khung hình mỗi giây, chế độ dải động tiêu chuẩn.
+
+Khi phiên phát lại phương tiện kết thúc, thiết bị sẽ chuyển trở lại chế độ hệ thống.
+
+Bước đầu tiên trong việc hỗ trợ khớp tốc độ khung hình cho nội dung của bạn là đảm bảo rằng danh sách phát chính HLS của bạn được chú thích đầy đủ với tốc độ khung hình gốc của các biến thể bằng cách sử dụng thuộc tính FRAME-RATE.
+
+Nếu danh sách phát không bao gồm thuộc tính FRAME-RATE, việc chuyển đổi chế độ tốc độ khung hình sẽ không được hỗ trợ cho tài sản đó.
+
+Hơn nữa, chỉ những danh sách phát khai báo tốc độ khung hình duy nhất cho tất cả các biến thể hoặc chỉ có tốc độ khung hình là bội số nguyên của tốc độ khung hình nhỏ nhất mới được hỗ trợ.
+
+Ví dụ, 29,97 và 59,94.
+
+Kết hợp chế độ dải động thường không yêu cầu bất kỳ thay đổi nào đối với danh sách phát của bạn, vì nội dung được giả định là SDR trừ khi thuộc tính VIDEO-RANGE chỉ định khác, vì tất cả nội dung không phải SDR phải bao gồm thuộc tính VIDEO-RANGE.
+
+Các ứng dụng sử dụng AVPlayerViewController sẽ tự động hỗ trợ khớp chế độ, trừ khi thuộc tính appliesPreferred DisplayCriteriaAutomatically được thay đổi thành false.
+
+Khi nội dung được phát lại ở chế độ toàn màn hình bằng AVPlayerViewController, tvOS sẽ tự động chuyển sang chế độ hiển thị thích hợp cho nội dung đó.
+
+Sau đó, khi AVPlayerViewController rời khỏi chế độ toàn màn hình hoặc bị loại bỏ, tvOS sẽ chuyển trở lại chế độ hiển thị hệ thống của nó.
+
+Đối với các ứng dụng phát lại nội dung toàn màn hình bằng AVPlayerViewController hoặc TVMLKit, không cần thêm công việc nào.
+
+Tuy nhiên, đối với các tình huống khác mà video của bạn có thể không phải lúc nào cũng được phát lại ở chế độ toàn màn hình, nếu bạn đang phát nhiều video cùng một lúc, thường xuyên chuyển đổi giữa các video ngắn khác nhau hoặc bạn không sử dụng AVPlayerViewController để phát lại video của mình, bạn có thể cần chỉ định trực tiếp AVDisplayMan
+
+Nếu bạn đang sử dụng AVPlayerViewController và muốn chọn không tham gia chuyển đổi chế độ hoàn toàn hoặc cần quản lý chế độ hiển thị theo cách thủ công, hãy bắt đầu bằng cách đặt thuộc tính appliesPreferredDisplay CriteriaAutomatically của AVPlayerViewController thành false.
+
+Điều này sẽ vô hiệu hóa hành vi kết hợp AVKit tự động.
+
+Sau đó, để kích hoạt tvOS chuyển đổi chế độ để khớp với một phần nội dung cụ thể, hãy truy xuất đối tượng AVDisplayCriteria được bán bởi thuộc tính preferredDisplayCriteria của AVAsset.
+
+Gán đối tượng AVDisplayCriteria cho thuộc tính preferredDisplayCriteria của AVDisplayManager được bán bởi khóa UIWindow.
+
+Việc chuyển đổi chế độ sẽ xảy ra khi cài đặt thuộc tính này, giả sử rằng kết hợp đã được bật trong cài đặt và thiết bị đính kèm hỗ trợ chế độ ưa thích.
+
+Bạn nên thực hiện công tắc này trước khi gán AVPlayerItem cho đối tượng AVPlayer để AVPlayer tự cấu hình dựa trên chế độ hiển thị được nhắm mục tiêu.
+
+Để chuyển trở lại chế độ mặc định của hệ thống, chỉ cần đặt thuộc tính preferredDisplayCriteria thành nil.
+
+Để biết khi nào công tắc chế độ bắt đầu và kết thúc, bạn có thể quan sát khóa-giá trị thuộc tính displayModeSwitchInProgress của đối tượng AVDisplayManager.
+
+Để giúp bạn xác định cách tốt nhất để sử dụng tính năng mới này trong ứng dụng phương tiện của mình, đây là một số hướng dẫn cần ghi nhớ: Chỉ chuyển đổi chế độ thường xuyên khi cần thiết.
+
+Tất cả các TV phản ứng với chế độ chuyển đổi hơi khác một chút, nhưng nhìn chung nó sẽ khiến màn hình nhấp nháy hoặc tạm thời tắt và có thể mất vài giây để hoàn thành.
+
+Điều này có thể gây rối nếu nó xảy ra thường xuyên hơn mức cần thiết.
+
+Thông thường, chuyển đổi chế độ chỉ thích hợp để phát lại toàn màn hình.
+
+Phù hợp với tốc độ khung hình và dải động cho nội dung phát trong nền, dưới dạng hình thu nhỏ hoặc quảng cáo xen kẽ như một phần của trò chơi, có thể khá gây rối và nói chung là không cần thiết.
+
+Giao diện người dùng chính của ứng dụng của bạn, ngoài trải nghiệm xem video, nên được chạy ở tốc độ khung hình của hệ thống để giao diện người dùng và hoạt ảnh mượt mà và trôi chảy.
+
+Khi tivi ở chế độ tốc độ khung hình thấp hơn, những hình ảnh động và chuyển động đó cũng sẽ hiển thị ở tốc độ khung hình đó và kết quả là có thể xuất hiện kém mượt mà hơn.
+
+Cũng có một số trường hợp để thiết bị ở chế độ hệ thống sẽ mang lại trải nghiệm người dùng được cải thiện.
+
+Nếu ứng dụng của bạn phát các clip ngắn hơn, hiển thị nhiều ô video cùng một lúc hoặc thường xuyên chuyển đổi giữa các nội dung có đặc điểm khác nhau, bạn nên tránh chuyển đổi chế độ hoàn toàn để đảm bảo trải nghiệm xem không bị gián đoạn một cách không cần thiết.
+
+tvOS 11.2 cho phép tốc độ khung hình nội dung video và kết hợp dải động trên Apple TV 4K.
+
+AVPlayerViewController có thể tự động quản lý hành vi này, nhưng một số ứng dụng sẽ muốn kiểm soát nhiều hơn bằng cách sử dụng AVDisplayManager và AVDisplayCriteria.
+
+Vui lòng truy cập developer.apple.com để biết thêm thông tin.

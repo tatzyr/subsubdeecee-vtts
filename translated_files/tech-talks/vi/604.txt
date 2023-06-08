@@ -1,0 +1,175 @@
+604
+
+Trong bài thuyết trình này, chúng tôi sẽ tập trung vào bóng gạch, giai đoạn lập trình mới trong GPU A11 của Apple cung cấp khả năng tính toán nội tuyến trong các lần kết xuất.
+
+Bóng gạch cho phép một cấp độ hiệu suất và hiệu quả hoàn toàn mới trong Metal 2.
+
+Các hoạt động kết xuất và tính toán hiện có thể chia sẻ dữ liệu thông qua băng thông cao hơn và bộ nhớ gạch công suất thấp hơn.
+
+Bóng gạch được tích hợp sâu với các khối hình ảnh.
+
+Bạn sẽ có thể phân tích nội dung khối hình ảnh, tóm tắt nội dung đó, lưu trữ khối hình ảnh giữa cảnh hoặc thậm chí thay đổi bố cục khối hình ảnh.
+
+Bóng gạch cũng được tích hợp chặt chẽ với bộ nhớ nhóm luồng và có thể được sử dụng để lưu trữ dữ liệu không đổi của gạch cho các giai đoạn lát gạch hoặc đoạn sau này.
+
+Hãy bắt đầu bằng cách thúc đẩy nhu cầu che lát gạch.
+
+Thực hiện tính toán giữa các lần kết xuất đã trở nên phổ biến hơn trong những năm gần đây.
+
+Ví dụ, các thuật toán kết xuất lùi và chuyển tiếp lát gạch giao nhau với các ô được căn chỉnh trên màn hình để giảm chi phí che bóng.
+
+Ý tưởng đằng sau các thuật toán này là không phải tất cả các ánh sáng đều ảnh hưởng đến tất cả các điểm ảnh, nhưng việc loại bỏ trên mỗi điểm ảnh có thể quá tốn kém, vì vậy chúng tôi khấu hao chi phí trên các vùng gạch.
+
+Trước đây trong Metal cho GPU A Series, việc thực hiện tính toán giữa kết xuất yêu cầu lưu trữ dữ liệu đích kết xuất được lưu trong bộ nhớ cache trong bộ nhớ gạch trở lại bộ nhớ thiết bị, để sau đó một đường chuyền tính toán có thể tiêu thụ nó.
+
+Máy tính sau đó cũng sẽ phải lưu trữ kết quả của nó trở lại bộ nhớ thiết bị trước khi kết xuất sẽ tiếp tục.
+
+Sự di chuyển dữ liệu lặp đi lặp lại này giữa bộ nhớ cục bộ và bộ nhớ ngoài tốn nhiều băng thông.
+
+Với Metal 2 và GPU A11, các thuật toán như vậy hiện có thể hoạt động độc quyền trong bộ nhớ gạch lộ ra bằng cách sử dụng bóng gạch, thay thế cho việc vượt qua tính toán.
+
+Kết xuất nội dung mục tiêu hiện được lưu trữ trong bộ nhớ gạch một lần.
+
+Việc đổ bóng ô sau đó hoạt động trực tiếp trên khối hình ảnh và thậm chí có thể kết quả của nó vào bộ nhớ nhóm luồng, bộ nhớ này cũng được hỗ trợ bởi bộ nhớ ô để sử dụng sau này bằng cách kết xuất.
+
+Bây giờ chúng ta đã thấy cách đổ bóng gạch cho phép bạn hoạt động trong bộ nhớ gạch thường xuyên hơn, chúng ta hãy xem xét kỹ hơn cách đổ bóng gạch tương tác với các bản vẽ.
+
+Khởi chạy các luồng trong một đường chuyền tính toán được gọi là công văn và Metal sử dụng cùng tên cho các hoạt động tô bóng gạch trong một đường chuyền kết xuất.
+
+Các công văn Tile có thể được tự do xen kẽ với các bản vẽ và được thực hiện theo thứ tự gửi API.
+
+Kim loại đảm bảo rằng kết quả rút thăm được ban hành trước khi công văn có thể nhìn thấy khi công văn đó được thực hiện.
+
+Tương tự như vậy, Metal đảm bảo rằng kết quả của mỗi công văn có thể nhìn thấy khi lần rút thăm hoặc công văn tiếp theo được thực hiện.
+
+Đảm bảo đồng bộ hóa này cho phép truy cập không có cuộc đua vào bộ nhớ ô.
+
+Tuy nhiên, không có sự đảm bảo nào như vậy được thực hiện giữa các lần rút thăm.
+
+Một khái niệm quan trọng khác trong tô bóng gạch là cách các luồng được tổ chức thành các nhóm luồng và lưới.
+
+Với các công văn tính toán truyền thống, các nhóm luồng được tổ chức thành các lưới được đóng gói chặt chẽ.
+
+Tuy nhiên, trong một đường chuyền kết xuất, lưới ô không đổi trên toàn bộ đường chuyền, nhưng kích thước nhóm luồng có thể khác nhau đối với mỗi công văn.
+
+Nếu chúng ta phóng to một ô, chúng ta thấy rằng điều này cho phép bạn ánh xạ từng luồng đến một điểm ảnh duy nhất hoặc ánh xạ mỗi luồng thành nhiều điểm ảnh.
+
+Tuy nhiên, việc ánh xạ các luồng đến các tài nguyên không có ý nghĩa đặc biệt đối với Kim loại.
+
+Bạn có thể khởi chạy các luồng không có ánh xạ đến các điểm ảnh, như trường hợp của ví dụ loại bỏ ánh sáng mà chúng ta đã thảo luận trước đây.
+
+Trong ví dụ đó, kích thước nhóm luồng của bạn có thể khớp với số lượng đèn cần kiểm tra giao lộ.
+
+Các nhóm ren che bóng ô được khởi chạy cho mỗi ô bất kể bất kỳ hình học nào hiện diện.
+
+Ví dụ, một hình tam giác ảnh hưởng đến một tập hợp con các ô, chỉ cần được xử lý bởi các ô đó.
+
+Tuy nhiên, một công văn ô tiếp theo sẽ được xử lý bởi mọi ô của màn hình.
+
+Làm như vậy rất quan trọng vì công văn đó có thể đang khởi tạo bộ nhớ ô cho hình học sau này có thể hạ cánh trong các ô đó.
+
+Các trạng thái khung nhìn và cắt kéo cũng không hạn chế việc tô bóng gạch.
+
+Nói chung, bóng gạch không bị ảnh hưởng bởi các trạng thái kết xuất truyền thống.
+
+Được rồi, vậy bây giờ chúng ta hãy chuyển sang các thay đổi API hỗ trợ đổ bóng gạch.
+
+Một đường chuyền kết xuất có thể được cấu hình với một trong ba kích thước ô, điều này sẽ xác định kích thước khối hình ảnh của bạn.
+
+Bạn thường muốn chọn kích thước ô lớn nhất phù hợp với khối hình ảnh của mình - là 32 KB trên GPU A11 - để giảm thiểu bất kỳ chi phí nào trong giai đoạn xử lý nguyên thủy của GPU.
+
+Tuy nhiên, một số thuật toán có thể được hưởng lợi từ việc chọn kích thước gạch nhỏ hơn khi quá trình xử lý mảnh hoặc gạch đặc biệt phức tạp, để tăng lượng song song gạch trong lõi đổ bóng.
+
+Như chúng ta đã thấy, bộ nhớ nhóm luồng cũng có nguồn gốc từ bộ nhớ ô nên kích thước của nó cũng có thể hạn chế sự lựa chọn kích thước ô của bạn.
+
+Tạo một đường ống che bóng gạch tương tự như tạo ra một đường ống truyền thống.
+
+Bạn đính kèm các chức năng vào bộ mô tả đường ống để tạo trạng thái đường ống.
+
+Đối với bóng gạch, Metal giới thiệu một loại mô tả đường ống mới.
+
+Nó tương tự như bộ mô tả đường ống kết xuất hiện có, nhưng loại bỏ các thuộc tính trạng thái kết xuất như pha trộn.
+
+Nó cũng tương tự như bộ mô tả đường ống tính toán hiện có vì chỉ có một hàm có thể bị ràng buộc.
+
+Tuy nhiên, hàm đó có thể là một hạt nhân tính toán hoặc một hàm phân đoạn.
+
+Hạt nhân tính toán cung cấp quyền truy cập vào tất cả các tính năng tô bóng gạch và khối hình ảnh mà chúng ta đã thảo luận cho đến nay.
+
+Việc tô bóng gạch dựa trên mảnh vỡ hạn chế hơn nhưng đóng một vai trò cụ thể và quan trọng mà tôi sẽ nói về sau.
+
+Đầu tiên, tôi muốn đề cập đến khả năng khối hình ảnh trong đường ống gạch.
+
+Vì bóng gạch thực hiện các công văn tính toán nội tuyến với kết xuất, nó có quyền truy cập vào cả khối hình ảnh ngầm và rõ ràng, giống như các hàm phân đoạn.
+
+Tuy nhiên, không giống như các chức năng phân đoạn, các trình đổ bóng gạch dựa trên hạt nhân có thể truy cập toàn bộ khối hình ảnh.
+
+Hãy cùng xem cú pháp.
+
+Chúng tôi phân biệt giữa các dạng ngầm và rõ ràng của loại khối hình ảnh mẫu bằng cách sử dụng đối số mẫu thứ hai.
+
+Chúng ta phải rõ ràng vì mỗi cái có ngữ nghĩa truy cập khác nhau.
+
+Dạng ngầm có ngữ nghĩa giá trị, có nghĩa là chúng ta sao chép các pixel vào và ra khỏi khối hình ảnh.
+
+Hình thức rõ ràng có ngữ nghĩa tham chiếu được thảo luận trong bài thuyết trình trước.
+
+Chúng tôi đã thấy cách các khối hình ảnh trong một đường chuyền kết xuất tồn tại trong suốt vòng đời của ô và cách chúng tôi tận dụng điều này để giao tiếp giữa các lần rút thăm và công văn.
+
+Trong ví dụ mở đầu của chúng tôi, tôi cũng đã đề cập rằng điều tương tự cũng đúng với bộ nhớ nhóm luồng.
+
+Bộ nhớ nhóm luồng liên tục là duy nhất để tô bóng ô và rất phù hợp để lưu trữ dữ liệu không đổi trên ô, chẳng hạn như danh sách ánh sáng được chọn lọc.
+
+Hãy xem cách chúng ta tận dụng điều này trong ngôn ngữ tô bóng.
+
+Trong ví dụ này, chức năng gạch dựa trên hạt nhân của chúng tôi được cung cấp danh sách ánh sáng đầy đủ để loại bỏ các giới hạn gạch của nó.
+
+Nó cũng được cung cấp độ sâu tối thiểu và tối đa của gạch từ một công văn gạch trước đó.
+
+Sau đó, nó đặt kết quả bị loại bỏ vào bộ nhớ nhóm luồng để các bộ đổ bóng phân đoạn sau này có quyền truy cập vào nó.
+
+Cả công văn gạch và bản vẽ phân đoạn phải đồng ý về điểm ràng buộc nhóm luồng.
+
+Cuối cùng chúng ta hãy xem xét vai trò của các đường ống gạch dựa trên đoạn.
+
+Bóng gạch khuyến khích bạn tận dụng bộ nhớ gạch bằng cách hợp nhất những gì trước đây có nhiều lần vượt qua.
+
+Bộ nhớ Tile là một nguồn tài nguyên quý giá, vì vậy chúng ta cần các khối hình ảnh rõ ràng để đóng gói nhiều dữ liệu hơn vào không gian đó.
+
+Nhưng bố cục bộ nhớ gạch tĩnh cho toàn bộ đường chuyền vẫn khó có thể phù hợp, vì vậy chúng ta cần chuyển đổi linh hoạt bố cục bộ nhớ ô khi chúng ta di chuyển qua các giai đoạn khác nhau trong tính toán của mình.
+
+Các đường ống gạch dựa trên mảnh vỡ cho phép chuyển đổi này.
+
+Ngữ nghĩa rào cản mà tôi đã mô tả trước đó đảm bảo rằng tất cả việc truy cập bộ nhớ gạch hoàn tất trước khi quá trình chuyển đổi bắt đầu.
+
+Và vì các bộ đổ bóng phân đoạn sao chép dữ liệu đến và đi từ các khối hình ảnh, chúng tôi có thể đảm bảo rằng mỗi điểm ảnh được chuyển đổi nguyên tử.
+
+Hãy xem xét một ví dụ.
+
+Trong ví dụ này, chúng tôi đã hoàn thành giai đoạn kết xuất hoãn lại của mình và muốn cấu hình lại khối hình ảnh để thực hiện một kỹ thuật trong suốt độc lập với thứ tự gần đúng được gọi là Multi-Layer Alpha Blending.
+
+Chúng tôi làm như vậy bằng cách sử dụng hàm gạch dựa trên đoạn lấy bố cục cũ làm đầu vào và trả về bố cục mới.
+
+Và như thường lệ, bạn thường cần khởi tạo bố cục mới bằng cách sử dụng dữ liệu từ bố cục cũ.
+
+Ở đây chúng tôi mang đến giá trị ánh sáng cuối cùng từ giai đoạn kết xuất hoãn lại.
+
+Để hiểu rõ hơn về bóng gạch, vui lòng đảm bảo kiểm tra mã mẫu của chúng tôi.
+
+Nó thể hiện cách chuyển tiếp bóng râm một cách hiệu quả với nhiều đèn trong một lần vượt qua.
+
+Bóng gạch được sử dụng để loại bỏ đèn không ảnh hưởng đến gạch.
+
+Cuối cùng, Trình gỡ lỗi GPU trong Xcode giúp việc kiểm tra bộ nhớ nhóm luồng trở nên dễ dàng bằng cách định dạng dữ liệu dựa trên cách bạn sử dụng nó trong bộ đổ bóng của mình.
+
+Sau khi chụp bằng Trình gỡ lỗi GPU của Xcode, bạn có thể thấy mỗi bộ nhớ nhóm luồng dưới dạng bộ đệm trong phần ô của chế độ xem tài nguyên bị ràng buộc.
+
+Từ đó, bạn có thể sử dụng trình xem bộ đệm để kiểm tra dữ liệu được định dạng giống như cách bộ đổ bóng của bạn sử dụng nó.
+
+Trong bài thuyết trình này, chúng tôi đã thấy cách đổ bóng gạch cho phép các nhà phát triển phân tích và thao tác toàn bộ nội dung ô, giao tiếp qua các bản vẽ và sử dụng lại bộ nhớ ô thông qua các giai đoạn tính toán khác nhau.
+
+Kết hợp với nhau, bộ đổ bóng gạch cho phép các nhà phát triển hợp nhất nhiều lần kết xuất và tính toán để tận dụng tốt hơn băng thông cao hơn và bộ nhớ gạch có công suất thấp hơn của GPU A11.
+
+Để biết thêm thông tin về Metal 2 và các liên kết đến mã mẫu, vui lòng truy cập trang web của Nhà phát triển tại developer.apple.com/metal.
+
+Cảm ơn bạn đã xem!

@@ -1,0 +1,343 @@
+110363
+
+♪ ♪
+
+Ahmed: Xin chào, tên tôi là Ahmed, và tôi làm việc trên trình biên dịch Clang và Swift.
+
+Trong phiên này, chúng tôi sẽ đi sâu vào những thay đổi mà chúng tôi đã thực hiện để làm cho các hoạt động Swift và Objective-C phổ biến nhanh hơn và hiệu quả hơn, để chúng tôi có thể cải thiện kích thước ứng dụng và hiệu suất thời gian chạy của bạn.
+
+Khi bạn viết mã bằng Swift hoặc Objective-C, bạn luôn thực sự tương tác với hai thành phần chính.
+
+Đầu tiên, bạn xây dựng bằng Xcode, và sử dụng trình biên dịch Swift và Clang.
+
+Nhưng khi bạn chạy ứng dụng của mình, rất nhiều công việc nặng nhọc được thực hiện trong Thời gian chạy Swift và Objective-C.
+
+Thời gian chạy được nhúng trong hệ điều hành cho tất cả các nền tảng của chúng tôi.
+
+Những gì trình biên dịch không thể làm tại thời điểm xây dựng, thời gian chạy thực hiện tốt, trong thời gian chạy.
+
+Chúng tôi sẽ xem xét một số cải tiến mà chúng tôi đã thực hiện trong cả trình biên dịch và thời gian chạy.
+
+Bây giờ, phiên này hơi bất thường; không có API mới, thay đổi ngôn ngữ hoặc cài đặt xây dựng mới.
+
+Bạn không cần phải thay đổi mã của mình, vì vậy tất cả những cải tiến này đều minh bạch đối với bạn, nhà phát triển.
+
+Hãy đi sâu vào.
+
+Chúng ta sẽ xem xét bốn cải tiến.
+
+Chúng tôi đã thực hiện kiểm tra giao thức trong Swift hiệu quả hơn, chúng tôi cũng đã thực hiện các cuộc gọi gửi tin nhắn Objective-C nhỏ hơn, vì chúng tôi đã giữ lại và phát hành các cuộc gọi, và cuối cùng, chúng tôi đã thực hiện việc loại bỏ tự động phát hành nhanh hơn và nhỏ hơn.
+
+Chúng ta hãy xem xét kỹ hơn.
+
+Hãy bắt đầu với việc kiểm tra giao thức trong Swift.
+
+Ở đây chúng tôi có một giao thức CustomLoggable.
+
+Nó có thuộc tính tính toán chỉ đọc customLogString và chúng ta có thể sử dụng nó trong hàm nhật ký của mình, có khả năng xử lý đặc biệt cho các đối tượng CustomLoggable.
+
+Sau đó, chúng tôi sẽ xác định một loại Sự kiện với các trường tên và ngày.
+
+Và chúng tôi đang tuân thủ giao thức CustomLoggable, bằng cách xác định getter cho thuộc tính customLogString.
+
+Và điều này cho phép chúng tôi chuyển các đối tượng Sự kiện sang chức năng 'nhật ký' của mình.
+
+Khi chúng tôi thực thi mã này, hàm 'log' cần kiểm tra xem giá trị chúng tôi đã truyền có phù hợp với giao thức hay không.
+
+Và nó làm điều đó bằng cách sử dụng toán tử 'as'. Bạn cũng có thể đã thấy toán tử 'là'.
+
+Bất cứ khi nào có thể, kiểm tra này được tối ưu hóa tại thời điểm xây dựng, trong trình biên dịch.
+
+Tuy nhiên, không phải lúc nào chúng ta cũng có đủ thông tin.
+
+Vì vậy, điều này thường cần xảy ra trong thời gian chạy, với sự trợ giúp của siêu dữ liệu kiểm tra giao thức mà chúng tôi tính toán trước đó.
+
+Với siêu dữ liệu này, thời gian chạy biết liệu đối tượng cụ thể này có thực sự phù hợp với giao thức hay không và việc kiểm tra thành công.
+
+Một phần của siêu dữ liệu được xây dựng tại thời điểm biên dịch, nhưng rất nhiều chỉ có thể được xây dựng tại thời điểm khởi chạy, đặc biệt là khi sử dụng Generics.
+
+Khi bạn sử dụng nhiều giao thức, điều này có thể tăng lên đến hàng trăm mili giây.
+
+Trên các ứng dụng trong thế giới thực, chúng tôi đã thấy điều này chiếm tới một nửa thời gian khởi chạy.
+
+Với thời gian chạy Swift mới, giờ đây chúng tôi tính toán trước những thứ này trước thời hạn, như một phần của việc đóng dyld cho ứng dụng thực thi và bất kỳ dylib nào mà nó sử dụng khi khởi chạy.
+
+Trên hết, điều này được kích hoạt ngay cả đối với các ứng dụng hiện có khi chạy trên iOS 16, tvOS 16 hoặc watchOS 9.
+
+Nếu bạn muốn tìm hiểu thêm về việc đóng cửa dyld và khởi chạy, hãy xem bài nói chuyện "Thời gian khởi động ứng dụng: Quá khứ, Hiện tại và Tương lai."
+
+Đó là kiểm tra giao thức trong Swift.
+
+Hãy chuyển sang gửi tin nhắn.
+
+Với trình biên dịch và trình liên kết mới trong Xcode 14, chúng tôi đã thực hiện các cuộc gọi gửi tin nhắn nhỏ hơn tới 8 byte, giảm từ 12, trên ARM64.
+
+Như chúng ta sẽ thấy chỉ trong giây lát, việc gửi tin nhắn thực sự ở khắp mọi nơi, vì vậy điều này cộng lại và chúng ta đã thấy những cải tiến về kích thước mã lên đến 2% trên các tệp nhị phân.
+
+Điều này được bật tự động khi xây dựng với Xcode 14, ngay cả khi bạn sử dụng bản phát hành hệ điều hành cũ hơn làm mục tiêu triển khai.
+
+Nó mặc định là sự cân bằng giữa chiến thắng kích thước và hiệu suất, nhưng bạn chỉ có thể chọn tối ưu hóa kích thước, sử dụng cờ liên kết objc_stubs_small.
+
+Bây giờ hãy xem xét những gì đã thay đổi.
+
+Vậy hãy bắt đầu với một ví dụ.
+
+Ở đây chúng tôi đang cố gắng tạo ra một NSDate cho ngày bắt đầu của hội nghị.
+
+Chúng tôi bắt đầu bằng cách tạo một NSCalendar, sau đó chúng tôi điền vào NSDateComponents, tạo một ngày từ đó và cuối cùng trả lại nó.
+
+Bây giờ hãy nhìn vào tập hợp mà trình biên dịch tạo ra.
+
+Bây giờ, các chi tiết của việc lắp ráp không quá quan trọng.
+
+Những người biên dịch của chúng tôi nhìn chằm chằm vào nó cả ngày để bạn không phải làm vậy.
+
+Điều quan trọng là hầu hết mọi dòng ở đây đều cần một hướng dẫn để gọi objc_msgSend, ngay cả khi thực hiện truy cập thuộc tính như chúng tôi làm cho các thành phần ngày.
+
+Điều này là do tại thời điểm biên dịch, chúng tôi không biết nên gọi phương thức nào và chỉ có thời gian chạy objc.
+
+Vì vậy, chúng tôi gọi vào thời gian chạy bằng cách sử dụng objc_msgSend để yêu cầu nó tìm phương thức phù hợp.
+
+Hãy tập trung vào một trong những cuộc gọi này.
+
+Chúng tôi đã đề cập đến hướng dẫn gọi objc_msgSend.
+
+Nhưng còn nhiều hơn thế nữa.
+
+Để cho thời gian chạy biết nên gọi phương thức nào, chúng ta phải chuyển bộ chọn cho các cuộc gọi objc_msgSend này.
+
+Điều đó cần thêm một vài hướng dẫn để chuẩn bị bộ chọn.
+
+Khi chúng ta nhìn vào nhị phân, mỗi hướng dẫn này chiếm một chút không gian.
+
+Trên ARM64, mỗi cái là 4 byte.
+
+Vì vậy, đối với mỗi cuộc gọi objc_msgSend này, chúng tôi đang sử dụng 12 byte và chúng tôi cần điều đó cho mỗi cuộc gọi này; điều đó thực sự cộng lại.
+
+Hãy xem chúng ta có thể làm gì để cải thiện điều đó.
+
+Bây giờ, như chúng ta đã thấy trước đây, 8 trong số các byte đó được dành riêng để chuẩn bị bộ chọn.
+
+Điều thú vị là, đối với bất kỳ bộ chọn nhất định nào, nó luôn là cùng một mã.
+
+Và đây là nơi tối ưu hóa của chúng tôi xuất hiện.
+
+Vì đây luôn là cùng một mã, chúng tôi có thể chia sẻ nó và chỉ phát ra nó một lần cho mỗi bộ chọn thay vì mỗi lần chúng tôi gửi tin nhắn.
+
+Chúng ta có thể lấy nó ra và đặt nó vào một hàm trợ giúp nhỏ, và thay vào đó gọi hàm đó.
+
+Qua nhiều cuộc gọi sử dụng cùng một bộ chọn, chúng ta có thể lưu tất cả các byte hướng dẫn này.
+
+Chúng tôi gọi chức năng trợ giúp này là "selector stub."
+
+Tuy nhiên, chúng tôi vẫn cần gọi hàm objc_msgSend thực, vì vậy chúng tôi tiếp tục điều đó.
+
+Và một lần nữa, điều đó có một chiều hướng khác, khác biệt để tải địa chỉ của chính hàm và gọi nó.
+
+Các chi tiết không quan trọng, nhưng điều quan trọng là chúng ta cần thêm vài byte mã để làm điều đó.
+
+Và đây là nơi bạn có thể chọn chế độ bạn muốn, như tôi đã đề cập trước đó.
+
+Chúng ta có thể giữ hai chức năng sơ khai nhỏ này riêng biệt, giống như chúng ta đã làm ở đây.
+
+Chúng tôi có thể chia sẻ nhiều mã nhất và làm cho các chức năng này càng nhỏ càng tốt.
+
+Nhưng thật không may, điều này sẽ thực hiện hai cuộc gọi liên tiếp, điều này không lý tưởng cho hiệu suất.
+
+Vì vậy, chúng tôi có thể cải thiện hơn nữa điều này với một phiên bản thay thế.
+
+Chúng ta có thể lấy hai hàm sơ khai mà chúng ta đã tạo, kết hợp chúng thành một.
+
+Bằng cách đó, chúng tôi giữ mã gần nhau hơn và chúng tôi không cần nhiều cuộc gọi.
+
+Và cái đó ở bên phải đây.
+
+Vì vậy đây là hai lựa chọn.
+
+Bạn có thể chọn tối ưu hóa kích thước một mình và tiết kiệm kích thước tối đa có sẵn.
+
+Bạn có thể kích hoạt điều đó bằng cách sử dụng cờ liên kết -objc_stubs_small hoặc bạn có thể sử dụng việc tạo mã cung cấp lợi ích về kích thước trong khi vẫn giữ được hiệu suất tốt nhất.
+
+Và trừ khi bạn bị hạn chế kích thước nghiêm trọng, chúng tôi khuyên bạn nên sử dụng cái này và đó là lý do tại sao nó là mặc định.
+
+Và đó là tin nhắn nhỏ hơn gửi bằng cuống.
+
+Một cải tiến khác mà chúng tôi đã thực hiện là làm cho việc giữ lại/phát hành rẻ hơn.
+
+Với các trình biên dịch mới trong Xcode 14, các cuộc gọi giữ/phát hành hiện nhỏ hơn tới 4 byte, giảm từ 8 trên ARM64.
+
+Như chúng ta sẽ thấy trong giây lát, giống như gửi tin nhắn, giữ lại/phát hành cũng ở khắp mọi nơi.
+
+Vì vậy, điều này cộng lại và chúng tôi đã thấy nhiều cải tiến kích thước mã hơn tới 2% trên các tệp nhị phân.
+
+Bây giờ, không giống như cuống gửi tin nhắn, điều này cần hỗ trợ thời gian chạy, vì vậy bạn sẽ tự động nhận được điều này khi bạn di chuyển đến mục tiêu triển khai của iOS 16, tvOS 16 hoặc watchOS 9.
+
+Bây giờ hãy xem xét những gì đã thay đổi.
+
+Hãy quay lại ví dụ của chúng ta.
+
+Chúng tôi đã nói về các cuộc gọi msgSend, nhưng với việc đếm tham chiếu tự động, hoặc ARC, chúng tôi cũng kết thúc với rất nhiều cuộc gọi giữ lại/phát hành được chèn bởi trình biên dịch.
+
+Ở cấp độ rất cao, bất cứ khi nào chúng ta tạo một bản sao của một con trỏ đến một đối tượng, chúng ta cần tăng số lượng lưu giữ của nó để giữ cho nó tồn tại.
+
+Và ở đây, điều này xảy ra với các biến cal, dateComponent và theDate của chúng tôi.
+
+Chúng tôi làm điều đó bằng cách gọi vào thời gian chạy, sử dụng objc_retain.
+
+Khi các biến nằm ngoài phạm vi, chúng ta cần giảm số lượng giữ lại bằng cách sử dụng objc_release.
+
+Tất nhiên, một phần lợi ích của ARC là tất cả phép thuật trình biên dịch loại bỏ rất nhiều cuộc gọi này, để giữ chúng ở mức tối thiểu.
+
+Và chúng ta sẽ đi sâu vào một trong những trò ảo thuật này một lát sau.
+
+Nhưng ngay cả với tất cả những điều kỳ diệu, chúng ta vẫn thường cần những cuộc gọi này.
+
+Trong ví dụ này, cuối cùng chúng tôi cần phát hành các bản sao cục bộ của lịch và các thành phần ngày.
+
+Dưới mui xe, các hàm objc_retain/release này chỉ là các hàm C đơn giản; lấy một đối số duy nhất, đối tượng sẽ được giải phóng.
+
+Vì vậy, với ARC, trình biên dịch chèn các lệnh gọi vào các hàm C này, truyền các con trỏ đối tượng thích hợp.
+
+Do đó, các cuộc gọi này phải tôn trọng quy ước gọi C, được xác định bởi Giao diện nhị phân ứng dụng nền tảng của chúng tôi hoặc ABI.
+
+Cụ thể, điều đó có nghĩa là chúng ta cần nhiều mã hơn để thực hiện các cuộc gọi này, để vượt qua con trỏ trong thanh ghi phù hợp.
+
+Vì vậy, chúng tôi kết thúc với một vài hướng dẫn 'di chuyển' bổ sung chỉ cho điều đó.
+
+Và đó là nơi tối ưu hóa mới của chúng tôi xuất hiện.
+
+Bằng cách chuyên giữ lại/phát hành với quy ước gọi tùy chỉnh, chúng ta có thể sử dụng đúng biến thể một cách cơ hội tùy thuộc vào vị trí của con trỏ đối tượng, để chúng ta không cần phải di chuyển nó.
+
+Cụ thể, điều này có nghĩa là, chúng tôi loại bỏ một loạt mã dư thừa cho tất cả các cuộc gọi này.
+
+Và một lần nữa, mặc dù điều này có vẻ không nhiều đối với những hướng dẫn nhỏ bé này, nhưng trên toàn bộ ứng dụng, nó thực sự cộng lại.
+
+Đó là cách chúng tôi làm cho các hoạt động giữ lại/phát hành rẻ hơn.
+
+Cuối cùng, hãy nói về việc loại bỏ tự động phát hành.
+
+Bây giờ cái này thậm chí còn thú vị hơn.
+
+Với những thay đổi về thời gian chạy objc, chúng tôi đã loại bỏ tự động phát hành nhanh hơn.
+
+Điều đó xảy ra tự động cho các ứng dụng hiện có khi bạn chạy chúng trên các bản phát hành hệ điều hành mới.
+
+Trên hết, với những thay đổi trình biên dịch bổ sung, chúng tôi cũng làm cho mã nhỏ hơn.
+
+Và bạn sẽ tự động nhận được lợi ích kích thước này khi bạn chuyển sang mục tiêu triển khai iOS 16, tvOS 16 hoặc watchOS 9.
+
+Bây giờ tất cả đều tuyệt vời, nhưng loại bỏ tự động phát hành ngay từ đầu là gì?
+
+Hãy quay lại ví dụ của chúng ta.
+
+Tôi đã đề cập trước đó rằng ARC đã cung cấp cho chúng tôi rất nhiều phép thuật biên dịch để tối ưu hóa việc giữ lại và phát hành.
+
+Vì vậy, hãy tập trung vào một trường hợp ở đây: các giá trị trả về tự động phát hành.
+
+Trong ví dụ này, chúng tôi đã tạo một đối tượng tạm thời và chúng tôi sẽ trả lại nó cho người gọi của mình.
+
+Vậy hãy xem nó hoạt động như thế nào.
+
+Vì vậy, chúng tôi có theDate tạm thời của mình, chúng tôi trả lại nó, cuộc gọi hoàn tất và người gọi lưu nó vào biến riêng của nó.
+
+Vậy hãy xem nó hoạt động như thế nào với ARC.
+
+ARC chèn một phần giữ vào người gọi và một bản phát hành trong hàm được gọi.
+
+Ở đây, khi chúng tôi trả về đối tượng tạm thời của mình, chúng tôi cần giải phóng nó trước trong hàm, bởi vì nó nằm ngoài phạm vi.
+
+Nhưng chúng ta chưa thể làm điều đó, bởi vì nó chưa có bất kỳ tài liệu tham khảo nào khác.
+
+Nếu chúng tôi phát hành nó, nó sẽ bị phá hủy trước khi chúng tôi quay trở lại, và điều đó không tốt.
+
+Vì vậy, một quy ước đặc biệt được sử dụng để có thể trả lại tạm thời.
+
+Chúng tôi tự động phát hành nó trước khi trả lại để người gọi có thể giữ lại nó.
+
+Bạn có thể đã thấy các bể bơi tự động phát hành và tự động phát hành trước đây: đó chỉ đơn giản là một cách để trì hoãn phát hành cho đến một số điểm sau đó.
+
+Thời gian chạy không thực sự đảm bảo khi nào việc phát hành xảy ra, nhưng miễn là nó không ở ngay đây, ngay bây giờ, nó thuận tiện, bởi vì nó cho phép chúng tôi trả lại đối tượng tạm thời này.
+
+Bây giờ, cái này không miễn phí.
+
+Có một số chi phí để thực hiện tự động phát hành.
+
+Đây là nơi loại bỏ tự động phát hành xuất hiện.
+
+Vì vậy, để hiểu cách thức hoạt động của nó, chúng ta hãy xem xét việc lắp ráp và truy xuất lại sự trở lại này.
+
+Khi chúng tôi gọi tự động phát hành, điều đó sẽ đi vào thời gian chạy objc và đó là nơi niềm vui bắt đầu.
+
+Thời gian chạy cố gắng nhận ra những gì đang xảy ra: rằng chúng tôi đang trả về một giá trị tự động phát hành.
+
+Để giúp nó, trình biên dịch phát ra một điểm đánh dấu đặc biệt mà chúng tôi không bao giờ sử dụng nếu không.
+
+Nó ở đó để cho thời gian chạy biết rằng điều này đủ điều kiện để loại bỏ tự động phát hành.
+
+Và nó được theo sau bởi việc giữ lại, mà chúng tôi sẽ thực hiện sau.
+
+Nhưng ngay bây giờ, chúng tôi vẫn đang trong quá trình tự động phát hành và khi chúng tôi thực hiện, thời gian chạy sẽ tải hướng dẫn đánh dấu đặc biệt dưới dạng dữ liệu và so sánh nó để xem liệu đó có phải là giá trị điểm đánh dấu đặc biệt mà nó mong đợi hay không.
+
+Nếu có, điều đó có nghĩa là trình biên dịch đã thông báo cho thời gian chạy rằng chúng tôi sẽ trả về tạm thời sẽ được giữ lại ngay lập tức.
+
+Và điều này cho phép chúng tôi bỏ qua, hoặc loại bỏ, các cuộc gọi tự động phát hành và giữ lại phù hợp.
+
+Và đó là loại bỏ tự động phát hành.
+
+Tuy nhiên, điều này cũng không miễn phí: tải mã dưới dạng dữ liệu không phải là thứ siêu phổ biến, vì vậy nó không tối ưu trên CPU.
+
+Chúng ta có thể làm tốt hơn.
+
+Vì vậy, hãy truy xuất lại chuỗi trả về một lần nữa, lần này sử dụng cách mới.
+
+Chúng tôi đã bắt đầu ở chế độ tự động phát hành.
+
+Điều đó vẫn đi vào thời gian chạy Objective-C.
+
+Tại thời điểm này, chúng tôi thực sự đã có thông tin có giá trị: địa chỉ trả lại.
+
+Nó cho chúng ta biết chúng ta cần quay lại đâu sau khi chức năng này hoàn tất việc thực thi.
+
+Vì vậy chúng ta có thể theo dõi điều đó.
+
+Rất may, lấy địa chỉ trả hàng rất rẻ.
+
+Nó chỉ là một con trỏ, và chúng ta có thể cất nó ở bên cạnh.
+
+Sau đó chúng tôi rời khỏi cuộc gọi tự động phát hành thời gian chạy.
+
+Chúng tôi quay lại với người gọi và chúng tôi nhập lại thời gian chạy khi thực hiện việc giữ lại.
+
+Và đây là nơi điều kỳ diệu mới xảy ra.
+
+Tại thời điểm đó, chúng ta có thể xem chúng ta đang ở đâu và nhận được một con trỏ đến địa chỉ trả lại hiện tại của chúng ta.
+
+Trong thời gian chạy, chúng ta có thể so sánh con trỏ này mà chúng ta vừa nhận được trong khi thực hiện giữ lại với con trỏ chúng ta đã lưu trước đó khi chúng ta đang phát hành tự động.
+
+Và vì chúng tôi chỉ đang so sánh hai con trỏ, cái này siêu rẻ.
+
+Chúng ta không cần phải truy cập bộ nhớ đắt tiền.
+
+Nếu so sánh thành công, chúng tôi biết rằng chúng tôi có thể loại bỏ cặp tự động phát hành/giữ lại và chúng tôi có thể cải thiện một số hiệu suất.
+
+Và trên hết, bây giờ chúng ta không cần so sánh hướng dẫn đánh dấu đặc biệt này dưới dạng dữ liệu nữa, chúng ta không cần nó, vì vậy chúng ta có thể xóa nó.
+
+Và điều đó cũng cho phép chúng tôi lưu một số kích thước mã.
+
+Đó là cách chúng tôi làm cho việc loại bỏ tự động phát hành nhanh hơn và nhỏ hơn.
+
+Chúng tôi đã trải qua một số cải tiến về thời gian chạy Swift và Objective-C.
+
+Hãy kết thúc.
+
+Khi ứng dụng của bạn được chạy trên hệ điều hành mới, nhờ những cải tiến trong thời gian chạy, việc kiểm tra giao thức Swift hiệu quả hơn.
+
+Mỗi khi chúng tôi cố gắng loại bỏ tự động phát hành, điều đó cũng nhanh hơn.
+
+Nhờ các trình biên dịch và trình liên kết mới trong Xcode 14 và cuống gửi tin nhắn, bạn có thể tiết kiệm tới 2% kích thước mã bằng cách xây dựng lại ứng dụng của mình.
+
+Và cuối cùng, khi bạn cập nhật mục tiêu triển khai của mình lên iOS 16, tvOS 16 hoặc watchOS 9, bạn có thể tiết kiệm thêm 2% nữa bằng cách thực hiện các cuộc gọi giữ/phát hành nhỏ hơn.
+
+Thậm chí nhiều hơn, nhờ vào trình tự loại bỏ tự động phát hành nhỏ hơn.
+
+Tôi hy vọng bạn thích đi sâu vào thời gian chạy Swift và Objective-C này, và cảm ơn vì đã xem.

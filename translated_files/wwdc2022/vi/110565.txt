@@ -1,0 +1,329 @@
+110565
+
+♪ ♪
+
+Ken Greenebaum: Chào mọi người! Chào mừng đến với WWDC 2022.
+
+Tên tôi là Ken Greenebaum, và tôi làm việc trong nhóm Công nghệ Màu sắc và Hiển thị tại Apple.
+
+Chúng tôi rất vui mừng khi có ba cuộc nói chuyện EDR trong năm nay.
+
+Hy vọng bạn đã có cơ hội xem "Khám phá EDR trên iOS", nơi chúng tôi đã công bố hỗ trợ API EDR cho iOS, cũng như "Hiển thị nội dung EDR với Core Image, Metal và SwiftUI."
+
+Một số bạn cũng có thể đã xem bài nói chuyện EDR của tôi vào năm ngoái, nơi chúng tôi đã trình bày cách sử dụng AVPlayer để phát lại video HDR, sử dụng EDR.
+
+Trong buổi nói chuyện này, chúng ta sẽ đi sâu hơn và khám phá cách sử dụng giao diện Core Media để cung cấp, không chỉ phát lại EDR mà còn cả cách giải mã và phát lại video HDR, vào các lớp hoặc chế độ xem EDR của riêng bạn.
+
+Sau đó, chúng tôi sẽ tiếp tục không chỉ đơn giản là phát lại nội dung, để chỉ ra cách truy cập các khung hình video được giải mã trong thời gian thực, thông qua liên kết hiển thị của Core Video, gửi các khung hình đó đến Bộ lọc CoreImage hoặc Metal Shader, để thêm quản lý màu sắc, hiệu ứng hình ảnh hoặc áp dụng xử lý tín hiệu khác
+
+Chúng tôi sẽ bắt đầu bằng cách xem xét các khung phương tiện video tương thích EDR, để giúp bạn quyết định cái nào phù hợp nhất với yêu cầu của ứng dụng của bạn.
+
+Tiếp theo, chúng ta sẽ thảo luận ngắn gọn về các khung AVKit và AVFoundation cấp cao, có thể thực hiện tất cả công việc phát video HDR, nếu ứng dụng của bạn yêu cầu phát lại thẳng về phía trước.
+
+Và cuối cùng, chúng ta sẽ thảo luận về các phương pháp hay nhất để sử dụng các khung hình video được giải mã, với Core Video và Metal, trong công cụ phát lại, chỉnh sửa hoặc xử lý hình ảnh EDR của bạn.
+
+Hãy bắt đầu bằng cách thực hiện một cuộc khảo sát nhanh về các khung video của Apple; Bắt đầu với các giao diện cấp cao nhất; dễ sử dụng nhất; và tiếp tục đến các khung cấp thấp hơn cung cấp nhiều cơ hội hơn, với chi phí thêm độ phức tạp vào mã của bạn.
+
+Tốt nhất là sử dụng khung cấp cao nhất có thể để tận dụng các tối ưu hóa được cung cấp tự động cho bạn.
+
+Điều này sẽ giúp chúng ta sẵn sàng đi sâu vào phần nội dung của cuộc nói chuyện, nơi chúng ta sẽ khám phá một số tình huống, từ phát lại EDR đơn giản đến hệ thống ống nước tinh vi hơn của các khung hình video được giải mã đến CoreImage hoặc Metal để xử lý thời gian thực.
+
+Ở cấp độ cao nhất, có AVKit.
+
+Với AVKit, bạn có thể tạo giao diện người dùng để phát lại phương tiện; hoàn chỉnh với các điều khiển vận chuyển, điều hướng chương, hỗ trợ Hình ảnh trong Hình ảnh và hiển thị phụ đề và phụ đề chi tiết.
+
+AVKit có thể phát lại nội dung HDR dưới dạng EDR, như chúng tôi sẽ trình diễn bằng cách sử dụng AVPlayerViewController.
+
+Tuy nhiên, nếu ứng dụng của bạn yêu cầu xử lý thêm các khung hình video, bạn sẽ phải sử dụng khung phương tiện có thể giúp bạn kiểm soát nhiều hơn đối với đường ống của mình.
+
+Tiếp theo là AVFoundation.
+
+AVFoundation là khuôn khổ đầy đủ tính năng để làm việc với phương tiện âm thanh hình ảnh dựa trên thời gian trên Nền tảng Apple.
+
+Sử dụng AVFoundation, bạn có thể dễ dàng phát, tạo và chỉnh sửa phim QuickTime và tệp MPEG 4, phát các luồng HLS và xây dựng chức năng đa phương tiện mạnh mẽ vào ứng dụng của mình.
+
+Chúng ta sẽ khám phá việc sử dụng AVPlayer và giao diện AVPlayerLayer liên quan trong buổi nói chuyện này.
+
+Core Video là một khuôn khổ cung cấp một mô hình đường ống cho video kỹ thuật số.
+
+Nó đơn giản hóa cách bạn làm việc với video bằng cách phân chia quy trình thành các bước riêng biệt.
+
+Core Video cũng giúp bạn dễ dàng truy cập và thao tác các khung hình riêng lẻ mà không phải lo lắng về việc dịch giữa các loại dữ liệu hoặc lo lắng về việc đồng bộ hóa màn hình.
+
+Chúng tôi sẽ trình diễn việc sử dụng DisplayLink và CVPixelBuffer's với Core Image.
+
+Và CVMetalTextureCache, với Metal.
+
+Tiếp theo là Hộp công cụ Video.
+
+Đây là một khung cấp thấp cung cấp quyền truy cập trực tiếp vào bộ mã hóa và bộ giải mã phần cứng.
+
+Hộp công cụ Video cung cấp dịch vụ nén và giải nén video, và để chuyển đổi giữa các định dạng hình ảnh raster được lưu trữ trong bộ đệm pixel Core Video.
+
+VTDecompressionSession là một giao diện cấp thấp mạnh mẽ nằm ngoài phạm vi của cuộc nói chuyện này, nhưng các nhà phát triển nâng cao có thể muốn điều tra thêm.
+
+Và cuối cùng, có Core Media.
+
+Khung này xác định đường ống truyền thông được sử dụng bởi AVFoundation và các khuôn khổ truyền thông cấp cao khác.
+
+Bạn luôn có thể sử dụng các loại dữ liệu và giao diện cấp thấp của Core Media để xử lý hiệu quả các mẫu phương tiện và quản lý hàng đợi dữ liệu phương tiện.
+
+Trong phần còn lại của bài nói chuyện này, chúng tôi sẽ trình bày cách thức và thời điểm sử dụng các khuôn khổ này trong ứng dụng của bạn.
+
+Đầu tiên, cách sử dụng AVKit và AVFoundation để dễ dàng phát lại video HDR được hiển thị dưới dạng EDR.
+
+Sau đó, một loạt các ứng dụng phức tạp hơn của AVPlayer: để hiển thị cho lớp của riêng bạn, truy cập các khung được giải mã riêng lẻ thông qua CADisplayLink và gửi CVPixelBuffers kết quả đến Core Image để xử lý, và cuối cùng, truy cập các khung được giải mã dưới dạng kết cấu Kim loại thông qua CVMetalTex
+
+Bây giờ chúng ta đã có cái nhìn tổng quan về lớp phương tiện video trên nền tảng Apple, chúng ta sẽ tập trung vào các khung AVKit và AVFoundation.
+
+Hãy bắt đầu mọi thứ bằng cách thảo luận trước về việc phát lại nội dung video HDR của bạn bằng giao diện AVPlayer của AVFoundation.
+
+AVPlayer là một đối tượng điều khiển, được sử dụng để quản lý việc phát lại và thời gian của một nội dung phương tiện.
+
+Giao diện AVPlayer có thể được sử dụng để phát lại video HDR hiệu suất cao, tự động hiển thị kết quả dưới dạng EDR khi có thể.
+
+Với AVPlayer, bạn có thể phát phương tiện dựa trên tệp cục bộ và từ xa, chẳng hạn như phim QuickTime; cũng như phương tiện phát trực tuyến, được phục vụ bằng HLS.
+
+Về cơ bản, AVPlayer được sử dụng để phát một nội dung đa phương tiện tại một thời điểm.
+
+Bạn có thể sử dụng lại phiên bản trình phát để phát nối tiếp các tài sản phương tiện bổ sung hoặc thậm chí tạo nhiều phiên bản để phát nhiều tài sản cùng một lúc, nhưng AVPlayer chỉ quản lý việc phát lại một tài sản phương tiện duy nhất tại một thời điểm.
+
+Khung AVFoundation cũng cung cấp một lớp con của AVPlayer được gọi là AVQueuePlayer mà bạn có thể sử dụng để tạo và quản lý việc xếp hàng và phát các tài sản phương tiện HDR tuần tự.
+
+Nếu ứng dụng của bạn yêu cầu phát lại phương tiện video HDR đơn giản được hiển thị thành EDR, thì AVPlayer với AVPlayerViewController, có thể là cách tiếp cận tốt nhất.
+
+Sử dụng AVPlayer với AVPlayerLayer để phát lại chế độ xem của riêng bạn trên iOS hoặc macOS.
+
+Đây là những cách đơn giản nhất để sử dụng AVPlayer.
+
+Hãy xem xét các ví dụ của cả hai.
+
+Đầu tiên chúng ta sẽ xem xét cách bạn có thể sử dụng giao diện AVPlayer của AVFoundation, kết hợp với Bộ điều khiển chế độ xem AVPlayer của AVKit.
+
+Ở đây, chúng tôi bắt đầu bằng cách khởi tạo AVPlayer từ URL của phương tiện truyền thông.
+
+Tiếp theo, chúng tôi tạo một AVPlayerViewController, sau đó đặt thuộc tính trình phát của bộ điều khiển người xem của chúng tôi thành trình phát mà chúng tôi vừa tạo từ URL của phương tiện.
+
+Và trình bày bộ điều khiển chế độ xem theo phương thức để bắt đầu phát lại video.
+
+AVKit quản lý tất cả các chi tiết cho bạn và sẽ tự động phát lại Video HDR dưới dạng EDR trên các màn hình hỗ trợ EDR.
+
+Như tôi đã đề cập, một số ứng dụng sẽ cần phát lại phương tiện video HDR vào chế độ xem của riêng chúng.
+
+Hãy xem cách thực hiện điều này bằng cách sử dụng AVPlayer với AVPlayerLayer.
+
+Để phát phương tiện video HDR dưới dạng EDR theo chế độ xem của riêng bạn, chúng tôi lại bắt đầu bằng cách tạo AVPlayer với URL của phương tiện.
+
+Tuy nhiên lần này chúng tôi khởi tạo một AVPlayerLayer với trình phát mà chúng tôi vừa tạo.
+
+Tiếp theo chúng ta cần đặt giới hạn trên lớp trình phát, mà chúng ta nhận được từ chế độ xem.
+
+Bây giờ lớp người chơi có giới hạn từ chế độ xem, chúng ta có thể thêm lớp người chơi dưới dạng lớp con vào chế độ xem.
+
+Cuối cùng, để phát lại phương tiện video HDR, chúng tôi gọi phương thức phát của AVPlayer.
+
+Đó là tất cả những gì cần thiết để phát lại phương tiện video HDR dưới dạng EDR trong lớp của riêng bạn bằng cách sử dụng AVPlayer và AVPlayerLayer.
+
+Chúng tôi vừa khám phá hai quy trình phát lại video HDR đơn giản nhất bằng cách sử dụng AVPlayer.
+
+Tuy nhiên, nhiều ứng dụng yêu cầu nhiều hơn là phát lại phương tiện đơn giản.
+
+Ví dụ, một ứng dụng có thể yêu cầu xử lý hình ảnh, chẳng hạn như phân loại màu sắc hoặc khóa sắc độ được áp dụng cho video.
+
+Hãy cùng khám phá quy trình làm việc nhận các khung hình video được giải mã từ AVPlayer, áp dụng các bộ lọc Core Image hoặc bộ đổ bóng kim loại trong thời gian thực và hiển thị kết quả dưới dạng EDR.
+
+Chúng tôi sẽ trình bày cách sử dụng AVPlayer và AVPlayerItem để giải mã các khung EDR khỏi phương tiện video HDR của bạn, truy cập các khung hình được giải mã từ liên kết hiển thị Core Video, gửi bộ đệm pixel kết quả đến Core Image hoặc Metal để xử lý, sau đó hiển thị kết quả trong CAMetalLayer dưới dạng EDR trên màn
+
+Với suy nghĩ này, trước tiên chúng ta hãy chứng minh việc thiết lập một vài thuộc tính chính trên CAMetalLayer, được yêu cầu để đảm bảo phương tiện HDR sẽ hiển thị chính xác dưới dạng EDR.
+
+Trước tiên, chúng ta cần lấy CAMetalLayer mà chúng ta sẽ hiển thị nội dung video HDR.
+
+Trên lớp đó, chúng tôi chọn tham gia EDR bằng cách đặt cờ wantsExtendedDynamicRangeContent thành true.
+
+Vui lòng đảm bảo sử dụng định dạng pixel hỗ trợ nội dung Dải động mở rộng.
+
+Đối với ví dụ AVPlayer tiếp theo, chúng tôi sẽ đặt CAMetalLayer sử dụng định dạng nửa pixel float, tuy nhiên định dạng mười bit được sử dụng kết hợp với chức năng truyền PQ hoặc HLG cũng sẽ hoạt động.
+
+Để tránh giới hạn kết quả ở SDR, chúng ta cũng cần đặt lớp thành không gian màu phạm vi mở rộng tương thích EDR.
+
+Trong các ví dụ của chúng tôi, chúng tôi sẽ đặt kết cấu kim loại nửa nổi thành không gian màu P3 hiển thị tuyến tính mở rộng.
+
+Chúng tôi vừa làm xước bề mặt liên quan đến EDR, không gian màu và định dạng bộ đệm điểm ảnh.
+
+Bạn có thể muốn xem phiên của tôi từ năm ngoái, "Kết xuất HDR với EDR", cũng như "EDR trên iOS" năm nay, để biết thêm chi tiết.
+
+Bây giờ chúng ta đã đặt các thuộc tính cơ bản trên CAMetalLayer, hãy tiếp tục trình diễn bằng cách thêm xử lý hình ảnh theo thời gian thực bằng Core Image hoặc Metal shader.
+
+Chúng tôi sẽ sử dụng liên kết hiển thị kết hợp với AVPlayer để truy cập các khung hình video được giải mã trong thời gian thực.
+
+Đối với quy trình làm việc này, bạn bắt đầu bằng cách tạo một AVPlayer từ AVPlayerItem.
+
+Tiếp theo, bạn khởi tạo AVPlayerItemVideoOutput, được định cấu hình với định dạng bộ đệm pixel thích hợp và không gian màu cho EDR.
+
+Sau đó bạn tạo và cấu hình một liên kết Hiển thị.
+
+Và cuối cùng, bạn chạy liên kết Hiển thị để đưa bộ đệm pixel đến Core Image hoặc Metal để xử lý.
+
+Chúng tôi sẽ trình diễn CADisplayLink như được sử dụng trên iOS.
+
+Vui lòng sử dụng giao diện CVDisplayLink tương đương khi phát triển cho macOS.
+
+Lần này chúng tôi chọn tạo AVPlayerItem từ URL của phương tiện và khởi tạo AVPlayer với AVPlayerItem mà chúng tôi vừa tạo.
+
+Bây giờ chúng tôi tạo một cặp từ điển để chỉ định không gian màu và định dạng bộ đệm pixel của các khung được giải mã.
+
+Từ điển đầu tiên, videoColorProperties, là nơi chỉ định không gian màu và chức năng truyền.
+
+Trong ví dụ này, chúng tôi yêu cầu không gian màu Display P3, tương ứng với không gian màu của hầu hết các màn hình Apple và chức năng truyền tuyến tính cho phép AVFoundation duy trì các giá trị phạm vi mở rộng cần thiết cho EDR.
+
+Từ điển thứ hai, outputVideoSettings, chỉ định các đặc điểm của định dạng bộ đệm pixel và cũng cung cấp tham chiếu đến từ điển videoColorProperties mà chúng tôi vừa tạo.
+
+Trong ví dụ này, chúng tôi yêu cầu màu rộng và định dạng bộ đệm nửa điểm ảnh nổi.
+
+Điều rất hữu ích là AVPlayerItemVideoOutput, không chỉ giải mã video thành định dạng bộ đệm pixel mà chúng tôi chỉ định trong từ điển cài đặt đầu ra, mà còn tự động thực hiện bất kỳ chuyển đổi màu nào được yêu cầu thông qua phiên truyền pixel.
+
+Nhớ lại, một video có thể chứa nhiều clip, có khả năng với các không gian màu khác nhau.
+
+AVFoundation tự động quản lý những thứ này cho chúng tôi và như chúng tôi sẽ sớm chứng minh, hành vi này cũng cho phép các khung hình video được giải mã kết quả được gửi đến các khung cấp thấp như Metal mà bản thân chúng không cung cấp chuyển đổi không gian màu tự động sang không gian màu của màn hình.
+
+Bây giờ chúng tôi tạo AVPlayerItemVideoOutput với từ điển outputVideoSettings.
+
+Bước thứ ba, chúng tôi thiết lập liên kết Hiển thị, liên kết này sẽ được sử dụng để truy cập các khung được giải mã trong thời gian thực.
+
+CADisplayLink nhận một cuộc gọi lại được chạy trên mỗi bản cập nhật hiển thị.
+
+Trong ví dụ của chúng tôi, chúng tôi gọi một hàm cục bộ mà chúng tôi sẽ khám phá trong giây lát để lấy CVPixelBuffers mà chúng tôi sẽ gửi đến Core Image để xử lý.
+
+Tiếp theo, chúng tôi tạo một người quan sát mục trình phát video để cho phép chúng tôi xử lý các thay đổi đối với các thuộc tính Mục trình phát được chỉ định.
+
+Ví dụ của chúng tôi sẽ thực thi mã này mỗi khi thay đổi trạng thái của vật phẩm của người chơi.
+
+Khi trạng thái của vật phẩm trình phát thay đổi thành readyToPlay, chúng tôi thêm AVPlayerItemVideoOutput của mình vào AVPlayerItem mới vừa được trả về, đăng ký CADisplayLink với vòng lặp chạy chính được đặt ở chế độ chung và bắt đầu giải mã video HDR theo thời gian thực bằng cách gọi phát trên trình phát video.
+
+Cuối cùng, chúng ta sẽ xem xét một ví dụ về việc triển khai gọi lại CADisplayLink, mà chúng ta đã gọi trước đó là hàm cục bộ `displayLinkCopyPixelBuffers`.
+
+Khi video HDR bắt đầu phát, chức năng gọi lại CADisplayLink được gọi trên mỗi lần làm mới màn hình.
+
+Ví dụ, nó có thể được gọi 60 lần một giây cho một màn hình điển hình.
+
+Đây là cơ hội của mã của chúng tôi để cập nhật khung được hiển thị nếu có CVPixelBuffer mới.
+
+Trên mỗi cuộc gọi lại hiển thị, chúng tôi cố gắng sao chép CVPixelBuffer chứa khung video được giải mã để hiển thị tại thời điểm đồng hồ treo tường hiện tại.
+
+Tuy nhiên, cuộc gọi `copyPixelBuffer` có thể thất bại, vì không phải lúc nào cũng có CVPixelBuffer mới có sẵn ở mỗi lần làm mới màn hình, đặc biệt là khi tốc độ làm mới màn hình vượt quá tốc độ làm mới video đang phát.
+
+Nếu không có CVPixelBuffer mới, thì cuộc gọi không thành công và chúng tôi bỏ qua kết xuất.
+
+Điều này làm cho khung hình trước đó vẫn ở trên màn hình để làm mới màn hình khác.
+
+Nhưng nếu bản sao thành công, thì chúng tôi có một khung video mới trong CVPixelBuffer.
+
+Có một số cách mà chúng tôi có thể xử lý và hiển thị khung mới này.
+
+Một cơ hội là gửi CVPixelBuffer đến Core Image để xử lý.
+
+Core Image có thể xâu chuỗi một hoặc nhiều CIFilters lại với nhau để cung cấp khả năng xử lý hình ảnh tăng tốc GPU cho khung hình video.
+
+Xin lưu ý rằng không phải tất cả CIFilters đều tương thích với EDR và có thể gặp sự cố với nội dung HDR, bao gồm cả việc kẹp vào SDR hoặc tệ hơn.
+
+Core Image cung cấp nhiều Bộ lọc tương thích EDR.
+
+Sử dụng tên bộ lọc với CICategoryHighDynamicRange, để liệt kê các bộ lọc Core Image tương thích EDR.
+
+Trong ví dụ của chúng tôi, chúng tôi sẽ thêm một hiệu ứng tông màu nâu đỏ đơn giản.
+
+Bây giờ hãy quay lại ví dụ của chúng tôi và tích hợp Core Image.
+
+Trên mỗi lần gọi lại liên kết hiển thị mang lại CVPixelBuffer mới, hãy tạo CIImage từ bộ đệm pixel đó.
+
+Ví dụ CIFilter để thực hiện hiệu ứng mong muốn.
+
+Tôi đang sử dụng bộ lọc tông màu nâu đỏ vì sự đơn giản ít tham số của nó, tuy nhiên có rất nhiều CIFilters được tích hợp trong hệ thống và việc viết của riêng bạn cũng rất đơn giản.
+
+Đặt inputImage của CIFilter thành CIImage mà chúng tôi vừa tạo.
+
+Và kết quả video đã xử lý sẽ có sẵn trong Hình ảnh đầu ra của bộ lọc.
+
+Xích nhiều CIFilters lại với nhau theo yêu cầu để đạt được hiệu quả mong muốn của bạn.
+
+Sau đó sử dụng CIRenderDestination để hiển thị hình ảnh kết quả vào mã xem ứng dụng của bạn.
+
+Vui lòng tham khảo bài nói chuyện WWDC 2020 "Tối ưu hóa đường ống Core Image cho ứng dụng video của bạn" để tìm hiểu thêm về quy trình làm việc này.
+
+Một cơ hội khác, là xử lý và hiển thị CVPixelBuffer mới bằng cách sử dụng Metal và các bộ đổ bóng Metal tùy chỉnh.
+
+Chúng tôi sẽ mô tả ngắn gọn quá trình chuyển đổi CVPixelBuffer thành kết cấu Kim loại.
+
+Tuy nhiên, việc thực hiện chuyển đổi này để duy trì hiệu suất tốt nhất là một chủ đề sâu sắc tốt nhất nên để lại cho một cuộc nói chuyện khác.
+
+Thay vào đó, chúng tôi khuyên bạn nên lấy kết cấu Kim loại từ bộ nhớ đệm kết cấu CoreVideo Metal và sẽ đi qua quy trình đó làm ví dụ cuối cùng trong bài nói chuyện này.
+
+Nói chung, quy trình là lấy bề mặt IOS từ CVPixelBuffer, tạo MetalTextureDescriptor, và sau đó tạo MetalTexture từ MetalDevice, sử dụng `newTextureWithDescriptor`.
+
+Tuy nhiên, có một mối nguy hiểm là các kết cấu có thể được sử dụng lại và vẽ quá mức, nếu không áp dụng khóa cẩn thận.
+
+Hơn nữa, không phải tất cả các định dạng PixelBuffer đều được MetalTexture hỗ trợ nguyên bản, đó là lý do tại sao chúng tôi sử dụng half float trong ví dụ này.
+
+Vì những phức tạp này, thay vào đó chúng tôi khuyên bạn nên truy cập trực tiếp kết cấu Kim loại từ Core Video, như bây giờ chúng tôi sẽ chứng minh.
+
+Hãy cùng khám phá thêm Core Video và Metal.
+
+Như đã đề cập, CVMetalTextureCache vừa là một cách đơn giản vừa hiệu quả để sử dụng CVPixelBuffers với Metal.
+
+CVMetalTextureCache rất tiện dụng vì bạn nhận được kết cấu Kim loại trực tiếp từ bộ nhớ cache mà không cần chuyển đổi thêm.
+
+CVMetalTextureCache tự động kết nối giữa CVPixelBuffer's và MetalTexture's, do đó vừa đơn giản hóa mã của bạn vừa giúp bạn đi nhanh.
+
+Kết hợp với CVPixelBufferPools, CVMetalTextureCache cũng cung cấp các lợi ích về hiệu suất, bằng cách giữ cho MTLTexture cho bản đồ bề mặt IOS tồn tại.
+
+Cuối cùng, sử dụng CVMetalTextureCache loại bỏ nhu cầu theo dõi thủ công các bề mặt IOS.
+
+Bây giờ là ví dụ cuối cùng trong bài nói chuyện của chúng tôi: cách trích xuất kết cấu Kim loại trực tiếp từ Core Video bằng CVMetalTextureCache.
+
+Ở đây, chúng tôi bắt đầu bằng cách lấy thiết bị Metal mặc định của hệ thống.
+
+Chúng tôi sử dụng điều đó để tạo Bộ nhớ đệm kết cấu kim loại, và sau đó khởi tạo Bộ nhớ đệm kết cấu kim loại video cốt lõi được liên kết với Bộ nhớ đệm kết cấu kim loại.
+
+Sau đó, điều đó có thể được sử dụng để truy cập các khung hình video được giải mã dưới dạng Kết cấu kim loại, thuận tiện, có thể được sử dụng trực tiếp trong công cụ Kim loại của chúng tôi.
+
+Trong ví dụ này, chúng tôi tạo và sử dụng thiết bị mặc định của hệ thống Metal.
+
+Tiếp theo, chúng tôi tạo CVMetalTextureCache với CVMetalTextureCacheCreate, chỉ định thiết bị Metal mà chúng tôi vừa tạo.
+
+Chúng tôi nhận được chiều cao và chiều rộng của CVPixelBuffer cần thiết để tạo ra kết cấu Core Video Metal.
+
+Sau đó, chúng tôi gọi `CVMetalTextureCacheCreateTextureFromImage`, để khởi tạo một đối tượng CVMetalTexture và liên kết nó với CVPixelBuffer.
+
+Cuối cùng chúng tôi gọi `CVMetalTextureGetTexture`, để có được kết cấu Kim loại mong muốn.
+
+Các ứng dụng Swift nên sử dụng tham chiếu mạnh mẽ cho CVMetalTexture, tuy nhiên, khi sử dụng Objective-C, bạn phải đảm bảo rằng Metal được hoàn thành với kết cấu của bạn trước khi bạn phát hành CVMetalTextureRef.
+
+Điều này có thể được thực hiện bằng cách sử dụng trình xử lý hoàn thành bộ đệm lệnh kim loại.
+
+Và đó là tất cả, các bạn!
+
+Để xem xét, chúng tôi đã khám phá một số quy trình làm việc sẽ hiển thị phương tiện video HDR của bạn thành EDR, để phát lại, chỉnh sửa hoặc xử lý hình ảnh.
+
+Bạn đã học cách chuyển từ AVPlayer sang AVPlayerViewController của AVKit, để phát lại phương tiện HDR.
+
+Bạn cũng đã học cách sử dụng AVPlayer, cùng với AVPlayerLayer, để hiển thị phương tiện HDR theo chế độ xem của riêng bạn.
+
+Và cuối cùng, chúng tôi đã khám phá cách thêm hiệu ứng thời gian thực trong khi phát lại.
+
+Kết nối AVPlayer của AVFoundation với CoreVideo và sau đó với Metal để kết xuất.
+
+Và áp dụng các hiệu ứng thời gian thực bằng cách sử dụng các bộ lọc CoreImage, cũng như các bộ đổ bóng kim loại.
+
+Nếu bạn muốn tìm hiểu sâu hơn, tôi đề xuất một vài phiên WWDC liên quan đến việc tạo quy trình làm việc video, cũng như tích hợp phương tiện HDR với EDR.
+
+Tôi đặc biệt muốn gọi phiên "Chỉnh sửa và phát lại video HDR với AVFoundation".
+
+Phiên này khám phá việc sử dụng AVVideoComposition với `applyingCIFiltersWithHandler` để áp dụng các hiệu ứng cho phương tiện HDR của bạn.
+
+Trong phiên này, bạn cũng sẽ học cách sử dụng bộ tổng hợp tùy chỉnh, sau đó có thể được sử dụng với CVPixelBuffer, khi mỗi khung hình video có sẵn để xử lý.
+
+Như tôi đã đề cập ở phần đầu, năm nay chúng tôi cũng trình bày hai phiên khác trên EDR: "EDR trên iOS", nơi chúng tôi thông báo hỗ trợ API EDR đã mở rộng để bao gồm iOS và "hiển thị nội dung HDR với EDR bằng CoreImage, Metal và SwiftUI", nơi chúng tôi khám phá thêm về việc tích hợp EDR với các
+
+Hy vọng bạn kết hợp video HDR vào các ứng dụng hỗ trợ EDR của mình trên cả macOS và bây giờ là iOS.
+
+Cảm ơn vì đã xem.

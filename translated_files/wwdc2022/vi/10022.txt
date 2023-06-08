@@ -1,0 +1,531 @@
+10022
+
+♪ ♪
+
+Xin chào và chào mừng.
+
+Tôi là Brad Ford từ nhóm Kỹ sư Phần mềm Máy ảnh.
+
+Trong phiên này, tôi sẽ giới thiệu cho bạn các tiện ích mở rộng máy ảnh với CoreMedia IO, đây là kiến trúc trình điều khiển máy ảnh hiện đại cho macOS và thay thế cho các trình cắm DAL.
+
+Trình cắm DAL là một công nghệ cho phép bạn tạo trình điều khiển máy ảnh cho phần cứng cắm vào máy Mac hoặc máy ảnh ảo.
+
+Chúng đã tồn tại trong một thời gian rất dài - kể từ macOS 10.7.
+
+Các trình cắm DAL cung cấp sức mạnh để mở rộng macOS như một nền tảng đa phương tiện, mang lại sự hỗ trợ cho các sản phẩm máy ảnh tuyệt vời của bên thứ ba cho những người chuyên nghiệp và người tiêu dùng.
+
+Đó là một phần của những gì tạo nên Mac, Mac.
+
+Nhưng các trình cắm DAL có một số vấn đề.
+
+Họ tải mã không đáng tin cậy trực tiếp vào quy trình của ứng dụng, khiến nó dễ bị treo nếu trình cắm có lỗi hoặc phần mềm độc hại tấn công.
+
+Vì lý do này, chúng không hoạt động với các ứng dụng của Apple như FaceTime, QuickTime Player và PhotoBooth.
+
+Chúng cũng không hoạt động với nhiều ứng dụng máy ảnh của bên thứ ba, trừ khi những ứng dụng đó cố tình vô hiệu hóa xác thực thư viện hoặc người dùng tắt tính toàn vẹn của hệ thống.
+
+Cả hai điều này đều không được khuyến nghị thực hành vì chúng làm cho hệ thống kém an toàn hơn và kém ổn định hơn.
+
+Chúng cũng khó phát triển.
+
+Họ mang một API C vào khoảng năm 2011 và một SDK dày của các lớp trợ giúp C++ để bạn học.
+
+Và trên hết, chúng được ghi lại một cách thưa thớt.
+
+Đã đến lúc nâng cấp.
+
+macOS 12.3 giới thiệu một sự thay thế hoàn toàn hiện đại cho các trình cắm DAL được gọi là Phần mở rộng máy ảnh... Một kiến trúc đặt bảo mật người dùng lên hàng đầu.
+
+Hãy cùng tìm hiểu xem nó hoạt động như thế nào.
+
+Đầu tiên, tôi sẽ cung cấp một cái nhìn tổng quan về công nghệ.
+
+Tiếp theo, tôi sẽ chỉ cho bạn cách xây dựng phần mở rộng máy ảnh từ đầu.
+
+Tiếp theo, tôi sẽ giới thiệu các lớp và chức năng chính của API.
+
+Tôi sẽ giải thích cách CoreMedia IO Extensions có thể được sử dụng làm thiết bị đầu ra.
+
+Và cuối cùng, tôi sẽ đề cập đến kế hoạch ngừng sử dụng trình cắm DAL của chúng tôi.
+
+Hãy bắt đầu nào.
+
+Tiện ích mở rộng máy ảnh, còn được gọi là tiện ích mở rộng CoreMedia IO, là một cách mới để đóng gói và cung cấp trình điều khiển máy ảnh cho các ứng dụng Mac.
+
+Họ an toàn.
+
+Mã mở rộng của bạn được cordon vào quy trình daemon của riêng nó được đóng hộp cát và chạy như một người dùng vai trò.
+
+Tất cả các bộ đệm mà tiện ích mở rộng của bạn cung cấp đều được xác thực trước khi được gửi đến một ứng dụng.
+
+Họ nhanh.
+
+Khung xử lý các lớp IPC giữa quy trình mở rộng của bạn và ứng dụng, nhấn mạnh vào hiệu suất.
+
+Khung cũng có thể đảm nhận việc cung cấp bộ đệm cho nhiều khách hàng đồng thời.
+
+Chúng hiện đại.
+
+Phần mở rộng của bạn có thể được viết bằng Swift hoặc Objective-c.
+
+Chúng đơn giản.
+
+Chỉ có một vài lớp học để học, một vài giao thức để thực hiện để bắt đầu và chạy.
+
+Khung đảm nhận mã soạn sẵn.
+
+Chúng rất dễ triển khai.
+
+Bạn có thể vận chuyển chúng dưới dạng ứng dụng trong App Store.
+
+Và các tiện ích mở rộng máy ảnh tương thích ngược 100% với các API chụp AVFoundation hiện có.
+
+Các tiện ích mở rộng máy ảnh hiển thị giống như máy ảnh tích hợp trong tất cả các ứng dụng máy ảnh, bao gồm cả các ứng dụng của Apple.
+
+Đây là cách một ví dụ về cách phần mở rộng máy ảnh có thể xuất hiện trong bộ chọn máy ảnh FaceTime.
+
+Bạn có thể xây dựng loại trải nghiệm nào với phần mở rộng máy ảnh?
+
+Hãy nghiên cứu ba cách sử dụng phổ biến.
+
+Cách sử dụng đơn giản nhất là máy ảnh chỉ dành cho phần mềm, chẳng hạn như máy ảnh hiển thị các thanh màu, mẫu thử nghiệm độc đáo, hình ảnh được tạo theo chương trình ở nhiều tốc độ hoặc độ phân giải khung hình khác nhau hoặc máy ảnh truyền phát nội dung được kết xuất trước, chẳng hạn như khung hình trong phim, để kiểm tra đồng bộ hóa A/V
+
+Trường hợp sử dụng thứ hai là trình điều khiển cho máy ảnh mà bạn định cắm vật lý vào máy Mac hoặc khám phá không dây.
+
+Phần mở rộng máy ảnh hỗ trợ đầy đủ việc cắm và rút phích cắm nóng.
+
+Để giải quyết phần cứng của bạn, bạn có một vài lựa chọn.
+
+Phương pháp ưa thích là sử dụng DriverKit Extension, hoặc DEXT, chạy hoàn toàn trong không gian người dùng.
+
+Nếu phần cứng của bạn phải được giải quyết ở cấp độ hạt nhân, bạn có thể sử dụng đường dẫn kext IOVideoFamily kế thừa.
+
+Việc phát triển mã kext mới không được khuyến khích vì kext vốn đã kém an toàn hơn và có thể góp phần gây ra sự không ổn định của hệ thống.
+
+Apple cung cấp tiện ích mở rộng tuân thủ lớp học cho lớp video USB, hoặc UVC, máy ảnh.
+
+Nó hoạt động tốt cho các máy ảnh phù hợp với thông số kỹ thuật UVC.
+
+Tuy nhiên, nếu bạn cần hỗ trợ máy ảnh USB sử dụng giao thức không chuẩn, có các tính năng bổ sung bên ngoài thông số kỹ thuật UVC, bạn có thể tạo tiện ích mở rộng máy ảnh ghi đè lên tiện ích mở rộng UVC của Apple, cho phép bạn yêu cầu một sản phẩm và ID nhà cung cấp cụ thể.
+
+Nếu bạn muốn tìm hiểu thêm về nó, vui lòng tham khảo bài viết tại developer.apple.com có tựa đề "Ghi đè phần mở rộng lớp video USB mặc định."
+
+Nó giải thích cách tạo một gói DEXT tối thiểu và khóa IOKitPersonalities nào bạn cần ghi đè trong Info.plist của mình.
+
+Cách sử dụng phổ biến thứ ba là máy ảnh sáng tạo, sự kết hợp giữa phần mềm và phần cứng.
+
+Tiện ích mở rộng của bạn truy cập luồng video từ một máy ảnh vật lý khác được gắn vào Mac, áp dụng hiệu ứng cho các bộ đệm đó và gửi chúng cho khách hàng dưới dạng luồng máy ảnh mới.
+
+Hoặc một máy ảnh sáng tạo truy cập các luồng video từ một số máy ảnh, tổng hợp chúng và gửi chúng đến ứng dụng.
+
+Một chiếc máy ảnh sáng tạo như thế này có thể sử dụng một ứng dụng cấu hình để kiểm soát việc tổng hợp hoặc tham số hóa các bộ lọc.
+
+Khả năng cho máy ảnh sáng tạo thực sự là vô tận.
+
+Bây giờ chúng ta đã khám phá các trường hợp sử dụng chính, hãy xem xét giải phẫu của Phần mở rộng CoreMedia IO.
+
+Đầu tiên là phần "CoreMedia IO".
+
+CoreMedia IO là một khuôn khổ cấp thấp để xuất bản hoặc khám phá trình điều khiển máy ảnh.
+
+Bạn đã biết rằng nó chứa API DAL kế thừa và API mở rộng máy ảnh mới thay thế nó.
+
+Nhưng nó cũng chứa một bộ API C cấp thấp mạnh mẽ để các nhà phát triển ứng dụng tìm và kiểm tra camera trên hệ thống.
+
+Bây giờ, còn phần "Mở rộng" đó thì sao?
+
+Phần mở rộng CoreMedia IO được xây dựng trên khung SystemExtensions lần đầu tiên xuất hiện trong macOS Catalina.
+
+Nó loại bỏ sự cần thiết của một trình cài đặt vứt đi.
+
+Thay vào đó, bạn gửi tiện ích mở rộng của mình bên trong một ứng dụng.
+
+Tiện ích mở rộng thực thi tồn tại trong gói ứng dụng.
+
+Bằng cách thực hiện các cuộc gọi vào khung SystemExtensions, ứng dụng của bạn có thể cài đặt, nâng cấp hoặc hạ cấp tiện ích mở rộng của bạn cho tất cả người dùng trên hệ thống.
+
+Và gỡ cài đặt chỉ trong tích tắc.
+
+Xóa ứng dụng và khung SystemExtensions gỡ cài đặt tiện ích mở rộng máy ảnh của bạn cho tất cả người dùng.
+
+Cơ chế phân phối này được chấp thuận để sử dụng App Store, giúp dễ dàng triển khai tiện ích mở rộng máy ảnh của mình cho nhiều đối tượng.
+
+Để tìm hiểu thêm về khung mở rộng hệ thống, bạn có thể đọc tài liệu tại developer.apple.com/ documentation/systemextensions.
+
+Và hãy chắc chắn xem video WWDC 2019 có tựa đề "Phần mở rộng hệ thống và DriverKit".
+
+Đó là tổng quan về công nghệ của chúng tôi về các phần mở rộng máy ảnh.
+
+Bây giờ, hãy thực sự xây dựng một cái.
+
+Đây là bản demo nhanh về cách thiết lập và chạy phần mở rộng máy ảnh chỉ trong vài phút.
+
+Tôi đã tạo một ứng dụng macOS cửa sổ duy nhất trong Xcode, được gọi là ExampleCam.
+
+Tại thời điểm này, tôi chỉ thêm một vài dòng mã.
+
+Đại diện ứng dụng không thay đổi.
+
+Trong bảng phân cảnh chính, tôi đã thêm hai nút, một để cài đặt và một để gỡ cài đặt tiện ích mở rộng, cộng với một trường văn bản để hiển thị trạng thái.
+
+Trong lớp ViewController, tôi đã thêm IBActions để kết nối các nút cài đặt và gỡ cài đặt.
+
+Các chức năng này tạo ra OSSystemExtensionRequests để kích hoạt hoặc hủy kích hoạt tiện ích mở rộng được tìm thấy trong gói của ứng dụng.
+
+Ở phía dưới, tôi đã thêm các triển khai xương của các hàm OSSystemExtensionRequestDelegate để ghi lại trạng thái.
+
+Tệp quyền lợi của ứng dụng có Hộp cát ứng dụng thông thường = CÓ và nó xác định một AppGroup.
+
+Tôi chỉ thêm một khóa mới ở đây, khóa "Phần mở rộng hệ thống", được yêu cầu nếu ứng dụng của bạn cài đặt phần mở rộng hệ thống.
+
+Tại thời điểm này, nếu tôi chạy ứng dụng và nhấp vào nút Cài đặt Tiện ích mở rộng, tôi sẽ gặp lỗi nghiêm trọng, vì ứng dụng đang tìm kiếm tiện ích mở rộng trong gói chưa tồn tại.
+
+Để tạo và nhúng tiện ích mở rộng hệ thống, tôi vào Tệp, Mới, Mục tiêu và trong macOS, tôi cuộn xuống dưới cùng nơi đặt Tiện ích mở rộng hệ thống.
+
+Sau đó, tôi chọn "Phần mở rộng máy ảnh", nhấn tiếp theo, đặt tên cho nó - Tôi sẽ chọn "Phần mở rộng" - Tôi sẽ đảm bảo rằng "Đã nhúng vào Ứng dụng" đã được đặt và sau đó tôi nhấp vào kết thúc.
+
+Bên trong thư mục mở rộng mới, tôi nhận được bốn tệp mới.
+
+Info.plist xác định nó là CMIOExtension bằng cách xác định MachServiceName của nó.
+
+Đây là một mẩu thông tin quan trọng.
+
+Trợ lý đăng ký của CoreMedia IO sẽ không khởi chạy tiện ích mở rộng của bạn trừ khi nó có mặt.
+
+Trong khi chúng tôi ở đây, hãy cung cấp cho nó một mô tả sử dụng cho phần mở rộng hệ thống.
+
+Tệp quyền lợi cho thấy rằng đó là ứng dụng được đóng hộp cát.
+
+Và tôi cần đảm bảo ở đây rằng nhóm ứng dụng tiện ích mở rộng của tôi có tiền tố MachServiceName để nó vượt qua xác thực.
+
+Vì vậy, tôi sẽ sao chép và dán nó từ phần mở rộng ứng dụng sang tệp quyền lợi phần mở rộng.
+
+Và thế là xong.
+
+Tệp main.swift đóng vai trò là điểm vào của tiện ích mở rộng của bạn và bắt đầu dịch vụ.
+
+Và tệp ExtensionProvider.swift cung cấp cho chúng tôi một máy ảnh đầy đủ chức năng.
+
+Nó chứa một DeviceSource, một StreamSource, và một ProviderSource, tất cả những gì bạn cần để tạo ra một máy ảnh phần mềm thuần túy.
+
+Một mẫu nhỏ không tệ.
+
+Trong tệp này, tôi sẽ tìm kiếm "SampleCapture" và tôi sẽ thay thế bằng "ExampleCam", để tên, kiểu máy ảnh và nhà sản xuất của tôi đều có tên riêng.
+
+Thế là xong. Hãy biên dịch và chạy nó.
+
+Khi tôi nhấn nút Cài đặt, uh-oh, nó không thành công.
+
+Đó là bởi vì các tiện ích mở rộng hệ thống chỉ có thể được cài đặt bởi các ứng dụng nằm trong /Ứng dụng.
+
+Hãy di chuyển nó và thử lại.
+
+Lần này, nó thành công.
+
+Tôi được nhắc Cho phép tiện ích mở rộng bị chặn cài đặt bằng cách xác thực trong Cài đặt hệ thống, nơi tôi tìm thấy Quyền riêng tư & Bảo mật và nhấp vào nút Cho phép.
+
+Tôi xác thực bằng mật khẩu của mình, và sau đó tôi thấy rằng kết quả của tôi đã thay đổi thành 0 vì "không có lỗi".
+
+Nếu tôi sử dụng công cụ danh sách systemextensionsctl, tôi xác nhận rằng tôi đã thành công và bây giờ tôi có một tiện ích mở rộng đang hoạt động trên hệ thống của mình.
+
+Bây giờ tôi có thể mở bất kỳ ứng dụng máy ảnh nào và tìm và chiêm ngưỡng công việc của mình.
+
+Hãy khởi chạy FaceTime.
+
+ExampleCam xuất hiện trong bộ chọn máy ảnh.
+
+Nó trông giống như trò chơi Pong cũ từ những năm 70, vẽ một đường trắng nằm ngang di chuyển lên và xuống khung hình với tốc độ 60 khung hình mỗi giây.
+
+Để thoát khỏi máy ảnh, tất cả những gì tôi phải làm là xóa ứng dụng.
+
+Hệ thống nhắc tôi xác nhận rằng tôi cũng đang gỡ cài đặt tiện ích mở rộng bằng cách xóa ứng dụng.
+
+Bản demo ExampleCam cho thấy việc tạo ra một máy ảnh phần mềm từ đầu dễ dàng như thế nào.
+
+Bây giờ hãy nâng nó lên một tầm cao mới bằng cách biến chiếc máy ảnh phần mềm đó thành một chiếc máy ảnh sáng tạo.
+
+Tôi gọi ví dụ thứ hai này là CIFilterCam.
+
+CI là viết tắt của CoreImage, một khung với tất cả các loại bộ lọc hiệu ứng mà bạn có thể áp dụng cho ảnh tĩnh hoặc video.
+
+Để tạo CIFilterCam, tôi đã bắt đầu với vỏ ExampleCam, nhưng quyết định biến ứng dụng thành một ứng dụng cấu hình cũng như một trình cài đặt.
+
+Tôi đã thêm nút chọn máy ảnh, nút chọn bộ lọc và nút bỏ qua hiệu ứng.
+
+Tôi cũng đã thêm chế độ xem để xem trước video trực tiếp.
+
+Đây là chế độ xem tiêu chuẩn được hỗ trợ bởi AVCaptureVideoPreviewLayer để cho bạn thấy Máy ảnh Bộ lọc đang làm gì.
+
+Bằng cách bỏ chọn nút bỏ qua, tôi có thể thấy các bộ lọc khác nhau được áp dụng cho video, từ hiệu ứng màu sắc đến bộ lọc biến dạng.
+
+Tôi là một phần của sự biến dạng vết sưng.
+
+Tôi có thể áp dụng những thứ này cho máy ảnh FaceTime tích hợp hoặc cho bất kỳ máy ảnh vật lý nào được gắn vào máy Mac của tôi.
+
+Tôi đã thiết lập iPhone của mình gần đó như một Camera Liên tục.
+
+Hãy sử dụng cái đó.
+
+Bản thân ứng dụng CIFilterCam không có gì đặc biệt.
+
+Chỉ là một ứng dụng máy ảnh hiệu ứng.
+
+Tuy nhiên, nơi nó thực sự trở nên thú vị là khi bạn nhận ra rằng ứng dụng là giao diện người dùng của máy ảnh lọc ảo mà tất cả các ứng dụng đều có thể sử dụng.
+
+Tôi sẽ khởi chạy FaceTime và PhotoBooth và đảm bảo rằng cả hai đều được trỏ vào CIFilterCam.
+
+Bây giờ, khi tôi thay đổi bộ lọc trong ứng dụng cấu hình của mình, mọi ứng dụng sử dụng CIFilterCam đều thay đổi song song.
+
+Nếu tôi chọn một máy ảnh nguồn khác nhau, mọi ứng dụng máy ảnh sẽ nhận được sự thay đổi.
+
+Mỗi nút nhấp chuột trong ứng dụng chuyển thành một cuộc gọi thuộc tính đơn giản đến tiện ích mở rộng cam bộ lọc, cho nó biết, "Này, tiện ích mở rộng, sử dụng máy ảnh này" hoặc, "Này, tiện ích mở rộng, sử dụng bộ lọc khác này."
+
+Hoặc bộ lọc khác này.
+
+Hoặc bộ lọc khác này.
+
+Hỗ trợ chạy máy ảnh phần cứng bên trong tiện ích mở rộng của bạn yêu cầu macOS Ventura.
+
+Bạn cũng cần thêm khóa com.apple.security.device.camera vào tệp quyền của tiện ích mở rộng, cho biết rằng bạn sẽ sử dụng một máy ảnh khác.
+
+Và vì bạn sẽ sử dụng máy ảnh, người dùng sẽ được nhắc cấp quyền cho tiện ích mở rộng của bạn, vì vậy bạn phải cung cấp Mô tả NSCameraUsage trong Info.plist của mình.
+
+Điều đó kết thúc những điều cơ bản của việc xây dựng một phần mở rộng máy ảnh.
+
+Bây giờ hãy chuyển sang APIs.
+
+Ở dưới cùng của ngăn xếp là các quy trình nền, một cho mỗi phần mở rộng máy ảnh của bên thứ nhất hoặc bên thứ ba.
+
+Trong quy trình ứng dụng máy ảnh, có một số lớp đang hoạt động, bắt đầu với mã khung riêng tư nói chuyện với tiện ích mở rộng máy ảnh của bạn qua IPC.
+
+Một cấp độ tăng lên là một lớp riêng tư khác dịch các cuộc gọi CoreMedia IO Extension sang các cuộc gọi trình cắm DAL kế thừa.
+
+Một lần nữa, chúng tôi tìm thấy các API CoreMedia IO công khai xuất bản các trình cắm DAL.
+
+Đối với khách hàng của giao diện này, không có sự khác biệt giữa Phần mở rộng CoreMedia IO và các trình cắm DAL.
+
+Mọi thứ trông giống như một trình cắm DAL.
+
+Và cuối cùng, ở trên cùng là AVFoundation, một khách hàng của CoreMedia IO.
+
+Nó tái xuất bản các trình cắm DAL dưới dạng AVCaptureDevices.
+
+Tương phản điều này với kiến trúc trình cắm DAL kế thừa.
+
+Các trình cắm DAL có thể bao gồm hoặc không bao gồm một phần trình nền, nhưng tất cả chúng đều chạy mã được tải bởi khung CoreMedia IO trực tiếp trong quy trình ứng dụng.
+
+Điều này khiến ứng dụng dễ bị phần mềm độc hại.
+
+Các tiện ích mở rộng máy ảnh loại bỏ hoàn toàn vectơ tấn công này.
+
+Tiện ích mở rộng của bạn phải được đóng hộp cát ứng dụng, nếu không nó sẽ không được phép chạy.
+
+Dịch vụ trợ lý đăng ký của Apple xác định nó bằng CMIOExtensionMachServiceName và khởi chạy nó dưới dạng tài khoản người dùng vai trò được gọi là _cmiodalassistants.
+
+Sandboxd áp dụng hồ sơ hộp cát tùy chỉnh cho quy trình của bạn.
+
+Nó được thiết kế riêng cho các trường hợp sử dụng máy ảnh.
+
+Cấu hình hộp cát tùy chỉnh cho phép bạn giao tiếp qua các giao diện phần cứng phổ biến mà bạn mong đợi.
+
+USB, Bluetooth, WiFi - như một máy khách nhưng không phải là một máy chủ mở cổng - và thậm chí cả Firewire.
+
+Nó cũng cho phép tiện ích mở rộng của bạn đọc và ghi từ vùng chứa và tmp của chính nó.
+
+Hồ sơ hộp cát mở rộng máy ảnh bị khóa nhiều hơn một ứng dụng thông thường.
+
+Một số ví dụ về những điều bạn không thể làm là phân tách, thực thi hoặc tạo ra một quy trình con, truy cập máy chủ cửa sổ, kết nối với tài khoản người dùng tiền cảnh hoặc đăng ký các dịch vụ mach của riêng bạn trong không gian tên toàn cầu.
+
+Nếu, khi bạn phát triển tiện ích mở rộng của mình, bạn thấy hộp cát quá hạn chế đối với trường hợp bắt giữ hợp pháp, vui lòng cung cấp phản hồi cho chúng tôi thông qua Trợ lý phản hồi và chúng tôi sẽ xem xét cẩn thận việc nới lỏng các hạn chế.
+
+Sơ đồ kiến trúc trước đó cho thấy quá trình nền của phần mở rộng máy ảnh của bạn truyền bộ đệm trực tiếp đến lớp ứng dụng.
+
+Thực sự có thêm một lớp bảo mật liên quan.
+
+Giữa trình nền của bạn và ứng dụng là một dịch vụ proxy được gọi là registerassistantservice.
+
+Nó thực thi chính sách minh bạch, đồng ý và kiểm soát.
+
+Khi một ứng dụng cố gắng sử dụng máy ảnh lần đầu tiên, hệ thống sẽ hỏi người dùng xem nó có ổn không.
+
+Sự đồng ý đó cần được cấp cho tất cả các máy ảnh, không chỉ những máy ảnh tích hợp sẵn.
+
+Dịch vụ ủy quyền thay mặt bạn xử lý sự đồng ý này.
+
+Nếu người dùng đã từ chối truy cập máy ảnh, proxy sẽ ngăn bộ đệm đi đến ứng dụng đó.
+
+Nó cũng xử lý ghi công - nó cho hệ thống biết rằng một máy ảnh cụ thể đang được sử dụng bởi một ứng dụng cụ thể để năng lượng tiêu thụ bởi trình nền của bạn có thể được quy cho ứng dụng đang sử dụng máy ảnh của bạn.
+
+Phần mở rộng CoreMedia IO có bốn lớp chính: Nhà cung cấp, Thiết bị và Luồng.
+
+Các nhà cung cấp có thiết bị và thiết bị có luồng, và cả ba đều có thể có thuộc tính.
+
+Bạn tạo từng lớp trong ba lớp chính này bằng cách cung cấp một nguồn, tương ứng, một ProviderSource, DeviceSource và StreamSource.
+
+ExtensionProvider là đối tượng cấp thấp nhất của bạn.
+
+Nó cho phép bạn thêm và xóa các thiết bị khi cần thiết, chẳng hạn như cho các sự kiện cắm nóng.
+
+Nó được thông báo về các quy trình của khách hàng khi họ cố gắng kết nối, điều này cho bạn cơ hội giới hạn việc xuất bản thiết bị của mình đối với một số ứng dụng nhất định.
+
+Nó cũng tham khảo đối tượng nguồn nhà cung cấp của bạn để triển khai tài sản.
+
+Đây là điểm vào chính của tiện ích mở rộng của bạn có thể trông như thế nào.
+
+Bạn tạo ExtensionProviderSource của riêng mình, phù hợp với giao thức CMIOExtensionProviderSource và tạo một ExtensionProvider.
+
+Để bắt đầu dịch vụ của bạn, bạn gọi phương thức lớp nhà cung cấp startService và chuyển phiên bản nhà cung cấp của bạn.
+
+ExtensionProvider triển khai hai thuộc tính chỉ đọc không thay đổi trong suốt vòng đời của tiện ích mở rộng của bạn.
+
+Nhà sản xuất và tên của nhà cung cấp của bạn.
+
+Cả hai thứ này đều là dây.
+
+Tiếp theo là CMIOExtensionDevice.
+
+Nó quản lý các luồng, thêm hoặc xóa chúng khi cần thiết.
+
+Thiết bị của bạn có thể hiển thị nhiều luồng, nhưng lưu ý rằng AVFoundation bỏ qua tất cả trừ luồng đầu vào đầu tiên.
+
+Khi bạn tạo một thiết bị, bạn cung cấp một nguồn thiết bị, cũng như một tên được bản địa hóa, một deviceID dưới dạng UUID và, tùy chọn, một chuỗi legacyID.
+
+Những đặc tính này thấm cho đến tận AVFoundation.
+
+Tên bản địa hóa của thiết bị của bạn trở thành tên bản địa hóa của AVCaptureDevice.
+
+ID thiết bị được chỉ định của bạn trở thành Mã định danh duy nhất của AVCaptureDevice, trừ khi bạn cũng cung cấp ID thiết bị kế thừa.
+
+Bạn chỉ cần cung cấp cái này nếu bạn đang hiện đại hóa trình cắm DAL và cần duy trì khả năng tương thích ngược với uniqueIdentifier mà bạn đã vận chuyển trước đó.
+
+Nếu bạn cung cấp một legacyDeviceID, AVCaptureDevice sẽ sử dụng nó làm uniqueIdentifier.
+
+Bạn tạo CMIOExtensionDevice của mình với CMIOExtensionDeviceSource, có thể tùy chọn triển khai các thuộc tính khác, chẳng hạn như deviceModel, sẽ giống nhau cho tất cả các máy ảnh cùng một kiểu.
+
+isSuspended nên được triển khai nếu thiết bị của bạn có thể chuyển sang trạng thái tạm ngưng, chẳng hạn như nếu nó có mống mắt riêng tư.
+
+Các camera tích hợp trên máy tính xách tay Apple chuyển sang trạng thái treo khi đóng vỏ sò.
+
+Loại vận chuyển thiết bị của bạn tiết lộ cách nó được kết nối, chẳng hạn như qua USB, Bluetooth hoặc Firewire.
+
+Cuối cùng, nếu bạn có micrô được ghép nối vật lý với máy ảnh của mình, bạn có thể hiển thị nó dưới dạng một thiết bị được liên kết.
+
+Tất cả các thuộc tính này chỉ được đọc.
+
+Tiếp theo là CMIOExtensionStream quan trọng nhất, thực hiện công việc nặng nhọc trong CMIOExtension.
+
+Nó xuất bản các định dạng video và xác định tốc độ khung hình hợp lệ của chúng và định cấu hình định dạng hoạt động.
+
+Nó sử dụng đồng hồ tiêu chuẩn, chẳng hạn như đồng hồ thời gian máy chủ hoặc cung cấp đồng hồ tùy chỉnh của riêng nó để điều khiển thời gian của mỗi bộ đệm mà nó tạo ra.
+
+Và quan trọng nhất, nó gửi bộ đệm mẫu cho khách hàng.
+
+Nguồn luồng mở rộng của bạn xuất bản CMIOExtensionStreamFormats.
+
+Những thứ đó trở thành AVCaptureDeviceFormats.
+
+Khách hàng có thể đọc và ghi chỉ mục định dạng hoạt động để thay đổi định dạng hoạt động.
+
+Thời lượng khung hình, tương đương với tốc độ khung hình tối đa.
+
+Và thời lượng khung hình tối đa, giống như tốc độ khung hình tối thiểu.
+
+Thế giới trình cắm DAL hiển thị giao diện thứ tư được gọi là điều khiển DAL.
+
+Các nhà phát triển trình cắm sử dụng chúng để hiển thị các tính năng như phơi sáng tự động, độ sáng, độ sắc nét, xoay và thu phóng, v.v.
+
+Mặc dù mạnh mẽ, nhưng chúng đã được triển khai không nhất quán, vì vậy rất khó để các nhà phát triển ứng dụng sử dụng chúng.
+
+Trong kiến trúc CMIOExtension, chúng tôi không cung cấp thay thế điều khiển DAL.
+
+Thay vào đó, mọi thứ đều là tài sản.
+
+Bạn đã tìm hiểu về nhiều thuộc tính tiêu chuẩn ở cấp độ nhà cung cấp, thiết bị và luồng.
+
+Bạn cũng có thể tạo các thuộc tính tùy chỉnh của riêng mình và truyền chúng đến lớp ứng dụng, giống như tôi đã làm trong bản demo CIFilterCam.
+
+Giao diện thuộc tính C của CoreMedia IO sử dụng cấu trúc C để xác định bộ chọn, phạm vi và phần tử của thuộc tính.
+
+Đây được coi là địa chỉ của nó.
+
+Bộ chọn là tên của thuộc tính dưới dạng mã bốn ký tự, chẳng hạn như cust cho tùy chỉnh.
+
+Phạm vi có thể là toàn cục, đầu vào hoặc đầu ra và phần tử có thể là bất kỳ số nào bạn muốn.
+
+Phần tử chính luôn bằng không.
+
+CMIOExtensions cho phép bạn kết nối các thuộc tính của mình với thế giới cũ bằng cách mã hóa các phần tử địa chỉ thuộc tính thành tên thuộc tính tùy chỉnh.
+
+Đầu tiên, các ký tự 4cc_, sau đó là bộ chọn, phạm vi và phần tử dưới dạng bốn mã ký tự được phân tách bằng dấu gạch dưới.
+
+Sử dụng phương pháp này, bạn có thể truyền bất kỳ chuỗi hoặc giá trị dữ liệu nào đến lớp ứng dụng.
+
+AVFoundation không hoạt động với các thuộc tính tùy chỉnh, vì vậy bạn phải tuân thủ CoreMedia IO C API nếu ứng dụng cấu hình của bạn cần hoạt động với các thuộc tính tùy chỉnh.
+
+Đó là cái nhìn cấp cao của chúng tôi về API.
+
+Bây giờ hãy nói về các thiết bị đầu ra.
+
+Một tính năng ít được biết đến của các trình cắm DAL là khả năng trình bày ngược lại với máy ảnh - một thiết bị đầu ra - tiêu thụ video từ một ứng dụng trong thời gian thực thay vì cung cấp nó.
+
+Đây là phần "O" của CoreMedia IO.
+
+Đầu vào và Đầu ra.
+
+Các thiết bị đầu ra rất phổ biến trong thế giới video chuyên nghiệp.
+
+Một số cách sử dụng phổ biến là in để ghi âm, trong đó tín hiệu video được gửi đến máy ghi âm bên ngoài hoặc giám sát xem trước thời gian thực, chẳng hạn như trên boong chuyên nghiệp với đầu vào SDI.
+
+Một điều quan trọng cần lưu ý là các thiết bị đầu ra không có API AVFoundation tương đương.
+
+Để gửi khung đến thiết bị đầu ra, bạn phải sử dụng CoreMedia IO C API trực tiếp.
+
+Các luồng CMIOExtension được tạo ra với hướng nguồn hoặc chìm.
+
+Các luồng chìm tiêu thụ dữ liệu từ một ứng dụng.
+
+Khách hàng cung cấp luồng bồn rửa của bạn bằng cách chèn bộ đệm mẫu vào một hàng đợi đơn giản.
+
+Điều đó chuyển thành cuộc gọi consumeSampleBuffer trong tiện ích mở rộng của bạn và khi bạn đã sử dụng bộ đệm đó, bạn thông báo cho họ bằng notifyScheduledOutputChanged.
+
+Có một số thuộc tính luồng cụ thể cho các thiết bị đầu ra.
+
+Họ chủ yếu xử lý kích thước hàng đợi, bao nhiêu khung hình để đệm trước khi bắt đầu và báo hiệu khi tất cả dữ liệu đã được tiêu thụ.
+
+Bây giờ đến chủ đề thứ năm và cuối cùng trong ngày của chúng tôi.
+
+Trước đó trong bài thuyết trình, tôi đã trình bày sơ đồ này của kiến trúc trình cắm DAL và tôi đã nhấn mạnh nhiều vấn đề bảo mật của nó.
+
+Chúng tôi đã giải quyết những thiếu sót này với Tiện ích mở rộng máy ảnh và hoàn toàn cam kết với sự phát triển liên tục của chúng.
+
+Họ là con đường phía trước.
+
+Vậy điều đó có ý nghĩa gì đối với các trình cắm DAL?
+
+Nó có nghĩa là kết thúc đã gần kề.
+
+Kể từ macOS 12.3, các trình cắm DAL đã bị phản đối, vì vậy bạn sẽ nhận được cảnh báo biên dịch khi xây dựng.
+
+Đó là một khởi đầu tốt, nhưng nó không đủ.
+
+Miễn là các trình cắm DAL kế thừa được phép tải, các ứng dụng máy ảnh vẫn sẽ gặp rủi ro.
+
+Để giải quyết đầy đủ các lỗ hổng bảo mật và làm cho hệ thống mạnh mẽ hơn cho tất cả người dùng, chúng tôi dự định vô hiệu hóa hoàn toàn các trình cắm DAL trong bản phát hành lớn tiếp theo sau macOS Ventura.
+
+Điều này có ý nghĩa gì với bạn?
+
+Chà, chúng tôi hy vọng thông điệp rõ ràng.
+
+Nếu bạn hiện đang duy trì trình cắm DAL, bây giờ là lúc để bắt đầu chuyển mã của bạn sang Tiện ích mở rộng máy ảnh.
+
+Và làm ơn, hãy cho chúng tôi biết bạn gặp phải xích mích nào.
+
+Chúng tôi rất mong muốn giải quyết những vấn đề này và cung cấp một bộ tính năng phong phú.
+
+Chúng tôi thực sự mong được làm việc với bạn.
+
+Điều này kết thúc bài thuyết trình hôm nay về các phần mở rộng máy ảnh cho macOS.
+
+Chúng tôi nóng lòng muốn xem bạn sẽ mang đến những trải nghiệm máy ảnh mới mẻ và sáng tạo nào cho Mac.
+
+Và hy vọng bạn vui vẻ khi làm điều đó.

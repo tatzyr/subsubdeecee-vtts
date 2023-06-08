@@ -1,0 +1,608 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:05.000
+Xin chào. Tên tôi là Steve, và tôi là một kỹ sư tại Apple.
+
+00:00:05.000 --> 00:00:09.000
+Xin chào. Tôi là Paul. Tôi cũng là một kỹ sư.
+
+00:00:09.000 --> 00:00:19.000
+Trong video này, chúng tôi sẽ hướng dẫn bạn đi sâu vào một trong những khía cạnh mới của Core ML, chuyển đổi các mô hình PyTorch sang Core ML.
+
+00:00:19.000 --> 00:00:31.000
+Tại WWDC 2020, chúng tôi đã công bố một cuộc đại tu cho các bộ chuyển đổi Core ML nhằm cải thiện nhiều khía cạnh của quá trình chuyển đổi.
+
+00:00:31.000 --> 00:00:37.000
+Chúng tôi đã mở rộng hỗ trợ cho các thư viện được sử dụng phổ biến nhất bởi cộng đồng học sâu.
+
+00:00:37.000 --> 00:00:45.000
+Chúng tôi đã thiết kế lại kiến trúc chuyển đổi để cải thiện trải nghiệm người dùng, tận dụng biểu diễn trong bộ nhớ mới.
+
+00:00:45.000 --> 00:00:51.000
+Và chúng tôi đã thống nhất API nên có một lệnh gọi duy nhất để gọi chuyển đổi từ bất kỳ nguồn mô hình nào.
+
+00:00:51.000 --> 00:01:01.000
+Nếu bạn chưa xem nó, tôi chắc chắn khuyên bạn nên xem video đi sâu vào chi tiết của kiến trúc chuyển đổi mới này.
+
+00:01:01.000 --> 00:01:10.000
+Nhưng trong video này, tôi sẽ tập trung vào việc chuyển đổi mô hình, bắt đầu với một mô hình được xây dựng trong khuôn khổ học sâu PyTorch.
+
+00:01:10.000 --> 00:01:15.000
+Vì vậy, có thể bạn là một kỹ sư ML, người đã làm việc chăm chỉ trong việc đào tạo một mô hình sử dụng PyTorch.
+
+00:01:15.000 --> 00:01:24.000
+Hoặc có thể bạn là một nhà phát triển ứng dụng đã tìm thấy một mô hình PyTorch sát thủ trực tuyến và bây giờ bạn muốn thả mô hình đó vào ứng dụng của mình.
+
+00:01:24.000 --> 00:01:31.000
+Bây giờ câu hỏi là làm thế nào để bạn chuyển đổi mô hình PyTorch đó thành mô hình Core ML?
+
+00:01:31.000 --> 00:01:38.000
+Chà, bộ chuyển đổi Core ML cũ yêu cầu bạn xuất mô hình của mình sang ONNX như một bước trong quy trình.
+
+00:01:38.000 --> 00:01:43.000
+Và nếu bạn đã sử dụng bộ chuyển đổi đó, bạn có thể đã gặp phải một số hạn chế của nó.
+
+00:01:43.000 --> 00:01:49.000
+ONNX là một tiêu chuẩn mở, và vì vậy nó có thể chậm phát triển và giới thiệu các tính năng mới.
+
+00:01:49.000 --> 00:01:58.000
+Kết hợp lại, các khung ML như PyTorch cần thời gian để thêm hỗ trợ xuất các tính năng mô hình mới nhất của chúng sang ONNX.
+
+00:01:58.000 --> 00:02:08.000
+Vì vậy, với bộ chuyển đổi cũ, bạn có thể thấy mình có mô hình PyTorch mà bạn không thể xuất sang ONNX, chặn việc chuyển đổi nó sang Core ML.
+
+00:02:08.000 --> 00:02:17.000
+Chà, loại bỏ sự phụ thuộc bổ sung này chỉ là một trong những điều đã thay đổi trong bộ chuyển đổi Core ML mới.
+
+00:02:17.000 --> 00:02:23.000
+Vì vậy, trong video này, chúng ta sẽ tìm hiểu chi tiết về đường dẫn chuyển đổi mô hình PyTorch hoàn toàn mới.
+
+00:02:23.000 --> 00:02:32.000
+Chúng ta sẽ đi qua các cách khác nhau để chuyển đổi mô hình PyTorch thành Core ML, bao gồm một số ví dụ chuyển đổi trong thế giới thực.
+
+00:02:32.000 --> 00:02:40.000
+Và cuối cùng, tôi sẽ chia sẻ một số mẹo hữu ích để bạn làm theo nếu bạn gặp rắc rối trên đường đi.
+
+00:02:40.000 --> 00:02:45.000
+Vì vậy, bây giờ hãy đi sâu vào quá trình chuyển đổi mới.
+
+00:02:45.000 --> 00:02:54.000
+Bắt đầu với mô hình PyTorch mà bạn muốn chuyển đổi, bạn sẽ sử dụng mô-đun JIT của PyTorch để chuyển đổi thành một biểu diễn có tên TorchScript.
+
+00:02:54.000 --> 00:03:00.000
+Nếu bạn tò mò, JIT là từ viết tắt của Just In Time.
+
+00:03:00.000 --> 00:03:09.000
+Sau đó, với mô hình TorchScript trong tay, bạn sẽ gọi bộ chuyển đổi Core ML mới để tạo mô hình ML mà bạn có thể thả vào ứng dụng của mình.
+
+00:03:09.000 --> 00:03:14.000
+Sau đó trong video, tôi sẽ tìm hiểu quá trình chuyển đổi TorchScript trông như thế nào.
+
+00:03:14.000 --> 00:03:20.000
+Nhưng bây giờ hãy xem bộ chuyển đổi Core ML mới hoạt động như thế nào.
+
+00:03:20.000 --> 00:03:25.000
+Trình chuyển đổi được viết bằng Python và việc gọi nó chỉ mất một vài dòng mã.
+
+00:03:25.000 --> 00:03:36.000
+Bạn chỉ cần cung cấp cho nó một mô hình, có thể là một đối tượng TorchScript hoặc đường dẫn đến một đối tượng được lưu trên đĩa và mô tả về các đầu vào cho mô hình.
+
+00:03:36.000 --> 00:03:42.000
+Bạn cũng có thể bao gồm một số thông tin về đầu ra của mô hình, nhưng đó là tùy chọn.
+
+00:03:42.000 --> 00:03:51.000
+Bộ chuyển đổi hoạt động bằng cách lặp lại các thao tác trong biểu đồ TorchScript và chuyển đổi từng thao tác một sang Core ML tương đương.
+
+00:03:51.000 --> 00:03:57.000
+Đôi khi một thao tác TorchScript có thể được chuyển đổi thành nhiều thao tác Core ML.
+
+00:03:57.000 --> 00:04:09.000
+Những lần khác, việc vượt qua tối ưu hóa đồ thị có thể phát hiện một mẫu đã biết và kết hợp một số hoạt động thành một.
+
+00:04:09.000 --> 00:04:14.000
+Bây giờ, đôi khi một mô hình có thể bao gồm một thao tác tùy chỉnh mà bộ chuyển đổi không hiểu.
+
+00:04:14.000 --> 00:04:22.000
+Nhưng không sao đâu. Bộ chuyển đổi được thiết kế để có thể mở rộng, vì vậy thật dễ dàng để thêm các định nghĩa cho các hoạt động mới.
+
+00:04:22.000 --> 00:04:29.000
+Trong nhiều trường hợp, bạn có thể diễn đạt hoạt động đó như một sự kết hợp của những hoạt động hiện có, mà chúng tôi gọi là "hoạt động tổng hợp".
+
+00:04:29.000 --> 00:04:36.000
+Nhưng nếu điều đó là không đủ, bạn cũng có thể viết một triển khai Swift tùy chỉnh và nhắm mục tiêu đó trong quá trình chuyển đổi.
+
+00:04:36.000 --> 00:04:45.000
+Tôi sẽ không đi vào chi tiết về cách thực hiện điều đó trong video này, nhưng vui lòng xem tài nguyên trực tuyến của chúng tôi để biết các ví dụ và hướng dẫn.
+
+00:04:45.000 --> 00:04:56.000
+Bây giờ tôi đã đưa ra một cái nhìn tổng quan về toàn bộ quá trình chuyển đổi, đã đến lúc khoanh tròn lại và tìm hiểu cách lấy mô hình TorchScript từ mô hình PyTorch của bạn.
+
+00:04:56.000 --> 00:04:58.000
+Có hai cách PyTorch có thể làm điều này.
+
+00:04:58.000 --> 00:05:05.000
+Đầu tiên được gọi là "truy tìm", và thứ hai được gọi là "kịch bản".
+
+00:05:05.000 --> 00:05:10.000
+Đầu tiên chúng ta hãy xem xét ý nghĩa của việc theo dõi một mô hình.
+
+00:05:10.000 --> 00:05:17.000
+Truy tìm được thực hiện bằng cách gọi phương thức theo dõi của mô-đun JIT của PyTorch, như được hiển thị trong đoạn mã này.
+
+00:05:17.000 --> 00:05:26.000
+Chúng tôi chuyển mô hình PyTorch cùng với đầu vào ví dụ và nó trả về mô hình và biểu diễn TorchScript.
+
+00:05:26.000 --> 00:05:29.000
+Vậy cuộc gọi này thực sự làm gì?
+
+00:05:29.000 --> 00:05:41.000
+Truy tìm hoạt động chạy một đầu vào ví dụ thông qua một chuyển tiếp của mô hình và nắm bắt các hoạt động được gọi khi đầu vào đi qua các lớp của mô hình.
+
+00:05:41.000 --> 00:05:49.000
+Bộ sưu tập của tất cả các hoạt động đó sau đó trở thành biểu diễn TorchScript của mô hình.
+
+00:05:49.000 --> 00:05:57.000
+Bây giờ khi bạn đang chọn một đầu vào ví dụ để theo dõi, điều tốt nhất để sử dụng là dữ liệu tương tự như những gì mô hình sẽ thấy trong quá trình sử dụng bình thường.
+
+00:05:57.000 --> 00:06:06.000
+Ví dụ, bạn có thể sử dụng một mẫu dữ liệu xác thực hoặc dữ liệu được thu thập giống như cách ứng dụng của bạn sẽ trình bày nó cho mô hình.
+
+00:06:06.000 --> 00:06:09.000
+Bạn cũng có thể sử dụng dữ liệu ngẫu nhiên.
+
+00:06:09.000 --> 00:06:18.000
+Nếu bạn làm vậy, hãy đảm bảo rằng phạm vi của các giá trị đầu vào và hình dạng của tenxơ phù hợp với những gì mô hình mong đợi.
+
+00:06:18.000 --> 00:06:22.000
+Hãy làm cho tất cả những điều này cụ thể hơn một chút bằng cách làm việc thông qua một ví dụ.
+
+00:06:22.000 --> 00:06:31.000
+Tôi muốn giới thiệu đồng nghiệp Paul của tôi, người sẽ đưa bạn qua toàn bộ quá trình chuyển đổi mô hình phân đoạn từ PyTorch sang Core ML.
+
+00:06:31.000 --> 00:06:33.000
+Cảm ơn, Steve.
+
+00:06:33.000 --> 00:06:38.000
+Giả sử tôi có một mô hình phân đoạn và tôi muốn nó chạy trên thiết bị.
+
+00:06:38.000 --> 00:06:48.000
+Nếu bạn không quen thuộc với những gì mô hình phân đoạn làm, nó sẽ lấy một hình ảnh và gán điểm xác suất lớp cho mỗi pixel của hình ảnh đó.
+
+00:06:48.000 --> 00:06:51.000
+Vậy làm thế nào để tôi có thể chạy mô hình của mình trên thiết bị?
+
+00:06:51.000 --> 00:06:55.000
+Tôi sẽ chuyển đổi mô hình của mình thành mô hình Core ML.
+
+00:06:55.000 --> 00:07:04.000
+Để làm điều này, trước tiên tôi theo dõi mô hình PyTorch của mình để biến nó thành dạng TorchScript bằng cách sử dụng mô-đun truy tìm JIT của PyTorch.
+
+00:07:04.000 --> 00:07:12.000
+Sau đó, tôi sử dụng bộ chuyển đổi Core ML mới để chuyển đổi mô hình TorchScript thành mô hình Core ML.
+
+00:07:12.000 --> 00:07:18.000
+Cuối cùng, tôi sẽ trình bày cách mô hình Core ML kết quả tích hợp liền mạch vào Xcode.
+
+00:07:18.000 --> 00:07:23.000
+Hãy xem quá trình này trông như thế nào trong mã.
+
+00:07:23.000 --> 00:07:31.000
+Trong Jupyter Notebook này, tôi sẽ chuyển đổi mô hình phân đoạn PyTorch của mình, được đề cập trong các trang trình bày, thành mô hình Core ML.
+
+00:07:31.000 --> 00:07:38.000
+Nếu bạn muốn tự mình thử mã này, nó có sẵn trong đoạn mã được liên kết với video này.
+
+00:07:38.000 --> 00:07:46.000
+Đầu tiên, tôi nhập một số phụ thuộc mà tôi sẽ sử dụng cho bản demo này.
+
+00:07:46.000 --> 00:08:04.000
+Tiếp theo, tôi tải mô hình phân đoạn ResNet-101 từ ngọn đuốc và đầu vào mẫu: trong trường hợp này, hình ảnh của một con chó và con mèo.
+
+00:08:04.000 --> 00:08:10.000
+Các mô hình PyTorch nhận các đối tượng tensor, không phải các đối tượng PIL Image.
+
+00:08:10.000 --> 00:08:15.000
+Vì vậy, tôi chuyển đổi hình ảnh thành một tenxơ với các biến đổi.ToTensor.
+
+00:08:15.000 --> 00:08:26.000
+Mô hình cũng mong đợi một kích thước bổ sung trong tensor biểu thị kích thước lô, vì vậy tôi cũng thêm kích thước đó vào.
+
+00:08:26.000 --> 00:08:32.000
+Như đã đề cập trong các trang trình bày, bộ chuyển đổi Core ML chấp nhận mô hình TorchScript.
+
+00:08:32.000 --> 00:08:47.000
+Để có được điều này, tôi sử dụng phương pháp theo dõi của mô-đun Torch.JIT, phương pháp này chuyển đổi mô hình PyTorch thành mô hình TorchScript.
+
+00:08:47.000 --> 00:08:51.000
+Uh-ồ. Truy tìm đã ném ra một ngoại lệ.
+
+00:08:51.000 --> 00:08:59.000
+Như đã nói trong phương pháp ngoại lệ, "Chỉ các tenxơ hoặc bộ tenxơ mới có thể được xuất ra từ các hàm được truy tìm."
+
+00:08:59.000 --> 00:09:03.000
+Đây là một hạn chế của mô-đun JIT của PyTorch.
+
+00:09:03.000 --> 00:09:08.000
+Vấn đề ở đây là mô hình của tôi đang trả lại một cuốn từ điển.
+
+00:09:08.000 --> 00:09:18.000
+Tôi giải quyết vấn đề này bằng cách gói mô hình của mình trong một mô-đun PyTorch chỉ trích xuất giá trị tensor từ từ điển đầu ra.
+
+00:09:18.000 --> 00:09:26.000
+Ở đây tôi khai báo trình bao bọc lớp của tôi kế thừa từ lớp mô-đun của PyTorch.
+
+00:09:26.000 --> 00:09:32.000
+Tôi xác định một thuộc tính mô hình có chứa ResNet-101, như đã sử dụng ở trên.
+
+00:09:32.000 --> 00:09:43.000
+Trong phương thức chuyển tiếp của lớp gói này, tôi lập chỉ mục từ điển trả về với khóa có tên "out" và chỉ trả về đầu ra tensor.
+
+00:09:43.000 --> 00:09:57.000
+Bây giờ mô hình trả về một tenxơ chứ không phải từ điển, nó sẽ theo dõi thành công.
+
+00:09:57.000 --> 00:10:01.000
+Bây giờ là lúc để tôi sử dụng bộ chuyển đổi Core ML mới.
+
+00:10:01.000 --> 00:10:09.000
+Đầu tiên, tôi cần xác định đầu vào của mình và quá trình tiền xử lý của nó.
+
+00:10:09.000 --> 00:10:20.000
+Tôi xác định đầu vào của mình là một ImageType với quá trình tiền xử lý để chuẩn hóa hình ảnh với số liệu thống kê ImageNet và chia tỷ lệ giá trị của nó xuống nằm trong khoảng từ 0 đến 1.
+
+00:10:20.000 --> 00:10:26.000
+Quá trình tiền xử lý này là những gì ResNet-101 mong đợi.
+
+00:10:26.000 --> 00:10:43.000
+Tiếp theo, tôi chỉ cần gọi phương thức chuyển đổi công cụ Core ML, truyền mô hình TorchScript và định nghĩa đầu vào.
+
+00:10:43.000 --> 00:10:51.000
+Sau khi chuyển đổi, tôi sẽ đặt siêu dữ liệu của mô hình của mình để các chương trình khác như Xcode có thể hiểu được.
+
+00:10:51.000 --> 00:11:05.000
+Tôi đặt loại mô hình của mình thành phân đoạn và liệt kê các lớp theo thứ tự mô hình của tôi.
+
+00:11:05.000 --> 00:11:09.000
+Vậy, mô hình đã chuyển đổi của tôi có hoạt động không?
+
+00:11:09.000 --> 00:11:13.000
+Tôi có thể dễ dàng hình dung đầu ra mô hình của mình thông qua Xcode.
+
+00:11:13.000 --> 00:11:20.000
+Đầu tiên, tôi sẽ lưu mô hình của mình.
+
+00:11:20.000 --> 00:11:27.000
+Bây giờ tất cả những gì tôi cần làm là nhấp vào mô hình đã lưu của mình trong Finder và nó sẽ được mở bởi Xcode.
+
+00:11:27.000 --> 00:11:33.000
+Ở đây tôi có thể xem siêu dữ liệu của nó, bao gồm các hình dạng và loại đầu vào.
+
+00:11:33.000 --> 00:11:43.000
+Để hình dung đầu ra của mô hình, tôi sẽ chuyển đến tab Xem trước và kéo vào hình ảnh mẫu của tôi về một con chó và con mèo.
+
+00:11:43.000 --> 00:11:49.000
+Có vẻ như người mẫu của tôi đang phân đoạn thành công các thú cưng trong hình ảnh này.
+
+00:11:49.000 --> 00:11:55.000
+ResNet-101 đã có thể được truy tìm, nhưng một số mô hình không thể chỉ được truy tìm.
+
+00:11:55.000 --> 00:12:02.000
+Để giải thích làm thế nào để chuyển đổi những mô hình khác này, tôi sẽ gửi lại cho Steve.
+
+00:12:02.000 --> 00:12:03.000
+Cảm ơn, Paul.
+
+00:12:03.000 --> 00:12:08.000
+Được rồi. Tôi nghĩ rằng chúng tôi có một cách xử lý khá tốt về cách chuyển đổi hoạt động bằng cách sử dụng truy tìm.
+
+00:12:08.000 --> 00:12:11.000
+Nhưng PyTorch đưa ra cách thứ hai để tải TorchScript.
+
+00:12:11.000 --> 00:12:15.000
+Vì vậy, bây giờ chúng ta hãy đào sâu vào cái đó, được gọi là "kịch bản".
+
+00:12:15.000 --> 00:12:22.000
+Scripting hoạt động bằng cách lấy mô hình PyTorch và biên dịch trực tiếp vào các hoạt động TorchScript.
+
+00:12:22.000 --> 00:12:27.000
+Hãy nhớ rằng, truy tìm đã nắm bắt được mô hình khi dữ liệu chảy qua nó.
+
+00:12:27.000 --> 00:12:31.000
+Nhưng giống như truy tìm, viết kịch bản cho một mô hình cũng thực sự dễ dàng.
+
+00:12:31.000 --> 00:12:39.000
+Chỉ cần gọi phương thức tập lệnh của mô-đun JIT của PyTorch và cung cấp cho nó một mô hình.
+
+00:12:39.000 --> 00:12:48.000
+Được rồi. Tôi đã chỉ cho bạn hai cách khác nhau để có được biểu diễn TorchScript và bạn có thể tự hỏi khi nào nên sử dụng cái này so với cái kia.
+
+00:12:48.000 --> 00:12:53.000
+Một trường hợp mà bạn phải sử dụng kịch bản là nếu mô hình bao gồm luồng điều khiển.
+
+00:12:53.000 --> 00:12:56.000
+Hãy xem xét một ví dụ để hiểu tại sao.
+
+00:12:56.000 --> 00:13:05.000
+Ở đây, mô hình này có các nhánh và vòng lặp, và kịch bản sẽ nắm bắt tất cả vì nó đang trực tiếp biên dịch mô hình.
+
+00:13:05.000 --> 00:13:15.000
+Nếu chúng tôi theo dõi mô hình, những gì chúng tôi nhận được chỉ là đường dẫn qua mô hình cho đầu vào đã cho, mà bạn có thể thấy không nắm bắt được toàn bộ mô hình.
+
+00:13:15.000 --> 00:13:27.000
+Nếu bạn cần viết kịch bản cho một mô hình, bạn thường sẽ nhận được kết quả tốt nhất nếu bạn theo dõi càng nhiều mô hình càng tốt và chỉ viết kịch bản cho các phần của mô hình cần nó.
+
+00:13:27.000 --> 00:13:33.000
+Điều này là do truy tìm thường tạo ra một biểu diễn đơn giản hơn kịch bản.
+
+00:13:33.000 --> 00:13:37.000
+Hãy xem cách áp dụng ý tưởng này bằng cách xem một số mã.
+
+00:13:37.000 --> 00:13:44.000
+Trong ví dụ này, tôi có một mô hình chạy một số đoạn mã một số lần cố định bên trong một vòng lặp.
+
+00:13:44.000 --> 00:13:53.000
+Tôi đã cô lập phần thân của vòng lặp thành một cái gì đó có thể dễ dàng tự truy tìm và sau đó tôi có thể áp dụng kịch bản cho toàn bộ mô hình.
+
+00:13:53.000 --> 00:14:02.000
+Những gì chúng tôi về cơ bản đang làm là giới hạn kịch bản chỉ trong các bit của luồng điều khiển cần nó và sau đó truy tìm mọi thứ khác.
+
+00:14:02.000 --> 00:14:11.000
+Sự pha trộn giữa truy tìm và kịch bản này hoạt động vì cả hai sẽ bỏ qua mã đã được chuyển đổi thành TorchScript.
+
+00:14:11.000 --> 00:14:15.000
+Bây giờ là lúc để xem qua một ví dụ cụ thể sử dụng kịch bản.
+
+00:14:15.000 --> 00:14:20.000
+Tôi sẽ giao lại nó cho Paul, người sẽ hướng dẫn bạn chuyển đổi một mô hình ngôn ngữ.
+
+00:14:20.000 --> 00:14:22.000
+Này.
+
+00:14:22.000 --> 00:14:30.000
+Giả sử tôi có một mô hình hoàn thành câu mà tôi muốn chuyển đổi thành mô hình Core ML để nó có thể chạy trên thiết bị.
+
+00:14:30.000 --> 00:14:41.000
+Đối với một số ngữ cảnh, hoàn thành câu là một nhiệm vụ liên quan đến việc lấy một đoạn câu và sử dụng một mô hình để dự đoán các từ có khả năng xuất hiện sau nó.
+
+00:14:41.000 --> 00:14:45.000
+Vậy điều này trông như thế nào về các bước tính toán?
+
+00:14:45.000 --> 00:14:56.000
+Tôi sẽ bắt đầu với một vài từ của một đoạn câu và chuyển chúng qua cái được gọi là bộ mã hóa để dịch những từ đó thành một biểu diễn mà mô hình của tôi có thể hiểu được.
+
+00:14:56.000 --> 00:14:59.000
+Trong trường hợp này, một chuỗi các mã thông báo số nguyên.
+
+00:14:59.000 --> 00:15:07.000
+Tiếp theo, tôi sẽ chuyển chuỗi mã thông báo đó vào mô hình của mình, điều này sẽ dự đoán mã thông báo tiếp theo trong chuỗi.
+
+00:15:07.000 --> 00:15:21.000
+Tôi sẽ tiếp tục cung cấp cho mô hình của mình câu được xây dựng một phần, thêm các mã thông báo mới vào cuối cho đến khi mô hình của tôi dự đoán một mã thông báo kết thúc câu đặc biệt, có nghĩa là câu của tôi đã hoàn thành.
+
+00:15:21.000 --> 00:15:30.000
+Bây giờ tôi đã có một câu mã thông báo hoàn chỉnh, tôi sẽ chuyển nó qua một bộ giải mã, bộ giải mã này chuyển đổi các mã thông báo trở lại thành các từ.
+
+00:15:30.000 --> 00:15:38.000
+Phần giữa của sơ đồ này, hoàn thành danh sách mã thông báo, là những gì tôi sẽ chuyển đổi thành mô hình Core ML.
+
+00:15:38.000 --> 00:15:42.000
+Bộ mã hóa và bộ giải mã được xử lý riêng biệt.
+
+00:15:42.000 --> 00:15:47.000
+Hãy chắc chắn rằng chúng ta hiểu những gì đang xảy ra bằng cách xem xét một số mã giả.
+
+00:15:47.000 --> 00:15:51.000
+Cốt lõi của mô hình của tôi là công cụ dự đoán mã thông báo tiếp theo của tôi.
+
+00:15:51.000 --> 00:15:55.000
+Đối với điều này, tôi sẽ sử dụng mô hình GPT2 của Hugging Face.
+
+00:15:55.000 --> 00:16:02.000
+Người dự đoán lấy một danh sách các mã thông báo làm đầu vào và đưa cho tôi dự đoán cho mã thông báo tiếp theo.
+
+00:16:02.000 --> 00:16:10.000
+Tiếp theo, tôi sẽ gói một số luồng kiểm soát xung quanh công cụ dự đoán để tiếp tục cho đến khi tôi thấy mã thông báo kết thúc câu.
+
+00:16:10.000 --> 00:16:19.000
+Bên trong vòng lặp, tôi thêm mã thông báo dự đoán vào danh sách đang chạy và sử dụng nó làm đầu vào cho công cụ dự đoán của tôi trên mọi vòng lặp.
+
+00:16:19.000 --> 00:16:26.000
+Khi công cụ dự đoán của tôi trả về mã thông báo kết thúc câu, tôi sẽ trả về câu hoàn chỉnh để giải mã.
+
+00:16:26.000 --> 00:16:31.000
+Bây giờ để xem toàn bộ quá trình mã hóa này, chúng ta hãy đi sâu vào Jupyter Notebook.
+
+00:16:31.000 --> 00:16:38.000
+Trong cuốn sổ này, tôi sẽ xây dựng một mô hình ngôn ngữ lấy một đoạn câu và hoàn thành câu.
+
+00:16:38.000 --> 00:16:45.000
+Hãy loại bỏ hàng nhập khẩu.
+
+00:16:45.000 --> 00:16:53.000
+Đây là mã cho người mẫu của tôi.
+
+00:16:53.000 --> 00:17:06.000
+Mô hình của tôi kế thừa từ torch.Module và chứa các thuộc tính cho mã thông báo kết thúc câu, mô hình next_token_predictor và mã thông báo mặc định biểu thị phần đầu của câu.
+
+00:17:06.000 --> 00:17:14.000
+Trong phương pháp chuyển tiếp của nó, giống như trong các trang trình bày, tôi đã viết một phần thân vòng lặp lấy danh sách các mã thông báo và dự đoán mã thông báo tiếp theo.
+
+00:17:14.000 --> 00:17:19.000
+Vòng lặp tiếp tục cho đến khi mã thông báo kết thúc câu được tạo.
+
+00:17:19.000 --> 00:17:24.000
+Khi điều này xảy ra, chúng tôi sẽ trả lại câu.
+
+00:17:24.000 --> 00:17:33.000
+Như đã đề cập, công cụ dự báo mã thông báo tiếp theo của tôi sẽ là GPT2, sẽ nằm trong phần thân vòng lặp.
+
+00:17:33.000 --> 00:17:39.000
+Tôi sẽ làm theo thực hành truy tìm phần thân vòng lặp tách biệt với kịch bản cho toàn bộ mô hình.
+
+00:17:39.000 --> 00:17:44.000
+Vì vậy, tôi sẽ chạy trình theo dõi JIT chỉ trên công cụ dự đoán mã thông báo tiếp theo của mình.
+
+00:17:44.000 --> 00:17:58.000
+Nó lấy một danh sách các mã thông báo làm đầu vào, vì vậy để truy tìm, tôi sẽ chỉ chuyển danh sách các mã thông báo ngẫu nhiên.
+
+00:17:58.000 --> 00:18:04.000
+Tôi có thể thấy rằng chất đánh dấu phát ra cảnh báo cho tôi biết dấu vết này có thể không khái quát hóa cho các đầu vào khác.
+
+00:18:04.000 --> 00:18:10.000
+Lưu ý rằng cảnh báo này là từ trình theo dõi JIT của PyTorch chứ không phải Core ML.
+
+00:18:10.000 --> 00:18:19.000
+Nó sẽ được giải thích những gì đang xảy ra ở đây trong phần khắc phục sự cố sau, nhưng bây giờ tôi sẽ bỏ qua cảnh báo này vì thực sự không có vấn đề gì.
+
+00:18:19.000 --> 00:18:32.000
+Với phần lớn nội dung vòng lặp được theo dõi, tôi có thể khởi tạo mô hình kết thúc câu của mình và áp dụng trình viết kịch bản JIT để chuẩn bị chuyển đổi sang Core ML.
+
+00:18:32.000 --> 00:18:46.000
+Bây giờ với mô hình TorchScript của tôi, tôi chuyển đổi nó thành mô hình Core ML giống như trong bản demo phân đoạn.
+
+00:18:46.000 --> 00:18:50.000
+Bây giờ tôi sẽ xem liệu người mẫu của tôi có thể hoàn thành một câu không.
+
+00:18:50.000 --> 00:18:56.000
+Tôi tạo ra một đoạn câu: trong trường hợp này, "Cầu Manhattan là."
+
+00:18:56.000 --> 00:19:12.000
+Sau đó, tôi chạy nó qua bộ mã hóa đi kèm của GPT2 để lấy mã hóa của đoạn, và sau đó chuyển đổi danh sách mã thông báo đó thành một tenxơ Torch.
+
+00:19:12.000 --> 00:19:34.000
+Tiếp theo, tôi đóng gói đầu vào từ mô hình Core ML của mình, chạy mô hình đã nói và giải mã đầu ra bằng bộ giải mã đi kèm của GPT2.
+
+00:19:34.000 --> 00:19:38.000
+Tốt. Mô hình Core ML đã có thể hoàn thành câu.
+
+00:19:38.000 --> 00:19:43.000
+Có vẻ như nó đã tạo ra một tuyên bố về Cầu Manhattan.
+
+00:19:43.000 --> 00:19:50.000
+Bạn có thể gặp va chạm dọc theo con đường khi bạn theo dõi và viết kịch bản cho các mô hình của mình để đưa chúng vào định dạng Core ML.
+
+00:19:50.000 --> 00:19:55.000
+Tôi sẽ trả lại nó cho Steve để giúp bạn trên đường đi.
+
+00:19:55.000 --> 00:20:07.000
+Trước khi chúng tôi kết thúc, tôi muốn xem lại những trở ngại mà chúng tôi gặp phải khi chuyển đổi các mô hình PyTorch sang Core ML và xem qua một số mẹo khắc phục sự cố và phương pháp hay nhất.
+
+00:20:07.000 --> 00:20:12.000
+Nghĩ lại bản demo phân đoạn, hãy nhớ rằng chúng tôi đã gặp lỗi trong quá trình truy tìm.
+
+00:20:12.000 --> 00:20:21.000
+Điều này là do mô hình của chúng tôi đã trả về một từ điển và truy tìm JIT chỉ có thể xử lý các tenxơ hoặc bộ tenxơ.
+
+00:20:21.000 --> 00:20:29.000
+Giải pháp mà chúng tôi đã trình bày trong bản demo là tạo ra một trình bao bọc mỏng xung quanh mô hình để giải nén các đầu ra gốc của mô hình.
+
+00:20:29.000 --> 00:20:40.000
+Hãy nhớ rằng, trong ví dụ này, mô hình đã trả về một từ điển, vì vậy ở đây chúng tôi đang truy cập khóa từ điển đại diện cho kết quả suy luận và trả về tenxơ đó.
+
+00:20:40.000 --> 00:20:52.000
+Tất nhiên, ý tưởng này cũng hoạt động nếu chúng ta muốn truy cập và trả lại nhiều mục từ từ từ điển hoặc nếu chúng ta cần giải nén các loại thùng chứa khác.
+
+00:20:52.000 --> 00:21:00.000
+Bây giờ trong bản demo mô hình ngôn ngữ, chúng tôi đã gặp phải một cảnh báo theo dõi cho biết dấu vết có thể không khái quát hóa cho các đầu vào khác.
+
+00:21:00.000 --> 00:21:05.000
+Và chúng tôi thấy trình theo dõi in một cách hữu ích dòng mã rắc rối.
+
+00:21:05.000 --> 00:21:07.000
+Vậy chuyện gì đang thực sự xảy ra vậy?
+
+00:21:07.000 --> 00:21:16.000
+Nếu chúng ta nhìn vào mã nguồn mô hình để hiểu cảnh báo, chúng ta thấy rằng mô hình đang cắt một tenxơ dựa trên kích thước của một tenxơ khác.
+
+00:21:16.000 --> 00:21:31.000
+Lấy kích thước của một tenxơ dẫn đến một giá trị Python trần - nói cách khác, không phải là một tenxơ PyTorch - và trình theo dõi đang cảnh báo rằng nó không thể theo dõi các phép toán đang được thực hiện trên các giá trị Python trần này.
+
+00:21:31.000 --> 00:21:40.000
+Tuy nhiên, trong trường hợp này, trình đánh dấu hơi quá mạnh trong việc phát ra cảnh báo này và thực sự không có vấn đề gì.
+
+00:21:40.000 --> 00:21:51.000
+Một nguyên tắc nhỏ khi nói đến mã truy tìm hoạt động trên các giá trị Python trần là chỉ các hoạt động Python tích hợp mới được trình theo dõi nắm bắt chính xác.
+
+00:21:51.000 --> 00:21:55.000
+Đây là một vài ví dụ để giúp giải thích ý tưởng này.
+
+00:21:55.000 --> 00:22:03.000
+Hãy suy nghĩ về những điều này và tìm ra, dựa trên quy tắc ngón tay cái đó, liệu chúng có được truy tìm chính xác hay không.
+
+00:22:03.000 --> 00:22:15.000
+Ví dụ đầu tiên rất giống với những gì chúng ta đã thấy trong bản demo và sẽ dẫn đến một dấu vết chính xác vì một hoạt động tích hợp, trong trường hợp này là bổ sung, đang được áp dụng.
+
+00:22:15.000 --> 00:22:25.000
+Ví dụ thứ hai cũng sẽ theo dõi chính xác, trong trường hợp này sử dụng toán tử modulo, một lần nữa là một hoạt động tích hợp sẵn.
+
+00:22:25.000 --> 00:22:29.000
+Nhưng ví dụ thứ ba sẽ không theo dõi chính xác.
+
+00:22:29.000 --> 00:22:45.000
+Trình theo dõi JIT không biết hàm thư viện math.sqrt làm gì và biểu đồ được theo dõi sẽ có giá trị không đổi được ghi lại thay vì các phép toán để tính kích thước tenxơ và căn bậc hai.
+
+00:22:45.000 --> 00:22:55.000
+Nhưng với một bản sửa lỗi đơn giản cho mô hình để thay thế math.sqrt bằng toán tử nguồn tích hợp sẵn của Python, điều này sẽ dẫn đến một dấu vết chính xác.
+
+00:22:55.000 --> 00:22:59.000
+Bây giờ chúng ta hãy xem xét một trường hợp mà kịch bản một mô hình có thể thất bại.
+
+00:22:59.000 --> 00:23:05.000
+Mô hình này bắt đầu với một danh sách trống và liên tiếp nối thêm một tập hợp các số nguyên cố định vào nó.
+
+00:23:05.000 --> 00:23:08.000
+Hãy nhớ rằng đây không phải là một mô hình cực kỳ hữu ích.
+
+00:23:08.000 --> 00:23:12.000
+Tôi chỉ đang sử dụng nó để minh họa một tình trạng thất bại.
+
+00:23:12.000 --> 00:23:18.000
+Nếu tôi viết kịch bản cho mô hình này, tôi sẽ gặp lỗi thời gian chạy gợi ý về sự không phù hợp.
+
+00:23:18.000 --> 00:23:26.000
+Trình viết kịch bản JIT cần thông tin loại để biến một mô hình thành TorchScript và thực hiện khá tốt công việc suy ra các loại đối tượng từ ngữ cảnh.
+
+00:23:26.000 --> 00:23:35.000
+Tuy nhiên, có những lúc điều đó là không thể và nếu trình viết kịch bản không thể tìm ra loại của một đối tượng, nó giả định đối tượng đó là một tenxơ.
+
+00:23:35.000 --> 00:23:44.000
+Trong trường hợp này, nó giả định danh sách này là một danh sách các tenxơ trong khi nó thực sự được xây dựng dưới dạng một danh sách các số nguyên.
+
+00:23:44.000 --> 00:23:47.000
+Vậy tôi có thể làm gì để giúp người viết kịch bản?
+
+00:23:47.000 --> 00:23:54.000
+Chà, tôi có thể bao gồm việc khởi tạo biến có ý nghĩa hoặc tôi có thể sử dụng chú thích kiểu.
+
+00:23:54.000 --> 00:23:59.000
+Ở đây, tôi đã điều chỉnh mô hình để hiển thị các ví dụ của cả hai.
+
+00:23:59.000 --> 00:24:02.000
+Có một điều cuối cùng tôi muốn đề cập đến.
+
+00:24:02.000 --> 00:24:08.000
+Bạn luôn muốn đảm bảo rằng mô hình của bạn đang ở chế độ đánh giá trước khi truy tìm.
+
+00:24:08.000 --> 00:24:13.000
+Điều này đảm bảo rằng tất cả các lớp được cấu hình để suy luận hơn là đào tạo.
+
+00:24:13.000 --> 00:24:16.000
+Đối với hầu hết các lớp, điều này không quan trọng.
+
+00:24:16.000 --> 00:24:23.000
+Nhưng, ví dụ, nếu bạn có một lớp bỏ học trong mô hình của mình, cài đặt chế độ đánh giá sẽ đảm bảo rằng nó bị vô hiệu hóa.
+
+00:24:23.000 --> 00:24:31.000
+Và khi bộ chuyển đổi gặp phải các hoạt động đã bị vô hiệu hóa, nó sẽ coi chúng là các hoạt động chuyển qua.
+
+00:24:31.000 --> 00:24:49.000
+Chúng tôi đã đề cập đến rất nhiều tài liệu trong video này, nhưng bạn có thể tìm thấy nhiều thông tin hơn trong các liên kết được liên kết với video, bao gồm tài liệu chuyển đổi Core ML, thông tin về chuyển đổi op tùy chỉnh và nhiều ví dụ TorchScript chi tiết.
+
+00:24:49.000 --> 00:24:54.000
+Chúng tôi thực sự vui mừng được cung cấp hỗ trợ hạng nhất để chuyển đổi các mẫu PyTorch.
+
+00:24:54.000 --> 00:25:10.000
+Tôi hy vọng bạn sẽ thấy rằng bộ chuyển đổi Core ML mới sẽ cho phép hỗ trợ rộng hơn cho các mô hình PyTorch của bạn, trao quyền cho bạn tối ưu hóa việc thực thi mô hình trên thiết bị và thực sự cung cấp cho bạn sự hỗ trợ tối đa để chuyển đổi mô hình của bạn một cách dễ dàng.
+
+00:25:10.000 --> 23:59:59.000
+Cảm ơn vì đã xem.
+

@@ -1,0 +1,305 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:08.000
+Raster Order Groups là một tính năng mới trong Metal 2 và chúng tôi đã mở rộng thêm nó đặc biệt cho GPU A11 mới.
+
+00:00:08.000 --> 00:00:12.000
+Video này là một trong năm video mô tả khả năng GPU mới của A11.
+
+00:00:12.000 --> 00:00:18.000
+Để tận dụng tối đa nó, bạn sẽ muốn xem các video trước đó trên Imageblocks và Tile Shaders.
+
+00:00:18.000 --> 00:00:25.000
+Tôi sẽ bắt đầu với một đánh giá ngắn gọn về Raster Order Groups như đã có sẵn trong Metal 2, trước khi chuyển sang các khả năng mới của A11 mới.
+
+00:00:25.000 --> 00:00:33.000
+Nhóm thứ tự Raster là một tính năng yêu cầu GPU thực thi một phần các luồng đổ bóng phân đoạn của bạn theo thứ tự với các luồng khác chồng chéo lên nó.
+
+00:00:33.000 --> 00:00:41.000
+Thứ tự này xuất phát từ thứ tự gửi của các cuộc gọi rút thăm của bạn trong một renderpass và thứ tự của mỗi tam giác trong cuộc gọi vẽ đó.
+
+00:00:41.000 --> 00:00:44.000
+Sự chồng chéo được xác định bởi Rasterizer.
+
+00:00:44.000 --> 00:00:53.000
+Hai luồng phân đoạn được xác định trùng lặp nếu chúng nhắm mục tiêu vào cùng một vị trí bộ đệm khung X và Y, cùng một mẫu và cùng một lớp.
+
+00:00:53.000 --> 00:01:01.000
+Ví dụ, hai mảnh vỡ sẽ được coi là chồng chéo lên nhau nếu cả hai đều kiểm tra độ sâu đối với cùng một mẫu đệm độ sâu.
+
+00:01:01.000 --> 00:01:08.000
+Đây là một trường hợp điển hình của hai tam giác, với tam giác màu xanh lam đầu tiên và tam giác màu xanh lá cây thứ hai.
+
+00:01:08.000 --> 00:01:14.000
+Để truy cập vào bộ đệm khung đồ họa cổ điển, pha trộn luôn là thứ mà GPU thực hiện theo thứ tự.
+
+00:01:14.000 --> 00:01:20.000
+GPU sẽ không đột nhiên trộn lẫn tam giác màu xanh lá cây ở phía sau, vì các biến thể lập lịch từ khung này sang khung khác.
+
+00:01:20.000 --> 00:01:24.000
+Nhưng các bộ đổ bóng phân mảnh sẽ thực hiện đồng thời và không theo thứ tự.
+
+00:01:24.000 --> 00:01:32.000
+Không có các nhóm thứ tự raster, công việc chỉ được tuần tự hóa sau khi đổ bóng phân đoạn hoàn tất, nhưng trước khi trộn.
+
+00:01:32.000 --> 00:01:34.000
+Nhưng nếu bạn không hòa nhập vào bộ đệm khung thì sao?
+
+00:01:34.000 --> 00:01:40.000
+Nhiều phát triển gần đây trong các thuật toán đồ họa cố gắng xây dựng các cấu trúc dữ liệu thú vị hơn từ các bộ đổ bóng phân đoạn của bạn.
+
+00:01:40.000 --> 00:01:45.000
+Có nhiều mã hóa nhiều lớp để xử lý hậu kỳ tốt hơn hoặc minh bạch độc lập với đơn hàng.
+
+00:01:45.000 --> 00:01:49.000
+Có voxelization, và các chức năng pha trộn mục đích đặc biệt.
+
+00:01:49.000 --> 00:01:57.000
+Tất cả những thứ này được xây dựng trên các bộ đổ bóng phân đoạn đang lưu trữ dữ liệu vào các cấu trúc dữ liệu tùy chỉnh trong bộ nhớ, thay vì chỉ pha trộn màu thành kết cấu đầu ra.
+
+00:01:57.000 --> 00:02:05.000
+Nhưng nếu truy cập trực tiếp vào bộ nhớ từ phần thân của bộ đổ bóng phân đoạn của bạn có thể xảy ra theo bất kỳ thứ tự nào, bất cứ lúc nào và đồng thời, điều đó bị hạn chế nghiêm trọng.
+
+00:02:05.000 --> 00:02:13.000
+Đối phó với các cuộc đua dữ liệu đó đã khiến việc triển khai hiện tại của các thuật toán đó đắt hơn nhiều so với trước đây.
+
+00:02:13.000 --> 00:02:19.000
+Những gì chúng tôi thực sự muốn là có được hành vi có trật tự giống như pha trộn đó, nhưng không phải sau khi kết thúc bộ đổ bóng phân đoạn của chúng tôi, mà là bên trong nó.
+
+00:02:19.000 --> 00:02:24.000
+Chúng tôi thực sự muốn ảo tưởng rằng việc truy cập bộ nhớ của chúng tôi đang diễn ra theo thứ tự.
+
+00:02:24.000 --> 00:02:27.000
+Đó là những gì Raster Order Groups làm.
+
+00:02:27.000 --> 00:02:31.000
+Nó cho phép bạn chú thích các con trỏ của mình vào bộ nhớ với Nhóm Thứ tự Raster.
+
+00:02:31.000 --> 00:02:35.000
+Việc truy cập thông qua các con trỏ đó sau đó được thực hiện theo thứ tự gửi trên mỗi pixel.
+
+00:02:35.000 --> 00:02:44.000
+Phần cứng sẽ đợi bất kỳ Chủ đề Shader Mảnh vỡ cũ hơn nào trùng với luồng hiện tại kết thúc trước khi luồng hiện tại được phép tiếp tục.
+
+00:02:44.000 --> 00:02:47.000
+Điều này mang lại cho bạn sự loại trừ lẫn nhau một cách hiệu quả, nhưng tốt hơn.
+
+00:02:47.000 --> 00:02:56.000
+Nó cung cấp loại trừ lẫn nhau có thứ tự, nơi bạn biết chủ đề nào sẽ đi vào phần quan trọng trước và chủ đề nào sẽ làm như vậy sau.
+
+00:02:56.000 --> 00:03:07.000
+Tính năng này đã được trình bày chi tiết hơn tại WWDC 2017 trong phiên Giới thiệu Metal 2, vì vậy nếu bạn muốn tìm hiểu sâu hơn, bạn có thể xem video đó.
+
+00:03:07.000 --> 00:03:12.000
+Vì vậy, với những điều cơ bản được đề cập, hãy chuyển sang những gì mới trong GPU A11.
+
+00:03:12.000 --> 00:03:17.000
+Nhóm thứ tự Raster hữu ích hơn, mạnh mẽ hơn và hoạt động cao hơn trên A11.
+
+00:03:17.000 --> 00:03:22.000
+Đầu tiên, A11 hiển thị bộ nhớ lát gạch bên trong của GPU.
+
+00:03:22.000 --> 00:03:33.000
+Cũng giống như truy cập thiết bị và kết cấu, bộ nhớ gạch sẽ hữu ích hơn rất nhiều nếu bạn có thể truy cập nó theo thứ tự có thể dự đoán được, và vì vậy Nhóm thứ tự Raster giờ đây cũng có thể áp dụng cho bộ nhớ gạch.
+
+00:03:33.000 --> 00:03:46.000
+Thứ hai, trong đó Nhóm thứ tự Raster trên các GPU khác chỉ giới hạn ở một mutex trên mỗi pixel, A11 có thể chi tiết hơn thế, cho phép chạm nhẹ hơn và giảm thiểu tần suất luồng của bạn đang chờ truy cập.
+
+00:03:46.000 --> 00:03:55.000
+Tôi muốn chỉ cho bạn một cặp ví dụ minh họa cách sử dụng những khả năng này để mở khóa hiệu suất mới trong một số thuật toán đồ họa phổ biến.
+
+00:03:55.000 --> 00:03:58.000
+Ví dụ đầu tiên là bóng râm hoãn lại cổ điển.
+
+00:03:58.000 --> 00:04:03.000
+Trên GPU truyền thống, việc trì hoãn đổ bóng được thực hiện trong hai lần.
+
+00:04:03.000 --> 00:04:14.000
+Đầu tiên điền vào G-Buffer và xuất ra nhiều kết cấu, và sau đó là kết xuất thứ hai đọc từ các kết cấu đó, hiển thị khối lượng ánh sáng và tính toán kết quả đổ bóng.
+
+00:04:14.000 --> 00:04:17.000
+Nhưng việc che bóng bị trì hoãn có xu hướng đốt cháy rất nhiều băng thông bộ nhớ.
+
+00:04:17.000 --> 00:04:33.000
+Một khả năng tuyệt vời của GPU dòng A của chúng tôi là giữ càng nhiều băng thông càng tốt trên chip, loại bỏ các kết cấu trung gian này bằng cách kết hợp cả hai đường vào một, giữ G-Buffer trong các khối có kích thước lát gạch hoàn toàn với một khối hình ảnh trong GPU.
+
+00:04:33.000 --> 00:04:37.000
+Cả hai nhiệm vụ này đều trở thành các giai đoạn của một renderpass.
+
+00:04:37.000 --> 00:04:49.000
+Bạn có thể thấy sâu hơn nhiều về cách xây dựng các RenderRasses kết hợp này trong các video A11 Imageblock và Tile Shading, trong khi video này sẽ chỉ tập trung vào các khía cạnh đồng bộ hóa.
+
+00:04:49.000 --> 00:04:54.000
+Hiệu suất của bóng mờ hoãn lại một lần thậm chí còn tốt hơn bằng cách tận dụng nhiều Nhóm thứ tự Raster.
+
+00:04:54.000 --> 00:04:59.000
+Để xem xét điều đó, chúng ta hãy tìm hiểu một số chi tiết của Giai đoạn số hai: Ánh sáng.
+
+00:04:59.000 --> 00:05:06.000
+Quá trình chiếu sáng cơ bản của chúng tôi bắt đầu bằng cách vẽ một khối lượng bao gồm ảnh hưởng của ánh sáng, tạo ra các sợi đổ bóng mảnh.
+
+00:05:06.000 --> 00:05:10.000
+Mỗi luồng đang áp dụng hiệu quả một ánh sáng cho một điểm ảnh.
+
+00:05:10.000 --> 00:05:13.000
+Chuỗi Ánh sáng của chúng tôi bắt đầu bằng cách đọc các trường G-Buffer.
+
+00:05:13.000 --> 00:05:19.000
+Trên GPU dòng A, bạn sẽ muốn đọc điều này trực tiếp từ một khối hình ảnh, đây là bộ nhớ nhanh nhất hiện có.
+
+00:05:19.000 --> 00:05:25.000
+Sau đó, bạn sẽ thực hiện mô hình đổ bóng đã chọn của mình, thường khá nhiều phép toán và có thể mất một chút thời gian để thực hiện.
+
+00:05:25.000 --> 00:05:29.000
+Cuối cùng, bạn sẽ tổng hợp sự đóng góp của ánh sáng này trở lại khối hình ảnh.
+
+00:05:29.000 --> 00:05:31.000
+Một bước rất nhanh.
+
+00:05:31.000 --> 00:05:35.000
+Sau đó, chúng ta có một ánh sáng thứ hai được áp dụng bởi một sợi thứ hai.
+
+00:05:35.000 --> 00:05:41.000
+Đối với việc triển khai đổ bóng hoãn lại một lần trước A11, nó sẽ trông giống như thế này.
+
+00:05:41.000 --> 00:05:48.000
+Bạn có thể thấy thứ tự được áp dụng cho lần đọc đầu tiên từ khối hình ảnh, buộc toàn bộ việc thực hiện hai đèn này phải chạy nối tiếp.
+
+00:05:48.000 --> 00:05:59.000
+Điều này là do một GPU chỉ hỗ trợ một Nhóm Thứ tự Raster duy nhất phải đợi tất cả các truy cập từ các luồng trước để hoàn thành trước khi bất kỳ quyền truy cập nào từ các luồng sau có thể bắt đầu.
+
+00:05:59.000 --> 00:06:05.000
+Điều này áp dụng ngay cả khi cả hai quyền truy cập đều là những lần đọc không thực sự xung đột với nhau.
+
+00:06:05.000 --> 00:06:10.000
+Sự hỗ trợ của A11 cho nhiều Nhóm Thứ tự Raster giúp loại bỏ sự đồng bộ hóa quá mức này.
+
+00:06:10.000 --> 00:06:20.000
+Nhiều nhóm cho phép bạn chạy đồng thời các lần đọc không xung đột này và chỉ đồng bộ hóa ở đầu rất ngắn của bộ đổ bóng tích lũy kết quả.
+
+00:06:20.000 --> 00:06:29.000
+Bạn có thể đạt được điều này bằng cách tuyên bố ba trường G-Buffer của chúng tôi nằm trong một nhóm và kết quả ánh sáng tích lũy của chúng tôi nằm trong nhóm thứ hai.
+
+00:06:29.000 --> 00:06:31.000
+Phần cứng bây giờ có thể đặt hàng chúng riêng biệt.
+
+00:06:31.000 --> 00:06:37.000
+Các bài viết nổi bật vào một nhóm không yêu cầu việc đọc trong một nhóm khác phải chờ đợi.
+
+00:06:37.000 --> 00:06:41.000
+Nhiều độc giả trong một nhóm không phải đợi nhau.
+
+00:06:41.000 --> 00:06:52.000
+Điều này có nghĩa là nhiều luồng hơn có thể đủ điều kiện để chạy tại bất kỳ thời điểm nào, cho phép song song hơn và cải thiện hiệu suất, vượt xa những gì bạn nhận được bằng cách giữ G-Buffers của mình trên chip ngay từ đầu.
+
+00:06:52.000 --> 00:06:55.000
+Mã cũng đơn giản như vậy.
+
+00:06:55.000 --> 00:07:02.000
+Ba trường G-Buffer của tôi được đọc và viết cùng một lúc, và vì vậy tôi sẽ chú thích tất cả chúng để đưa chúng vào nhóm số không.
+
+00:07:02.000 --> 00:07:07.000
+Bộ tích lũy được đọc và viết vào một thời điểm khác, và vì vậy tôi sẽ chú thích nó vào nhóm một.
+
+00:07:07.000 --> 00:07:10.000
+Theo như việc nhận con nuôi, đó thực sự là về nó.
+
+00:07:10.000 --> 00:07:15.000
+Raster Order Groups là một khả năng cực kỳ dễ dàng để bắt đầu sử dụng.
+
+00:07:15.000 --> 00:07:17.000
+Đến ví dụ thứ hai.
+
+00:07:17.000 --> 00:07:22.000
+Tôi sẽ làm cho ví dụ đổ bóng hoãn lại của chúng ta phức tạp hơn bằng cách thêm một giai đoạn khác.
+
+00:07:22.000 --> 00:07:32.000
+Sau khi tôi có một phiên bản sáng của nội dung mờ đục của mình, tôi sẽ thêm một giai đoạn trong suốt vào hỗn hợp, được tô bóng về phía trước và xấp xỉ thứ tự pha trộn ngược lại phía trước.
+
+00:07:32.000 --> 00:07:39.000
+Một cách để làm điều đó, mà A11 thực sự giỏi, là khai báo khối hình ảnh của chúng tôi để lưu trữ một mảng các cặp màu sắc và độ sâu.
+
+00:07:39.000 --> 00:07:45.000
+Mỗi đoạn bóng chuyển tiếp thêm một mục nhập vào mảng này với một số xử lý tràn.
+
+00:07:45.000 --> 00:07:52.000
+Và ở cuối ô của tôi, tôi sẽ sắp xếp và trộn ngược lại phía trước, sử dụng độ sâu đã lưu, cho phép trộn từ sau ra trước.
+
+00:07:52.000 --> 00:07:58.000
+Vì vậy, đây là một dòng thời gian thể hiện tuổi thọ của một ô và khối hình ảnh của nó từ trái sang phải.
+
+00:07:58.000 --> 00:08:04.000
+Tôi bắt đầu với khối hình ảnh của A11 được đặt ra để trì hoãn việc che bóng, và tôi kết thúc với màu mờ đục của mình.
+
+00:08:04.000 --> 00:08:11.000
+Cuối cùng, tôi có giai đoạn trong suốt của mình, nơi tôi đang xây dựng và sau đó sắp xếp các mảng màu sắc và chiều sâu của mình.
+
+00:08:11.000 --> 00:08:19.000
+Trong mỗi lần vượt qua này, Raster Order Groups sẽ kiểm soát mức độ song song có thể xảy ra giữa các luồng phân đoạn.
+
+00:08:19.000 --> 00:08:24.000
+Vì lý do hiệu suất, tôi thực sự muốn hai thao tác này là một renderpass.
+
+00:08:24.000 --> 00:08:29.000
+Tôi không muốn lưu bất cứ thứ gì vào bộ nhớ thiết bị chỉ để tải lại nó sau.
+
+00:08:29.000 --> 00:08:38.000
+Nhưng khai báo khối hình ảnh cực kỳ khác biệt giữa phần đầu tiên và phần thứ hai của cảnh của tôi, cả về loại dữ liệu và phân công Raster Order Group.
+
+00:08:38.000 --> 00:08:43.000
+A11 có thể thực hiện quá trình chuyển đổi này với một bước từ phía bạn.
+
+00:08:43.000 --> 00:08:47.000
+Để thu hẹp khoảng cách giữa các giai đoạn này, bạn cần đặt một bộ đổ bóng gạch ở giữa.
+
+00:08:47.000 --> 00:08:53.000
+Bộ đổ bóng ô là một nhóm luồng tính toán có thể truy cập toàn bộ bộ nhớ ô và khối hình ảnh.
+
+00:08:53.000 --> 00:09:02.000
+Bộ đổ bóng ô có hành vi là chúng không khởi chạy cho đến khi tất cả các luồng đổ bóng phân đoạn trước đó hoàn thành, bất kể khai báo của Nhóm Đơn đặt hàng Raster.
+
+00:09:02.000 --> 00:09:07.000
+Điều này cho phép bạn yên tâm rằng nhóm luồng đổ bóng gạch này có quyền truy cập độc quyền vào bộ nhớ này.
+
+00:09:07.000 --> 00:09:20.000
+Với bộ đổ bóng gạch, bạn có thể đọc và viết toàn bộ ô, định dạng lại nó theo ý muốn và đặc biệt, đọc từ khối hình ảnh thông qua loại gửi đi cũ của nó và khởi tạo lại nội dung của khối hình ảnh bằng cách sử dụng loại mới của nó.
+
+00:09:20.000 --> 00:09:28.000
+Giống như các trình đổ bóng gạch có một rào cản đầy đủ trước khi chúng thực hiện, chúng cũng có một rào cản đầy đủ sau khi chúng thực hiện.
+
+00:09:28.000 --> 00:09:38.000
+Không có chuỗi đổ bóng phân đoạn tiếp theo nào sẽ truy cập bộ nhớ cho đến khi bộ đổ bóng gạch hoàn thành đầy đủ, bất kể bạn đã thiết lập Nhóm thứ tự Raster như thế nào trong giai đoạn sau.
+
+00:09:38.000 --> 00:09:45.000
+Điều này có nghĩa là bạn có thể dựa vào việc khởi tạo này được hoàn thành trước khi công việc minh bạch bắt đầu.
+
+00:09:45.000 --> 00:09:47.000
+Yêu cầu ở đây khá đơn giản.
+
+00:09:47.000 --> 00:09:58.000
+Nếu bạn muốn sắp xếp lại nội dung khối hình ảnh của mình hoặc thay đổi trường mà Nhóm thứ tự Raster bảo vệ, bạn cần đặt một bộ đổ bóng gạch ở giữa để làm cho quá trình chuyển đổi đó được sắp xếp hợp và an toàn.
+
+00:09:58.000 --> 00:10:04.000
+Một số đoạn mã mẫu mà chúng tôi đang xuất bản cho A11 cho thấy trình tự này trong thực tế.
+
+00:10:04.000 --> 00:10:09.000
+Vì vậy, đó thực sự là tất cả để sử dụng khả năng mở rộng của Raster Order Groups trên A11.
+
+00:10:09.000 --> 00:10:15.000
+Bạn đã thấy cách Raster Order Groups thậm chí còn linh hoạt hơn trên A11 so với bất kỳ GPU nào khác.
+
+00:10:15.000 --> 00:10:20.000
+Phần cứng hỗ trợ nhiều nhóm, có thể loại bỏ đồng bộ hóa quá mức và cải thiện hiệu suất.
+
+00:10:20.000 --> 00:10:34.000
+Chúng hoạt động song song với quyền truy cập của bộ đổ bóng phân đoạn của A11 vào bộ nhớ gạch và bạn có thể sử dụng bộ đổ bóng gạch để thay đổi hoàn toàn ký tự của các khối hình ảnh của mình, bao gồm cấu hình Nhóm thứ tự Raster, ngay giữa đường chuyền kết xuất của bạn.
+
+00:10:34.000 --> 00:10:43.000
+Kết hợp tất cả lại với nhau, điều này cho phép bạn xây dựng khối lượng công việc trên A11 cực kỳ nhẹ về băng thông và hoạt động rất tốt.
+
+00:10:43.000 --> 00:10:49.000
+Để biết thêm thông tin về Metal 2 và A11, và các liên kết đến mã mẫu, vui lòng truy cập trang web của nhà phát triển Metal.
+
+00:10:49.000 --> 23:59:59.000
+Cảm ơn bạn đã xem.
+

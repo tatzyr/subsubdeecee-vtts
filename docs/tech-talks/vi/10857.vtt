@@ -1,0 +1,623 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:05.000
+Xin chào. Tôi là Patrick từ nhóm biểu diễn hệ điều hành tại Apple.
+
+00:00:05.000 --> 00:00:11.000
+Hôm nay chúng ta sẽ đi sâu vào việc làm sáng tỏ và loại bỏ các trở ngại kết xuất trong ứng dụng của bạn.
+
+00:00:11.000 --> 00:00:20.000
+iOS sử dụng Render Loop để hiển thị chế độ xem của bạn và trở ngại là bất cứ lúc nào Render Loop không hoàn thành khung hình kịp thời để hiển thị.
+
+00:00:20.000 --> 00:00:26.000
+Để có cái nhìn tổng quan về toàn bộ Render Loop, hãy xem bài nói chuyện của tôi "Khám phá UI Animation Hitches và The Render Loop."
+
+00:00:26.000 --> 00:00:34.000
+Ở đây chúng ta sẽ tập trung vào các quá giang kết xuất, đó là các quá giang gây ra bởi sự chậm chạp trong các giai đoạn chuẩn bị kết xuất và kết xuất thực hiện.
+
+00:00:34.000 --> 00:00:44.000
+Đầu tiên, chúng ta sẽ xem xét hai giai đoạn kết xuất này là gì, sau đó xem cách bắt và phân loại các quá giang kết xuất trong ứng dụng của chúng tôi bằng cách sử dụng Công cụ và trình gỡ lỗi chế độ xem Xcode.
+
+00:00:44.000 --> 00:00:52.000
+Cuối cùng, chúng tôi sẽ xem xét một số đề xuất để tối ưu hóa cây lớp của chúng tôi và ngăn chặn những trở ngại làm gián đoạn trải nghiệm người dùng của chúng tôi.
+
+00:00:52.000 --> 00:00:55.000
+Hãy bắt đầu bằng cách xác định các giai đoạn kết xuất.
+
+00:00:55.000 --> 00:01:01.000
+Trong giai đoạn cam kết, các ứng dụng sửa đổi giao diện người dùng của chúng và gửi cây lớp giao diện người dùng cập nhật để xử lý.
+
+00:01:01.000 --> 00:01:09.000
+Chúng tôi gọi những bài gửi này là "cam kết" và máy chủ kết xuất chịu trách nhiệm hiển thị các cam kết cho tất cả các quy trình tiền cảnh.
+
+00:01:09.000 --> 00:01:14.000
+Nếu công việc trong máy chủ kết xuất mất nhiều thời lượng hơn một khung hình, nó có thể gặp trở ngại.
+
+00:01:14.000 --> 00:01:25.000
+Mặc dù công việc diễn ra bên ngoài quy trình của ứng dụng, công việc kết xuất được thực hiện thay mặt cho ứng dụng của bạn, vì vậy bạn chịu trách nhiệm về thời gian để hiển thị cây lớp ứng dụng của mình.
+
+00:01:25.000 --> 00:01:30.000
+Máy chủ kết xuất có hai giai đoạn: chuẩn bị kết xuất và thực thi kết xuất.
+
+00:01:30.000 --> 00:01:38.000
+Giai đoạn chuẩn bị kết xuất là nơi cây lớp của chúng tôi được biên dịch thành một đường ống các hoạt động đơn giản để GPU thực thi.
+
+00:01:38.000 --> 00:01:42.000
+Các hình ảnh động diễn ra trên một vài khung hình cũng được xử lý ở đây.
+
+00:01:42.000 --> 00:01:49.000
+Trong giai đoạn thực thi kết xuất, GPU vẽ các lớp của ứng dụng thành hình ảnh cuối cùng sẵn sàng được hiển thị.
+
+00:01:49.000 --> 00:01:54.000
+Một trong hai giai đoạn này có thể trì hoãn thời gian giao hàng của khung.
+
+00:01:54.000 --> 00:01:58.000
+Để giúp hiểu những khái niệm này, chúng ta hãy xem qua một kết xuất ví dụ.
+
+00:01:58.000 --> 00:02:00.000
+Chúng ta sẽ xem qua phần kết xuất của khung này.
+
+00:02:00.000 --> 00:02:04.000
+Lưu ý rằng bóng nằm xung quanh cả vòng tròn và thanh.
+
+00:02:04.000 --> 00:02:06.000
+Điều này sẽ trở nên quan trọng sau này.
+
+00:02:06.000 --> 00:02:10.000
+Chúng tôi bắt đầu với cây lớp mà ứng dụng đã gửi đến máy chủ kết xuất ở bên trái.
+
+00:02:10.000 --> 00:02:20.000
+Máy chủ kết xuất sẽ từng lớp một để biên dịch một đường ống các lệnh vẽ cho phép GPU vẽ giao diện người dùng từ sau ra trước.
+
+00:02:20.000 --> 00:02:32.000
+Bắt đầu từ nút gốc, máy chủ kết xuất đi từ anh chị em sang anh chị em và từ cha mẹ sang con cho đến khi nó có mọi lớp trong hệ thống phân cấp.
+
+00:02:32.000 --> 00:02:38.000
+Cuối cùng, nó có toàn bộ đường ống mà GPU có thể thực thi trong giai đoạn thực thi tiếp theo.
+
+00:02:38.000 --> 00:02:44.000
+Công việc của GPU là thực hiện đường ống này và vẽ từng bước vào kết cấu cuối cùng ở trung tâm.
+
+00:02:44.000 --> 00:02:49.000
+Đó là kết cấu này sẽ được hiển thị trên màn hình trong giai đoạn hiển thị.
+
+00:02:49.000 --> 00:02:53.000
+Bắt đầu với lớp màu xanh đầu tiên, nó vẽ màu trong các giới hạn được chỉ định.
+
+00:02:53.000 --> 00:02:59.000
+Tiếp theo, màu xanh đậm hơn được vẽ vào giới hạn của nó, và chúng ta chuyển sang lớp tiếp theo.
+
+00:02:59.000 --> 00:03:02.000
+Nhưng bây giờ, GPU phải vẽ bóng.
+
+00:03:02.000 --> 00:03:09.000
+Hình dạng bóng được xác định bởi hai lớp tiếp theo, vì vậy GPU không biết nên vẽ bóng bằng hình dạng nào.
+
+00:03:09.000 --> 00:03:15.000
+Tuy nhiên, nếu chúng ta vẽ vòng tròn và thanh trước, thì bóng sẽ che khuất chúng bằng màu đen và nó sẽ trông không chính xác.
+
+00:03:15.000 --> 00:03:22.000
+Điều đó có nghĩa là GPU đã gặp phải rào cản và để tiếp tục, nó phải chuyển sang một kết cấu khác để tìm ra hình dạng của bóng.
+
+00:03:22.000 --> 00:03:28.000
+Chúng tôi gọi đây là "kết xuất ngoài màn hình" bởi vì chúng tôi đang vẽ ở một nơi nào đó khác ngoài kết cấu cuối cùng.
+
+00:03:28.000 --> 00:03:32.000
+Từ đây, nó có thể vẽ vòng tròn và thanh.
+
+00:03:32.000 --> 00:03:37.000
+Và bây giờ nó có hình dạng bóng bị cô lập trong kết cấu ngoài màn hình.
+
+00:03:37.000 --> 00:03:43.000
+Nó có tất cả những gì nó cần để tạo ra hình bóng bằng cách đầu tiên làm cho các lớp màu đen và sau đó làm mờ nó.
+
+00:03:43.000 --> 00:03:50.000
+Sau đó, nó có thể sao chép kết cấu ngoài màn hình đó vào kết cấu cuối cùng và lớp bóng đã được hoàn thành.
+
+00:03:50.000 --> 00:03:55.000
+Bước tiếp theo là vẽ lại vòng tròn và sau đó là hình chữ nhật.
+
+00:03:55.000 --> 00:04:00.000
+Nó sẽ kết thúc bằng cách sao chép hình ảnh của văn bản mà ứng dụng đã vẽ ở trên cùng.
+
+00:04:00.000 --> 00:04:05.000
+Chúng tôi hiện đã hoàn thành cả hai giai đoạn kết xuất và khung đã sẵn sàng để được hiển thị.
+
+00:04:05.000 --> 00:04:10.000
+Nhưng chúng tôi đã phải thực hiện một thủ thuật đặc biệt để hiển thị bóng, điều này khiến việc kết xuất của chúng tôi mất nhiều thời gian hơn.
+
+00:04:10.000 --> 00:04:14.000
+Đây được gọi là thẻ ngoài màn hình.
+
+00:04:14.000 --> 00:04:21.000
+Vượt qua ngoài màn hình là bất cứ lúc nào GPU phải hiển thị một lớp bằng cách trước tiên kết xuất nó ở một nơi khác và sau đó sao chép nó.
+
+00:04:21.000 --> 00:04:25.000
+Với cái bóng, nó phải vẽ các lớp để tìm ra hình dạng cuối cùng.
+
+00:04:25.000 --> 00:04:33.000
+Vượt qua ngoài màn hình có thể cộng lại và khiến kết xuất trở nên điều quan trọng là phải theo dõi và cố gắng tránh chúng trong ứng dụng của bạn.
+
+00:04:33.000 --> 00:04:41.000
+Có bốn loại thẻ ngoài màn hình chính có thể được tối ưu hóa: bóng, mặt nạ, hình chữ nhật tròn và hiệu ứng hình ảnh.
+
+00:04:41.000 --> 00:04:45.000
+Chúng tôi đã thấy một ví dụ về bóng ngoài màn hình trong kết xuất ví dụ.
+
+00:04:45.000 --> 00:04:53.000
+Trong trường hợp này, trình kết xuất không có đủ thông tin để vẽ bóng mà không vẽ lớp mà nó được gắn vào trước.
+
+00:04:53.000 --> 00:04:57.000
+Loại ngoài màn hình thứ hai là khi một lớp hoặc cây lớp yêu cầu che.
+
+00:04:57.000 --> 00:05:00.000
+Trình kết xuất cần kết xuất cây con bị che.
+
+00:05:00.000 --> 00:05:05.000
+Nhưng nó cũng cần tránh ghi đè lên các điểm ảnh bên ngoài hình dạng được che.
+
+00:05:05.000 --> 00:05:14.000
+Vì vậy, nó sẽ hiển thị toàn bộ cây con ngoài màn hình trước khi chỉ sao chép các điểm ảnh trong hình dạng được che trở lại kết cấu cuối cùng.
+
+00:05:14.000 --> 00:05:20.000
+Màn hình ngoài này có thể dẫn đến kết xuất nhiều điểm ảnh mà người dùng sẽ không bao giờ nhìn thấy.
+
+00:05:20.000 --> 00:05:23.000
+Loại thứ ba có liên quan đến mặt nạ.
+
+00:05:23.000 --> 00:05:27.000
+Làm tròn các góc của các lớp đôi khi có thể yêu cầu ngoài màn hình.
+
+00:05:27.000 --> 00:05:38.000
+Nếu không được cung cấp đủ thông tin, trình kết xuất có thể phải vẽ toàn bộ chế độ xem ra khỏi màn hình và sau đó sao chép các điểm ảnh bên trong hình tròn trở lại.
+
+00:05:38.000 --> 00:05:40.000
+Loại thứ tư là từ chế độ xem hiệu ứng hình ảnh.
+
+00:05:40.000 --> 00:05:45.000
+UI Kit cung cấp hai loại hiệu ứng hình ảnh: sống động và làm mờ.
+
+00:05:45.000 --> 00:05:52.000
+Để áp dụng các hiệu ứng này, trình kết xuất phải sao chép những gì bên dưới chế độ xem hiệu ứng hình ảnh sang một kết cấu khác với một đường chuyền ngoài màn hình.
+
+00:05:52.000 --> 00:05:57.000
+Sau đó, nó áp dụng các loại hiệu ứng hình ảnh cho kết quả và sao chép lại.
+
+00:05:57.000 --> 00:06:07.000
+Bạn sẽ thấy điều này trong các thanh điều hướng giao diện người dùng, thanh tab giao diện người dùng và nhiều điều khiển tiêu chuẩn khác, vì nó rất phổ biến trên iOS, tvOS và macOS.
+
+00:06:07.000 --> 00:06:12.000
+Vì vậy, bốn loại ngoài màn hình này có thể làm chậm quá trình kết xuất và gây ra các trở ngại kết xuất.
+
+00:06:12.000 --> 00:06:25.000
+Bây giờ chúng tôi đã mô tả chi tiết về giai đoạn kết xuất và xem số lượng lớn các đường chuyền ngoài màn hình có thể gây ra chúng như thế nào, hãy chuyển sang chủ đề thứ hai của chúng tôi: tìm kiếm các trở ngại với Nhạc cụ.
+
+00:06:25.000 --> 00:06:31.000
+Trong Nhạc cụ 12, chúng tôi đã phát hành một mẫu Nhạc cụ mới để lập hồ sơ các trở ngại trong ứng dụng của bạn.
+
+00:06:31.000 --> 00:06:41.000
+Một số người dùng đã phàn nàn về những trở ngại trong ứng dụng Meal Planner và tôi muốn điều tra, vì vậy tôi bắt đầu trong Instrument và bắt đầu cuộn trong ứng dụng.
+
+00:06:41.000 --> 00:06:45.000
+Và đây là dấu vết của ứng dụng Meal Planner, sử dụng mẫu hoạt hình quá giang.
+
+00:06:45.000 --> 00:06:49.000
+Tôi tò mò muốn đi sâu vào một số trở ngại mà tôi đã thấy khi cuộn.
+
+00:06:49.000 --> 00:06:54.000
+Hãy phóng to và mở rộng đường đua Hitches để tìm quá giang 16.
+
+00:06:54.000 --> 00:06:59.000
+Mỗi bản nhạc tương ứng với một giai đoạn của Vòng lặp kết xuất mà chúng ta đã nói trước đó.
+
+00:06:59.000 --> 00:07:03.000
+Dọc theo đỉnh là đường đua quan trọng nhất. Nó hiển thị các khoảng thời gian quá giang.
+
+00:07:03.000 --> 00:07:07.000
+Đây là khoảng thời gian vì khung hình lẽ ra đã sẵn sàng.
+
+00:07:07.000 --> 00:07:14.000
+Theo dõi Sự kiện Người dùng hiển thị các sự kiện người dùng được liên kết với khung quá giang.
+
+00:07:14.000 --> 00:07:19.000
+Theo dõi Cam kết hiển thị tất cả các giai đoạn cam kết được gửi đến máy chủ kết xuất trong khung đó.
+
+00:07:19.000 --> 00:07:25.000
+Đảm bảo xem "Tìm và sửa lỗi quá giang trong giai đoạn cam kết" để biết thêm về các bản nhạc này một cách cụ thể.
+
+00:07:25.000 --> 00:07:28.000
+Và đây là những gì chúng tôi đã tập trung vào trong video này.
+
+00:07:28.000 --> 00:07:33.000
+Các bản nhạc Kết xuất và GPU hiển thị công việc được thực hiện bởi máy chủ kết xuất.
+
+00:07:33.000 --> 00:07:40.000
+Bản nhạc Frame Lifetimes hiển thị toàn bộ thời lượng cần thiết để soạn khung từ sự kiện này sang sự kiện khác.
+
+00:07:40.000 --> 00:07:48.000
+Và cuối cùng, bản nhạc Màn hình Tích hợp hiển thị tất cả các khung hình xuất hiện trên màn hình cùng với các VSYNC đã xảy ra trên đường đi.
+
+00:07:48.000 --> 00:07:57.000
+Bạn có thể so sánh tuổi thọ khung hình với thời gian bắt đầu của thời lượng quá giang để hình dung khoảng thời gian dự kiến mà khung hình lẽ ra phải được tạo thành.
+
+00:07:57.000 --> 00:08:05.000
+Trong quá trình này, chúng tôi đã kết thúc hai khung hình và từ việc tuân theo VSYNCs, chúng tôi có thể thấy rằng cả giai đoạn cam kết và kết xuất đều diễn ra theo thời gian.
+
+00:08:05.000 --> 00:08:14.000
+Khoảng thời gian này được gọi là độ trễ chấp nhận được và tất cả thời gian sau đó là thời gian quá giang.
+
+00:08:14.000 --> 00:08:19.000
+Bên dưới các bản nhạc, chúng tôi thấy các số liệu chi tiết của các bản nhạc Hitches khi bản nhạc Hitches được chọn.
+
+00:08:19.000 --> 00:08:21.000
+Chúng tôi đang xem xét quá giang 16.
+
+00:08:21.000 --> 00:08:24.000
+Chúng ta có thể thấy thời gian quá giang và độ trễ chấp nhận được.
+
+00:08:24.000 --> 00:08:29.000
+Đây là khoảng thời gian chúng tôi phải hoàn thành khung hình.
+
+00:08:29.000 --> 00:08:34.000
+Số lượng bộ đệm là số lượng bộ đệm được sử dụng bởi máy chủ kết xuất tại thời điểm quá giang.
+
+00:08:34.000 --> 00:08:41.000
+Giá trị mặc định là hai, nhưng nó có thể là ba khi khung kết xuất bị trì hoãn và máy chủ kết xuất đang cố gắng bắt kịp.
+
+00:08:41.000 --> 00:08:49.000
+Ở chế độ đệm kép, chúng ta có hai khung hình, hoặc 33,34 mili giây trên iPhone, đó là những gì chúng ta thấy trong cột độ trễ.
+
+00:08:49.000 --> 00:08:57.000
+Luôn nhớ theo dõi theo dõi Hitch Duration ở trên, điều này sẽ luôn làm nổi bật khu vực quan tâm, bất kể số lượng bộ đệm.
+
+00:08:57.000 --> 00:08:59.000
+Cuối cùng, có loại quá giang.
+
+00:08:59.000 --> 00:09:05.000
+Loại quá giang hiển thị các loại quá giang và giúp cung cấp cho bạn bối cảnh về những gì cần đi sâu vào trong ứng dụng của bạn.
+
+00:09:05.000 --> 00:09:12.000
+Ở đây, chúng tôi thấy chúng tôi có cả cam kết đắt tiền và thời gian GPU đắt tiền, đó là những gì chúng tôi đã thấy trong các bản nhạc ở trên.
+
+00:09:12.000 --> 00:09:21.000
+Mở rộng ra, chúng ta có thể tập trung vào các bản nhạc Render và GPU và chọn chúng để xem một máy phân tích có thêm thông tin về các giai đoạn chuẩn bị và thực hiện.
+
+00:09:21.000 --> 00:09:28.000
+Một cột quan trọng là số lượng kết xuất, nơi chúng ta có thể thấy số lần vượt qua ngoài màn hình mà GPU phải thực hiện.
+
+00:09:28.000 --> 00:09:35.000
+Bởi vì chúng tôi biết rằng chúng tôi đã gặp trở ngại khi kết xuất, chúng tôi cần nhìn vào những màn hình này và hiểu nguyên nhân gây ra chúng và cách chúng tôi có thể khắc phục chúng.
+
+00:09:35.000 --> 00:09:38.000
+Cách tốt nhất để nhìn vào cây lớp của chúng tôi là sử dụng trình gỡ lỗi chế độ xem Xcode.
+
+00:09:38.000 --> 00:09:42.000
+Vì vậy, vì điều đó, chúng ta hãy đi đến một bản demo.
+
+00:09:42.000 --> 00:09:46.000
+Ở đây chúng tôi đang trong trình gỡ lỗi chế độ xem với ứng dụng Meal Planner của chúng tôi đã bị tạm dừng.
+
+00:09:46.000 --> 00:09:51.000
+Ở bên trái, chúng ta thấy bộ điều khiển chế độ xem, cửa sổ, ràng buộc và chế độ xem của mình.
+
+00:09:51.000 --> 00:09:55.000
+Nhưng bắt đầu với Xcode 11.2, chúng ta cũng có thể hiển thị các lớp.
+
+00:09:55.000 --> 00:10:01.000
+Nếu chúng ta nhấp vào Trình chỉnh sửa, hãy nhấp vào mục Hiển thị Lớp mới.
+
+00:10:01.000 --> 00:10:03.000
+Tuyệt.
+
+00:10:03.000 --> 00:10:10.000
+Bây giờ ở bên trái trong trình duyệt, chúng ta có thể nhấp vào bất kỳ chế độ xem nào và xem lớp của nó và tất cả các lớp con của nó.
+
+00:10:10.000 --> 00:10:17.000
+Khi chúng tôi chọn một lớp, chúng tôi được trình bày trình kiểm tra lớp hoàn toàn mới này, phục vụ các thuộc tính hữu ích của lớp của chúng tôi.
+
+00:10:17.000 --> 00:10:28.000
+Vì vậy, chúng tôi có thể thấy ở đây rằng chúng tôi có lớp nền chế độ xem thẻ của mình và chúng tôi có thể thấy màu nền, độ mờ đục, cho dù chúng tôi đã bật masksToBounds và nhiều thuộc tính khác.
+
+00:10:28.000 --> 00:10:31.000
+Quan trọng hơn, chúng ta có thể thấy số lượng ngoài màn hình.
+
+00:10:31.000 --> 00:10:34.000
+Đây là số lượng offscreen cần thiết để hiển thị lớp này.
+
+00:10:34.000 --> 00:10:37.000
+Dưới đây là những gì chúng tôi gọi là cờ ngoài màn hình.
+
+00:10:37.000 --> 00:10:40.000
+Những điều này mô tả lý do cho việc tắt màn hình.
+
+00:10:40.000 --> 00:10:46.000
+Bây giờ, một lá cờ nhất định, ví dụ như mặt nạ ngoài màn hình, có thể kích hoạt nhiều số lượng ngoài màn hình.
+
+00:10:46.000 --> 00:10:48.000
+Ví dụ, ở đây chúng ta có hai cái.
+
+00:10:48.000 --> 00:10:58.000
+Nhưng nếu chúng ta đào qua từng lớp trong toàn bộ ứng dụng của mình để kiểm tra số lượng ngoài màn hình của nó, chúng ta vẫn sẽ không có đủ thông tin chi tiết để giảm bất kỳ thẻ ngoài màn hình nào trong số này.
+
+00:10:58.000 --> 00:11:10.000
+Để giúp xác định và đề xuất tối ưu hóa hiệu suất trong chế độ xem và hệ thống phân cấp lớp của bạn, chúng tôi đã thêm một loại vấn đề thời gian chạy mới trong Xcode 12 mà chúng tôi gọi là cơ hội tối ưu hóa.
+
+00:11:10.000 --> 00:11:17.000
+Những thứ này được bật theo mặc định, nhưng bạn có thể tìm thấy tùy chọn trong menu Trình chỉnh sửa bên dưới Hiển thị Cơ hội Tối ưu hóa.
+
+00:11:17.000 --> 00:11:27.000
+Những cơ hội tối ưu hóa này là một nguồn tài nguyên đáng kinh ngạc được phát triển và viết bởi các nhóm hiệu suất của Apple sau nhiều năm tối ưu hóa hiệu suất kết xuất của ứng dụng.
+
+00:11:27.000 --> 00:11:33.000
+Những điều này nhằm đề xuất những thay đổi đơn giản nhưng có giá trị sẽ không ảnh hưởng đến diện mạo tổng thể của các lớp của bạn.
+
+00:11:33.000 --> 00:11:41.000
+Trong trình duyệt của chúng tôi, chúng tôi có thể thấy chỉ báo sự cố thời gian chạy màu tím trên một số lớp.
+
+00:11:41.000 --> 00:11:43.000
+Ở đây chúng ta có lớp sao của chúng ta.
+
+00:11:43.000 --> 00:11:46.000
+Chúng tôi thấy trong thanh tra rằng nó mất năm màn hình.
+
+00:11:46.000 --> 00:11:51.000
+Làm nổi bật trên chỉ báo cho thấy nguyên nhân là do bóng động.
+
+00:11:51.000 --> 00:11:57.000
+Hãy đi đến trình điều hướng vấn đề thời gian chạy để xem thêm chi tiết.
+
+00:11:57.000 --> 00:12:00.000
+Ở đây chúng ta có thể đọc tin nhắn cho vấn đề này.
+
+00:12:00.000 --> 00:12:04.000
+Nó nói rằng lớp đang sử dụng bóng động, rất tốn kém để hiển thị.
+
+00:12:04.000 --> 00:12:11.000
+Nếu có thể, hãy thử cài đặt shadowPath hoặc kết xuất trước bóng thành một hình ảnh và đặt nó dưới lớp.
+
+00:12:11.000 --> 00:12:14.000
+Chúng tôi thảo luận về loại ngoài màn hình này trong các trang trình bày.
+
+00:12:14.000 --> 00:12:21.000
+Trình kết xuất không có đủ thông tin và cần vẽ lớp ra khỏi màn hình để tìm ra hình dạng của bóng.
+
+00:12:21.000 --> 00:12:31.000
+Bằng cách sử dụng thuộc tính shadowPath trên CALayer, chúng tôi thực sự có thể cung cấp cho trình kết xuất các bước chính xác để sử dụng và loại bỏ tất cả năm màn hình ngoài.
+
+00:12:31.000 --> 00:12:37.000
+Những thứ này thực sự cộng lại trong ứng dụng của chúng tôi, vì vậy chúng ta hãy xem mã và thực hiện thay đổi này.
+
+00:12:37.000 --> 00:12:40.000
+Chúng ta đang ở đây với lớp sao của chúng ta, nơi chúng ta đặt bóng.
+
+00:12:40.000 --> 00:12:45.000
+Văn bản tối ưu hóa yêu cầu chúng tôi thiết lập shadowPath, chấp nhận bất kỳ CGPath nào.
+
+00:12:45.000 --> 00:12:50.000
+Hãy sử dụng lại đường dẫn sao mà chúng ta đã tạo.
+
+00:12:50.000 --> 00:12:54.000
+Cứ như vậy, chúng tôi đã loại bỏ năm thẻ ngoài màn hình cho mỗi CollectionViewCell.
+
+00:12:54.000 --> 00:12:57.000
+Đó là một sửa chữa lớn.
+
+00:12:57.000 --> 00:13:02.000
+Bây giờ trở lại trình điều hướng gỡ lỗi của chúng tôi, chúng tôi vẫn thấy một số chỉ báo vấn đề thời gian chạy khác.
+
+00:13:02.000 --> 00:13:06.000
+Trên chế độ xem thẻ của chúng tôi, chúng tôi thấy sự cố thời gian chạy trên lớp.
+
+00:13:06.000 --> 00:13:11.000
+Trong trình điều hướng, chúng ta thấy hai màn hình ngoài do mặt nạ ngoài màn hình gây ra.
+
+00:13:11.000 --> 00:13:15.000
+Lớp này bao gồm chế độ xem hình ảnh và chế độ xem nhãn.
+
+00:13:15.000 --> 00:13:20.000
+Chúng tôi đã lo lắng về việc mọi thứ thoát khỏi nền đỏ, vì vậy chúng tôi đã thêm một lớp mặt nạ.
+
+00:13:20.000 --> 00:13:27.000
+Trong mẹo công cụ thời gian chạy, chúng tôi thấy rằng nguyên nhân là do mặt nạ màu nền đơn giản.
+
+00:13:27.000 --> 00:13:30.000
+Trong trình điều hướng vấn đề, chúng tôi thấy văn bản cơ hội.
+
+00:13:30.000 --> 00:13:35.000
+Nó nói rằng lớp này đang sử dụng một lớp đơn giản với màu nền được đặt làm mặt nạ.
+
+00:13:35.000 --> 00:13:43.000
+Thay vào đó, hãy sử dụng một lớp thùng chứa có cùng khung và bán kính góc làm mặt nạ, cả hai mặt nạToBounds đều được đặt thành "Có".
+
+00:13:43.000 --> 00:13:51.000
+Màn hình ngoài được gây ra bởi trình kết xuất cần kết xuất lớp mặt nạ của chúng tôi trước và đề xuất là loại bỏ hoàn toàn lớp này.
+
+00:13:51.000 --> 00:13:56.000
+Hãy kiểm tra nó trong mã.
+
+00:13:56.000 --> 00:13:58.000
+Ở đây chúng tôi có chế độ xem thẻ của chúng tôi.
+
+00:13:58.000 --> 00:14:03.000
+Chúng tôi tạo ra một lớp mặt nạ và tạo cho nó một màu nền đen và bán kính góc.
+
+00:14:03.000 --> 00:14:08.000
+Lớp mặt nạ này rất đơn giản, và bất kỳ lớp đơn giản nào cũng không bao giờ nên là mặt nạ.
+
+00:14:08.000 --> 00:14:15.000
+Thay vào đó, chúng ta chỉ nên xác định hình dạng mặt nạ được yêu cầu này trên lớp thực tế để trình kết xuất có thể tối ưu hóa bản vẽ.
+
+00:14:15.000 --> 00:14:21.000
+Thay vào đó, chúng ta có thể đặt bán kính góc thành 10, như chúng ta muốn, và sau đó đặt masksToBounds bằng "True".
+
+00:14:21.000 --> 00:14:25.000
+Sau đó xóa hoàn toàn mặt nạ.
+
+00:14:25.000 --> 00:14:28.000
+Nhưng điều đó chỉ loại bỏ một màn hình.
+
+00:14:28.000 --> 00:14:34.000
+Bởi vì chúng tôi có các lớp con, masksToBounds sẽ cần thực hiện một đường chuyền ngoài màn hình để đảm bảo các chế độ xem được cắt chính xác.
+
+00:14:34.000 --> 00:14:39.000
+Nhưng theo quan điểm của chúng tôi, chúng tôi đã đảm bảo rằng các lớp con không thể vượt quá giới hạn của chế độ xem thẻ của chúng tôi.
+
+00:14:39.000 --> 00:14:42.000
+Vì vậy, trên thực tế, chúng tôi thực sự không cần mặt nạ chút nào.
+
+00:14:42.000 --> 00:14:45.000
+Hãy xóa cuộc gọi masksToBounds đó.
+
+00:14:45.000 --> 00:14:49.000
+Và bây giờ chúng tôi đã loại bỏ cả hai màn hình. Tuyệt vời.
+
+00:14:49.000 --> 00:14:53.000
+Cho đến nay với ba dòng mã, chúng tôi đã lưu bảy dòng ngoài màn hình cho mỗi CollectionViewCell.
+
+00:14:53.000 --> 00:14:58.000
+Đây là một cải tiến to lớn, nhưng chúng tôi còn một vấn đề nữa cần khám phá.
+
+00:14:58.000 --> 00:15:03.000
+Hãy quay trở lại hoa tiêu.
+
+00:15:03.000 --> 00:15:05.000
+Hãy chọn chế độ xem hình ảnh của chúng tôi.
+
+00:15:05.000 --> 00:15:11.000
+Chúng tôi thấy rằng nó có các góc tròn và khi chúng tôi làm nổi bật vấn đề thời gian chạy, chúng tôi thấy nó nói, "mặt nạ hình dạng đơn giản."
+
+00:15:11.000 --> 00:15:16.000
+Một lần nữa, chúng ta sẽ đến trình điều hướng thời gian chạy để tìm hiểu thêm.
+
+00:15:16.000 --> 00:15:23.000
+Nó nói rằng lớp được che bởi một CAShapeLayer với một đường dẫn là một rect, một trònRect hoặc một hình elip.
+
+00:15:23.000 --> 00:15:30.000
+Thay vào đó, hãy sử dụng một lớp thùng chứa được chuyển đổi thích hợp với góc Bán kính và mặt nạ ToBounds được đặt.
+
+00:15:30.000 --> 00:15:35.000
+Màn hình ngoài được gây ra bởi trình kết xuất cần phải che lại một lớp khác.
+
+00:15:35.000 --> 00:15:37.000
+Nhưng lần này, nó không phải là một lớp đơn giản.
+
+00:15:37.000 --> 00:15:42.000
+Hãy nhìn vào mã để hiểu chuyện gì đang xảy ra.
+
+00:15:42.000 --> 00:15:45.000
+Ở đây trong mã, chúng tôi thấy chúng tôi có chế độ xem hình ảnh của mình.
+
+00:15:45.000 --> 00:15:53.000
+Đầu tiên, chúng tôi tạo một CAShapeLayer và sử dụng UIBezierPath API để tạo một đường dẫn và sau đó sử dụng nó làm mặt nạ.
+
+00:15:53.000 --> 00:15:58.000
+Điều đang xảy ra ở đây là chúng tôi đang sử dụng một lớp hình dạng, có thể là một loại mặt nạ hợp lệ.
+
+00:15:58.000 --> 00:16:04.000
+Nhưng Xcode có thể phát hiện ra rằng thay vì một hình dạng phức tạp, chúng tôi chỉ đang tạo ra một hình chữ nhật tròn.
+
+00:16:04.000 --> 00:16:11.000
+Lý do chúng tôi viết mã này là vì chúng tôi đang cố gắng tạo ra một loại hình chữ nhật tròn đặc biệt đôi khi được gọi là squircle.
+
+00:16:11.000 --> 00:16:15.000
+Những loại hình chữ nhật tròn này rất phổ biến trong iOS.
+
+00:16:15.000 --> 00:16:18.000
+Nhưng đây không phải là cách tốt nhất để có được hiệu ứng đó.
+
+00:16:18.000 --> 00:16:25.000
+Bắt đầu từ iOS 13, chúng ta có thể sử dụng thuộc tính cornerCurve để biến hiệu ứng cornerRadius thành một hình dạng squircle.
+
+00:16:25.000 --> 00:16:35.000
+Bây giờ chúng ta có thể loại bỏ hoàn toàn shapeLayer và chỉ cần đặt cornerRadius và cornerCurve thành "liên tục".
+
+00:16:35.000 --> 00:16:40.000
+Cứ như vậy, chúng tôi đã loại bỏ thêm hai màn hình ngoài màn hình chỉ bằng cách sử dụng API được cung cấp.
+
+00:16:40.000 --> 00:16:45.000
+Vì vậy, chúng tôi đã có thể thực sự tối ưu hóa số lượng ngoài màn hình của mình và đưa nó từ 36 xuống 0.
+
+00:16:45.000 --> 00:16:49.000
+Thật tuyệt vời.
+
+00:16:49.000 --> 00:16:53.000
+Quay lại trình gỡ lỗi chế độ xem, chúng tôi thấy một số vấn đề thời gian chạy khác không liên quan đến kết xuất.
+
+00:16:53.000 --> 00:16:58.000
+Tuy nhiên, chúng tôi muốn giới thiệu chúng cho đồng nghiệp Charles của chúng tôi để anh ấy có thể thử và tối ưu hóa chúng.
+
+00:16:58.000 --> 00:17:05.000
+Trước đây, điều này sẽ yêu cầu Charles có cùng một thiết bị với chúng tôi và gắn vào ứng dụng của anh ấy và tạm dừng nó trong trình gỡ lỗi chế độ xem.
+
+00:17:05.000 --> 00:17:15.000
+Nhưng bây giờ chúng tôi có thể lưu trạng thái trình gỡ lỗi chế độ xem của mình để chúng tôi có thể gửi nó qua e-mail, chia sẻ nó với đồng nghiệp hoặc thậm chí đính kèm nó vào báo cáo phản hồi.
+
+00:17:15.000 --> 00:17:21.000
+Để làm điều này, chúng ta có thể chọn Tệp, Xuất Chế độ xem Phân cấp...
+
+00:17:21.000 --> 00:17:23.000
+Nhấp vào "Lưu" và voilà.
+
+00:17:23.000 --> 00:17:31.000
+Bây giờ chúng tôi có một tệp có thể gửi được gói gọn tất cả các chế độ xem, lớp, ràng buộc và các vấn đề về thời gian chạy của chúng tôi.
+
+00:17:31.000 --> 00:17:39.000
+Điều này giúp cộng tác từ xa dễ dàng hơn nhiều và sẽ thực sự hữu ích khi bạn cố gắng theo dõi tất cả các màn hình không cần thiết của mình.
+
+00:17:39.000 --> 00:17:47.000
+Bây giờ chúng ta đã thấy cách trình gỡ lỗi chế độ xem Xcode có thể làm nổi bật các vấn đề ngoài màn hình trong ứng dụng của chúng tôi, hãy tóm tắt lại một số đề xuất.
+
+00:17:47.000 --> 00:17:52.000
+Điều quan trọng nhất cần làm trong mọi ứng dụng là luôn sử dụng các API được cung cấp.
+
+00:17:52.000 --> 00:17:58.000
+Khi đặt bóng, hãy đảm bảo đặt ShadowPath để lưu một số lượng lớn các thẻ ngoài màn hình.
+
+00:17:58.000 --> 00:18:03.000
+Khi làm tròn một hình chữ nhật, hãy sử dụng thuộc tính cornerRadius và cornerCurve.
+
+00:18:03.000 --> 00:18:08.000
+Tránh sử dụng mặt nạ hoặc nội dung góc để tạo thành các hình chữ nhật tròn.
+
+00:18:08.000 --> 00:18:11.000
+Những thứ này gây ra những thứ ngoài màn hình không cần thiết.
+
+00:18:11.000 --> 00:18:19.000
+Đối với hầu hết các lớp, tạo một UIBezierPath bằng cách làm tròn các giới hạn của lớp đến cornerRadius của nó là tất cả những gì cần thiết để thiết lập một ShadowPath tốt.
+
+00:18:19.000 --> 00:18:23.000
+Bước thứ hai là tối ưu hóa mặt nạ trên ứng dụng của bạn.
+
+00:18:23.000 --> 00:18:29.000
+Sử dụng masksToBounds để che dấu vào hình chữ nhật, hình chữ nhật tròn hoặc hình elip.
+
+00:18:29.000 --> 00:18:32.000
+Nó hiệu quả hơn nhiều so với các lớp mặt nạ tùy chỉnh.
+
+00:18:32.000 --> 00:18:35.000
+Nhìn chung, hãy đảm bảo rằng mặt nạ thực sự được yêu cầu.
+
+00:18:35.000 --> 00:18:41.000
+Nếu nội dung trong cây con không vượt quá giới hạn, thì hãy tắt hoàn toàn masksToBounds.
+
+00:18:41.000 --> 00:18:43.000
+Đây chỉ là những khuyến nghị.
+
+00:18:43.000 --> 00:18:53.000
+Điều quan trọng là phải lập hồ sơ ứng dụng của bạn bằng Công cụ và sử dụng các cơ hội tối ưu hóa để kiểm tra cây lớp của bạn để biết các mẹo đơn giản nhưng quan trọng để giảm số lượng ngoài màn hình tổng thể của bạn.
+
+00:18:53.000 --> 00:19:02.000
+Cuối cùng, hãy nhớ rằng bạn có thể lưu trạng thái của hệ thống phân cấp chế độ xem để chia sẻ với nhóm của mình hoặc thậm chí đính kèm phản hồi trong ứng dụng phóng viên phản hồi.
+
+00:19:02.000 --> 00:19:07.000
+Nhìn chung, những công cụ này và các đề xuất sẽ giúp bạn tránh được các trở ngại kết xuất.
+
+00:19:07.000 --> 00:19:13.000
+Đối với các trở ngại cam kết, hãy đảm bảo kiểm tra "Tìm và sửa các trở ngại trong giai đoạn cam kết."
+
+00:19:13.000 --> 00:19:20.000
+Cùng với nhau, những cuộc nói chuyện này sẽ giúp bạn giảm tỷ lệ thời gian quá giang của ứng dụng và giữ cho người dùng của bạn cuộn mượt mà.
+
+00:19:20.000 --> 23:59:59.000
+Cảm ơn vì đã xem.
+

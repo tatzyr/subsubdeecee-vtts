@@ -1,0 +1,323 @@
+10120
+
+♪ ♪
+
+David Stites: Xin chào, và chào mừng đến với "Evolve Your Core Data Schema."
+
+Tên tôi là David Stites và tôi là một kỹ sư trong nhóm Core Data.
+
+Trong phiên này, tôi rất vui được nói chuyện với bạn về cách cập nhật và di chuyển lược đồ Dữ liệu Cốt lõi trong ứng dụng của bạn.
+
+Chương trình nghị sự cho phiên này là tìm hiểu di chuyển lược đồ là gì và tại sao ứng dụng của bạn phải thực hiện nó sau khi cập nhật mô hình dữ liệu của nó, cách di chuyển lược đồ hiện có và cách CloudKit và di chuyển lược đồ tương tác.
+
+Đầu tiên, di chuyển lược đồ là gì và tại sao ứng dụng của bạn phải di chuyển khi bạn cập nhật mô hình dữ liệu của mình.
+
+Khi ứng dụng của bạn phát triển, có thể cần phải thay đổi mô hình dữ liệu của bạn.
+
+Việc cập nhật mô hình dữ liệu yêu cầu những thay đổi đó được hiện thực hóa trong lược đồ lưu trữ cơ bản.
+
+Hãy xem xét mô hình dữ liệu này.
+
+Nó có một thực thể Máy bay với hai thuộc tính, loại và số lượng động cơ.
+
+Những thuộc tính này được phản ánh trong bộ lưu trữ cơ bản.
+
+Nếu tôi thêm một thuộc tính số hành khách, tôi cần thêm bộ nhớ tương ứng.
+
+Sau khi di chuyển, những thay đổi được phản ánh đầy đủ trong bộ nhớ cơ bản.
+
+Nếu không di chuyển các thay đổi trong bộ nhớ cơ bản, Core Data sẽ từ chối mở cửa hàng liên tục của bạn vì mô hình mới thay đổi không khớp với mô hình được sử dụng để lưu trữ.
+
+Cố gắng mở một cửa hàng không tương thích sẽ dẫn đến lỗi với mã NSPersistentStore- IncompatibleVersionHashError.
+
+Nếu bạn nhận được lỗi này, nó sẽ là một dấu hiệu cho bạn rằng cần phải di chuyển.
+
+Bây giờ tôi đã giải thích di chuyển lược đồ là gì và tại sao nó lại cần thiết để phát triển ứng dụng của bạn, hãy để tôi cho bạn biết cách di chuyển được thực hiện.
+
+Core Data có các công cụ di chuyển dữ liệu tích hợp để giúp cập nhật lưu trữ dữ liệu của ứng dụng của bạn với mô hình dữ liệu hiện tại.
+
+Nói chung, những công cụ này được gọi là "di chuyển nhẹ".
+
+Di chuyển nhẹ là phương pháp di chuyển ưa thích.
+
+Di chuyển nhẹ tự động phân tích và suy ra sự di chuyển từ sự khác biệt giữa các mô hình đối tượng được quản lý nguồn và đích.
+
+Trong thời gian chạy, Core Data tìm kiếm các mô hình trong các gói được trả về bởi các phương thức .allBundles và .allFrameworks của lớp NSBundle.
+
+Di chuyển nhẹ sau đó tạo ra một mô hình ánh xạ để hiện thực hóa những thay đổi bạn đã thực hiện trong ứng dụng của mình trong lược đồ cơ sở dữ liệu của bạn.
+
+Sử dụng di chuyển nhẹ đòi hỏi những thay đổi đối với mô hình dữ liệu để phù hợp với mô hình di chuyển rõ ràng.
+
+Các hoạt động nhẹ liên quan đến các thuộc tính bao gồm thêm thuộc tính, xóa thuộc tính, làm cho thuộc tính không tùy chọn trở thành tùy chọn, làm cho thuộc tính tùy chọn không tùy chọn và xác định giá trị mặc định và đổi tên thuộc tính.
+
+Nếu bạn muốn đổi tên một thuộc tính, hãy đặt mã định danh đổi tên trong mô hình đích thành tên của thuộc tính tương ứng trong mô hình nguồn.
+
+Mã định danh đổi tên được tìm thấy trong trình kiểm tra thuộc tính của Trình chỉnh sửa mô hình dữ liệu Xcode.
+
+Ví dụ, bạn có thể đổi tên thuộc tính màu thực thể Máy bay thành paintColor.
+
+Mã định danh đổi tên tạo tên chuẩn, vì vậy hãy đặt mã định danh đổi tên thành tên của thuộc tính trong mô hình nguồn, trừ khi thuộc tính đó đã có mã định danh đổi tên.
+
+Điều này có nghĩa là bạn có thể đổi tên một thuộc tính trong phiên bản 2 của mô hình, và sau đó đổi tên nó một lần nữa trong phiên bản 3.
+
+Việc đổi tên sẽ hoạt động chính xác từ phiên bản 2 sang phiên bản 3 hoặc từ phiên bản 1 đến phiên bản 3.
+
+Di chuyển nhẹ cũng có thể xử lý những thay đổi đối với các mối quan hệ mà không đổ mồ hôi.
+
+Bạn có thể thêm một mối quan hệ mới hoặc xóa một mối quan hệ hiện có.
+
+Bạn cũng có thể đổi tên một mối quan hệ bằng cách sử dụng mã định danh đổi tên, giống như một thuộc tính.
+
+Ngoài ra, bạn có thể thay đổi lực lượng mối quan hệ, ví dụ, di chuyển từ một sang nhiều hoặc nhiều không được đặt hàng sang nhiều thứ tự sang nhiều thứ tự và ngược lại.
+
+Nếu bạn đoán rằng các thực thể cũng đủ điều kiện để di chuyển nhẹ, bạn đã đúng.
+
+Bạn có thể thêm một thực thể mới, xóa một thực thể hiện có và đổi tên các thực thể.
+
+Bạn cũng có thể tạo một thực thể mẹ hoặc con mới và di chuyển các thuộc tính lên xuống trong hệ thống phân cấp thực thể.
+
+Bạn có thể di chuyển các thực thể vào hoặc ra khỏi một hệ thống phân cấp.
+
+Tuy nhiên, bạn không thể hợp nhất hệ thống phân cấp thực thể.
+
+Nếu hai thực thể hiện có không chia sẻ cha mẹ chung trong nguồn, chúng không thể chia sẻ cha mẹ chung ở đích đến.
+
+Di chuyển nhẹ được kiểm soát bởi hai phím tùy chọn: NSMigratePersistent- StoresAutomaticallyOption và NSInferMappingModelAutomaticallyOption.
+
+Sự hiện diện của hai khóa này được đặt thành giá trị thực khi cửa hàng được thêm vào điều phối viên liên tục sẽ khiến Dữ liệu cốt lõi tự động thực hiện di chuyển nhẹ nếu phát hiện cửa hàng liên tục không còn khớp với mô hình hiện tại.
+
+Nếu bạn đang sử dụng NSPersistentContainer hoặc NSPersistentStoreDescription, các tùy chọn này được đặt tự động cho bạn và bạn không cần phải làm gì cả.
+
+Nếu bạn đang sử dụng một API thay thế như NSPersistentStoreCoordinator .addPersistentStore (type:configuration:at:options:), di chuyển nhẹ có thể được yêu cầu bằng cách cài đặt và chuyển từ điển tùy chọn với các khóa NSMigratePersistent- StoresAutomaticallyOption và NSInferMa
+
+Core Data sẽ tự động thực hiện di chuyển nhẹ nếu nó phát hiện cửa hàng liên tục không còn khớp với mô hình hiện tại.
+
+Đây là cách điều này hoạt động trong mã.
+
+Đầu tiên, tôi sẽ nhập CoreData và tạo một mô hình đối tượng được quản lý.
+
+Sau đó, tôi sẽ tạo một điều phối viên cửa hàng liên tục bằng cách sử dụng mô hình tôi vừa tạo.
+
+Lưu ý từ điển tùy chọn mà tôi đã tạo và tôi sẽ vượt qua khi tôi thêm cửa hàng cho điều phối viên liên tục.
+
+Cuối cùng, tôi sẽ thêm cửa hàng vào điều phối viên nơi việc di chuyển sẽ tự động xảy ra nếu cần thiết.
+
+Bất kể bạn sử dụng API nào, những thay đổi đối với mô hình dữ liệu của bạn có thể được thực hiện trực tiếp trong cùng một mô hình đang được vận chuyển cùng với ứng dụng.
+
+Không cần phải tạo một phiên bản mới của mô hình để thực hiện các thay đổi.
+
+Nếu bạn muốn xác định trước liệu Dữ liệu cốt lõi có thể suy ra mô hình ánh xạ giữa mô hình nguồn và mô hình đích mà không thực sự thực hiện công việc di chuyển hay không, bạn có thể sử dụng phương pháp NSMappingModel .inferredMappingModel.
+
+Phương thức trả về mô hình suy ra nếu Core Data có thể tạo ra nó.
+
+Nếu không, nó trả về số không.
+
+Đôi khi, những thay đổi kết hợp đối với lược đồ có thể vượt quá khả năng di chuyển nhẹ.
+
+Tôi sẽ mô tả cho bạn cách giải quyết vấn đề đó và vẫn sử dụng di chuyển nhẹ.
+
+Quay trở lại mô hình ví dụ trước đây của chúng tôi, giả sử rằng trước đây chúng tôi đã thêm một thuộc tính gọi là "flightData" sử dụng bộ nhớ ngoài cho dữ liệu nhị phân, được biểu thị bằng đường dẫn tệp được lưu trữ trong FLIGHT_DATA.
+
+Hơn nữa, giả sử cần phải thay đổi thuộc tính đó để lưu trữ dữ liệu bên trong và xóa bộ nhớ ngoài.
+
+Kiểm tra xem liệu việc di chuyển này có phù hợp với bất kỳ khả năng nào của di chuyển nhẹ hay không, người ta phát hiện ra rằng nó không phù hợp.
+
+Nhìn bề ngoài, có vẻ như chúng ta đang bị mắc kẹt, không thể thực hiện thay đổi này.
+
+Tuy nhiên, đừng sợ!
+
+Di chuyển nhẹ vẫn có thể được sử dụng để thực hiện các di chuyển phức tạp hơn, không phù hợp hơn, mặc dù theo nhiều bước.
+
+Mục tiêu trở thành phân tách các nhiệm vụ di chuyển không đủ điều kiện để di chuyển nhẹ thành một chuỗi di chuyển tối thiểu đủ điều kiện cho di chuyển nhẹ.
+
+Nói chung, nếu mô hình ban đầu là A và mô hình mục tiêu là B, nhưng mô hình B có những thay đổi không đủ điều kiện để di chuyển nhẹ, một cầu nối có thể được tạo bằng cách giới thiệu một hoặc nhiều phiên bản mô hình phân tách những thay đổi đó.
+
+Mỗi mô hình được giới thiệu sẽ có một hoặc nhiều hoạt động nằm trong khả năng tạo nên những thay đổi không phù hợp.
+
+Điều này dẫn đến một loạt các lần di chuyển trong đó mỗi mô hình hiện có thể di chuyển nhẹ nhưng tương đương với di chuyển không phù hợp.
+
+Quay trở lại ví dụ của tôi không đủ điều kiện để di chuyển nhẹ, mô hình ban đầu của chúng tôi là mô hình A.
+
+Tôi sẽ bắt đầu phân tích nhiệm vụ bằng cách giới thiệu một phiên bản mô hình mới, A prime và thêm một thuộc tính mới "tmpStorage" sẽ được sử dụng tạm thời để lưu trữ dữ liệu được nhập từ các tệp bên ngoài.
+
+Tiếp theo, tôi sẽ nhập dữ liệu từ các tệp bên ngoài vào thuộc tính mới của chúng tôi.
+
+Mã để nhập dữ liệu này tách biệt với chức năng được cung cấp bởi Core Data.
+
+Việc thực hiện nhập khẩu này được xen kẽ giữa các lần di chuyển.
+
+Khi dữ liệu đã được nhập an toàn, tôi sẽ tạo một phiên bản mới khác của mô hình A double-prime từ A prime.
+
+Trong A double-prime, tôi sẽ xóa thuộc tính lưu trữ bên ngoài cũ trong khi đồng thời đổi tên thuộc tính mới.
+
+Mỗi bước được mô tả đều nằm trong khả năng di chuyển nhẹ.
+
+Theo trực giác, một vòng lặp sự kiện có thể được xây dựng để mở cửa hàng liên tục với các tùy chọn di chuyển nhẹ được đặt và lặp đi lặp lại qua từng mô hình chưa được xử lý theo thứ tự nối tiếp và Dữ liệu cốt lõi sẽ di chuyển cửa hàng.
+
+Nếu bạn thực hiện logic dành riêng cho ứng dụng trong quá trình di chuyển của mình, chẳng hạn như cách tôi nhập dữ liệu từ các tệp bên ngoài trong ví dụ trước, logic đó phải "có thể khởi động lại" trong trường hợp quá trình di chuyển bị gián đoạn do quá trình kết thúc.
+
+Nếu ứng dụng của bạn sử dụng Core Data và CloudKit, có một số điểm quan trọng bạn nên ghi nhớ khi thiết kế mô hình dữ liệu của mình trong Core Data.
+
+Để chuyển các bản ghi giữa kho Dữ liệu Cốt lõi và cơ sở dữ liệu CloudKit, chúng yêu cầu sự hiểu biết chung về mô hình dữ liệu.
+
+Bạn xác định mô hình này trong trình chỉnh sửa mô hình Dữ liệu cốt lõi.
+
+Mô hình đó sau đó được sử dụng để tạo lược đồ CloudKit.
+
+Lược đồ được tạo ra ban đầu được tạo ra trong môi trường Phát triển, và sau đó được thăng cấp lên Sản xuất.
+
+Bạn nên lưu ý rằng CloudKit không hỗ trợ tất cả các tính năng của mô hình Dữ liệu Cốt lõi.
+
+Khi bạn thiết kế mô hình của mình, hãy nhận biết những hạn chế sau và tạo ra một mô hình dữ liệu tương thích.
+
+Ví dụ, các ràng buộc duy nhất đối với các thực thể không được hỗ trợ.
+
+Loại thuộc tính không xác định và objectID không được hỗ trợ dưới dạng loại thuộc tính.
+
+Và các mối quan hệ phải là tùy chọn và có mối quan hệ nghịch đảo.
+
+Ngoài ra, CloudKit không hỗ trợ quy tắc từ chối xóa.
+
+Khi bạn đang phát triển ứng dụng của mình, bạn sẽ sử dụng môi trường Phát triển.
+
+Lược đồ CloudKit có thể được sửa đổi tự do trong môi trường này.
+
+Tuy nhiên, sau khi bạn quảng bá lược đồ của mình lên Sản xuất, các loại bản ghi và trường của chúng là bất biến.
+
+Trong khi di chuyển nhẹ xử lý nhiều tình huống khác nhau, CloudKit bị hạn chế hơn trong những gì nó hỗ trợ.
+
+Nhiều hoạt động nhẹ mà tôi đã mô tả trước đó không được hỗ trợ.
+
+Cụ thể, những gì được hỗ trợ trong CloudKit là thêm các trường mới vào các loại bản ghi hiện có và thêm các loại bản ghi mới.
+
+Bạn không thể sửa đổi hoặc xóa các loại hoặc trường bản ghi hiện có.
+
+Xem xét những hạn chế này khi sửa đổi lược đồ mô hình.
+
+Khi đến lúc cập nhật mô hình dữ liệu của bạn, hãy nhớ rằng di chuyển nhẹ chỉ hiện thực hóa các thay đổi lược đồ trong tệp cửa hàng cục bộ.
+
+Bất kể một cửa hàng cụ thể có được sử dụng với CloudKit hay không, việc di chuyển sẽ chỉ thay đổi cửa hàng trên đĩa và không thực hiện thay đổi đối với lược đồ CloudKit.
+
+Bạn vẫn cần hiện thực hóa những thay đổi đó trong cơ sở dữ liệu Phát triển bằng cách chạy trình khởi tạo lược đồ và sau đó quảng bá những thay đổi đó trong Phát triển thành Sản xuất bằng Bảng điều khiển CloudKit.
+
+Hãy nhớ rằng người dùng ứng dụng của bạn sẽ sử dụng các phiên bản cũ cũng như các phiên bản mới.
+
+Phiên bản mới nhất của ứng dụng tất nhiên sẽ biết về bất kỳ bổ sung mới nào cho lược đồ.
+
+Các phiên bản cũ của ứng dụng sẽ không biết về các trường hoặc loại bản ghi mới.
+
+Vì lược đồ CloudKit về cơ bản là phụ gia, hãy xem xét các tác động của việc di chuyển lược đồ sang các thiết bị chạy các phiên bản cũ hơn của ứng dụng của bạn.
+
+Ví dụ, một cạm bẫy phổ biến là quên cập nhật các trường cũ mà các phiên bản cũ hơn của ứng dụng của bạn sử dụng nhưng các phiên bản mới hơn thì không.
+
+Đây là một số chiến lược để di chuyển lược đồ CloudKit.
+
+Tùy chọn đầu tiên là thêm dần các trường mới vào các loại bản ghi hiện có.
+
+Nếu bạn áp dụng cách tiếp cận này, các phiên bản cũ hơn của ứng dụng của bạn sẽ có quyền truy cập vào mọi bản ghi mà người dùng tạo ra, nhưng không phải mọi lĩnh vực.
+
+Tùy chọn thứ hai là lập phiên bản các thực thể của bạn bằng cách bao gồm thuộc tính phiên bản và sau đó sử dụng yêu cầu tìm nạp để chỉ chọn các bản ghi tương thích với phiên bản hiện tại của ứng dụng.
+
+Nếu bạn áp dụng cách tiếp cận này, các phiên bản cũ hơn của ứng dụng của bạn sẽ không tìm nạp các bản ghi mà người dùng tạo với phiên bản mới hơn, ẩn chúng một cách hiệu quả trên thiết bị đó.
+
+Chiến lược cuối cùng là tạo một vùng chứa hoàn toàn mới, sử dụng NSPersistentCloudKitContainerOptions, để liên kết cửa hàng mới với một vùng chứa mới.
+
+Lưu ý rằng nếu người dùng có một tập dữ liệu lớn, việc tải tập dữ liệu lên iCloud có thể mất một khoảng thời gian dài.
+
+Dù bạn sử dụng phương pháp nào, hãy cẩn thận trong việc thiết kế mô hình dữ liệu của bạn.
+
+Hãy chắc chắn xem xét các vấn đề tương thích phiên bản chéo và kiểm tra các phiên bản khác nhau của mô hình dữ liệu của bạn cùng nhau.
+
+Bây giờ chúng ta đã thảo luận kỹ lưỡng về các mô hình dữ liệu, di chuyển và CloudKit, tôi sẽ chứng minh điều này trong hành động.
+
+Như bạn có thể đoán, tôi là một phi công.
+
+Tôi đã tạo một ứng dụng nhỏ để ghi lại thời gian bay của mình.
+
+Đây là mô hình dữ liệu cho ứng dụng đó.
+
+Tôi có một thực thể duy nhất được gọi là "LogEntry" và đã thêm một số thuộc tính, chẳng hạn như loại máy bay, thời gian bay, nguồn gốc, điểm đến và số đuôi để cho phép tôi ghi lại thông tin kinh nghiệm cần thiết.
+
+Khi tôi chạy ứng dụng này lần đầu tiên, Core Data sẽ tạo ra cửa hàng và hiện thực hóa lược đồ trong cửa hàng đó.
+
+Trước khi tôi chạy ứng dụng, tôi sẽ bật các biến môi trường com.apple.CoreData.SQLDebug và com.apple.CoreData.MigrationDebug.
+
+Điều này sẽ khiến Dữ liệu cốt lõi ghi lại các bước mà nó đang thực hiện.
+
+Với những lập luận này, tôi sẽ chạy ứng dụng.
+
+Khi ứng dụng khởi chạy, Core Data đang ghi lại các bước mà nó đang thực hiện: tạo tệp, tạo siêu dữ liệu cho cửa hàng và hiện thực hóa lược đồ.
+
+SQLite đã tạo bảng ZLOGENTRY với lược đồ của chúng tôi trong đó.
+
+Điều này cũng có thể được xác nhận bằng cách xem tệp lưu trữ bằng công cụ dòng lệnh sqlite3.
+
+Ở đây, tôi có bảng LogEntry và nó có các cột tương ứng với các thuộc tính tôi đã tạo trong mô hình dữ liệu.
+
+Bây giờ tôi sẽ thực hiện một số thay đổi nhẹ.
+
+Tôi đang thêm một số thực thể mới, Máy bay, Phi công và Sân bay.
+
+Điều này sẽ giúp tôi bình thường hóa lược đồ.
+
+Tôi đang thay đổi một số thuộc tính trong thực thể LogEntry thành các mối quan hệ.
+
+Ví dụ, điểm đến và nguồn gốc chuyển từ thuộc tính chuỗi sang mối quan hệ giữa Sân bay.
+
+Thực thể Sân bay cũng có hai thuộc tính mới, icaoIdentifier và faaIdentifier.
+
+Thuộc tính kiểu được thăng cấp thành một thực thể mới; Máy bay và tôi đang thêm hai thuộc tính mới, tailNumber và registrationNumber.
+
+Trên LogEntry, tôi đang tạo mối quan hệ 1-1 với Máy bay từ LogEntry.
+
+Cuối cùng, tôi đã thêm một thực thể Thí điểm có tên và ID chứng chỉ.
+
+Mỗi mục nhật ký sẽ liên quan đến một thực thể Thí điểm.
+
+Bây giờ tôi đã hoàn thành các thay đổi của mình đối với mô hình dữ liệu, tôi sẽ chạy lại ứng dụng.
+
+Rất tiếc! Tôi nhận được lỗi khi chạy ứng dụng.
+
+Kiểm tra mã, đó là NSPersistentStore- IncompatibleVersionHashError.
+
+Lỗi đó có nghĩa là mô hình hiện tại của tôi không còn khớp với lược đồ cho mô hình trong cửa hàng.
+
+Tôi cần di chuyển lược đồ cửa hàng.
+
+Tôi có thể làm điều đó theo một trong ba cách.
+
+Sử dụng phương pháp đầu tiên, tôi có thể chuyển đổi mã của mình để sử dụng NSPersistentContainer vì các tùy chọn di chuyển nhẹ được tự động đặt cho tôi.
+
+Sử dụng phương pháp thứ hai, tôi có thể sử dụng NSPersistentStoreDescription, vì, một lần nữa, các tùy chọn di chuyển nhẹ được tự động đặt cho tôi.
+
+Cuối cùng, sử dụng phương pháp thứ ba, tôi có thể đặt thủ công các tùy chọn di chuyển nhẹ trên từ điển tùy chọn và chuyển từ điển đó cho điều phối viên khi mở cửa hàng.
+
+Tôi nghĩ tôi sẽ chọn tùy chọn đầu tiên, sử dụng NSPersistentContainer.
+
+Bây giờ tôi đã chuyển đổi mã để sử dụng NSPersistentContainer, tôi sẽ khởi chạy ứng dụng và một lần nữa quan sát thấy rằng Dữ liệu cốt lõi đang di chuyển lược đồ trong tệp lưu trữ.
+
+Một lần nữa, điều này có thể được xác nhận bằng cách sử dụng công cụ dòng lệnh sqlite3.
+
+Lưu ý rằng lược đồ mới đã được Core Data hiện thực hóa một cách tự động, sử dụng di chuyển nhẹ.
+
+Điều gì có thể dễ dàng hơn?
+
+Trước khi kết thúc bản demo của mình, tôi muốn hiển thị tùy chọn số 3.
+
+Nhớ lại trong tùy chọn này, tôi đang cài đặt thủ công các tùy chọn di chuyển nhẹ trên từ điển tùy chọn và sau đó chuyển từ điển đó cho điều phối viên khi mở cửa hàng.
+
+Kết quả cuối cùng giống nhau ở chỗ cửa hàng được chuyển sang lược đồ mới.
+
+Khi bạn thực hiện thay đổi đối với mô hình dữ liệu của mình, hãy sử dụng di chuyển nhẹ để giúp bạn.
+
+Di chuyển nhẹ rất linh hoạt và dễ sử dụng cho phần lớn các thay đổi mô hình dữ liệu.
+
+Nếu bạn có các mô hình dữ liệu phức tạp hơn, hãy chia mô hình đó thành những mô hình bao gồm các thay đổi nhẹ.
+
+Cuối cùng, nếu bạn sử dụng CloudKit với ứng dụng của mình, hãy xem xét cẩn thận ý nghĩa của những thay đổi mô hình dữ liệu.
+
+Kiểm tra kỹ lưỡng bất kỳ thay đổi mô hình dữ liệu nào.
+
+Tôi hy vọng bạn thấy thông tin này hữu ích và bạn sẽ cân nhắc cập nhật mô hình trong dự án của mình để xây dựng một số tính năng mới tuyệt vời.
+
+Cảm ơn vì đã bay cùng tôi, và có một WWDC tuyệt vời.

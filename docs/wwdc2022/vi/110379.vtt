@@ -1,0 +1,311 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:15.000
+Jeremy: Xin chào. Tôi là Jeremy, và tôi ở đây để chỉ cho bạn cách tạo một ứng dụng đa phương tiện nhạy hơn bằng AVFoundation.
+
+00:00:15.000 --> 00:00:19.000
+Khi sử dụng nội dung đa phương tiện trong ứng dụng của bạn, bạn có thể muốn làm nhiều hơn là chỉ chơi chúng.
+
+00:00:19.000 --> 00:00:28.000
+Bạn có thể muốn hiển thị hình thu nhỏ, kết hợp phương tiện thành các tác phẩm mới hoặc nhận thông tin về tài sản của mình.
+
+00:00:28.000 --> 00:00:35.000
+Những nhiệm vụ này yêu cầu tải dữ liệu và với các tệp lớn như video, có thể mất một thời gian để hoàn thành.
+
+00:00:35.000 --> 00:00:42.000
+Thật không may, có thể dễ dàng giới thiệu các vấn đề về độ trễ trong ứng dụng của bạn nếu công việc này được thực hiện đồng bộ trên luồng chính.
+
+00:00:42.000 --> 00:00:48.000
+Một cách tuyệt vời để giữ cho ứng dụng của bạn đáp ứng là tải dữ liệu không đồng bộ và cập nhật giao diện người dùng của bạn khi hoàn tất.
+
+00:00:48.000 --> 00:00:51.000
+AVFoundation có các công cụ để làm điều này trở nên dễ dàng.
+
+00:00:51.000 --> 00:00:53.000
+Vì vậy đây là những gì chúng ta sẽ nói về ngày hôm nay.
+
+00:00:53.000 --> 00:00:58.000
+Đầu tiên, tôi sẽ giới thiệu cho bạn một số API không đồng bộ mới trong AVFoundation.
+
+00:00:58.000 --> 00:01:04.000
+Sau đó, tôi sẽ cung cấp cho bạn thông tin cập nhật về việc kiểm tra tài sản bằng cách sử dụng phương pháp tải không đồng bộ (_:) mà chúng tôi đã giới thiệu vào năm ngoái.
+
+00:01:04.000 --> 00:01:10.000
+Và tôi sẽ chỉ cho bạn cách tối ưu hóa việc tải dữ liệu tùy chỉnh cho phương tiện cục bộ và được lưu trong bộ nhớ cache bằng AVAssetResourceLoader.
+
+00:01:10.000 --> 00:01:14.000
+Nhưng trước tiên, hãy nhảy vào API không đồng bộ mới.
+
+00:01:14.000 --> 00:01:20.000
+Lấy hình ảnh tĩnh từ video với AVAssetImageGenerator là một cách tuyệt vời để tạo hình thu nhỏ.
+
+00:01:20.000 --> 00:01:24.000
+Nhưng việc tạo ra hình ảnh không phải là tức thời.
+
+00:01:24.000 --> 00:01:29.000
+Để tạo ra một hình ảnh, trình tạo hình ảnh cần tải dữ liệu khung hình từ tệp video của bạn.
+
+00:01:29.000 --> 00:01:35.000
+Và đối với phương tiện được lưu trữ trên máy chủ từ xa hoặc trên internet, việc tải đó sẽ chậm hơn nhiều.
+
+00:01:35.000 --> 00:01:39.000
+Đó là lý do tại sao điều quan trọng là cách bạn tạo ra hình ảnh của mình.
+
+00:01:39.000 --> 00:01:48.000
+Sử dụng phương pháp tải dữ liệu đồng bộ, như copyCGImage, trên luồng chính có thể khiến giao diện người dùng của bạn bị đóng băng khi chờ video được tải.
+
+00:01:48.000 --> 00:01:56.000
+Năm nay, chúng tôi đã thêm phương thức không đồng bộ hình ảnh (tại: thời điểm) sử dụng async/await để giải phóng chuỗi gọi trong khi trình tạo hình ảnh tải dữ liệu.
+
+00:01:56.000 --> 00:02:01.000
+Trình tạo hình ảnh trả về một bộ với hình ảnh và thời gian thực tế của nó trong tài sản.
+
+00:02:01.000 --> 00:02:10.000
+Có một vài lý do khiến thời gian thực tế có thể thay đổi so với thời gian bạn yêu cầu, nhưng nếu bạn chỉ muốn hình ảnh, bạn có thể truy cập trực tiếp vào nó bằng thuộc tính .image.
+
+00:02:10.000 --> 00:02:14.000
+Một số khung hình trong video nén dễ tải hơn những khung hình khác.
+
+00:02:14.000 --> 00:02:20.000
+iFrames có thể được giải mã độc lập, trong khi các khung khác dựa vào các khung gần đó để giải mã.
+
+00:02:20.000 --> 00:02:26.000
+Trong thời gian bạn yêu cầu, trình tạo hình ảnh theo mặc định sẽ sử dụng iFrame gần nhất để tạo hình ảnh của bạn.
+
+00:02:26.000 --> 00:02:31.000
+Có thể rất hấp dẫn khi đặt dung sai về 0 để có được khung chính xác cho thời gian bạn yêu cầu.
+
+00:02:31.000 --> 00:02:39.000
+Nhưng hãy nhớ rằng khung hình đó có thể sẽ phụ thuộc vào các khung hình khác gần đó mà trình tạo hình ảnh cũng sẽ cần tải.
+
+00:02:39.000 --> 00:02:44.000
+Thay vào đó, hãy cân nhắc thiết lập dung sai rộng mà vẫn sẽ mang lại cho bạn kết quả mà bạn đang tìm kiếm.
+
+00:02:44.000 --> 00:02:49.000
+Dung sai rộng giúp trình tạo hình ảnh giảm thiểu tải dữ liệu bằng cách cung cấp cho nó nhiều khung hình hơn để chọn.
+
+00:02:49.000 --> 00:02:54.000
+Càng ít khung hình cần tải, nó càng có thể trả lại hình ảnh nhanh hơn.
+
+00:02:54.000 --> 00:03:02.000
+Để có được một loạt hình ảnh nhiều lần trong một tài sản, trình tạo hình ảnh đã tạo raCGImagesAsynchronously(forTimes:).
+
+00:03:02.000 --> 00:03:06.000
+Tuy nhiên trong Swift, có một số sắc thái cần chú ý khi sử dụng nó.
+
+00:03:06.000 --> 00:03:10.000
+Mới trong năm nay chúng tôi đã thêm phương pháp hình ảnh (cho: thời gian).
+
+00:03:10.000 --> 00:03:15.000
+Bây giờ phải mất một mảng CMTimes, vì vậy bạn không cần phải ánh xạ chúng đến NSValues trước.
+
+00:03:15.000 --> 00:03:18.000
+Nó cũng cung cấp kết quả của nó bằng cách sử dụng Trình tự không đồng bộ.
+
+00:03:18.000 --> 00:03:23.000
+Trong Swift, các chuỗi cho phép bạn lặp lại các mục của chúng bằng cách sử dụng vòng lặp for in.
+
+00:03:23.000 --> 00:03:31.000
+Đối với một chuỗi các mục chưa sẵn sàng cùng một lúc, một chuỗi không đồng bộ cho phép bạn chờ đợi phần tử tiếp theo sau mỗi lần lặp.
+
+00:03:31.000 --> 00:03:39.000
+Đối với mỗi hình ảnh được tạo thành công, kết quả bao gồm thời gian được yêu cầu ban đầu và thời gian thực tế cùng với hình ảnh.
+
+00:03:39.000 --> 00:03:44.000
+Nếu nó thất bại, kết quả có lỗi để giải thích tại sao.
+
+00:03:44.000 --> 00:03:54.000
+Và nếu bạn chỉ quan tâm đến hình ảnh, kết quả có các thuộc tính để truy cập trực tiếp vào các giá trị của nó, điều này cũng có thể gây ra lỗi nếu việc tạo không thành công.
+
+00:03:54.000 --> 00:03:59.000
+Để tìm hiểu thêm về các chuỗi không đồng bộ, tôi khuyên bạn nên kiểm tra phiên "gặp gỡ chuỗi không đồng bộ".
+
+00:03:59.000 --> 00:04:03.000
+Đối với một nhiệm vụ như tạo hình ảnh, sẽ dễ dàng hơn một chút để xem nó liên quan đến việc tải dữ liệu như thế nào.
+
+00:04:03.000 --> 00:04:09.000
+Nhưng có một số lĩnh vực đồng bộ khác của AVFoundation khó chọn ra làm điểm có vấn đề hơn.
+
+00:04:09.000 --> 00:04:13.000
+AVMutableComposition là một trong những lĩnh vực này.
+
+00:04:13.000 --> 00:04:19.000
+Chèn phạm vi thời gian cho thông tin nhu cầu tài sản về các bản nhạc của tài sản để thêm tham chiếu đến chúng trong bố cục.
+
+00:04:19.000 --> 00:04:29.000
+Nó kiểm tra đồng bộ các bản nhạc, vì vậy nếu các bản nhạc chưa được tải, chúng sẽ được tải đồng bộ để tạo ra các bản nhạc sáng tác mới.
+
+00:04:29.000 --> 00:04:36.000
+Trước đây, giải pháp sẽ là chờ tải các bản nhạc của tài sản trước khi chèn chúng vào bố cục.
+
+00:04:36.000 --> 00:04:46.000
+Tuy nhiên, năm nay, chúng tôi sẽ giới thiệu một phiên bản không đồng bộ của insertTimeRange, phiên bản này sẽ tải không đồng bộ các bản nhạc cho bạn, nếu cần.
+
+00:04:46.000 --> 00:04:53.000
+Thành phần video và thành phần video có thể thay đổi cũng có các phương pháp bổ sung yêu cầu tải các thuộc tính của tài sản.
+
+00:04:53.000 --> 00:05:01.000
+Mới trong năm nay, hàm tạo "propertiesOf asset" và phương thức isValid(for:timeRange:) hiện cũng có các đối tác không đồng bộ.
+
+00:05:01.000 --> 00:05:08.000
+Những phương pháp mới này sẽ tải không đồng bộ các bản nhạc và thời lượng của tài sản, vì vậy bạn cũng không cần tải trước chúng.
+
+00:05:08.000 --> 00:05:14.000
+Các phương pháp không đồng bộ mới này giúp tương tác với tài sản dễ dàng hơn bằng cách tải các thuộc tính mà chúng cần không đồng bộ.
+
+00:05:14.000 --> 00:05:21.000
+Nhưng khi bạn cần tự tải các thuộc tính của một tài sản, hãy làm mới việc kiểm tra tài sản không đồng bộ.
+
+00:05:21.000 --> 00:05:25.000
+Bạn có thể nhận thấy có hai cách để kiểm tra tài sản của tài sản.
+
+00:05:25.000 --> 00:05:31.000
+Khi AVFoundation được giới thiệu, cách tốt nhất để kiểm tra các thuộc tính là tải giá trị khóa không đồng bộ.
+
+00:05:31.000 --> 00:05:34.000
+Năm ngoái, chúng tôi đã giới thiệu async load(_:).
+
+00:05:34.000 --> 00:05:43.000
+Nó sử dụng các khóa an toàn kiểu để xác định các thuộc tính cần tải, trong đó kỹ thuật tải giá trị khóa không đồng bộ cũ sử dụng các chuỗi được mã hóa cứng làm khóa.
+
+00:05:43.000 --> 00:05:46.000
+Lỗi chính tả trong các phím chuỗi này rất khó nắm bắt.
+
+00:05:46.000 --> 00:05:54.000
+Lỗi chính tả một khóa ngăn không cho nó được tải không đồng bộ và khi thuộc tính được sử dụng sau đó, nó sẽ chặn trong khi tải.
+
+00:05:54.000 --> 00:06:03.000
+Cũng rất dễ quên thêm các thuộc tính mới vào các phím để tải hoặc quên tải chúng hoàn toàn không đồng bộ.
+
+00:06:03.000 --> 00:06:11.000
+Vì những lý do này, năm nay, chúng tôi đang phản đối việc tải giá trị khóa không đồng bộ và các thuộc tính đồng bộ trong Swift, ủng hộ tải không đồng bộ.
+
+00:06:11.000 --> 00:06:15.000
+Tải không đồng bộ sử dụng các định danh an toàn loại để ngăn chặn lỗi chính tả.
+
+00:06:15.000 --> 00:06:21.000
+Nó trực tiếp trả về các giá trị thuộc tính theo yêu cầu để tránh truy cập các thuộc tính chưa tải.
+
+00:06:21.000 --> 00:06:28.000
+Và vì tất cả những điều này được kiểm tra tại thời điểm biên dịch, bạn sẽ ngăn chặn việc giới thiệu bất kỳ vấn đề hiệu suất ràng buộc IO mới nào.
+
+00:06:28.000 --> 00:06:38.000
+Tải không đồng bộ hiện là cách duy nhất được đề xuất để kiểm tra không đồng bộ các thuộc tính trên AVAsset, AVAssetTrack, AVMetadataItem và các lớp con của chúng.
+
+00:06:38.000 --> 00:06:43.000
+Tuy nhiên, một số ít các lớp này vẫn sẽ cung cấp kiểm tra tài sản đồng bộ.
+
+00:06:43.000 --> 00:06:48.000
+Đó là bởi vì dữ liệu cho các thuộc tính của họ đã có sẵn trong bộ nhớ.
+
+00:06:48.000 --> 00:06:52.000
+Chúng ta hãy xem lại thành phần có thể thay đổi để xem tại sao.
+
+00:06:52.000 --> 00:06:58.000
+Chúng tôi sẽ sử dụng một bố cục có thể thay đổi để ghép các phân đoạn của hai bản nhạc video hiện có lại với nhau.
+
+00:06:58.000 --> 00:07:03.000
+Chúng ta sẽ bắt đầu bằng cách tạo một bố cục trống và thêm một đoạn video trống.
+
+00:07:03.000 --> 00:07:09.000
+Sau đó, chúng ta có thể chèn đồng bộ một phần của đoạn video đầu tiên vào bản nhạc sáng tác.
+
+00:07:09.000 --> 00:07:12.000
+Đằng sau hậu trường, bước này không tải bất kỳ dữ liệu nào.
+
+00:07:12.000 --> 00:07:18.000
+Thay vào đó, nó thêm một phân đoạn bản nhạc mới trỏ đến bản nhạc mong muốn.
+
+00:07:18.000 --> 00:07:23.000
+Sau đó, chúng ta có thể nối thêm một phần của bản nhạc thứ hai theo cùng một cách.
+
+00:07:23.000 --> 00:07:33.000
+Vì bản thân thành phần được hỗ trợ bởi cấu trúc bộ nhớ chứ không phải tệp, chúng tôi có thể kiểm tra các thuộc tính của nó một cách an toàn đồng bộ mà không cần tải chúng trước.
+
+00:07:33.000 --> 00:07:44.000
+Một lần nữa, vì lý do này, kiểm tra tài sản đồng bộ sẽ vẫn có sẵn trên các lớp này và tất cả các lớp sẽ sử dụng tải không đồng bộ để kiểm tra không đồng bộ.
+
+00:07:44.000 --> 00:07:51.000
+Tất cả các phương pháp không đồng bộ mới này trong AVFoundation sẽ giúp ngăn chặn chặn dễ dàng hơn trong khi tải dữ liệu phương tiện.
+
+00:07:51.000 --> 00:07:55.000
+Tuy nhiên, lần đầu tiên giới thiệu đồng thời vào ứng dụng của bạn có thể khó khăn.
+
+00:07:55.000 --> 00:08:04.000
+Kiểm tra các phiên này từ WWDC 21 để được trợ giúp bắt đầu với Swift đồng thời và để chuyển sang tải không đồng bộ của AVFoundation trong ứng dụng của bạn.
+
+00:08:04.000 --> 00:08:09.000
+Đối với chủ đề cuối cùng của chúng tôi, hãy nói về việc tối ưu hóa việc tải dữ liệu tùy chỉnh cho tài sản của bạn.
+
+00:08:09.000 --> 00:08:13.000
+Để bắt đầu, hãy xem cách AVAsset tải dữ liệu theo mặc định.
+
+00:08:13.000 --> 00:08:20.000
+Khi bạn tạo một AVAsset với một URL, phương tiện có thể ở trên mạng hoặc được lưu trữ cục bộ trên thiết bị.
+
+00:08:20.000 --> 00:08:27.000
+Nếu nó ở trên mạng, AVAsset sẽ tự động lưu trữ một lượng dữ liệu nhất định để đảm bảo phát lại mượt mà.
+
+00:08:27.000 --> 00:08:32.000
+Nếu phương tiện là cục bộ, AVAsset có thể bỏ qua bộ nhớ cache và tải dữ liệu khi cần thiết để phát.
+
+00:08:32.000 --> 00:08:37.000
+Trong một số trường hợp, bạn có thể không cung cấp cho AVAsset một con trỏ trực tiếp đến phương tiện của bạn.
+
+00:08:37.000 --> 00:08:42.000
+Có thể bạn lưu trữ các byte thô của mp4 bên trong tệp dự án tùy chỉnh.
+
+00:08:42.000 --> 00:08:47.000
+Đối với những tình huống như thế này, AVAsset có thể sử dụng AVAssetResourceLoader.
+
+00:08:47.000 --> 00:08:54.000
+Trình tải tài nguyên cung cấp cho tài sản một cách để yêu cầu các byte tùy ý từ phương tiện của bạn mà bạn có một cách đặc biệt để tải.
+
+00:08:54.000 --> 00:09:01.000
+Nhưng vì tài sản không còn xử lý việc đọc dữ liệu, nên nó không thể dự đoán mỗi đoạn sẽ mất bao lâu để tải.
+
+00:09:01.000 --> 00:09:09.000
+Vì vậy, nó giả định rằng việc truy cập phương tiện liên quan đến giao tiếp mạng và đợi cho đến khi nó lưu trữ dữ liệu trước khi nó sẵn sàng phát.
+
+00:09:09.000 --> 00:09:16.000
+Năm nay, nếu phương tiện của bạn có sẵn cục bộ, bạn có thể bật wholeLengthAvailableOnDemand cho trình tải tài nguyên của mình.
+
+00:09:16.000 --> 00:09:25.000
+Đặt cờ này cho nội dung biết rằng nó có thể mong đợi nhận được dữ liệu theo yêu cầu, vì vậy nó có thể bỏ qua bộ nhớ đệm.
+
+00:09:25.000 --> 00:09:33.000
+Đối với phương tiện truyền thông địa phương, wholeLengthAvailableOnDemand có thể giúp giảm mức sử dụng bộ nhớ của ứng dụng của bạn trong quá trình phát lại, vì nó sẽ không cần lưu trữ thêm dữ liệu.
+
+00:09:33.000 --> 00:09:39.000
+Nó cũng có thể giảm thời gian cần thiết để bắt đầu phát lại, vì nội dung sẽ không phải đợi bộ nhớ cache lấp đầy trước.
+
+00:09:39.000 --> 00:09:42.000
+Tuy nhiên, hãy thận trọng khi bật cờ này.
+
+00:09:42.000 --> 00:09:50.000
+Nếu việc tải yêu cầu bất kỳ hoạt động mạng nào, bao gồm lưu trữ tệp mạng, có khả năng phát lại sẽ không đáng tin cậy.
+
+00:09:50.000 --> 00:09:52.000
+Đó là cải tiến mới cho trình tải tài nguyên.
+
+00:09:52.000 --> 00:09:56.000
+Bây giờ hãy kết thúc mọi thứ với một số bước tiếp theo cho ứng dụng của bạn.
+
+00:09:56.000 --> 00:10:02.000
+Khi làm việc với phương tiện truyền thông, hãy sử dụng async/await để giữ cho ứng dụng của bạn phản hồi trong khi nó tải ở chế độ nền.
+
+00:10:02.000 --> 00:10:07.000
+Cân nhắc tăng dung sai khi sử dụng trình tạo hình ảnh để có kết quả nhanh hơn.
+
+00:10:07.000 --> 00:10:15.000
+Và nếu bạn đang sử dụng trình tải tài nguyên cho phương tiện có sẵn cục bộ, hãy bật toàn bộ chiều dài có sẵn theo yêu cầu để giúp tăng hiệu suất.
+
+00:10:15.000 --> 00:10:16.000
+Đó là tất cả những gì tôi có cho ngày hôm nay.
+
+00:10:16.000 --> 23:59:59.000
+Cảm ơn vì đã xem, và tận hưởng WWDC 22.
+

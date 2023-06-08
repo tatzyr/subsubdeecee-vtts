@@ -1,0 +1,566 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:07.000
+Jason Fielder: Xin chào, tên tôi là Jason Fielder, và tôi làm việc với nhóm Kỹ thuật Phần mềm GPU tại Apple.
+
+00:00:07.000 --> 00:00:22.000
+Chúng ta sẽ học cách tận dụng khả năng xử lý đồ họa tuyệt vời của máy tính xách tay M1 Pro và M1 Max mới của chúng tôi và chúng tôi sẽ khám phá các phương pháp hay nhất mà bạn có thể áp dụng để làm cho các ứng dụng của mình hoạt động tốt trên GPU của chúng tôi.
+
+00:00:22.000 --> 00:00:27.000
+MacBook Pros mới nhất của chúng tôi có những con chip mạnh mẽ nhất mà chúng tôi từng tạo ra.
+
+00:00:27.000 --> 00:00:33.000
+M1 Pro có tới 16 lõi GPU và M1 Max tăng gấp đôi lên 32.
+
+00:00:33.000 --> 00:00:40.000
+Điều này, cùng với băng thông DRAM cao hơn nhiều, làm tăng đáng kể hiệu suất của MacBook Pro.
+
+00:00:40.000 --> 00:00:53.000
+Bộ nhớ hệ thống hiện có sẵn cho GPU nhờ Kiến trúc Bộ nhớ Hợp nhất của chúng tôi và với khả năng lên đến 64GB, ứng dụng GPU của chúng tôi có thể truy cập nhiều bộ nhớ hơn bao giờ hết.
+
+00:00:53.000 --> 00:01:04.000
+Những chiếc MacBook Pro này sẽ mở ra một thế giới khả năng hoàn toàn mới cho các nhà phát triển và chuyên gia sáng tạo, cho phép quy trình làm việc mà trước đây chỉ nhắm mục tiêu vào máy tính để bàn.
+
+00:01:04.000 --> 00:01:07.000
+Vậy làm thế nào để chúng ta mở ra thế giới tiềm năng GPU mới này?
+
+00:01:07.000 --> 00:01:12.000
+Chúng ta sẽ bắt đầu với bản tóm tắt của Metal Compute, cho phép lên lịch làm việc trên GPU.
+
+00:01:12.000 --> 00:01:20.000
+Sau đó, với sự hiểu biết về API và kiến trúc GPU, chúng tôi sẽ xem xét các phương pháp hay nhất cho từng giai đoạn của ứng dụng của bạn.
+
+00:01:20.000 --> 00:01:25.000
+Sau đó, chúng tôi sẽ kết luận với một số tối ưu hóa hạt nhân cụ thể mà bạn có thể áp dụng.
+
+00:01:25.000 --> 00:01:29.000
+Hãy bắt đầu với việc làm mới nhanh Metal Compute.
+
+00:01:29.000 --> 00:01:34.000
+Metal là API chi phí thấp hiện đại của Apple để thực hiện công việc GPU.
+
+00:01:34.000 --> 00:01:41.000
+Nó được thiết kế mỏng và hiệu quả nhất có thể và cung cấp một giao diện đồ họa và tính toán thống nhất.
+
+00:01:41.000 --> 00:01:53.000
+Metal thân thiện với đa luồng, cho phép công việc được xếp hàng một cách tầm thường từ nhiều luồng CPU và mang đến cho bạn, nhà phát triển, sự linh hoạt để sử dụng quy trình biên dịch đổ bóng ngoại tuyến hoặc trực tuyến.
+
+00:01:53.000 --> 00:01:59.000
+Dưới mui xe trong lớp phần cứng của chúng tôi, chúng tôi có một CPU và GPU cả hai được kết nối với cùng một bộ nhớ vật lý.
+
+00:01:59.000 --> 00:02:09.000
+CPU tạo tài nguyên GPU trong khối bộ nhớ thống nhất và cả GPU và CPU đều có thể đọc và ghi vào các tài nguyên này.
+
+00:02:09.000 --> 00:02:14.000
+Chúng tôi có một vài lớp API để làm việc để xem một hạt nhân được thực thi trên GPU.
+
+00:02:14.000 --> 00:02:16.000
+Lớp trên cùng là hàng đợi lệnh.
+
+00:02:16.000 --> 00:02:23.000
+Theo tên gọi của nó, đối tượng này cho phép một ứng dụng xếp hàng hoạt động để thực thi tại một số điểm trên GPU.
+
+00:02:23.000 --> 00:02:28.000
+Các lệnh được đặt hàng loạt trên CPU thông qua bộ đệm lệnh.
+
+00:02:28.000 --> 00:02:33.000
+Những đối tượng này là thoáng qua và bạn sẽ tạo ra rất nhiều trong số này ở mức độ chi tiết có ý nghĩa đối với ứng dụng của bạn.
+
+00:02:33.000 --> 00:02:44.000
+Bạn có thể thấy điều này được áp đặt bởi các yêu cầu xung quanh đồng bộ hóa CPU và GPU, nhưng tóm lại, bạn sẽ muốn đảm bảo rằng bạn có đủ công việc để giữ cho GPU hoạt động hoàn toàn.
+
+00:02:44.000 --> 00:02:48.000
+Để đưa hướng dẫn vào bộ đệm lệnh, chúng ta sẽ cần một bộ mã hóa lệnh.
+
+00:02:48.000 --> 00:02:52.000
+Có nhiều loại bộ mã hóa lệnh khác nhau nhắm vào các loại công việc khác nhau.
+
+00:02:52.000 --> 00:03:01.000
+Có một bộ mã hóa đồ họa cho các bản vẽ 3D, một bộ mã hóa blit để sao chép tài nguyên xung quanh, nhưng đối với cuộc nói chuyện này, chúng tôi sẽ tập trung vào bộ mã hóa tính toán cho các công văn hạt nhân.
+
+00:03:01.000 --> 00:03:06.000
+Với một bộ mã hóa tính toán tại chỗ, bây giờ chúng tôi đã sẵn sàng để mã hóa một công văn hạt nhân.
+
+00:03:06.000 --> 00:03:12.000
+Cùng với bản thân chức năng hạt nhân, bộ mã hóa là cách các tài nguyên cần thiết cho hạt nhân được liên kết với nó.
+
+00:03:12.000 --> 00:03:16.000
+Trên thực tế, chúng ta có thể mã hóa nhiều công văn hạt nhân đến cùng một bộ mã hóa.
+
+00:03:16.000 --> 00:03:30.000
+Chúng ta có thể thay đổi hạt nhân hoặc ràng buộc tài nguyên giữa mỗi công văn và cũng thông báo cho Metal liệu một công văn có thể được thực hiện đồng thời hay nên được tuần tự hóa và thực hiện sau khi công văn trước đó hoàn thành.
+
+00:03:30.000 --> 00:03:41.000
+Với việc mã hóa của chúng tôi hoàn tất, chúng tôi kết thúc bộ mã hóa làm cho bộ đệm lệnh có sẵn để bắt đầu mã hóa một bộ mã hóa mới hoặc cam kết bộ đệm lệnh với GPU để thực thi.
+
+00:03:41.000 --> 00:03:46.000
+Ở đây chúng tôi đã mã hóa tổng cộng ba bộ mã hóa tính toán cho GPU.
+
+00:03:46.000 --> 00:03:52.000
+Điều này đại diện cho toàn bộ công việc từ đầu đến cuối và chúng tôi sẵn sàng hướng dẫn GPU bắt đầu thực thi nó.
+
+00:03:52.000 --> 00:04:02.000
+Một cuộc gọi cam kết trả về ngay lập tức và Metal sẽ đảm bảo rằng công việc được lên lịch và thực hiện trên GPU sau khi tất cả các công việc khác trước khi nó trong hàng đợi hoàn thành.
+
+00:04:02.000 --> 00:04:10.000
+Luồng CPU hiện có sẵn để bắt đầu xây dựng bộ đệm lệnh mới hoặc thực hiện bất kỳ công việc ứng dụng nào khác phù hợp trong khi GPU đang bận.
+
+00:04:10.000 --> 00:04:18.000
+Tuy nhiên, CPU có thể sẽ cần biết khi nào một khối lượng công việc đã được hoàn thành, để kết quả của nó có thể được đọc lại.
+
+00:04:18.000 --> 00:04:21.000
+Đối với điều này, bộ đệm lệnh có hai kỹ thuật cho chúng tôi.
+
+00:04:21.000 --> 00:04:29.000
+Tại đây, trước khi cam kết công việc, ứng dụng có thể thêm chức năng xử lý hoàn thành sẽ được Metal gọi sau khi công việc hoàn thành.
+
+00:04:29.000 --> 00:04:38.000
+Đối với các trường hợp đơn giản, có một phương thức đồng bộ được gọi là waitUntilComplete sẽ chặn luồng CPU đang gọi, nhưng ở đây chúng tôi đang sử dụng phương thức không đồng bộ.
+
+00:04:38.000 --> 00:04:41.000
+Vì vậy đây là mô hình thực hiện cơ bản của chúng tôi.
+
+00:04:41.000 --> 00:04:47.000
+Một tính năng cuối cùng của API là nhiều bộ đệm lệnh có thể được mã hóa đồng thời.
+
+00:04:47.000 --> 00:04:54.000
+Nhiều luồng CPU có thể mã hóa nhiều bộ đệm lệnh cùng một lúc và cam kết công việc sau khi mã hóa hoàn tất.
+
+00:04:54.000 --> 00:05:05.000
+Nếu việc đặt hàng là quan trọng, hãy dành chỗ của bộ đệm lệnh để thực thi trong hàng đợi lệnh bằng cách gọi enqueue, hoặc cách khác, chỉ cần gọi cam kết theo thứ tự mong muốn.
+
+00:05:05.000 --> 00:05:08.000
+Sử dụng bất kỳ cách tiếp cận nào phù hợp nhất với ứng dụng của bạn.
+
+00:05:08.000 --> 00:05:20.000
+Với khả năng tạo nhiều hàng đợi lệnh, tính linh hoạt của Metal cho phép một ứng dụng mã hóa công việc với GPU theo mô hình hiệu quả nhất cho nhu cầu của nó.
+
+00:05:20.000 --> 00:05:23.000
+Vì vậy, đó là bản tóm tắt của mô hình thực hiện mà Metal phơi bày.
+
+00:05:23.000 --> 00:05:28.000
+Hãy xây dựng dựa trên điều đó và xem cách tối ưu hóa cho nó.
+
+00:05:28.000 --> 00:05:45.000
+Chúng tôi có một số đề xuất về cách ứng dụng của bạn nên truy cập bộ nhớ GPU để tận dụng Kiến trúc bộ nhớ hợp nhất của chúng tôi, cách gửi công việc đến GPU để phù hợp với mô hình tính toán mà chúng tôi vừa xem qua và cách chọn tài nguyên nào để phân bổ để phù hợp nhất với UMA của chúng tôi.
+
+00:05:45.000 --> 00:05:50.000
+Đầu tiên để nói về chắc chắn là Kiến trúc Bộ nhớ Thống nhất.
+
+00:05:50.000 --> 00:05:55.000
+Bộ phương pháp hay nhất này là về việc giảm thiểu khối lượng công việc cần thiết trên GPU.
+
+00:05:55.000 --> 00:06:02.000
+Với Kiến trúc Bộ nhớ Hợp nhất, việc quản lý truyền thống các bản sao giữa RAM hệ thống và RAM video sẽ biến mất.
+
+00:06:02.000 --> 00:06:11.000
+Metal hiển thị UMA thông qua các tài nguyên được chia sẻ cho phép GPU và CPU đọc và ghi cùng một bộ nhớ.
+
+00:06:11.000 --> 00:06:22.000
+Quản lý tài nguyên sau đó là đồng bộ hóa quyền truy cập giữa CPU và GPU để diễn ra an toàn vào đúng thời điểm, thay vì sao chép hoặc làm mờ dữ liệu giữa bộ nhớ hệ thống và bộ nhớ video.
+
+00:06:22.000 --> 00:06:33.000
+Làm việc từ một phiên bản duy nhất của tài nguyên trong bộ nhớ làm giảm đáng kể các yêu cầu về băng thông bộ nhớ mà ứng dụng của bạn có thể có, cho phép tăng hiệu suất lớn.
+
+00:06:33.000 --> 00:06:45.000
+Khi có thể xảy ra tranh chấp - chẳng hạn như CPU cần cập nhật bộ đệm cho đợt công việc thứ hai trong khi GPU vẫn đang thực hiện đợt đầu tiên - một mô hình đa bộ đệm rõ ràng là cần thiết.
+
+00:06:45.000 --> 00:06:53.000
+CPU chuẩn bị nội dung trong bộ đệm n, trong khi GPU đang đọc từ bộ đệm n-1 và sau đó tăng n cho đợt tiếp theo.
+
+00:06:53.000 --> 00:07:04.000
+Điều này cho phép bạn với tư cách là nhà phát triển ứng dụng điều chỉnh chi phí bộ nhớ và các mẫu truy cập của mình, đồng thời tránh các gian hàng hoặc bản sao CPU/GPU không cần thiết.
+
+00:07:04.000 --> 00:07:10.000
+Giới hạn về số lượng tài nguyên GPU mà một ứng dụng có thể phân bổ có hai giá trị cần lưu ý.
+
+00:07:10.000 --> 00:07:20.000
+Tổng lượng tài nguyên GPU có thể được phân bổ và quan trọng hơn là dung lượng bộ nhớ mà một bộ mã hóa lệnh duy nhất có thể tham chiếu cùng một lúc.
+
+00:07:20.000 --> 00:07:24.000
+Giới hạn này được gọi là giới hạn tập hợp làm việc.
+
+00:07:24.000 --> 00:07:30.000
+Nó có thể được tìm nạp từ thiết bị Metal trong thời gian chạy thông qua việc đọc được đề xuất MaxWorkingSetSize.
+
+00:07:30.000 --> 00:07:37.000
+Chúng tôi khuyên bạn nên sử dụng điều này trong ứng dụng của mình để giúp kiểm soát lượng bộ nhớ bạn muốn sử dụng và dựa vào việc có sẵn.
+
+00:07:37.000 --> 00:07:43.000
+Trong khi một bộ mã hóa lệnh duy nhất có giới hạn bộ hoạt động này, Metal có thể phân bổ thêm tài nguyên ngoài điều này.
+
+00:07:43.000 --> 00:07:55.000
+Metal quản lý nơi cư trú của các tài nguyên này cho bạn và giống như phân bổ bộ nhớ hệ thống, phân bổ GPU cũng hầu như được phân bổ và cư trú trước khi thực thi.
+
+00:07:55.000 --> 00:08:10.000
+Bằng cách chia nhỏ việc sử dụng tài nguyên của bạn trên nhiều bộ mã hóa lệnh, một ứng dụng có thể sử dụng tổng tài nguyên vượt quá kích thước bộ làm việc và tránh các ràng buộc truyền thống liên quan đến giới hạn VRAM cứng.
+
+00:08:10.000 --> 00:08:16.000
+Đối với MacBook Pros mới, kích thước bộ làm việc GPU được hiển thị trong bảng này.
+
+00:08:16.000 --> 00:08:32.000
+Giờ đây, đối với M1 Pro hoặc M1 Max với 32GB RAM hệ thống, GPU có thể truy cập 21GB bộ nhớ và đối với M1 Max với 64GB RAM, GPU có thể truy cập 48GB bộ nhớ.
+
+00:08:32.000 --> 00:08:42.000
+Cho đến nay, đây là dung lượng bộ nhớ cao nhất mà chúng tôi từng cung cấp cho GPU trong máy Mac và dòng sản phẩm MacBook Pro mới cung cấp khả năng mở rộng đáng kể cho người dùng.
+
+00:08:42.000 --> 00:08:51.000
+Chúng tôi thực sự vui mừng khi thấy những trải nghiệm nào bạn sẽ có thể trao quyền cho người dùng và trải nghiệm những gì họ sẽ tạo ra với nó.
+
+00:08:51.000 --> 00:08:58.000
+Đó là các phương pháp hay nhất của chúng tôi để làm việc với UMA và chúng tôi đã sẵn sàng cho chủ đề tiếp theo của mình.
+
+00:08:58.000 --> 00:09:02.000
+Ở cấp độ bộ đệm lệnh, có độ trễ khi gửi nó.
+
+00:09:02.000 --> 00:09:06.000
+Một lượng công việc nhỏ có thể dẫn đến nhiều thời gian chờ đợi hơn là làm việc.
+
+00:09:06.000 --> 00:09:13.000
+Xem xét nhiều bộ mã hóa hơn với nhau vào mỗi bộ đệm lệnh trước khi thực hiện lệnh gọi cam kết.
+
+00:09:13.000 --> 00:09:21.000
+Nếu ứng dụng của bạn dành thời gian chờ kết quả GPU để thông báo những gì sẽ được gửi tiếp theo, thì bong bóng sẽ xuất hiện trong dòng thời gian GPU.
+
+00:09:21.000 --> 00:09:26.000
+Trong những bong bóng này, GPU không hoạt động, chờ đợi công văn tiếp theo đến.
+
+00:09:26.000 --> 00:09:33.000
+Để che giấu điều này, hãy cân nhắc sử dụng nhiều luồng CPU làm việc trên nhiều phần công việc và giữ cho GPU bận rộn.
+
+00:09:33.000 --> 00:09:40.000
+Hoặc bằng cách tạo nhiều bộ đệm lệnh, hoặc bằng cách tạo nhiều hàng đợi lệnh.
+
+00:09:40.000 --> 00:09:50.000
+Đối với hạt nhân tự gửi đi, GPU được giữ bận rộn bằng cách có đủ luồng để làm việc và có đủ công việc trong mỗi luồng để biện minh cho chi phí khởi chạy nó.
+
+00:09:50.000 --> 00:09:57.000
+Trong ví dụ xử lý hình ảnh của chúng tôi ở đây, mỗi điểm ảnh được xử lý bởi một luồng duy nhất.
+
+00:09:57.000 --> 00:10:06.000
+Khi bạn có thể, hãy tăng tổng số luồng trong công văn hạt nhân để đảm bảo tất cả các lõi xử lý của GPU có thể được sử dụng.
+
+00:10:06.000 --> 00:10:17.000
+Ở đây, một công văn hạt nhân duy nhất được sử dụng để xử lý toàn bộ hình ảnh cho phép Metal và GPU phân phối tối ưu công việc trên tất cả các lõi xử lý có sẵn.
+
+00:10:17.000 --> 00:10:25.000
+Cuối cùng, khi bạn có và cần số lượng luồng nhỏ hơn, hãy sử dụng mô hình điều phối đồng thời thay vì mô hình tuần tự hóa mặc định.
+
+00:10:25.000 --> 00:10:32.000
+Chúng tôi đã quan sát thấy nhiều ứng dụng chạy tốt trên M1, nhưng không đạt được tiềm năng của chúng trên M1 Pro và M1 Max.
+
+00:10:32.000 --> 00:10:43.000
+Gửi tác phẩm với khối lượng lớn hơn bằng cách sử dụng các kỹ thuật này là một cách dễ dàng để đơn đăng ký của bạn mở rộng quy mô và đạt được tiềm năng của nó.
+
+00:10:43.000 --> 00:10:47.000
+Cân nhắc tiếp theo mà tôi muốn nói đến là bộ nhớ cache L1.
+
+00:10:47.000 --> 00:10:53.000
+GPU Silicon của Apple chứa bộ nhớ đệm L1 riêng biệt để đọc kết cấu và đọc bộ đệm.
+
+00:10:53.000 --> 00:11:02.000
+Với Metal là một API thống nhất trên đồ họa và tính toán, bộ đầy đủ các đối tượng kết cấu và bộ lấy mẫu có sẵn cho các ứng dụng.
+
+00:11:02.000 --> 00:11:10.000
+Vì vậy, nếu ứng dụng của bạn chỉ sử dụng bộ đệm cho các nguồn dữ liệu của nó, sẽ có những lợi ích về hiệu suất từ việc chuyển một số tài nguyên này sang kết cấu.
+
+00:11:10.000 --> 00:11:19.000
+Điều này sẽ cho phép sử dụng tốt hơn bộ nhớ đệm hiệu suất cao của GPU, giảm lưu lượng truy cập từ RAM và tăng hiệu suất.
+
+00:11:19.000 --> 00:11:21.000
+Hãy xem nó trông như thế nào.
+
+00:11:21.000 --> 00:11:31.000
+Trong khi GPU truy cập RAM để đọc tất cả các tài nguyên, có một bộ nhớ đệm để cải thiện hiệu suất của các lần đọc bộ đệm trong tương lai đến cùng một vùng bộ nhớ cục bộ.
+
+00:11:31.000 --> 00:11:41.000
+Tuy nhiên, bộ nhớ đệm có kích thước giới hạn và sẽ lấp đầy nhanh chóng, vì vậy dữ liệu cũ hơn đã không được đọc trong một thời gian sẽ bị loại bỏ để nhường chỗ cho các lần đọc mới hơn.
+
+00:11:41.000 --> 00:11:54.000
+Theo giả thuyết, nếu hạt nhân của chúng tôi hoạt động trên một tập hợp dữ liệu đủ nhỏ, một khi bộ nhớ đệm được điền, tất cả các lần đọc trong tương lai sẽ truy cập vào bộ nhớ cache và hoàn thành mà không bị đình trệ hoặc chậm trễ do chờ tải bộ nhớ hệ thống hoàn tất.
+
+00:11:54.000 --> 00:12:02.000
+Băng thông đến bộ nhớ đệm cao hơn đáng kể và có độ trễ thấp hơn so với RAM hệ thống.
+
+00:12:02.000 --> 00:12:09.000
+Khi đọc bỏ lỡ bộ nhớ cache, các luồng gọi sẽ bị đình trệ trong khi đọc được tìm nạp từ RAM và được đặt vào bộ nhớ cache.
+
+00:12:09.000 --> 00:12:15.000
+Việc đọc dữ liệu bị giới hạn bởi băng thông bộ nhớ hệ thống thay vì băng thông bộ nhớ đệm trên chip.
+
+00:12:15.000 --> 00:12:22.000
+Một hạt nhân truy cập một lượng lớn dữ liệu từ bộ đệm có thể làm gián đoạn bộ nhớ cache theo cách này và dẫn đến giảm hiệu suất.
+
+00:12:22.000 --> 00:12:30.000
+GPU silicon của Apple chứa bộ nhớ đệm thứ hai cùng với bộ nhớ đệm dành riêng cho việc đọc kết cấu.
+
+00:12:30.000 --> 00:12:41.000
+Các ứng dụng có thể di chuyển một số dữ liệu nguồn của chúng từ các đối tượng đệm Kim loại sang các đối tượng kết cấu Kim loại và tăng hiệu quả dung lượng bộ nhớ cache và tăng hiệu suất.
+
+00:12:41.000 --> 00:12:47.000
+Ngoài ra, dữ liệu kết cấu có thể được xáo trộn và Metal sẽ tự động làm điều này cho bạn khi tải lên.
+
+00:12:47.000 --> 00:12:57.000
+Twiddling có nghĩa là các texels được sắp xếp tối ưu hơn cho một mẫu truy cập ngẫu nhiên và có thể giúp cải thiện hiệu quả bộ nhớ cache hơn nữa, mang lại một mức tăng hiệu suất khác so với bộ đệm thông thường.
+
+00:12:57.000 --> 00:13:03.000
+Điều này minh bạch đối với hạt nhân khi đọc, vì vậy nó không làm tăng thêm sự phức tạp cho nguồn hạt nhân của bạn.
+
+00:13:03.000 --> 00:13:06.000
+Trên thực tế, kết cấu là một món quà không ngừng trao tặng.
+
+00:13:06.000 --> 00:13:18.000
+Apple Silicon cũng có thể thực hiện nén kết cấu không mất dữ liệu - sau khi nó được tạo và khi có thể - để giảm thêm băng thông bộ nhớ đọc từ nó và một lần nữa, tăng hiệu suất.
+
+00:13:18.000 --> 00:13:25.000
+Điều này cũng trong suốt đối với hạt nhân đổ bóng vì quá trình giải nén xảy ra tự động trên kết cấu đọc hoặc mẫu.
+
+00:13:25.000 --> 00:13:41.000
+Kết cấu Kim loại sẽ được nén theo mặc định nếu nó ở chế độ riêng tư của GPU, nhưng kết cấu được chia sẻ và quản lý có thể được nén rõ ràng sau khi tải lên thông qua lệnh gọi optimizeContentsForGPUAccess trên bộ mã hóa lệnh blit.
+
+00:13:41.000 --> 00:13:48.000
+Để nén kết cấu không mất dữ liệu có sẵn, kết cấu cần phải đặt cách sử dụng thành shaderRead hoặc renderTarget.
+
+00:13:48.000 --> 00:13:53.000
+Đảm bảo điều này được đặt trên bộ mô tả của bạn khi tạo đối tượng kết cấu.
+
+00:13:53.000 --> 00:14:06.000
+Và nếu dữ liệu kết cấu của bạn là dữ liệu hình ảnh thực tế hoặc được sử dụng theo cách có thể chấp nhận nén mất dữ liệu, thì hãy xem xét các định dạng nén mất tỷ lệ cao hơn như ASTC hoặc BC.
+
+00:14:06.000 --> 00:14:13.000
+Điều này sẽ làm giảm hơn nữa cả dung lượng bộ nhớ và việc sử dụng băng thông, tăng hiệu suất của hạt nhân.
+
+00:14:13.000 --> 00:14:25.000
+BC và ASTC đều có thể được tạo bằng cách sử dụng các công cụ ngoại tuyến, mang lại chất lượng hình ảnh tuyệt vời và có tỷ lệ nén từ 4:1 đến 36:1.
+
+00:14:25.000 --> 00:14:37.000
+Với công việc của chúng tôi hiện đã được thực hiện theo lô tối ưu, sử dụng bộ đệm và kết cấu cho đầu vào dữ liệu của chúng tôi và nhận thức được UMA để giảm số lượng công việc sao chép mà chúng tôi đang thực hiện, chúng tôi đã sẵn sàng xem xét tối ưu hóa hạt nhân.
+
+00:14:37.000 --> 00:14:41.000
+Tất cả các phương pháp hay nhất này đều nhằm mục đích tăng hiệu suất hạt nhân của bạn.
+
+00:14:41.000 --> 00:14:44.000
+Hãy cùng xem một vài trong số chúng.
+
+00:14:44.000 --> 00:14:51.000
+Tôi sẽ tập trung vào lập chỉ mục bộ nhớ, nguyên tử toàn cầu và chiếm dụng như những lĩnh vực cơ hội trong hạt nhân của bạn.
+
+00:14:51.000 --> 00:15:01.000
+Chúng tôi cũng sẽ xem xét nơi cần xem xét trong các công cụ lập hồ sơ của chúng tôi để hiểu các nút thắt cổ chai của hạt nhân của bạn và cách đo lường bất kỳ cải tiến nào mà bất kỳ tối ưu hóa nào có thể có.
+
+00:15:01.000 --> 00:15:09.000
+Tại WWDC năm ngoái, nhóm phần mềm GPU của chúng tôi đã phát hành một video về các kỹ thuật tối ưu hóa kim loại cho silicon của Apple.
+
+00:15:09.000 --> 00:15:18.000
+Tôi sẽ tóm tắt ngắn gọn một số nội dung của bài nói chuyện đó ở đây, nhưng để biết chi tiết và ví dụ đầy đủ, vui lòng xem bài thuyết trình đó.
+
+00:15:18.000 --> 00:15:22.000
+Đầu tiên, tôi muốn nói về lập chỉ mục bộ nhớ.
+
+00:15:22.000 --> 00:15:27.000
+Khi lập chỉ mục vào một mảng, hãy sử dụng các kiểu số nguyên có dấu thay vì các kiểu không dấu.
+
+00:15:27.000 --> 00:15:32.000
+Ở đây chúng ta có một vòng lặp for, với biến count tôi đã khai báo là unsigned.
+
+00:15:32.000 --> 00:15:38.000
+Do các đặc tính gói của uint trong thông số kỹ thuật ngôn ngữ đổ bóng, điều này vô hiệu hóa tải vectơ hóa.
+
+00:15:38.000 --> 00:15:45.000
+Thông thường, đây không phải là những gì bạn muốn và mã bổ sung được tạo ra có thể tránh được bằng cách sử dụng một loại đã ký.
+
+00:15:45.000 --> 00:15:54.000
+Và ở đây, vì hành vi gói của int là không xác định, tải sẽ được vectơ hóa và có khả năng cải thiện hiệu suất.
+
+00:15:54.000 --> 00:16:06.000
+Với sự gia tăng của lõi GPU và băng thông bộ nhớ trong MacBook Pro mới, chúng tôi đã thấy các nút thắt chính của một số khối lượng công việc GPU chuyển từ ALU hoặc sử dụng băng thông bộ nhớ sang các khu vực khác.
+
+00:16:06.000 --> 00:16:08.000
+Một trong những khu vực đó là nguyên tử toàn cầu.
+
+00:16:08.000 --> 00:16:17.000
+Khuyến nghị của chúng tôi là giảm thiểu việc sử dụng các hoạt động nguyên tử trong hạt nhân của bạn hoặc thay vào đó sử dụng các kỹ thuật được xây dựng xung quanh nguyên tử nhóm luồng.
+
+00:16:17.000 --> 00:16:27.000
+Như với tất cả các quy trình làm việc tối ưu hóa tốt, trước tiên hãy lập hồ sơ bộ đổ bóng của bạn để hiểu liệu đây có phải là vấn đề bạn đang gặp phải hay không, vì việc sử dụng nguyên tử vừa phải sẽ không thành vấn đề.
+
+00:16:27.000 --> 00:16:30.000
+Vậy làm thế nào để chúng ta có được thông tin hồ sơ quan trọng này?
+
+00:16:30.000 --> 00:16:33.000
+Bằng cách sử dụng trình gỡ lỗi khung GPU bên trong Xcode.
+
+00:16:33.000 --> 00:16:36.000
+Nó là một công cụ tuyệt vời cho công việc đánh giá này.
+
+00:16:36.000 --> 00:16:43.000
+Nó cung cấp vô số thông tin chi tiết về công việc xảy ra trên GPU và một khi chúng tôi đã nắm bắt được, chúng tôi có thể duyệt qua nó.
+
+00:16:43.000 --> 00:16:52.000
+Chế độ xem dòng thời gian cung cấp cho chúng tôi một cái nhìn tổng quan tuyệt vời về khối lượng công việc của chúng tôi và hiển thị cho chúng tôi các biểu đồ trực quan hóa các bộ đếm hiệu suất chính của GPU.
+
+00:16:52.000 --> 00:16:56.000
+Nhiều bộ đếm trong số này cung cấp cả giá trị sử dụng và giá trị giới hạn.
+
+00:16:56.000 --> 00:17:07.000
+Sử dụng ALU làm ví dụ ở đây, con số sử dụng cho chúng ta biết rằng hạt nhân đã sử dụng khoảng 27 phần trăm khả năng ALU của GPU trong quá trình thực thi.
+
+00:17:07.000 --> 00:17:14.000
+Thời gian khác được dành để thực hiện các nhiệm vụ khác, chẳng hạn như đọc và ghi dữ liệu, đưa ra các quyết định logic điều khiển, v.v.
+
+00:17:14.000 --> 00:17:23.000
+Con số giới hạn có nghĩa là GPU bị tắc nghẽn bởi việc sử dụng ALU trong khoảng 31% thời gian thực thi của hạt nhân.
+
+00:17:23.000 --> 00:17:32.000
+Vậy làm thế nào GPU có thể sử dụng 27 phần trăm khả năng ALU của GPU nhưng lại bị ALU tắc nghẽn với 31%?
+
+00:17:32.000 --> 00:17:37.000
+Bộ giới hạn có thể được coi là hiệu quả của công việc ALU đã được thực hiện.
+
+00:17:37.000 --> 00:17:43.000
+Đó là thời gian dành cho công việc thực tế, cộng với thời gian dành cho các quầy hàng nội bộ hoặc không hiệu quả.
+
+00:17:43.000 --> 00:17:47.000
+Trong trường hợp tốt nhất, những thời điểm này là bằng nhau, nhưng trong thực tế, có một sự khác biệt.
+
+00:17:47.000 --> 00:17:53.000
+Một sự khác biệt lớn chỉ ra rằng GPU có việc phải làm, nhưng không thể làm điều đó vì một số lý do.
+
+00:17:53.000 --> 00:18:07.000
+Ví dụ, các hoạt động ALU phức tạp như log() hoặc sử dụng các định dạng kết cấu đắt tiền, có thể dẫn đến việc sử dụng không đúng mức và biểu thị rằng có thể có phạm vi để tối ưu hóa toán học của hạt nhân.
+
+00:18:07.000 --> 00:18:17.000
+Hai con số này phối hợp với nhau để giúp bạn hiểu được cấu trúc chung của công việc mà hạt nhân của bạn đang thực hiện và hiệu quả của từng loại công việc để thực hiện.
+
+00:18:17.000 --> 00:18:22.000
+Với hạt nhân đặc biệt này, chúng ta có thể thấy rằng tỷ lệ lấp đầy ở mức 37 phần trăm.
+
+00:18:22.000 --> 00:18:27.000
+Giá trị này có vẻ thấp và chắc chắn đáng để điều tra để hiểu liệu nó có thể được tăng lên hay không.
+
+00:18:27.000 --> 00:18:31.000
+Chúng ta hãy xem xét kỹ hơn về công suất phòng.
+
+00:18:31.000 --> 00:18:37.000
+Đó là thước đo số lượng luồng hiện đang hoạt động trên GPU, so với mức tối đa có thể có.
+
+00:18:37.000 --> 00:18:45.000
+Khi con số này thấp, điều quan trọng là phải hiểu tại sao, để xác định xem điều này được mong đợi hay biểu thị một vấn đề.
+
+00:18:45.000 --> 00:18:55.000
+Công suất lấp đầy thấp đôi khi không đáng ngạc nhiên cũng như không thể tránh được, ví dụ như công việc đã gửi của bạn có số lượng chủ đề tương đối thấp vì công việc cần thực hiện đơn giản là nhỏ.
+
+00:18:55.000 --> 00:19:00.000
+Nó cũng có thể ổn nếu GPU bị giới hạn bởi các bộ đếm khác, chẳng hạn như ALU.
+
+00:19:00.000 --> 00:19:10.000
+Tuy nhiên, công suất sử dụng thấp cùng với bộ đếm bộ giới hạn thấp biểu thị rằng GPU có khả năng thực thi nhiều luồng hơn cùng một lúc.
+
+00:19:10.000 --> 00:19:14.000
+Vậy điều gì có thể gây ra công suất thấp có vấn đề?
+
+00:19:14.000 --> 00:19:18.000
+Một lý do phổ biến cho điều này là bộ nhớ luồng hoặc nhóm luồng cạn kiệt.
+
+00:19:18.000 --> 00:19:24.000
+Cả hai tài nguyên này đều hữu hạn trên GPU và được chia sẻ giữa các luồng đang chạy.
+
+00:19:24.000 --> 00:19:32.000
+Bộ nhớ luồng được hỗ trợ bởi các thanh ghi và khi áp lực đối với các thanh ghi tăng lên, công suất có thể được giảm xuống để phù hợp.
+
+00:19:32.000 --> 00:19:39.000
+Với mức sử dụng bộ nhớ nhóm luồng cao, cách duy nhất để tăng công suất là giảm dung lượng bộ nhớ dùng chung được sử dụng.
+
+00:19:39.000 --> 00:19:45.000
+Giảm bộ nhớ nhóm threrad cũng có thể giúp giảm tác động của áp suất đăng ký luồng.
+
+00:19:45.000 --> 00:19:54.000
+Có phạm vi để trình biên dịch đăng ký tràn hiệu quả hơn khi số lượng luồng tối đa trong một nhóm luồng được biết đến tại thời điểm tạo trạng thái đường ống.
+
+00:19:54.000 --> 00:20:09.000
+Những tối ưu hóa này có thể được kích hoạt bằng cách đặt maxThreadsPerThreadgroup trên bộ mô tả trạng thái đường ống tính toán hoặc bằng cách sử dụng thuộc tính Metal Shader langauge max_total_threads_per threadgroup trực tiếp trong nguồn hạt nhân của bạn.
+
+00:20:09.000 --> 00:20:12.000
+Điều chỉnh giá trị này để tìm sự cân bằng phù hợp nhất với hạt nhân của bạn.
+
+00:20:12.000 --> 00:20:20.000
+Nhắm đến một giá trị là bội số nhỏ nhất của chiều rộng thực thi luồng hoạt động cho thuật toán của bạn.
+
+00:20:20.000 --> 00:20:23.000
+Hãy đi sâu hơn vào áp lực đăng ký.
+
+00:20:23.000 --> 00:20:29.000
+Khi điều này cao, chúng ta sẽ thấy sự cố tràn đăng ký trong trình lập hồ sơ GPU của Xcode.
+
+00:20:29.000 --> 00:20:36.000
+Với ví dụ hạt nhân này, chúng ta có thể thấy rằng công suất lấp đầy của chúng ta ở mức 16 phần trăm và điều này thực sự thấp.
+
+00:20:36.000 --> 00:20:45.000
+Nhìn vào số liệu thống kê trình biên dịch cho hạt nhân này cho thấy chi phí hướng dẫn tương đối của nó, bao gồm cả các byte bị đổ.
+
+00:20:45.000 --> 00:20:50.000
+Sự cố tràn dầu này, cùng với các sổ đăng ký tạm thời, có thể là nguyên nhân khiến công suất phòng kém của chúng tôi.
+
+00:20:50.000 --> 00:20:58.000
+Chúng tôi đang làm cạn kiệt bộ nhớ luồng và công suất chiếm dụng được giảm xuống để giải phóng nhiều thanh ghi hơn cho các luồng sẽ chạy.
+
+00:20:58.000 --> 00:21:08.000
+Các thanh ghi được phân bổ cho một hạt nhân trong các khối đăng ký và do đó, bạn sẽ cần giảm mức sử dụng lên đến kích thước khối để thấy khả năng tăng công suất.
+
+00:21:08.000 --> 00:21:18.000
+Tối ưu hóa cho việc sử dụng đăng ký tối thiểu là một cách tuyệt vời để cải thiện hiệu suất có tác động đối với các hạt nhân phức tạp, nhưng làm thế nào để chúng ta làm điều này?
+
+00:21:18.000 --> 00:21:25.000
+Thích các loại 16 bit hơn các loại 32 bit làm tăng số lượng thanh ghi có sẵn cho các phần khác của hạt nhân.
+
+00:21:25.000 --> 00:21:29.000
+Việc chuyển đổi giữa các loại này sang các đối tác 32 bit của chúng thường miễn phí.
+
+00:21:29.000 --> 00:21:39.000
+Và việc giảm dữ liệu được lưu trữ trên ngăn xếp - ví dụ: các mảng hoặc cấu trúc lớn - có thể tiêu thụ một số lượng lớn thanh ghi và giảm chúng là một công cụ hiệu quả.
+
+00:21:39.000 --> 00:21:44.000
+Tìm cách điều chỉnh đầu vào đổ bóng của bạn để tận dụng tốt nhất không gian địa chỉ không đổi.
+
+00:21:44.000 --> 00:21:51.000
+Điều này có thể làm giảm đáng kể số lượng thanh ghi mục đích chung đang được sử dụng một cách không cần thiết.
+
+00:21:51.000 --> 00:21:58.000
+Và mẹo cuối cùng là tránh lập chỉ mục thành các mảng được lưu trữ trên ngăn xếp hoặc trong dữ liệu không đổi với chỉ mục động.
+
+00:21:58.000 --> 00:22:02.000
+Một ví dụ về điều này được hiển thị ở đây, trong đó một mảng được khởi tạo trong thời gian chạy.
+
+00:22:02.000 --> 00:22:08.000
+Nếu trình biên dịch không biết chỉ mục tại thời điểm biên dịch, mảng có thể sẽ tràn vào bộ nhớ.
+
+00:22:08.000 --> 00:22:17.000
+Tuy nhiên, trong ví dụ thứ hai này, chỉ mục được biết đến tại thời điểm biên dịch và trình biên dịch có thể sẽ hủy cuộn vòng lặp và có thể tối ưu hóa mọi sự cố tràn.
+
+00:22:17.000 --> 00:22:26.000
+Mỗi kỹ thuật này sẽ làm giảm việc phân bổ thanh ghi, giảm sự cố tràn và giúp tăng công suất cho các hạt nhân hoạt động hiệu quả hơn.
+
+00:22:26.000 --> 00:22:37.000
+Để biết thêm thông tin chi tiết về các kỹ thuật tối ưu hóa kim loại cho Apple Silicon, hãy xem video WWDC 2020, "Tối ưu hóa hiệu suất kim loại cho Apple Silicon Macs."
+
+00:22:37.000 --> 00:22:38.000
+Và bạn đã có nó.
+
+00:22:38.000 --> 00:22:41.000
+Hãy xem lại những gì chúng ta đã đề cập hôm nay.
+
+00:22:41.000 --> 00:22:58.000
+Chúng tôi bắt đầu với một đánh giá về vai trò của hàng đợi lệnh, bộ đệm lệnh và bộ mã hóa lệnh để nhắc nhở bản thân về mô hình gửi và cách công việc được xếp hàng lên GPU trong Metal và chúng tôi đã khám phá cách mã hóa các lệnh Metal từ nhiều luồng để giảm thời gian và chi phí mã hóa CPU.
+
+00:22:58.000 --> 00:23:15.000
+Với kiến thức đó, chúng tôi đã xem xét các đề xuất về cách điều chỉnh các ứng dụng của bạn; tránh các bản sao không cần thiết để tận dụng kiến trúc bộ nhớ thống nhất; gửi số lượng công việc lớn hơn; và sử dụng kết cấu Kim loại cũng như bộ đệm Kim loại cho tài nguyên hạt nhân của chúng tôi.
+
+00:23:15.000 --> 00:23:20.000
+Và cuối cùng, chúng tôi đã hướng dẫn cách sử dụng các công cụ của mình để xác định tắc nghẽn hiệu suất.
+
+00:23:20.000 --> 00:23:30.000
+Chúng tôi đã hiểu cách diễn giải các giá trị sử dụng và giới hạn của GPU và cách chúng tôi có thể giải quyết vấn đề về công suất thấp nếu chúng tôi phát hiện ra nó.
+
+00:23:30.000 --> 23:59:59.000
+Cảm ơn bạn rất nhiều, và tôi hy vọng bạn cũng hào hứng như tôi bởi những gì có thể với dòng sản phẩm MacBook Pro mạnh mẽ nhất từ trước đến nay.
+

@@ -1,0 +1,368 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:15.000
+Felix Acero: Xin chào, tên tôi là Felix Acero, và tôi là Kỹ sư phần mềm của nhóm Kiến trúc và Kỹ thuật Bảo mật.
+
+00:00:15.000 --> 00:00:23.000
+Trong video này, tôi sẽ chỉ cho bạn cách bạn có thể sử dụng khung LocalAuthentication để cải thiện quy trình xác thực và ủy quyền cho ứng dụng của bạn.
+
+00:00:23.000 --> 00:00:31.000
+Chúng tôi sẽ bắt đầu bằng cách xem xét các khái niệm chung về xác thực và ủy quyền và cách chúng áp dụng cho ứng dụng của bạn.
+
+00:00:31.000 --> 00:00:41.000
+Sau đó, chúng tôi sẽ xem xét cách API LocalAuthentication hiện có, và đặc biệt là LAContext, có thể giúp bạn thực hiện một loạt các sơ đồ ủy quyền.
+
+00:00:41.000 --> 00:00:50.000
+Và cuối cùng chúng ta sẽ xem các API mới mà chúng ta đang thêm vào LocalAuthentication năm nay có thể giúp bạn hợp lý hóa hơn nữa mã ủy quyền của mình như thế nào.
+
+00:00:50.000 --> 00:00:53.000
+Vì vậy, hãy bắt đầu bằng cách nói về xác thực và ủy quyền.
+
+00:00:53.000 --> 00:00:59.000
+Xác thực và ủy quyền là những khái niệm bảo mật khác biệt nhưng có liên quan chặt chẽ.
+
+00:00:59.000 --> 00:01:04.000
+Một mặt, xác thực là hành động xác minh danh tính của người dùng.
+
+00:01:04.000 --> 00:01:13.000
+Mặt khác, ủy quyền là hành động xác minh xem một người dùng nhất định có được phép thực hiện một hoạt động cụ thể trên một tài nguyên cụ thể hay không.
+
+00:01:13.000 --> 00:01:26.000
+Tổng hợp lại, chúng ta có thể thấy rằng, vì trước tiên chúng ta cần xác minh rằng người dùng là người mà họ tuyên bố trước khi chúng ta có thể đánh giá những tài nguyên và hoạt động nào có sẵn cho họ, chúng ta có thể nói rằng xác thực trên thực tế cho phép ủy quyền.
+
+00:01:26.000 --> 00:01:35.000
+Để giúp minh họa các khái niệm này, hãy xem xét một ví dụ cụ thể liên quan đến tài nguyên bảo mật chung được quản lý bởi các ứng dụng của bạn, chẳng hạn như các khóa Secure Enclave.
+
+00:01:35.000 --> 00:01:46.000
+Các khóa Secure Enclave là các loại khóa bất đối xứng đặc biệt được liên kết với một thiết bị cụ thể và được bảo vệ bởi trình quản lý khóa dựa trên phần cứng được cách ly với bộ xử lý chính.
+
+00:01:46.000 --> 00:01:56.000
+Điều làm cho các khóa này trở nên đặc biệt là khi bạn lưu trữ khóa riêng tư trong Secure Enclave, bạn không bao giờ thực sự xử lý khóa mà thay vào đó hướng dẫn Secure Enclave thực hiện các thao tác với nó.
+
+00:01:56.000 --> 00:02:02.000
+Các khóa Secure Enclave có thể được liên kết với danh sách kiểm soát truy cập hoặc viết tắt là ACL.
+
+00:02:02.000 --> 00:02:11.000
+Danh sách kiểm soát truy cập chỉ định các yêu cầu cần được thỏa mãn để thực hiện các thao tác cụ thể như ký hoặc giải mã một đốm màu.
+
+00:02:11.000 --> 00:02:21.000
+Họ có thể chỉ định khi nào một mục nhất định có sẵn, ví dụ như sau khi mở khóa thiết bị, cũng như các yêu cầu xác thực cần thiết để cho phép thực hiện một số thao tác nhất định.
+
+00:02:21.000 --> 00:02:34.000
+Đối với ví dụ này, giả sử rằng ứng dụng của bạn muốn bảo vệ các hoạt động ký hiệu và giải mã của khóa bằng xác thực sinh trắc học, đồng thời đảm bảo rằng khóa chỉ khả dụng sau khi thiết bị đã được mở khóa.
+
+00:02:34.000 --> 00:02:40.000
+Bây giờ hãy xem quy trình ủy quyền sẽ trông như thế nào đối với một hoạt động ký hiệu liên quan đến khóa này.
+
+00:02:40.000 --> 00:02:45.000
+Đầu tiên, ứng dụng của bạn đưa ra yêu cầu ký một đốm màu bằng khóa riêng tư.
+
+00:02:45.000 --> 00:02:54.000
+Sau đó, sau khi xác minh rằng ứng dụng của bạn có thể truy cập khóa, hệ thống tiến hành xác định các yêu cầu ủy quyền cho hoạt động ký hiệu.
+
+00:02:54.000 --> 00:03:01.000
+Trong trường hợp này, thao tác ký hiệu yêu cầu xác thực sinh trắc học thành công từ bất kỳ người dùng nào hiện đang đăng ký.
+
+00:03:01.000 --> 00:03:07.000
+Hệ thống sau đó sẽ hướng dẫn người dùng qua quy trình xác thực sinh trắc học thông qua giao diện người dùng tiêu chuẩn.
+
+00:03:07.000 --> 00:03:21.000
+Sau khi xác thực thành công, hệ thống xác minh rằng tất cả các yêu cầu ủy quyền còn lại đã được thỏa mãn trước khi cuối cùng thực hiện thao tác ký hiệu và trả lại một đốm màu đã ký cho ứng dụng của bạn.
+
+00:03:21.000 --> 00:03:26.000
+Hãy chia nhỏ các thành phần chính liên quan đến luồng này để xem chúng phù hợp với định nghĩa ban đầu của chúng ta như thế nào.
+
+00:03:26.000 --> 00:03:30.000
+Đầu tiên, chúng tôi có một tài nguyên: khóa Secure Enclave.
+
+00:03:30.000 --> 00:03:35.000
+Thứ hai, chúng tôi có một thao tác có thể được thực hiện bằng chìa khóa.
+
+00:03:35.000 --> 00:03:46.000
+Và thứ ba, chúng tôi có một bộ yêu cầu, trong số những thứ khác, chỉ định ai được phép thực hiện thao tác cũng như các phương tiện xác thực nên được sử dụng để xác minh danh tính của họ.
+
+00:03:46.000 --> 00:04:09.000
+Cắm các thông số của ví dụ này vào định nghĩa của chúng tôi, chúng tôi có thể thấy rằng để xác thực, câu hỏi liệu đây có phải là người dùng phù hợp hay không được trả lời bằng phương tiện xác thực sinh trắc học; trong khi để ủy quyền, câu hỏi liệu người dùng có được phép thực hiện thao tác chữ ký bằng khóa riêng hay không được trả lời bằng cách
+
+00:04:09.000 --> 00:04:18.000
+Bây giờ chúng ta đã thấy cách điều này hoạt động ở cấp độ cao, chúng ta có thể xem cách một luồng như thế này có thể được thực hiện bằng cách sử dụng API hiện tại của LocalAuthentication.
+
+00:04:18.000 --> 00:04:25.000
+Hãy bắt đầu bằng cách nhanh chóng xem xét các tính năng được cung cấp bởi LAContext, đây là một trong những thành phần cốt lõi của khuôn khổ.
+
+00:04:25.000 --> 00:04:29.000
+Một LAContext có thể được sử dụng để đánh giá danh tính của người dùng.
+
+00:04:29.000 --> 00:04:33.000
+Nó xử lý sự tương tác của người dùng khi yêu cầu xác thực sinh trắc học hoặc mật mã.
+
+00:04:33.000 --> 00:04:39.000
+Và nó cũng giao tiếp với Secure Enclave để cho phép quản lý an toàn dữ liệu sinh trắc học.
+
+00:04:39.000 --> 00:04:44.000
+Từ quan điểm này, LAContext có thể được sử dụng để hỗ trợ các trường hợp sử dụng xác thực của bạn.
+
+00:04:44.000 --> 00:04:50.000
+LAContext cũng có thể được sử dụng kết hợp với các khuôn khổ khác để hỗ trợ các luồng ủy quyền.
+
+00:04:50.000 --> 00:04:56.000
+Ví dụ, bạn có thể sử dụng nó để đánh giá danh sách kiểm soát truy cập giống như danh sách chúng ta đã thấy trong ví dụ trước.
+
+00:04:56.000 --> 00:04:58.000
+Chúng ta hãy xem xét kỹ hơn.
+
+00:04:58.000 --> 00:05:05.000
+Điều đầu tiên chúng ta cần làm là truy cập ACL được liên kết với khóa riêng tư của chúng ta.
+
+00:05:05.000 --> 00:05:15.000
+Chúng tôi có thể làm điều này với sự trợ giúp của SecItemCopyMatching API được cung cấp bởi khung Bảo mật, đảm bảo rằng chúng tôi cung cấp khóa thuộc tính trả về bên trong truy vấn của mình.
+
+00:05:15.000 --> 00:05:24.000
+Khi chúng tôi có quyền truy cập vào danh sách kiểm soát truy cập, chúng tôi có thể đánh giá nó trực tiếp bằng cách sử dụng LAContext và evaluateAccessControl API.
+
+00:05:24.000 --> 00:05:33.000
+Lợi thế lớn nhất mà cách tiếp cận này mang lại cho bạn là nó cho phép bạn quyết định đúng thời điểm và đúng vị trí trong ứng dụng của mình để nhắc người dùng ủy quyền này.
+
+00:05:33.000 --> 00:05:44.000
+Trong trường hợp này, vì danh sách kiểm soát truy cập yêu cầu xác thực sinh trắc học cho hoạt động chữ ký, LAContext sẽ trình bày Face ID hoặc Touch ID UI quen thuộc.
+
+00:05:44.000 --> 00:05:53.000
+Khi ACL đã được ủy quyền bên trong LAContext của chúng tôi, chúng tôi sẽ có thể sử dụng nó như một phần của truy vấn để có được tham chiếu đến khóa của chúng tôi.
+
+00:05:53.000 --> 00:06:01.000
+Chúng tôi làm điều này bằng cách thêm LAContext vào truy vấn SecItem của chúng tôi dưới khóa use-authentication-context.
+
+00:06:01.000 --> 00:06:13.000
+Bằng cách liên kết LAContext với tham chiếu khóa riêng của chúng tôi, chúng tôi đảm bảo rằng việc thực hiện thao tác chữ ký sẽ không kích hoạt xác thực khác, đồng thời cho phép thao tác tiếp tục mà không có lời nhắc không cần thiết.
+
+00:06:13.000 --> 00:06:22.000
+Những ràng buộc này cũng có nghĩa là sẽ không cần tương tác người dùng bổ sung cho các chữ ký trong tương lai cho đến khi LAContext bị vô hiệu.
+
+00:06:22.000 --> 00:06:30.000
+LAContext cung cấp rất nhiều tính linh hoạt và nó cho phép bạn kiểm soát từng bước và thông số liên quan đến quy trình ủy quyền của bạn.
+
+00:06:30.000 --> 00:06:37.000
+Nó có thể được sử dụng kết hợp với các khung khác như khung Bảo mật, từ đó mở ra một loạt các trường hợp sử dụng.
+
+00:06:37.000 --> 00:06:47.000
+Tuy nhiên, tính linh hoạt này phải trả giá bằng độ phức tạp mã cao hơn, đòi hỏi bạn phải điều phối cẩn thận các API được cung cấp bởi một số khuôn khổ.
+
+00:06:47.000 --> 00:06:58.000
+Tùy thuộc vào trường hợp sử dụng của bạn, LAContext có thể là công cụ phù hợp với bạn, đặc biệt nếu đề xuất giá trị chính của ứng dụng của bạn yêu cầu quyền truy cập cấp thấp vào các khóa, bí mật, ngữ cảnh và danh sách kiểm soát truy cập.
+
+00:06:58.000 --> 00:07:09.000
+Tuy nhiên, nếu tất cả những gì bạn cần cho ứng dụng của mình là một cách cho phép truy cập vào nội dung hoặc tài nguyên nhạy cảm, thì bạn có thể muốn đánh đổi một số tính linh hoạt này để lấy một API đơn giản hơn.
+
+00:07:09.000 --> 00:07:13.000
+Điều này đưa chúng ta đến chủ đề cuối cùng của chúng ta, hợp lý hóa ứng dụng của bạn.
+
+00:07:13.000 --> 00:07:22.000
+Mới sử dụng iOS 16 và macOS 13, LocalAuthentication đang giới thiệu API tập trung vào ủy quyền, cấp độ cao hơn.
+
+00:07:22.000 --> 00:07:38.000
+API mới được xây dựng dựa trên các khái niệm hiện có trong LocalAuthentication như LAContext và hướng tới việc đơn giản hóa việc triển khai các luồng ủy quyền chung, cho phép bạn tập trung tất cả năng lượng của mình vào đề xuất giá trị cốt lõi của các ứng dụng.
+
+00:07:38.000 --> 00:07:44.000
+Sự trừu tượng quan trọng nhất được giới thiệu bởi API mới là LARight.
+
+00:07:44.000 --> 00:07:51.000
+Trường hợp sử dụng đơn giản nhất mà bạn có thể cung cấp LARight là giúp bạn ủy quyền các hoạt động trên các tài nguyên được xác định bởi ứng dụng.
+
+00:07:51.000 --> 00:08:02.000
+Ví dụ: bạn có thể sử dụng quyền để giúp bạn truy cập vào phần hồ sơ người dùng của ứng dụng bằng cách trước tiên yêu cầu xác thực sinh trắc học thành công từ người dùng của bạn.
+
+00:08:02.000 --> 00:08:16.000
+Theo mặc định, các quyền được bảo vệ bởi một tập hợp các yêu cầu xác thực cho phép người dùng của bạn xác thực bằng Touch ID, Face ID, Apple Watch hoặc mật mã thiết bị của họ tùy thuộc vào thiết bị họ đang sử dụng.
+
+00:08:16.000 --> 00:08:24.000
+Bạn cũng có thể chọn liên kết các quyền của mình với các yêu cầu chi tiết hơn, điều này cho phép bạn hạn chế hơn nữa các phương tiện xác thực.
+
+00:08:24.000 --> 00:08:29.000
+Hãy xem cách chúng ta có thể sử dụng LARights trong mã.
+
+00:08:29.000 --> 00:08:32.000
+Điều đầu tiên chúng ta cần làm là khởi tạo quyền của mình.
+
+00:08:32.000 --> 00:08:35.000
+Chúng tôi làm điều này bằng cách xác định các yêu cầu của nó.
+
+00:08:35.000 --> 00:08:43.000
+Trong trường hợp này, quyền đăng nhập của chúng tôi sẽ yêu cầu người dùng xác thực bằng phép đo sinh học hoặc cung cấp mật mã thiết bị.
+
+00:08:43.000 --> 00:08:48.000
+Sau đó chúng tôi tiến hành xác minh rằng người dùng hiện tại có thể có quyền đăng nhập.
+
+00:08:48.000 --> 00:08:58.000
+Chúng tôi sử dụng thông tin này để xác định xem chúng tôi có thể tiếp tục với hoạt động đăng nhập hay thay vào đó chúng tôi cần chuyển hướng người dùng đến phần công khai của ứng dụng của chúng tôi.
+
+00:08:58.000 --> 00:09:08.000
+Cuối cùng, chúng ta có thể tiến hành hoạt động ủy quyền thực tế cung cấp một lý do cục bộ sẽ hiển thị cho người dùng trong giao diện người dùng ủy quyền.
+
+00:09:08.000 --> 00:09:13.000
+Khi ủy quyền quyền theo cách này, một giao diện người dùng hoàn toàn mới, dựa trên hệ thống sẽ được trình bày.
+
+00:09:13.000 --> 00:09:21.000
+Giao diện người dùng được hiển thị bên trong cửa sổ ứng dụng của bạn và cung cấp cho người dùng thông tin liên quan để giúp họ hiểu nguồn gốc và mục đích của hoạt động.
+
+00:09:21.000 --> 00:09:32.000
+Chúng tôi tin rằng giao diện mới sẽ cho phép bạn tạo ra các luồng ủy quyền tích hợp liền mạch hơn với ứng dụng của bạn và cung cấp nhiều ngữ cảnh và thông tin hơn cho người dùng của bạn.
+
+00:09:32.000 --> 00:09:38.000
+Bây giờ chúng ta đã thấy cách tạo và ủy quyền quyền, chúng ta hãy xem xét kỹ hơn vòng đời của nó.
+
+00:09:38.000 --> 00:09:42.000
+Quyền bắt đầu vòng đời của chúng ở một trạng thái không xác định.
+
+00:09:42.000 --> 00:09:48.000
+Ngay sau khi đơn đăng ký của bạn đưa ra yêu cầu ủy quyền, trạng thái của quyền sẽ thay đổi thành ủy quyền.
+
+00:09:48.000 --> 00:09:54.000
+Tại thời điểm này, người dùng sẽ được trình bày với giao diện người dùng ủy quyền mà chúng ta đã thấy trong trang chiếu trước.
+
+00:09:54.000 --> 00:10:01.000
+Tùy thuộc vào sự thành công hay thất bại của hoạt động, quyền có thể chuyển sang trạng thái được ủy quyền hoặc không được ủy quyền.
+
+00:10:01.000 --> 00:10:05.000
+Đây là quá trình chuyển đổi trạng thái quan trọng nhất cho đơn đăng ký của bạn.
+
+00:10:05.000 --> 00:10:09.000
+Cuối cùng, quyền cũng có thể chuyển từ trạng thái được ủy quyền sang trạng thái không được ủy quyền.
+
+00:10:09.000 --> 00:10:17.000
+Điều này xảy ra khi ứng dụng của bạn đưa ra yêu cầu hủy ủy quyền một cách rõ ràng ở bên phải hoặc khi trường hợp phù hợp được phân bổ.
+
+00:10:17.000 --> 00:10:23.000
+Hãy chắc chắn giữ một tham chiếu mạnh mẽ đến quyền của bạn để duy trì trạng thái được ủy quyền của nó.
+
+00:10:23.000 --> 00:10:31.000
+Sau khi quyền đã bị hủy cấp phép, ứng dụng của bạn có thể tiếp tục đưa ra các yêu cầu ủy quyền để khởi động lại chu kỳ.
+
+00:10:31.000 --> 00:10:35.000
+Tất cả các chuyển đổi trạng thái trước đó có thể được truy vấn và quan sát.
+
+00:10:35.000 --> 00:10:40.000
+Nếu bạn có quyền truy cập vào phiên bản LARight, bạn có thể truy vấn trực tiếp thuộc tính trạng thái của nó.
+
+00:10:40.000 --> 00:10:44.000
+Bạn cũng có thể quan sát tất cả các chuyển đổi trạng thái bằng cách sử dụng KVO hoặc Combine.
+
+00:10:44.000 --> 00:11:01.000
+Ngoài ra, nếu ứng dụng của bạn xử lý một số quyền, bạn có thể quan sát trạng thái của tất cả chúng từ một nơi duy nhất bằng cách nghe thông báo didBecomeAuthorized và didBecomeUnauthorized, được xuất bản lên Trung tâm thông báo mặc định sau khi phát hiện thay đổi trạng thái ủy quyền.
+
+00:11:01.000 --> 00:11:08.000
+Trước khi chúng ta tiếp tục, hãy quay lại ví dụ của chúng ta và thêm thao tác đăng xuất để hủy ủy quyền đăng nhập của chúng ta.
+
+00:11:08.000 --> 00:11:15.000
+Bằng cách này, chúng tôi đảm bảo rằng một ủy quyền mới sẽ được yêu cầu vào lần đăng nhập tiếp theo khi người dùng muốn đăng nhập.
+
+00:11:15.000 --> 00:11:23.000
+Cho đến nay, chúng tôi đã thấy cách sử dụng các trường hợp phù hợp để ủy quyền các hoạt động trên các tài nguyên do ứng dụng xác định.
+
+00:11:23.000 --> 00:11:35.000
+Chúng tôi cũng đã thấy vòng đời và trạng thái của các quyền này cuối cùng gắn liền với thời gian chạy như thế nào, điều đó có nghĩa là trên mỗi phiên của ứng dụng của bạn, bạn cần khởi tạo và định cấu hình các quyền này một cách chính xác.
+
+00:11:35.000 --> 00:11:42.000
+Vì vậy, chúng ta hãy xem cách các quyền có thể được duy trì và loại khả năng nào mà điều này cho phép cho ứng dụng của bạn.
+
+00:11:42.000 --> 00:11:47.000
+LARights có thể được duy trì với sự trợ giúp của đúng cửa hàng.
+
+00:11:47.000 --> 00:11:57.000
+Khi vẫn tồn tại, các quyền được hỗ trợ bởi khóa Secure Enclave duy nhất được bảo vệ bằng danh sách kiểm soát truy cập hoặc ACL phù hợp với các yêu cầu ủy quyền của quyền.
+
+00:11:57.000 --> 00:12:05.000
+Cách tiếp cận này giúp chúng tôi đảm bảo rằng các yêu cầu ủy quyền sẽ vẫn bất biến sau khi quyền đã được duy trì.
+
+00:12:05.000 --> 00:12:17.000
+Bạn cũng có thể truy cập khóa riêng tư hỗ trợ quyền của mình và sử dụng nó để thực hiện các hoạt động mật mã được bảo vệ như giải mã, chữ ký và trao đổi khóa.
+
+00:12:17.000 --> 00:12:25.000
+Khóa công khai tương ứng cũng có thể truy cập được và có thể được sử dụng để thực hiện các hoạt động như mã hóa và xác minh chữ ký.
+
+00:12:25.000 --> 00:12:31.000
+Bởi vì đây là khóa công khai, bạn cũng có thể xuất các byte được liên kết với nó.
+
+00:12:31.000 --> 00:12:36.000
+Các hoạt động khóa riêng tư chỉ được phép sau khi quyền đã được ủy quyền thành công.
+
+00:12:36.000 --> 00:12:42.000
+Ngược lại, các hoạt động khóa công khai luôn được cho phép.
+
+00:12:42.000 --> 00:12:48.000
+Khi duy trì quyền của mình, bạn cũng có cơ hội lưu trữ một bí mật bất biến duy nhất cùng với nó.
+
+00:12:48.000 --> 00:12:59.000
+Bí mật cũng được liên kết với một danh sách kiểm soát truy cập phù hợp với các yêu cầu ủy quyền của quyền của bạn và nó chỉ có thể truy cập được sau khi quyền đã được ủy quyền.
+
+00:12:59.000 --> 00:13:03.000
+Tóm lại, LAPersistedRights được tạo ra với sự trợ giúp của đúng cửa hàng.
+
+00:13:03.000 --> 00:13:08.000
+Chúng chỉ được cấu hình một lần và các yêu cầu ủy quyền của chúng là bất biến.
+
+00:13:08.000 --> 00:13:13.000
+Bởi vì chúng được lưu trữ, chúng có thể được sử dụng trong các phiên khác nhau trong ứng dụng của bạn.
+
+00:13:13.000 --> 00:13:25.000
+Bên trong, chúng được liên kết với một thiết bị cụ thể và được hỗ trợ bởi một khóa Secure Enclave duy nhất có thể được sử dụng để thực hiện các hoạt động mật mã khác nhau, tùy thuộc vào trạng thái ủy quyền của quyền.
+
+00:13:25.000 --> 00:13:33.000
+Cuối cùng, chúng có thể được sử dụng để bảo vệ một bí mật bất biến duy nhất mà chỉ có sẵn sau khi quyền đã được cho phép.
+
+00:13:33.000 --> 00:13:44.000
+Bây giờ chúng tôi đã hiểu một số tính năng được cung cấp bởi các quyền tồn tại, hãy xem chúng có thể giúp chúng tôi thực hiện kịch bản mà chúng tôi đã thảo luận ở đầu bài thuyết trình như thế nào, nơi chúng tôi muốn cho phép hoạt động chữ ký.
+
+00:13:44.000 --> 00:13:49.000
+Chúng tôi bắt đầu bằng cách khởi tạo một quyền thông thường chỉ định các yêu cầu ủy quyền của nó.
+
+00:13:49.000 --> 00:13:58.000
+Trong trường hợp này, chúng tôi muốn đảm bảo rằng quyền sẽ chỉ được cấp cho những người dùng có đăng ký sinh trắc học trong thiết bị tại thời điểm tạo quyền của chúng tôi.
+
+00:13:58.000 --> 00:14:03.000
+Do đó, chúng tôi sử dụng yêu cầu BiometryCurrentSet.
+
+00:14:03.000 --> 00:14:08.000
+Sau đó, chúng tôi có thể duy trì quyền với sự trợ giúp của cửa hàng phù hợp, cung cấp một mã định danh duy nhất.
+
+00:14:08.000 --> 00:14:15.000
+Mã định danh này sẽ hữu ích vào lần tới khi chúng tôi cần tìm nạp quyền trong các phiên ứng dụng trong tương lai của mình.
+
+00:14:15.000 --> 00:14:25.000
+Khi quyền được duy trì, chúng tôi có quyền truy cập ngay vào khóa công khai của nó và có thể bắt đầu thực hiện các hoạt động không được bảo vệ với nó mà không cần ủy quyền rõ ràng.
+
+00:14:25.000 --> 00:14:30.000
+Trong ví dụ này, chúng tôi chỉ đơn giản là xuất các byte công khai của nó.
+
+00:14:30.000 --> 00:14:39.000
+Sau đó, khi đến lúc thực hiện thao tác chữ ký, chúng tôi có thể truy xuất quyền của mình từ cửa hàng bằng cách sử dụng mã định danh duy nhất mà chúng tôi đã cung cấp trong quá trình tạo.
+
+00:14:39.000 --> 00:14:45.000
+Sau đó, chúng tôi có thể tiến hành ủy quyền cho người dùng hiện tại thông qua hoạt động ủy quyền ở bên phải của chúng tôi.
+
+00:14:45.000 --> 00:14:53.000
+Tại thời điểm này, hệ thống sẽ hướng dẫn người dùng qua quy trình xác thực và sẽ xác minh rằng tất cả các yêu cầu ủy quyền đều được thỏa mãn.
+
+00:14:53.000 --> 00:14:59.000
+Sau khi quyền đã được ủy quyền, chúng ta có thể sử dụng khóa riêng của nó để thực hiện các hoạt động mật mã được bảo vệ.
+
+00:14:59.000 --> 00:15:06.000
+Trong trường hợp này, chúng tôi đang sử dụng khóa riêng để ký một thử thách do máy chủ phụ trợ của ứng dụng của chúng tôi ban hành.
+
+00:15:06.000 --> 00:15:17.000
+Để kết thúc, chúng tôi đã nói về mối quan hệ tồn tại giữa các khái niệm chung về xác thực và ủy quyền, và đặc biệt là cách xác thực cho phép ủy quyền.
+
+00:15:17.000 --> 00:15:27.000
+Chúng tôi đã xem xét một số tính năng được cung cấp bởi LAContext và cách nó có thể được kết hợp với các khuôn khổ như Bảo mật để mở khóa các luồng ủy quyền rất mạnh mẽ và có thể mở rộng.
+
+00:15:27.000 --> 00:15:35.000
+Và cuối cùng, chúng tôi đã xem xét cách LARight mới được thêm vào có thể giúp bạn hợp lý hóa mã để thực hiện các trường hợp sử dụng ủy quyền nhất định.
+
+00:15:35.000 --> 00:15:48.000
+Chúng tôi mời bạn xem xét các cách sử dụng LocalAuthentication hiện có trong ứng dụng của bạn và xem xét liệu một số tính năng mà chúng tôi đã thảo luận hôm nay có thể giúp bạn đơn giản hóa mã của mình trong khi vẫn bảo vệ quyền riêng tư và bảo mật của người dùng hay không.
+
+00:15:48.000 --> 23:59:59.000
+Cảm ơn.
+

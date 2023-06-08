@@ -1,0 +1,467 @@
+10188
+
+♪ ♪
+
+Tim: Xin chào, tôi là Tim, tôi là một kỹ sư trong nhóm CloudKit.
+
+Đồng nghiệp của tôi Aamer và tôi ở đây để nói về một CloudKit API mới có tên là CKSyncEngine.
+
+CKSyncEngine được thiết kế để giúp đồng bộ hóa dữ liệu giữa thiết bị và đám mây.
+
+Đầu tiên, tôi sẽ nói về trạng thái đồng bộ hóa với CloudKit trên nền tảng Apple.
+
+Tiếp theo, tôi sẽ đưa ra một cái nhìn tổng quan về CKSyncEngine là gì và nó hoạt động như thế nào.
+
+Sau đó, bạn sẽ tìm hiểu về cách bắt đầu với CKSyncEngine trong dự án của riêng bạn.
+
+Khi bạn đã thiết lập xong, bạn sẽ học cách sử dụng công cụ đồng bộ hóa để đồng bộ hóa dữ liệu trên các thiết bị.
+
+Cuối cùng, bạn sẽ tìm hiểu về các phương pháp hay nhất để kiểm tra và gỡ lỗi tích hợp của bạn với CKSyncEngine.
+
+Đầu tiên, trạng thái đồng bộ hóa với CloudKit.
+
+Khi bạn xây dựng một ứng dụng mới, mọi người chỉ mong đợi dữ liệu của họ đồng bộ hóa.
+
+Họ làm một cái gì đó trên iPhone của họ, và khi họ mở máy Mac của họ, họ mong đợi nó cũng ở đó.
+
+Nhìn từ bên ngoài, điều này trông giống như phép thuật.
+
+Dữ liệu của họ ở một nơi, và sau đó nó ở khắp mọi nơi.
+
+Đối với bạn và tôi, nó không dễ dàng như vậy.
+
+Bản thân CloudKit không quá phức tạp, nhưng việc đồng bộ hóa nói chung rất khó.
+
+Khi bạn đưa nhiều thiết bị vào kịch bản, có rất nhiều điều có thể xảy ra.
+
+Vì vậy, bạn có thể tạo mã đồng bộ hóa của mình càng đơn giản thì càng tốt.
+
+Và cách tốt nhất để đơn giản hóa mã đồng bộ hóa của bạn là viết càng ít càng tốt.
+
+Rất may, bạn có một số lựa chọn API tuyệt vời để đồng bộ hóa với CloudKit và những API này thực hiện rất nhiều công việc nặng nhọc cho bạn.
+
+Nếu bạn muốn một giải pháp full-stack bao gồm sự kiên trì cục bộ, bạn có thể sử dụng NSPersistentCloudKitContainer.
+
+Nếu bạn muốn mang lại sự kiên trì cục bộ của riêng mình, bạn có thể sử dụng API CKSyncEngine mới.
+
+Nếu bạn vẫn nghĩ rằng bạn cần kiểm soát chi tiết hơn, bạn có thể sử dụng CKDatabase và CKOperations.
+
+Nhưng nếu bạn muốn đồng bộ hóa với CloudKit, và nếu bạn không sử dụng NSPersistentCloudKitContainer, bạn nên sử dụng CKSyncEngine.
+
+Đồng bộ hóa liên quan đến nhiều bộ phận chuyển động và sử dụng API cấp cao hơn như CKSyncEngine có thể giúp giảm độ phức tạp và cải thiện trải nghiệm đồng bộ hóa ứng dụng của bạn.
+
+Về cốt lõi, đồng bộ hóa chủ yếu chỉ là gửi các thay đổi từ một thiết bị và tìm nạp chúng trên một thiết bị khác, chuyển đổi sang và từ các bản ghi CloudKit khi cần thiết.
+
+Điều đó khá dễ thực hiện một mình, nhưng còn nhiều hơn thế nữa.
+
+Bạn cần tìm hiểu về tất cả các hoạt động và lỗi khác nhau, theo dõi điều kiện hệ thống, lắng nghe các thay đổi tài khoản, xử lý thông báo đẩy, quản lý đăng ký của bạn, theo dõi một loạt trạng thái và hơn thế nữa.
+
+Khi bạn sử dụng CKSyncEngine, lượng mã đồng bộ hóa bạn phải viết trở nên nhỏ hơn và tập trung hơn nhiều.
+
+Bạn chỉ phải xử lý những thứ cụ thể cho ứng dụng của mình và công cụ đồng bộ xử lý phần còn lại.
+
+Để viết một công cụ đồng bộ hóa thích hợp, bạn có thể cần vài nghìn dòng mã, và sau đó tăng gấp đôi số lượng đó trong các bài kiểm tra của bạn.
+
+Tôi thực sự đã nghe một tin đồn rằng NSPersistentCloudKitContainer được hỗ trợ bởi hơn 70.000 dòng thử nghiệm.
+
+CKSyncEngine cũng có khá nhiều bài kiểm tra, và đó là vì nó xử lý rất nhiều thứ này cho bạn.
+
+Vậy CKSyncEngine API mới này là gì?
+
+CKSyncEngine gói gọn logic chung để đồng bộ hóa với cơ sở dữ liệu CloudKit.
+
+Nó nhằm mục đích cung cấp một API thuận tiện, đồng thời mang lại sự linh hoạt khi cần thiết.
+
+Nó được thiết kế để đáp ứng nhu cầu của hầu hết các ứng dụng mà nếu không sẽ viết công cụ đồng bộ hóa tùy chỉnh của riêng chúng.
+
+Nói chung, nếu bạn đang muốn đồng bộ hóa dữ liệu riêng tư hoặc được chia sẻ của ứng dụng, CKSyncEngine là một lựa chọn tuyệt vời.
+
+Mô hình dữ liệu bạn sử dụng với công cụ đồng bộ hóa bao gồm các bản ghi và vùng, là cùng loại dữ liệu được sử dụng trong phần còn lại của CloudKit.
+
+Bạn có thể truy cập bất kỳ dữ liệu nào trong số này bằng cách sử dụng bất kỳ API CloudKit hiện có nào.
+
+Bởi vì điều này, nếu bạn đã có một triển khai đồng bộ hóa CloudKit hiện có, CKSyncEngine cũng có thể đồng bộ hóa với điều đó.
+
+Công cụ đồng bộ hóa đang được sử dụng bởi một số ứng dụng và dịch vụ trên toàn hệ thống, bao gồm cả ứng dụng Freeform.
+
+Một ví dụ khác là NSUbiquitousKeyValueStore, được viết lại trên công cụ đồng bộ hóa.
+
+Đây là một ví dụ điển hình về trường hợp sử dụng tương thích ngược.
+
+Trong các hệ điều hành mới hơn, nó sử dụng công cụ đồng bộ hóa, nhưng nó vẫn đồng bộ hóa với các phiên bản trước.
+
+Vì vậy, nếu bạn đã có triển khai đồng bộ hóa CloudKit tùy chỉnh, thì bạn có tùy chọn chuyển sang CKSyncEngine.
+
+Nếu lợi ích nghe có vẻ đủ hấp dẫn, bạn nên cân nhắc chuyển đổi, nhưng nó không bắt buộc.
+
+Đôi khi, thật tuyệt khi chỉ có ít mã hơn để duy trì.
+
+Bạn cũng sẽ có thể hưởng lợi bất cứ khi nào CKSyncEngine có một cải tiến mới.
+
+Khi nền tảng phát triển, công cụ đồng bộ hóa cũng sẽ phát triển, giúp đồng bộ hóa dễ dàng và hiệu quả hơn khi thời gian trôi qua.
+
+Bạn cũng có thể hưởng lợi từ bề mặt API nhỏ hơn của CKSyncEngine.
+
+Điều này cho phép bạn tập trung vào mô hình dữ liệu và trường hợp sử dụng cụ thể của ứng dụng.
+
+Nếu bạn đang cân nhắc sử dụng CKSyncEngine, nhưng bạn có một số nhu cầu cụ thể mà nó không hỗ trợ, bạn luôn có thể tự xây dựng nếu muốn.
+
+Tuy nhiên, nếu bạn nghĩ rằng nhu cầu của mình có thể được thỏa mãn bởi một tính năng mới trong CKSyncEngine, hãy cân nhắc gửi phản hồi cùng với trường hợp sử dụng của bạn.
+
+Rốt cuộc, một số ý tưởng tốt nhất cho công cụ đồng bộ hóa đã đến từ các nhà phát triển như bạn.
+
+Vậy công cụ đồng bộ hóa thực sự hoạt động như thế nào?
+
+Nói chung, công cụ đồng bộ hóa hoạt động như một đường dẫn dữ liệu giữa ứng dụng của bạn và máy chủ CloudKit.
+
+Ứng dụng của bạn giao tiếp với công cụ đồng bộ hóa về các bản ghi và vùng.
+
+Khi có những thay đổi cần lưu, ứng dụng của bạn sẽ cung cấp chúng cho công cụ đồng bộ hóa.
+
+Khi nó tìm nạp những thay đổi này trên một thiết bị khác, nó sẽ cung cấp chúng cho ứng dụng của bạn.
+
+Điều đó nói rằng, khi công cụ đồng bộ hóa có việc phải làm, nó không phải lúc nào cũng làm điều đó ngay lập tức.
+
+Nếu nó cần giao tiếp với máy chủ, trước tiên nó sẽ tham khảo ý kiến của bộ lập lịch tác vụ hệ thống.
+
+Đây là cùng một bộ lập lịch được sử dụng trên hệ điều hành để quản lý tác vụ nền và nó đảm bảo rằng thiết bị đã sẵn sàng để đồng bộ hóa.
+
+Khi thiết bị đã sẵn sàng, bộ lập lịch sẽ chạy tác vụ và công cụ đồng bộ hóa sẽ nói chuyện với máy chủ.
+
+Đây là quy trình hoạt động cơ bản cho động cơ đồng bộ hóa.
+
+Cụ thể hơn, nó trông như thế nào khi công cụ đồng bộ hóa gửi các thay đổi đến máy chủ?
+
+Đầu tiên, ai đó thực hiện sửa đổi dữ liệu.
+
+Có thể họ đã gõ một cái gì đó hoặc họ bật công tắc hoặc xóa một đối tượng.
+
+Sau đó, ứng dụng của bạn thông báo cho công cụ đồng bộ hóa rằng có một thay đổi đang chờ xử lý để gửi đến máy chủ.
+
+Điều này cho phép công cụ đồng bộ hóa biết rằng nó có việc phải làm.
+
+Tiếp theo, công cụ đồng bộ hóa gửi một nhiệm vụ đến bộ lập lịch.
+
+Khi thiết bị đã sẵn sàng, bộ lập lịch sẽ chạy tác vụ.
+
+Khi tác vụ chạy, công cụ đồng bộ hóa bắt đầu quá trình gửi các thay đổi đến máy chủ.
+
+Để làm điều đó, nó yêu cầu ứng dụng của bạn gửi hàng loạt thay đổi tiếp theo.
+
+Nếu ai đó thực hiện một sửa đổi duy nhất, bạn có thể chỉ có một thay đổi đang chờ xử lý.
+
+Tuy nhiên, nếu ai đó nhập một cơ sở dữ liệu khổng lồ về dữ liệu mới, bạn có thể có hàng trăm hoặc hàng nghìn thay đổi.
+
+Vì có giới hạn về số lượng có thể được gửi đến máy chủ trong một yêu cầu duy nhất, công cụ đồng bộ hóa yêu cầu những thay đổi này theo lô.
+
+Điều này cũng giúp giảm chi phí bộ nhớ bằng cách không đưa bất kỳ bản ghi nào vào bộ nhớ cho đến khi chúng thực sự cần thiết.
+
+Sau khi bạn cung cấp lô tiếp theo, công cụ đồng bộ sẽ gửi nó đến máy chủ.
+
+Máy chủ phản hồi với kết quả của hoạt động, bao gồm bất kỳ thông tin nào về sự thành công hay thất bại của những thay đổi này.
+
+Khi yêu cầu kết thúc, công cụ đồng bộ sẽ gọi lại ứng dụng của bạn với kết quả.
+
+Đây là cơ hội của bạn để phản ứng với sự thành công hay thất bại của hoạt động.
+
+Nếu bạn có thêm bất kỳ thay đổi nào đang chờ xử lý, công cụ đồng bộ hóa sẽ tiếp tục yêu cầu các lô cho đến khi không còn gì để gửi.
+
+Bây giờ một thiết bị đã gửi một số dữ liệu đến máy chủ, các thiết bị khác sẽ tìm nạp dữ liệu đó.
+
+Khi máy chủ nhận được một thay đổi mới, nó sẽ gửi thông báo đẩy đến các thiết bị khác có quyền truy cập vào dữ liệu đó.
+
+CKSyncEngine tự động lắng nghe những thông báo đẩy này trong ứng dụng của bạn.
+
+Khi nó nhận được thông báo, nó sẽ gửi một nhiệm vụ đến bộ lập lịch.
+
+Khi tác vụ lập lịch chạy, công cụ đồng bộ sẽ tìm nạp từ máy chủ.
+
+Khi nó tìm nạp các thay đổi mới, nó sẽ cung cấp chúng cho ứng dụng của bạn.
+
+Đây là cơ hội của bạn để duy trì những thay đổi này cục bộ và hiển thị chúng trong giao diện người dùng.
+
+Và đó là quy trình hoạt động cơ bản khi sử dụng công cụ đồng bộ hóa.
+
+Một điểm chung của tất cả các luồng này là bộ lập lịch hệ thống.
+
+Nói chung, CKSyncEngine sẽ tham khảo ý kiến người lập lịch trước khi làm bất cứ điều gì.
+
+Đây là cách nó có thể tự động đồng bộ hóa thay mặt bạn.
+
+Bộ lập lịch giám sát các điều kiện hệ thống như kết nối mạng, mức pin, mức sử dụng tài nguyên và hơn thế nữa.
+
+Nó đảm bảo thiết bị đã đáp ứng mọi điều kiện tiên quyết trước khi cố gắng đồng bộ hóa.
+
+Bằng cách tôn trọng bộ lập lịch, công cụ đồng bộ hóa có thể đảm bảo sự cân bằng hợp lý giữa trải nghiệm người dùng và tài nguyên thiết bị.
+
+Trong điều kiện bình thường, đồng bộ hóa sẽ khá nhanh, thường là trong vòng vài giây hoặc lâu hơn.
+
+Tuy nhiên, nếu không có kết nối mạng hoặc nếu pin của thiết bị yếu, thì quá trình đồng bộ hóa có thể bị trì hoãn hoặc trì hoãn.
+
+Nếu thiết bị bị tải nặng, bạn không muốn cơ chế đồng bộ hóa của mình can thiệp vào các tác vụ khẩn cấp khác trong ứng dụng của bạn.
+
+Bằng cách dựa vào lịch trình tự động của công cụ đồng bộ hóa, bạn có thể tự tin rằng bạn sẽ đồng bộ hóa khi bạn nên, chứ không phải khi bạn không nên.
+
+Nó không chỉ hiệu quả hơn mà còn dễ sử dụng hơn.
+
+Nếu bạn không phải lo lắng về thời điểm đồng bộ hóa, bạn có thể tập trung vào mọi thứ khác.
+
+Điều đó nói rằng, có những trường hợp sử dụng hợp pháp để thực hiện đồng bộ hóa theo cách thủ công.
+
+Bạn có thể có giao diện người dùng kéo để làm mới tìm nạp ngay lập tức.
+
+Hoặc bạn có thể có một nút để sao lưu ngay bây giờ để ngay lập tức gửi bất kỳ thay đổi đang chờ xử lý nào đến máy chủ.
+
+Đồng bộ hóa thủ công cũng có thể hữu ích khi viết các bài kiểm tra tự động.
+
+Nó có thể giúp bạn mô phỏng các kịch bản đồng bộ hóa cụ thể trên nhiều thiết bị nơi bạn cần kiểm soát thứ tự của các sự kiện.
+
+Nói chung, chúng tôi khuyên bạn nên dựa vào lịch trình đồng bộ hóa tự động.
+
+Tuy nhiên, chúng tôi hiểu rằng có những trường hợp sử dụng hợp lệ để đồng bộ hóa thủ công và công cụ đồng bộ hóa có API để làm điều đó khi cần thiết.
+
+Và bây giờ, Aamer sẽ nói về cách bắt đầu sử dụng CKSyncEngine.
+
+Aamer: Cảm ơn vì lời giới thiệu đó, Tim.
+
+Tên tôi là Aamer.
+
+Tôi là một kỹ sư trong nhóm CloudKit Client.
+
+Bây giờ tôi sẽ đề cập đến việc bắt đầu với CKSyncEngine.
+
+Trước khi bạn sử dụng CKSyncEngine, có một vài điều bạn cần làm để thiết lập dự án của mình.
+
+Những yêu cầu này giống nhau cho dù bạn đang sử dụng CKSyncEngine hay xây dựng triển khai CloudKit tùy chỉnh của riêng mình.
+
+Đầu tiên, bạn sẽ cần kiến thức cơ bản về các loại dữ liệu cơ bản của CloudKit, CKRecord và CKRecordZone.
+
+API công cụ đồng bộ hóa xử lý rất nhiều về bản ghi và khu vực, vì vậy bạn nên hiểu chúng là gì trước khi đi sâu vào.
+
+Tiếp theo, bạn sẽ cần kích hoạt khả năng CloudKit cho dự án của mình trong Xcode.
+
+Cuối cùng, vì công cụ đồng bộ hóa dựa vào thông báo đẩy để cập nhật, bạn cũng sẽ cần bật khả năng thông báo từ xa.
+
+Khi bạn có tất cả những thứ đó, bạn đã sẵn sàng khởi tạo công cụ đồng bộ hóa của mình.
+
+Bạn nên khởi tạo CKSyncEngine của mình ngay sau khi ứng dụng của bạn khởi chạy.
+
+Khi bạn khởi tạo công cụ đồng bộ hóa của mình, nó sẽ tự động bắt đầu lắng nghe thông báo đẩy và các tác vụ lập lịch trong nền.
+
+Những thông báo và nhiệm vụ này có thể xảy ra bất cứ lúc nào và công cụ đồng bộ hóa cần được khởi tạo để xử lý chúng.
+
+Phương tiện giao tiếp chính giữa ứng dụng của bạn và CKSyncEngine là thông qua một giao thức gọi là CKSyncEngineDelegate.
+
+Khi khởi tạo công cụ đồng bộ hóa của bạn, bạn sẽ cần cung cấp một đối tượng phù hợp với giao thức này.
+
+Để hoạt động bình thường và hiệu quả, công cụ đồng bộ hóa theo dõi một số trạng thái bên trong.
+
+Bạn cũng sẽ cần cung cấp phiên bản cuối cùng được biết đến của trạng thái động cơ đồng bộ hóa.
+
+Trong khi thực hiện các thao tác đồng bộ hóa, đôi khi nó sẽ cung cấp cho đại diện của bạn một phiên bản cập nhật của trạng thái này dưới dạng sự kiện cập nhật trạng thái.
+
+Bất cứ khi nào công cụ đồng bộ cung cấp cho bạn tuần tự hóa trạng thái mới, bạn nên duy trì nó cục bộ.
+
+Bằng cách này, bạn có thể cung cấp nó vào lần khởi chạy quy trình tiếp theo và bạn khởi tạo công cụ đồng bộ hóa của mình.
+
+Để giúp hiểu điều này, tôi sẽ giải thích nó bằng cách sử dụng một vài ví dụ mã.
+
+Để khởi tạo một công cụ đồng bộ hóa, bạn sẽ chuyển một đối tượng cấu hình.
+
+Trong cấu hình, bạn sẽ cần cung cấp cơ sở dữ liệu mà bạn muốn đồng bộ hóa, phiên bản cuối cùng được biết đến của trạng thái công cụ đồng bộ hóa và đại diện của bạn.
+
+Một trong những chức năng trong giao thức đại diện là chức năng xử lý sự kiện.
+
+Chức năng này là cách công cụ đồng bộ thông báo cho ứng dụng của bạn về các sự kiện khác nhau xảy ra trong quá trình hoạt động đồng bộ hóa bình thường.
+
+Ví dụ, nó sẽ đăng các sự kiện khi tìm nạp dữ liệu mới từ máy chủ hoặc khi tài khoản thay đổi.
+
+Một trong những sự kiện này là sự kiện cập nhật trạng thái.
+
+Khi công cụ đồng bộ cập nhật trạng thái bên trong của nó hoặc khi bạn tự cập nhật trạng thái, công cụ đồng bộ sẽ đăng một sự kiện cập nhật trạng thái.
+
+Để đáp lại sự kiện này, bạn nên duy trì cục bộ phiên bản tuần tự mới này của trạng thái.
+
+Trong ví dụ, bạn sẽ sử dụng tuần tự hóa trạng thái này vào lần tới khi bạn khởi tạo công cụ đồng bộ hóa của mình.
+
+Bây giờ nền tảng đã được thiết lập, tôi sẽ đề cập đến việc đồng bộ hóa với công cụ đồng bộ hóa.
+
+Có một vài bước đơn giản cho phép bạn gửi các thay đổi đến máy chủ.
+
+Đầu tiên, thêm các thay đổi vùng bản ghi đang chờ xử lý của bạn và các thay đổi cơ sở dữ liệu đang chờ xử lý vào trạng thái công cụ đồng bộ hóa.
+
+Điều này sẽ cảnh báo công cụ đồng bộ hóa rằng nó nên lên lịch đồng bộ hóa.
+
+Công cụ đồng bộ hóa sẽ đảm bảo tính nhất quán và sao chép những thay đổi này.
+
+Tiếp theo, triển khai phương thức đại diện nextRecordZoneChangeBatch.
+
+Công cụ đồng bộ hóa sẽ gọi điều này để nhận đợt thay đổi vùng ghi tiếp theo để gửi đến máy chủ.
+
+Cuối cùng, xử lý các sự kiện sentDatabaseChanges và sentRecordZoneChanges.
+
+Những sự kiện này sẽ được đăng khi các thay đổi được gửi đến máy chủ.
+
+Đây là một ví dụ về việc gửi các thay đổi đến máy chủ.
+
+Ứng dụng này chỉnh sửa dữ liệu và muốn đồng bộ hóa các thay đổi bản ghi mới.
+
+Để làm điều này, bạn sẽ nói với công cụ đồng bộ hóa rằng bạn cần lưu bản ghi đó bằng cách thêm thay đổi vùng bản ghi đang chờ xử lý vào trạng thái công cụ đồng bộ hóa.
+
+Khi công cụ đồng bộ hóa đã sẵn sàng để đồng bộ hóa bản ghi, nó sẽ gọi phương thức đại diện nextRecordZoneChangeBatch.
+
+Tại đây bạn sẽ trả lại lô thay đổi tiếp theo để gửi đến máy chủ.
+
+Bạn khởi tạo RecordZoneChangeBatch bằng cách cung cấp danh sách các thay đổi đang chờ xử lý và nhà cung cấp bản ghi.
+
+Danh sách các thay đổi đang chờ xử lý chứa các recordID cần lưu hoặc xóa và nhà cung cấp bản ghi sẽ ánh xạ các ID đó vào các bản ghi khi quá trình đồng bộ hóa thực tế xảy ra.
+
+Đây là cách ứng dụng của bạn có thể tìm nạp các thay đổi từ máy chủ.
+
+Công cụ đồng bộ hóa tự động tìm nạp các thay đổi cho bạn từ máy chủ.
+
+Khi nó xảy ra, nó sẽ đăng các sự kiện fetchedDatabaseChanges và fetchedRecordZoneChanges.
+
+Tùy thuộc vào trường hợp sử dụng của bạn, bạn có thể muốn nghe các sự kiện willFetchChanges và didFetchChanges.
+
+Ví dụ, việc xử lý các sự kiện này có thể hữu ích nếu bạn muốn thực hiện bất kỳ tác vụ thiết lập hoặc dọn dẹp nào trước hoặc sau khi tìm nạp các thay đổi.
+
+Đây là một ví dụ trong đó ứng dụng của chúng tôi tìm nạp các thay đổi từ máy chủ.
+
+Khi công cụ đồng bộ tìm nạp các thay đổi trong vùng bản ghi, nó sẽ đăng sự kiện fetchedRecordZoneChanges.
+
+Sự kiện này chứa các sửa đổi và xóa được thực hiện bởi một thiết bị khác.
+
+Khi nghe điều này, bạn nên kiểm tra các sửa đổi đã tìm nạp và xóa đã tìm nạp.
+
+Khi bạn nhận được các sửa đổi, bạn nên duy trì dữ liệu cục bộ.
+
+Khi bạn nhận được việc xóa, bạn nên xóa dữ liệu cục bộ.
+
+Tìm nạp các thay đổi cơ sở dữ liệu hoạt động rất giống nhau và có thể được xử lý với cùng một cách tiếp cận.
+
+Xử lý lỗi có thể khó khăn.
+
+Công cụ đồng bộ cũng giúp ích cho việc này.
+
+Công cụ đồng bộ hóa tự động xử lý các lỗi tạm thời như sự cố mạng, điều chỉnh và sự cố tài khoản.
+
+Công cụ đồng bộ hóa sẽ tự động thử lại công việc bị ảnh hưởng bởi những lỗi này.
+
+Đối với các lỗi khác, ứng dụng của bạn sẽ cần xử lý chúng.
+
+Khi bạn đã giải quyết được những lỗi đó, bạn nên lên lịch lại công việc nếu cần thiết.
+
+Đây là một ví dụ về việc xử lý lỗi khi gửi thay đổi vùng bản ghi.
+
+Khi sự kiện sentRecordZoneChanges được đăng, bạn nên kiểm tra failedRecordSaves để xem có bất kỳ bản ghi nào không lưu được không.
+
+serverRecordChanged chỉ ra rằng bản ghi đã thay đổi trên máy chủ.
+
+Điều này có nghĩa là một thiết bị khác đã lưu một phiên bản mới mà ứng dụng chưa tìm nạp.
+
+Bạn nên giải quyết xung đột và lên lịch lại công việc.
+
+zoneNotFound chỉ ra rằng vùng chưa tồn tại trên máy chủ.
+
+Để giải quyết vấn đề này, bạn có thể cần tạo khu vực và sau đó lên lịch lại công việc.
+
+Công cụ đồng bộ hóa sẽ luôn cố gắng lưu các vùng trước, và sau đó ghi lại.
+
+networkFailure, networkUnavailable, serviceUnavailable, và requestRateLimited là những ví dụ về lỗi tạm thời mà công cụ đồng bộ hóa sẽ xử lý cho bạn.
+
+Bạn vẫn sẽ nhận được những lỗi này cho nhận thức của mình nhưng bạn không cần phải hành động để đáp lại chúng.
+
+Công cụ đồng bộ hóa sẽ tự động thử lại những lỗi này khi điều kiện hệ thống cho phép.
+
+Một điều khác mà công cụ đồng bộ hóa giúp đỡ là thay đổi tài khoản.
+
+Thay đổi tài khoản iCloud có thể xảy ra bất cứ lúc nào trên thiết bị.
+
+Công cụ đồng bộ hóa giúp bạn quản lý và phản ứng với những thứ này.
+
+Công cụ đồng bộ lắng nghe các thay đổi và sẽ thông báo cho bạn bằng cách sử dụng sự kiện Thay đổi tài khoản để cho biết đăng nhập, đăng xuất hoặc tài khoản đã chuyển đổi.
+
+Đơn đăng ký của bạn nên chuẩn bị cho sự thay đổi tùy thuộc vào loại.
+
+Công cụ đồng bộ hóa sẽ không bắt đầu đồng bộ hóa với iCloud cho đến khi có tài khoản trên thiết bị.
+
+Bạn có thể khởi tạo công cụ đồng bộ hóa bất cứ lúc nào và nó sẽ tự động cập nhật cho bạn khi có thay đổi tài khoản.
+
+Chia sẻ dữ liệu với những người dùng khác là một phần quan trọng của CloudKit.
+
+Động cơ đồng bộ hóa cũng giúp cuộc sống ở đây dễ dàng hơn.
+
+Công cụ đồng bộ hóa hoạt động với cơ sở dữ liệu được chia sẻ CloudKit.
+
+Bạn chỉ cần tạo một công cụ đồng bộ hóa cho mỗi cơ sở dữ liệu mà ứng dụng của bạn sẽ hoạt động.
+
+Ví dụ, bạn có thể tạo một công cụ đồng bộ hóa cho cơ sở dữ liệu riêng tư và một công cụ đồng bộ hóa khác cho cơ sở dữ liệu được chia sẻ.
+
+Để tìm hiểu thêm về việc chia sẻ với CloudKit, hãy xem Cuộc nói chuyện công nghệ "Tối đa việc chia sẻ trên CloudKit".
+
+Điều đó bao gồm việc sử dụng CKSyncEngine.
+
+Bây giờ tôi sẽ đề cập đến cách kiểm tra khi sử dụng nó.
+
+Kiểm tra tự động là cách tốt nhất để đảm bảo sự ổn định trong cơ sở mã của bạn trong khi phát triển nhanh chóng.
+
+Sử dụng công cụ đồng bộ hóa, bạn có thể mô phỏng luồng người dùng từ thiết bị đến thiết bị bằng cách sử dụng nhiều phiên bản CKSyncEngine.
+
+Bạn nên mô phỏng các trường hợp cạnh mà ứng dụng của bạn có thể gặp phải.
+
+Để làm điều này, bạn có thể can thiệp vào luồng động cơ đồng bộ hóa bằng cách đặt tự động Đồng bộ hóa thành sai.
+
+Đây là một trường hợp thử nghiệm mô phỏng xung đột dữ liệu giữa hai thiết bị và máy chủ.
+
+Mục đích của bài kiểm tra này là mô phỏng toàn bộ luồng mà người dùng sẽ thực hiện khi làm việc với nhiều thiết bị.
+
+Nó cũng xác nhận giải quyết xung đột.
+
+Đầu tiên, mô phỏng hai thiết bị sử dụng MySyncManager.
+
+Trong ví dụ này, MySyncManager tạo ra một cơ sở dữ liệu cục bộ và công cụ đồng bộ hóa.
+
+Thiết bị A đặt giá trị thành A và gửi các thay đổi của nó đến máy chủ.
+
+Trước khi thiết bị B tìm nạp các thay đổi từ máy chủ, chúng tôi cũng sẽ yêu cầu nó gửi các thay đổi đến máy chủ.
+
+Vì thiết bị A được lưu vào máy chủ trước, việc lưu thiết bị B dự kiến sẽ thất bại.
+
+Điều này sẽ dẫn đến lỗi thay đổi bản ghi máy chủ, lỗi này sẽ thực hiện mã giải quyết xung đột cục bộ.
+
+Mẫu này hy vọng giải quyết xung đột sẽ ưu tiên dữ liệu từ máy chủ, vì vậy giá trị mới trên thiết bị B sẽ là giá trị được gửi đến máy chủ gần đây nhất từ thiết bị A.
+
+Dưới đây là một vài điểm chính có thể giúp tăng tốc độ kiểm tra và gỡ lỗi.
+
+Hiểu được chuỗi sự kiện trên mỗi thiết bị sẽ giúp xác định chính xác vị trí mà ứng dụng của bạn có thể gặp sự cố.
+
+Ghi nhật ký càng nhiều càng tốt khi phát triển sẽ giúp theo dõi các luồng này và so sánh nhật ký trên nhiều thiết bị.
+
+CloudKit sẽ ghi lại từng sự kiện mà bạn nhận được, nhưng bạn cũng nên ghi lại các hành động xung quanh chúng trong ứng dụng của mình.
+
+Ghi nhật ký ID bản ghi và ID vùng có thể giúp gỡ lỗi dữ liệu nào đang chảy giữa công cụ đồng bộ hóa, máy chủ và các thiết bị khác mà bạn có thể đang đồng bộ hóa.
+
+Viết các bài kiểm tra mô phỏng từng luồng người dùng của bạn sẽ giúp duy trì sự ổn định khi bạn phát triển cơ sở mã của mình.
+
+Nhìn vào dấu thời gian khi ghép câu đố lại với nhau.
+
+Bạn có thể chỉ có một vài thao tác đồng bộ đang diễn ra hoặc bạn có thể có nhiều thao tác trong một thời gian ngắn.
+
+Đảm bảo bạn đang truy tìm đúng thiết bị là chìa khóa để gỡ lỗi giữa nhiều thiết bị.
+
+Các bước này sẽ giúp tạo và duy trì một ứng dụng đáng tin cậy, lâu dài bằng CKSyncEngine.
+
+Điều đó kết thúc cuộc nói chuyện của chúng tôi trên CKSyncEngine.
+
+Hãy xem mã mẫu công cụ đồng bộ hóa để xem ví dụ hoạt động đầy đủ trong một ứng dụng.
+
+Để tìm hiểu sâu hơn, hãy xem tài liệu CKSyncEngine của chúng tôi.
+
+Nếu bạn có bất kỳ đề xuất nào để cải thiện công cụ đồng bộ hóa, vui lòng gửi phản hồi cho nhóm CloudKit.
+
+Chúng tôi rất vui khi thấy những gì bạn tạo ra với nó.
+
+Cảm ơn vì đã xem. Chúc một WWDC tuyệt vời!
+
+♪ ♪

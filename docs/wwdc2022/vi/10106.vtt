@@ -1,0 +1,1055 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:13.000
+Chào mừng bạn đến với Hồ sơ và Tối ưu hóa Bộ nhớ Trò chơi của Bạn.
+
+00:00:13.000 --> 00:00:16.000
+Tôi là Jack Xu (许) từ nhóm Phần mềm GPU tại Apple.
+
+00:00:16.000 --> 00:00:18.000
+Chúng tôi có sự tham gia của đồng nghiệp Seth Lù (陆) của tôi.
+
+00:00:18.000 --> 00:00:26.000
+Trong vài năm qua, các nhóm của chúng tôi đã làm việc với các nhà phát triển trò chơi như bạn để cùng nhau hiểu và cải thiện trí nhớ trò chơi.
+
+00:00:26.000 --> 00:00:37.000
+Hôm nay, chúng tôi muốn chia sẻ những bài học của chúng tôi, vì vậy bạn cũng có thể bắt đầu thuận lợi khi gỡ lỗi bộ nhớ trò chơi của mình và tạo ra những trò chơi tuyệt vời với trải nghiệm người chơi tốt nhất.
+
+00:00:37.000 --> 00:00:43.000
+Chúng tôi sẽ chia nhỏ việc sử dụng bộ nhớ trong trò chơi của bạn, từ cả đối tượng CPU và GPU.
+
+00:00:43.000 --> 00:00:51.000
+Thêm vào đó, phân tích phân bổ trong trò chơi của bạn, sử dụng thực tế trên bộ nhớ vật lý và tham chiếu giữa các đối tượng.
+
+00:00:51.000 --> 00:00:58.000
+Bởi vì có nhiều khía cạnh của bộ nhớ, các công cụ dành cho nhà phát triển của chúng tôi cũng tiết lộ những bí ẩn về trí nhớ từ các góc độ khác nhau.
+
+00:00:58.000 --> 00:01:06.000
+Chúng tôi sẽ tham gia một chuyến tham quan có hướng dẫn và trải nghiệm cách chúng tôi sử dụng tất cả chúng, bao gồm Xcode, Instruments và các công cụ dòng lệnh trong Terminal.
+
+00:01:06.000 --> 00:01:12.000
+Trong chuyến tham quan có hướng dẫn hôm nay, chúng ta sẽ bắt đầu với khúc dạo đầu để hiểu bộ nhớ trò chơi.
+
+00:01:12.000 --> 00:01:18.000
+Và bắt đầu lập hồ sơ bộ nhớ và sự phát triển trí nhớ, nơi Seth sẽ cho chúng ta biết về Dụng cụ.
+
+00:01:18.000 --> 00:01:28.000
+Sau khi thực hiện cách tiếp cận tạm thời với Instruments, chúng tôi sẽ tiếp tục hành trình của mình và phân tích biểu đồ bộ nhớ của trò chơi của bạn bằng cách sử dụng các công cụ trong Xcode và Terminal.
+
+00:01:28.000 --> 00:01:35.000
+Các quy trình làm việc này tập trung vào trạng thái sử dụng bộ nhớ hiện tại và phân tích tổng bộ nhớ trò chơi.
+
+00:01:35.000 --> 00:01:45.000
+Cuối cùng, Seth sẽ chia sẻ cách bạn có thể sử dụng Metal Debugger để tối ưu hóa tài nguyên Metal, đây là một lĩnh vực hơi độc lập nhưng cốt lõi trong bộ nhớ trò chơi.
+
+00:01:45.000 --> 00:01:51.000
+Bây giờ, hãy bắt đầu với việc hiểu bộ nhớ trò chơi.
+
+00:01:51.000 --> 00:02:00.000
+Khi bạn khởi chạy trò chơi của mình từ Xcode, chẳng hạn như Kết xuất hiện đại với mã mẫu Kim loại, bạn có thể mở Báo cáo bộ nhớ này trong trình duyệt gỡ lỗi của Xcode.
+
+00:02:00.000 --> 00:02:08.000
+Đây là cái nhìn đầu tiên của bạn về việc sử dụng bộ nhớ hiện tại và gần đây của trò chơi, và mức độ tác động của nó đối với hệ thống.
+
+00:02:08.000 --> 00:02:12.000
+Con số trên thước đo cho bạn thấy việc sử dụng bộ nhớ hiện tại của trò chơi.
+
+00:02:12.000 --> 00:02:19.000
+Bước đầu tiên quan trọng trong việc gỡ lỗi bộ nhớ là hiểu con số này có nghĩa là gì.
+
+00:02:19.000 --> 00:02:26.000
+Để đặt nó vào một dòng, việc sử dụng bộ nhớ thực tế trong trò chơi của bạn không giống như phân bổ.
+
+00:02:26.000 --> 00:02:28.000
+Việc sử dụng bộ nhớ thực tế là trên bộ nhớ vật lý.
+
+00:02:28.000 --> 00:02:34.000
+Trong khi phân bổ là bộ nhớ được yêu cầu bởi trò chơi, trên không gian địa chỉ bộ nhớ ảo.
+
+00:02:34.000 --> 00:02:41.000
+Và các loại phân bổ khác nhau được tính toán riêng một cách tự nhiên.
+
+00:02:41.000 --> 00:02:48.000
+Khi trò chơi của bạn phân bổ bộ nhớ, những phân bổ mới đó không ngay lập tức cũng như không trực tiếp chiếm dung lượng trên bộ nhớ vật lý.
+
+00:02:48.000 --> 00:02:56.000
+Ngược lại, họ sẽ dành một số không gian trên không gian địa chỉ bộ nhớ ảo, mà hệ thống cung cấp cho mỗi quy trình.
+
+00:02:56.000 --> 00:03:04.000
+Và khi chương trình thực sự sử dụng phân bổ này sau này, hệ thống sẽ chuẩn bị không gian trên bộ nhớ vật lý.
+
+00:03:04.000 --> 00:03:11.000
+Các phân bổ cùng loại được nhóm thành các danh mục và chiếm không gian địa chỉ ảo một cách thưa thớt.
+
+00:03:11.000 --> 00:03:44.000
+Các danh mục này có thể bao gồm: nhị phân thực thi của chương trình; tất cả các thư viện và khuôn khổ; ngăn xếp, cung cấp lưu trữ cho các biến cục bộ và tạm thời cũng như một số đối số hàm; các vùng bộ nhớ động còn được gọi là đống; bao gồm lưu trữ phiên bản lớp và bộ nhớ mà chương trình phân bổ thủ công; các vùng
+
+00:03:44.000 --> 00:03:48.000
+Và những danh mục này được tạo thành từ các khu vực.
+
+00:03:48.000 --> 00:03:57.000
+Dưới mui xe, các hoạt động bộ nhớ hoạt động ở mức độ chi tiết của các trang bộ nhớ, mỗi trang có 16 kibibyte trên các thiết bị Apple hiện đại.
+
+00:03:57.000 --> 00:04:05.000
+Điều này có nghĩa là mỗi khu vực chiếm một hoặc nhiều trang và lớn ít nhất 16 kibibyte.
+
+00:04:05.000 --> 00:04:16.000
+Khi trò chơi tiếp tục, trạng thái bộ nhớ của nó tiếp tục phát triển; các đối tượng mới được phân bổ, các vật phẩm cũ bị phá hủy, các khu vực liên tục thay đổi.
+
+00:04:16.000 --> 00:04:27.000
+Nhưng chỉ các trang được sử dụng trên các khu vực nằm trên bộ nhớ vật lý, mà hệ thống siêng năng tính phí cho trò chơi của bạn, cũng như với bất kỳ ứng dụng nào khác.
+
+00:04:27.000 --> 00:04:33.000
+Các trang bộ nhớ trong trò chơi của bạn có thể là một trong ba loại: bẩn, nén và sạch.
+
+00:04:33.000 --> 00:04:35.000
+Hãy kiểm tra xem chúng là gì.
+
+00:04:35.000 --> 00:04:40.000
+Các trang bộ nhớ bẩn bao gồm bộ nhớ mà trò chơi của bạn đã ghi vào.
+
+00:04:40.000 --> 00:04:47.000
+Điều này bao gồm phân bổ bộ nhớ trong đống và khuôn khổ, một khi trò chơi của bạn sửa đổi các biến hoặc biểu tượng đó.
+
+00:04:47.000 --> 00:05:00.000
+Trên các thiết bị có Apple silicon, các tài nguyên Metal được truy cập cũng thuộc danh mục này, điều này là do CPU và GPU chia sẻ cùng một nhóm bộ nhớ thống nhất nhanh.
+
+00:05:00.000 --> 00:05:12.000
+Tuy nhiên, nếu một số trang bẩn không được sử dụng trong một thời gian dài, hệ thống có thể giảm sự hiện diện của chúng trên bộ nhớ vật lý bằng cách nén các trang này hoặc lưu trữ chúng trên flash hoặc đĩa, mà chúng tôi gọi là hoán đổi.
+
+00:05:12.000 --> 00:05:17.000
+Điều này sẽ cho phép thiết bị chạy nhiều ứng dụng và dịch vụ hơn.
+
+00:05:17.000 --> 00:05:24.000
+Sau đó, khi trò chơi của bạn yêu cầu các trang này một lần nữa, hệ thống sẽ giải nén hoặc trang trong đó từ đĩa.
+
+00:05:24.000 --> 00:05:29.000
+Lưu ý, trò chơi của bạn vẫn sẽ bị tính phí cho kích thước không nén của chúng.
+
+00:05:29.000 --> 00:05:40.000
+Đối với các trang bộ nhớ sạch, chúng bao gồm các tệp chỉ đọc được ánh xạ từ đĩa, chẳng hạn như tài sản kết cấu hoặc âm thanh và các khung được tải vào quy trình.
+
+00:05:40.000 --> 00:05:48.000
+Hệ thống có thể làm trống hoặc tải lại chúng từ đĩa bất cứ lúc nào, vì vậy chúng không được tính vào dấu chân bộ nhớ trò chơi của bạn.
+
+00:05:48.000 --> 00:05:57.000
+Tuy nhiên, chúng có thể nằm trong bộ nhớ và việc sử dụng quá mức sẽ làm chậm hệ thống và trò chơi của bạn.
+
+00:05:57.000 --> 00:06:04.000
+Nó thường thú vị nhất khi nhìn vào hai phần đầu tiên, kết hợp lại, chúng ta gọi là dấu chân bộ nhớ.
+
+00:06:04.000 --> 00:06:09.000
+Và hệ thống sử dụng cái này để thực thi giới hạn bộ nhớ.
+
+00:06:09.000 --> 00:06:18.000
+Trong một số thuật ngữ, mọi người nói "trí nhớ bẩn" khi chúng có nghĩa là dấu chân bộ nhớ, vì bẩn trái ngược với sạch sẽ.
+
+00:06:18.000 --> 00:06:24.000
+Nhưng đừng lo lắng, khi mọi thứ trở nên mờ nhạt, chúng tôi sẽ gọi ra ý chúng tôi là cái nào.
+
+00:06:24.000 --> 00:06:29.000
+Vì vậy, bây giờ bạn đã biết bộ nhớ hoạt động như thế nào và cách hệ thống sạc nó vào trò chơi.
+
+00:06:29.000 --> 00:06:39.000
+Bên cạnh máy đo bộ nhớ Xcode này, bạn có thể tìm thấy dấu chân bộ nhớ ở nhiều nơi trên hệ thống, bao gồm cả ứng dụng Giám sát Hoạt động trên Mac.
+
+00:06:39.000 --> 00:06:43.000
+Và một số nền tảng của Apple sử dụng nó cho giới hạn bộ nhớ ứng dụng.
+
+00:06:43.000 --> 00:06:47.000
+Trò chơi của bạn cũng có thể sử dụng số liệu này để hướng dẫn việc sử dụng bộ nhớ của nó.
+
+00:06:47.000 --> 00:06:53.000
+Có các API hữu ích để truy vấn dấu chân hiện tại và bộ nhớ khả dụng.
+
+00:06:53.000 --> 00:06:54.000
+Đây là một cái nhìn nhanh.
+
+00:06:54.000 --> 00:07:07.000
+Để có sẵn bộ nhớ hệ thống cho trò chơi iOS, iPadOS hoặc tvOS của bạn, hãy gọi os_proc_available_memory, nằm trong tệp tiêu đề os/proc.h.
+
+00:07:07.000 --> 00:07:22.000
+Và đối với dấu chân bộ nhớ trên bất kỳ nền tảng Apple nào, bạn có thể lấy nó thông qua proc_pid_rusage, với ID quy trình từ "get pid", "rusage_info_current", hiện tại là phiên bản 6 và kho dữ liệu.
+
+00:07:22.000 --> 00:07:28.000
+Và lấy lại dấu chân vật lý hoặc thuộc tính dấu chân vật lý tối đa suốt đời của nó.
+
+00:07:28.000 --> 00:07:33.000
+Tóm lại, trong phần đầu tiên này, chúng tôi đã xem xét một số khái niệm về trí nhớ.
+
+00:07:33.000 --> 00:07:45.000
+Việc phân bổ trong trò chơi của bạn xảy ra trên không gian địa chỉ bộ nhớ ảo và chúng sẽ chiếm không gian bộ nhớ vật lý dưới dạng 16 trang kibibyte, một khi chúng được trò chơi của bạn truy cập.
+
+00:07:45.000 --> 00:07:53.000
+Dấu chân bộ nhớ là thước đo chính và phổ quát trên nền tảng Apple để xác định việc sử dụng bộ nhớ thực tế trong trò chơi của bạn.
+
+00:07:53.000 --> 00:07:58.000
+Dấu chân bộ nhớ chứa các trang bẩn, được nén và hoán đổi.
+
+00:07:58.000 --> 00:08:03.000
+Nó bao gồm cả đối tượng CPU và GPU trên Apple silicon.
+
+00:08:03.000 --> 00:08:06.000
+Và nó được sử dụng để thực thi giới hạn bộ nhớ.
+
+00:08:06.000 --> 00:08:12.000
+Trò chơi của bạn có thể gọi các API hệ thống để lấy dấu chân và bộ nhớ khả dụng.
+
+00:08:12.000 --> 00:08:18.000
+Bây giờ bạn đã biết bộ nhớ hoạt động như thế nào đằng sau hậu trường, hãy cùng tìm hiểu xem nó trông như thế nào trong trò chơi của bạn.
+
+00:08:18.000 --> 00:08:21.000
+Hãy để tôi giao cho Seth, để nói cho bạn biết thêm.
+
+00:08:21.000 --> 00:08:23.000
+Seth Lù: Cảm ơn, Jack.
+
+00:08:23.000 --> 00:08:26.000
+Bây giờ, hãy bắt đầu với việc nắm bắt sự phát triển trí nhớ cho một trò chơi.
+
+00:08:26.000 --> 00:08:30.000
+Và tôi sẽ tiếp tục sử dụng dự án mẫu Modern Renderer.
+
+00:08:30.000 --> 00:08:36.000
+Khi bạn chạy một trò chơi từ Xcode, Máy đo bộ nhớ sẽ hiển thị cho bạn dấu chân bộ nhớ theo thời gian.
+
+00:08:36.000 --> 00:08:42.000
+Tuy nhiên, bạn có thể có cái nhìn chi tiết hơn nhiều về việc sử dụng bộ nhớ bằng cách lập hồ sơ trò chơi trong Instruments.
+
+00:08:42.000 --> 00:08:51.000
+Bởi vì đôi khi một trò chơi có thể phân bổ rất nhiều bộ nhớ tại thời điểm ra mắt, bạn có thể muốn bắt đầu lập hồ sơ từ một lần ra mắt trò chơi mới thay vì gắn vào một lần chạy hiện có.
+
+00:08:51.000 --> 00:08:59.000
+Từ Xcode, để nhanh chóng bắt đầu lập hồ sơ trò chơi của bạn, hãy nhấn và giữ nút chạy, sau đó chọn "Hồ sơ".
+
+00:08:59.000 --> 00:09:02.000
+Điều này sẽ tự động đưa bạn đến với Instruments.
+
+00:09:02.000 --> 00:09:10.000
+Ứng dụng Instruments bao gồm một bộ sưu tập các công cụ lập hồ sơ ghi lại các khía cạnh khác nhau của hệ thống và trực quan hóa dữ liệu được ghi lại trên dòng thời gian.
+
+00:09:10.000 --> 00:09:17.000
+Mới trong năm nay là mẫu Game Memory có thể giúp bạn hiểu rõ hơn về sự phát triển bộ nhớ trong trò chơi Metal của mình.
+
+00:09:17.000 --> 00:09:37.000
+Mẫu này đi kèm với các công cụ Phân bổ và Sự kiện Tài nguyên Kim loại để ghi lại phân bổ bộ nhớ với lịch sử, Trình theo dõi VM để ghi lại dấu chân bộ nhớ, Dấu vết bộ nhớ ảo để ghi lại hoạt động bộ nhớ ảo và Ứng dụng Kim loại và GPU để ghi lại các sự kiện liên quan đến Kim loại.
+
+00:09:37.000 --> 00:09:44.000
+Và trong bản demo này, tôi sẽ làm nổi bật ba công cụ đầu tiên: Phân bổ, Sự kiện Tài nguyên Kim loại và Trình theo dõi VM.
+
+00:09:44.000 --> 00:09:47.000
+Nhưng trước tiên, hãy ghi lại dấu vết cho trò chơi.
+
+00:09:47.000 --> 00:09:51.000
+Bạn có thể nhấn nút ghi âm ở đây để bắt đầu ghi âm.
+
+00:09:51.000 --> 00:09:57.000
+Và sau đó, để dừng ghi âm, bạn có thể nhấn cùng một nút hoặc đơn giản là thoát khỏi trò chơi.
+
+00:09:57.000 --> 00:10:03.000
+Trong khi Instruments đang ghi lại Modern Renderer, hãy để tôi chỉ cho bạn một cách khác để ghi lại dấu vết.
+
+00:10:03.000 --> 00:10:10.000
+Lệnh xctrace cho phép bạn thực hiện các bản ghi theo chương trình, điều này có thể hữu ích trong quy trình làm việc tự động hóa.
+
+00:10:10.000 --> 00:10:18.000
+Ngoài ra, bạn có thể chỉ định tên thiết bị để chọn iPhone, iPad hoặc Apple TV làm mục tiêu.
+
+00:10:18.000 --> 00:10:23.000
+Bây giờ tôi đã nắm bắt được dấu vết của Công cụ, trước tiên chúng ta hãy xem Phân bổ.
+
+00:10:23.000 --> 00:10:30.000
+Công cụ Phân bổ cung cấp cho bạn cái nhìn chi tiết về phân bổ bộ nhớ, kích thước của chúng và số lượng tham chiếu đối tượng.
+
+00:10:30.000 --> 00:10:34.000
+Tuy nhiên, nó không bao gồm các tài nguyên Metal tư nhân.
+
+00:10:34.000 --> 00:10:40.000
+Chế độ xem Thống kê hiển thị tất cả các phân bổ đống và máy ảo ẩn danh.
+
+00:10:40.000 --> 00:10:50.000
+All Heap Allocations bao gồm các bộ đệm malloc'ed có thể chứa các đối tượng và All Anonymous VM bao gồm các vùng VM thú vị có thể bị bẩn.
+
+00:10:50.000 --> 00:10:56.000
+Và chúng ta sẽ thấy trong giây lát rằng một số tài nguyên Kim loại thuộc danh mục này.
+
+00:10:56.000 --> 00:10:59.000
+Bây giờ, chúng ta hãy xem bên trong All Heap Allocations.
+
+00:10:59.000 --> 00:11:03.000
+Thông thường, các phân bổ lớn hơn sẽ thú vị hơn để tối ưu hóa.
+
+00:11:03.000 --> 00:11:11.000
+Để tìm phân bổ lớn nhất, bạn có thể nhấp vào cột Bảng Kích thước để sắp xếp phân bổ theo kích thước.
+
+00:11:11.000 --> 00:11:20.000
+Để phân bổ, bạn có thể nhấp vào mũi tên này để xem các thay đổi số lượng tham chiếu cho các đối tượng Swift và Objective-C.
+
+00:11:20.000 --> 00:11:26.000
+Và với phân bổ lớn này được chọn trong danh sách, có dấu vết ngăn xếp của lịch sử phân bổ trong trình kiểm tra.
+
+00:11:26.000 --> 00:11:31.000
+Nhấp vào nút cho phép ẩn các thư viện hoặc khuôn khổ hệ thống.
+
+00:11:31.000 --> 00:11:38.000
+Và ở đây, theo dấu vết ngăn xếp, việc phân bổ đã xảy ra khi Trình kết xuất hiện đại tải tài sản.
+
+00:11:38.000 --> 00:11:43.000
+Nhấp đúp vào khung cũng có thể đưa bạn đến mã nguồn.
+
+00:11:43.000 --> 00:11:48.000
+Bây giờ, chúng ta hãy quay lại và xem bên trong danh mục "All Anonymous VM".
+
+00:11:48.000 --> 00:11:55.000
+Trong các trò chơi Metal, bạn có thể tìm thấy rất nhiều phân bổ trong danh mục IOAccelerator và IOSurface.
+
+00:11:55.000 --> 00:12:00.000
+Phân bổ trong IOAccelerator tương ứng với tài nguyên kim loại.
+
+00:12:00.000 --> 00:12:06.000
+Từ dấu vết ngăn xếp, bạn có thể thấy sự phân bổ này đã xảy ra trong khi tải tài sản.
+
+00:12:06.000 --> 00:12:10.000
+Phân bổ trong IOSurface tương ứng với các bản vẽ.
+
+00:12:10.000 --> 00:12:16.000
+Và ở đây, dấu vết ngăn xếp cho thấy chế độ xem MetalKit yêu cầu có thể vẽ được.
+
+00:12:16.000 --> 00:12:20.000
+Công cụ Phân bổ, theo mặc định, trực quan hóa kích thước phân bổ.
+
+00:12:20.000 --> 00:12:23.000
+Tuy nhiên, nó cũng đi kèm với vẻ ngoài thay thế.
+
+00:12:23.000 --> 00:12:29.000
+Bạn có thể trên nút mũi tên trong bản nhạc Phân bổ để tùy chỉnh chế độ hiển thị để trực quan hóa Mật độ Phân bổ.
+
+00:12:29.000 --> 00:12:36.000
+Điều này sẽ cập nhật biểu đồ để hiển thị cho bạn số lượng phân bổ được thực hiện theo thời gian và tiết lộ mức tăng đột biến cho phân bổ bộ nhớ.
+
+00:12:36.000 --> 00:12:39.000
+Những đột biến này có thể là nguồn tăng trưởng trí nhớ.
+
+00:12:39.000 --> 00:12:43.000
+Vì vậy, dữ liệu được hiển thị trong Phân bổ ở mức khá thấp.
+
+00:12:43.000 --> 00:12:50.000
+Để hiểu rõ hơn về các tài nguyên Kim loại được phân bổ, hãy chuyển sang Sự kiện Tài nguyên Kim loại.
+
+00:12:50.000 --> 00:12:54.000
+Công cụ Sự kiện Tài nguyên Kim loại được thiết kế xoay quanh Tài nguyên Kim loại.
+
+00:12:54.000 --> 00:13:00.000
+Trong chế độ xem Sự kiện Tài nguyên, bạn có thể tìm thấy lịch sử phân bổ tài nguyên Kim loại và phân bổ giao dịch.
+
+00:13:00.000 --> 00:13:08.000
+Tại đây, bạn cũng có thể xác định tài nguyên Metal bằng nhãn của chúng mà bạn có thể chỉ định theo chương trình thông qua Metal API.
+
+00:13:08.000 --> 00:13:15.000
+Và tương tự như công cụ Phân bổ, bạn có thể tìm thấy dấu vết ngăn xếp cho lịch sử phân bổ trong trình kiểm tra.
+
+00:13:15.000 --> 00:13:21.000
+Công cụ này cũng thêm phân bổ và theo dõi Deallocations dưới thiết bị Metal.
+
+00:13:21.000 --> 00:13:23.000
+Chúng giúp hình dung mật độ của các sự kiện.
+
+00:13:23.000 --> 00:13:29.000
+Cho đến nay, Phân bổ và Sự kiện Tài nguyên Kim loại có thể giúp hiểu được phân bổ bộ nhớ.
+
+00:13:29.000 --> 00:13:33.000
+Tuy nhiên, việc phân bổ không phải lúc nào cũng chuyển thành dấu chân bộ nhớ.
+
+00:13:33.000 --> 00:13:38.000
+Vì vậy, hãy chuyển sang VM Tracker để điều tra việc sử dụng bộ nhớ thực tế.
+
+00:13:38.000 --> 00:13:44.000
+Thiết bị VM Tracker hiển thị bộ nhớ bẩn và nén hoặc hoán đổi không nén.
+
+00:13:44.000 --> 00:13:48.000
+Kích thước bẩn đại diện cho bộ nhớ bẩn không nén.
+
+00:13:48.000 --> 00:13:52.000
+Và Kích thước Hoán đổi đại diện cho bộ nhớ nén hoặc hoán đổi.
+
+00:13:52.000 --> 00:13:57.000
+Trong bản ghi âm này, không có việc sử dụng bộ nhớ nén hoặc hoán đổi từ Trình kết xuất hiện đại.
+
+00:13:57.000 --> 00:14:00.000
+Chế độ xem Tóm tắt chi tiết cho thấy các khu vực VM.
+
+00:14:00.000 --> 00:14:06.000
+Và trong khu vực "tệp ánh xạ", bạn có thể tìm thấy một số tài nguyên ánh xạ bộ nhớ như nội dung trò chơi của mình.
+
+00:14:06.000 --> 00:14:10.000
+Ở đây, Modern Renderer ánh xạ tệp nội dung quán rượu vào bộ nhớ.
+
+00:14:10.000 --> 00:14:17.000
+Vì vậy, đó là tổng quan ngắn gọn về Phân bổ, Sự kiện Tài nguyên Kim loại và Trình theo dõi VM trong Công cụ.
+
+00:14:17.000 --> 00:14:25.000
+Để nhanh chóng tóm tắt lại cách bạn có thể lập hồ sơ tăng trưởng bộ nhớ: Đầu tiên, chọn mẫu Bộ nhớ trò chơi, sau đó, ghi lại và phân tích dấu vết.
+
+00:14:25.000 --> 00:14:31.000
+Đôi khi, bạn có thể lặp lại quá trình này một vài lần khi tái tạo hoặc xác minh các mẫu tăng trưởng bộ nhớ.
+
+00:14:31.000 --> 00:14:37.000
+Chúng tôi hy vọng mẫu Bộ nhớ trò chơi mới có thể giúp bạn hiểu rõ hơn về việc phân bổ bộ nhớ hoặc tăng trưởng dấu chân trong trò chơi của mình.
+
+00:14:37.000 --> 00:14:42.000
+Và vui lòng xem các video khác này để tìm hiểu thêm về cách sử dụng Dụng cụ.
+
+00:14:42.000 --> 00:14:45.000
+Bây giờ, quay lại với Jack.
+
+00:14:45.000 --> 00:14:53.000
+Mẫu bộ nhớ trò chơi trông rất tuyệt và nó sẽ rất hữu ích để giúp hiểu những thay đổi trong việc sử dụng bộ nhớ theo thời gian.
+
+00:14:53.000 --> 00:15:04.000
+Ngoài ra, bạn cũng có thể muốn nắm bắt trạng thái bộ nhớ của trò chơi tại một thời điểm nhất định, vì vậy bạn có thể tìm hiểu sâu hơn về trạng thái bộ nhớ đó và kiểm tra nó thông qua các lăng kính khác nhau.
+
+00:15:04.000 --> 00:15:09.000
+Và vì điều đó, chúng tôi có biểu đồ bộ nhớ và một bộ công cụ.
+
+00:15:09.000 --> 00:15:21.000
+Biểu đồ bộ nhớ là một tệp để lưu trữ hiệu quả ảnh chụp nhanh hoàn chỉnh trạng thái bộ nhớ của trò chơi của bạn, bao gồm lịch sử tạo đối tượng, tài liệu tham khảo và bất kỳ nén hoặc hoán đổi nào.
+
+00:15:21.000 --> 00:15:31.000
+Bạn có thể chụp nhanh bất cứ lúc nào bạn muốn, chẳng hạn như khi một vấn đề xảy ra, hoặc một cặp trong số đó, trước và sau khi một vấn đề xảy ra để so sánh.
+
+00:15:31.000 --> 00:15:38.000
+Để thêm gia vị cho mọi thứ, hãy sử dụng một cuốn sách dạy nấu ăn tương tự về cách phân tích trí nhớ bằng biểu đồ bộ nhớ.
+
+00:15:38.000 --> 00:15:43.000
+Nó bao gồm một thành phần và một phần chuẩn bị.
+
+00:15:43.000 --> 00:15:52.000
+Đối với Thành phần, bạn sẽ cần trò chơi của mình; một thứ gọi là Ghi nhật ký ngăn xếp Malloc; và, một biểu đồ bộ nhớ được ghi lại.
+
+00:15:52.000 --> 00:15:58.000
+Thật nhanh chóng để cấu hình Malloc Stack Logging và chụp biểu đồ bộ nhớ.
+
+00:15:58.000 --> 00:16:03.000
+Malloc Stack Logging ghi lại thông tin phân bổ trong quá trình trò chơi.
+
+00:16:03.000 --> 00:16:05.000
+Bạn có thể tìm thấy nó trong cài đặt Sơ đồ.
+
+00:16:05.000 --> 00:16:13.000
+Chọn hành động Chạy, đi tới Chẩn đoán và đánh dấu vào hộp kiểm Ghi nhật ký ngăn xếp Malloc.
+
+00:16:13.000 --> 00:16:22.000
+Trong trường hợp bạn tự hỏi hai tùy chọn là gì; Tất cả Phân bổ và Lịch sử Miễn phí theo dõi tất cả các đối tượng ngay cả sau khi chúng được phân bổ.
+
+00:16:22.000 --> 00:16:28.000
+Dữ liệu ghi nhật ký có thể chiếm nhiều bộ nhớ hơn, nhưng nó hữu ích cho các vấn đề gỡ lỗi như phân mảnh.
+
+00:16:28.000 --> 00:16:36.000
+Mặt khác, Phân bổ Trực tiếp Chỉ loại bỏ các đối tượng được phân bổ khỏi lịch sử của nó, vì vậy nó nhẹ hơn.
+
+00:16:36.000 --> 00:16:43.000
+Trong trường hợp này, tôi chỉ đang điều tra các tài liệu tham khảo, trên các đối tượng trực tiếp, vì vậy tôi có thể chọn tùy chọn này.
+
+00:16:43.000 --> 00:16:50.000
+Trên thực tế, hầu hết thời gian, Chỉ phân bổ trực tiếp sẽ là lựa chọn được đề xuất của bạn.
+
+00:16:50.000 --> 00:16:56.000
+Ngoài ra, bạn có thể đặt biến môi trường nếu không khởi chạy từ Xcode.
+
+00:16:56.000 --> 00:17:00.000
+Kiểm tra trang hướng dẫn sử dụng malloc để biết một số chế độ ghi âm bổ sung.
+
+00:17:00.000 --> 00:17:03.000
+Sau đó, cũng chuẩn bị một biểu đồ bộ nhớ.
+
+00:17:03.000 --> 00:17:07.000
+Chỉ cần nhấp vào nút biểu đồ bộ nhớ gỡ lỗi trong khu vực gỡ lỗi.
+
+00:17:07.000 --> 00:17:13.000
+Xcode sẽ chụp nhanh bộ nhớ, xử lý nó và nhập trình gỡ lỗi bộ nhớ.
+
+00:17:13.000 --> 00:17:18.000
+Xcode Memory Debugger cung cấp các quan điểm trực quan về việc sử dụng bộ nhớ của trò chơi.
+
+00:17:18.000 --> 00:17:22.000
+Hãy dành một phút để khám phá khung cảnh.
+
+00:17:22.000 --> 00:17:30.000
+Ở phía bên trái, Debug Navigator cung cấp cho bạn một danh sách phân cấp các trường hợp đối tượng.
+
+00:17:30.000 --> 00:17:40.000
+Ở bên phải, Trình kiểm tra tệp cung cấp thông tin hữu ích như dấu chân bộ nhớ, thời gian hoạt động và ngày chụp.
+
+00:17:40.000 --> 00:17:50.000
+Ở khu vực giữa chiếu sáng chế độ xem biểu đồ bộ nhớ nơi bạn có đối tượng đã chọn từ bên trái và cách các tham chiếu kết nối với đối tượng này.
+
+00:17:50.000 --> 00:17:56.000
+Tôi sẽ quay lại biểu đồ này một chút.
+
+00:17:56.000 --> 00:18:05.000
+Và menu Tệp cung cấp cho bạn tùy chọn lưu biểu đồ bộ nhớ này để phân tích trong tương lai hoặc dễ dàng chia sẻ với nhóm của bạn.
+
+00:18:05.000 --> 00:18:12.000
+Đối với một trò chơi Mac, bạn cũng có thể chụp biểu đồ bộ nhớ với chương trình dòng lệnh rò rỉ, sử dụng ID quy trình hoặc tên.
+
+00:18:12.000 --> 00:18:23.000
+Điều này có nghĩa là bạn có thể làm điều đó từ xa trong một trình bao an toàn, vì vậy con trỏ vẫn ở trong trò chơi, trong trường hợp trò chơi của bạn đang chạy toàn màn hình và cần tập trung.
+
+00:18:23.000 --> 00:18:28.000
+Vì vậy, đó là những gì bạn sẽ cần để bắt đầu phân tích biểu đồ bộ nhớ.
+
+00:18:28.000 --> 00:18:41.000
+Bây giờ là lúc để kiểm tra biểu đồ bộ nhớ này bằng cách sử dụng Trình gỡ lỗi bộ nhớ Xcode, cộng với một số công cụ dòng lệnh linh hoạt trong Terminal, để tìm ra phân bổ, dấu chân và hơn thế nữa.
+
+00:18:41.000 --> 00:18:45.000
+Bước đầu tiên tốt là chia nhỏ việc sử dụng bộ nhớ theo danh mục.
+
+00:18:45.000 --> 00:18:50.000
+Chương trình dấu chân thực hiện điều đó.
+
+00:18:50.000 --> 00:18:56.000
+Dấu chân sử dụng thông tin trong biểu đồ bộ nhớ để tạo lại bản tóm tắt cấp cao này.
+
+00:18:56.000 --> 00:19:01.000
+Thông thường, trước tiên bạn sẽ muốn tập trung vào các danh mục lớn hơn.
+
+00:19:01.000 --> 00:19:09.000
+Đối với các biểu đồ bộ nhớ trò chơi như thế này từ mã mẫu Kết xuất Hiện đại, IOAccelerator thường là biểu đồ lớn nhất.
+
+00:19:09.000 --> 00:19:15.000
+Như Seth đã nói, nó bao gồm tài nguyên Kim loại.
+
+00:19:15.000 --> 00:19:25.000
+Ở đây, phân bổ đống đi đến một số danh mục MALLOC_(tiền tố), vì hệ thống nhóm phân bổ đống vào các nhóm kích thước để cải thiện hiệu suất.
+
+00:19:25.000 --> 00:19:36.000
+Những đối tượng này có thể đến từ nhiều nơi, chẳng hạn như plugin của bên thứ ba hoặc thư viện, nơi trò chơi của bạn thực hiện hiệu ứng âm thanh hoặc mô phỏng vật lý.
+
+00:19:36.000 --> 00:19:43.000
+Đây là biểu đồ bộ nhớ từ một trò chơi Apple Arcade tuyệt vời, Manifold Garden, được tạo ra bởi William "Cheer" Studio.
+
+00:19:43.000 --> 00:19:46.000
+Tôi rất vui vì họ cho phép tôi cho bạn thấy việc sử dụng bộ nhớ của trò chơi.
+
+00:19:46.000 --> 00:19:58.000
+Nếu trò chơi của bạn sử dụng công cụ trò chơi, như Manifold Garden sử dụng Unity hoặc bộ phân bổ tùy chỉnh trên bản đồ bộ nhớ, bộ nhớ đó sẽ được hiển thị dưới dạng VM_ALLOCATE không được gắn thẻ như thế này.
+
+00:19:58.000 --> 00:20:08.000
+Đây là một mẹo chuyên nghiệp: trên nền tảng Apple, trò chơi của bạn có thể sử dụng tối đa 16 thẻ dành riêng cho ứng dụng, vì vậy bạn có thể rõ ràng hơn khi sử dụng bộ nhớ.
+
+00:20:08.000 --> 00:20:12.000
+Nó dễ dàng như một sự thay đổi một dòng.
+
+00:20:12.000 --> 00:20:16.000
+Đầu tiên, tạo thẻ từ một trong 16 tùy chọn.
+
+00:20:16.000 --> 00:20:24.000
+Sau đó thay thế dấu trừ bằng thẻ mới này làm "mô tả tệp", khi gọi "em map".
+
+00:20:24.000 --> 00:20:30.000
+Kiểm tra trang hướng dẫn sử dụng "bản đồ chúng" để tìm hiểu cách xác định các thẻ và danh mục.
+
+00:20:30.000 --> 00:20:39.000
+Nếu bạn sử dụng "mach VM phân bổ", hãy bao gồm cùng một cờ trong đối số cờ khi phân bổ.
+
+00:20:39.000 --> 00:20:50.000
+Trong chương trình thế giới dấu chân, kích thước bẩn cũng bao gồm hoán đổi và nén, vì vậy hãy nghĩ về nó như tổng phí cho mỗi danh mục.
+
+00:20:50.000 --> 00:20:56.000
+Đó là một ý tưởng ngắn gọn về thành phần của việc sử dụng bộ nhớ hiện tại và cách nó tạo nên dấu chân.
+
+00:20:56.000 --> 00:21:01.000
+Một số bộ nhớ này ít được sử dụng hơn và bị nén hoặc hoán đổi.
+
+00:21:01.000 --> 00:21:04.000
+Chúng có thể là nguồn tiết kiệm bộ nhớ.
+
+00:21:04.000 --> 00:21:12.000
+Bước tiếp theo là tìm hiểu xem trò chơi sử dụng bao nhiêu bộ nhớ nén hoặc hoán đổi và tối ưu hóa.
+
+00:21:12.000 --> 00:21:16.000
+Đối với điều này, bạn có thể chạy biểu đồ bộ nhớ với vmmap.
+
+00:21:16.000 --> 00:21:22.000
+Nó cung cấp cho bạn kích thước bẩn và hoán đổi, thay vì hai kích thước kết hợp.
+
+00:21:22.000 --> 00:21:33.000
+Cột bẩn này bao gồm bộ nhớ bẩn thông thường hiện không được hoán đổi hoặc nén, trong khi cột được hoán đổi bao gồm kích thước ban đầu của bộ nhớ nén hoặc hoán đổi.
+
+00:21:33.000 --> 00:21:37.000
+Hệ thống thêm hai cột này lại với nhau để xác định dấu chân.
+
+00:21:37.000 --> 00:21:48.000
+Nhưng vì nội dung trong cột kích thước hoán đổi không được sử dụng thường xuyên, nó là một chỉ báo tốt cho những gì cần tìm để tối ưu hóa bộ nhớ trò chơi của bạn.
+
+00:21:48.000 --> 00:21:54.000
+Ồ, nhân tiện, đây là kích thước phân bổ, với cột kích thước ảo.
+
+00:21:54.000 --> 00:22:02.000
+Và kích thước cư trú bao gồm các trang sạch như tệp thực thi và tệp được ánh xạ bộ nhớ.
+
+00:22:02.000 --> 00:22:07.000
+Thuận tiện, vmmap hiển thị phân bổ đống với một bảng riêng biệt.
+
+00:22:07.000 --> 00:22:13.000
+Ở dưới cùng của đầu ra, vmmap nhóm bộ nhớ đống theo vùng.
+
+00:22:13.000 --> 00:22:18.000
+Các khu vực này phản ánh việc sử dụng hoặc vòng đời của chúng trong trò chơi của bạn.
+
+00:22:18.000 --> 00:22:24.000
+Bởi vì tôi đã bật MallocStackLogging, phân bổ trên đống nằm trong khu vực của công cụ.
+
+00:22:24.000 --> 00:22:33.000
+Nếu không, chúng sẽ nằm trong hai vùng mặc định: MallocHelperZone và DefaultMallocZone, dựa trên kích thước phân bổ.
+
+00:22:33.000 --> 00:22:42.000
+Và thông thường bạn có thể bỏ qua các khu vực tiện ích hệ thống nhỏ hơn như vùng QuartzCore.
+
+00:22:42.000 --> 00:22:58.000
+Ngoài ra, nếu bạn nghi ngờ sự phân mảnh, được biểu thị bằng kích thước hoặc tỷ lệ phần trăm phân mảnh cao, như hàng chục hoặc hàng trăm megabyte, phiên WWDC 2021 bao gồm nhiều hơn về các vấn đề phân mảnh.
+
+00:22:58.000 --> 00:23:09.000
+Và chạy vmmap mà không có tóm tắt dấu gạch ngang dấu gạch ngang hoặc để sử dụng vmmap ở chế độ tiêu chuẩn, hiển thị từng vùng vm trong các danh mục đó từng dòng một.
+
+00:23:09.000 --> 00:23:14.000
+Giống như không gian địa chỉ ảo trông như thế nào, như chúng ta đã thảo luận trước đó.
+
+00:23:14.000 --> 00:23:21.000
+Vì vậy, với vmmap, bạn có thể chắt lọc bộ nhớ bẩn ít được sử dụng hơn từ những bộ nhớ được sử dụng tích cực.
+
+00:23:21.000 --> 00:23:30.000
+Và thông thường, cũng có một lượng lớn phân bổ động với nhiều kích cỡ khác nhau, hoặc sử dụng bộ nhớ đống trong trò chơi.
+
+00:23:30.000 --> 00:23:32.000
+Họ cần một cái nhìn đặc biệt.
+
+00:23:32.000 --> 00:23:39.000
+Công cụ đống nhóm các tài nguyên được phân loại theo các lớp của chúng và sắp xếp chúng theo số lượng phiên bản.
+
+00:23:39.000 --> 00:23:47.000
+Các lớp này được xác định trong C++ với VTable, Objective-C hoặc Swift.
+
+00:23:47.000 --> 00:23:53.000
+Chúng tôi đang sử dụng đối số —quiet để bỏ qua tiêu đề về một số siêu dữ liệu.
+
+00:23:53.000 --> 00:23:59.000
+Mới trong năm nay, đống thông minh hơn trong việc xác định các loại đối tượng.
+
+00:23:59.000 --> 00:24:10.000
+Nó sử dụng thông tin được ghi lại bởi Malloc Stack Logging để trình bày người gọi hoặc thư viện có trách nhiệm, vì vậy một đối tượng phi lớn đã là quá khứ.
+
+00:24:10.000 --> 00:24:14.000
+Và đây là biểu đồ bộ nhớ từ Manifold Garden một lần nữa.
+
+00:24:14.000 --> 00:24:27.000
+Trong ví dụ này, lần đầu tiên nó được tiết lộ mức độ sử dụng đống được sử dụng bởi các plugin như FMOD Studio và các thành phần trò chơi như GameAssembly.dylib.
+
+00:24:27.000 --> 00:24:32.000
+Vì vậy, bây giờ bạn có thể được thông báo nhiều hơn về cách bộ nhớ được trải ra.
+
+00:24:32.000 --> 00:24:38.000
+Và nó cũng gợi ý hướng đi để có thêm thông tin về các đối tượng này.
+
+00:24:38.000 --> 00:24:52.000
+Trong ví dụ này, nhà phát triển có thể mở FMOD Studio để tinh chỉnh nhạc nền và hiệu ứng âm thanh trong trò chơi hoặc truy cập Unity để tìm kiếm tối ưu hóa mã trò chơi, v.v.
+
+00:24:52.000 --> 00:24:58.000
+Đôi khi, việc sắp xếp theo tổng kích thước lớp thay vì số lượng phiên bản lớp sẽ hữu ích hơn.
+
+00:24:58.000 --> 00:25:07.000
+Trong biểu đồ bộ nhớ của dự án mẫu Kết xuất Hiện đại, người đóng góp hàng đầu là một lớp sử dụng hơn 258 triệu byte.
+
+00:25:07.000 --> 00:25:24.000
+Để tiếp tục tìm kiếm các đối tượng lớn hơn trong mẫu Kết xuất Hiện đại, hãy sử dụng heap để sắp xếp các đối tượng theo tổng kích thước lớp với —sortBySize và liệt kê tất cả các đối tượng với —showSizes, thay vì tóm tắt của từng lớp.
+
+00:25:24.000 --> 00:25:38.000
+Và, có một đối tượng của NSConcreteMutableData trong Bytes Storage với kích thước 255 triệu byte: trông giống như một đối tượng đáng xem.
+
+00:25:38.000 --> 00:25:40.000
+Tiếp theo, tôi muốn tìm hiểu nó là gì.
+
+00:25:40.000 --> 00:25:44.000
+Và tôi muốn biết địa chỉ của nó để bắt đầu.
+
+00:25:44.000 --> 00:26:00.000
+Tôi thêm —địa chỉ và nhập mẫu NSConcreteMutableData theo sau là ký tự đại diện- ngôi sao dấu chấm và bộ lọc kích thước trong ngoặc để chỉ liệt kê các đối tượng lớn từ 10 megabyte trở lên.
+
+00:26:00.000 --> 00:26:02.000
+Và đây là địa chỉ của đối tượng.
+
+00:26:02.000 --> 00:26:07.000
+Tôi sẽ sử dụng nó trong các bước sau để phân tích chuyên sâu hơn.
+
+00:26:07.000 --> 00:26:13.000
+Vì vậy, đó là công cụ đống, với nhận dạng đối tượng được cải thiện cho các trường hợp.
+
+00:26:13.000 --> 00:26:21.000
+Cho đến nay, bạn đã thấy ba công cụ để hiểu những đối tượng nào đang sử dụng bộ nhớ trong trò chơi và tất cả chúng đều cung cấp các chế độ xem khác nhau.
+
+00:26:21.000 --> 00:26:24.000
+Những gì tôi cho thấy chỉ là một quy trình làm việc.
+
+00:26:24.000 --> 00:26:33.000
+Tùy thuộc vào các mẫu bộ nhớ cụ thể hoặc công nghệ được sử dụng trong trò chơi của bạn, bạn có thể sử dụng chúng theo bất kỳ cách nào phù hợp với nhu cầu của mình.
+
+00:26:33.000 --> 00:26:45.000
+Với những khám phá cho các đối tượng mà chúng ta không hoàn toàn chắc chắn về sự tồn tại của chúng, bước tiếp theo là lấy nguồn gốc của nó, đó là ngăn xếp cuộc gọi phân bổ của nó.
+
+00:26:45.000 --> 00:26:54.000
+Trong trường hợp đối tượng 200 triệu byte trong Kết xuất hiện đại, tôi sử dụng chế độ —callTree và chuyển địa chỉ của nó đến malloc_history.
+
+00:26:54.000 --> 00:27:01.000
+Cùng với đối số đảo ngược bổ sung, tôi có thể tập trung vào các chức năng gần nhất với phân bổ.
+
+00:27:01.000 --> 00:27:03.000
+Và thì đấy.
+
+00:27:03.000 --> 00:27:06.000
+Đây là dấu vết phía sau của việc phân bổ.
+
+00:27:06.000 --> 00:27:13.000
+Tương tự, Xcode Memory Debugger cũng hiển thị lịch sử phân bổ của một đối tượng trong trình kiểm tra.
+
+00:27:13.000 --> 00:27:20.000
+Chỉ cần chọn một đối tượng, nhấp vào Trình kiểm tra bộ nhớ và nó đây rồi.
+
+00:27:20.000 --> 00:27:34.000
+Một ví dụ khác, chuyển VM_ALLOCATE làm mẫu lớp thay vì địa chỉ, để kiểm tra việc sử dụng VM ẩn danh trong trò chơi hoặc plugin của bạn, chẳng hạn như gỡ lỗi bộ phân bổ tùy chỉnh.
+
+00:27:34.000 --> 00:27:48.000
+Cho dù sử dụng Xcode hay malloc_history, bạn có thể biết dấu vết phân bổ trở lại và quyết định xem bạn có muốn đào sâu hơn hay không, bao gồm cả việc đặt điểm dừng ở dòng, để bắt đầu.
+
+00:27:48.000 --> 00:27:55.000
+Và cuối cùng nhưng không kém phần quan trọng, việc điều tra các tham chiếu đối tượng cũng rất hữu ích.
+
+00:27:55.000 --> 00:28:04.000
+Biểu đồ bộ nhớ luôn ghi lại các tham chiếu đối tượng, ngay cả khi MallocStackLogging không được bật vì nhiều lý do.
+
+00:28:04.000 --> 00:28:08.000
+Chúng tôi đã sử dụng rò rỉ trước đây để chụp biểu đồ bộ nhớ bên ngoài Xcode.
+
+00:28:08.000 --> 00:28:10.000
+Rò rỉ làm được nhiều hơn thế.
+
+00:28:10.000 --> 00:28:17.000
+Nó kiểm tra tất cả các tham chiếu trong biểu đồ bộ nhớ, và đó là lý do tại sao nó biết về rò rỉ và giữ lại các chu kỳ.
+
+00:28:17.000 --> 00:28:24.000
+Leaks lấy cây tham chiếu này đến đối tượng bằng cách sử dụng đối số cây theo dõi và địa chỉ đối tượng từ đống.
+
+00:28:24.000 --> 00:28:34.000
+Tuy nhiên, vì đây là một cái cây khá lớn trong ví dụ này, nên có một cách tốt hơn để xem nó hơn là trong Terminal.
+
+00:28:34.000 --> 00:28:43.000
+Với Xcode 14, chúng tôi đã thiết kế lại chế độ xem biểu đồ bộ nhớ để hiển thị cả cạnh đi và đi của đối tượng đã chọn.
+
+00:28:43.000 --> 00:28:49.000
+Nó thậm chí còn có một cửa sổ bật lên lựa chọn hàng xóm mới, để chọn các cạnh bạn muốn Xcode vẽ.
+
+00:28:49.000 --> 00:28:58.000
+Điều này sẽ cải thiện đáng kể năng suất khi cố gắng hiểu các tham chiếu đối tượng trong các trạng thái trò chơi phức tạp.
+
+00:28:58.000 --> 00:29:05.000
+Sau khi khám phá xung quanh một chút, tôi khá chắc chắn rằng trình quản lý kết cấu là thứ đang truy cập vào đối tượng này.
+
+00:29:05.000 --> 00:29:16.000
+Đối với trò chơi của bạn, hãy cân nhắc sử dụng công cụ rò rỉ và chế độ xem biểu đồ bộ nhớ để tìm các mối quan hệ tham chiếu đối tượng quan trọng, để tìm hiểu cách các đối tượng này được truy cập trong trò chơi.
+
+00:29:16.000 --> 00:29:22.000
+Vì vậy, làm thế nào để xem và tìm ra các tham chiếu quan trọng của một đối tượng bằng cách sử dụng rò rỉ hoặc Xcode.
+
+00:29:22.000 --> 00:29:29.000
+Vui lòng xem trang hướng dẫn sử dụng của rò rỉ và trợ giúp Xcode để sử dụng nhiều hơn các công cụ này.
+
+00:29:29.000 --> 00:29:35.000
+Trong sách dạy nấu ăn phân tích biểu đồ bộ nhớ này, mỗi bước sử dụng một số công cụ cụ thể.
+
+00:29:35.000 --> 00:29:41.000
+Tất cả chúng làm việc cùng nhau để hoàn thành phân tích trên biểu đồ bộ nhớ.
+
+00:29:41.000 --> 00:29:51.000
+Tóm lại, điều đầu tiên là bật MallocStackLogging khi bạn mong đợi chụp và phân tích bộ nhớ bằng biểu đồ bộ nhớ.
+
+00:29:51.000 --> 00:29:58.000
+Sau đó chụp biểu đồ bộ nhớ bằng Xcode cho trò chơi của bạn hoặc sử dụng công cụ rò rỉ cho trò chơi Mac của bạn.
+
+00:29:58.000 --> 00:30:02.000
+Tiếp theo, tìm những đồ vật lớn và rắc rối.
+
+00:30:02.000 --> 00:30:11.000
+Dấu chân, vmmap và các công cụ đống cung cấp sự cố bộ nhớ, cả ở mức độ cao và chi tiết.
+
+00:30:11.000 --> 00:30:19.000
+Với malloc_history, bạn có thể tìm ra nơi các đối tượng được phân bổ và rò rỉ có thể phân tích việc sử dụng hoặc tham chiếu đối tượng.
+
+00:30:19.000 --> 00:30:26.000
+Các phiên trước đây bao gồm các hướng dẫn chuyên sâu cũng như các bản trình diễn về việc sử dụng nhiều hơn các công cụ này.
+
+00:30:26.000 --> 00:30:30.000
+Cho đến bây giờ, chúng tôi đã hoãn việc thăm dò tài nguyên Kim loại.
+
+00:30:30.000 --> 00:30:32.000
+Chà, bây giờ là lúc.
+
+00:30:32.000 --> 00:30:35.000
+Để nói với bạn nhiều hơn, đây là Seth.
+
+00:30:35.000 --> 00:30:37.000
+Xin chào lần nữa!
+
+00:30:37.000 --> 00:30:40.000
+Trong các trò chơi, tài nguyên Metal có thể sử dụng một phần lớn bộ nhớ.
+
+00:30:40.000 --> 00:30:44.000
+Nhưng có nhiều cách để tối ưu hóa việc sử dụng bộ nhớ của họ.
+
+00:30:44.000 --> 00:30:50.000
+Ở đây tôi đã tóm tắt danh sách tiết kiệm bộ nhớ mà bạn có thể sử dụng khi tối ưu hóa tài nguyên Metal trong trò chơi của mình.
+
+00:30:50.000 --> 00:30:59.000
+Chúng tôi sẽ xem xét cách Metal Debugger có thể giúp bạn kiểm tra tài nguyên và tìm hiểu một số kỹ thuật nâng cao để giảm hơn nữa bộ nhớ trò chơi của bạn.
+
+00:30:59.000 --> 00:31:03.000
+Metal Debugger là cửa hàng một cửa để gỡ lỗi các trò chơi Metal của bạn.
+
+00:31:03.000 --> 00:31:07.000
+Sau khi chụp khung GPU, bạn có thể tìm thấy một trang tóm tắt.
+
+00:31:07.000 --> 00:31:12.000
+Điều này cung cấp cho bạn một số số liệu thống kê chung về khối lượng công việc đã nắm bắt.
+
+00:31:12.000 --> 00:31:17.000
+Ở nửa dưới của trang, có một danh sách các thông tin chi tiết được chia thành bốn loại.
+
+00:31:17.000 --> 00:31:22.000
+Thông tin chi tiết trong danh mục "Bộ nhớ" đề xuất tiết kiệm bộ nhớ cho trò chơi của bạn.
+
+00:31:22.000 --> 00:31:31.000
+Không có nhiều thông tin chi tiết về bộ nhớ cụ thể cho dấu vết này; chúng ta có thể tiết kiệm chỉ một vài megabyte bộ nhớ sau khi giải quyết những thông tin chi tiết này.
+
+00:31:31.000 --> 00:31:35.000
+Tuy nhiên, có thể tiết kiệm nhiều bộ nhớ hơn dành riêng cho trò chơi của bạn.
+
+00:31:35.000 --> 00:31:42.000
+Để có được bức tranh hoàn chỉnh hơn về bộ nhớ được sử dụng bởi Metal resources, bạn có thể sử dụng Trình xem bộ nhớ bằng cách nhấp vào nút Hiển thị bộ nhớ.
+
+00:31:42.000 --> 00:31:47.000
+Trình xem bộ nhớ cung cấp cho bạn danh sách đầy đủ các tài nguyên được thu thập từ trò chơi.
+
+00:31:47.000 --> 00:31:50.000
+Nửa trên hiển thị các danh mục khác nhau để lọc.
+
+00:31:50.000 --> 00:31:54.000
+Bạn có thể nhanh chóng sử dụng cái này để tra cứu tài nguyên, chẳng hạn như kết cấu.
+
+00:31:54.000 --> 00:31:58.000
+Và ở nửa dưới, bảng chỉ hiển thị các kết cấu.
+
+00:31:58.000 --> 00:32:01.000
+Hãy lấy bộ lọc ra ngay bây giờ.
+
+00:32:01.000 --> 00:32:06.000
+Bảng tài nguyên có một bộ sưu tập các cột để giúp bạn tối ưu hóa trò chơi của mình.
+
+00:32:06.000 --> 00:32:13.000
+Và tôi muốn làm nổi bật một vài cột có thể giúp bạn nhanh chóng xác định một số tài nguyên thú vị.
+
+00:32:13.000 --> 00:32:17.000
+Cột Insights tương tự như những gì chúng ta vừa thấy trên trang tóm tắt.
+
+00:32:17.000 --> 00:32:23.000
+Bạn có thể nhanh chóng xem tất cả các tài nguyên với thông tin chi tiết khi sắp xếp bảng theo cột này.
+
+00:32:23.000 --> 00:32:30.000
+Và nhấp vào biểu tượng thông tin chi tiết sẽ hiển thị một cửa sổ bật lên giải thích việc tìm kiếm và cung cấp một số hành động có thể xảy ra.
+
+00:32:30.000 --> 00:32:34.000
+Ngay bên cạnh cột này là Kích thước được phân bổ.
+
+00:32:34.000 --> 00:32:38.000
+Bạn có thể sắp xếp theo cột này để xem các tài nguyên lớn nhất.
+
+00:32:38.000 --> 00:32:43.000
+Có thể hữu ích khi kiểm tra xem một số tài nguyên có thực sự sử dụng tốt kích thước bộ nhớ của chúng hay không.
+
+00:32:43.000 --> 00:32:55.000
+Ví dụ, một số kết cấu có thể được thay đổi kích thước thành độ phân giải nhỏ hơn và một số mô hình được tải trong bộ đệm có thể sử dụng số lượng poly thấp hơn, vì làm như vậy sẽ không ảnh hưởng đến chất lượng hình ảnh của trò chơi.
+
+00:32:55.000 --> 00:32:59.000
+Có một số cách thay thế để tiết kiệm bộ nhớ kết cấu mà tôi sẽ đề cập trong một phút.
+
+00:32:59.000 --> 00:33:03.000
+Một chuyên mục thú vị khác ở đây là Time Since Last Bound.
+
+00:33:03.000 --> 00:33:08.000
+Bạn có thể sắp xếp các tài nguyên theo cột này để tìm tài nguyên chưa được sử dụng gần đây.
+
+00:33:08.000 --> 00:33:14.000
+Nếu một tài nguyên không bao giờ được sử dụng, bạn nên kiểm tra kỹ xem nó có đáng để tải tài sản hay không.
+
+00:33:14.000 --> 00:33:20.000
+Đối với một tài nguyên đã không bị ràng buộc trong một thời gian, bạn có thể cân nhắc phát hành nó nếu nó không được sử dụng lại trong tương lai.
+
+00:33:20.000 --> 00:33:25.000
+Ngoài ra, bạn có thể đặt trạng thái có thể thanh lọc của nó thành dễ bay hơi.
+
+00:33:25.000 --> 00:33:32.000
+Tài nguyên kim loại có thể ở một trong ba trạng thái có thể thanh lọc được: không bay hơi, dễ bay hơi và trống rỗng.
+
+00:33:32.000 --> 00:33:35.000
+Theo mặc định, tài nguyên không bay hơi.
+
+00:33:35.000 --> 00:33:42.000
+Bằng cách đặt trạng thái có thể thanh lọc thành dễ bay hơi, Metal có thể trục xuất tài nguyên khỏi bộ nhớ trong trường hợp áp suất bộ nhớ cao trong hệ thống.
+
+00:33:42.000 --> 00:33:48.000
+Khi tài nguyên trống, hệ thống sẽ không còn sạc nó về phía dấu chân của trò chơi nữa.
+
+00:33:48.000 --> 00:33:53.000
+Khi trò chơi của bạn cần tài nguyên một lần nữa, hãy kiểm tra xem nội dung có còn ở đó không và tải lại nếu cần.
+
+00:33:53.000 --> 00:34:01.000
+Cân nhắc chỉ sử dụng dễ bay hơi cho các tài nguyên được sử dụng không thường xuyên, vì vậy trạng thái có thể thanh lọc không chống lại bạn.
+
+00:34:01.000 --> 00:34:05.000
+Vì vậy, đó là một số ghi chú chung cho tất cả các tài nguyên.
+
+00:34:05.000 --> 00:34:08.000
+Và bây giờ, chúng ta hãy xem xét kỹ hơn về kết cấu.
+
+00:34:08.000 --> 00:34:12.000
+Không phải tất cả các cột đều được hiển thị theo mặc định trong Trình xem bộ nhớ.
+
+00:34:12.000 --> 00:34:18.000
+Nhấp chuột phải vào tiêu đề bảng sẽ cho phép hiển thị và ẩn các cột như Định dạng Pixel của kết cấu.
+
+00:34:18.000 --> 00:34:23.000
+Bạn có thể nhận được số tiền tiết kiệm khác nhau bằng cách tối ưu hóa định dạng pixel cho một kết cấu.
+
+00:34:23.000 --> 00:34:29.000
+Nhiều kết cấu trong một trò chơi có thể sử dụng định dạng pixel chính xác một nửa bit để giảm việc sử dụng bộ nhớ và băng thông.
+
+00:34:29.000 --> 00:34:35.000
+Trong trường hợp bạn cần một kết cấu với một thành phần alpha duy nhất, bạn có thể tránh nhiều kênh màu.
+
+00:34:35.000 --> 00:34:41.000
+Và cuối cùng, một số kết cấu chỉ đọc có thể được hưởng lợi từ việc nén khối để sử dụng bộ nhớ thấp hơn.
+
+00:34:41.000 --> 00:34:46.000
+Đối với các định dạng pixel nén khối, có các tùy chọn như ASTC và BC.
+
+00:34:46.000 --> 00:34:55.000
+Ngoài ra, kể từ A15 Bionic, bạn có thể sử dụng nén mất dữ liệu cho kết cấu và hiển thị các mục tiêu để tiết kiệm bộ nhớ trong khi vẫn giữ được chất lượng bất cứ khi nào có thể.
+
+00:34:55.000 --> 00:35:00.000
+Vui lòng xem các video trước đó để biết thêm chi tiết.
+
+00:35:00.000 --> 00:35:05.000
+Và đó là một số tiết kiệm bộ nhớ mà bạn có thể nhanh chóng khám phá bằng cách sử dụng Trình xem bộ nhớ.
+
+00:35:05.000 --> 00:35:10.000
+Nhưng có một vài kỹ thuật bổ sung bạn có thể thực hiện để tối ưu hóa hơn nữa trò chơi của mình.
+
+00:35:10.000 --> 00:35:16.000
+Nếu một kết cấu chỉ được sử dụng bằng một lần, bạn có thể đặt chế độ lưu trữ của nó thành không bộ nhớ để tiết kiệm bộ nhớ và băng thông.
+
+00:35:16.000 --> 00:35:23.000
+Các kết cấu không có bộ nhớ hoạt động tốt cho các mục tiêu kết xuất tạm thời, như chiều sâu, khuôn tô hoặc kết cấu đa mẫu.
+
+00:35:23.000 --> 00:35:31.000
+Mặt khác, nếu kết cấu chỉ được sử dụng bởi GPU, bạn có thể đặt chế độ lưu trữ của nó thành riêng tư hoặc được chia sẻ hoặc quản lý.
+
+00:35:31.000 --> 00:35:37.000
+Xin nhắc lại, chế độ quản lý không cần thiết trên Apple silicon Macs, giống như trên iPhone và iPad.
+
+00:35:37.000 --> 00:35:39.000
+Đây là một ví dụ điển hình.
+
+00:35:39.000 --> 00:35:42.000
+Trò chơi có kết cấu Depth32Float_Stencil8.
+
+00:35:42.000 --> 00:35:51.000
+Kết cấu chiều sâu được sử dụng trên các đường chuyền, nhưng nội dung của kết cấu stprint bị loại bỏ và sẽ không được sử dụng sau này trong khung.
+
+00:35:51.000 --> 00:35:59.000
+Vì vậy, thay vào đó, trò chơi có thể sử dụng hai kết cấu và làm cho kết cấu stprint không có bộ nhớ, để tiết kiệm bộ nhớ và băng thông.
+
+00:35:59.000 --> 00:36:05.000
+Cuối cùng, tôi muốn đề cập đến một kỹ thuật khác có thể thú vị với bạn để tận dụng tối đa ký ức trong trò chơi của bạn.
+
+00:36:05.000 --> 00:36:09.000
+Bạn có thể sử dụng các tài nguyên bí danh từ một đống nếu trò chơi của bạn không sử dụng chúng cùng một lúc.
+
+00:36:09.000 --> 00:36:13.000
+Họ có thể chia sẻ bộ nhớ được hỗ trợ bởi cùng một phân bổ.
+
+00:36:13.000 --> 00:36:17.000
+Nhưng hãy hết sức cẩn thận khi đồng bộ hóa quyền truy cập vào các tài nguyên đó.
+
+00:36:17.000 --> 00:36:23.000
+Bạn có thể xem bài nói chuyện "Go bindless with Metal 3" để tìm hiểu thêm về cách sử dụng các tài nguyên được phân bổ từ một đống.
+
+00:36:23.000 --> 00:36:26.000
+Vì vậy, điều đó kết thúc danh sách kiểm tra tiết kiệm bộ nhớ của chúng tôi.
+
+00:36:26.000 --> 00:36:31.000
+Và tôi hy vọng danh sách kiểm tra này sẽ giúp bạn kiểm tra tài nguyên Metal trong trò chơi của mình.
+
+00:36:31.000 --> 00:36:38.000
+Để tìm hiểu thêm về cách sử dụng Metal Debugger để tối ưu hóa bộ nhớ trò chơi của bạn, vui lòng xem các cuộc nói chuyện WWDC khác này.
+
+00:36:38.000 --> 00:36:41.000
+Và trở lại với bạn, Jack.
+
+00:36:41.000 --> 00:36:42.000
+Cảm ơn bạn, Seth.
+
+00:36:42.000 --> 00:36:50.000
+Hôm nay, chúng tôi đã thực hiện một chuyến tham quan có hướng dẫn và khám phá nhiều điều thú vị mà bạn có thể làm để hiểu và cải thiện việc sử dụng bộ nhớ trong trò chơi của mình.
+
+00:36:50.000 --> 00:37:01.000
+Đầu tiên, dấu chân bộ nhớ là thước đo chính để hiểu việc sử dụng bộ nhớ trong trò chơi của bạn và nó bao gồm bộ nhớ bẩn cộng với bộ nhớ nén và hoán đổi.
+
+00:37:01.000 --> 00:37:05.000
+Sau đó, chúng tôi đã trải nghiệm các công cụ gỡ lỗi bộ nhớ mạnh mẽ.
+
+00:37:05.000 --> 00:37:11.000
+Seth đã chỉ cho chúng ta cách Instruments trao quyền lập hồ sơ bộ nhớ với các bản nhạc đo từ xa hữu ích.
+
+00:37:11.000 --> 00:37:16.000
+Mẫu Game Memory mới được thiết kế chính xác cho công việc này.
+
+00:37:16.000 --> 00:37:22.000
+Sau đó, tôi đã trình bày biểu đồ bộ nhớ để lưu trữ ảnh chụp nhanh trạng thái bộ nhớ trò chơi.
+
+00:37:22.000 --> 00:37:31.000
+Có các chương trình dòng lệnh linh hoạt và mạnh mẽ để phân tích biểu đồ bộ nhớ cho các đối tượng, tài liệu tham khảo và lịch sử phân bổ.
+
+00:37:31.000 --> 00:37:38.000
+Những cải tiến trong công cụ đống và Trình gỡ lỗi bộ nhớ Xcode được thiết kế lại sẽ tăng cường phân tích bộ nhớ trò chơi.
+
+00:37:38.000 --> 00:37:51.000
+Cuối cùng, Seth đã chia sẻ danh sách kiểm tra tiết kiệm bộ nhớ cho tài nguyên Metal và cách Metal Debugger có thể giúp trả lời các câu hỏi về việc sử dụng tài nguyên Metal trong trò chơi của bạn.
+
+00:37:51.000 --> 00:37:58.000
+Bạn cũng có thể tìm hiểu thêm từ các phiên WWDC khác, tài liệu và các trang hướng dẫn sử dụng.
+
+00:37:58.000 --> 00:38:02.000
+Chúng tôi không ngừng phát triển các công cụ tốt nhất và linh hoạt nhất cho bạn.
+
+00:38:02.000 --> 00:38:04.000
+Vậy tại sao không thử chúng?
+
+00:38:04.000 --> 00:38:07.000
+Chúng có thể chỉ là những gì bạn đang tìm kiếm.
+
+00:38:07.000 --> 00:38:15.000
+Và đừng ngần ngại chia sẻ với chúng tôi bất kỳ phản hồi nào bạn có thể có, thông qua bất kỳ kênh nào như Trợ lý phản hồi.
+
+00:38:15.000 --> 23:59:59.000
+Hãy vui vẻ trong hành trình ký ức của bạn, và cảm ơn vì đã xem. ♪ ♪
+

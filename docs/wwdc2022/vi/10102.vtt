@@ -1,0 +1,401 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:10.000
+Xin chào và chào mừng.
+
+00:00:10.000 --> 00:00:13.000
+Tôi là Galo Avila, quản lý kỹ thuật trong Phần mềm GPU.
+
+00:00:13.000 --> 00:00:19.000
+Trong phiên này, Eylon và tôi rất vui mừng được chia sẻ cách bạn có thể cải thiện thế hệ nhị phân GPU của ứng dụng với Metal 3.
+
+00:00:19.000 --> 00:00:26.000
+Đầu tiên, tôi sẽ mô tả cách biên dịch ngoại tuyến có thể giúp bạn giảm tình trạng nói lắp ứng dụng, lần khởi chạy đầu tiên và thời gian tải cấp độ mới.
+
+00:00:26.000 --> 00:00:35.000
+Sau đó, Eylon sẽ giải thích cách bạn có thể sử dụng tùy chọn tối ưu hóa cho trình biên dịch kích thước, để điều chỉnh các phép biến đổi mở rộng mã và cải thiện thời gian biên dịch của bạn.
+
+00:00:35.000 --> 00:00:39.000
+Biên dịch ngoại tuyến cho phép bạn chuyển thế hệ nhị phân GPU sang thời gian xây dựng dự án.
+
+00:00:39.000 --> 00:00:47.000
+Để hiểu đầy đủ về những lợi ích mà việc áp dụng có thể mang lại cho ứng dụng Metal của bạn, tôi sẽ bắt đầu bằng cách xem xét các cách mà bạn đã có thể tạo ra một tệp nhị phân GPU.
+
+00:00:47.000 --> 00:00:52.000
+Trong ứng dụng Metal của bạn, việc tạo nhị phân GPU xảy ra cả ở thời điểm xây dựng và thời gian chạy.
+
+00:00:52.000 --> 00:00:56.000
+Ví dụ, giả sử bạn khởi tạo một thư viện kim loại từ nguồn.
+
+00:00:56.000 --> 00:01:02.000
+Điều này tạo ra tại thời gian chạy ứng dụng Đại diện Trung gian của Apple, còn được gọi là AIR.
+
+00:01:02.000 --> 00:01:11.000
+Đây có thể là một hoạt động chuyên sâu về CPU, bạn có thể chuyển sang thời gian xây dựng ứng dụng bằng cách biên dịch trước nguồn của mình vào thư viện Metal và thay vào đó khởi tạo từ một tệp.
+
+00:01:11.000 --> 00:01:18.000
+Khi thư viện Metal của bạn nằm trong bộ nhớ, việc tạo Bộ mô tả trạng thái đường ống chứa trạng thái và các chức năng là một thao tác nhẹ.
+
+00:01:18.000 --> 00:01:28.000
+Cho đến khi bạn tạo đối tượng trạng thái đường ống của mình, đây có thể là một hoạt động chuyên sâu khác của CPU, nơi diễn ra việc tạo nhị phân GPU đúng lúc.
+
+00:01:28.000 --> 00:01:36.000
+Vì thế hệ nhị phân GPU trong thời gian chạy có thể là một hoạt động chuyên sâu về CPU, Metal giúp bạn tăng tốc độ tạo đối tượng trạng thái đường ống.
+
+00:01:36.000 --> 00:01:41.000
+Khi bạn khởi tạo một PSO, Metal sẽ lưu trữ các tệp nhị phân GPU của bạn trong bộ nhớ cache hệ thống tệp của nó.
+
+00:01:41.000 --> 00:01:46.000
+Và mỗi khi một PSO mới được tạo ra, bất kỳ chức năng mới được tạo nào cũng được thêm vào.
+
+00:01:46.000 --> 00:01:52.000
+Vì vậy, bất kỳ tệp nhị phân nào được tạo trước đó được tham chiếu sẽ được tải từ bộ nhớ cache.
+
+00:01:52.000 --> 00:01:58.000
+Metal cũng cho phép bạn kiểm soát rõ ràng khi nào và ở đâu các tệp nhị phân GPU được lưu trong bộ nhớ cache bằng Kho lưu trữ nhị phân.
+
+00:01:58.000 --> 00:02:05.000
+Chỉ cần sử dụng bộ mô tả PSO để lưu trữ tệp nhị phân GPU trong kho lưu trữ, bao nhiêu lần bạn cần.
+
+00:02:05.000 --> 00:02:09.000
+Sau đó, việc tạo PSO của bạn trở thành một hoạt động nhẹ.
+
+00:02:09.000 --> 00:02:14.000
+Kho lưu trữ nhị phân cho phép bộ nhớ đệm linh hoạt hơn, nhưng chúng vẫn phải được tạo trong thời gian chạy.
+
+00:02:14.000 --> 00:02:20.000
+Trong nhiều trường hợp, điều bạn thực sự muốn là tạo ra những kho lưu trữ đó tại thời điểm xây dựng, và bây giờ cuối cùng bạn cũng có thể.
+
+00:02:20.000 --> 00:02:29.000
+Với thế hệ nhị phân ngoại tuyến, bạn chỉ định một tạo tác mới tại thời điểm xây dựng dự án được gọi là tập lệnh đường ống kim loại, cùng với nguồn Metal hoặc thư viện Metal.
+
+00:02:29.000 --> 00:02:35.000
+Tập lệnh đường ống là chuỗi công cụ biên dịch của bạn tương đương với một tập hợp các bộ mô tả đường ống trong API.
+
+00:02:35.000 --> 00:02:38.000
+Đầu ra của quá trình biên dịch của bạn là một kho lưu trữ nhị phân.
+
+00:02:38.000 --> 00:02:42.000
+Không có thêm việc tạo mã GPU nào diễn ra trong thời gian chạy ứng dụng.
+
+00:02:42.000 --> 00:02:48.000
+Chỉ tải kho lưu trữ nhị phân của bạn được xây dựng ngoại tuyến để tăng tốc độ tạo PSO của bạn.
+
+00:02:48.000 --> 00:02:55.000
+Biên dịch ngoại tuyến mang lại lợi ích cho ứng dụng của bạn bằng cách giảm chi phí CPU thời gian chạy, đó là cốt lõi của những gì làm cho Metal trở thành một API cấp thấp.
+
+00:02:55.000 --> 00:03:00.000
+Hơn nữa, việc áp dụng có thể cải thiện trải nghiệm ứng dụng của bạn theo hai cách đáng chú ý.
+
+00:03:00.000 --> 00:03:07.000
+Lần ra mắt đầu tiên và thời gian tải cấp độ mới có thể trở nên nhanh hơn đáng kể, có khả năng dẫn đến sự tương tác và tương tác lớn hơn.
+
+00:03:07.000 --> 00:03:15.000
+Stutters hoặc giảm tốc độ khung hình, do quá trình biên dịch thời gian chạy cuối cùng có thể được gỡ bỏ, mà không có chi phí bộ nhớ hoặc CPU của các khung trước khi làm nóng.
+
+00:03:15.000 --> 00:03:19.000
+Tôi sẽ khám phá những lợi ích này chi tiết hơn tiếp theo.
+
+00:03:19.000 --> 00:03:22.000
+Ở đây bạn có thế hệ nhị phân thời gian chạy ứng dụng truyền thống của mình.
+
+00:03:22.000 --> 00:03:31.000
+Trong ví dụ này, ứng dụng của bạn dành khoảng 2/3 thời gian để biên dịch các tệp nhị phân GPU phía sau màn hình tải, trước khi bạn có thể bắt đầu tương tác với nó.
+
+00:03:31.000 --> 00:03:43.000
+Nhưng với việc biên dịch ngoại tuyến, thế hệ đổ bóng thời gian chạy của bạn chuyển sang thời gian xây dựng ứng dụng, việc tạo PSO diễn ra trong một phần nhỏ thời gian và bạn có thể tương tác với ứng dụng của mình sớm hơn thay vì chạy không tải ở màn hình tải.
+
+00:03:43.000 --> 00:03:47.000
+Biên dịch ngoại tuyến cũng giúp giảm nói lắp.
+
+00:03:47.000 --> 00:03:56.000
+Với việc tạo nhị phân thời gian chạy truyền thống, bạn có thể có quá nhiều trạng thái đường ống để tạo tại thời điểm tải, vì vậy thay vào đó bạn có thể đang tạo một số trạng thái đúng lúc.
+
+00:03:56.000 --> 00:04:03.000
+Và khi điều đó xảy ra, bạn có thể gặp phải tình trạng giảm khung hình do việc biên dịch tạm thời làm gián đoạn mã hóa lệnh của bạn.
+
+00:04:03.000 --> 00:04:10.000
+Biên dịch ngoại tuyến loại bỏ những bong bóng phiền phức đó, bởi vì bạn có thể biên dịch nhiều đổ bóng hơn tại thời điểm xây dựng ứng dụng.
+
+00:04:10.000 --> 00:04:16.000
+Tiếp theo, tôi sẽ chia sẻ quy trình làm việc mới của nhà phát triển để giúp bạn khai thác những lợi ích của việc biên dịch ngoại tuyến.
+
+00:04:16.000 --> 00:04:21.000
+Trong quy trình làm việc sau đây, bạn sẽ học cách sử dụng các tính năng chuỗi công cụ mới để xây dựng các tệp nhị phân GPU ngoại tuyến.
+
+00:04:21.000 --> 00:04:25.000
+Tôi sẽ chỉ cho bạn cách tạo tạo tạo tác nhập tập lệnh đường ống mới của bạn.
+
+00:04:25.000 --> 00:04:29.000
+Sau đó, cách gọi chuỗi công cụ để tạo tệp nhị phân GPU.
+
+00:04:29.000 --> 00:04:38.000
+Tạo tác tập lệnh đường ống là mô tả được định dạng JSON của một hoặc nhiều bộ mô tả trạng thái đường ống API và có thể được tạo theo nhiều cách.
+
+00:04:38.000 --> 00:04:46.000
+Ví dụ: tác giả chúng trong trình chỉnh sửa JSON yêu thích của bạn hoặc Thu thập chúng từ các kho lưu trữ nhị phân được tuần tự hóa trong quá trình phát triển và thử nghiệm.
+
+00:04:46.000 --> 00:04:54.000
+Ở đây bạn có một đoạn mã Metal tạo ra một bộ mô tả đường ống kết xuất với trạng thái và chức năng và biểu diễn JSON tương đương của nó.
+
+00:04:54.000 --> 00:04:59.000
+Đầu tiên, tệp thư viện kim loại API của bạn được chỉ định là thuộc tính đường dẫn thư viện.
+
+00:04:59.000 --> 00:05:04.000
+Sau đó, tên hàm mô tả kết xuất API của bạn dưới dạng thuộc tính đường ống kết xuất.
+
+00:05:04.000 --> 00:05:11.000
+Cuối cùng, trạng thái đường ống khác, như định dạng raster_sample_count hoặc pixel, cũng được ghi lại dưới dạng thuộc tính tập lệnh.
+
+00:05:11.000 --> 00:05:16.000
+Tìm kiếm thêm chi tiết lược đồ JSON trong tài liệu dành cho nhà phát triển của Metal.
+
+00:05:16.000 --> 00:05:22.000
+Bạn cũng có thể muốn bắt đầu tạo tập lệnh JSON và sử dụng thời gian chạy Metal có thể hữu ích.
+
+00:05:22.000 --> 00:05:27.000
+Chỉ cần tạo kho lưu trữ nhị phân của bạn trong thời gian chạy và tuần tự hóa chúng trong quá trình phát triển và thử nghiệm của bạn.
+
+00:05:27.000 --> 00:05:32.000
+Bây giờ tôi sẽ chỉ cho bạn cách bạn có thể hoàn thành điều này với Metal API.
+
+00:05:32.000 --> 00:05:48.000
+Bạn bắt đầu quá trình thu thập thời gian chạy bằng cách tạo bộ mô tả đường ống của mình với trạng thái và chức năng, thêm nó vào kho lưu trữ, tạo ra tệp nhị phân GPU và tuần tự hóa nó vào hệ thống tệp để nhập và tải từ gói ứng dụng của bạn.
+
+00:05:48.000 --> 00:05:52.000
+Thời gian chạy Metal 3 lưu trữ bộ mô tả đường ống của bạn cùng với tệp nhị phân GPU.
+
+00:05:52.000 --> 00:05:55.000
+Bây giờ tôi sẽ chỉ cho bạn cách trích xuất chúng.
+
+00:05:55.000 --> 00:06:00.000
+Nguồn kim loại cho phép bạn trích xuất tập lệnh đường ống JSON của mình từ một kho lưu trữ hiện có.
+
+00:06:00.000 --> 00:06:05.000
+Điều này rất hữu ích để di chuyển thế hệ nhị phân của bạn từ thời gian chạy sang thời gian xây dựng ứng dụng.
+
+00:06:05.000 --> 00:06:10.000
+Chỉ cần gọi nguồn kim loại với các bộ đệm phẳng và các tùy chọn thư mục đầu ra.
+
+00:06:10.000 --> 00:06:14.000
+Kết quả là một tệp tập lệnh đường ống, bạn có thể chỉnh sửa để tạo các tệp nhị phân bổ sung.
+
+00:06:14.000 --> 00:06:18.000
+Bây giờ, tôi sẽ chỉ cho bạn cách gọi chuỗi công cụ.
+
+00:06:18.000 --> 00:06:23.000
+Tạo một tệp nhị phân GPU từ giai đoạn xây dựng dự án Xcode thật dễ dàng.
+
+00:06:23.000 --> 00:06:29.000
+Chỉ cần gọi kim loại như bạn làm từ thiết bị đầu cuối với nguồn, tập lệnh đường ống và tệp đầu ra của bạn.
+
+00:06:29.000 --> 00:06:36.000
+Thư viện kim loại đầu ra của bạn hiện chứa GPU nhị phân và có thể được triển khai trên bất kỳ thiết bị hỗ trợ chuỗi công cụ nào.
+
+00:06:36.000 --> 00:06:42.000
+Và nếu thay vì nguồn, bạn có một thư viện Metal, bạn cũng có thể chuyển nó đến chuỗi công cụ.
+
+00:06:42.000 --> 00:06:48.000
+Tạo một tệp nhị phân từ một thư viện Metal đã có từ trước cũng dễ dàng như vậy với công cụ dịch Metal.
+
+00:06:48.000 --> 00:06:53.000
+Chỉ cần gọi metal-tt như bạn làm trong một thiết bị đầu cuối với nguồn, tập lệnh đường ống và tệp đầu ra của bạn.
+
+00:06:53.000 --> 00:07:00.000
+Thư viện Metal kết quả của bạn hiện chứa GPU nhị phân cho tất cả các thiết bị được hỗ trợ chuỗi công cụ.
+
+00:07:00.000 --> 00:07:05.000
+Bây giờ bạn đã biết cách tạo các tệp nhị phân ngoại tuyến, tôi sẽ xem lại cách tải chúng.
+
+00:07:05.000 --> 00:07:10.000
+Chỉ cần cung cấp URL nhị phân khi tạo bộ mô tả lưu trữ và sử dụng nó để khởi tạo kho lưu trữ.
+
+00:07:10.000 --> 00:07:12.000
+Thế là xong!
+
+00:07:12.000 --> 00:07:18.000
+Để biết thêm thông tin về API lưu trữ nhị phân của Metal, vui lòng tham khảo các cuộc nói chuyện của những năm trước của chúng tôi.
+
+00:07:18.000 --> 00:07:25.000
+Cuối cùng, một lưu ý về cách Metal xử lý khả năng tương thích nhị phân GPU cho các hiện vật được tạo ngoại tuyến.
+
+00:07:25.000 --> 00:07:30.000
+Để đảm bảo các tệp nhị phân được tạo ngoại tuyến của bạn tương thích về phía trước với các phiên bản và sản phẩm hệ điều hành trong tương lai.
+
+00:07:30.000 --> 00:07:34.000
+Metal duyên dáng nâng cấp kho lưu trữ nhị phân của bạn trong quá trình cập nhật hệ điều hành hoặc tại thời điểm cài đặt ứng dụng.
+
+00:07:34.000 --> 00:07:38.000
+Nó làm như vậy không đồng bộ, và trong nền.
+
+00:07:38.000 --> 00:07:45.000
+Tôi nóng lòng chờ đợi bạn khai thác những lợi ích của việc biên dịch ngoại tuyến để loại bỏ tình trạng nói lắp thời gian chạy và giảm thời gian khởi chạy đầu tiên và thời gian tải cấp độ mới.
+
+00:07:45.000 --> 00:07:49.000
+Những cải tiến như vậy có thể hữu hình đối với những người khác và nâng cao trải nghiệm ứng dụng tổng thể của họ.
+
+00:07:49.000 --> 00:07:51.000
+Bây giờ, đến Eylon.
+
+00:07:51.000 --> 00:07:53.000
+Eylon: Cảm ơn, Galo.
+
+00:07:53.000 --> 00:07:58.000
+Tiếp theo, tôi sẽ giới thiệu tùy chọn biên dịch mới, tối ưu hóa cho kích thước.
+
+00:07:58.000 --> 00:08:02.000
+Trình biên dịch Metal tối ưu hóa mã mạnh mẽ cho hiệu suất thời gian chạy.
+
+00:08:02.000 --> 00:08:09.000
+Một số tối ưu hóa mở rộng kích thước chương trình GPU, điều này có thể gây ra chi phí bất ngờ.
+
+00:08:09.000 --> 00:08:14.000
+Ví dụ, hàm nội tuyến là một tối ưu hóa để tránh chi phí của một cuộc gọi hàm.
+
+00:08:14.000 --> 00:08:19.000
+Nó hoạt động bằng cách nội tuyến nội dung của hàm được gọi vào trang web cuộc gọi.
+
+00:08:19.000 --> 00:08:34.000
+Hạt nhân ví dụ này trông không giống như nhiều mã, nhưng sau khi nội tuyến, nó sẽ chứa một bản sao của các hàm 'f' và 'g', và cũng có khả năng của các hàm được gọi từ 'f' và 'g', chẳng hạn như trình trợ giúp và các hàm thư viện không nguyên thủy.
+
+00:08:34.000 --> 00:08:44.000
+Một tối ưu hóa khác là mở vòng lặp, nội tuyến các bản sao bổ sung của phần thân vòng lặp, để phơi bày tính song song giữa các lần lặp và để tránh chi phí phân nhánh.
+
+00:08:44.000 --> 00:08:53.000
+Trình biên dịch có thể hủy cuộn ít nhất hai lần lặp của vòng lặp hoặc nhiều như tất cả các lần lặp của một vòng lặp có giới hạn cố định.
+
+00:08:53.000 --> 00:09:04.000
+Khi những tối ưu hóa như thế này tạo ra một chương trình rất lớn, trình biên dịch cũng phải dành nhiều thời gian hơn để biên dịch nó và trong một số tình huống, bạn có thể muốn tránh những chi phí đó.
+
+00:09:04.000 --> 00:09:10.000
+Xcode 14 giới thiệu một chế độ tối ưu hóa kim loại mới: tối ưu hóa kích thước.
+
+00:09:10.000 --> 00:09:18.000
+Chế độ này giới hạn các phép biến đổi mở rộng kích thước, chẳng hạn như nội tuyến và mở vòng lặp, khi trình biên dịch áp dụng tối ưu hóa hiệu suất.
+
+00:09:18.000 --> 00:09:27.000
+Lợi ích dự kiến là giữ cho GPU nhị phân nhỏ hơn và thời gian biên dịch ngắn hơn, trong trường hợp tối ưu hóa mặc định được chứng minh là quá đắt.
+
+00:09:27.000 --> 00:09:32.000
+Khi tối ưu hóa kích thước, kết quả có thể có hiệu suất thời gian chạy thấp hơn.
+
+00:09:32.000 --> 00:09:39.000
+Điều đó có thực sự xảy ra hay không phụ thuộc vào chương trình, vì vậy bạn sẽ cần thử cả hai chế độ tối ưu hóa và so sánh.
+
+00:09:39.000 --> 00:09:43.000
+Tối ưu hóa kích thước có thể không cải thiện kích thước và thời gian biên dịch cho tất cả các bộ đổ bóng.
+
+00:09:43.000 --> 00:09:50.000
+Nó rất có thể mang lại lợi ích cho các chương trình lớn với các đường dẫn và vòng lặp cuộc gọi sâu, trong đó nội tuyến và mở cuộn là phổ biến.
+
+00:09:50.000 --> 00:09:57.000
+Tùy chọn này đáng để thử bất cứ khi nào bạn gặp phải thời gian biên dịch dài bất ngờ từ tối ưu hóa mặc định.
+
+00:09:57.000 --> 00:10:02.000
+Tùy chọn có sẵn cho dù biên dịch tại thời điểm xây dựng dự án hay trong thời gian chạy ứng dụng.
+
+00:10:02.000 --> 00:10:06.000
+Đây là một trường hợp mà tối ưu hóa kích thước có thể tạo ra sự khác biệt.
+
+00:10:06.000 --> 00:10:15.000
+Cycles là một dự án mã nguồn mở triển khai trình kết xuất sản xuất cho môi trường thiết kế Blender 3D và gần đây đã được cập nhật để hỗ trợ Metal.
+
+00:10:15.000 --> 00:10:28.000
+Apple gần đây đã tham gia Quỹ Phát triển Blender và một trong những điều chúng tôi học được là các thuật toán truy tìm đường dẫn của Blender sử dụng các bộ đổ bóng tính toán lớn, với nhiều chức năng và vòng lặp trợ giúp và thời gian biên dịch của nó có thể tăng lên đến vài phút.
+
+00:10:28.000 --> 00:10:36.000
+Hóa ra đó chính xác là loại đổ bóng có thể hưởng lợi từ tùy chọn tối ưu hóa kích thước mới của Metal 3.
+
+00:10:36.000 --> 00:10:48.000
+Khi kết xuất những cảnh này trên GPU Apple Silicon, cho phép tối ưu hóa kích thước đã cải thiện Thời gian thiết lập của Blender, bao gồm biên dịch các đường ống đổ bóng, lên đến 1,4 lần.
+
+00:10:48.000 --> 00:10:52.000
+Và nó cung cấp tốc độ đó với rất ít hoặc không có sự xuống cấp trong Thời gian kết xuất.
+
+00:10:52.000 --> 00:10:57.000
+Một số kết xuất chậm lại đến 4%, và một số không chậm chút nào.
+
+00:10:57.000 --> 00:11:00.000
+Vì vậy, hiệu suất thời gian chạy thấp hơn là có thể.
+
+00:11:00.000 --> 00:11:04.000
+Nhưng trong một số trường hợp, tối ưu hóa kích thước cũng có thể cải thiện hiệu suất thời gian chạy.
+
+00:11:04.000 --> 00:11:07.000
+Đây là một ví dụ.
+
+00:11:07.000 --> 00:11:14.000
+Đây là những tốc độ Thời gian kết xuất cho cùng một cảnh từ việc cho phép tối ưu hóa kích thước trên GPU Intel.
+
+00:11:14.000 --> 00:11:20.000
+Lợi ích không chỉ là biên dịch nhanh hơn, mà còn là một số kết xuất nhanh hơn, lên đến 1.6x.
+
+00:11:20.000 --> 00:11:21.000
+Làm thế nào?
+
+00:11:21.000 --> 00:11:35.000
+Bởi vì một chương trình GPU nhỏ hơn có thể tránh được một số hình phạt thời gian chạy đi kèm với kích thước lớn: nó có thể ít bị bỏ lỡ bộ nhớ cache lệnh hơn hoặc cần ít thanh ghi hơn, điều này có nghĩa là ít sự cố tràn vào bộ nhớ hơn hoặc thậm chí nhiều luồng song song hơn.
+
+00:11:35.000 --> 00:11:40.000
+Hãy nhớ rằng, những kết quả này không phải là điển hình của tất cả các bộ đổ bóng và cảnh, và có thể giảm hiệu suất.
+
+00:11:40.000 --> 00:11:47.000
+Đối với dự án của bạn, bạn sẽ cần đánh giá tác động thực tế đến cả thời gian biên dịch và hiệu suất thời gian chạy.
+
+00:11:47.000 --> 00:11:53.000
+Bạn có thể kích hoạt tối ưu hóa kích thước khi biên dịch từ nguồn Kim loại, trong ba môi trường khác nhau.
+
+00:11:53.000 --> 00:11:58.000
+Trong giao diện người dùng Xcode 14, chỉ định tối ưu hóa kích thước làm cài đặt xây dựng.
+
+00:11:58.000 --> 00:12:03.000
+Trong "Trình biên dịch kim loại - Tùy chọn xây dựng" tìm cài đặt "Cấp độ tối ưu hóa".
+
+00:12:03.000 --> 00:12:07.000
+Cấp độ "Mặc định" tối ưu hóa cho hiệu suất, như Metal đã làm trong quá khứ.
+
+00:12:07.000 --> 00:12:11.000
+Cấp độ "Kích thước" cho phép tối ưu hóa kích thước.
+
+00:12:11.000 --> 00:12:18.000
+Khi biên dịch nguồn Metal theo dòng lệnh, chỉ định tối ưu hóa cho kích thước bằng cách sử dụng tùy chọn '-Os'.
+
+00:12:18.000 --> 00:12:23.000
+Ví dụ đầu tiên chỉ định tùy chọn cho một lệnh biên dịch và liên kết duy nhất.
+
+00:12:23.000 --> 00:12:30.000
+Ví dụ thứ hai có hai lệnh biên dịch và chỉ định tùy chọn chỉ một trong số chúng để kích hoạt nó chỉ cho một số trình đổ bóng.
+
+00:12:30.000 --> 00:12:34.000
+Tùy chọn không cần phải được chuyển đến lệnh liên kết hoặc bất kỳ lệnh tiếp theo nào.
+
+00:12:34.000 --> 00:12:44.000
+Và bạn có thể sử dụng tối ưu hóa cho kích thước có hoặc không có tạo GPU nhị phân bằng cách sử dụng các lệnh được trình bày trước đó trong bài nói chuyện này.
+
+00:12:44.000 --> 00:12:57.000
+Cuối cùng, khi biên dịch nguồn Metal trong thời gian chạy ứng dụng với API Khung kim loại như 'newLibraryWithSource', hãy chỉ định tối ưu hóa kích thước trong đối tượng 'MTLCompileOptions' bằng cách sử dụng thuộc tính 'optimizationLevel'.
+
+00:12:57.000 --> 00:13:02.000
+Mức tối ưu hóa có thể là 'mặc định' hoặc 'kích thước'.
+
+00:13:02.000 --> 00:13:08.000
+Tôi hy vọng dự án của bạn sẽ được hưởng lợi từ chế độ tối ưu hóa mới này trong trình biên dịch Metal.
+
+00:13:08.000 --> 00:13:18.000
+Galo: Để kết thúc, tôi đã trình bày biên dịch ngoại tuyến, một quy trình làm việc mới để tạo các tệp nhị phân GPU hoàn toàn tại thời điểm xây dựng ứng dụng, để giảm tình trạng nói lắp trong ứng dụng, lần khởi chạy đầu tiên và thời gian tải cấp độ mới.
+
+00:13:18.000 --> 00:13:27.000
+Eylon: Sau đó, tôi trình bày tối ưu hóa cho kích thước, một chế độ tối ưu hóa Kim loại mới khi biên dịch từ nguồn, để giảm kích thước chương trình và thời gian biên dịch.
+
+00:13:27.000 --> 00:13:31.000
+Galo: Chúng tôi hy vọng những cải tiến này sẽ giúp ứng dụng hoặc trò chơi của bạn mang lại trải nghiệm người dùng được cải thiện.
+
+00:13:31.000 --> 00:13:39.000
+Eylon: Với thời gian thiết lập và tải ngắn hơn, ít nói lắp hơn và quy trình làm việc mới, nhờ chi phí biên dịch thấp hơn trong thời gian chạy.
+
+00:13:39.000 --> 23:59:59.000
+Cảm ơn bạn đã xem. ♪ ♪
+

@@ -1,0 +1,476 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:14.000
+Sophia: Xin chào, và chào mừng đến với "Khổ quát hóa API với các gói tham số."
+
+00:00:14.000 --> 00:00:18.000
+Tên tôi là Sophia, và tôi làm việc trong nhóm biên dịch Swift.
+
+00:00:18.000 --> 00:00:26.000
+Hôm nay tôi sẽ nói chuyện với bạn về các gói thông số Swift và cách chúng cung cấp một chiều hướng linh hoạt mới với lập trình chung.
+
+00:00:26.000 --> 00:00:30.000
+Đây là một cuộc nói chuyện nâng cao, và nó được xây dựng dựa trên hệ thống generics hiện có.
+
+00:00:30.000 --> 00:00:37.000
+Nếu bạn không quen thuộc với chủ đề này, tôi khuyến khích bạn xem "Embrace Swift generics" từ WWDC22.
+
+00:00:37.000 --> 00:00:51.000
+Hôm nay, tôi sẽ hướng dẫn bạn các loại vấn đề mà các gói tham số có thể giải quyết, cách suy nghĩ về các gói tham số khi bạn gặp chúng trong thư viện và cuối cùng, tôi sẽ đi sâu vào cách triển khai mã của riêng bạn sử dụng các gói tham số.
+
+00:00:51.000 --> 00:00:55.000
+Trước khi tôi nhảy vào các gói tham số, điều quan trọng là phải biết tại sao chúng tồn tại.
+
+00:00:55.000 --> 00:01:00.000
+Vì vậy, tôi sẽ bắt đầu bằng cách nói một chút về thuốc generic và sau đó là thuốc generic.
+
+00:01:00.000 --> 00:01:07.000
+Mã bạn viết về cơ bản bao gồm hai loại: giá trị và loại.
+
+00:01:07.000 --> 00:01:13.000
+Bạn có thể trừu tượng hóa các giá trị bằng cách viết các hàm chấp nhận các giá trị khác nhau làm tham số.
+
+00:01:13.000 --> 00:01:25.000
+Một ví dụ có thể là một hàm radian (từ:) mà khi đầu vào sẽ chấp nhận bất kỳ giá trị Double nào đại diện cho độ và đối với đầu ra sẽ trả về một giá trị Double mới đại diện cho radian.
+
+00:01:25.000 --> 00:01:31.000
+Bạn có thể trừu tượng hóa các loại bằng cách viết mã chung chấp nhận các loại khác nhau cho các tham số của nó.
+
+00:01:31.000 --> 00:01:39.000
+Ví dụ, loại Mảng thư viện tiêu chuẩn được thiết kế để chứa bất kỳ dạng dữ liệu nào mà bạn có thể muốn điền vào nó.
+
+00:01:39.000 --> 00:01:47.000
+Nó có một tham số loại Phần tử là một trình giữ chỗ cho loại cụ thể mà bạn sẽ sử dụng cho một phiên bản nhất định của một Mảng.
+
+00:01:47.000 --> 00:01:53.000
+Trong cả hai trường hợp, các giá trị cụ thể hoặc các loại cụ thể được chuyển dưới dạng đối số cho sự trừu tượng.
+
+00:01:53.000 --> 00:01:59.000
+Hầu hết các tóm tắt mã chung trên cả hai loại và giá trị.
+
+00:01:59.000 --> 00:02:04.000
+Để khám phá điều này, tôi sẽ viết một số mã để gửi các truy vấn đến máy chủ.
+
+00:02:04.000 --> 00:02:16.000
+Việc triển khai cơ bản của nó sẽ nhận được Yêu cầu của một số loại Tải trọng, sau đó nó sẽ chuyển nó như một truy vấn đến máy chủ và cuối cùng trả về phản hồi của máy chủ thuộc loại Tải trọng.
+
+00:02:16.000 --> 00:02:21.000
+Hàm có một tham số, nhưng tôi muốn hỗ trợ truy vấn nhiều yêu cầu trong cùng một cuộc gọi.
+
+00:02:21.000 --> 00:02:27.000
+Đối với khả năng có một số lượng đối số thay đổi, chúng ta có các tham số khác nhau.
+
+00:02:27.000 --> 00:02:34.000
+Các tham số biến đổi cho phép một hàm chấp nhận linh hoạt bất kỳ số lượng đối số nào của một loại duy nhất.
+
+00:02:34.000 --> 00:02:37.000
+Nhưng các thông số đa nguyên có những hạn chế.
+
+00:02:37.000 --> 00:02:45.000
+Ví dụ, bạn có thể muốn ánh xạ các đối số đã cho đến một bộ có độ dài bằng số lượng đối số.
+
+00:02:45.000 --> 00:02:52.000
+Tuy nhiên, với các tham số đa dạng, không có cách nào để khai báo kiểu trả về dựa trên độ dài đối số.
+
+00:02:52.000 --> 00:03:04.000
+Cũng không có cách nào để các tham số đa dạng chấp nhận các loại khác nhau mà không sử dụng xóa kiểu, và do đó không có cách nào để bảo toàn thông tin kiểu tĩnh cụ thể của mỗi đối số.
+
+00:03:04.000 --> 00:03:14.000
+Những gì chúng ta thiếu với hệ thống generics và các tham số đa dạng là khả năng bảo toàn thông tin kiểu vừa thay đổi số lượng đối số.
+
+00:03:14.000 --> 00:03:22.000
+Ngày nay, cách duy nhất để làm điều này là quá tải, điều này buộc bạn phải chọn giới hạn trên của số lượng đối số mà bạn ủng hộ.
+
+00:03:22.000 --> 00:03:26.000
+Tôi tự hỏi, liệu hai thông số có đủ không? Có lẽ là không.
+
+00:03:26.000 --> 00:03:29.000
+Xử lý tối đa ba thông số sẽ tốt hơn.
+
+00:03:29.000 --> 00:03:31.000
+Nhưng nếu chúng ta muốn bốn thì sao?
+
+00:03:31.000 --> 00:03:40.000
+Mô hình quá tải này, cũng như những hạn chế của nó, phổ biến trên các API xử lý khái niệm số lượng tham số loại khác nhau.
+
+00:03:40.000 --> 00:03:50.000
+Cách tiếp cận này có nhược điểm là dự phòng, nhưng quan trọng hơn, nó buộc phải chọn giới hạn trên tùy ý đối với số lượng đối số sẽ được hỗ trợ.
+
+00:03:50.000 --> 00:03:56.000
+Vượt quá bất kỳ giới hạn nào đã được chọn sẽ dẫn đến lỗi trình biên dịch về các đối số bổ sung.
+
+00:03:56.000 --> 00:04:00.000
+Đây là loại vấn đề mà các gói tham số giải quyết.
+
+00:04:00.000 --> 00:04:08.000
+Nếu bạn thấy mình rơi vào mô hình quá tải này, thì đó là một dấu hiệu mạnh mẽ cho thấy bạn muốn sử dụng các gói tham số.
+
+00:04:08.000 --> 00:04:18.000
+Trong Swift 5.9, hệ thống generics đang nhận được sự hỗ trợ hạng nhất cho sự trừu tượng hóa trên độ dài đối số với một cấu trúc mới được gọi là "gói tham số".
+
+00:04:18.000 --> 00:04:24.000
+Bây giờ tôi sẽ nói về ý nghĩa của các gói tham số khi bạn nhìn thấy chúng trong API.
+
+00:04:24.000 --> 00:04:28.000
+Trong mã, hầu hết thời gian, bạn làm việc với một loại hoặc giá trị duy nhất.
+
+00:04:28.000 --> 00:04:37.000
+Một gói tham số có thể chứa bất kỳ số lượng loại hoặc giá trị nào và đóng gói chúng lại với nhau để chuyển chúng như một đối số cho một hàm.
+
+00:04:37.000 --> 00:04:41.000
+Một gói chứa các loại riêng lẻ được gọi là gói loại.
+
+00:04:41.000 --> 00:04:49.000
+Ví dụ, bạn có thể có một gói loại chứa ba loại riêng lẻ: Bool, Int và String.
+
+00:04:49.000 --> 00:04:54.000
+Một gói chứa các giá trị riêng lẻ được gọi là gói giá trị.
+
+00:04:54.000 --> 00:05:02.000
+Ví dụ, bạn có thể có một gói giá trị chứa ba giá trị riêng lẻ: đúng, số 10 và một chuỗi trống.
+
+00:05:02.000 --> 00:05:05.000
+Các gói loại và các gói giá trị được sử dụng cùng nhau.
+
+00:05:05.000 --> 00:05:12.000
+Một gói loại cung cấp từng loại riêng lẻ cho từng giá trị riêng lẻ trong một gói giá trị.
+
+00:05:12.000 --> 00:05:17.000
+Loại và giá trị tương ứng ở cùng một vị trí trong các gói tương ứng của chúng.
+
+00:05:17.000 --> 00:05:22.000
+Ở vị trí 0, loại giá trị đúng là Bool.
+
+00:05:22.000 --> 00:05:27.000
+Ở vị trí 1, loại số nguyên theo nghĩa đen 10 là Int.
+
+00:05:27.000 --> 00:05:32.000
+Và ở vị trí 2, loại chuỗi rỗng theo nghĩa đen là Chuỗi.
+
+00:05:32.000 --> 00:05:39.000
+Các gói tham số cho phép bạn viết một đoạn mã chung hoạt động với mọi phần tử riêng lẻ trong một gói.
+
+00:05:39.000 --> 00:05:48.000
+Khái niệm này nghe có vẻ quen thuộc vì bạn đã quen với việc viết một đoạn mã hoạt động với các yếu tố riêng lẻ, khác nhau khi bạn sử dụng Bộ sưu tập trong Swift.
+
+00:05:48.000 --> 00:05:51.000
+Cách bạn viết mã như vậy là thông qua sự lặp lại.
+
+00:05:51.000 --> 00:05:58.000
+Ví dụ, phần thân của vòng lặp for-in hoạt động trên từng phần tử riêng lẻ của một mảng.
+
+00:05:58.000 --> 00:06:08.000
+Điều làm cho các gói tham số khác với các bộ sưu tập là mỗi phần tử trong gói có một loại tĩnh khác nhau và bạn có thể làm việc với các gói ở cấp loại.
+
+00:06:08.000 --> 00:06:16.000
+Thông thường, bạn viết mã chung hoạt động với các loại cụ thể khác nhau bằng cách khai báo một tham số kiểu bên trong dấu ngoặc nhọn.
+
+00:06:16.000 --> 00:06:24.000
+Trong Swift 5.9, bạn có thể khai báo một gói các tham số loại với từ khóa "each".
+
+00:06:24.000 --> 00:06:31.000
+Thay vì có một tham số loại duy nhất, hàm chấp nhận từng loại Tải trọng mà bạn muốn truy vấn.
+
+00:06:31.000 --> 00:06:34.000
+Đây được gọi là gói tham số kiểu.
+
+00:06:34.000 --> 00:06:45.000
+Để tên của các gói loại và gói giá trị được đọc một cách tự nhiên, hãy sử dụng quy ước đặt tên số ít, chẳng hạn như "mỗi Tải trọng" thay vì "mỗi Tải trọng".
+
+00:06:45.000 --> 00:06:53.000
+Mã chung sử dụng các gói tham số có thể hoạt động trên từng Tải trọng riêng lẻ bằng cách sử dụng các mẫu lặp lại.
+
+00:06:53.000 --> 00:07:00.000
+Một mẫu lặp lại được thể hiện bằng cách sử dụng từ khóa 'lặp lại', tiếp theo là một kiểu gọi là kiểu mẫu.
+
+00:07:00.000 --> 00:07:05.000
+Mẫu sẽ chứa một hoặc nhiều tham chiếu đến các phần tử đóng gói.
+
+00:07:05.000 --> 00:07:12.000
+'Lặp lại' chỉ ra rằng kiểu mẫu sẽ được lặp lại cho mọi phần tử trong gói đối số đã cho.
+
+00:07:12.000 --> 00:07:19.000
+'Mỗi' hoạt động như một trình giữ chỗ được thay thế bằng các phần tử gói riêng lẻ ở mỗi lần lặp lại.
+
+00:07:19.000 --> 00:07:24.000
+Hãy xem sự thay thế này hoạt động như thế nào với một gói loại bê tông có chứa Bool, Int và String.
+
+00:07:24.000 --> 00:07:34.000
+Mẫu sẽ được lặp lại ba lần và trình giữ chỗ 'mỗi Tải trọng' được thay thế bằng loại bê tông trong gói trong mỗi lần lặp lại.
+
+00:07:34.000 --> 00:07:42.000
+Kết quả là một danh sách các loại được phân tách bằng dấu phẩy: Yêu cầu Bool, Yêu cầu Int và Yêu cầu Chuỗi.
+
+00:07:42.000 --> 00:07:52.000
+Bởi vì các mẫu lặp lại tạo ra các danh sách các loại được phân tách bằng dấu phẩy, chúng chỉ có thể được sử dụng ở các vị trí chấp nhận danh sách được phân tách bằng dấu phẩy một cách tự nhiên.
+
+00:07:52.000 --> 00:07:59.000
+Điều này bao gồm các loại được bọc trong dấu ngoặc đơn, là một loại bộ hoặc một loại duy nhất.
+
+00:07:59.000 --> 00:08:07.000
+Ngoài ra, chúng có thể được sử dụng trong danh sách tham số hàm và các mẫu lặp lại có thể được sử dụng trong danh sách đối số chung.
+
+00:08:07.000 --> 00:08:16.000
+Sử dụng mẫu lặp lại làm loại tham số hàm biến tham số hàm đó thành một gói tham số giá trị.
+
+00:08:16.000 --> 00:08:27.000
+Điều này cho phép người gọi chuyển một số trường hợp Yêu cầu tùy ý và các giá trị đối số sẽ được thu thập thành một gói và chuyển đến hàm.
+
+00:08:27.000 --> 00:08:32.000
+Điều đó bao gồm khái niệm cơ bản về các gói tham số và cú pháp được sử dụng.
+
+00:08:32.000 --> 00:08:40.000
+Tiếp theo, để chứng minh cách họ có thể đơn giản hóa cũng như mở rộng chức năng của API, hãy quay lại API truy vấn của chúng tôi.
+
+00:08:40.000 --> 00:08:47.000
+Tôi đã thêm nhiều quá tải chung để cung cấp các đối số yêu cầu biến đổi và các loại trả về tương ứng.
+
+00:08:47.000 --> 00:08:52.000
+Việc khai báo mỗi tình trạng quá tải tuân theo một mô hình có thể dự đoán được.
+
+00:08:52.000 --> 00:08:58.000
+Mỗi quá tải lần lượt có 1, 2, 3 và 4 tham số loại.
+
+00:08:58.000 --> 00:09:04.000
+Mỗi quá tải ánh xạ từng tham số loại đến một Yêu cầu qua loại đó trong danh sách tham số.
+
+00:09:04.000 --> 00:09:09.000
+Và mỗi quá tải chứa một danh sách của từng tham số loại trong loại trả về.
+
+00:09:09.000 --> 00:09:15.000
+Sử dụng các gói tham số, 4 quá tải này có thể được thu gọn thành một hàm duy nhất.
+
+00:09:15.000 --> 00:09:22.000
+Đầu tiên chúng ta hãy xem xét các khai báo tham số kiểu, sau đó là danh sách tham số hàm và cuối cùng là kiểu trả về.
+
+00:09:22.000 --> 00:09:27.000
+Mỗi tham số loại có thể được thu gọn thành một gói tham số loại.
+
+00:09:27.000 --> 00:09:33.000
+Mỗi tham số Yêu cầu riêng lẻ có thể được thu gọn thành một gói tham số giá trị.
+
+00:09:33.000 --> 00:09:40.000
+Và kiểu trả về có thể được thu gọn thành một bộ được xây dựng bằng cách lặp lại từng loại Tải trọng.
+
+00:09:40.000 --> 00:09:44.000
+Bây giờ bạn có một hàm truy vấn có thể xử lý bất kỳ số lượng đối số yêu cầu nào.
+
+00:09:44.000 --> 00:10:00.000
+Bởi vì tham số hàm và loại trả về đều là các loại phụ thuộc của gói tham số loại 'mỗi Tải trọng', bạn biết rằng độ dài của gói tham số giá trị của hàm sẽ luôn khớp với số lượng phần tử trong bộ được trả về.
+
+00:10:00.000 --> 00:10:10.000
+Bây giờ tôi đã áp dụng các gói tham số trong API này, bạn có thể gọi hàm truy vấn duy nhất này với một đối số hoặc với ba đối số hoặc bất kỳ số lượng nào bạn muốn.
+
+00:10:10.000 --> 00:10:13.000
+Các gói tham số xử lý tất cả độ dài đối số theo cùng một cách.
+
+00:10:13.000 --> 00:10:17.000
+Hãy tập trung vào cuộc gọi với ba lập luận.
+
+00:10:17.000 --> 00:10:21.000
+Gói đối số cụ thể được suy ra từ các đối số tại trang web cuộc gọi.
+
+00:10:21.000 --> 00:10:28.000
+Mọi loại cụ thể cho trình giữ chỗ 'mỗi Tải trọng' được thu thập từ danh sách đối số thành một gói loại.
+
+00:10:28.000 --> 00:10:33.000
+Và gói loại bê tông được thay thế để sản xuất loại trả lại.
+
+00:10:33.000 --> 00:10:38.000
+'Mỗi Payload' xuất hiện trong danh sách tham số và loại trả về.
+
+00:10:38.000 --> 00:10:48.000
+Gói loại bê tông "Int, String, Bool" được thay thế ở cả hai nơi, khiến mẫu được lặp lại ba lần.
+
+00:10:48.000 --> 00:10:55.000
+Cuối cùng, mã được chạy tương đương với một lần lặp lại trên cả ba loại của gói loại.
+
+00:10:55.000 --> 00:11:00.000
+Bây giờ chúng ta hãy quay lại API truy vấn của chúng ta để xem cách thêm các ràng buộc vào các gói tham số.
+
+00:11:00.000 --> 00:11:04.000
+Giả sử rằng tải trọng truy vấn của chúng ta phải tương đương.
+
+00:11:04.000 --> 00:11:15.000
+Bằng cách thêm dấu hai chấm và tên giao thức Equatable theo gói tham số loại, mọi phần tử trong gói Tải trọng được yêu cầu phải phù hợp với Equatable.
+
+00:11:15.000 --> 00:11:20.000
+Các yêu cầu chung hơn có thể được khai báo với mệnh đề 'ở đâu', giống như các chung chung thông thường.
+
+00:11:20.000 --> 00:11:32.000
+Hãy nhớ rằng các gói tham số có thể chứa không hoặc nhiều đối số, bạn có thể nghĩ rằng API truy vấn máy chủ này không có lý do cụ thể nào để chấp nhận không có đối số.
+
+00:11:32.000 --> 00:11:36.000
+May mắn thay, có một kỹ thuật đơn giản để yêu cầu độ dài đối số tối thiểu.
+
+00:11:36.000 --> 00:11:43.000
+Trong trường hợp này, tôi muốn yêu cầu ít nhất một đối số, để cung cấp cho hàm một cái gì đó để làm.
+
+00:11:43.000 --> 00:11:53.000
+Để đạt được điều này, tôi thêm một tham số loại thông thường trước gói tham số loại và một tham số giá trị tương ứng trước gói tham số giá trị.
+
+00:11:53.000 --> 00:12:01.000
+Bất kỳ ràng buộc nào đối với gói tham số loại cũng nên được áp dụng cho tham số loại mới, trong ví dụ này, là sự phù hợp với Equatable.
+
+00:12:01.000 --> 00:12:05.000
+Bây giờ những người gọi chức năng của bạn phải cung cấp ít nhất một đối số.
+
+00:12:05.000 --> 00:12:12.000
+Tại thời điểm này, chúng tôi đã đề cập đến nền tảng của những gì các gói tham số giải quyết và cách đọc chúng trong API.
+
+00:12:12.000 --> 00:12:16.000
+Tiếp theo, hãy xem qua cách triển khai mã sử dụng các gói tham số.
+
+00:12:16.000 --> 00:12:21.000
+Chúng tôi sẽ xây dựng việc triển khai truy vấn máy chủ bằng cách sử dụng các gói tham số.
+
+00:12:21.000 --> 00:12:30.000
+Hàm truy vấn chấp nhận một gói giá trị trong đó mỗi phần tử riêng lẻ là một Yêu cầu trên mọi phần tử trong gói loại.
+
+00:12:30.000 --> 00:12:39.000
+Cấu trúc Yêu cầu có một tham số loại duy nhất được gọi là Tải trọng và một phương thức đánh giá trả về một thể hiện của Tải trọng.
+
+00:12:39.000 --> 00:12:44.000
+Phần thân của hàm truy vấn sẽ hoạt động trên gói giá trị 'mục'.
+
+00:12:44.000 --> 00:12:51.000
+Bên trong nội dung truy vấn, tôi muốn gọi phương thức đánh giá cho mọi mục trong gói giá trị.
+
+00:12:51.000 --> 00:12:54.000
+Bạn có thể diễn đạt điều này bằng cách sử dụng các mẫu lặp lại.
+
+00:12:54.000 --> 00:13:01.000
+Các mẫu lặp lại được thể hiện bằng cách sử dụng cùng một cú pháp ở cấp độ kiểu và ở cấp độ giá trị.
+
+00:13:01.000 --> 00:13:06.000
+Ở cấp độ giá trị, từ khóa 'lặp lại' được theo sau bởi biểu thức mẫu.
+
+00:13:06.000 --> 00:13:11.000
+Biểu thức mẫu sẽ chứa một hoặc nhiều gói giá trị.
+
+00:13:11.000 --> 00:13:17.000
+Gói được lặp lại qua mọi giá trị mà nó chứa và biểu thức được đánh giá một lần cho mỗi giá trị.
+
+00:13:17.000 --> 00:13:25.000
+Để tạo ra một danh sách tất cả các kết quả đánh giá có trong một bộ, bạn có thể bọc biểu thức mẫu trong ngoặc đơn.
+
+00:13:25.000 --> 00:13:31.000
+Nếu gói giá trị được chuyển đến hàm trống, kết quả sẽ là bộ trống.
+
+00:13:31.000 --> 00:13:36.000
+Nếu gói giá trị có một phần tử duy nhất, kết quả sẽ là một giá trị duy nhất khác.
+
+00:13:36.000 --> 00:13:40.000
+Nếu gói giá trị có nhiều phần tử, kết quả sẽ là một bộ.
+
+00:13:40.000 --> 00:13:41.000
+Và thế là xong.
+
+00:13:41.000 --> 00:13:52.000
+Bây giờ, chúng tôi có một hàm truy vấn chấp nhận một gói giá trị kết quả, đánh giá từng yêu cầu riêng lẻ và trả về kết quả của mọi yêu cầu cùng nhau trong một bộ.
+
+00:13:52.000 --> 00:13:57.000
+Đây là nền tảng của cách bạn sử dụng các gói tham số trong mã của mình.
+
+00:13:57.000 --> 00:14:08.000
+Điều này tiếp tục ít mã hơn nhiều so với ví dụ trước đó đã sử dụng nhiều quá tải thay vì gói tham số và phiên bản đó thậm chí không có triển khai.
+
+00:14:08.000 --> 00:14:14.000
+Việc bảo trì dễ dàng hơn và các lỗi thường phát sinh từ các mẫu mã lặp đi lặp lại đã biến mất.
+
+00:14:14.000 --> 00:14:16.000
+Bây giờ hãy linh hoạt hơn một chút.
+
+00:14:16.000 --> 00:14:31.000
+Tôi sẽ cấu trúc lại ví dụ của mình để: bật API truy vấn lưu trữ trạng thái, cho phép mỗi đánh giá yêu cầu có các loại đầu vào và đầu ra khác nhau và quản lý luồng điều khiển trong quá trình lặp gói tham số.
+
+00:14:31.000 --> 00:14:40.000
+Tôi sẽ di chuyển hàm truy vấn bên trong cấu trúc Người đánh giá và nâng gói tham số kiểu từ phương thức truy vấn sang kiểu Người đánh giá.
+
+00:14:40.000 --> 00:14:47.000
+Cấu trúc Người đánh giá có thể lưu trữ gói yêu cầu trong một thuộc tính được lưu trữ bằng cách gói nó trong dấu ngoặc đơn để biến nó thành một giá trị bộ.
+
+00:14:47.000 --> 00:14:57.000
+Đưa ra một gói đối số loại Tải trọng cụ thể, biến 'mục' sẽ là một yêu cầu duy nhất hoặc một bộ của mọi yêu cầu.
+
+00:14:57.000 --> 00:15:04.000
+Tiếp theo, tôi sẽ thay đổi Yêu cầu từ cấu trúc sang giao thức có loại liên quan có tên Đầu ra.
+
+00:15:04.000 --> 00:15:09.000
+Và tôi sẽ thêm một loại liên quan khác vào giao thức Yêu cầu có tên Input.
+
+00:15:09.000 --> 00:15:15.000
+Sau đó tôi sẽ cập nhật phương thức đánh giá trong Yêu cầu để biến đối số của nó thành loại Đầu vào của giao thức.
+
+00:15:15.000 --> 00:15:20.000
+Điều này cho phép kiểu trả về của phương thức khác với kiểu trả về của đối số.
+
+00:15:20.000 --> 00:15:40.000
+Sau đó, tôi cập nhật Trình đánh giá để yêu cầu tất cả các loại Tải trọng phù hợp với Yêu cầu và cập nhật tương ứng thuộc tính được lưu trữ 'mục' để bây giờ chỉ đơn giản là loại 'mỗi Tải trọng.' Tuy nhiên, tại thời điểm này, tên "Payload" cho gói tham số loại của Người đánh giá không thực sự phù hợp.
+
+00:15:40.000 --> 00:15:46.000
+Tải trọng không còn là những gì được chứa trong một Yêu cầu mà thay vào đó phù hợp với toàn bộ Yêu cầu.
+
+00:15:46.000 --> 00:15:53.000
+Do đó, chúng tôi sẽ thay đổi tên của Payload thành Request và tên của giao thức thành RequestProtocol.
+
+00:15:53.000 --> 00:16:02.000
+Phương thức truy vấn hiện có thể chấp nhận một gói loại Đầu vào của mỗi Yêu cầu và nó sẽ trả về danh sách loại Đầu ra của mỗi Yêu cầu.
+
+00:16:02.000 --> 00:16:11.000
+Cuối cùng, tham số mới 'đầu vào' vào phương thức truy vấn chỉ cần được chuyển đến các cuộc gọi đến phương thức đánh giá của mọi mục.
+
+00:16:11.000 --> 00:16:19.000
+Bây giờ chúng tôi có thể có một loại khác được trả về từ phản hồi của máy chủ so với loại dữ liệu mà chúng tôi đưa vào bên trong truy vấn của mình.
+
+00:16:19.000 --> 00:16:30.000
+Bạn có thể biết rằng độ dài của gói đối số giá trị của phương thức sẽ khớp với độ dài của gói giá trị được trả về vì cả hai loại của chúng đều dựa trên gói loại của Người đánh giá.
+
+00:16:30.000 --> 00:16:35.000
+Điều tương tự cũng xảy ra với độ dài của các đối số trong 'mục' thuộc tính được lưu trữ.
+
+00:16:35.000 --> 00:16:43.000
+Cho rằng việc sử dụng các gói tham số là một hình thức lặp lại, bạn có thể tự hỏi về luồng điều khiển nếu bạn muốn thoát sớm khỏi lần lặp.
+
+00:16:43.000 --> 00:16:50.000
+Có lẽ đó là trường hợp hậu quả của một tập hợp các truy vấn chỉ nên có hiệu lực nếu mọi truy vấn đều thành công.
+
+00:16:50.000 --> 00:16:53.000
+Lỗi ném có thể được sử dụng cho việc này.
+
+00:16:53.000 --> 00:17:03.000
+Trong ví dụ của chúng tôi, bạn có thể cập nhật phương thức đánh giá của RequestProtocol thành một hàm ném và sửa đổi loại trả về phương thức truy vấn của Người đánh giá thành tùy chọn.
+
+00:17:03.000 --> 00:17:12.000
+Bạn có thể di chuyển phần thân của phương thức truy vấn thành câu lệnh do-catch, đặt câu lệnh trả về trong mệnh đề do và trả về nil từ mệnh đề catch.
+
+00:17:12.000 --> 00:17:20.000
+Giờ đây, bất kỳ đánh giá của truy vấn riêng lẻ nào cũng có thể dừng lặp lại trên tất cả các truy vấn, nếu điều đó có thể cần thiết.
+
+00:17:20.000 --> 00:17:29.000
+Trong phiên này, chúng tôi đã nói về cách các gói tham số cho phép bạn trừu tượng hóa các loại cũng như số lượng đối số trong mã chung.
+
+00:17:29.000 --> 00:17:41.000
+Chúng tôi đã hướng dẫn cách bạn có thể sử dụng các gói tham số để vừa đơn giản hóa vừa loại bỏ các giới hạn trong mã của mình bằng cách viết một triển khai chung duy nhất mà trước đây sẽ yêu cầu nhiều quá tải.
+
+00:17:41.000 --> 00:17:48.000
+Cuối cùng, chúng tôi đã viết mã để thực hiện gửi các truy vấn đến máy chủ trong khi sử dụng các gói tham số.
+
+00:17:48.000 --> 00:17:54.000
+Để tìm hiểu thêm về generics, hãy xem phiên "Embrace Swift generics" từ WWDC22.
+
+00:17:54.000 --> 00:18:03.000
+Và để tìm hiểu thêm về các giao thức và xóa loại, hãy xem phiên "Thiết kế giao diện giao thức trong Swift" từ WWDC22.
+
+00:18:03.000 --> 00:18:13.000
+Các gói tham số Swift là một công cụ mạnh mẽ để mở rộng những gì có thể có trong mã chung của bạn đồng thời cho phép bạn đơn giản hóa các mẫu chung phổ biến.
+
+00:18:13.000 --> 00:18:15.000
+Chúng tôi nóng lòng muốn xem bạn xây dựng những gì với họ.
+
+00:18:15.000 --> 23:59:59.000
+Cảm ơn bạn đã xem.
+

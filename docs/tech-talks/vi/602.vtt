@@ -1,0 +1,401 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+Metal 2 giới thiệu một bộ API mới và thay đổi ngôn ngữ đổ bóng để tận dụng kiến trúc và các tính năng mới của GPU A11.
+
+00:00:10.000 --> 00:00:14.000
+Hãy để chúng tôi xem lại những gì mới với Metal 2 trên A11.
+
+00:00:14.000 --> 00:00:18.000
+Apple đã thiết kế Metal để cho phép đổi mới nhanh chóng trong kiến trúc GPU.
+
+00:00:18.000 --> 00:00:24.000
+Và đến lượt nó, kiến trúc GPU của Apple đã thông báo cho thiết kế của Metal.
+
+00:00:24.000 --> 00:00:35.000
+Sự tích hợp sâu sắc và liền mạch của phần cứng và phần mềm này cho phép những khả năng mới thú vị cho đồ họa, máy tính, ứng dụng học máy và trò chơi của bạn.
+
+00:00:35.000 --> 00:00:45.000
+Chỉ ba năm sau khi giới thiệu Metal, chúng tôi đã giới thiệu Metal 2, thế hệ tiếp theo của Metal, tại WWDC 2017.
+
+00:00:45.000 --> 00:01:06.000
+Dựa trên một thiết kế sạch sẽ và được cấu trúc tốt, Metal 2 mở rộng để bao gồm nhiều cách tiên tiến hơn để truy cập các khả năng của GPU, chẳng hạn như kết xuất dựa trên GPU, cho phép GPU gửi khối lượng công việc đồ họa đến chính nó, tăng hiệu quả hơn nữa và giảm chi phí cuộc gọi rút thăm lên đến 10 lần.
+
+00:01:06.000 --> 00:01:11.000
+Vào năm 2015, Metal đã mở rộng để hỗ trợ Mac và GPU máy tính để bàn.
+
+00:01:11.000 --> 00:01:19.000
+Giờ đây, Metal 2 căn chỉnh API để hiển thị các tính năng chính một cách thống nhất, bất kể kiến trúc GPU cơ bản.
+
+00:01:19.000 --> 00:01:34.000
+Với sự phát triển của học máy trên nhiều lĩnh vực khác nhau, Metal 2 mang đến một bộ chức năng rộng hơn và phức tạp hơn nhằm tăng tốc các hoạt động suy luận để cải thiện hiệu suất và hiệu quả.
+
+00:01:34.000 --> 00:01:43.000
+Metal 2 cũng mang đến một bộ công cụ tối ưu hóa mới giúp bạn dễ dàng khai thác một cách chuyên nghiệp sức mạnh của GPU trên nền tảng Apple.
+
+00:01:43.000 --> 00:01:50.000
+Và bây giờ, chúng tôi có thể tiết lộ nhiều khả năng Metal 2 hơn mà chúng tôi đã không công bố tại WWDC.
+
+00:01:50.000 --> 00:02:02.000
+Metal 2 bao gồm một tập hợp các tính năng mới mạnh mẽ thể hiện khả năng độc đáo của GPU do Apple thiết kế trong chip dòng A mới nhất của chúng tôi, A11.
+
+00:02:02.000 --> 00:02:13.000
+Trước khi chúng ta đi vào chi tiết về kiến trúc và tính năng GPU A11, chúng ta hãy xem lại kiến trúc của GPU cổ điển và kiến trúc kết xuất hoãn lại dựa trên ô.
+
+00:02:13.000 --> 00:02:17.000
+Đây là một sơ đồ đơn giản hóa của kiến trúc GPU cổ điển.
+
+00:02:17.000 --> 00:02:20.000
+GPU là những cỗ máy song song ồ ạt.
+
+00:02:20.000 --> 00:02:27.000
+Các giai đoạn đỉnh và đoạn được thể hiện trong sơ đồ này được sao chép nhiều lần và chúng chạy song song.
+
+00:02:27.000 --> 00:02:37.000
+Ngoài ra còn có nhiều tối ưu hóa như phân cấp bộ nhớ cache, FIFO, kiểm tra độ sâu thô ban đầu, v.v., không được hiển thị trong sơ đồ này.
+
+00:02:37.000 --> 00:02:46.000
+Về cơ bản, GPU với kiến trúc cổ điển lấy nguyên thủy và tạo ra chiều sâu, màu sắc, bộ đệm dữ liệu và kết cấu.
+
+00:02:46.000 --> 00:02:55.000
+Một trong những đặc điểm xác định của kiến trúc này là đầu ra của giai đoạn đỉnh cung cấp trực tiếp vào giai đoạn phân đoạn.
+
+00:02:55.000 --> 00:03:01.000
+Chúng ta hãy xem xét kiến trúc kết xuất hoãn lại dựa trên ô, còn được gọi là TBDR.
+
+00:03:01.000 --> 00:03:06.000
+Tất cả các GPU dòng A đều dựa trên kiến trúc TBDR.
+
+00:03:06.000 --> 00:03:11.000
+TBDR thực hiện một số thay đổi đáng kể đối với kiến trúc GPU cổ điển.
+
+00:03:11.000 --> 00:03:17.000
+Sự khác biệt lớn đầu tiên là giai đoạn đỉnh không được đưa trực tiếp vào giai đoạn phân đoạn.
+
+00:03:17.000 --> 00:03:26.000
+Thay vào đó, khi chúng ra khỏi giai đoạn đỉnh, các nguyên thủy được binned vào các ô nhỏ được căn chỉnh trên màn hình và được lưu trữ vào bộ nhớ.
+
+00:03:26.000 --> 00:03:31.000
+Sự thay đổi này cho phép giai đoạn đỉnh chạy không đồng bộ so với giai đoạn phân đoạn.
+
+00:03:31.000 --> 00:03:39.000
+Trong khi chạy giai đoạn phân đoạn của đường kết xuất, song song, phần cứng thực hiện giai đoạn đỉnh của đường kết xuất trong tương lai.
+
+00:03:39.000 --> 00:03:44.000
+Chạy giai đoạn đỉnh không đồng bộ cung cấp những cải tiến hiệu suất đáng kể.
+
+00:03:44.000 --> 00:03:52.000
+Giai đoạn đỉnh thường sử dụng nhiều phần cứng chức năng cố định, trong khi giai đoạn phân đoạn là người sử dụng nhiều toán học và băng thông.
+
+00:03:52.000 --> 00:03:58.000
+Hoàn toàn chồng chéo chúng cho phép chúng tôi sử dụng tất cả các khối phần cứng trên GPU cùng một lúc.
+
+00:03:58.000 --> 00:04:03.000
+Việc các nguyên thủy được đóng thùng vào các ô cho phép chúng ta xử lý tất cả các nguyên thủy trong một ô cùng nhau.
+
+00:04:03.000 --> 00:04:06.000
+Hãy để chúng tôi xem làm thế nào chúng tôi có thể tận dụng điều đó.
+
+00:04:06.000 --> 00:04:14.000
+Chúng tôi đặt các bộ đệm có kích thước gạch, độ phân giải đầy đủ, độ sâu, khuôn tô và khung trên chip bên cạnh lõi đổ bóng của chúng tôi.
+
+00:04:14.000 --> 00:04:17.000
+Chúng tôi gọi đây là bộ nhớ gạch bộ nhớ.
+
+00:04:17.000 --> 00:04:20.000
+Có ba đặc điểm quan trọng của bộ nhớ lát gạch.
+
+00:04:20.000 --> 00:04:33.000
+Đầu tiên, băng thông giữa lõi đổ bóng và bộ nhớ gạch cao hơn nhiều lần so với băng thông giữa GPU và bộ nhớ ngoài, và tỷ lệ thuận với số lượng lõi đổ bóng.
+
+00:04:33.000 --> 00:04:40.000
+Thứ hai, độ trễ truy cập bộ nhớ vào bộ nhớ gạch thấp hơn nhiều lần so với độ trễ truy cập vào bộ nhớ ngoài.
+
+00:04:40.000 --> 00:04:46.000
+Cuối cùng, bộ nhớ gạch tiêu thụ năng lượng thấp hơn đáng kể so với bộ nhớ ngoài.
+
+00:04:46.000 --> 00:04:54.000
+TBDR sử dụng bộ nhớ có độ trễ thấp, tiêu thụ năng lượng thấp, băng thông cao này cho hai tối ưu hóa chính.
+
+00:04:54.000 --> 00:05:12.000
+Đầu tiên, bộ nhớ độ sâu/stencil của gạch cho phép phần cứng tạo ra thông tin bộ đệm chiều sâu và stprint đầy đủ cho các đối tượng mờ đục trước khi lõi che bóng bắt đầu xử lý chúng, điều này cho phép phần cứng loại bỏ hoàn hảo các mảnh vỡ bị che khuất trước khi gửi đến lõi đổ bóng.
+
+00:05:12.000 --> 00:05:26.000
+Nếu bộ đệm độ sâu không cần thiết cho các lần kết xuất tiếp theo, bộ đệm độ sâu kích thước đầy đủ có thể được loại bỏ hoàn toàn thông qua việc sử dụng các mục tiêu kết xuất không bộ nhớ, tiết kiệm một lượng lớn băng thông bộ nhớ, dung lượng lưu trữ và năng lượng.
+
+00:05:26.000 --> 00:05:30.000
+Thứ hai, bộ nhớ gạch được sử dụng để lưu trữ bộ đệm màu trên chip.
+
+00:05:30.000 --> 00:05:37.000
+Các hoạt động pha trộn rất nhanh vì chúng không cần truy cập vào bộ đệm khung có kích thước đầy đủ trên bộ nhớ ngoài.
+
+00:05:37.000 --> 00:05:45.000
+Bộ nhớ ô chỉ được ghi một lần, sau khi toàn bộ ô được xử lý và tiết kiệm một lượng đáng kể năng lượng, hiệu suất và băng thông.
+
+00:05:45.000 --> 00:05:49.000
+Công suất phòng cao hơn đạt được nhờ bộ nhớ nhanh hơn này.
+
+00:05:49.000 --> 00:05:55.000
+Tính năng tìm nạp bộ đệm khung cho phép bạn thực hiện pha trộn tùy chỉnh và cho phép một số kỹ thuật nâng cao.
+
+00:05:55.000 --> 00:06:02.000
+Kết hợp với bộ đệm khung không bộ nhớ, nhiều kỹ thuật trong số này cũng không cần sử dụng bộ nhớ ngoài.
+
+00:06:02.000 --> 00:06:08.000
+Kết quả là, TBDR mang lại hiệu suất tuyệt vời ngay cả khi băng thông bị hạn chế.
+
+00:06:08.000 --> 00:06:14.000
+TBDR tiêu thụ năng lượng thấp hơn nhiều, điều này rất cần thiết cho các thiết bị chạy bằng pin.
+
+00:06:14.000 --> 00:06:17.000
+Bây giờ chúng ta hãy chuyển bánh răng sang GPU A11.
+
+00:06:17.000 --> 00:06:29.000
+Trên A11, thay đổi lớn đầu tiên mà chúng tôi thực hiện đối với kiến trúc GPU là cung cấp cho bạn quyền kiểm soát trực tiếp dữ liệu nằm trong bộ nhớ gạch từ các chức năng phân đoạn của bạn.
+
+00:06:29.000 --> 00:06:33.000
+Các khối hình ảnh cung cấp quyền truy cập được tối ưu hóa vào dữ liệu hình ảnh nằm trong bộ nhớ ô.
+
+00:06:33.000 --> 00:06:41.000
+Bạn sẽ có thể bố trí các điểm ảnh theo cách có ý nghĩa với ứng dụng của mình, nhưng vẫn có thể được hiển thị một cách hiệu quả.
+
+00:06:41.000 --> 00:06:45.000
+Khối hình ảnh là cấu trúc dữ liệu 2D trong bộ nhớ ô.
+
+00:06:45.000 --> 00:06:49.000
+Bạn có thể chỉ định chiều rộng, chiều cao, chiều sâu và định dạng của nó.
+
+00:06:49.000 --> 00:06:58.000
+Metal 2 thêm các định dạng pixel kết cấu vào ngôn ngữ đổ bóng để cung cấp cho bạn toàn quyền kiểm soát bố cục pixel thông qua các loại dữ liệu được đóng gói.
+
+00:06:58.000 --> 00:07:06.000
+Thay đổi kiến trúc lớn thứ hai cho phép bạn truy cập vào tất cả các điểm ảnh được lưu trữ trong bộ nhớ gạch cùng một lúc.
+
+00:07:06.000 --> 00:07:15.000
+Ngói bóng là giai đoạn lập trình mới trong GPU A11 của Apple cung cấp khả năng tính toán nội tuyến trong các đường kết xuất.
+
+00:07:15.000 --> 00:07:21.000
+Bóng gạch cho phép một cấp độ hiệu suất và hiệu quả hoàn toàn mới trong Metal 2.
+
+00:07:21.000 --> 00:07:28.000
+Các hoạt động kết xuất và tính toán hiện có thể chia sẻ dữ liệu thông qua băng thông cao hơn, độ trễ thấp hơn và bộ nhớ gạch công suất thấp hơn.
+
+00:07:28.000 --> 00:07:31.000
+Bóng gạch được tích hợp sâu với các khối hình ảnh.
+
+00:07:31.000 --> 00:07:41.000
+Bạn sẽ có thể phân tích nội dung khối hình ảnh, tóm tắt nội dung đó, lưu trữ khối hình ảnh giữa cảnh và thậm chí thay đổi bố cục khối hình ảnh.
+
+00:07:41.000 --> 00:07:45.000
+Bạn cũng có thể sử dụng bộ nhớ nhóm luồng giống như một hạt nhân tính toán thông thường.
+
+00:07:45.000 --> 00:07:49.000
+Đối với bộ đổ bóng gạch, bộ nhớ nhóm luồng là liên tục.
+
+00:07:49.000 --> 00:07:57.000
+Mỗi lần gọi liên tiếp của bộ đổ bóng ô có thể hoạt động trên bộ nhớ nhóm luồng, bắt đầu với các giá trị còn lại từ bộ đổ bóng ô trước đó.
+
+00:07:57.000 --> 00:08:00.000
+Điều này cũng đúng với bộ nhớ imageblock.
+
+00:08:00.000 --> 00:08:04.000
+Chúng liên tục giữa các lần gọi của gạch và các bộ đổ bóng mảnh.
+
+00:08:04.000 --> 00:08:11.000
+Ngoài ra, chúng tôi đang giới thiệu một phiên bản nâng cao của các nhóm thứ tự raster hỗ trợ imageblock và đổ bóng gạch.
+
+00:08:11.000 --> 00:08:19.000
+Và cuối cùng, chúng tôi đang mở rộng ngôn ngữ đổ bóng kim loại để cung cấp cho bạn toàn quyền kiểm soát phạm vi bao phủ mẫu cho các khối hình ảnh đa mẫu.
+
+00:08:19.000 --> 00:08:27.000
+Hãy để chúng tôi xem một bộ kỹ thuật kết xuất có thể tận dụng tối đa kiến trúc mới và các tính năng Metal 2 mới.
+
+00:08:27.000 --> 00:08:36.000
+Bộ đổ bóng ô, khối hình ảnh và nhóm thứ tự raster là một cách tuyệt vời để kết hợp các đường chuyền xen kẽ, kết xuất và tính toán thành một đường chuyền kết hợp duy nhất.
+
+00:08:36.000 --> 00:08:40.000
+Kết xuất hoãn lại và kết xuất chuyển tiếp lát gạch có thể được tăng tốc theo cách này.
+
+00:08:40.000 --> 00:08:44.000
+Hãy để chúng tôi xem xét việc triển khai chuyển tiếp lát gạch làm ví dụ.
+
+00:08:44.000 --> 00:09:02.000
+Bạn có thể vượt qua hình học để tạo thông tin độ sâu trên chip trước, sau đó chạy bộ đổ bóng gạch để tạo thông tin độ sâu tối thiểu tối đa cho mỗi ô, chạy bộ đổ bóng gạch khác để tạo danh sách ánh sáng bị loại bỏ trong bộ nhớ nhóm luồng và sau đó chạy bộ đổ bóng vật liệu của bạn.
+
+00:09:02.000 --> 00:09:11.000
+Tất cả các hoạt động này có thể được thực hiện trong một lần kết hợp, tăng hiệu suất bằng cách loại bỏ một lượng lớn băng thông, dung lượng lưu trữ và năng lượng.
+
+00:09:11.000 --> 00:09:20.000
+Các tính năng này cũng cho phép triển khai hiệu quả độ trong suốt độc lập với thứ tự, pha trộn alpha nhiều lớp và tán xạ dưới bề mặt.
+
+00:09:20.000 --> 00:09:31.000
+Kiểm soát vùng phủ sóng mẫu, đổ bóng gạch và khối hình ảnh cho phép các cách hiệu quả hơn nhiều để thực hiện các giải quyết MSAA tùy chỉnh, ánh xạ tông màu MSAA và tổng hợp bề mặt.
+
+00:09:31.000 --> 00:09:44.000
+Để cho thấy một số trường hợp sử dụng này có thể được tăng tốc như thế nào, chúng tôi đang phát hành mã mẫu để kết xuất hoãn lại, lát gạch về phía trước, pha trộn alpha nhiều lớp và tổng hợp bề mặt.
+
+00:09:44.000 --> 00:09:56.000
+Metal 2 trên A11 nâng cao kiến trúc TBDR bằng cách giới thiệu các khối hình ảnh, bộ đổ bóng gạch, kiểm soát vùng phủ sóng mẫu khối hình ảnh và các nhóm thứ tự raster.
+
+00:09:56.000 --> 00:10:06.000
+Ngoài ra, chúng tôi đã giới thiệu các thay đổi ngôn ngữ đổ bóng kim loại mới để cung cấp cho bạn các cơ chế mới và hiệu quả để chia sẻ dữ liệu giữa các luồng tính toán và nhóm luồng của bạn.
+
+00:10:06.000 --> 00:10:13.000
+Hãy để chúng tôi xem xét ngắn gọn những điều này và các tính năng bổ sung khác và cải tiến hiệu suất trên A11.
+
+00:10:13.000 --> 00:10:15.000
+Hãy để chúng tôi bắt đầu với các khối hình ảnh.
+
+00:10:15.000 --> 00:10:19.000
+Khối hình ảnh là cấu trúc dữ liệu 2D trong bộ nhớ ô.
+
+00:10:19.000 --> 00:10:27.000
+Các chức năng phân mảnh chỉ có thể truy cập một pixel duy nhất tương ứng với vị trí của nó, trong khi hạt nhân có thể truy cập toàn bộ khối hình ảnh.
+
+00:10:27.000 --> 00:10:36.000
+Mỗi điểm ảnh có thể khá phức tạp, bao gồm nhiều thành phần và mỗi thành phần có thể được giải quyết dưới dạng mặt phẳng hình ảnh riêng của nó.
+
+00:10:36.000 --> 00:10:40.000
+Imageblocks cũng cung cấp quyền truy cập hàng loạt vào phần cứng chuyển đổi định dạng của GPU.
+
+00:10:40.000 --> 00:10:48.000
+Các điểm ảnh dấu phẩy động sẽ được chuyển đổi sang định dạng kết cấu đích khi được lưu trữ vào bộ nhớ thiết bị.
+
+00:10:48.000 --> 00:10:53.000
+Bộ đổ bóng ô cung cấp khả năng tính toán nội tuyến trong các lần kết xuất.
+
+00:10:53.000 --> 00:11:00.000
+Bộ đổ bóng ô có thể truy cập toàn bộ khối hình ảnh và giống như các hạt nhân tính toán thông thường, chúng có hỗ trợ bộ nhớ nhóm luồng.
+
+00:11:00.000 --> 00:11:11.000
+Không giống như bộ nhớ nhóm luồng của hạt nhân tính toán, bộ nhớ nhóm luồng của bộ đổ bóng ô tồn tại trong suốt vòng đời của ô, giống như dữ liệu màu vẫn tồn tại qua các lần vẽ.
+
+00:11:11.000 --> 00:11:24.000
+Vì vậy, trước đây bạn bị giới hạn trong việc giao tiếp giữa các lần vẽ trong phạm vi pixel bằng cách sử dụng tính năng tìm nạp bộ đệm khung, giờ đây bạn có thể giao tiếp giữa các công văn gạch và các cuộc gọi vẽ phân đoạn bằng cách sử dụng phạm vi ô rộng hơn.
+
+00:11:24.000 --> 00:11:29.000
+Bây giờ chúng ta hãy xem xét cách A11 cải thiện MSAA so với các thế hệ trước.
+
+00:11:29.000 --> 00:11:34.000
+GPU dòng A của Apple có triển khai MSAA rất hiệu quả.
+
+00:11:34.000 --> 00:11:41.000
+Khi đoạn không phải là một đoạn cạnh, việc pha trộn phần cứng sẽ thực hiện một lần trên mỗi đoạn, không phải một lần trên mỗi mẫu.
+
+00:11:41.000 --> 00:11:49.000
+Ngoài ra, bạn có thể giải quyết trực tiếp từ bộ nhớ gạch đến tệp đính kèm giải quyết và tránh phát sinh băng thông bộ nhớ bổ sung.
+
+00:11:49.000 --> 00:11:57.000
+Thông qua việc sử dụng tính năng mục tiêu kết xuất không bộ nhớ của Metal, bạn cũng có thể loại bỏ hoàn toàn bộ nhớ mục tiêu kết xuất MSAA.
+
+00:11:57.000 --> 00:12:01.000
+Với Metal 2 trên A11, chúng tôi đã đưa MSAA đi xa hơn nữa.
+
+00:12:01.000 --> 00:12:14.000
+Trong khi các GPU dòng A hiện tại của chúng tôi đã theo dõi các cạnh trong một pixel, GPU A11 mở rộng theo dõi này đến độ chi tiết thậm chí còn mịn hơn bằng cách theo dõi số lượng mẫu duy nhất trong mỗi pixel.
+
+00:12:14.000 --> 00:12:21.000
+Sự thay đổi phần cứng này làm cho các ứng dụng đa mẫu của bạn nhanh hơn mà không yêu cầu bất kỳ thay đổi nào đối với ứng dụng của bạn.
+
+00:12:21.000 --> 00:12:29.000
+Với A11, Metal 2 cũng cung cấp cho bạn toàn quyền kiểm soát siêu dữ liệu theo dõi này với kiểm soát vùng phủ sóng mẫu imageblock.
+
+00:12:29.000 --> 00:12:34.000
+Bạn cũng có thể tận dụng tính năng này kết hợp với khối hình ảnh nhóm chủ đề và đổ bóng gạch.
+
+00:12:34.000 --> 00:12:49.000
+Với kiểm soát vùng phủ sóng mẫu imageblock, đường ống gạch của bạn có thể sửa đổi dữ liệu theo dõi vùng phủ sóng mẫu của GPU, cho phép bạn giải quyết dữ liệu mẫu bất cứ lúc nào trong quá trình kết xuất với thuật toán giải quyết tùy chỉnh của riêng bạn.
+
+00:12:49.000 --> 00:12:57.000
+Các nhóm thứ tự Raster cho phép bạn truy cập bộ nhớ từ các hàm phân đoạn chồng chéo theo thứ tự gửi và cho phép các hàm phân đoạn giao tiếp.
+
+00:12:57.000 --> 00:13:01.000
+A11 mở rộng chức năng của các nhóm thứ tự raster.
+
+00:13:01.000 --> 00:13:05.000
+Đầu tiên, A11 hiển thị bộ nhớ lát gạch bên trong của GPU.
+
+00:13:05.000 --> 00:13:12.000
+Các nhóm thứ tự Raster làm cho bộ nhớ gạch hữu ích hơn bằng cách cấp cho bạn quyền truy cập vào nó theo thứ tự có thể dự đoán được.
+
+00:13:12.000 --> 00:13:27.000
+Thứ hai, khi các nhóm thứ tự raster trên các GPU khác chỉ giới hạn ở một mutex trên mỗi pixel, A11 có thể chi tiết hơn thế, cho phép chạm nhẹ hơn và giảm thiểu tần suất các luồng của bạn đang chờ truy cập.
+
+00:13:27.000 --> 00:13:32.000
+Bây giờ chúng ta hãy xem Metal 2 tăng tốc độ chia sẻ dữ liệu giữa các luồng và nhóm luồng.
+
+00:13:32.000 --> 00:13:38.000
+Ngôn ngữ đổ bóng Metal 2 mở rộng các hàm nguyên tử với thứ tự bộ nhớ và thuộc tính phạm vi.
+
+00:13:38.000 --> 00:13:44.000
+Những bổ sung mới này cho phép những cách mới để chia sẻ dữ liệu linh hoạt và hiệu quả giữa các luồng.
+
+00:13:44.000 --> 00:13:55.000
+Trước Metal 2, để giao tiếp giữa các nhóm luồng yêu cầu hoàn thành việc thực thi hạt nhân và phát hành một hạt nhân mới để tiêu thụ đầu ra của các nhóm luồng của hạt nhân đầu tiên.
+
+00:13:55.000 --> 00:13:59.000
+Trên Metal 2, các nhóm chủ đề có thể giao tiếp trực tiếp với nhau.
+
+00:13:59.000 --> 00:14:10.000
+Ngoài ra, với việc bổ sung các tính năng mới này, các luồng trong một nhóm luồng có thể giao tiếp mà không cần sử dụng rào cản dẫn đến hiệu suất được cải thiện.
+
+00:14:10.000 --> 00:14:16.000
+Chúng tôi cũng đã thêm một số tính năng và khả năng quan trọng khác vào Metal 2 trên A11.
+
+00:14:16.000 --> 00:14:24.000
+Trên A11, toán học f16 có độ chính xác tổng thể tốt hơn thông qua các cải tiến để làm tròn và xử lý giá trị tối đa.
+
+00:14:24.000 --> 00:14:31.000
+A11 bổ sung hỗ trợ cho các mảng khối kết cấu và giới thiệu chức năng kết cấu đọc-ghi.
+
+00:14:31.000 --> 00:14:36.000
+Với A11, một loạt các vùng phủ sóng lấy mẫu đến với GPU dòng A.
+
+00:14:36.000 --> 00:14:44.000
+A11 bổ sung tính năng bảo hiểm sau độ sâu và cung cấp một cách linh hoạt hơn để gửi hạt nhân tính toán.
+
+00:14:44.000 --> 00:14:48.000
+A11 cũng bổ sung hỗ trợ cho các hoạt động permute có phạm vi bốn.
+
+00:14:48.000 --> 00:14:54.000
+Để biết thêm chi tiết về các tính năng này, vui lòng kiểm tra tài liệu Metal 2.
+
+00:14:54.000 --> 00:14:58.000
+A11 thực hiện nhiều cải tiến hiệu suất đáng kể cho GPU.
+
+00:14:58.000 --> 00:15:06.000
+Nó có hiệu suất toán học lên đến 2X khi nói đến các nhiệm vụ cho thị giác máy tính, xử lý hình ảnh và học máy.
+
+00:15:06.000 --> 00:15:10.000
+Nhưng đó không phải là lĩnh vực cải tiến duy nhất cho hiệu suất.
+
+00:15:10.000 --> 00:15:14.000
+Hãy để chúng tôi xem xét hiệu suất và khả năng được cải thiện của GPU A11.
+
+00:15:14.000 --> 00:15:22.000
+Chúng tôi đã tăng gấp đôi tốc độ lọc toán học và kết cấu F16 trên mỗi chu kỳ xung nhịp khi so sánh với GPU A10.
+
+00:15:22.000 --> 00:15:31.000
+Xin lưu ý: Trên A11, việc sử dụng các kiểu dữ liệu F16 trong bộ đổ bóng của bạn khi có thể tạo ra sự khác biệt hiệu suất lớn hơn nhiều.
+
+00:15:31.000 --> 00:15:36.000
+Chúng tôi đã tăng gấp đôi kích thước nhóm luồng tối đa từ 512 lên 1K trên A11.
+
+00:15:36.000 --> 00:15:42.000
+Kích thước mục tiêu nhiều kết xuất tối đa tăng từ 256 bit lên 512 bit.
+
+00:15:42.000 --> 00:15:47.000
+Kích thước bộ nhớ nhóm luồng tối đa tăng gấp đôi từ 16K lên 32K.
+
+00:15:47.000 --> 00:15:51.000
+Chúng tôi cũng đã cải thiện đáng kể hiệu suất của các hoạt động phản hồi.
+
+00:15:51.000 --> 00:15:55.000
+Chúng còn được gọi là kiểm tra alpha và loại bỏ.
+
+00:15:55.000 --> 00:16:05.000
+Để biết thêm thông tin về Metal 2 và các liên kết đến mã mẫu, vui lòng truy cập trang web của nhà phát triển tại developer.apple.com/metal.
+
+00:16:05.000 --> 23:59:59.000
+Cảm ơn bạn đã xem!
+

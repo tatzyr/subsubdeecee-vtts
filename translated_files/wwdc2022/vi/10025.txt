@@ -1,0 +1,247 @@
+10025
+
+Ron Santos: Này, hy vọng bạn khỏe. Tôi là Ron Santos, một kỹ sư đầu vào.
+
+Hôm nay tôi ở đây để nói chuyện với bạn về việc ghi lại mã và văn bản có thể đọc được bằng máy từ nguồn cấp dữ liệu video, hoặc, như chúng tôi muốn gọi nó, quét dữ liệu.
+
+Chính xác thì chúng ta có ý gì khi quét dữ liệu?
+
+Nó chỉ đơn giản là một cách sử dụng cảm biến, giống như máy ảnh, để đọc dữ liệu.
+
+Thông thường dữ liệu đó xuất hiện dưới dạng văn bản.
+
+Ví dụ, một biên lai với thông tin thú vị như số điện thoại, ngày tháng và giá cả.
+
+Hoặc có thể dữ liệu đến dưới dạng mã có thể đọc được bằng máy, giống như mã QR phổ biến.
+
+Bạn có thể đã sử dụng máy quét dữ liệu trước đây, có thể trong ứng dụng Máy ảnh hoặc bằng cách sử dụng các tính năng Văn bản Trực tiếp được giới thiệu trong iOS 15.
+
+Và tôi cá là bạn đã sử dụng các ứng dụng trong cuộc sống hàng ngày của mình với trải nghiệm quét tùy chỉnh của riêng chúng.
+
+Nhưng nếu bạn phải xây dựng máy quét dữ liệu của riêng mình thì sao?
+
+Bạn sẽ làm nó như thế nào?
+
+iOS SDK có nhiều hơn một giải pháp cho bạn, tùy thuộc vào nhu cầu của bạn.
+
+Một lựa chọn là bạn có thể sử dụng khung AVFoundation để thiết lập biểu đồ máy ảnh, kết nối đầu vào và đầu ra với một phiên và định cấu hình nó để tạo ra AVMetadataObjects như mã có thể đọc được bằng máy.
+
+Nếu bạn cũng muốn chụp văn bản, một lựa chọn khác sẽ là kết hợp cả khung AVFoundation và Vision với nhau.
+
+Trong sơ đồ này, thay vì đầu ra siêu dữ liệu, bạn tạo đầu ra dữ liệu video.
+
+Đầu ra dữ liệu video dẫn đến việc phân phối các bộ đệm mẫu có thể được đưa vào khung Vision để sử dụng với các yêu cầu nhận dạng văn bản và mã vạch, dẫn đến các đối tượng quan sát Vision.
+
+Để biết thêm về việc sử dụng Vision để quét dữ liệu, hãy xem "Trích xuất dữ liệu tài liệu bằng Vision" từ WWDC21.
+
+Được rồi, vậy đó là sử dụng AVFoundation và Vision để quét dữ liệu.
+
+Trong iOS 16, chúng tôi có một tùy chọn mới gói gọn tất cả những điều đó cho bạn.
+
+Giới thiệu DataScannerViewController trong khung VisionKit.
+
+Nó kết hợp các tính năng của AVFoundation và Vision đặc biệt cho mục đích quét dữ liệu.
+
+Người dùng DataScannerViewController được xử lý các tính năng như xem trước máy ảnh trực tiếp, nhãn hướng dẫn hữu ích, tô sáng mục, chạm để lấy nét cũng được sử dụng để lựa chọn và cuối cùng là chụm để phóng to để xem xét kỹ hơn.
+
+Và hãy nói về các tính năng cho các nhà phát triển như bạn.
+
+DataScannerViewController là một lớp con UIViewController mà bạn có thể trình bày theo cách bạn chọn.
+
+Tọa độ cho các mục được công nhận luôn nằm trong tọa độ xem, giúp bạn không chuyển đổi từ không gian hình ảnh sang tọa độ Tầm nhìn, sang tọa độ xem.
+
+Bạn cũng sẽ có thể giới hạn phần hoạt động của chế độ xem bằng cách chỉ định một khu vực quan tâm, cũng nằm trong tọa độ xem.
+
+Để nhận dạng văn bản, bạn có thể chỉ định các loại nội dung để giới hạn loại văn bản bạn tìm thấy.
+
+Và đối với các mã có thể đọc được bằng máy, bạn có thể chỉ định chính xác ký hiệu nào cần tìm kiếm.
+
+Tôi hiểu rồi; Tôi sử dụng các ứng dụng của bạn và tôi hiểu rằng quét dữ liệu chỉ là một phần nhỏ trong chức năng của chúng.
+
+Nhưng nó có thể yêu cầu rất nhiều mã.
+
+Với DataScannerViewController, mục tiêu của chúng tôi là thực hiện các nhiệm vụ phổ biến cho bạn, vì vậy bạn có thể tập trung thời gian của mình vào nơi khác.
+
+Tiếp theo, tôi sẽ hướng dẫn bạn thêm nó vào ứng dụng của bạn.
+
+Hãy bắt đầu với mô tả sử dụng quyền riêng tư.
+
+Khi các ứng dụng cố gắng quay video, iOS yêu cầu người dùng cấp quyền rõ ràng của họ để truy cập vào máy ảnh.
+
+Bạn sẽ muốn cung cấp một thông điệp mô tả biện minh cho nhu cầu của mình.
+
+Để làm điều đó, hãy thêm "quyền riêng tư - mô tả sử dụng máy ảnh" vào tệp Info.plist của ứng dụng của bạn.
+
+Hãy nhớ rằng, hãy mô tả càng nhiều càng tốt, để người dùng biết những gì họ đồng ý.
+
+Bây giờ vào mã.
+
+Bất cứ nơi nào bạn muốn trình bày máy quét dữ liệu, hãy bắt đầu bằng cách nhập VisionKit.
+
+Tiếp theo, vì tính năng quét dữ liệu không được hỗ trợ trên tất cả các thiết bị, hãy sử dụng thuộc tính lớp isSupported để ẩn bất kỳ nút hoặc menu nào hiển thị chức năng, vì vậy người dùng không được cung cấp thứ gì đó mà họ không thể sử dụng.
+
+Nếu bạn tò mò, bất kỳ thiết bị iPhone và iPad 2018 và mới hơn nào có Apple Neural Engine đều hỗ trợ quét dữ liệu.
+
+Bạn cũng sẽ muốn kiểm tra tình trạng sẵn có.
+
+Nhớ lại mô tả sử dụng quyền riêng tư?
+
+Quét có sẵn nếu người dùng chấp thuận ứng dụng để truy cập máy ảnh và nếu thiết bị không có bất kỳ hạn chế nào, như hạn chế truy cập máy ảnh được đặt ở đây, trong Hạn chế quyền riêng tư và nội dung của Screen Time.
+
+Bây giờ bạn đã sẵn sàng để cấu hình một phiên bản.
+
+Điều đó được thực hiện bằng cách trước tiên chỉ định các loại dữ liệu mà bạn quan tâm.
+
+Ví dụ, bạn có thể quét cả mã QR và văn bản.
+
+Bạn có thể tùy ý chuyển danh sách các ngôn ngữ để trình nhận dạng văn bản sử dụng làm gợi ý cho các khía cạnh xử lý khác nhau, như chỉnh sửa ngôn ngữ.
+
+Nếu bạn có ý tưởng về những ngôn ngữ mong đợi, hãy liệt kê chúng.
+
+Nó đặc biệt hữu ích khi hai ngôn ngữ có kịch bản trông giống nhau.
+
+Nếu bạn không cung cấp bất kỳ ngôn ngữ nào, ngôn ngữ ưa thích của người dùng sẽ được sử dụng theo mặc định.
+
+Bạn cũng có thể yêu cầu một loại nội dung văn bản cụ thể.
+
+Trong ví dụ này, tôi muốn máy quét của mình tìm kiếm URL.
+
+Bây giờ bạn đã nêu các loại dữ liệu cần nhận dạng, bạn có thể tạo phiên bản DataScanner của mình.
+
+Trong ví dụ trước, tôi đã chỉ định ký hiệu mã vạch, ngôn ngữ nhận dạng và loại nội dung văn bản.
+
+Hãy để tôi dành một chút thời gian để giải thích các lựa chọn khác cho từng lựa chọn đó.
+
+Đối với ký hiệu mã vạch, chúng tôi hỗ trợ tất cả các ký hiệu giống như máy dò mã vạch của Vision.
+
+Về mặt ngôn ngữ, như một phần của tính năng LiveText, DataScannerViewController hỗ trợ cùng một ngôn ngữ chính xác.
+
+Và trong iOS 16, tôi rất vui khi nói rằng chúng tôi đang thêm hỗ trợ cho tiếng Nhật và tiếng Hàn.
+
+Tất nhiên, điều này có thể thay đổi một lần nữa trong tương lai.
+
+Vì vậy, hãy sử dụng thuộc tính lớp supportedTextRecognitionLanguages để truy xuất danh sách cập nhật nhất.
+
+Cuối cùng, khi quét văn bản với ý nghĩa ngữ nghĩa cụ thể, DataScannerViewController có thể tìm thấy bảy loại này.
+
+Bây giờ chúng tôi đã sẵn sàng giới thiệu Máy quét dữ liệu cho người dùng.
+
+Trình bày nó giống như bất kỳ bộ điều khiển chế độ xem nào khác, sử dụng toàn màn hình, sử dụng một trang tính hoặc thêm nó vào một hệ thống phân cấp chế độ xem khác hoàn toàn.
+
+Tất cả tùy thuộc vào bạn.
+
+Sau đó, khi bản trình bày hoàn tất, hãy gọi startScanning() để bắt đầu tìm kiếm dữ liệu.
+
+Vì vậy, bây giờ tôi muốn lùi lại một bước và dành thời gian xem xét các thông số khởi tạo của Data Scanner.
+
+Tôi đã sử dụng một cái ở đây, recognizedDataTypes.
+
+Nhưng có những người khác có thể giúp bạn tùy chỉnh trải nghiệm của mình.
+
+Hãy xem qua từng cái một.
+
+recognizedDataTypes cho phép bạn chỉ định loại dữ liệu cần nhận dạng.
+
+Văn bản, mã có thể đọc được bằng máy và loại nào của mỗi loại.
+
+Mức chất lượng có thể cân bằng, nhanh chóng hoặc chính xác.
+
+Fast sẽ hy sinh độ phân giải để ủng hộ tốc độ trong các tình huống mà bạn mong đợi các mục lớn và dễ đọc, như văn bản trên bảng hiệu.
+
+Chính xác sẽ cung cấp cho bạn độ chính xác tốt nhất, ngay cả với các mặt hàng nhỏ như mã QR siêu nhỏ hoặc số sê-ri nhỏ.
+
+Tôi khuyên bạn nên bắt đầu với cân bằng, điều này sẽ hoạt động tốt cho hầu hết các trường hợp.
+
+recognizesMultipleItems cung cấp cho bạn tùy chọn tìm kiếm một hoặc nhiều mục trong khung, chẳng hạn như nếu bạn muốn quét nhiều mã vạch cùng một lúc.
+
+Khi nó sai, mục trung tâm nhiều nhất được nhận dạng theo mặc định cho đến khi người dùng nhấn vào nơi khác.
+
+Bật tính năng theo dõi tốc độ khung hình cao khi bạn vẽ các điểm nổi bật.
+
+Nó cho phép các điểm nổi bật theo dõi các mục càng gần càng tốt khi máy ảnh di chuyển hoặc cảnh thay đổi.
+
+Bật pinch-to-zoom hoặc vô hiệu hóa nó.
+
+Chúng tôi cũng có các phương pháp bạn có thể sử dụng để tự sửa đổi mức thu phóng.
+
+Khi bạn bật hướng dẫn, nhãn sẽ hiển thị ở đầu màn hình để giúp hướng dẫn người dùng.
+
+Và, cuối cùng, bạn có thể bật tính năng tô sáng hệ thống nếu bạn cần hoặc bạn có thể tắt nó để vẽ tô sáng tùy chỉnh của riêng bạn.
+
+Bây giờ bạn đã biết cách trình bày trình quét dữ liệu, hãy nói về cách bạn nhập các mục được nhận dạng và cả cách bạn vẽ các điểm nổi bật tùy chỉnh của riêng mình.
+
+Đầu tiên, cung cấp một đại diện cho máy quét dữ liệu.
+
+Bây giờ bạn đã có một đại diện, bạn có thể triển khai phương thức dataScanner didTapOn, được gọi khi người dùng nhấn vào một mục.
+
+Với nó, bạn sẽ nhận được một phiên bản của loại RecognizeItem mới này.
+
+RecognizedItem là một enum chứa văn bản hoặc mã vạch như một giá trị liên quan.
+
+Đối với văn bản, thuộc tính phiên âm giữ chuỗi được nhận dạng.
+
+Đối với mã vạch, nếu tải trọng của nó chứa một chuỗi, bạn có thể truy xuất nó bằng payloadStringValue.
+
+Hai điều khác bạn nên biết về RecognizedItem: Đầu tiên, mỗi mặt hàng được công nhận có một mã định danh duy nhất mà bạn có thể sử dụng để theo dõi một mặt hàng trong suốt vòng đời của nó.
+
+Vòng đời đó bắt đầu khi vật phẩm được nhìn thấy lần đầu tiên và kết thúc khi nó không còn trong tầm nhìn.
+
+Và thứ hai, mỗi RecognizedItem có một thuộc tính giới hạn.
+
+Giới hạn không phải là một rect, nhưng nó bao gồm bốn điểm, một cho mỗi góc.
+
+Tiếp theo, hãy nói về ba phương thức đại diện liên quan được gọi khi các mục được nhận dạng trong cảnh thay đổi.
+
+Đầu tiên là didAdd, được gọi khi các mục trong cảnh mới được nhận dạng.
+
+Nếu bạn muốn tạo điểm nổi bật tùy chỉnh của riêng mình, bạn sẽ tạo một điểm ở đây cho mỗi mục mới.
+
+Bạn có thể theo dõi các điểm nổi bật bằng cách sử dụng ID từ mục liên quan của nó.
+
+Và khi thêm chế độ xem mới của bạn vào hệ thống phân cấp chế độ xem, hãy thêm chúng vào lớp phủ của DataScannerContainerView, để chúng xuất hiện phía trên bản xem trước máy ảnh, nhưng bên dưới bất kỳ chrome bổ sung nào khác.
+
+Phương thức đại diện tiếp theo là didUpdate, được gọi khi các mục di chuyển hoặc máy ảnh di chuyển.
+
+Nó cũng có thể được gọi khi phiên âm để thay đổi văn bản được công nhận.
+
+Chúng thay đổi vì máy quét nhìn thấy văn bản càng lâu thì nó sẽ càng chính xác hơn với phiên âm của nó.
+
+Sử dụng ID từ các mục được cập nhật để truy xuất các điểm nổi bật của bạn từ từ từ điển bạn vừa tạo, và sau đó tạo hiệu ứng động cho các chế độ xem theo giới hạn mới được cập nhật của chúng.
+
+Và cuối cùng, phương thức ủy quyền didRemove, được gọi khi các mục không còn hiển thị trong cảnh.
+
+Trong phương pháp này, bạn có thể quên đi bất kỳ chế độ xem nổi bật nào mà bạn đã liên kết với các mục đã xóa và bạn có thể xóa chúng khỏi hệ thống phân cấp chế độ xem.
+
+Tóm lại, nếu bạn vẽ các điểm nổi bật của riêng mình trên các mục, ba phương pháp ủy quyền đó sẽ rất quan trọng để bạn kiểm soát các điểm nổi bật hoạt hình vào cảnh, tạo hoạt ảnh chuyển động của chúng và tạo hoạt ảnh cho chúng.
+
+Và đối với mỗi phương thức trong số ba phương thức đại diện trước đó, bạn cũng sẽ được cung cấp một mảng của tất cả các mục hiện được công nhận.
+
+Điều đó có thể hữu ích cho việc nhận dạng văn bản vì các mục được đặt theo thứ tự đọc tự nhiên của chúng, có nghĩa là người dùng sẽ đọc mục ở chỉ mục 0 trước mục ở chỉ mục 1, v.v.
+
+Đó là tổng quan về cách sử dụng DataScannerViewController.
+
+Trước khi kết thúc, tôi muốn nhanh chóng đề cập đến một vài tính năng khác, như chụp ảnh.
+
+Bạn có thể gọi phương thức capturePhoto, phương thức này sẽ trả về UIImage chất lượng cao một cách không đồng bộ.
+
+Và nếu bạn không tạo các điểm nổi bật tùy chỉnh, bạn có thể không cần ba phương thức ủy quyền này.
+
+Thay vào đó, bạn có thể sử dụng thuộc tính recognizedItem.
+
+Đó là một AsyncStream sẽ được cập nhật liên tục khi cảnh thay đổi.
+
+Cảm ơn vì đã đi chơi.
+
+Hãy nhớ rằng, iOS SDK cung cấp cho bạn các tùy chọn để tạo quy trình làm việc thị giác máy tính với các khung AVFoundation và Vision.
+
+Nhưng có thể bạn đang tạo một ứng dụng quét văn bản hoặc mã có thể đọc được bằng máy bằng nguồn cấp dữ liệu video trực tiếp, như ứng dụng Pick-and-pack, ứng dụng back-of-the-warehouse hoặc ứng dụng điểm bán hàng.
+
+Nếu vậy, hãy xem qua DataScannerViewController trong VisionKit.
+
+Như tôi đã xem qua hôm nay, nó có một số thông số khởi tạo và phương pháp ủy quyền mà bạn có thể sử dụng để cung cấp trải nghiệm tùy chỉnh phù hợp với phong cách và nhu cầu của ứng dụng của bạn.
+
+Và cuối cùng, tôi muốn hét lên với phiên "Thêm tương tác Văn bản Trực tiếp vào ứng dụng của bạn", nơi bạn có thể tìm hiểu về khả năng Văn bản Trực tiếp của VisionKit cho hình ảnh tĩnh.
+
+Cho đến lần sau, bình yên.
+
+.

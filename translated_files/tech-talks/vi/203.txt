@@ -1,0 +1,173 @@
+203
+
+Cập nhật ứng dụng watchOS 4 của bạn cho Apple Watch Series 3 giúp kết nối dễ dàng hơn bao giờ hết và cho phép bạn tận dụng máy đo độ cao khí quyển mới.
+
+Apple Watch bắt đầu với sự phụ thuộc vào kết nối với iPhone cho tất cả các mạng.
+
+Tuy nhiên, kể từ watchOS 2, Apple Watch đã có khả năng giao tiếp qua Wi-Fi nếu iPhone của bạn tắt hoặc ngoài phạm vi và bạn đang ở trong phạm vi điểm truy cập Wi-Fi mà iPhone của bạn đã kết nối trước đó.
+
+Apple Watch Series 3 với mạng di động hiện cho phép ứng dụng của bạn giao tiếp trực tiếp qua kết nối di động nếu iPhone của bạn nằm ngoài phạm vi và Wi-Fi không khả dụng ở nơi bạn đang ở.
+
+Ứng dụng của bạn không chỉ có thể cập nhật dữ liệu từ mọi nơi mà thông báo đẩy mà iPhone của bạn nhận được sẽ tự động chuyển tiếp đến Apple Watch của bạn khi nó ở trên kết nối di động.
+
+Để đảm bảo rằng ứng dụng của bạn hoạt động trên bất kỳ và tất cả các khả năng kết nối, giờ đây việc sử dụng URLSession cho các yêu cầu kết nối mạng trong ứng dụng đồng hồ của bạn thậm chí còn quan trọng hơn.
+
+URLSession là lớp được sử dụng để tạo và quản lý các kết nối mạng trong watchOS.
+
+Sử dụng URLSession từ mã ứng dụng đồng hồ của bạn, cho phép bạn bắt đầu các yêu cầu mạng trực tiếp từ Apple Watch.
+
+Khi iPhone của bạn nằm trong phạm vi của Apple Watch, những yêu cầu này sẽ được proxy đằng sau hậu trường thông qua iPhone để tận dụng kết nối của nó.
+
+Nếu không, các yêu cầu sẽ xảy ra trực tiếp thông qua các điểm truy cập Wi-Fi hoặc kết nối di động.
+
+Khi sử dụng URLSession trong khi Apple Watch chỉ có kết nối di động, hãy lưu ý rằng các phiên có thể được hệ thống xử lý hơi khác một chút.
+
+Hãy xem xét các loại phiên khác nhau và những gì bạn có thể mong đợi.
+
+Đối với các phiên mặc định và phù du, các loại phiên này sẽ hoạt động như bình thường khi trạng thái ứng dụng đang hoạt động.
+
+Bạn có thể kiểm tra trạng thái ứng dụng hiện tại bằng cách sử dụng thuộc tính applicationState trên đối tượng WKExtension được chia sẻ.
+
+Tuy nhiên, các loại phiên này không được phép nếu trạng thái ứng dụng không hoạt động hoặc nền.
+
+Có một cảnh báo về điều này, vì chúng được cho phép nếu ứng dụng của bạn hiện đang sử dụng chế độ điều hướng nền.
+
+Tiếp theo, hãy xem xét các phiên nền.
+
+Với các phiên nền, các chuyển nhỏ hơn được ưu tiên và bất kỳ chuyển nào cũng có thể được hoãn lại cho đến khi hệ thống có cơ hội tốt hơn để thực hiện các yêu cầu mạng.
+
+Điều này được xác định ở cấp độ hệ thống và tính đến nhiều khía cạnh như mức năng lượng, sức mạnh kết nối và các nhiệm vụ mà các ứng dụng khác đang cần hoàn thành.
+
+Với các phiên nền, một khi yêu cầu đã được thực hiện và phản hồi đã được trả về, nếu ứng dụng của bạn ở trạng thái frontmostapp, ứng dụng của bạn sẽ được đánh thức ngay lập tức và đưa ra phản hồi.
+
+Bên ngoài trạng thái ứng dụng ngoài cùng, hệ thống sẽ đánh thức ứng dụng của bạn với phản hồi khi xác định đây là thời điểm tốt để làm như vậy hoặc khi trạng thái ứng dụng hoạt động trở lại.
+
+Bây giờ chúng ta hãy xem qua một vài phương pháp hay nhất để đảm bảo bạn tận dụng tối đa mã mạng của mình trên watchOS.
+
+Đầu tiên là sử dụng thuộc tính waitsForConnectivity mới trên đối tượng URLSessionConfiguration của bạn.
+
+Đặt điều này thành true trên một phiên không phải nền sẽ cho phép hệ thống đợi cho đến khi kết nối đủ để thực hiện yêu cầu, thay vì thất bại ngay lập tức.
+
+Có một phương thức đại diện để biết khi nào kết nối đang chờ, vì vậy bạn có thể xử lý tình huống.
+
+Chúng tôi khuyến khích sử dụng thuộc tính này cho tất cả các yêu cầu không phụ thuộc vào việc ngay lập tức, vì chúng sẽ kích hoạt ngay lập tức miễn là có kết nối.
+
+Nếu không, hệ thống sẽ đợi đưa ra yêu cầu cho đến khi kết nối tiếp tục.
+
+Điều này cho phép bạn tập trung vào những gì làm cho ứng dụng của bạn trở nên tuyệt vời thay vì tập trung vào mã khả năng tiếp cận.
+
+Sử dụng phương thức applicationWillResignActive trên đối tượng WKExtensionDelegate cho phép bạn tối ưu hóa những gì xảy ra khi trạng thái ứng dụng thay đổi từ hoạt động sang không hoạt động hoặc nền khi bạn đang xử lý yêu cầu mạng.
+
+Nói cách khác, khi ai đó đặt cổ tay xuống trong khi sử dụng ứng dụng của bạn.
+
+Bằng cách sử dụng phương pháp này, bạn có thể quyết định hủy yêu cầu hiện tại của mình hoặc tạo lại nó dưới dạng phiên nền.
+
+Cuối cùng, tốt nhất là luôn sử dụng đối tượng URLSession singleton được chia sẻ cho nhiều tác vụ, thay vì tạo một phiên cho mỗi tác vụ.
+
+Tạo và vô hiệu hóa nhiều phiên tạo ra chi phí không cần thiết cho hệ thống và tốt nhất là sử dụng phiên được chia sẻ hoặc ít khi cần thiết.
+
+Hãy chuyển sang khung Kết nối Đồng hồ.
+
+Khi Apple Watch trở nên độc lập hơn với kết nối của nó, điều quan trọng là phải xác định nơi sử dụng Kết nối Đồng hồ có thể giúp tạo ra trải nghiệm ứng dụng đồng hồ tuyệt vời.
+
+Sự ra mắt ban đầu của một ứng dụng trên Apple Watch có thể yêu cầu mã thông báo để xác thực với một dịch vụ.
+
+Sử dụng Kết nối Đồng hồ là một cách tuyệt vời để chuyển thông tin này có thể đã được thiết lập trong ứng dụng iPhone.
+
+Nếu ứng dụng của bạn là một ứng dụng huấn luyện để tập luyện hoặc một cái gì đó tương tự, ban đầu bạn có thể muốn chuyển một số tệp âm thanh lớn hơn sang Apple Watch khi ai đó bắt đầu sử dụng ứng dụng của bạn.
+
+Watch Connectivity có thể xử lý các loại chuyển khoản này và có thể giúp cài đặt ứng dụng của bạn vẫn nhỏ và bổ sung ứng dụng với các tài nguyên sau này.
+
+Phương thức updateApplicationContext trên WCSession cho phép bạn yêu cầu iPhone gửi qua từ điển dữ liệu mà ứng dụng đồng hồ có quyền truy cập vào lần kích hoạt tiếp theo.
+
+Đây là một cách hay để giữ cho dữ liệu mới chảy vào ứng dụng đồng hồ trong trường hợp ứng dụng iPhone nhận được dữ liệu mới hơn và ứng dụng đồng hồ vẫn chưa có cơ hội cập nhật.
+
+Khi ứng dụng đồng hồ khởi chạy, bạn có thể hiển thị dữ liệu mới hơn này trong khi bạn bắt đầu yêu cầu mạng để có thêm dữ liệu cập nhật.
+
+Điều rất quan trọng là bạn xây dựng khả năng dự phòng cho một yêu cầu mạng.
+
+Với Apple Watch độc lập hơn, ít đảm bảo rằng ứng dụng đồng hồ của bạn sẽ có dữ liệu cập nhật từ iPhone.
+
+Bây giờ chúng ta hãy chuyển sự chú ý của chúng ta sang máy đo độ cao khí quyển mới trong Apple Watch Series 3, cho phép bạn thêm độ cao hoặc giảm vào bản tóm tắt tập luyện khi ai đó ở xa iPhone của họ.
+
+Điều này cũng giúp cung cấp các tính toán đốt cháy năng lượng hoạt động chính xác hơn cho HealthKit, và đến lượt nó, ứng dụng của bạn.
+
+Sử dụng Core Motion, ứng dụng của bạn hiện có thể được thông báo về sự thay đổi độ cao tương đối từ nơi ứng dụng của bạn bắt đầu nhận được các bản cập nhật.
+
+Thay đổi độ cao tương đối có nghĩa là nếu bạn bắt đầu cập nhật trong khi đứng ở độ cao 800 mét và di chuyển độ cao hơn 50 mét, giá trị độ cao tương đối sẽ là 50 mét.
+
+Nếu bạn di chuyển thấp hơn 80 mét so với nơi bạn bắt đầu, giá trị độ cao tương đối sau đó sẽ âm 80 mét.
+
+Core Motion bao gồm lớp CMAltimeter, bạn sẽ sử dụng để nhận các bản cập nhật.
+
+CMAltimeter có thể xác định và cho bạn biết liệu thiết bị có khả năng cập nhật độ cao tương đối hay không.
+
+Bạn nên luôn kiểm tra điều này trước khi hỏi Core Motion nhiều hơn về độ cao tương đối.
+
+Trong watchOS 4, CMAltimeter hiện có thể cung cấp cho bạn trạng thái ủy quyền cho hoạt động Chuyển động và Thể dục.
+
+Tùy thuộc vào những gì ứng dụng của bạn được phép truy cập, bạn có thể cần xử lý các trường hợp ủy quyền bị từ chối hoặc hạn chế.
+
+Cuối cùng, CMAltimeter cung cấp khả năng bắt đầu và dừng cập nhật độ cao tương đối.
+
+Các bản cập nhật này được phân phối theo nhịp hai giây rưỡi trên watchOS 4, do bộ lọc tín hiệu mà chúng tôi áp dụng cho dữ liệu cảm biến thô.
+
+Khi bạn nhận được bản cập nhật, bạn sẽ có một trình xử lý chuyển cho bạn một đối tượng CMAltitudeData.
+
+Đối tượng CMAltitudeData cung cấp cho bạn dữ liệu thay đổi độ cao tương đối cho bản cập nhật đó.
+
+Điều này bao gồm các phần dữ liệu sau: đầu tiên là dấu thời gian.
+
+Đối tượng này là một khoảng thời gian và được đưa ra dưới dạng số giây kể từ ngày tham chiếu.
+
+Để chuyển đổi giá trị này thành đối tượng Date, bạn có thể dễ dàng sử dụng phương thức khởi tạo timeIntervalSinceReferenceDate trên lớp Date.
+
+Thuộc tính tiếp theo là độ cao tương đối.
+
+Điều này thể hiện sự thay đổi độ cao kể từ sự kiện được báo cáo cuối cùng.
+
+Hãy nhớ rằng đây sẽ là một giá trị tương đối, vì vậy nếu thiết bị di chuyển độ cao thấp hơn hoặc cao hơn, giá trị này sẽ đại diện cho sự thay đổi độ cao chứ không phải độ cao cụ thể.
+
+Giá trị này được tính bằng mét.
+
+Tài sản cuối cùng là áp lực.
+
+Vì máy đo độ cao trên tàu là máy đo độ cao khí quyển, Core Motion có thể cung cấp cho bạn áp suất được ghi lại cùng với sự thay đổi độ cao tương đối.
+
+Giá trị này được tính bằng kilopascals.
+
+Hãy xem qua một ví dụ về cách bắt đầu cập nhật độ cao tương đối bằng CMAltimeter, cũng như cách kiểm tra đúng khả năng của thiết bị và trạng thái ủy quyền.
+
+Trước phương thức startAltitudeUpdates này, tôi đã nhập khung Core Motion vào lớp của mình và tạo một biến thể hiện được gọi là altimeter, thuộc loại CMAltimeter.
+
+Đó là đối tượng chúng tôi sẽ sử dụng để bắt đầu và dừng cập nhật độ cao tương đối sau này.
+
+Trong chức năng của chúng tôi, điều đầu tiên chúng ta nên làm là kiểm tra xem độ cao tương đối có sẵn trên thiết bị hay không.
+
+Nếu không, chúng tôi có thể muốn thay đổi giao diện người dùng để cho người đó biết rằng dữ liệu này sẽ không khả dụng khi họ sử dụng ứng dụng.
+
+Tiếp theo, chúng ta cần kiểm tra xem trạng thái ủy quyền có bị từ chối hay bị hạn chế hay không.
+
+Ở đây, chúng tôi đang đảm bảo trạng thái ủy quyền không bị từ chối, cũng không bị hạn chế.
+
+Nếu trạng thái ủy quyền được ủy quyền, chúng tôi có thể tiếp tục và nếu trạng thái ủy quyền không được xác định, hệ thống sẽ nhắc truy cập, nếu người đó chưa được nhắc trước đó.
+
+Khi ứng dụng được phép sử dụng hoạt động Chuyển động và Thể dục, chúng tôi có thể yêu cầu Core Motion bắt đầu cập nhật độ cao tương đối.
+
+Cuộc gọi này trên một đối tượng CMAltimeter được tạo trước đó yêu cầu chúng tôi vượt qua hàng đợi hoạt động mà chúng tôi muốn nhận thông tin cập nhật, cũng như cung cấp trình xử lý để chạy mỗi khi Core Motion chuyển dữ liệu mới cho chúng tôi.
+
+Trong trường hợp này, chúng tôi đã đặt hàng đợi hoạt động thành hàng đợi chính vì chúng tôi sẽ cập nhật giao diện người dùng trong trình xử lý.
+
+Di chuyển đến trình xử lý, nó chuyển cho chúng tôi một đối tượng CMAltitudeData, chứa các giá trị mà chúng tôi quan tâm hoặc có thể là lỗi nếu có sự cố xảy ra trong bản cập nhật.
+
+Sau khi đảm bảo chúng tôi không có lỗi nào cần xử lý, chúng tôi chỉ cần lấy giá trị relativeAltitude từ đối tượng CMAltitudeData, lưu trữ giá trị float của nó và sử dụng giá trị đó để cập nhật giao diện người dùng.
+
+Chúng ta có thể dễ dàng sử dụng dấu thời gian hoặc các thuộc tính áp suất, như đã đề cập trước đó.
+
+Khi chúng tôi không còn cần nhận bản cập nhật nữa, chúng tôi yêu cầu Core Motion dừng cập nhật độ cao tương đối, sử dụng đối tượng CMAltimeter đã sử dụng trước đây của chúng tôi.
+
+Và thế là xong!
+
+Để biết thêm thông tin về việc phát triển cho Apple Watch và sử dụng URLSession và Core Motion, vui lòng xem các liên kết tài nguyên ở trang sau.
+
+Cảm ơn bạn.

@@ -1,0 +1,521 @@
+10063
+
+♪ ♪
+
+Dhruva: Chào mừng đến với WWDC 2022.
+
+Tên tôi là Dhruva, và tôi là một Kỹ sư GPUSW.
+
+Hôm nay, Matteo và tôi sẽ khám phá tất cả các tính năng và cải tiến mới được giới thiệu cho việc học máy trong năm nay trong Metal.
+
+Đào tạo học máy là quá trình tính toán chuyên sâu nhất của đường ống ML.
+
+Do tính chất song song của chúng, GPU vượt trội trong khối lượng công việc ML.
+
+Các API học máy Metal được hiển thị thông qua một khuôn khổ gọi là Metal Performance Shaders, hoặc MPS.
+
+MPS là một bộ sưu tập các GPU nguyên thủy hiệu suất cao cho các lĩnh vực khác nhau như Xử lý hình ảnh, Đại số tuyến tính, Truy tìm tia và học máy.
+
+Những hạt nhân Kim loại này được tối ưu hóa để cung cấp hiệu suất tốt nhất trên tất cả các nền tảng của chúng tôi.
+
+Ví dụ bộ lọc MPSImageCanny trả về một bản đồ cạnh cho một hình ảnh đầu vào.
+
+Đây là một thao tác phổ biến trong các ứng dụng phân đoạn hình ảnh.
+
+Năm nay, bộ lọc Canny có thể xử lý hình ảnh 4K, độ phân giải cao nhanh hơn tới tám lần.
+
+Biểu đồ MPS, là một biểu đồ tính toán mục đích chung cho GPU nằm trên khung MPS và mở rộng hỗ trợ cho các tenxơ đa chiều.
+
+Tôi khuyên bạn nên xem phiên trước để biết thêm chi tiết về cách sử dụng MPS Graph.
+
+Các khung ML cấp cao như CoreML và Tensorflow nằm trên đầu Biểu đồ MPS.
+
+Bạn có thể tăng tốc mạng TensorFlow của mình trên GPU với trình cắm TensorFlow Metal.
+
+Để biết thêm về cách tận dụng tối đa TensorFlow, hãy xem phiên năm ngoái.
+
+Matteo và tôi có ba chủ đề cần đề cập trong phiên này.
+
+Đầu tiên, tôi sẽ giới thiệu khung ML mới nhất đến với Apple GPUs, PyTorch.
+
+Tiếp theo, tôi sẽ đi sâu vào những cải tiến được thực hiện cho TensorFlow trong năm nay.
+
+Cuối cùng, Matteo sẽ nói về những gì mới trong khuôn khổ MPS Graph.
+
+Chúng tôi thực sự vui mừng vì bây giờ bạn sẽ có thể tăng tốc mạng PyTorch của mình trên GPU Mac của mình.
+
+PyTorch, là một khung học máy mã nguồn mở phổ biến.
+
+Tính năng được yêu cầu nhiều nhất, trong cộng đồng PyTorch là hỗ trợ tăng tốc GPU trên Apple silicon.
+
+Chúng tôi đang mang sức mạnh của Metal đến PyTorch bằng cách giới thiệu một phụ trợ MPS mới cho hệ sinh thái PyTorch.
+
+Phần phụ trợ này sẽ là một phần của bản phát hành PyTorch 1.12 chính thức.
+
+Phần phụ trợ MPS triển khai các hạt nhân hoạt động PyTorch, cũng như khung Thời gian chạy.
+
+Các hoạt động gọi vào MPS Graph và MPS và thành phần Runtime sử dụng Metal.
+
+Điều này cho phép PyTorch sử dụng các hạt nhân hiệu quả cao từ MPS cùng với hàng đợi Lệnh của Metal, bộ đệm Lệnh và nguyên thủy đồng bộ hóa.
+
+Các hạt nhân hoạt động và các thành phần PyTorch MPS Runtime là một phần của mã nguồn mở và được hợp nhất vào kho lưu trữ PyTorch GitHub chính thức.
+
+Sử dụng phụ trợ MPS PyTorch là một quy trình ba bước đơn giản.
+
+Đầu tiên, bắt đầu với PyTorch 1.12, bạn có thể cài đặt gói cơ sở bằng cách sử dụng 'pip install torch'.
+
+Gói này có sẵn trong kho lưu trữ gói python chính thức.
+
+Để biết thêm chi tiết về thiết lập và cài đặt môi trường, vui lòng tham khảo trang web Tài nguyên Nhà phát triển Kim loại.
+
+Thứ hai, nhập PyTorch và tạo thiết bị MPS.
+
+Đoạn mã này sử dụng phụ trợ thiết bị MPS nếu nó có sẵn, nếu không nó sẽ quay trở lại CPU.
+
+Bước cuối cùng là chuyển đổi các mô hình và đầu vào của bạn để sử dụng thiết bị MPS.
+
+Để chứng minh cách thực hiện điều này, tôi sẽ sử dụng một ví dụ chạy suy luận trên mô hình ResNet50 được đào tạo trước từ torchvision.
+
+Theo mặc định, mô hình sẽ chạy trên CPU.
+
+Bạn có thể sử dụng phương pháp "đến" để chuyển đổi mô hình thành sử dụng thiết bị MPS.
+
+Điều này đảm bảo rằng các tenxơ trung gian bên trong mô hình cũng sẽ sử dụng phụ trợ MPS tăng tốc.
+
+Cuối cùng, bạn có thể chạy mô hình.
+
+Ví dụ này chuyển một tenxơ đầu vào ngẫu nhiên đến mô hình MPS.
+
+Theo mặc định, tất cả các tenxơ được phân bổ trên CPU.
+
+Để sử dụng phụ trợ MPS, bạn cũng sẽ cần cung cấp mpsDevice tại đây.
+
+Tất cả các thao tác tiếp theo trên tenxơ này sẽ được tăng tốc trên GPU.
+
+Cuối cùng, chuyển đầu vào mẫu cho mô hình MPS để có được dự đoán.
+
+Bây giờ bạn đã biết cách sử dụng thiết bị MPS, tôi sẽ chỉ cho bạn một ví dụ về PyTorch đang hoạt động.
+
+Tôi luôn muốn trở thành một nghệ sĩ nổi tiếng.
+
+Vì vậy, tôi quyết định sử dụng máy học và GPU của mình để giúp tạo ra tác phẩm nghệ thuật của mình bằng cách sử dụng mạng StyleTransfer.
+
+Mạng lưới này cho phép bạn áp dụng một phong cách nghệ thuật khác cho một hình ảnh.
+
+Trong trường hợp này, mục tiêu là học cách áp dụng phong cách của Van Gogh trong Đêm đầy sao vào bức tranh về một con mèo này.
+
+Với thiết bị MPS mới, bạn sẽ có thể sử dụng GPU để đào tạo mạng PyTorch của mình nhanh hơn đáng kể.
+
+Để chứng minh điều này, tôi sẽ bắt đầu đào tạo mạng này trên cả CPU và GPU đồng thời trên M1 Max.
+
+Phải mất hàng nghìn lần lặp lại để học phong cách này, nhưng GPU có thể hội tụ thành một mô hình hợp lý trong thời gian ngắn hơn nhiều.
+
+Ngoài StyleTransfer, chúng tôi đã thấy tốc độ đáng kinh ngạc trên tất cả các điểm chuẩn PyTorch này.
+
+Trên M1 Ultra, chúng tôi đã thấy tốc độ nhanh hơn tới 20 lần với tốc độ trung bình nhanh hơn 8,3 lần.
+
+PyTorch giúp bạn dễ dàng phát triển các mô hình học máy và bạn sẽ có thể tiết kiệm rất nhiều thời gian bằng cách sử dụng GPU của Apple để đào tạo chúng.
+
+Tiếp theo, tôi sẽ đi sâu vào tất cả các cải tiến mà chúng tôi đã thực hiện trong năm nay cho TensorFlow.
+
+Tăng tốc TensorFlow Metal đã có sẵn kể từ TensorFlow phiên bản 2.5 thông qua trình cắm TensorFlow Metal.
+
+Kể từ đó, một số tính năng và cải tiến bổ sung đã được thêm vào.
+
+Chúng bao gồm đào tạo được cải thiện với các lô lớn hơn, các hoạt động mới và hỗ trợ hoạt động tùy chỉnh, cải tiến RNN và đào tạo phân tán.
+
+Các bản phát hành trình cắm TensorFlow Metal phù hợp với các bản phát hành TensorFlow chính, vì vậy hãy đảm bảo bạn cập nhật các gói TensorFlow của mình để có được các tính năng và cải tiến mới nhất.
+
+Hãy bắt đầu với kích thước lô lớn hơn.
+
+Những cải tiến phần mềm năm nay trong TensorFlow Metal cho phép bạn tận dụng những lợi ích độc đáo của kiến trúc silicon Apple.
+
+Biểu đồ này cho thấy tốc độ đào tạo mô hình ResNet50 với nhiều kích thước lô khác nhau.
+
+Dữ liệu cho thấy hiệu suất được cải thiện với kích thước lô lớn hơn vì mỗi bản cập nhật gradient tương ứng chặt chẽ hơn với gradient thực sự.
+
+Kiến trúc bộ nhớ thống nhất của Apple silicon cho phép bạn chạy các mạng lớn hơn hoặc kích thước lô lớn hơn.
+
+Bây giờ bạn có thể chạy khối lượng công việc của mình trên một Mac Studio duy nhất thay vì chia nó thành một cụm đám mây, điều đó thật tuyệt vời!
+
+Kiến trúc Apple Silicon cũng có hiệu suất cao trên mỗi watt, có nghĩa là mạng của bạn chạy hiệu quả hơn bao giờ hết.
+
+Tiếp theo tôi sẽ nói về các hoạt động mới và các hoạt động tùy chỉnh.
+
+Trình cắm Tensorflow Metal hiện có khả năng tăng tốc GPU cho nhiều hoạt động mới, bao gồm argMin, all, pack, adaDelta, và nhiều hơn nữa.
+
+Nhưng điều gì sẽ xảy ra nếu bạn muốn tăng tốc GPU cho một hoạt động hiện không được hỗ trợ trong TensorFlow API?
+
+Để làm điều này, bạn sẽ cần tạo một thao tác tùy chỉnh.
+
+Đây là một ví dụ về một mạng tích chập đơn giản chạy cho hai lần lặp lại.
+
+Dòng thời gian đại diện cho công việc được thực hiện trên GPU và CPU, tương ứng ở trên và dưới.
+
+Mạng thực hiện tích chập theo sau là maxpool-ing và sau đó là tổn thất entropy chéo softmax.
+
+Tất cả các hoạt động này đều được tăng tốc GPU trong trình cắm TensorFlow Metal thông qua MPS Graph Nhưng bạn có thể muốn sử dụng chức năng mất tùy chỉnh.
+
+Nếu không có khả năng tăng tốc GPU MPS cho sự mất mát tùy chỉnh này, công việc đó sẽ cần được thực hiện trên dòng thời gian CPU, điều này giới thiệu chi phí đồng bộ hóa và bỏ đói GPU.
+
+Bạn có thể đạt được hiệu suất tốt hơn nhiều bằng cách thực hiện tổn thất tùy chỉnh này trên GPU.
+
+Để thực hiện một thao tác tùy chỉnh, bạn sẽ cần hiểu giao thức TensorFlow Metal Stream.
+
+Đây là một giao thức mà bạn sử dụng để mã hóa các hoạt động của GPU.
+
+Luồng Metal giữ một tham chiếu đến MTLCommandBuffer mà bạn sử dụng để mã hóa hạt nhân GPU của mình.
+
+Nó cũng hiển thị dispatch_queue để sử dụng cho đồng bộ hóa phía CPU trong khi mã hóa vì có thể có nhiều luồng gửi công việc.
+
+Sử dụng các phương thức cam kết hoặc commitAndWait để gửi công việc đến GPU.
+
+CommitAndWait là một công cụ gỡ lỗi sẽ đợi cho đến khi bộ đệm lệnh hiện tại được thực hiện để bạn có thể quan sát các bài gửi được tuần tự hóa.
+
+Bây giờ hãy xem những khái niệm này có thể được sử dụng như thế nào để triển khai một hoạt động tùy chỉnh.
+
+Có ba bước để viết một thao tác tùy chỉnh.
+
+Đầu tiên, đăng ký hoạt động.
+
+Tiếp theo, thực hiện thao tác bằng MetalStream.
+
+Và cuối cùng, nhập thao tác vào tập lệnh đào tạo của bạn và bắt đầu sử dụng nó.
+
+Tôi sẽ bắt đầu với việc đăng ký hoạt động.
+
+Sử dụng macro REGISTER_OP được hiển thị bởi lõi TensorFlow để chỉ định ngữ nghĩa của op và cách nó nên được xác định trong trình cắm TensorFlow Metal.
+
+Tiếp theo, triển khai op bằng cách sử dụng TensorFlow_MetalStream.
+
+Bắt đầu bằng cách xác định chức năng "tính toán".
+
+Bây giờ, bên trong hàm này, lấy các đối tượng TensorFlow_Tensor cho đầu vào và xác định đầu ra, có thể yêu cầu phân bổ.
+
+Sau đó tạo một bộ mã hóa bằng cách sử dụng bộ đệm lệnh của luồng Metal.
+
+Tiếp theo, xác định hạt nhân GPU tùy chỉnh.
+
+Hoạt động của bạn nên được mã hóa bên trong dispatch_queue được cung cấp bởi luồng Metal.
+
+Điều này đảm bảo các bài gửi từ nhiều luồng được tuần tự hóa.
+
+Sau đó cam kết hạt nhân bằng cách sử dụng phương thức được cung cấp trong giao thức TensorFlow_MetalStream.
+
+Cuối cùng, xóa các tham chiếu đến các tenxơ được phân bổ.
+
+Cuối cùng, nhập thao tác vào tập lệnh đào tạo của bạn để bắt đầu sử dụng nó.
+
+Trong bước này, hãy xây dựng tệp thư viện động được chia sẻ của op tùy chỉnh được gọi là zero_out.so.
+
+Tham khảo Tài nguyên Nhà phát triển Kim loại để biết thông tin về cách xây dựng và nhập các tệp .so.
+
+Ví dụ này nhập thao tác vào tập lệnh đào tạo bằng cách sử dụng TensorFlow load_op_library, đây là một bước tùy chọn.
+
+Bây giờ, điều này hoạt động giống như một trình bao bọc python và op tùy chỉnh của chúng tôi có thể được gọi trong tập lệnh đào tạo.
+
+Tiếp theo, tôi muốn chỉ cho bạn một ví dụ về một ứng dụng thú vị được gọi là Neural Radiance Fields, hoặc NeRF.
+
+Chúng tôi đã viết một thao tác tùy chỉnh giúp nâng cao hiệu suất của mạng bằng cách cho phép tăng tốc GPU để có thuật toán tốt hơn.
+
+NeRF là một mạng được sử dụng để tổng hợp các chế độ xem 3D của một mô hình.
+
+Để đào tạo, NeRF lấy đầu vào, hình ảnh của một đối tượng từ các góc độ khác nhau.
+
+Mạng NeRF bao gồm hai perceptron nhiều lớp xếp chồng lên nhau và đầu ra là biểu diễn thể tích của mô hình.
+
+Tối ưu hóa hiệu suất chính cho đào tạo thời gian thực sử dụng triển khai bảng băm.
+
+Mạng được cập nhật này cho phép một perceptron nhiều lớp nhỏ hơn nhiều.
+
+TensorFlow không hỗ trợ các bảng băm nguyên bản nên chúng tôi sử dụng tính năng op tùy chỉnh để triển khai chúng trong trình cắm Metal.
+
+Tăng tốc GPU cho các bảng băm giúp có thể đào tạo NeRF nhanh hơn nhiều.
+
+Tôi sẽ bắt đầu trên chiếc MacBook này và chạy triển khai perceptron nhiều lớp ban đầu.
+
+Để làm cho bất cứ điều gì hợp lý, chúng ta cần ít nhất 20 kỷ nguyên nhưng mỗi kỷ nguyên mất khoảng 100 giây.
+
+Điều đó có nghĩa là sẽ mất khoảng 30 phút trước khi bất cứ thứ gì được nhìn thấy.
+
+Vì vậy, bây giờ tôi sẽ khởi động lại khóa đào tạo từ một tệp trạm kiểm soát được đào tạo trước, được để lại để đào tạo trước 30 phút.
+
+Điều này bắt đầu từ kỷ nguyên 20.
+
+Mô hình 3D bị mờ và không rõ ràng ngay cả sau 30 phút đào tạo.
+
+Nó sẽ đòi hỏi thời gian đào tạo lâu hơn nhiều để mạng lưới học một mô hình rõ ràng hơn.
+
+Cách tiếp cận perceptron nhiều lớp hai lớp được xếp chồng lên nhau ban đầu mà không có bảng băm tùy chỉnh là quá chậm.
+
+Bây giờ trên MacBook này, tôi sẽ khởi động phiên bản được tối ưu hóa sử dụng các bảng băm tùy chỉnh.
+
+Việc triển khai này đã có thể hiển thị một mô hình rõ ràng hơn nhiều và mỗi kỷ nguyên chỉ mất 10 giây để học.
+
+Để biết thêm thông tin về dự án này, hãy xem mã mẫu mà chúng tôi đã tải lên Metal Developer Resources.
+
+NeRF chỉ là một trong nhiều mạng thể hiện cách bạn có thể triển khai tăng tốc GPU cho các hoạt động tùy chỉnh của riêng mình để làm cho mạng của bạn chạy cực nhanh.
+
+Tôi mong muốn được tìm hiểu về tất cả các tùy chỉnh sáng tạo mà bạn thực hiện, trong tương lai.
+
+Bây giờ tôi muốn chỉ cho bạn cách sử dụng GPU của Apple để phân phối đào tạo khối lượng công việc ML.
+
+Để phân phối đào tạo khối lượng công việc, bạn có thể chạy nhiều phiên bản của tập lệnh đào tạo trong các quy trình riêng biệt trong đó mỗi quy trình đánh giá một lần lặp duy nhất của mô hình.
+
+Mỗi quy trình sẽ đọc dữ liệu từ một kho dữ liệu trung tâm.
+
+Sau đó, nó sẽ chạy qua mô hình và tính toán độ dốc của mô hình.
+
+Tiếp theo, các quy trình sẽ tính trung bình các độ dốc và truyền đạt điều này với nhau để mỗi quá trình có cùng độ dốc trước lần lặp tiếp theo.
+
+Cuối cùng, mô hình được cập nhật và bạn có thể lặp lại quy trình này cho đến khi tất cả các lần lặp lại cạn kiệt.
+
+Để chứng minh điều này trên TensorFlow, tôi sẽ sử dụng một ví dụ về đào tạo phân tán bằng cách sử dụng một khung mã nguồn mở phổ biến được gọi là Horovod.
+
+Horovod sử dụng phương pháp giảm tất cả vòng.
+
+Trong thuật toán này, mỗi N nút giao tiếp với hai trong số các đồng nghiệp của nó nhiều lần.
+
+Sử dụng giao tiếp này, công nhân xử lý đồng bộ hóa độ dốc trước mỗi lần lặp.
+
+Tôi sẽ thể hiện điều này trong hành động bằng cách sử dụng bốn Mac Studios được kết nối với nhau bằng cáp Thunderbolt.
+
+Đối với ví dụ này, tôi sẽ đào tạo ResNet, một trình phân loại cho hình ảnh.
+
+Thanh ở bên cạnh mỗi Mac Studio hiển thị việc sử dụng GPU trong khi đào tạo mạng này.
+
+Đối với một Mac Studio duy nhất, hiệu suất là khoảng 200 hình ảnh mỗi giây.
+
+Khi tôi thêm một Mac Studio khác được kết nối qua Thunderbolt, hiệu suất gần như tăng gấp đôi lên 400 hình ảnh mỗi giây vì cả hai GPU đều được sử dụng tối đa.
+
+Cuối cùng, khi tôi kết nối thêm hai Mac Studios, hiệu suất được nâng lên 800 hình ảnh mỗi giây.
+
+Đây gần như là tỷ lệ tuyến tính trên khối lượng công việc đào tạo ràng buộc tính toán của bạn.
+
+Bây giờ đây là một cái nhìn về hiệu suất đào tạo Phân tán của TensorFlow.
+
+Biểu đồ này cho thấy tốc độ tương đối cho một, hai và bốn Mac Studios.
+
+Chúng được kết nối trong một cấu trúc liên kết vòng và chạy các mạng TensorFlow liên kết tính toán như resNet và DistilBERT với trình cắm TensorFlow Metal mới nhất và Horovod.
+
+Cơ sở là màn trình diễn trên một Mac Studio duy nhất.
+
+Biểu đồ cho thấy hiệu suất mạng có quy mô với việc bổ sung từng GPU để giờ đây bạn có thể tận dụng GPU trên nhiều thiết bị, để tăng tốc thời gian đào tạo và tận dụng tối đa tất cả các thiết bị Apple của mình.
+
+Tất cả các cải tiến và tính năng được mở khóa cho TensorFlow năm nay lên đến đỉnh điểm trong biểu đồ này cho thấy hiệu suất tương đối so với việc triển khai CPU với nhiều cải tiến hơn trong tương lai.
+
+Bây giờ Matteo sẽ chia sẻ những gì mới trong khuôn khổ MPSGraph.
+
+Matteo: Cảm ơn, Dhruva.
+
+Xin chào, tên tôi là Matteo, và tôi là một kỹ sư phần mềm GPU.
+
+PyTorch và TensorFlow nằm trên đỉnh của khung MPSGraph.
+
+Đổi lại, MPSGraph sử dụng các nguyên thủy song song được hiển thị bởi khung MPS để tăng tốc công việc trên GPU.
+
+Hôm nay tôi sẽ nói về hai tính năng mà bạn có thể sử dụng để tăng tốc khối lượng công việc tính toán của mình hơn nữa với MPSGraph.
+
+Đầu tiên, tôi sẽ hiển thị API sự kiện được chia sẻ mới cho phép bạn đồng bộ hóa công việc giữa hai biểu đồ.
+
+Thứ hai, tôi sẽ xem xét các thao tác mới, mà bạn có thể sử dụng để làm nhiều hơn nữa với MPSGraph.
+
+Tôi sẽ bắt đầu với API Sự kiện được Chia sẻ.
+
+Chạy các ứng dụng trên cùng một hàng đợi lệnh đảm bảo đồng bộ hóa giữa các khối lượng công việc.
+
+Trong ví dụ này, khối lượng công việc tính toán được đảm bảo luôn chấm dứt trước khi các khối lượng công việc khác, chẳng hạn như xử lý hậu kỳ và hiển thị, được gửi đi.
+
+Trong những trường hợp như thế này, bạn sẽ tận dụng tính song song của GPU trong mỗi công văn.
+
+Tuy nhiên, một số ứng dụng có thể được hưởng lợi từ tính song song hơn, trong đó phần đầu tiên của GPU được sử dụng để tính toán và phần thứ hai được sử dụng để xử lý hậu kỳ và hiển thị.
+
+Điều này có thể đạt được bằng cách gửi công việc đến GPU trên nhiều hàng đợi lệnh.
+
+Thật không may, trong trường hợp này, đường ống xử lý hậu kỳ có thể được gửi đi trước khi máy tính tạo ra kết quả, giới thiệu một cuộc đua dữ liệu.
+
+API Sự kiện được Chia sẻ có thể được sử dụng để giải quyết vấn đề này và giới thiệu đồng bộ hóa trên các hàng đợi lệnh để đảm bảo rằng các phụ thuộc quy trình làm việc có thể được thỏa mãn.
+
+Sử dụng các sự kiện được chia sẻ trong mã của bạn rất đơn giản.
+
+Giả sử bạn đang làm việc với hai biểu đồ.
+
+Đầu tiên chịu trách nhiệm về khối lượng công việc tính toán.
+
+Thứ hai, chịu trách nhiệm về khối lượng công việc xử lý bài đăng.
+
+Chúng ta cũng giả sử rằng kết quả của biểu đồ tính toán được sử dụng làm đầu vào cho biểu đồ xử lý hậu kỳ và chúng chạy trên các hàng đợi lệnh khác nhau.
+
+Bản nhạc MPSGraph mới trong Metal System Trace chỉ ra rằng các hàng đợi lệnh đang chồng chéo với nhau.
+
+Điều này tạo ra một cuộc đua dữ liệu.
+
+Bạn có thể giải quyết vấn đề này bằng cách sử dụng một sự kiện được chia sẻ.
+
+Đầu tiên, tạo sự kiện bằng thiết bị Metal.
+
+Tiếp theo, gọi phương thức tín hiệu trong bộ mô tả thực thi, cung cấp sự kiện, hành động và giá trị.
+
+Sau đó, tất cả những gì bạn phải làm là gọi phương thức chờ trên bộ mô tả thứ hai, cung cấp biến sự kiện và giá trị.
+
+Bây giờ, dấu vết hệ thống Metal chỉ ra rằng hai hàng đợi lệnh được chạy tuần tự và sự phụ thuộc giữa biểu đồ tính toán và xử lý hậu kỳ đã được giải quyết.
+
+Đó là cách bạn có thể sử dụng các sự kiện được chia sẻ để giải quyết các vấn đề đồng bộ hóa trong các ứng dụng của mình.
+
+Thứ hai, tôi sẽ nói về các hoạt động mới được hỗ trợ bởi MPSGraph.
+
+Những thao tác này cho phép bạn làm được nhiều việc hơn với khuôn khổ.
+
+Tôi sẽ xem xét một số chi tiết của từng hoạt động mới này, bắt đầu với RNN.
+
+MPSGraph hiện hiển thị ba hoạt động thường được sử dụng trong các ứng dụng Mạng thần kinh tái phát.
+
+Đây là các lớp RNN, LSTM và GRU.
+
+Tất cả các hoạt động này đều hoạt động tương tự nhau, vì vậy tôi sẽ chỉ tập trung vào LSTM hôm nay.
+
+Hoạt động LSTM thường được sử dụng để xử lý ngôn ngữ tự nhiên và các ứng dụng khác.
+
+Sơ đồ này cho thấy cách hoạt động của LSTM.
+
+Để tìm hiểu thêm về nó, hãy xem phiên WWDC trước đây của chúng tôi.
+
+Bạn có thể tự triển khai đơn vị LSTM, nhưng để làm như vậy, bạn sẽ phải xây dựng biểu đồ con tùy chỉnh khá phức tạp này.
+
+Thay vào đó, bạn có thể sử dụng thao tác LSTM mới, mã hóa hiệu quả tất cả các công việc GPU theo yêu cầu của thiết bị lặp lại.
+
+Hoạt động mới này làm cho các mô hình suy luận CoreML dựa trên LSTM nhanh hơn đáng kể.
+
+Để sử dụng thao tác LSTM mới, trước tiên hãy tạo Mô tả MPSGraphLSTM.
+
+Bạn có thể sửa đổi các thuộc tính mô tả khi cần thiết, ví dụ như chọn các chức năng kích hoạt.
+
+Tiếp theo, thêm đơn vị LSTM vào biểu đồ, cung cấp các tenxơ đầu vào.
+
+Bạn cũng có thể cung cấp một vectơ thiên vị, cũng như trạng thái ban đầu và ô cho hoạt động.
+
+Cuối cùng, cung cấp mô tả.
+
+Đó là tất cả những gì bạn cần làm để thiết lập LSTM.
+
+Các hoạt động RNN khác hoạt động tương tự.
+
+Tôi khuyến khích bạn thử các thao tác này và xem bạn có thể tăng tốc loại nào trong ứng dụng của mình.
+
+Tiếp theo, tôi sẽ chỉ cho bạn sự hỗ trợ được cải thiện cho Max Pooling.
+
+Thao tác Max Pooling lấy một tenxơ đầu vào và kích thước cửa sổ và tính toán, đối với mỗi ứng dụng của cửa sổ, giá trị tối đa của đầu vào trong cửa sổ.
+
+Nó thường được sử dụng trong thị giác máy tính để giảm kích thước của hình ảnh.
+
+API đã được mở rộng để trả về các chỉ số của vị trí giá trị tối đa được trích xuất bởi toán tử gộp.
+
+Bạn có thể sử dụng các chỉ số trong gradient pass, trong đó các gradient phải được truyền qua các vị trí nơi các giá trị tối đa được trích xuất.
+
+API mới cũng hoạt động để đào tạo.
+
+Tái sử dụng các chỉ số trong quá trình đào tạo có thể nhanh hơn tới sáu lần đối với PyTorch và TensorFlow.
+
+Để thiết lập điều này trong mã, trước tiên, hãy tạo mô tả GraphPooling.
+
+Bạn có thể chỉ định returnIndicesMode, ví dụ, globalFlatten4D.
+
+Sau đó, bạn có thể gọi hoạt động tổng hợp trên biểu đồ với API Chỉ số Trả về.
+
+Kết quả của ca phẫu thuật có hai mặt.
+
+Đầu tiên, Tổng hợpTensor, và thứ hai, indicesTensor.
+
+Bạn có thể lưu trữ indicesTensor để sử dụng sau này, ví dụ, trên một đường ống đào tạo.
+
+Biểu đồ MPS hiện hiển thị một trình tạo số ngẫu nhiên song song mới, có thể được sử dụng, ví dụ, để khởi tạo trọng số của biểu đồ đào tạo.
+
+Thao tác ngẫu nhiên mới sử dụng thuật toán Philox và trả về kết quả tương tự như TensorFlow cho một hạt giống nhất định.
+
+Thao tác mới lấy, làm đầu vào, một tenxơ trạng thái; nó trả về dưới dạng đầu ra một tenxơ ngẫu nhiên và một tenxơ trạng thái mới có thể được sử dụng, ví dụ, làm đầu vào cho một thao tác ngẫu nhiên thứ hai.
+
+Để sử dụng thao tác ngẫu nhiên mới, hãy gọi phương thức randomPhiloxStateTensor.
+
+Phương pháp này khởi tạo một stateTensor đầu vào với hạt giống đã cho.
+
+Sau đó khai báo bộ mô tả RandomOp, lấy đầu vào phân phối và kiểu dữ liệu.
+
+Trong ví dụ, bộ mô tả chỉ định một phân phối Bình thường bị cắt ngắn của các giá trị dấu phẩy động 32 bit.
+
+Bạn cũng có thể sử dụng phân phối Bình thường và Đồng nhất.
+
+Bạn có thể xác định thêm các đặc điểm phân phối bằng cách chỉ định giá trị trung bình, độ lệch chuẩn, giá trị tối thiểu và tối đa.
+
+Cuối cùng, bạn có thể tạo thao tác ngẫu nhiên, cung cấp shapeTensor, descriptor và stateTensor vừa tạo.
+
+Ngoài Ngẫu nhiên, MPSGraph hiện hỗ trợ hoạt động tăng tốc GPU mới để tính toán khoảng cách Hamming giữa hai vectơ bit.
+
+Khoảng cách hamming, được định nghĩa là số bit khác nhau giữa hai đầu vào có cùng độ dài, là thước đo khoảng cách chỉnh sửa giữa hai chuỗi và nó được sử dụng trên một số ứng dụng, từ tin sinh học đến mật mã học.
+
+Để sử dụng HammingDistance, hãy gọi API trên biểu đồ, cung cấp primaryTensor, secondaryTensor và resultDataType.
+
+Lưu ý rằng hạt nhân mới hỗ trợ phát sóng qua kích thước hàng loạt trên GPU.
+
+Bây giờ, tôi sẽ chỉ cho bạn tất cả về các thao tác tensor mới, rất dễ sử dụng.
+
+Bây giờ bạn có thể mở rộng kích thước của tenxơ, ví dụ, từ hai đến ba chiều.
+
+Và bạn có thể ép kích thước trở lại.
+
+Bạn cũng có thể chia đều một tenxơ cung cấp một số lát cắt và một trục.
+
+Hoặc xếp các tenxơ dọc theo một trục nhất định.
+
+Bạn cũng có thể tạo các giá trị tọa độ dọc theo kích thước tensor cho một hình dạng đầu vào nhất định.
+
+Ví dụ, bạn có thể điền một tenxơ hình dạng hai x bốn với tọa độ dọc theo trục 0.
+
+Điều này cũng có thể được sử dụng để thực hiện hoạt động range1D.
+
+Ví dụ, giả sử bạn muốn tạo phạm vi số từ 3 đến 27 với gia số là 4.
+
+Bạn có thể làm như vậy bằng cách trước tiên tạo tọa độ dọc theo kích thước 0 của một tenxơ hình 6.
+
+Sau đó, tất cả những gì bạn phải làm là nhân với gia số và cộng phần bù.
+
+Đó là tất cả các hoạt động mới được bổ sung trong năm nay.
+
+Với tất cả các hoạt động mới này, bạn sẽ có thể làm được nhiều hơn nữa và đạt được hiệu suất cao hơn trên hệ sinh thái Apple bằng MPSGraph.
+
+Bây giờ, tôi sẽ chỉ cho bạn những cải tiến hiệu suất mà bạn có thể nhận được trên Apple silicon từ MPSGraph.
+
+Blackmagic vừa phát hành DaVinci Resolve phiên bản 18, sử dụng MPS Graph để tăng tốc khối lượng công việc học máy.
+
+Magic Mask là một tính năng của Resolve sử dụng máy học để xác định một đối tượng chuyển động trên màn hình và áp dụng có chọn lọc lên trên nó.
+
+Đầu tiên tôi sẽ trình bày cách thức hoạt động của Resolve trong phiên bản trước của Resolve, và sau đó tôi sẽ so sánh nó với phiên bản hiện tại.
+
+Để tạo mặt nạ, bạn chỉ cần chọn đối tượng mục tiêu.
+
+Bạn có thể xem mặt nạ bằng cách chuyển đổi lớp phủ.
+
+Mặt nạ được xác định bởi vùng màu đỏ, đánh dấu chính xác hình dạng của đối tượng.
+
+Bây giờ, nếu tôi phát video, mặt nạ sẽ theo dõi đối tượng khi nó di chuyển trên màn hình.
+
+Điều này trông rất tuyệt, nhưng nó đang chạy ở tốc độ khung hình khá thấp, vì đường ống học máy chạy dưới mui xe.
+
+Bây giờ tôi sẽ chuyển sang phiên bản Resolve mới nhất, sử dụng MPSGraph để tăng tốc mạng Magic Mask.
+
+Chạy lại cùng một dòng thời gian, tốc độ khung hình nhanh hơn trước.
+
+Điều này dẫn đến trải nghiệm chỉnh sửa tốt hơn nhiều trên Apple silicon.
+
+Đây là loại tăng tốc bạn có thể nhận được chỉ bằng cách áp dụng Biểu đồ MPS.
+
+Tôi khuyến khích bạn khám phá loại hiệu suất mà nó có thể mang lại cho ứng dụng của bạn.
+
+Để kết thúc, bây giờ bạn sẽ có thể tận dụng khả năng tăng tốc GPU cho PyTorch và dự án hiện là mã nguồn mở.
+
+Bạn sẽ tìm thấy những cách mới để tăng tốc khối lượng công việc đào tạo bằng cách sử dụng trình cắm TensorFlow Metal, ví dụ, sử dụng các hoạt động tùy chỉnh và đào tạo phân tán.
+
+Cuối cùng, bạn sẽ có thể tối ưu hóa các tác vụ học máy đòi hỏi khắt khe nhất với khung MPSGraph để tận dụng tối đa silicon của Apple, sử dụng các sự kiện được chia sẻ và các hoạt động mới.
+
+Dhruva và tôi nóng lòng muốn xem bạn sẽ sử dụng những tính năng mới này trong các ứng dụng của mình như thế nào.
+
+Cảm ơn bạn đã xem phiên họp, và chúc bạn có một WWDC tuyệt vời.

@@ -1,0 +1,494 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:11.000
+- Xin chào! Tên tôi là Andrei.
+
+00:00:11.000 --> 00:00:15.000
+Tôi là một kỹ sư phần mềm GPU với nhóm Metal Frameworks.
+
+00:00:15.000 --> 00:00:19.000
+Hôm nay, tôi rất vui được giới thiệu với bạn Bộ đổ bóng lưới kim loại.
+
+00:00:19.000 --> 00:00:26.000
+Lưới đổ bóng là đường ống linh hoạt mới trong Kim loại để tạo và xử lý hình học dựa trên GPU.
+
+00:00:26.000 --> 00:00:35.000
+Nó cải thiện trên đường ống đỉnh/đoạn, thêm rất nhiều tính linh hoạt và loại bỏ các hạn chế của xử lý per-vertex.
+
+00:00:35.000 --> 00:00:52.000
+Nó có nhiều ứng dụng, nhưng không giới hạn ở: loại bỏ hình học chi tiết, tạo hình học thủ tục có thể mở rộng trên GPU và cho phép các đầu vào hình học tùy chỉnh như luồng đỉnh nén, meshlet và các thuật toán thủ tục phức tạp.
+
+00:00:52.000 --> 00:00:55.000
+Tôi muốn đề cập đến ba điều này hôm nay.
+
+00:00:55.000 --> 00:00:59.000
+Đầu tiên, tôi sẽ xem xét bóng lưới kim loại là gì.
+
+00:00:59.000 --> 00:01:03.000
+Sau đó, tôi muốn nói với bạn về hai trường hợp sử dụng bộ đổ bóng lưới.
+
+00:01:03.000 --> 00:01:09.000
+Bộ đổ bóng lưới rất tốt để tạo ra hình học thủ tục như kết xuất tóc thủ tục.
+
+00:01:09.000 --> 00:01:13.000
+Bộ đổ bóng lưới cũng giúp cải thiện việc xử lý và kết xuất cảnh.
+
+00:01:13.000 --> 00:01:19.000
+Một ví dụ chính về điều này là sử dụng bộ đổ bóng lưới để thực hiện loại bỏ lưới điều khiển bằng GPU.
+
+00:01:19.000 --> 00:01:21.000
+Hãy bắt đầu với việc giới thiệu lưới đổ bóng.
+
+00:01:21.000 --> 00:01:27.000
+Đây là Stanford Bunny, đại diện cho một lưới điển hình mà bạn có thể hiển thị trên GPU.
+
+00:01:27.000 --> 00:01:34.000
+Để hiển thị lưới này, dữ liệu đỉnh và chỉ mục trước tiên sẽ phải được đặt trong bộ nhớ thiết bị.
+
+00:01:34.000 --> 00:01:39.000
+Sau đó, bạn sẽ phải sử dụng bộ mã hóa lệnh kết xuất để thực hiện lệnh gọi vẽ.
+
+00:01:39.000 --> 00:01:52.000
+Một đường ống kết xuất truyền thống bao gồm ba giai đoạn cơ bản: Giai đoạn đổ bóng đỉnh có thể lập trình, giai đoạn rasterization chức năng cố định và giai đoạn đổ bóng đoạn có thể lập trình.
+
+00:01:52.000 --> 00:01:57.000
+Giai đoạn đổ bóng đỉnh sẽ lấy hình học từ bộ nhớ thiết bị làm đầu vào và xử lý nó.
+
+00:01:57.000 --> 00:02:04.000
+Bộ tạo rasterizer sẽ tạo ra các mảnh không gian màn hình và bộ đổ bóng phân mảnh sẽ tô bóng chúng để tạo ra hình ảnh cuối cùng.
+
+00:02:04.000 --> 00:02:08.000
+Đường ống này đã và vẫn đang phục vụ mục đích của nó cực kỳ tốt.
+
+00:02:08.000 --> 00:02:13.000
+Tuy nhiên, nó thiếu tính linh hoạt và có những hạn chế nhất định.
+
+00:02:13.000 --> 00:02:15.000
+Hãy xem qua một ví dụ.
+
+00:02:15.000 --> 00:02:19.000
+Hãy tưởng tượng rằng bạn muốn tạo ra một số hình học thủ tục trên GPU.
+
+00:02:19.000 --> 00:02:25.000
+Ví dụ, bạn đã quyết định thêm lông thú thủ tục vào chú thỏ này.
+
+00:02:25.000 --> 00:02:30.000
+Hãy để tôi chỉ cho bạn cách nhiệm vụ này được xử lý bởi đường ống hình học truyền thống.
+
+00:02:30.000 --> 00:02:40.000
+Theo truyền thống, để tạo ra hình học thủ tục, bạn cũng sẽ cần phải có một bộ mã hóa lệnh tính toán để thực hiện một công văn hạt nhân tính toán.
+
+00:02:40.000 --> 00:02:49.000
+Hạt nhân tính toán sẽ lấy lưới ban đầu làm đầu vào, tạo ra hình học thủ tục và xuất nó trở lại bộ nhớ thiết bị.
+
+00:02:49.000 --> 00:02:57.000
+Sau đó, bạn sẽ sử dụng bộ mã hóa lệnh kết xuất để thực hiện lệnh gọi vẽ lấy hình học thủ tục làm đầu vào và tạo ra hình ảnh cuối cùng.
+
+00:02:57.000 --> 00:03:05.000
+Cách tiếp cận này không chỉ yêu cầu hai bộ mã hóa lệnh, nó còn yêu cầu bạn phân bổ bộ nhớ bổ sung để lưu trữ hình học thủ tục.
+
+00:03:05.000 --> 00:03:13.000
+Trong trường hợp các cuộc gọi rút thăm gián tiếp hoặc các yếu tố mở rộng cao, dung lượng bộ nhớ này có thể khá cao và khó dự đoán.
+
+00:03:13.000 --> 00:03:18.000
+Ngoài ra còn có một rào cản giữa hai bộ mã hóa, tuần tự hóa công việc trên GPU.
+
+00:03:18.000 --> 00:03:21.000
+Bộ đổ bóng lưới kim loại giải quyết tất cả những vấn đề đó.
+
+00:03:21.000 --> 00:03:32.000
+Bộ đổ bóng lưới là một đường ống hình học mới thay thế giai đoạn đổ bóng đỉnh bằng hai giai đoạn có thể lập trình mới - giai đoạn đổ bóng đối tượng và giai đoạn đổ bóng lưới.
+
+00:03:32.000 --> 00:03:41.000
+Trong ví dụ này, bộ đổ bóng đối tượng sẽ lấy hình học làm đầu vào, xử lý nó và xuất ra một số dữ liệu - mà chúng tôi gọi là "tải trọng" - vào bộ đổ bóng lưới.
+
+00:03:41.000 --> 00:03:45.000
+Tùy thuộc vào bạn để quyết định dữ liệu này là gì.
+
+00:03:45.000 --> 00:03:50.000
+Bộ đổ bóng lưới, lần lượt, sẽ sử dụng dữ liệu này để tạo ra hình học thủ tục.
+
+00:03:50.000 --> 00:03:58.000
+Hình học thủ tục này sẽ chỉ tồn tại bên trong cuộc gọi vẽ, vì vậy nó sẽ không yêu cầu bạn phân bổ bất kỳ bộ nhớ thiết bị nào.
+
+00:03:58.000 --> 00:04:06.000
+Nó sẽ được dẫn thẳng đến rasterizer và sau đó đến một bộ đổ bóng mảnh sẽ tạo ra hình ảnh cuối cùng.
+
+00:04:06.000 --> 00:04:12.000
+Các cuộc gọi vẽ lưới được thực hiện bằng cách sử dụng cùng một loại bộ mã hóa lệnh kết xuất như các cuộc gọi vẽ truyền thống.
+
+00:04:12.000 --> 00:04:16.000
+Các cuộc gọi vẽ lưới và các cuộc gọi vẽ truyền thống có thể được trộn lẫn và kết hợp.
+
+00:04:16.000 --> 00:04:22.000
+Bây giờ, chúng ta hãy xem xét hai giai đoạn lập trình mới.
+
+00:04:22.000 --> 00:04:27.000
+Trái ngược với bộ đổ bóng đỉnh, bộ đổ bóng đối tượng và lưới tương tự như hạt nhân tính toán.
+
+00:04:27.000 --> 00:04:30.000
+Chúng được khởi chạy trong lưới các nhóm luồng.
+
+00:04:30.000 --> 00:04:37.000
+Mỗi nhóm luồng là một mạng lưới các luồng riêng lẻ, giống như các luồng tính toán, có thể giao tiếp với nhau.
+
+00:04:37.000 --> 00:04:48.000
+Ngoài ra, mỗi nhóm luồng đối tượng có thể tạo ra một lưới lưới và xác định theo chương trình kích thước của lưới mà nó khởi chạy, mang lại nhiều tính linh hoạt.
+
+00:04:48.000 --> 00:04:53.000
+Mỗi nhóm luồng đối tượng chuyển dữ liệu tải trọng đến lưới lưới mà nó sinh ra.
+
+00:04:53.000 --> 00:04:57.000
+Đúng như tên gọi, giai đoạn đối tượng xử lý các đối tượng.
+
+00:04:57.000 --> 00:05:01.000
+Đối tượng là một khái niệm trừu tượng mà bạn có thể xác định theo nhu cầu của mình.
+
+00:05:01.000 --> 00:05:09.000
+Nó có thể là một mô hình cảnh, một phần của mô hình cảnh hoặc, ví dụ, một vùng không gian nơi bạn muốn tạo ra hình học thủ tục.
+
+00:05:09.000 --> 00:05:15.000
+Giai đoạn lưới được thiết kế để xây dựng các mắt lưới và gửi dữ liệu hình học trực tiếp đến rasterizer.
+
+00:05:15.000 --> 00:05:20.000
+Hai ví dụ tiếp theo sẽ bao gồm mối quan hệ giữa các đối tượng và mắt lưới.
+
+00:05:20.000 --> 00:05:23.000
+Đầu tiên là sử dụng lưới đổ bóng để thực hiện kết xuất tóc.
+
+00:05:23.000 --> 00:05:28.000
+Để đơn giản hóa nhiệm vụ này, thay vì mô hình Bunny, tôi sẽ sử dụng một mặt phẳng đơn giản.
+
+00:05:28.000 --> 00:05:41.000
+Để tạo ra một mảng tóc, tôi sẽ chia hình học đầu vào thành các ô, trong đó mỗi ô sẽ tính toán mức độ chi tiết và số lượng sợi mà nó cần tạo ra, sau đó tạo ra từng sợi tóc riêng lẻ.
+
+00:05:41.000 --> 00:05:46.000
+Hãy để tôi chỉ cho bạn cách tạo tóc theo thủ tục trên mặt phẳng này bằng cách sử dụng bộ đổ lưới.
+
+00:05:46.000 --> 00:05:52.000
+Mặt phẳng có thể được chia thành các ô, trong đó mỗi ô tương ứng với một nhóm chủ đề đối tượng.
+
+00:05:52.000 --> 00:05:59.000
+Mỗi nhóm sợi đối tượng sẽ tính toán số lượng sợi tóc và tạo ra các điểm kiểm soát đường cong cho mỗi sợi.
+
+00:05:59.000 --> 00:06:01.000
+Điều này sẽ trở thành trọng tải.
+
+00:06:01.000 --> 00:06:08.000
+Nhóm ren đối tượng của chúng tôi sau đó khởi chạy một lưới lưới, trong đó mỗi nhóm luồng lưới đại diện cho một sợi tóc duy nhất.
+
+00:06:08.000 --> 00:06:11.000
+Mỗi nhóm sợi lưới xuất lưới ra bộ rasterizer.
+
+00:06:11.000 --> 00:06:21.000
+Đường ống hình học mới cho phép bạn lập bản đồ quá trình xử lý hình học của mình chặt chẽ với phần cứng và cho phép bạn tận dụng tối đa tất cả các luồng mà GPU của bạn cung cấp.
+
+00:06:21.000 --> 00:06:27.000
+Trong một đường ống kết xuất lưới, hình học đầu vào được chia thành các ô cho lưới đổ bóng đối tượng.
+
+00:06:27.000 --> 00:06:33.000
+Mỗi nhóm luồng đổ bóng đối tượng có thể độc lập tạo ra một tải trọng và khởi chạy lưới lưới.
+
+00:06:33.000 --> 00:06:41.000
+Mỗi nhóm luồng đổ bóng lưới từ lưới tạo ra một lưới kim loại:: lưới được xử lý thêm trong phần còn lại của đường ống kết xuất.
+
+00:06:41.000 --> 00:06:46.000
+Chúng ta hãy xem xét kỹ hơn dữ liệu được tạo ra bởi mỗi giai đoạn đó.
+
+00:06:46.000 --> 00:06:48.000
+Tải trọng được xác định trong bộ đổ bóng đối tượng.
+
+00:06:48.000 --> 00:06:55.000
+Mỗi nhóm luồng đối tượng chuyển tải trọng tùy chỉnh đến lưới lưới được tạo mà một nhóm luồng đối tượng sinh ra.
+
+00:06:55.000 --> 00:07:00.000
+Trong trường hợp kết xuất tóc, tải trọng bao gồm các điểm kiểm soát đường cong.
+
+00:07:00.000 --> 00:07:09.000
+Trong khi đó, bộ đổ bóng lưới xuất ra đỉnh và dữ liệu nguyên thủy thông qua một loại kim loại::mesh mới, mà tôi sẽ thảo luận chi tiết hơn một chút.
+
+00:07:09.000 --> 00:07:15.000
+Các giai đoạn đối tượng và lưới dữ liệu lưới đầu ra được tiêu thụ bởi phần còn lại của đường ống.
+
+00:07:15.000 --> 00:07:25.000
+Tương tự như đầu ra đỉnh từ đường ống truyền thống, dữ liệu lưới đầu tiên được tiêu thụ bởi bộ rasterizer, sau đó bộ đổ bóng phân đoạn thực thi.
+
+00:07:25.000 --> 00:07:30.000
+Chúng ta hãy đi sâu hơn vào cách thiết lập một đường ống lưới kết xuất tóc.
+
+00:07:30.000 --> 00:07:38.000
+Đầu tiên, mặt phẳng được bao phủ bởi tóc được chia thành các viên gạch, trong đó mỗi viên gạch tương ứng với một nhóm sợi đối tượng.
+
+00:07:38.000 --> 00:07:45.000
+Nhóm luồng đối tượng xác định kích thước lưới lưới và khởi tạo dữ liệu tải trọng mà nó chuyển đến lưới lưới.
+
+00:07:45.000 --> 00:07:54.000
+Trong trường hợp này, gạch có sáu sợi tóc và tạo ra lưới lưới 3x2, cùng với dữ liệu tải trọng đường cong cho mỗi sợi.
+
+00:07:54.000 --> 00:07:57.000
+Mỗi nhóm luồng có thể tạo ra các kích thước lưới lưới độc đáo.
+
+00:07:57.000 --> 00:08:07.000
+Đối với nhóm luồng tiếp theo, chỉ cần tạo bốn sợi tóc, vì vậy lưới lưới 2x2 được đặt cùng với việc khởi tạo dữ liệu tải trọng đường cong cho 4 sợi.
+
+00:08:07.000 --> 00:08:11.000
+Đây là cách bộ đổ bóng đối tượng thực hiện cách tiếp cận này trông như thế nào.
+
+00:08:11.000 --> 00:08:17.000
+Thuộc tính đối tượng đã được thêm vào Metal để chỉ định mã nào là bộ đổ bóng đối tượng.
+
+00:08:17.000 --> 00:08:26.000
+Ngoài thuộc tính tải trọng và không gian địa chỉ object_data, cho phép các đối số tải trọng được sử dụng trong đổ bóng.
+
+00:08:26.000 --> 00:08:31.000
+Đối số thuộc tính lưới được sử dụng để mã hóa kích thước lưới lưới.
+
+00:08:31.000 --> 00:08:34.000
+Bước tiếp theo là khởi tạo đường ống.
+
+00:08:34.000 --> 00:08:47.000
+Đầu tiên, phân bổ bộ mô tả đường ống kết xuất lưới, sau đó khởi tạo hàm đối tượng và chỉ định độ dài tải trọng mong muốn, cùng với số lượng luồng tối đa trên mỗi nhóm luồng.
+
+00:08:47.000 --> 00:08:50.000
+Có một số ràng buộc nhất định đối với bộ đổ bóng đối tượng.
+
+00:08:50.000 --> 00:08:54.000
+Định dạng tải trọng và nội dung hoàn toàn có thể tùy chỉnh.
+
+00:08:54.000 --> 00:08:58.000
+Tuy nhiên, kích thước tải trọng không thể vượt quá giới hạn 16 kilobyte.
+
+00:08:58.000 --> 00:09:06.000
+Ngoài ra, số lượng nhóm luồng lưới tối đa mà mỗi nhóm luồng đối tượng tạo ra không được vượt quá 1024.
+
+00:09:06.000 --> 00:09:11.000
+Bước tiếp theo sau khi chuẩn bị sẵn sàng giai đoạn đổ bóng đối tượng là khởi tạo giai đoạn đổ bóng lưới.
+
+00:09:11.000 --> 00:09:15.000
+Bộ đổ bóng lưới có tải trọng do người dùng xác định làm đầu vào.
+
+00:09:15.000 --> 00:09:19.000
+Trong ví dụ này, tải trọng là tập hợp các điểm kiểm soát đường cong.
+
+00:09:19.000 --> 00:09:25.000
+Mỗi nhóm sợi lưới tạo ra một kim loại::lưới, là một sợi tóc duy nhất.
+
+00:09:25.000 --> 00:09:29.000
+Lưới đầu ra của bộ đổ bóng lưới phải có loại kim loại:: lưới.
+
+00:09:29.000 --> 00:09:38.000
+Metal::mesh là một cấu trúc tích hợp trong Metal cung cấp cho bạn một giao diện để xuất ra đỉnh và dữ liệu nguyên thủy cho rasterizer và bộ đổ bóng phân đoạn.
+
+00:09:38.000 --> 00:09:57.000
+Mỗi kim loại::mesh xác định một kiểu dữ liệu đỉnh, giống như kiểu đầu ra của bộ đổ bóng đỉnh, kiểu dữ liệu nguyên thủy, số lượng đỉnh tối đa, số lượng nguyên thủy tối đa và cuối cùng là cấu trúc liên kết lưới - điểm, đường thẳng hoặc tam giác.
+
+00:09:57.000 --> 00:10:04.000
+Thuộc tính lưới đã được thêm vào ngôn ngữ đổ bóng kim loại để chỉ định mã nào là bộ đổ bóng lưới.
+
+00:10:04.000 --> 00:10:09.000
+Metal::mesh được sử dụng như một cấu trúc đầu ra trong bộ đổ bóng lưới.
+
+00:10:09.000 --> 00:10:18.000
+Bộ đổ bóng lưới rất tốt cho việc xử lý hình học dựa trên GPU vì chúng cho phép bạn sản xuất các kim loại này::meshes một cách nhanh chóng để rasterizer tiêu thụ.
+
+00:10:18.000 --> 00:10:27.000
+Bộ đổ bóng lưới tận dụng lợi thế của metal::mesh để bạn có thể xử lý nhiều hơn vào các lệnh kết xuất mà không cần phải tính toán bổ sung.
+
+00:10:27.000 --> 00:10:31.000
+Mã hóa một lưới được thực hiện trên các luồng trong cùng một nhóm luồng.
+
+00:10:31.000 --> 00:10:39.000
+Trong ví dụ này, 9 luồng đầu tiên của một nhóm luồng sẽ mã hóa đỉnh, chỉ mục và dữ liệu nguyên thủy của sợi tóc này.
+
+00:10:39.000 --> 00:10:45.000
+Mỗi luồng từ 0 đến 4 mã hóa một đỉnh trong lưới.
+
+00:10:45.000 --> 00:10:50.000
+Các luồng còn lại trong nhóm luồng không mã hóa các đỉnh trong lưới.
+
+00:10:50.000 --> 00:10:57.000
+Tiếp theo, tất cả 9 luồng mã hóa một chỉ mục vào các chỉ mục lưới.
+
+00:10:57.000 --> 00:11:03.000
+Tiếp theo, ba luồng đầu tiên mã hóa dữ liệu nguyên thủy cho ba tam giác.
+
+00:11:03.000 --> 00:11:07.000
+Phần còn lại của các luồng không mã hóa bất kỳ dữ liệu nguyên thủy nào.
+
+00:11:07.000 --> 00:11:12.000
+Và cuối cùng, một luồng sẽ mã hóa số lượng nguyên thủy cho kim loại:: lưới.
+
+00:11:12.000 --> 00:11:16.000
+Để tôi chỉ cho bạn mã nguồn cho bộ đổ bóng lưới này.
+
+00:11:16.000 --> 00:11:30.000
+Bộ đổ bóng lưới được tổ chức để tránh phân kỳ nhiều nhất có thể trong các luồng - tuân theo các bước tương tự để mã hóa đỉnh, chỉ mục và dữ liệu nguyên thủy, và cuối cùng là số lượng nguyên thủy.
+
+00:11:30.000 --> 00:11:34.000
+Hãy chuyển trở lại khởi tạo mô tả đường ống lưới.
+
+00:11:34.000 --> 00:11:41.000
+Trên bộ mô tả đường ống lưới, chức năng lưới cùng với các luồng tối đa trên mỗi nhóm luồng lưới, được đặt.
+
+00:11:41.000 --> 00:11:45.000
+Có những giới hạn mà cấu trúc lưới kim loại cần phải tuân thủ.
+
+00:11:45.000 --> 00:11:54.000
+Bộ đổ bóng Metal::mesh có các giới hạn sau: metal::mesh hỗ trợ lên đến 256 đỉnh và lên đến 512 đỉnh nguyên thủy.
+
+00:11:54.000 --> 00:11:58.000
+Tổng kích thước của lưới kim loại:: không được vượt quá 16 kilobyte.
+
+00:11:58.000 --> 00:12:06.000
+Bây giờ lưới lưới đã tạo ra các tin nhắn kim loại::, chúng sau đó được đưa vào bộ rasterizer và cuối cùng bộ đổ bóng phân đoạn được chạy.
+
+00:12:06.000 --> 00:12:13.000
+Vì vậy, tương tự như đường ống kết xuất truyền thống, hàm phân đoạn được đặt trên bộ mô tả đường ống lưới.
+
+00:12:13.000 --> 00:12:23.000
+Bây giờ bộ mô tả đã được khởi tạo, trạng thái đường ống được tạo thông qua phương thức "tạo trạng thái đường ống kết xuất với bộ mô tả lưới" trên thiết bị Metal.
+
+00:12:23.000 --> 00:12:29.000
+Mã hóa một đường ống lưới rất giống với mã hóa một cuộc gọi vẽ truyền thống.
+
+00:12:29.000 --> 00:12:31.000
+Trạng thái đường ống được đặt trên bộ mã hóa.
+
+00:12:31.000 --> 00:12:34.000
+Mỗi giai đoạn trong đường ống có thể có các nguồn lực bị ràng buộc.
+
+00:12:34.000 --> 00:12:46.000
+Trong ví dụ này, các tài nguyên bị ràng buộc là: một bộ đệm đối tượng cho một giai đoạn đối tượng, một kết cấu cho một giai đoạn lưới và một bộ đệm phân mảnh cho một giai đoạn phân mảnh.
+
+00:12:46.000 --> 00:13:04.000
+Tiếp theo, tôi đang xác định một vài hằng số mà tôi sẽ cần để khởi chạy đường ống lưới: kích thước lưới đối tượng, số lượng luồng trên mỗi nhóm luồng đối tượng, số luồng trên mỗi nhóm luồng lưới và sử dụng các hằng số này để mã hóa việc vẽ thông qua phương pháp "rút nhóm luồng lưới" mới.
+
+00:13:04.000 --> 00:13:13.000
+Cách tiếp cận tương tự được sử dụng để tạo ra một mặt phẳng lông có thể được áp dụng cho toàn bộ chú thỏ để tạo ra lông theo thủ tục thông qua một đường ống lưới.
+
+00:13:13.000 --> 00:13:16.000
+Tiếp theo, hãy xem xét một cách khác để sử dụng lưới đổ bóng.
+
+00:13:16.000 --> 00:13:23.000
+Bộ đổ bóng lưới có thể được sử dụng để xử lý hiệu quả và hiển thị một lượng lớn hình học bằng cách sử dụng loại bỏ lưới.
+
+00:13:23.000 --> 00:13:33.000
+Cơ sở cho kỹ thuật này là chia các mắt lưới cảnh thành các phần nhỏ hơn được gọi là lưới nhỏ.
+
+00:13:33.000 --> 00:13:39.000
+Tách hình học cảnh thành các mắt lưới làm tăng độ chi tiết của cảnh, cho phép loại bỏ hiệu quả và chi tiết hơn.
+
+00:13:39.000 --> 00:13:42.000
+Điều này cho phép bạn giảm đáng kể chi phí hình học.
+
+00:13:42.000 --> 00:13:51.000
+Tận dụng xử lý độ chi tiết lưới cho phép các thuật toán loại bỏ và loại bỏ hiệu quả như loại bỏ không gian màn hình và lọc thông thường.
+
+00:13:51.000 --> 00:13:56.000
+Bạn có thể sử dụng bộ đổ bóng lưới để thực hiện đường ống loại bỏ và kết xuất hoàn toàn dựa trên GPU.
+
+00:13:56.000 --> 00:14:05.000
+Đây là một đường ống điều khiển GPU truyền thống thực hiện xử lý và kết xuất cảnh bằng cách sử dụng một phép tính và một lần vượt qua kết xuất.
+
+00:14:05.000 --> 00:14:17.000
+Dữ liệu cảnh được chia thành các meshlets và được đưa vào đường chuyền tính toán, chịu trách nhiệm loại bỏ frustum, lựa chọn LOD và mã hóa các bản vẽ vào bộ nhớ thiết bị.
+
+00:14:17.000 --> 00:14:23.000
+Đường chuyền kết xuất sau đó thực hiện các lệnh vẽ cho cảnh và tạo ra hình ảnh cuối cùng.
+
+00:14:23.000 --> 00:14:33.000
+Sử dụng bộ đổ bóng lưới, có thể loại bỏ các điểm đồng bộ hóa và tránh các lệnh vẽ trung gian bằng cách hợp nhất hai đường chuyền thành một công văn đổ bóng lưới duy nhất.
+
+00:14:33.000 --> 00:14:35.000
+Hãy để tôi chỉ cho bạn cách nó có thể được thực hiện.
+
+00:14:35.000 --> 00:14:39.000
+Đây là một đường chuyền kết xuất duy nhất thực hiện công văn đổ bóng lưới.
+
+00:14:39.000 --> 00:14:45.000
+Bộ đổ bóng đối tượng thực hiện loại bỏ frustum và tính toán LOD cho mỗi mắt lưới có thể nhìn thấy được.
+
+00:14:45.000 --> 00:14:50.000
+Tải trọng cho bộ đổ bóng lưới là một danh sách các ID meshlet cần được mã hóa.
+
+00:14:50.000 --> 00:14:55.000
+Bộ đổ bóng lưới sau đó mã hóa các vật thể lưới kim loại:: sẽ được rasterized và tô bóng.
+
+00:14:55.000 --> 00:15:00.000
+Hình ảnh cuối cùng sau đó được tô bóng trong bộ đổ bóng phân đoạn, giống hệt với đường ống truyền thống.
+
+00:15:00.000 --> 00:15:06.000
+Quá trình xử lý hình học được thực hiện hoàn toàn trong lệnh nhóm luồng lưới và trong một bộ mã hóa duy nhất.
+
+00:15:06.000 --> 00:15:13.000
+Không còn cần bộ đệm trung gian để lưu trữ các lệnh vẽ này nữa, vì dữ liệu tam giác được mã hóa trong bộ đổ bóng lưới.
+
+00:15:13.000 --> 00:15:19.000
+Hãy chuyển sự chú ý của chúng ta sang việc loại bỏ ngay bây giờ - cụ thể là việc triển khai loại bỏ meshlet.
+
+00:15:19.000 --> 00:15:22.000
+Khung cảnh bao gồm các mô hình được thể hiện bằng các hình dạng ở đây.
+
+00:15:22.000 --> 00:15:27.000
+Trong quá trình triển khai này, mỗi mô hình của cảnh sẽ trở thành một phần của lưới đối tượng.
+
+00:15:27.000 --> 00:15:35.000
+Các lưới lưới được tạo ra bởi các nhóm ren đổ bóng đối tượng sẽ bao gồm các lưới nhỏ - các mảng hình tam giác tạo nên bề mặt của mô hình.
+
+00:15:35.000 --> 00:15:38.000
+Đường ống hình học mới rất linh hoạt.
+
+00:15:38.000 --> 00:15:41.000
+Tùy thuộc vào bạn để quyết định cách ánh xạ cảnh của bạn vào lưới đối tượng.
+
+00:15:41.000 --> 00:15:49.000
+Trong ví dụ này, tôi đang ánh xạ từng mô hình đến một nhóm luồng đối tượng, nhưng bạn có thể sử dụng ánh xạ phù hợp hơn với nhiệm vụ của mình.
+
+00:15:49.000 --> 00:15:58.000
+Bây giờ, bộ đổ bóng đối tượng sẽ xác định khả năng hiển thị của các mắt lưới bằng cách sử dụng frustum xem và công việc điều phối chỉ cho những gì sẽ được trình bày trong hình ảnh cuối cùng.
+
+00:15:58.000 --> 00:16:00.000
+Hãy tập trung vào hai mô hình từ hiện trường.
+
+00:16:00.000 --> 00:16:04.000
+Bộ đổ bóng đối tượng khởi chạy lưới lưới dựa trên khả năng hiển thị được xác định.
+
+00:16:04.000 --> 00:16:09.000
+Bộ đổ bóng lưới sau đó xử lý các meshlet và xây dựng kim loại::meshes.
+
+00:16:09.000 --> 00:16:16.000
+Kích thước lưới lưới có thể lập trình cho phép điều phối linh hoạt nên chỉ các lưới nhỏ có thể nhìn thấy mới được xử lý bởi bộ đổ bóng lưới.
+
+00:16:16.000 --> 00:16:21.000
+Điều này làm giảm thời gian xử lý hình học không nhìn thấy sau này trong đường ống.
+
+00:16:21.000 --> 00:16:30.000
+Bộ rasterizer chức năng cố định chỉ nhận các bề mặt được biết là có thể nhìn thấy và sẽ giảm thời gian xử lý và cắt bỏ hình học không nhìn thấy được.
+
+00:16:30.000 --> 00:16:35.000
+Cuối cùng, bộ đổ bóng phân đoạn có thể lập trình được gọi và tạo ra hình ảnh cuối cùng.
+
+00:16:35.000 --> 00:16:48.000
+Như bạn có thể thấy, có rất nhiều vấn đề mà đường ống hình học mới cho phép bạn giải quyết như tạo các mắt lưới thủ tục hoặc làm cho các cuộc gọi vẽ của bạn hiệu quả hơn, như được minh họa trong ví dụ loại bỏ lưới này.
+
+00:16:48.000 --> 00:16:52.000
+Metal hiện bao gồm một đường ống hình học mới hiện đại và linh hoạt.
+
+00:16:52.000 --> 00:16:59.000
+Giờ đây, việc tạo ra hình học thủ tục dễ dàng hơn bao giờ hết, như được thể hiện trong ví dụ kết xuất tóc.
+
+00:16:59.000 --> 00:17:11.000
+Ngoài ra, các khả năng cho công việc được điều khiển bằng GPU trong một lần kết xuất đã được mở rộng mà không yêu cầu các lần tính toán bổ sung hoặc bộ đệm trung gian, như đã thấy trong bản demo loại bỏ meshlet.
+
+00:17:11.000 --> 00:17:18.000
+Đường ống hình học mới này có sẵn trong các thiết bị Family7 và Mac2.
+
+00:17:18.000 --> 00:17:27.000
+Để giúp bạn bắt đầu học và thử nghiệm với lưới đổ bóng, một mã mẫu có sẵn trên trang web dành cho nhà phát triển Apple hướng dẫn cách sử dụng API mới.
+
+00:17:27.000 --> 00:17:35.000
+Tôi rất vui khi thấy cách bạn sử dụng tính năng này và sử dụng bản chất song song ồ ạt của GPU Apple để phù hợp với nhu cầu xử lý hình học của bạn.
+
+00:17:35.000 --> 23:59:59.000
+Cảm ơn bạn rất nhiều vì đã xem!
+

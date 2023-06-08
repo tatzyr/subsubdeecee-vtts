@@ -1,0 +1,377 @@
+10580
+
+Jason Fielder: Xin chào, tên tôi là Jason Fielder, và tôi làm việc với nhóm Kỹ thuật Phần mềm GPU tại Apple.
+
+Chúng ta sẽ học cách tận dụng khả năng xử lý đồ họa tuyệt vời của máy tính xách tay M1 Pro và M1 Max mới của chúng tôi và chúng tôi sẽ khám phá các phương pháp hay nhất mà bạn có thể áp dụng để làm cho các ứng dụng của mình hoạt động tốt trên GPU của chúng tôi.
+
+MacBook Pros mới nhất của chúng tôi có những con chip mạnh mẽ nhất mà chúng tôi từng tạo ra.
+
+M1 Pro có tới 16 lõi GPU và M1 Max tăng gấp đôi lên 32.
+
+Điều này, cùng với băng thông DRAM cao hơn nhiều, làm tăng đáng kể hiệu suất của MacBook Pro.
+
+Bộ nhớ hệ thống hiện có sẵn cho GPU nhờ Kiến trúc Bộ nhớ Hợp nhất của chúng tôi và với khả năng lên đến 64GB, ứng dụng GPU của chúng tôi có thể truy cập nhiều bộ nhớ hơn bao giờ hết.
+
+Những chiếc MacBook Pro này sẽ mở ra một thế giới khả năng hoàn toàn mới cho các nhà phát triển và chuyên gia sáng tạo, cho phép quy trình làm việc mà trước đây chỉ nhắm mục tiêu vào máy tính để bàn.
+
+Vậy làm thế nào để chúng ta mở ra thế giới tiềm năng GPU mới này?
+
+Chúng ta sẽ bắt đầu với bản tóm tắt của Metal Compute, cho phép lên lịch làm việc trên GPU.
+
+Sau đó, với sự hiểu biết về API và kiến trúc GPU, chúng tôi sẽ xem xét các phương pháp hay nhất cho từng giai đoạn của ứng dụng của bạn.
+
+Sau đó, chúng tôi sẽ kết luận với một số tối ưu hóa hạt nhân cụ thể mà bạn có thể áp dụng.
+
+Hãy bắt đầu với việc làm mới nhanh Metal Compute.
+
+Metal là API chi phí thấp hiện đại của Apple để thực hiện công việc GPU.
+
+Nó được thiết kế mỏng và hiệu quả nhất có thể và cung cấp một giao diện đồ họa và tính toán thống nhất.
+
+Metal thân thiện với đa luồng, cho phép công việc được xếp hàng một cách tầm thường từ nhiều luồng CPU và mang đến cho bạn, nhà phát triển, sự linh hoạt để sử dụng quy trình biên dịch đổ bóng ngoại tuyến hoặc trực tuyến.
+
+Dưới mui xe trong lớp phần cứng của chúng tôi, chúng tôi có một CPU và GPU cả hai được kết nối với cùng một bộ nhớ vật lý.
+
+CPU tạo tài nguyên GPU trong khối bộ nhớ thống nhất và cả GPU và CPU đều có thể đọc và ghi vào các tài nguyên này.
+
+Chúng tôi có một vài lớp API để làm việc để xem một hạt nhân được thực thi trên GPU.
+
+Lớp trên cùng là hàng đợi lệnh.
+
+Theo tên gọi của nó, đối tượng này cho phép một ứng dụng xếp hàng hoạt động để thực thi tại một số điểm trên GPU.
+
+Các lệnh được đặt hàng loạt trên CPU thông qua bộ đệm lệnh.
+
+Những đối tượng này là thoáng qua và bạn sẽ tạo ra rất nhiều trong số này ở mức độ chi tiết có ý nghĩa đối với ứng dụng của bạn.
+
+Bạn có thể thấy điều này được áp đặt bởi các yêu cầu xung quanh đồng bộ hóa CPU và GPU, nhưng tóm lại, bạn sẽ muốn đảm bảo rằng bạn có đủ công việc để giữ cho GPU hoạt động hoàn toàn.
+
+Để đưa hướng dẫn vào bộ đệm lệnh, chúng ta sẽ cần một bộ mã hóa lệnh.
+
+Có nhiều loại bộ mã hóa lệnh khác nhau nhắm vào các loại công việc khác nhau.
+
+Có một bộ mã hóa đồ họa cho các bản vẽ 3D, một bộ mã hóa blit để sao chép tài nguyên xung quanh, nhưng đối với cuộc nói chuyện này, chúng tôi sẽ tập trung vào bộ mã hóa tính toán cho các công văn hạt nhân.
+
+Với một bộ mã hóa tính toán tại chỗ, bây giờ chúng tôi đã sẵn sàng để mã hóa một công văn hạt nhân.
+
+Cùng với bản thân chức năng hạt nhân, bộ mã hóa là cách các tài nguyên cần thiết cho hạt nhân được liên kết với nó.
+
+Trên thực tế, chúng ta có thể mã hóa nhiều công văn hạt nhân đến cùng một bộ mã hóa.
+
+Chúng ta có thể thay đổi hạt nhân hoặc ràng buộc tài nguyên giữa mỗi công văn và cũng thông báo cho Metal liệu một công văn có thể được thực hiện đồng thời hay nên được tuần tự hóa và thực hiện sau khi công văn trước đó hoàn thành.
+
+Với việc mã hóa của chúng tôi hoàn tất, chúng tôi kết thúc bộ mã hóa làm cho bộ đệm lệnh có sẵn để bắt đầu mã hóa một bộ mã hóa mới hoặc cam kết bộ đệm lệnh với GPU để thực thi.
+
+Ở đây chúng tôi đã mã hóa tổng cộng ba bộ mã hóa tính toán cho GPU.
+
+Điều này đại diện cho toàn bộ công việc từ đầu đến cuối và chúng tôi sẵn sàng hướng dẫn GPU bắt đầu thực thi nó.
+
+Một cuộc gọi cam kết trả về ngay lập tức và Metal sẽ đảm bảo rằng công việc được lên lịch và thực hiện trên GPU sau khi tất cả các công việc khác trước khi nó trong hàng đợi hoàn thành.
+
+Luồng CPU hiện có sẵn để bắt đầu xây dựng bộ đệm lệnh mới hoặc thực hiện bất kỳ công việc ứng dụng nào khác phù hợp trong khi GPU đang bận.
+
+Tuy nhiên, CPU có thể sẽ cần biết khi nào một khối lượng công việc đã được hoàn thành, để kết quả của nó có thể được đọc lại.
+
+Đối với điều này, bộ đệm lệnh có hai kỹ thuật cho chúng tôi.
+
+Tại đây, trước khi cam kết công việc, ứng dụng có thể thêm chức năng xử lý hoàn thành sẽ được Metal gọi sau khi công việc hoàn thành.
+
+Đối với các trường hợp đơn giản, có một phương thức đồng bộ được gọi là waitUntilComplete sẽ chặn luồng CPU đang gọi, nhưng ở đây chúng tôi đang sử dụng phương thức không đồng bộ.
+
+Vì vậy đây là mô hình thực hiện cơ bản của chúng tôi.
+
+Một tính năng cuối cùng của API là nhiều bộ đệm lệnh có thể được mã hóa đồng thời.
+
+Nhiều luồng CPU có thể mã hóa nhiều bộ đệm lệnh cùng một lúc và cam kết công việc sau khi mã hóa hoàn tất.
+
+Nếu việc đặt hàng là quan trọng, hãy dành chỗ của bộ đệm lệnh để thực thi trong hàng đợi lệnh bằng cách gọi enqueue, hoặc cách khác, chỉ cần gọi cam kết theo thứ tự mong muốn.
+
+Sử dụng bất kỳ cách tiếp cận nào phù hợp nhất với ứng dụng của bạn.
+
+Với khả năng tạo nhiều hàng đợi lệnh, tính linh hoạt của Metal cho phép một ứng dụng mã hóa công việc với GPU theo mô hình hiệu quả nhất cho nhu cầu của nó.
+
+Vì vậy, đó là bản tóm tắt của mô hình thực hiện mà Metal phơi bày.
+
+Hãy xây dựng dựa trên điều đó và xem cách tối ưu hóa cho nó.
+
+Chúng tôi có một số đề xuất về cách ứng dụng của bạn nên truy cập bộ nhớ GPU để tận dụng Kiến trúc bộ nhớ hợp nhất của chúng tôi, cách gửi công việc đến GPU để phù hợp với mô hình tính toán mà chúng tôi vừa xem qua và cách chọn tài nguyên nào để phân bổ để phù hợp nhất với UMA của chúng tôi.
+
+Đầu tiên để nói về chắc chắn là Kiến trúc Bộ nhớ Thống nhất.
+
+Bộ phương pháp hay nhất này là về việc giảm thiểu khối lượng công việc cần thiết trên GPU.
+
+Với Kiến trúc Bộ nhớ Hợp nhất, việc quản lý truyền thống các bản sao giữa RAM hệ thống và RAM video sẽ biến mất.
+
+Metal hiển thị UMA thông qua các tài nguyên được chia sẻ cho phép GPU và CPU đọc và ghi cùng một bộ nhớ.
+
+Quản lý tài nguyên sau đó là đồng bộ hóa quyền truy cập giữa CPU và GPU để diễn ra an toàn vào đúng thời điểm, thay vì sao chép hoặc làm mờ dữ liệu giữa bộ nhớ hệ thống và bộ nhớ video.
+
+Làm việc từ một phiên bản duy nhất của tài nguyên trong bộ nhớ làm giảm đáng kể các yêu cầu về băng thông bộ nhớ mà ứng dụng của bạn có thể có, cho phép tăng hiệu suất lớn.
+
+Khi có thể xảy ra tranh chấp - chẳng hạn như CPU cần cập nhật bộ đệm cho đợt công việc thứ hai trong khi GPU vẫn đang thực hiện đợt đầu tiên - một mô hình đa bộ đệm rõ ràng là cần thiết.
+
+CPU chuẩn bị nội dung trong bộ đệm n, trong khi GPU đang đọc từ bộ đệm n-1 và sau đó tăng n cho đợt tiếp theo.
+
+Điều này cho phép bạn với tư cách là nhà phát triển ứng dụng điều chỉnh chi phí bộ nhớ và các mẫu truy cập của mình, đồng thời tránh các gian hàng hoặc bản sao CPU/GPU không cần thiết.
+
+Giới hạn về số lượng tài nguyên GPU mà một ứng dụng có thể phân bổ có hai giá trị cần lưu ý.
+
+Tổng lượng tài nguyên GPU có thể được phân bổ và quan trọng hơn là dung lượng bộ nhớ mà một bộ mã hóa lệnh duy nhất có thể tham chiếu cùng một lúc.
+
+Giới hạn này được gọi là giới hạn tập hợp làm việc.
+
+Nó có thể được tìm nạp từ thiết bị Metal trong thời gian chạy thông qua việc đọc được đề xuất MaxWorkingSetSize.
+
+Chúng tôi khuyên bạn nên sử dụng điều này trong ứng dụng của mình để giúp kiểm soát lượng bộ nhớ bạn muốn sử dụng và dựa vào việc có sẵn.
+
+Trong khi một bộ mã hóa lệnh duy nhất có giới hạn bộ hoạt động này, Metal có thể phân bổ thêm tài nguyên ngoài điều này.
+
+Metal quản lý nơi cư trú của các tài nguyên này cho bạn và giống như phân bổ bộ nhớ hệ thống, phân bổ GPU cũng hầu như được phân bổ và cư trú trước khi thực thi.
+
+Bằng cách chia nhỏ việc sử dụng tài nguyên của bạn trên nhiều bộ mã hóa lệnh, một ứng dụng có thể sử dụng tổng tài nguyên vượt quá kích thước bộ làm việc và tránh các ràng buộc truyền thống liên quan đến giới hạn VRAM cứng.
+
+Đối với MacBook Pros mới, kích thước bộ làm việc GPU được hiển thị trong bảng này.
+
+Giờ đây, đối với M1 Pro hoặc M1 Max với 32GB RAM hệ thống, GPU có thể truy cập 21GB bộ nhớ và đối với M1 Max với 64GB RAM, GPU có thể truy cập 48GB bộ nhớ.
+
+Cho đến nay, đây là dung lượng bộ nhớ cao nhất mà chúng tôi từng cung cấp cho GPU trong máy Mac và dòng sản phẩm MacBook Pro mới cung cấp khả năng mở rộng đáng kể cho người dùng.
+
+Chúng tôi thực sự vui mừng khi thấy những trải nghiệm nào bạn sẽ có thể trao quyền cho người dùng và trải nghiệm những gì họ sẽ tạo ra với nó.
+
+Đó là các phương pháp hay nhất của chúng tôi để làm việc với UMA và chúng tôi đã sẵn sàng cho chủ đề tiếp theo của mình.
+
+Ở cấp độ bộ đệm lệnh, có độ trễ khi gửi nó.
+
+Một lượng công việc nhỏ có thể dẫn đến nhiều thời gian chờ đợi hơn là làm việc.
+
+Xem xét nhiều bộ mã hóa hơn với nhau vào mỗi bộ đệm lệnh trước khi thực hiện lệnh gọi cam kết.
+
+Nếu ứng dụng của bạn dành thời gian chờ kết quả GPU để thông báo những gì sẽ được gửi tiếp theo, thì bong bóng sẽ xuất hiện trong dòng thời gian GPU.
+
+Trong những bong bóng này, GPU không hoạt động, chờ đợi công văn tiếp theo đến.
+
+Để che giấu điều này, hãy cân nhắc sử dụng nhiều luồng CPU làm việc trên nhiều phần công việc và giữ cho GPU bận rộn.
+
+Hoặc bằng cách tạo nhiều bộ đệm lệnh, hoặc bằng cách tạo nhiều hàng đợi lệnh.
+
+Đối với hạt nhân tự gửi đi, GPU được giữ bận rộn bằng cách có đủ luồng để làm việc và có đủ công việc trong mỗi luồng để biện minh cho chi phí khởi chạy nó.
+
+Trong ví dụ xử lý hình ảnh của chúng tôi ở đây, mỗi điểm ảnh được xử lý bởi một luồng duy nhất.
+
+Khi bạn có thể, hãy tăng tổng số luồng trong công văn hạt nhân để đảm bảo tất cả các lõi xử lý của GPU có thể được sử dụng.
+
+Ở đây, một công văn hạt nhân duy nhất được sử dụng để xử lý toàn bộ hình ảnh cho phép Metal và GPU phân phối tối ưu công việc trên tất cả các lõi xử lý có sẵn.
+
+Cuối cùng, khi bạn có và cần số lượng luồng nhỏ hơn, hãy sử dụng mô hình điều phối đồng thời thay vì mô hình tuần tự hóa mặc định.
+
+Chúng tôi đã quan sát thấy nhiều ứng dụng chạy tốt trên M1, nhưng không đạt được tiềm năng của chúng trên M1 Pro và M1 Max.
+
+Gửi tác phẩm với khối lượng lớn hơn bằng cách sử dụng các kỹ thuật này là một cách dễ dàng để đơn đăng ký của bạn mở rộng quy mô và đạt được tiềm năng của nó.
+
+Cân nhắc tiếp theo mà tôi muốn nói đến là bộ nhớ cache L1.
+
+GPU Silicon của Apple chứa bộ nhớ đệm L1 riêng biệt để đọc kết cấu và đọc bộ đệm.
+
+Với Metal là một API thống nhất trên đồ họa và tính toán, bộ đầy đủ các đối tượng kết cấu và bộ lấy mẫu có sẵn cho các ứng dụng.
+
+Vì vậy, nếu ứng dụng của bạn chỉ sử dụng bộ đệm cho các nguồn dữ liệu của nó, sẽ có những lợi ích về hiệu suất từ việc chuyển một số tài nguyên này sang kết cấu.
+
+Điều này sẽ cho phép sử dụng tốt hơn bộ nhớ đệm hiệu suất cao của GPU, giảm lưu lượng truy cập từ RAM và tăng hiệu suất.
+
+Hãy xem nó trông như thế nào.
+
+Trong khi GPU truy cập RAM để đọc tất cả các tài nguyên, có một bộ nhớ đệm để cải thiện hiệu suất của các lần đọc bộ đệm trong tương lai đến cùng một vùng bộ nhớ cục bộ.
+
+Tuy nhiên, bộ nhớ đệm có kích thước giới hạn và sẽ lấp đầy nhanh chóng, vì vậy dữ liệu cũ hơn đã không được đọc trong một thời gian sẽ bị loại bỏ để nhường chỗ cho các lần đọc mới hơn.
+
+Theo giả thuyết, nếu hạt nhân của chúng tôi hoạt động trên một tập hợp dữ liệu đủ nhỏ, một khi bộ nhớ đệm được điền, tất cả các lần đọc trong tương lai sẽ truy cập vào bộ nhớ cache và hoàn thành mà không bị đình trệ hoặc chậm trễ do chờ tải bộ nhớ hệ thống hoàn tất.
+
+Băng thông đến bộ nhớ đệm cao hơn đáng kể và có độ trễ thấp hơn so với RAM hệ thống.
+
+Khi đọc bỏ lỡ bộ nhớ cache, các luồng gọi sẽ bị đình trệ trong khi đọc được tìm nạp từ RAM và được đặt vào bộ nhớ cache.
+
+Việc đọc dữ liệu bị giới hạn bởi băng thông bộ nhớ hệ thống thay vì băng thông bộ nhớ đệm trên chip.
+
+Một hạt nhân truy cập một lượng lớn dữ liệu từ bộ đệm có thể làm gián đoạn bộ nhớ cache theo cách này và dẫn đến giảm hiệu suất.
+
+GPU silicon của Apple chứa bộ nhớ đệm thứ hai cùng với bộ nhớ đệm dành riêng cho việc đọc kết cấu.
+
+Các ứng dụng có thể di chuyển một số dữ liệu nguồn của chúng từ các đối tượng đệm Kim loại sang các đối tượng kết cấu Kim loại và tăng hiệu quả dung lượng bộ nhớ cache và tăng hiệu suất.
+
+Ngoài ra, dữ liệu kết cấu có thể được xáo trộn và Metal sẽ tự động làm điều này cho bạn khi tải lên.
+
+Twiddling có nghĩa là các texels được sắp xếp tối ưu hơn cho một mẫu truy cập ngẫu nhiên và có thể giúp cải thiện hiệu quả bộ nhớ cache hơn nữa, mang lại một mức tăng hiệu suất khác so với bộ đệm thông thường.
+
+Điều này minh bạch đối với hạt nhân khi đọc, vì vậy nó không làm tăng thêm sự phức tạp cho nguồn hạt nhân của bạn.
+
+Trên thực tế, kết cấu là một món quà không ngừng trao tặng.
+
+Apple Silicon cũng có thể thực hiện nén kết cấu không mất dữ liệu - sau khi nó được tạo và khi có thể - để giảm thêm băng thông bộ nhớ đọc từ nó và một lần nữa, tăng hiệu suất.
+
+Điều này cũng trong suốt đối với hạt nhân đổ bóng vì quá trình giải nén xảy ra tự động trên kết cấu đọc hoặc mẫu.
+
+Kết cấu Kim loại sẽ được nén theo mặc định nếu nó ở chế độ riêng tư của GPU, nhưng kết cấu được chia sẻ và quản lý có thể được nén rõ ràng sau khi tải lên thông qua lệnh gọi optimizeContentsForGPUAccess trên bộ mã hóa lệnh blit.
+
+Để nén kết cấu không mất dữ liệu có sẵn, kết cấu cần phải đặt cách sử dụng thành shaderRead hoặc renderTarget.
+
+Đảm bảo điều này được đặt trên bộ mô tả của bạn khi tạo đối tượng kết cấu.
+
+Và nếu dữ liệu kết cấu của bạn là dữ liệu hình ảnh thực tế hoặc được sử dụng theo cách có thể chấp nhận nén mất dữ liệu, thì hãy xem xét các định dạng nén mất tỷ lệ cao hơn như ASTC hoặc BC.
+
+Điều này sẽ làm giảm hơn nữa cả dung lượng bộ nhớ và việc sử dụng băng thông, tăng hiệu suất của hạt nhân.
+
+BC và ASTC đều có thể được tạo bằng cách sử dụng các công cụ ngoại tuyến, mang lại chất lượng hình ảnh tuyệt vời và có tỷ lệ nén từ 4:1 đến 36:1.
+
+Với công việc của chúng tôi hiện đã được thực hiện theo lô tối ưu, sử dụng bộ đệm và kết cấu cho đầu vào dữ liệu của chúng tôi và nhận thức được UMA để giảm số lượng công việc sao chép mà chúng tôi đang thực hiện, chúng tôi đã sẵn sàng xem xét tối ưu hóa hạt nhân.
+
+Tất cả các phương pháp hay nhất này đều nhằm mục đích tăng hiệu suất hạt nhân của bạn.
+
+Hãy cùng xem một vài trong số chúng.
+
+Tôi sẽ tập trung vào lập chỉ mục bộ nhớ, nguyên tử toàn cầu và chiếm dụng như những lĩnh vực cơ hội trong hạt nhân của bạn.
+
+Chúng tôi cũng sẽ xem xét nơi cần xem xét trong các công cụ lập hồ sơ của chúng tôi để hiểu các nút thắt cổ chai của hạt nhân của bạn và cách đo lường bất kỳ cải tiến nào mà bất kỳ tối ưu hóa nào có thể có.
+
+Tại WWDC năm ngoái, nhóm phần mềm GPU của chúng tôi đã phát hành một video về các kỹ thuật tối ưu hóa kim loại cho silicon của Apple.
+
+Tôi sẽ tóm tắt ngắn gọn một số nội dung của bài nói chuyện đó ở đây, nhưng để biết chi tiết và ví dụ đầy đủ, vui lòng xem bài thuyết trình đó.
+
+Đầu tiên, tôi muốn nói về lập chỉ mục bộ nhớ.
+
+Khi lập chỉ mục vào một mảng, hãy sử dụng các kiểu số nguyên có dấu thay vì các kiểu không dấu.
+
+Ở đây chúng ta có một vòng lặp for, với biến count tôi đã khai báo là unsigned.
+
+Do các đặc tính gói của uint trong thông số kỹ thuật ngôn ngữ đổ bóng, điều này vô hiệu hóa tải vectơ hóa.
+
+Thông thường, đây không phải là những gì bạn muốn và mã bổ sung được tạo ra có thể tránh được bằng cách sử dụng một loại đã ký.
+
+Và ở đây, vì hành vi gói của int là không xác định, tải sẽ được vectơ hóa và có khả năng cải thiện hiệu suất.
+
+Với sự gia tăng của lõi GPU và băng thông bộ nhớ trong MacBook Pro mới, chúng tôi đã thấy các nút thắt chính của một số khối lượng công việc GPU chuyển từ ALU hoặc sử dụng băng thông bộ nhớ sang các khu vực khác.
+
+Một trong những khu vực đó là nguyên tử toàn cầu.
+
+Khuyến nghị của chúng tôi là giảm thiểu việc sử dụng các hoạt động nguyên tử trong hạt nhân của bạn hoặc thay vào đó sử dụng các kỹ thuật được xây dựng xung quanh nguyên tử nhóm luồng.
+
+Như với tất cả các quy trình làm việc tối ưu hóa tốt, trước tiên hãy lập hồ sơ bộ đổ bóng của bạn để hiểu liệu đây có phải là vấn đề bạn đang gặp phải hay không, vì việc sử dụng nguyên tử vừa phải sẽ không thành vấn đề.
+
+Vậy làm thế nào để chúng ta có được thông tin hồ sơ quan trọng này?
+
+Bằng cách sử dụng trình gỡ lỗi khung GPU bên trong Xcode.
+
+Nó là một công cụ tuyệt vời cho công việc đánh giá này.
+
+Nó cung cấp vô số thông tin chi tiết về công việc xảy ra trên GPU và một khi chúng tôi đã nắm bắt được, chúng tôi có thể duyệt qua nó.
+
+Chế độ xem dòng thời gian cung cấp cho chúng tôi một cái nhìn tổng quan tuyệt vời về khối lượng công việc của chúng tôi và hiển thị cho chúng tôi các biểu đồ trực quan hóa các bộ đếm hiệu suất chính của GPU.
+
+Nhiều bộ đếm trong số này cung cấp cả giá trị sử dụng và giá trị giới hạn.
+
+Sử dụng ALU làm ví dụ ở đây, con số sử dụng cho chúng ta biết rằng hạt nhân đã sử dụng khoảng 27 phần trăm khả năng ALU của GPU trong quá trình thực thi.
+
+Thời gian khác được dành để thực hiện các nhiệm vụ khác, chẳng hạn như đọc và ghi dữ liệu, đưa ra các quyết định logic điều khiển, v.v.
+
+Con số giới hạn có nghĩa là GPU bị tắc nghẽn bởi việc sử dụng ALU trong khoảng 31% thời gian thực thi của hạt nhân.
+
+Vậy làm thế nào GPU có thể sử dụng 27 phần trăm khả năng ALU của GPU nhưng lại bị ALU tắc nghẽn với 31%?
+
+Bộ giới hạn có thể được coi là hiệu quả của công việc ALU đã được thực hiện.
+
+Đó là thời gian dành cho công việc thực tế, cộng với thời gian dành cho các quầy hàng nội bộ hoặc không hiệu quả.
+
+Trong trường hợp tốt nhất, những thời điểm này là bằng nhau, nhưng trong thực tế, có một sự khác biệt.
+
+Một sự khác biệt lớn chỉ ra rằng GPU có việc phải làm, nhưng không thể làm điều đó vì một số lý do.
+
+Ví dụ, các hoạt động ALU phức tạp như log() hoặc sử dụng các định dạng kết cấu đắt tiền, có thể dẫn đến việc sử dụng không đúng mức và biểu thị rằng có thể có phạm vi để tối ưu hóa toán học của hạt nhân.
+
+Hai con số này phối hợp với nhau để giúp bạn hiểu được cấu trúc chung của công việc mà hạt nhân của bạn đang thực hiện và hiệu quả của từng loại công việc để thực hiện.
+
+Với hạt nhân đặc biệt này, chúng ta có thể thấy rằng tỷ lệ lấp đầy ở mức 37 phần trăm.
+
+Giá trị này có vẻ thấp và chắc chắn đáng để điều tra để hiểu liệu nó có thể được tăng lên hay không.
+
+Chúng ta hãy xem xét kỹ hơn về công suất phòng.
+
+Đó là thước đo số lượng luồng hiện đang hoạt động trên GPU, so với mức tối đa có thể có.
+
+Khi con số này thấp, điều quan trọng là phải hiểu tại sao, để xác định xem điều này được mong đợi hay biểu thị một vấn đề.
+
+Công suất lấp đầy thấp đôi khi không đáng ngạc nhiên cũng như không thể tránh được, ví dụ như công việc đã gửi của bạn có số lượng chủ đề tương đối thấp vì công việc cần thực hiện đơn giản là nhỏ.
+
+Nó cũng có thể ổn nếu GPU bị giới hạn bởi các bộ đếm khác, chẳng hạn như ALU.
+
+Tuy nhiên, công suất sử dụng thấp cùng với bộ đếm bộ giới hạn thấp biểu thị rằng GPU có khả năng thực thi nhiều luồng hơn cùng một lúc.
+
+Vậy điều gì có thể gây ra công suất thấp có vấn đề?
+
+Một lý do phổ biến cho điều này là bộ nhớ luồng hoặc nhóm luồng cạn kiệt.
+
+Cả hai tài nguyên này đều hữu hạn trên GPU và được chia sẻ giữa các luồng đang chạy.
+
+Bộ nhớ luồng được hỗ trợ bởi các thanh ghi và khi áp lực đối với các thanh ghi tăng lên, công suất có thể được giảm xuống để phù hợp.
+
+Với mức sử dụng bộ nhớ nhóm luồng cao, cách duy nhất để tăng công suất là giảm dung lượng bộ nhớ dùng chung được sử dụng.
+
+Giảm bộ nhớ nhóm threrad cũng có thể giúp giảm tác động của áp suất đăng ký luồng.
+
+Có phạm vi để trình biên dịch đăng ký tràn hiệu quả hơn khi số lượng luồng tối đa trong một nhóm luồng được biết đến tại thời điểm tạo trạng thái đường ống.
+
+Những tối ưu hóa này có thể được kích hoạt bằng cách đặt maxThreadsPerThreadgroup trên bộ mô tả trạng thái đường ống tính toán hoặc bằng cách sử dụng thuộc tính Metal Shader langauge max_total_threads_per threadgroup trực tiếp trong nguồn hạt nhân của bạn.
+
+Điều chỉnh giá trị này để tìm sự cân bằng phù hợp nhất với hạt nhân của bạn.
+
+Nhắm đến một giá trị là bội số nhỏ nhất của chiều rộng thực thi luồng hoạt động cho thuật toán của bạn.
+
+Hãy đi sâu hơn vào áp lực đăng ký.
+
+Khi điều này cao, chúng ta sẽ thấy sự cố tràn đăng ký trong trình lập hồ sơ GPU của Xcode.
+
+Với ví dụ hạt nhân này, chúng ta có thể thấy rằng công suất lấp đầy của chúng ta ở mức 16 phần trăm và điều này thực sự thấp.
+
+Nhìn vào số liệu thống kê trình biên dịch cho hạt nhân này cho thấy chi phí hướng dẫn tương đối của nó, bao gồm cả các byte bị đổ.
+
+Sự cố tràn dầu này, cùng với các sổ đăng ký tạm thời, có thể là nguyên nhân khiến công suất phòng kém của chúng tôi.
+
+Chúng tôi đang làm cạn kiệt bộ nhớ luồng và công suất chiếm dụng được giảm xuống để giải phóng nhiều thanh ghi hơn cho các luồng sẽ chạy.
+
+Các thanh ghi được phân bổ cho một hạt nhân trong các khối đăng ký và do đó, bạn sẽ cần giảm mức sử dụng lên đến kích thước khối để thấy khả năng tăng công suất.
+
+Tối ưu hóa cho việc sử dụng đăng ký tối thiểu là một cách tuyệt vời để cải thiện hiệu suất có tác động đối với các hạt nhân phức tạp, nhưng làm thế nào để chúng ta làm điều này?
+
+Thích các loại 16 bit hơn các loại 32 bit làm tăng số lượng thanh ghi có sẵn cho các phần khác của hạt nhân.
+
+Việc chuyển đổi giữa các loại này sang các đối tác 32 bit của chúng thường miễn phí.
+
+Và việc giảm dữ liệu được lưu trữ trên ngăn xếp - ví dụ: các mảng hoặc cấu trúc lớn - có thể tiêu thụ một số lượng lớn thanh ghi và giảm chúng là một công cụ hiệu quả.
+
+Tìm cách điều chỉnh đầu vào đổ bóng của bạn để tận dụng tốt nhất không gian địa chỉ không đổi.
+
+Điều này có thể làm giảm đáng kể số lượng thanh ghi mục đích chung đang được sử dụng một cách không cần thiết.
+
+Và mẹo cuối cùng là tránh lập chỉ mục thành các mảng được lưu trữ trên ngăn xếp hoặc trong dữ liệu không đổi với chỉ mục động.
+
+Một ví dụ về điều này được hiển thị ở đây, trong đó một mảng được khởi tạo trong thời gian chạy.
+
+Nếu trình biên dịch không biết chỉ mục tại thời điểm biên dịch, mảng có thể sẽ tràn vào bộ nhớ.
+
+Tuy nhiên, trong ví dụ thứ hai này, chỉ mục được biết đến tại thời điểm biên dịch và trình biên dịch có thể sẽ hủy cuộn vòng lặp và có thể tối ưu hóa mọi sự cố tràn.
+
+Mỗi kỹ thuật này sẽ làm giảm việc phân bổ thanh ghi, giảm sự cố tràn và giúp tăng công suất cho các hạt nhân hoạt động hiệu quả hơn.
+
+Để biết thêm thông tin chi tiết về các kỹ thuật tối ưu hóa kim loại cho Apple Silicon, hãy xem video WWDC 2020, "Tối ưu hóa hiệu suất kim loại cho Apple Silicon Macs."
+
+Và bạn đã có nó.
+
+Hãy xem lại những gì chúng ta đã đề cập hôm nay.
+
+Chúng tôi bắt đầu với một đánh giá về vai trò của hàng đợi lệnh, bộ đệm lệnh và bộ mã hóa lệnh để nhắc nhở bản thân về mô hình gửi và cách công việc được xếp hàng lên GPU trong Metal và chúng tôi đã khám phá cách mã hóa các lệnh Metal từ nhiều luồng để giảm thời gian và chi phí mã hóa CPU.
+
+Với kiến thức đó, chúng tôi đã xem xét các đề xuất về cách điều chỉnh các ứng dụng của bạn; tránh các bản sao không cần thiết để tận dụng kiến trúc bộ nhớ thống nhất; gửi số lượng công việc lớn hơn; và sử dụng kết cấu Kim loại cũng như bộ đệm Kim loại cho tài nguyên hạt nhân của chúng tôi.
+
+Và cuối cùng, chúng tôi đã hướng dẫn cách sử dụng các công cụ của mình để xác định tắc nghẽn hiệu suất.
+
+Chúng tôi đã hiểu cách diễn giải các giá trị sử dụng và giới hạn của GPU và cách chúng tôi có thể giải quyết vấn đề về công suất thấp nếu chúng tôi phát hiện ra nó.
+
+Cảm ơn bạn rất nhiều, và tôi hy vọng bạn cũng hào hứng như tôi bởi những gì có thể với dòng sản phẩm MacBook Pro mạnh mẽ nhất từ trước đến nay.

@@ -1,0 +1,487 @@
+110351
+
+♪ Nhạc hip-hop nhạc cụ êm dịu ♪
+
+♪
+
+Xin chào.
+
+Tôi là Doug từ nhóm Swift, và tôi ở đây để nói về cách tiếp cận của Swift Concurrency để loại bỏ các cuộc đua dữ liệu.
+
+Chúng tôi đã giới thiệu Swift Concurrency như một tập hợp các tính năng ngôn ngữ giúp viết các chương trình đồng thời dễ dàng hơn.
+
+Đối với cơ chế của các tính năng ngôn ngữ riêng lẻ này, chúng tôi giới thiệu bạn đến các cuộc nói chuyện WWDC 2021 bao gồm từng tính năng.
+
+Bài nói chuyện này có một cái nhìn khác, toàn diện hơn về Swift Concurrency như một cách cấu trúc chương trình của bạn để sử dụng hiệu quả tính đồng thời mà không giới thiệu các cuộc đua dữ liệu.
+
+Nhưng để làm như vậy, chúng tôi cần một sự tương tự tuyệt vời, vì vậy chúng tôi mời bạn đi thuyền với chúng tôi trên biển đồng thời trên biển đồng thời.
+
+Biển đồng thời là không thể đoán trước, với nhiều thứ đang diễn ra cùng một lúc, nhưng với bạn ở vị trí lãnh đạo và Swift giúp bạn điều hướng vùng biển, nó có thể tạo ra những điều tuyệt vời.
+
+Hãy đi sâu vào!
+
+Chúng ta sẽ bắt đầu bằng cách nói về sự cô lập, đó là một trong những ý tưởng chính của mô hình đồng thời của Swift, đảm bảo rằng dữ liệu không được chia sẻ theo cách có thể giới thiệu các cuộc đua dữ liệu.
+
+Hãy bắt đầu với việc cô lập nhiệm vụ.
+
+Trong biển đồng thời của chúng ta, các nhiệm vụ được đại diện bởi những chiếc thuyền.
+
+Thuyền là công nhân chính của chúng tôi - họ có một công việc phải làm, họ thực hiện tuần tự từ đầu đến cuối.
+
+Chúng không đồng bộ và công việc của chúng có thể bị đình chỉ bất kỳ số lần nào tại các hoạt động "chờ đợi" trong mã.
+
+Cuối cùng, chúng khép kín: mỗi nhiệm vụ có tài nguyên riêng, vì vậy nó có thể tự vận hành, độc lập với tất cả các tàu thuyền khác trên biển.
+
+Nếu thuyền của chúng tôi hoàn toàn độc lập, chúng tôi có sự đồng thời mà không có các cuộc đua dữ liệu, nhưng nó không hữu ích lắm nếu không có một số cách để giao tiếp.
+
+Hãy thêm một số giao tiếp!
+
+Ví dụ, một chiếc thuyền có thể có một quả dứa mà nó muốn chia sẻ với một chiếc thuyền khác.
+
+Vì vậy, những chiếc thuyền gặp nhau trên biển khơi, và chúng tôi chuyển dứa từ thuyền này sang thuyền khác.
+
+Bây giờ, đây là nơi mà sự tương tự vật lý bị phá vỡ một chút, bởi vì quả dứa này không phải là một vật phẩm vật lý di chuyển từ thuyền này sang thuyền khác.
+
+Đó là dữ liệu và trong Swift, chúng tôi có một vài cách khác nhau mà chúng tôi có thể biểu diễn dữ liệu đó.
+
+Chúng ta định nghĩa loại dứa của mình như thế nào?
+
+Chúng tôi thích các loại giá trị trong Swift, vì vậy hãy biến dứa thành một cấu trúc được xác định bởi trọng lượng và độ chín của nó.
+
+Hãy xem cái này hoạt động như thế nào.
+
+Khi những chiếc thuyền gặp nhau trên biển khơi, chúng tôi thực sự đang chuyển một bản sao của ví dụ dứa từ thuyền này sang thuyền khác, và mỗi thuyền biến mất với bản sao riêng của nó.
+
+Nếu bạn biến đổi các bản sao, chẳng hạn như bằng cách gọi các phương thức slice() và ripen(), nó sẽ không có bất kỳ ảnh hưởng nào đến cái kia.
+
+Swift luôn ưu tiên các loại giá trị cho chính xác lý do này - đột biến chỉ có tác động cục bộ.
+
+Nguyên tắc đó giúp các loại giá trị duy trì sự cô lập.
+
+Bây giờ, hãy mở rộng mô hình dữ liệu của chúng ta một chút và thêm gà!
+
+Không giống như dứa, loại chỉ tốt để ăn, gà là những sinh vật xinh đẹp với tính cách độc đáo của riêng chúng.
+
+Vì vậy, chúng tôi sẽ mô hình hóa chúng với một lớp học, như thế này.
+
+Hãy để những người đi biển gan dạ của chúng ta đổi lấy một con gà.
+
+Khi thuyền của chúng tôi gặp nhau, chúng tôi chia sẻ con gà, ngoại trừ việc sao chép một loại tham chiếu như gà không cung cấp cho bạn một bản sao đầy đủ khác của con gà, nó cung cấp cho bạn một tham chiếu đến đối tượng cụ thể đó.
+
+Vì vậy, một khi thuyền của chúng tôi đã đi theo con đường riêng của chúng, chúng tôi có thể thấy rằng chúng tôi có một vấn đề: cả hai thuyền đang thực hiện công việc của chúng đồng thời, nhưng chúng không độc lập vì cả hai đều tham chiếu đến cùng một vật thể gà.
+
+Dữ liệu có thể thay đổi được chia sẻ đó dễ bị các cuộc đua dữ liệu, chẳng hạn như khi một chiếc thuyền đang cố gắng cho gà ăn và chiếc kia muốn chơi với nó, dẫn đến một con gà rất bối rối.
+
+Chúng ta cần một cách để biết rằng việc chia sẻ dứa giữa những chiếc thuyền là an toàn, nhưng không phải gà.
+
+Và sau đó chúng tôi cần một số kiểm tra tại chỗ trong trình biên dịch Swift để đảm bảo rằng gà không vô tình được chuyển từ thuyền này sang thuyền khác.
+
+Giao thức Swift là một cách tuyệt vời để phân loại các loại để bạn có thể suy luận về hành vi của chúng.
+
+Giao thức Sendable được sử dụng để mô tả các loại có thể được chia sẻ một cách an toàn trên các miền cách ly khác nhau mà không tạo ra các cuộc đua dữ liệu.
+
+Một loại có thể được thực hiện Có thể gửi được bằng cách viết một sự phù hợp.
+
+Cấu trúc Pineapple phù hợp với Sendable vì nó là một loại giá trị, nhưng lớp Chicken thì không vì nó là một loại tham chiếu không đồng bộ.
+
+Mô hình hóa Sendable như một giao thức cho phép chúng tôi mô tả những nơi dữ liệu sẽ được chia sẻ trên các miền cách ly.
+
+Ví dụ, khi một nhiệm vụ trả về một giá trị, giá trị này được cung cấp cho bất kỳ nhiệm vụ nào đang chờ giá trị đó.
+
+Ở đây, chúng tôi đang cố gắng trả lại một con Gà từ Nhiệm vụ của mình và chúng tôi gặp lỗi nói rằng điều này không an toàn vì Gà không thể gửi được.
+
+Ràng buộc Sendable thực tế xuất phát từ định nghĩa của chính cấu trúc Nhiệm vụ, chỉ định rằng loại kết quả của một Nhiệm vụ, được gọi là Thành công, phải phù hợp với giao thức Có thể gửi được.
+
+Bạn nên sử dụng các ràng buộc Sendable nơi bạn có các tham số chung có giá trị sẽ được truyền qua các miền cách ly khác nhau.
+
+Bây giờ, hãy xem lại ý tưởng chia sẻ dữ liệu giữa các tàu thuyền.
+
+Khi hai chiếc thuyền gặp nhau trên biển cả và muốn chia sẻ dữ liệu, chúng tôi cần ai đó kiểm tra nhất quán tất cả hàng hóa để đảm bảo chúng an toàn để chia sẻ.
+
+Đó là vai trò của thanh tra hải quan thân thiện của chúng tôi - được thực hiện ở đây bởi trình biên dịch Swift - để đảm bảo rằng chỉ các loại Sendable mới được trao đổi.
+
+Dứa vẫn ổn và có thể được đổi tự do, bởi vì nó có thể gửi được.
+
+Tuy nhiên, gà không thể đổi được, và thanh tra hải quan thân thiện của chúng tôi sẽ ngăn chúng tôi phạm sai lầm đó.
+
+Trình biên dịch có liên quan đến việc kiểm tra tính chính xác của Sendable tại nhiều điểm khác nhau.
+
+Các loại có thể gửi phải chính xác bằng cách xây dựng và không thể cho phép bất kỳ dữ liệu được chia sẻ nào được nhập lậu qua chúng.
+
+Enums và cấu trúc thường xác định các loại giá trị, sao chép tất cả dữ liệu thể hiện của chúng cùng với chúng để tạo ra các giá trị độc lập.
+
+Do đó, chúng có thể được gửi miễn là tất cả dữ liệu phiên bản của chúng cũng có thể gửi được.
+
+Sendable có thể được truyền bá thông qua các bộ sưu tập và các loại chung khác bằng cách sử dụng sự phù hợp có điều kiện.
+
+Một mảng các loại Có thể gửi được là Có thể gửi được, vì vậy một Thùng đầy dứa cũng có thể gửi được.
+
+Tất cả các tuân thủ Sendable này thậm chí có thể được trình biên dịch Swift suy ra cho các loại không công khai, vì vậy Ripeness, Pineapple và Crate đều có thể gửi ngầm.
+
+Nhưng giả sử chúng ta tạo ra một cái chuồng để nuôi đàn gà của chúng ta.
+
+Loại này không thể được đánh dấu là Có thể gửi được, bởi vì nó chứa trạng thái không thể gửi được: Gà không thể gửi được, vì vậy mảng gà không thể gửi được.
+
+Chúng tôi sẽ nhận được thông báo lỗi từ trình biên dịch của chúng tôi để chỉ ra rằng loại này không thể được chia sẻ một cách an toàn.
+
+Các lớp là các loại tham chiếu, vì vậy chúng chỉ có thể được thực hiện Có thể gửi được trong những trường hợp rất hẹp, chẳng hạn như khi lớp cuối cùng chỉ có bộ nhớ bất biến.
+
+Nỗ lực của chúng tôi để làm cho lớp Chicken Sendable sẽ gây ra lỗi vì nó chứa trạng thái có thể thay đổi.
+
+Bây giờ, có thể triển khai các loại tham chiếu thực hiện đồng bộ hóa nội bộ của riêng chúng, ví dụ, bằng cách sử dụng khóa một cách nhất quán.
+
+Những loại này có thể gửi được về mặt khái niệm, nhưng không có cách nào để Swift lý luận về điều đó.
+
+Sử dụng Sendable không được chọn để vô hiệu hóa việc kiểm tra của trình biên dịch.
+
+Hãy cẩn thận với điều này, bởi vì tình trạng có thể thay đổi buôn lậu thông qua @unchecked Sendable làm suy yếu đảm bảo an toàn cuộc đua dữ liệu mà Swift đang cung cấp.
+
+Tạo nhiệm vụ liên quan đến việc thực hiện việc đóng cửa trong một nhiệm vụ mới, độc lập, như gửi một chiếc thuyền chèo từ thuyền của bạn.
+
+Khi chúng tôi làm điều này, chúng tôi có thể nắm bắt các giá trị từ nhiệm vụ ban đầu và chuyển chúng vào nhiệm vụ mới, vì vậy chúng tôi cần kiểm tra Sendable để đảm bảo chúng tôi không giới thiệu các cuộc đua dữ liệu.
+
+Nếu chúng tôi cố gắng chia sẻ một loại không thể gửi qua ranh giới này, trình biên dịch Swift sẽ bảo vệ chúng tôi, tạo ra một thông báo lỗi như thế này.
+
+Đây không phải là phép thuật để tạo ra nhiệm vụ.
+
+Việc đóng cửa đang được suy ra là một sự đóng cửa có thể gửi được, có thể được viết rõ ràng với At-Sendable.
+
+Đóng có thể gửi là các giá trị của loại hàm có thể gửi.
+
+At-Sendable có thể được viết trên một loại hàm để chỉ ra rằng loại hàm phù hợp với giao thức Sendable.
+
+Điều đó ngụ ý rằng các giá trị của loại hàm đó có thể được chuyển đến các miền cách ly khác và được gọi ở đó mà không cần giới thiệu các cuộc đua dữ liệu ở trạng thái bị bắt của chúng.
+
+Thông thường, các loại hàm không thể phù hợp với các giao thức, nhưng Sendable là đặc biệt vì trình biên dịch xác thực các yêu cầu ngữ nghĩa cho nó.
+
+Có sự hỗ trợ tương tự cho các bộ các loại Sendable phù hợp với giao thức Sendable, cho phép Sendable được sử dụng trong toàn bộ ngôn ngữ.
+
+Hệ thống mà chúng tôi đã mô tả có nhiều nhiệm vụ thực hiện đồng thời bị cô lập với nhau.
+
+Giao thức Sendable mô tả các loại có thể được chia sẻ một cách an toàn giữa các tác vụ và trình biên dịch Swift kiểm tra sự phù hợp của Sendable ở mọi cấp độ để duy trì sự cô lập của các tác vụ.
+
+Tuy nhiên, nếu không có bất kỳ khái niệm nào về dữ liệu có thể thay đổi được chia sẻ ở bất kỳ đâu, thật khó để các nhiệm vụ phối hợp một cách có ý nghĩa.
+
+Vì vậy, chúng tôi cần một số cách để chia sẻ dữ liệu giữa các nhiệm vụ của chúng tôi mà không giới thiệu lại các cuộc đua dữ liệu.
+
+Đây là nơi các diễn viên bước vào.
+
+Các diễn viên cung cấp một cách để cô lập trạng thái có thể được truy cập bởi các nhiệm vụ khác nhau, nhưng theo cách phối hợp để loại bỏ các cuộc đua dữ liệu.
+
+Diễn viên là những hòn đảo trong biển đồng thời của chúng ta.
+
+Giống như những chiếc thuyền, mỗi hòn đảo đều khép kín, với trạng thái riêng biệt lập với mọi thứ khác trên biển.
+
+Để truy cập trạng thái đó, mã của bạn cần phải chạy trên đảo.
+
+Ví dụ, phương pháp advanceTime bị cô lập với hòn đảo này.
+
+Nó sống trên đảo và có quyền truy cập vào tất cả các tiểu bang của hòn đảo.
+
+Để thực sự chạy mã trên một hòn đảo, bạn cần một chiếc thuyền.
+
+Một chiếc thuyền có thể ghé thăm hòn đảo để chạy mã trên đảo, tại thời điểm đó nó có quyền truy cập vào tiểu bang đó.
+
+Chỉ có một chiếc thuyền có thể đến thăm hòn đảo để chạy mã tại một thời điểm, điều này đảm bảo rằng không có quyền truy cập đồng thời vào tiểu bang của hòn đảo.
+
+Nếu những chiếc thuyền khác xuất hiện, họ phải đợi đến lượt mình để đến thăm hòn đảo.
+
+Và bởi vì có thể mất một thời gian dài trước khi một chiếc thuyền nhất định có cơ hội đến thăm hòn đảo, việc tham gia vào một diễn viên là một điểm đình chỉ tiềm năng được đánh dấu bằng từ khóa "chờ đợi".
+
+Một khi hòn đảo được giải phóng - một lần nữa, tại một điểm treo - một chiếc thuyền khác có thể ghé thăm.
+
+Cũng giống như với hai chiếc thuyền gặp nhau trên biển khơi, sự tương tác giữa một chiếc thuyền và một hòn đảo cần duy trì sự cô lập của cả hai, bằng cách đảm bảo rằng các loại không thể gửi được không đi qua giữa hai loại.
+
+Ví dụ, có lẽ chúng tôi cố gắng thêm một con gà từ thuyền của chúng tôi vào đàn trên đảo.
+
+Điều này sẽ tạo ra hai tham chiếu đến cùng một đối tượng gà từ các miền cách ly khác nhau, vì vậy trình biên dịch Swift từ chối nó.
+
+Tương tự, nếu chúng tôi cố gắng nhận nuôi một con gà cưng từ hòn đảo và mang nó đi trên thuyền của chúng tôi, kiểm tra Sendable đảm bảo rằng chúng tôi không thể tạo cuộc đua dữ liệu này.
+
+Các diễn viên là các loại tham chiếu, nhưng không giống như các lớp, chúng cô lập tất cả các thuộc tính và mã của chúng để ngăn chặn truy cập đồng thời.
+
+Do đó, có một tham chiếu đến một diễn viên từ một miền cách ly khác là an toàn.
+
+Nó giống như có một bản đồ đến một hòn đảo: bạn có thể sử dụng bản đồ để đến thăm hòn đảo, nhưng bạn vẫn cần phải trải qua quy trình cập bến để truy cập trạng thái của nó.
+
+Do đó, tất cả các loại diễn viên đều hoàn toàn có thể gửi được.
+
+Bạn có thể tự hỏi làm thế nào để biết mã nào bị cô lập với diễn viên và mã nào không.
+
+Sự cô lập diễn viên được xác định bởi bối cảnh bạn đang ở.
+
+Các thuộc tính ví dụ của một diễn viên được cô lập với diễn viên đó.
+
+Các phương thức phiên bản trên diễn viên hoặc phần mở rộng của diễn viên cũng bị cô lập theo mặc định, như phương thức advanceTime này.
+
+Các đóng không thể gửi được, chẳng hạn như đóng được chuyển đến thuật toán giảm, ở lại trên diễn viên và bị cô lập diễn viên khi chúng ở trong bối cảnh bị cô lập bởi diễn viên.
+
+Trình khởi tạo nhiệm vụ cũng kế thừa sự cô lập của diễn viên khỏi ngữ cảnh của nó, vì vậy nhiệm vụ đã tạo sẽ được lên lịch trên cùng một diễn viên như nó đã được khởi tạo.
+
+Ở đây, điều đó cấp quyền truy cập vào đàn.
+
+Mặt khác, một nhiệm vụ tách rời không kế thừa sự cô lập của diễn viên với bối cảnh của nó, bởi vì nó hoàn toàn độc lập với bối cảnh nơi nó được tạo ra.
+
+Chúng ta có thể thấy rằng mã trong phần đóng ở đây được coi là bên ngoài diễn viên vì nó cần sử dụng "chờ đợi" để chỉ tài sản "thực phẩm" bị cô lập.
+
+Chúng tôi có một thuật ngữ cho việc đóng cửa này: đó là mã không bị cô lập.
+
+Mã không cô lập là mã không chạy trên bất kỳ tác nhân nào cả.
+
+Bạn có thể tạo một cách rõ ràng một hàm bên trong một diễn viên không bị cô lập bằng cách sử dụng từ khóa không bị cô lập, đặt nó bên ngoài diễn viên.
+
+Giống như những gì đã xảy ra ngầm với việc đóng cửa được sử dụng cho nhiệm vụ tách rời.
+
+Điều đó có nghĩa là nếu chúng ta muốn đọc một số tiểu bang bị cô lập với diễn viên, chúng ta sẽ cần sử dụng "chờ đợi" để đến thăm hòn đảo và lấy một bản sao của tiểu bang mà chúng ta cần.
+
+Mã không đồng bộ không cô lập luôn chạy trên nhóm hợp tác toàn cầu.
+
+Hãy nghĩ về nó chỉ chạy khi một chiếc thuyền ở ngoài biển khơi, vì vậy bạn phải rời khỏi hòn đảo bạn đang đến thăm để thực hiện công việc.
+
+Điều đó có nghĩa là kiểm tra để đảm bảo rằng bạn không mang theo bất kỳ dữ liệu không thể gửi nào bên mình!
+
+Ở đây, trình biên dịch phát hiện cuộc đua dữ liệu tiềm năng, trong đó một trường hợp Gà không thể gửi được đang cố gắng rời khỏi hòn đảo.
+
+Hãy xem xét thêm một trường hợp mã không bị cô lập.
+
+Hoạt động "chào mừng" là mã đồng bộ, không cô lập.
+
+Nó không biết gì về thuyền hoặc đảo hoặc đồng thời nói chung.
+
+Và ở đây, chúng tôi đang gọi nó từ chức năng greetOne bị cô lập bởi diễn viên, và điều đó không sao cả!
+
+Mã đồng bộ này, khi được gọi từ đảo, sẽ ở trên đảo, vì vậy nó được tự do hoạt động trên gà từ đàn.
+
+Thay vào đó, nếu chúng tôi có một hoạt động không đồng bộ không bị cô lập gọi là "chào mừng", thì "chào mừng" sẽ chạy đến đó, trên một chiếc thuyền, trên biển khơi.
+
+Hầu hết mã Swift là như thế này: đồng bộ, không cô lập với bất kỳ tác nhân nào và chỉ hoạt động trên các tham số mà nó đã được cung cấp, vì vậy nó nằm trong miền cách ly nơi nó được gọi.
+
+Các diễn viên giữ trạng thái bị cô lập với phần còn lại của chương trình.
+
+Chỉ có một tác vụ có thể chạy trên một diễn viên tại một thời điểm, vì vậy không có quyền truy cập đồng thời vào trạng thái đó.
+
+Kiểm tra có thể gửi được áp dụng bất cứ khi nào một tác vụ vào hoặc thoát khỏi một diễn viên để đảm bảo rằng không có trạng thái có thể thay đổi không đồng bộ nào thoát ra.
+
+Nhìn chung, điều này làm cho các diễn viên trở thành một trong những khối xây dựng cho một chương trình đồng thời trong Swift.
+
+Có một diễn viên đặc biệt khác mà chúng ta thường nói đến được gọi là diễn viên chính.
+
+Hãy nghĩ về diễn viên chính như một hòn đảo lớn giữa biển.
+
+Nó đại diện cho chủ đề chính, nơi xảy ra tất cả các bản vẽ và tương tác cho giao diện người dùng của bạn.
+
+Vì vậy, nếu bạn muốn vẽ thứ gì đó, bạn cần chạy mã trên đảo của diễn viên chính.
+
+Nó rất quan trọng đối với giao diện người dùng của bạn, có lẽ chúng ta thậm chí nên gọi nó là "U-I-land".
+
+Khi chúng tôi nói rằng diễn viên chính là "lớn", ý của chúng tôi là nó chứa rất nhiều trạng thái liên quan đến giao diện người dùng của chương trình.
+
+Có rất nhiều mã, cả trong khung giao diện người dùng và trong ứng dụng của bạn, cần chạy trên đó.
+
+Tuy nhiên, nó vẫn là một diễn viên, vì vậy nó chỉ điều hành một công việc tại một thời điểm.
+
+Vì vậy, bạn phải cẩn thận để không đặt quá nhiều hoặc công việc lâu dài vào diễn viên chính, bởi vì nó có thể làm cho giao diện người dùng của bạn không phản hồi.
+
+Sự cô lập với diễn viên chính được thể hiện với thuộc tính MainActor.
+
+Thuộc tính này có thể được áp dụng cho một hàm hoặc đóng để chỉ ra rằng mã phải chạy trên tác nhân chính.
+
+Sau đó, chúng tôi nói rằng mã này bị cô lập với diễn viên chính.
+
+Trình biên dịch Swift sẽ đảm bảo rằng mã cách ly diễn viên chính sẽ chỉ được thực thi trên luồng chính, sử dụng cùng một cơ chế đảm bảo quyền truy cập độc quyền lẫn nhau cho các tác nhân khác.
+
+Nếu một người gọi updateView từ một ngữ cảnh không bị cô lập với diễn viên chính, nó sẽ cần giới thiệu một "chờ đợi" để tính đến việc chuyển sang diễn viên chính.
+
+Thuộc tính diễn viên chính cũng có thể được áp dụng cho các loại, trong trường hợp đó, các trường hợp của các loại đó sẽ được cách ly với diễn viên chính.
+
+Một lần nữa, điều này giống như bất kỳ tác nhân nào khác - các thuộc tính chỉ có thể truy cập được khi ở tác nhân chính và các phương thức được cách ly với tác nhân chính trừ khi chúng chọn không tham gia một cách rõ ràng.
+
+Giống như các diễn viên bình thường, các tham chiếu đến các lớp diễn viên chính tự chúng có thể gửi được, bởi vì dữ liệu của họ bị cô lập.
+
+Điều này làm cho chú thích diễn viên chính phù hợp với chế độ xem giao diện người dùng và bộ điều khiển chế độ xem của bạn, chúng nhất thiết phải được gắn với luồng chính bởi chính các khuôn khổ.
+
+Bạn có thể chia sẻ tham chiếu đến bộ điều khiển chế độ xem của mình với các tác vụ và tác nhân khác trong chương trình của mình và họ có thể gọi lại không đồng bộ vào bộ điều khiển chế độ xem để đăng kết quả.
+
+Điều này có ảnh hưởng trực tiếp đến kiến trúc ứng dụng của bạn.
+
+Trong ứng dụng của bạn, chế độ xem và bộ điều khiển chế độ xem của bạn sẽ nằm trên diễn viên chính.
+
+Logic chương trình khác nên được tách ra khỏi tác nhân chính đó, sử dụng các tác nhân khác để mô hình hóa trạng thái và nhiệm vụ được chia sẻ một cách an toàn để mô tả công việc độc lập.
+
+Và những nhiệm vụ đó có thể chuyển đổi giữa diễn viên chính và các diễn viên khác khi cần thiết.
+
+Có rất nhiều điều đang diễn ra trong một ứng dụng đồng thời, vì vậy chúng tôi đã xây dựng một số công cụ tuyệt vời để giúp bạn hiểu nó.
+
+Tôi mời bạn xem bài nói chuyện "Trực quan hóa và Tối ưu hóa Đồng thời Nhanh chóng" để tìm hiểu thêm.
+
+Hãy đi sâu vào một số vùng nước sâu hơn để nói về tính nguyên tử.
+
+Mục tiêu của mô hình Swift Concurrency là loại bỏ các cuộc đua dữ liệu.
+
+Điều đó thực sự có nghĩa là nó loại bỏ các cuộc đua dữ liệu cấp thấp, liên quan đến tham nhũng dữ liệu.
+
+Bạn vẫn cần phải suy luận về tính nguyên tử ở mức độ cao.
+
+Như chúng ta đã nói trước đây, các diễn viên chỉ thực hiện một nhiệm vụ tại một thời điểm.
+
+Tuy nhiên, khi bạn ngừng chạy trên một diễn viên, diễn viên đó có thể chạy các tác vụ khác.
+
+Điều này đảm bảo rằng chương trình đạt được tiến bộ, loại bỏ khả năng bế tắc.
+
+Tuy nhiên, nó yêu cầu bạn xem xét các bất biến của diễn viên một cách cẩn thận xung quanh các tuyên bố đang chờ đợi.
+
+Nếu không, bạn có thể kết thúc với một cuộc đua dữ liệu cấp cao, nơi chương trình ở trạng thái bất ngờ, mặc dù không có dữ liệu nào thực sự bị hỏng.
+
+Hãy chia nhỏ một ví dụ về điều này.
+
+Ở đây chúng tôi có một chức năng dự định gửi thêm một số quả dứa trên một hòn đảo.
+
+Nó nằm ngoài một diễn viên, vì vậy nó là mã không đồng bộ không bị cô lập.
+
+Điều đó có nghĩa là nó chạy ra đây trên biển khơi.
+
+Nó đã được tặng một số quả dứa và một bản đồ đến hòn đảo nơi nó nên gửi những quả dứa đó.
+
+Hoạt động thú vị đầu tiên ở đây lấy một bản sao của mảng thức ăn từ hòn đảo.
+
+Để làm điều đó, con thuyền cần đến thăm hòn đảo, được báo hiệu bằng từ khóa "chờ đợi".
+
+Ngay sau khi có một bản sao của thức ăn, con thuyền quay trở lại biển khơi để tiếp tục công việc của mình.
+
+Điều đó có nghĩa là thêm dứa từ thông số dứa vào hai loại mà nó nhận được từ hòn đảo.
+
+Bây giờ, chúng ta có thể di chuyển đến dòng cuối cùng của hàm.
+
+Thuyền của chúng tôi bây giờ cần đến thăm hòn đảo một lần nữa để thiết lập mảng thức ăn của hòn đảo cho ba quả dứa đó.
+
+Ở đây, mọi thứ đều ổn, và chúng tôi có ba quả dứa trên đảo!
+
+Nhưng mọi thứ có thể đã diễn ra hơi khác một chút.
+
+Giả sử một con tàu cướp biển đã lẻn vào và đánh cắp tất cả dứa trong khi chiếc thuyền đầu tiên của chúng tôi đang đợi đến lượt nó đến thăm hòn đảo.
+
+Bây giờ, con tàu ban đầu của chúng tôi gửi ba quả dứa của nó trên đảo, và chúng tôi nhận thấy một vấn đề.
+
+Ba quả dứa đột nhiên biến thành năm quả dứa!
+
+Chuyện gì đã xảy ra ở đây vậy?
+
+Chà, lưu ý rằng chúng tôi có hai người đang chờ đợi để tiếp cận tiểu bang trên cùng một diễn viên và chúng tôi đang đưa ra giả định ở đây rằng mảng thức ăn trên đảo không thay đổi giữa hai người đang chờ đợi.
+
+Nhưng những điều này đang chờ đợi, có nghĩa là nhiệm vụ của chúng tôi có thể bị đình chỉ ở đây và diễn viên có thể thực hiện các công việc ưu tiên cao hơn khác, như chiến đấu với cướp biển.
+
+Trong trường hợp cụ thể này, trình biên dịch Swift sẽ từ chối nỗ lực sửa đổi hoàn toàn trạng thái trên một diễn viên khác.
+
+Tuy nhiên, chúng ta thực sự nên viết lại hoạt động gửi tiền của mình dưới dạng mã đồng bộ trên tác nhân, như thế này.
+
+Bởi vì đây là mã đồng bộ, nó sẽ chạy trên diễn viên mà không bị gián đoạn.
+
+Vì vậy, chúng tôi có thể chắc chắn rằng trạng thái của hòn đảo sẽ không thay đổi bởi bất kỳ ai khác trong toàn bộ chức năng.
+
+Khi bạn đang viết diễn viên của mình, hãy nghĩ về các hoạt động giao dịch, đồng bộ có thể được xen kẽ theo bất kỳ cách nào.
+
+Mỗi người trong số họ nên đảm bảo rằng diễn viên ở trong trạng thái tốt khi nó thoát ra.
+
+Đối với các hoạt động diễn viên không đồng bộ, hãy giữ chúng đơn giản, hình thành chúng chủ yếu từ các hoạt động giao dịch, đồng bộ của bạn và chú ý rằng diễn viên của bạn ở trạng thái tốt ở mỗi hoạt động đang chờ.
+
+Bằng cách này, bạn có thể tận dụng tối đa các tác nhân để loại bỏ cả các chủng tộc dữ liệu cấp thấp và cấp cao.
+
+Trong một chương trình đồng thời, nhiều thứ đang xảy ra cùng một lúc, vì vậy thứ tự những điều đó xảy ra có thể thay đổi từ lần thực hiện này sang lần khác.
+
+Tuy nhiên, các chương trình thường dựa vào việc xử lý các sự kiện theo thứ tự nhất quán.
+
+Ví dụ, luồng sự kiện đến từ đầu vào của người dùng hoặc tin nhắn từ máy chủ.
+
+Khi các luồng sự kiện này xuất hiện, chúng tôi hy vọng ảnh hưởng của chúng sẽ xảy ra theo thứ tự.
+
+Swift Concurrency cung cấp các công cụ để đặt hàng các hoạt động, tuy nhiên, các tác nhân không phải là công cụ để làm như vậy.
+
+Các diễn viên thực hiện công việc ưu tiên cao nhất trước tiên, để giúp hệ thống tổng thể luôn phản hồi nhanh.
+
+Điều này loại bỏ các đảo ngược ưu tiên trong đó công việc ưu tiên thấp hơn kết thúc xảy ra trước khi công việc ưu tiên cao hơn trên cùng một tác nhân.
+
+Lưu ý rằng đây là một sự khác biệt đáng kể so với hàng đợi Dispatch nối tiếp, được thực hiện theo thứ tự vào trước, ra trước một cách nghiêm ngặt.
+
+Swift Concurrency có một số công cụ để đặt hàng công việc.
+
+Lần đầu tiên chúng ta đã nói về rất nhiều - nhiệm vụ.
+
+Các nhiệm vụ được thực hiện từ đầu đến cuối, với quy trình điều khiển bình thường mà bạn đã quen, vì vậy chúng tự nhiên sắp xếp công việc.
+
+AsyncStream có thể được sử dụng để mô hình hóa một luồng sự kiện thực tế.
+
+Một nhiệm vụ có thể lặp lại trên luồng sự kiện với vòng lặp chờ đợi, lần lượt xử lý từng sự kiện.
+
+AsyncStream có thể được chia sẻ với bất kỳ số lượng nhà sản xuất sự kiện nào, có thể thêm các yếu tố vào luồng trong khi vẫn duy trì thứ tự.
+
+Chúng tôi đã nói rất nhiều về cách mô hình đồng thời của Swift được thiết kế để loại bỏ các cuộc đua dữ liệu bằng cách sử dụng khái niệm cô lập, được duy trì bằng cách kiểm tra Sendable tại nhiệm vụ và ranh giới diễn viên.
+
+Tuy nhiên, tất cả chúng ta không thể dừng lại những gì chúng ta đang làm để đánh dấu tất cả các loại Có thể gửi được ở mọi nơi.
+
+Thay vào đó, chúng ta cần một cách tiếp cận gia tăng.
+
+Swift 5.7 giới thiệu cài đặt xây dựng để xác định mức độ nghiêm ngặt của trình biên dịch Swift nên kiểm tra Sendability.
+
+Cài đặt mặc định là Tối thiểu có nghĩa là trình biên dịch sẽ chỉ chẩn đoán những nơi mà người ta đã cố gắng đánh dấu rõ ràng thứ gì đó là Có thể gửi được.
+
+Điều này tương tự như cách Swift 5.5 và 5.6 hoạt động, và đối với những điều trên, sẽ không có bất kỳ cảnh báo hoặc lỗi nào.
+
+Bây giờ, nếu bạn thêm sự phù hợp có thể gửi được, trình biên dịch sẽ phàn nàn rằng loại Coop không thể gửi được vì Chicken không thể gửi được.
+
+Tuy nhiên, điều này - và các vấn đề liên quan đến Sendable khác - sẽ được trình bày dưới dạng cảnh báo trong Swift 5, không phải lỗi, để giúp giải quyết từng vấn đề một dễ dàng hơn.
+
+Để tiến xa hơn về an toàn cuộc đua dữ liệu, hãy bật cài đặt đồng thời nghiêm ngặt "được nhắm mục tiêu".
+
+Cài đặt này cho phép Sendable kiểm tra mã đã áp dụng các tính năng Swift Concurrency như async/await, tasks hoặc actors.
+
+Điều này sẽ xác định, ví dụ, các nỗ lực nắm bắt các giá trị của loại không thể gửi được trong một nhiệm vụ mới được tạo.
+
+Đôi khi các loại không thể gửi đến từ một mô-đun khác.
+
+Có lẽ đó là một số gói chưa được cập nhật cho Sendable, hoặc thậm chí là mô-đun của riêng bạn mà bạn chưa nhận được.
+
+Đối với những người đó, bạn có thể tạm thời vô hiệu hóa cảnh báo Sendable cho các loại đến từ mô-đun đó bằng cách sử dụng thuộc tính @preconcurrency.
+
+Điều này sẽ tắt tiếng các cảnh báo có thể gửi được cho loại Gà trong tệp nguồn này.
+
+Tại một thời điểm nào đó, mô-đun FarmAnimals sẽ được cập nhật với sự phù hợp của Sendable.
+
+Sau đó, một trong hai điều sẽ xảy ra: hoặc Chicken trở thành Sendable bằng cách nào đó, trong trường hợp đó, thuộc tính tiền đồng thời có thể bị xóa khỏi mục nhập.
+
+Hoặc Gà sẽ được biết là không thể gửi được, trong trường hợp đó cảnh báo sẽ quay trở lại, cho thấy rằng các giả định của bạn về Gà có thể gửi được, trên thực tế, không chính xác.
+
+Cài đặt độ nghiêm ngặt được nhắm mục tiêu cố gắng đạt được sự cân bằng giữa khả năng tương thích với mã hiện có và xác định các chủng tộc dữ liệu tiềm năng.
+
+Tuy nhiên, nếu bạn muốn thấy ở mọi nơi mà các chủng tộc có thể xảy ra, có một lựa chọn nữa: kiểm tra hoàn chỉnh.
+
+Kiểm tra hoàn chỉnh gần đúng ngữ nghĩa Swift 6 dự định để loại bỏ hoàn toàn các cuộc đua dữ liệu.
+
+Nó kiểm tra mọi thứ mà hai chế độ trước đó kiểm tra nhưng làm như vậy cho tất cả mã trong mô-đun.
+
+Ở đây, chúng tôi hoàn toàn không thực sự sử dụng các tính năng đồng thời của Swift.
+
+Thay vào đó, nó đang thực hiện công việc trên hàng đợi điều phối, nó sẽ thực thi mã đó đồng thời.
+
+Thao tác không đồng bộ trên hàng đợi điều phối thực sự được biết là đóng Sendable, vì vậy trình biên dịch tạo ra cảnh báo cho biết rằng có một cuộc đua dữ liệu khi nội dung không thể gửi được mã đang chạy trên hàng đợi điều phối bắt giữ.
+
+Chúng ta có thể khắc phục điều này bằng cách làm cho tham số nội dung có thể gửi được.
+
+Sự thay đổi đó loại bỏ cảnh báo này, và bây giờ tất cả những người gọi của doWork đều biết rằng họ cần cung cấp một đóng có thể gửi được.
+
+Điều đó có nghĩa là chúng tôi kiểm tra tốt hơn các cuộc đua dữ liệu và chúng tôi có thể thấy rằng chức năng truy cập hiện là nguồn của cuộc đua dữ liệu.
+
+Kiểm tra hoàn chỉnh sẽ giúp loại bỏ các cuộc đua dữ liệu tiềm năng trong chương trình của bạn.
+
+Để đạt được mục tiêu của Swift là loại bỏ các cuộc đua dữ liệu, cuối cùng chúng ta sẽ cần phải hoàn thành việc kiểm tra.
+
+Chúng tôi khuyến khích bạn làm việc từng bước hướng tới mục tiêu đó: áp dụng mô hình đồng thời của Swift để kiến trúc ứng dụng của bạn để đảm bảo an toàn cuộc đua dữ liệu, sau đó cho phép kiểm tra đồng thời chặt chẽ hơn dần dần để loại bỏ các loại lỗi khỏi mã của bạn.
+
+Và đừng lo lắng về việc đánh dấu hàng nhập khẩu của bạn bằng @preconcurrency để ngăn chặn các cảnh báo cho các loại đã nhập khẩu.
+
+Khi các mô-đun đó áp dụng kiểm tra đồng thời chặt chẽ hơn, trình biên dịch sẽ kiểm tra lại các giả định của bạn.
+
+Ở cuối con đường này, mã của bạn sẽ được hưởng lợi từ cả an toàn bộ nhớ và an toàn cuộc đua dữ liệu, giúp bạn tập trung vào việc xây dựng các ứng dụng tuyệt vời.
+
+Và cảm ơn bạn đã đi thuyền với tôi trên biển đồng thời.
+
+♪

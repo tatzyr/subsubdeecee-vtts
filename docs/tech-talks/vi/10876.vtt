@@ -1,0 +1,602 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.000
+Dave Roberts: Xin chào. Tôi là Dave Roberts từ nhóm Phần mềm GPU tại Apple.
+
+00:00:04.000 --> 00:00:10.000
+Tôi thực sự vui mừng được chia sẻ một số cập nhật cho GPU trong chip Apple A15 Bionic mới.
+
+00:00:10.000 --> 00:00:18.000
+Sau đó, Katelyn Hinson, đồng nghiệp của tôi trong nhóm Phần mềm GPU, sẽ cho bạn biết tất cả về các tính năng Metal mới của GPU.
+
+00:00:18.000 --> 00:00:25.000
+Cô ấy cũng sẽ chỉ cho bạn cách sử dụng các tính năng đó trong các ứng dụng Metal của bạn trong khi khám phá một số trường hợp sử dụng thú vị.
+
+00:00:25.000 --> 00:00:37.000
+A15 Bionic là một nền tảng mới mạnh mẽ cho các ứng dụng và trò chơi Metal của bạn, với các bản cập nhật cho CPU, GPU, Neural Engine và các công nghệ nâng cao trải nghiệm người dùng khác.
+
+00:00:37.000 --> 00:00:46.000
+GPU A15 được xây dựng dựa trên cùng một trình kết xuất hoãn dựa trên ô và kiến trúc bộ nhớ thống nhất như A14 Bionic.
+
+00:00:46.000 --> 00:00:54.000
+Mặc dù chúng tôi đã thực hiện nhiều cải tiến kiến trúc vi mô trong các lĩnh vực khác nhau, nhưng có một số thay đổi quan trọng về hiệu suất mà tôi nên nhấn mạnh.
+
+00:00:54.000 --> 00:01:04.000
+GPU của A15 có tối đa năm lõi đổ bóng và lõi thứ năm đó cung cấp mức tăng hiệu suất 25% ở cùng tần số lõi GPU.
+
+00:01:04.000 --> 00:01:12.000
+Các lõi đổ bóng hiện có gấp đôi các đơn vị toán học dấu phẩy động F32 có thể tăng hiệu suất GPU trên khối lượng công việc nặng về toán học.
+
+00:01:12.000 --> 00:01:18.000
+GPU của A15 cũng làm cho giao diện người dùng trở nên nhạy hơn và kéo dài tuổi thọ pin hơn nữa.
+
+00:01:18.000 --> 00:01:23.000
+Và bạn nhận được tất cả những cải tiến tuyệt vời này miễn phí mà không cần bất kỳ sửa đổi nào đối với mã của bạn.
+
+00:01:23.000 --> 00:01:25.000
+Nhưng đó không phải là tất cả!
+
+00:01:25.000 --> 00:01:31.000
+Chúng tôi đã mang đến một số tính năng hoàn toàn mới cho GPU A15 mà bạn có thể sử dụng để làm cho các ứng dụng Metal của mình trở nên tốt hơn.
+
+00:01:31.000 --> 00:01:38.000
+Và tất cả những khả năng mới này thuộc về một bộ tính năng Metal mới được gọi là AppleGPUFamily8.
+
+00:01:38.000 --> 00:01:50.000
+Trong phần còn lại của cuộc nói chuyện, Katelyn và tôi sẽ tập trung vào các tính năng mới này và giải thích chúng là gì, tại sao chúng hữu ích và đề cập đến những thay đổi đối với API kim loại mới và ngôn ngữ đổ bóng hỗ trợ chúng.
+
+00:01:50.000 --> 00:01:57.000
+Đầu tiên, các tính năng xử lý đồ họa mới của A15.
+
+00:01:57.000 --> 00:02:03.000
+Nén mất dữ liệu, sử dụng việc sử dụng bộ nhớ kết cấu ứng dụng của bạn với tác động tối thiểu đến chất lượng hình ảnh.
+
+00:02:03.000 --> 00:02:09.000
+Tính năng A15 mới này giúp bạn tiết kiệm băng thông bộ nhớ kết cấu giống như nén không mất dữ liệu.
+
+00:02:09.000 --> 00:02:15.000
+Tôi sẽ chỉ cho bạn cách sử dụng nén mất dữ liệu trong các ứng dụng Metal của bạn với một số chi tiết hơn trong giây lát.
+
+00:02:15.000 --> 00:02:27.000
+Sau đó, Katelyn sẽ chỉ cho bạn cách GPU A15 mở rộng hỗ trợ hiện có cho các kết cấu thưa thớt bằng cách bao gồm kết xuất đến cả độ sâu thưa thớt và kết cấu stprint.
+
+00:02:27.000 --> 00:02:32.000
+Katelyn cũng sẽ đề cập đến một tính năng tính toán cụ thể mới: xáo trộn và điền nhóm SIMD.
+
+00:02:32.000 --> 00:02:37.000
+A15 thêm các hướng dẫn mới này vào bộ hướng dẫn lõi GPU.
+
+00:02:37.000 --> 00:02:47.000
+Cô ấy sẽ giải thích tính năng này và chỉ cho bạn cách cải thiện hiệu suất ứng dụng của mình bằng cách giảm thời gian thực thi hạt nhân tính toán cho các trường hợp sử dụng có thể áp dụng như xử lý hình ảnh.
+
+00:02:47.000 --> 00:02:51.000
+Tôi sẽ bắt đầu bằng cách xem xét kỹ hơn về việc nén mất mát.
+
+00:02:51.000 --> 00:02:57.000
+Để hiểu rõ hơn về nén mất dữ liệu, đáng để xem lại nén không mất dữ liệu.
+
+00:02:57.000 --> 00:03:06.000
+A12 Bionic lần đầu tiên giới thiệu nén kết cấu không mất dữ liệu vào năm 2018 và A14 Bionic đã bổ sung thêm những cải tiến cho tính năng này vào năm 2020.
+
+00:03:06.000 --> 00:03:14.000
+Nén kết cấu không mất dữ liệu giúp tiết kiệm băng thông bộ nhớ, từ đó tiết kiệm năng lượng, vì vậy các ứng dụng của bạn có thể làm được nhiều hơn chỉ với một lần sạc pin.
+
+00:03:14.000 --> 00:03:19.000
+Nén không mất dữ liệu đảm bảo rằng nó luôn giữ được chi tiết kết cấu.
+
+00:03:19.000 --> 00:03:24.000
+Trên thực tế, các ứng dụng của bạn có thể đã tận dụng lợi thế của việc nén không mất dữ liệu trên A12 Bionic trở lên.
+
+00:03:24.000 --> 00:03:37.000
+Kiểm tra bài nói chuyện công nghệ, "Khám phá các cải tiến kim loại cho A14 Bionic" và bài viết "Tối ưu hóa dữ liệu kết cấu" trên developer.apple.com để biết thêm chi tiết về nén không mất dữ liệu.
+
+00:03:37.000 --> 00:03:43.000
+Lossy đưa việc nén kết cấu lên một tầm cao mới trên A15 Bionic.
+
+00:03:43.000 --> 00:03:51.000
+Ngoài việc tiết kiệm băng thông mà nén không mất dữ liệu mang lại cho bạn, nén mất dữ liệu chỉ sử dụng một nửa dung lượng bộ nhớ của kết cấu không nén.
+
+00:03:51.000 --> 00:03:55.000
+Nén mất dữ liệu duy trì chất lượng kết cấu ở bất cứ nơi nào có thể.
+
+00:03:55.000 --> 00:04:03.000
+Và trên hết, bạn có thể dễ dàng áp dụng điều này cho các mục tiêu kết xuất của mình trên A15 để tận dụng tối đa việc tiết kiệm bộ nhớ đó.
+
+00:04:03.000 --> 00:04:11.000
+Bạn có thể bật tính năng nén mất dữ liệu bằng cách chỉ cần đặt thuộc tính loại nén mới của bộ mô tả kết cấu thành mất dữ liệu.
+
+00:04:11.000 --> 00:04:13.000
+Vậy tại sao lại sử dụng nén mất dữ liệu?
+
+00:04:13.000 --> 00:04:20.000
+Chà, nén tiết kiệm băng thông bộ nhớ kết cấu đáng kể, cho dù bạn chọn sử dụng không mất dữ liệu hay mất dữ liệu.
+
+00:04:20.000 --> 00:04:26.000
+Đó là đơn vị nén tiết kiệm băng thông bằng cách nén dữ liệu kết cấu trước khi nó được ghi vào bộ nhớ.
+
+00:04:26.000 --> 00:04:31.000
+Khi bạn sử dụng nén không mất dữ liệu, GPU phải bảo toàn hoàn hảo chi tiết kết cấu.
+
+00:04:31.000 --> 00:04:39.000
+Vì vậy, Metal không thể đảm bảo bất kỳ lượng nén nào và phải phân bổ đủ bộ nhớ để bao phủ toàn bộ kích thước kết cấu không nén.
+
+00:04:39.000 --> 00:04:46.000
+Tuy nhiên, khi bạn sử dụng nén mất dữ liệu, kết cấu chỉ sử dụng một nửa dung lượng bộ nhớ không mất dữ liệu.
+
+00:04:46.000 --> 00:04:57.000
+Nếu GPU A15 không thể nén kết cấu không mất dữ liệu để phù hợp với dấu chân bộ nhớ nhỏ hơn 50% đó, nó sẽ làm giảm độ trung thực của các vùng của kết cấu để nó hoạt động.
+
+00:04:57.000 --> 00:05:04.000
+Lossy compression hỗ trợ hầu hết các định dạng pixel và loại kết cấu, và bạn có thể sử dụng nó trên các mục tiêu kết xuất của mình.
+
+00:05:04.000 --> 00:05:10.000
+Trong nhiều trường hợp, bạn có thể bật nó trên kết cấu mà không cần bất kỳ sửa đổi nào khác đối với ứng dụng của bạn.
+
+00:05:10.000 --> 00:05:16.000
+Tôi khuyên bạn nên cho phép nén mất dữ liệu ở bất cứ nơi nào bạn chấp nhận được sự đánh đổi chất lượng.
+
+00:05:16.000 --> 00:05:23.000
+Nơi dễ dàng nhất để kích hoạt nó là mục tiêu kết xuất cuối cùng của bạn, nơi bạn ít có khả năng nhận thấy sự mất chất lượng nhất.
+
+00:05:23.000 --> 00:05:30.000
+Cân nhắc sử dụng nén mất dữ liệu cho các mục tiêu kết xuất trung gian và sử dụng lưu bộ nhớ đó cho những thứ khác, chẳng hạn như tăng độ phân giải kết cấu.
+
+00:05:30.000 --> 00:05:38.000
+Và hãy chắc chắn xem lại thay đổi xử lý hậu kỳ của bạn để tìm các ứng cử viên mục tiêu kết xuất có thể được hưởng lợi từ việc nén mất dữ liệu.
+
+00:05:38.000 --> 00:05:42.000
+Đây là một số trường hợp sử dụng chi tiết.
+
+00:05:42.000 --> 00:05:49.000
+Hãy xem sự khác biệt về hình ảnh nếu tôi cho phép nén mất dữ liệu chỉ cho mục tiêu kết xuất cuối cùng.
+
+00:05:49.000 --> 00:05:56.000
+Hình ảnh phân chia này so sánh không mất dữ liệu ở bên trái với mất dữ liệu ở bên phải và sự khác biệt khá tinh tế.
+
+00:05:56.000 --> 00:06:01.000
+Anh ấy là một hình ảnh cho thấy sự khác biệt trên mỗi pixel giữa nén không mất dữ liệu và nén mất dữ liệu.
+
+00:06:01.000 --> 00:06:09.000
+Các điểm ảnh màu đen không đại diện cho sự khác biệt; màu xanh lam đến màu xanh lá cây đại diện cho sự khác biệt nhỏ; và màu đỏ đại diện cho những thay đổi lớn nhất.
+
+00:06:09.000 --> 00:06:16.000
+Các điểm ảnh màu đỏ và màu vàng trong hình ảnh này minh họa một vài vùng biệt lập có sự khác biệt lớn nhất trong kết xuất cuối cùng.
+
+00:06:16.000 --> 00:06:24.000
+Nếu tôi phóng to một trong những khu vực bằng xe tay ga, tôi sẽ khó nhìn thấy bất kỳ sự khác biệt nào giữa hình ảnh bên trái và bên phải.
+
+00:06:24.000 --> 00:06:29.000
+Các mục tiêu kết xuất trung gian cũng hoạt động tốt với nén mất dữ liệu.
+
+00:06:29.000 --> 00:06:36.000
+Đây là góc nhìn song song về sự phản chiếu của vũng nước so sánh độ nén không mất dữ liệu và mất dữ liệu.
+
+00:06:36.000 --> 00:06:44.000
+Nếu tôi chuyển sang biểu diễn chênh lệch trên mỗi pixel một lần nữa, phản xạ nén mất dữ liệu chỉ có sự khác biệt tối thiểu so với phiên bản không mất dữ liệu.
+
+00:06:44.000 --> 00:06:51.000
+Thêm vào đó, bạn có thể tăng độ phân giải của kết cấu để thêm chi tiết hơn với bộ nhớ bạn lưu lại khi nén mất dữ liệu.
+
+00:06:51.000 --> 00:07:01.000
+Ví dụ, đây là một phản chiếu có độ phân giải cao cho thấy nhiều chi tiết hơn phiên bản không mất dữ liệu, tất cả trong khi sử dụng cùng một lượng bộ nhớ.
+
+00:07:01.000 --> 00:07:07.000
+Phía bên phải của bản demo này sử dụng nén mất dữ liệu cho mọi kết cấu có thể hiển thị trong cảnh.
+
+00:07:07.000 --> 00:07:17.000
+Khi nó chuyển động, cảnh trông rất ổn định và rất khó để phát hiện sự khác biệt nếu bạn so sánh nó với phiên bản không mất dữ liệu ở bên trái.
+
+00:07:17.000 --> 00:07:22.000
+Metal giúp bạn dễ dàng sử dụng tính năng nén mất dữ liệu trong các ứng dụng của mình.
+
+00:07:22.000 --> 00:07:24.000
+Đây là cách.
+
+00:07:24.000 --> 00:07:32.000
+Bắt đầu bằng cách khởi tạo một bộ mô tả kết cấu như bình thường, sau đó đặt thuộc tính loại nén thành mất dữ liệu.
+
+00:07:32.000 --> 00:07:34.000
+Tiếp theo, đặt chế độ lưu trữ thành riêng tư.
+
+00:07:34.000 --> 00:07:36.000
+Cuối cùng, tạo ra kết cấu.
+
+00:07:36.000 --> 00:07:42.000
+Và ứng dụng của bạn bây giờ có thể tận dụng tối đa việc nén mất dữ liệu và tiết kiệm mà nó mang lại.
+
+00:07:42.000 --> 00:07:48.000
+Lưu ý rằng bạn có thể tạo kết cấu để nén mất dữ liệu cho hầu hết các cấu hình với một vài ngoại lệ.
+
+00:07:48.000 --> 00:07:55.000
+Ví dụ, bạn có thể sử dụng nén mất dữ liệu cho hầu hết các loại kết cấu phổ biến, bao gồm 2D, 3D, mảng và khối lập phương.
+
+00:07:55.000 --> 00:07:59.000
+Nhưng tính năng này không hỗ trợ một số loại ít phổ biến hơn.
+
+00:07:59.000 --> 00:08:07.000
+Tương tự, nén mất dữ liệu hỗ trợ hầu hết các định dạng pixel phổ biến, nhưng không hỗ trợ các định dạng có kênh màu được đóng gói.
+
+00:08:07.000 --> 00:08:16.000
+Nén mất dữ liệu hỗ trợ kết cấu dưới dạng mục tiêu kết xuất, trong các hoạt động âm vật và khi bạn truy cập chúng bằng các thao tác mẫu và đọc.
+
+00:08:16.000 --> 00:08:22.000
+Tuy nhiên, lưu ý rằng bạn không thể điền vào một kết cấu mất dữ liệu với các thao tác ghi đổ bóng.
+
+00:08:22.000 --> 00:08:25.000
+Nén mất dữ liệu chỉ hỗ trợ kết cấu trong bộ nhớ riêng tư.
+
+00:08:25.000 --> 00:08:30.000
+Bạn không thể sử dụng các nút lưu trữ được chia sẻ hoặc được quản lý.
+
+00:08:30.000 --> 00:08:37.000
+Và cuối cùng, các kết cấu mất dữ liệu hoạt động với các tính năng phổ biến khác như MSAA, sRGB và mipmapping.
+
+00:08:37.000 --> 00:08:45.000
+Kiểm tra các bảng thiết lập tính năng Metal trên developer.apple.com để biết thêm chi tiết về hỗ trợ nén mất dữ liệu.
+
+00:08:45.000 --> 00:08:54.000
+Vì vậy, tóm lại, nén mất dữ liệu tiết kiệm băng thông tương tự như nén không mất dữ liệu đồng thời tiết kiệm 50 phần trăm bộ nhớ kết cấu.
+
+00:08:54.000 --> 00:09:01.000
+Bạn có thể tiết kiệm một lượng bộ nhớ đáng kể tùy thuộc vào trường hợp sử dụng và số lượng bạn chọn sử dụng nén mất dữ liệu trong các ứng dụng của mình.
+
+00:09:01.000 --> 00:09:09.000
+Nén mất dữ liệu nhằm mục đích bảo tồn chi tiết kết cấu nhưng chỉ làm giảm nhẹ chất lượng cho các khu vực mà dữ liệu kết cấu nén không phù hợp.
+
+00:09:09.000 --> 00:09:22.000
+Và cuối cùng, nén mất dữ liệu hỗ trợ các loại kết cấu phổ biến, định dạng pixel phổ biến và tất cả các chế độ truy cập GPU khác ngoài ghi đổ bóng, giúp bạn dễ dàng sử dụng nén mất dữ liệu.
+
+00:09:22.000 --> 00:09:27.000
+Cảm ơn vì đã lắng nghe, và bây giờ tôi sẽ giao cho Katelyn.
+
+00:09:27.000 --> 00:09:28.000
+Katelyn Hinson: Cảm ơn, Dave.
+
+00:09:28.000 --> 00:09:33.000
+Tôi rất vui mừng được giới thiệu các phần mở rộng kết cấu thưa thớt mới trong A15 Bionic.
+
+00:09:33.000 --> 00:09:40.000
+Kết cấu thưa thớt là một cách tuyệt vời để tạo ra các kết cấu có độ phân giải cao trong khi quản lý ngân sách bộ nhớ của bạn trong Metal.
+
+00:09:40.000 --> 00:09:48.000
+A13 Bionic lần đầu tiên giới thiệu hỗ trợ kết cấu thưa thớt, cho phép bạn ánh xạ và bỏ ánh xạ các ô kết cấu trên dòng thời gian GPU.
+
+00:09:48.000 --> 00:09:56.000
+Để biết thêm chi tiết về cách sử dụng kết cấu thưa thớt trong ứng dụng của bạn, hãy tham khảo các cuộc nói chuyện từ mùa thu năm 2019 và 2020.
+
+00:09:56.000 --> 00:10:01.000
+A15 Bionic mở rộng hỗ trợ thưa thớt bằng cách bao gồm độ sâu và phần đính kèm stprint.
+
+00:10:01.000 --> 00:10:07.000
+Nguyên tắc chỉ đạo của một kết cấu thưa thớt là, "Đừng phân bổ những gì bạn sẽ không sử dụng."
+
+00:10:07.000 --> 00:10:12.000
+Ví dụ, ứng dụng này không cần ánh xạ các ô phía sau các yếu tố giao diện người dùng.
+
+00:10:12.000 --> 00:10:20.000
+Với chiều sâu thưa thớt và kết cấu stprint, ứng dụng này luôn có thể để những ô bị che khuất này không được ánh xạ.
+
+00:10:20.000 --> 00:10:24.000
+Bạn có thể tối ưu hóa bản đồ bóng tối với các tệp đính kèm độ sâu thưa thớt.
+
+00:10:24.000 --> 00:10:30.000
+Nếu bạn không quen thuộc với việc lập bản đồ bóng tối, hãy xem mẫu ánh sáng hoãn lại của Metal sử dụng kỹ thuật này.
+
+00:10:30.000 --> 00:10:37.000
+Một đường chuyền bóng hiển thị bản đồ bóng từ góc nhìn của ánh sáng và đường chuyền ánh sáng đọc lại nó.
+
+00:10:37.000 --> 00:10:41.000
+Các texels được lấy mẫu từ bản đồ bóng luôn nằm trong frustum dự kiến.
+
+00:10:41.000 --> 00:10:45.000
+Kịch bản này là một ứng cử viên hoàn hảo cho một kết cấu thưa thớt.
+
+00:10:45.000 --> 00:10:52.000
+Một phần lớn kết cấu bóng không cần phải được lập bản đồ, vì đường chuyền ánh sáng không lấy mẫu các ô này.
+
+00:10:52.000 --> 00:10:56.000
+Đây là một cảnh sử dụng ánh xạ bóng và bản đồ bóng được hiển thị của nó.
+
+00:10:56.000 --> 00:11:05.000
+Ứng dụng có thể khôi phục bộ nhớ trong các ô bên ngoài khung nhìn vì nó không cần ghi hoặc đọc lại từ các ô đó.
+
+00:11:05.000 --> 00:11:12.000
+Ánh xạ bóng đổ là một kỹ thuật tiên tiến hơn cho bóng tối sử dụng nhiều bản đồ bóng riêng lẻ để che cảnh hiệu quả hơn.
+
+00:11:12.000 --> 00:11:20.000
+Nó phân bổ bản đồ bóng có độ phân giải cao hơn gần máy ảnh và bản đồ độ phân giải thấp hơn ở xa máy ảnh.
+
+00:11:20.000 --> 00:11:24.000
+Ví dụ, cảnh này sử dụng ba bản đồ bóng chồng lên nhau.
+
+00:11:24.000 --> 00:11:32.000
+Mỗi bản đồ bóng có cùng độ phân giải kết cấu và được ánh xạ đến các khu vực ngày càng lớn hơn càng xa máy ảnh.
+
+00:11:32.000 --> 00:11:38.000
+Các khu vực được đánh dấu màu xanh lá cây trong bản đồ bóng tối đại diện cho các texels mà ánh sáng truyền các mẫu.
+
+00:11:38.000 --> 00:11:48.000
+Ánh sáng truyền các mẫu không đồng đều từ các ô này - được biểu thị dưới dạng bản đồ nhiệt - với các ô màu xanh lam được lấy mẫu và lấy mẫu quá mức màu đỏ.
+
+00:11:48.000 --> 00:11:57.000
+Bạn có thể sử dụng bản đồ bóng lát gạch thưa thớt để thay thế các kết cấu này bằng một bề mặt duy nhất có độ phân giải có thể điều chỉnh dựa trên tốc độ lấy mẫu.
+
+00:11:57.000 --> 00:12:03.000
+Với bản đồ bóng lát gạch thưa thớt - hoặc STSM - bạn tạo ra một bề mặt có độ sâu thưa thớt duy nhất.
+
+00:12:03.000 --> 00:12:09.000
+Thay vì sử dụng kết cấu có độ phân giải cố định, bề mặt đã ánh xạ các ô trên chuỗi mipmap thưa thớt.
+
+00:12:09.000 --> 00:12:14.000
+Kỹ thuật này chỉ lập bản đồ các ô cần thiết để phù hợp với tốc độ lấy mẫu mong muốn.
+
+00:12:14.000 --> 00:12:21.000
+Đây là hình minh họa về độ phân giải vật lý cho mỗi ô ở mức mip tương đối của nó.
+
+00:12:21.000 --> 00:12:29.000
+Bạn có thể tự do và hiệu quả điều chỉnh độ phân giải của bản đồ bóng của mình trên một cảnh bằng cách ánh xạ các ô trên các mips khác nhau.
+
+00:12:29.000 --> 00:12:32.000
+Đây là các bước chính của kỹ thuật STSM.
+
+00:12:32.000 --> 00:12:37.000
+Đầu tiên, tạo bản đồ mật độ dựa trên tốc độ lấy mẫu.
+
+00:12:37.000 --> 00:12:42.000
+Sau đó xây dựng các ô bề mặt và bản đồ theo bản đồ mật độ.
+
+00:12:42.000 --> 00:12:46.000
+Và sau đó kết xuất và lấy mẫu từ bề mặt thích ứng.
+
+00:12:46.000 --> 00:12:53.000
+Để tạo bản đồ mật độ, đường chuyền hình học điền vào bộ đệm bản đồ mật độ cho các đường chuyền khác.
+
+00:12:53.000 --> 00:12:57.000
+Bước đầu tiên là lấy tỷ lệ lấy mẫu trên bản đồ bóng tối.
+
+00:12:57.000 --> 00:13:04.000
+Mật độ mẫu dự kiến được tính bằng cách theo dõi các đạo hàm không gian bóng của hình học được hiển thị.
+
+00:13:04.000 --> 00:13:13.000
+Bộ đổ bóng mảnh sử dụng nguyên tử để lưu trữ các dẫn xuất trong lưới 2D, thu thập tốc độ lấy mẫu trên không gian shadowUV.
+
+00:13:13.000 --> 00:13:21.000
+Khi bạn đã có bản đồ mật độ, hãy sử dụng nó để bố trí các ô cho kết cấu độ sâu thưa thớt của bạn và tạo bộ đệm mục lục.
+
+00:13:21.000 --> 00:13:25.000
+Bộ đệm mục lục này sẽ được sử dụng bởi thẻ chiếu sáng của bạn.
+
+00:13:25.000 --> 00:13:35.000
+Đầu tiên, lập bản đồ các ô của kết cấu độ sâu bằng cách phân chia bề mặt lặp đi lặp lại và lập lịch ánh xạ của từng cấp độ mip, bắt đầu với mip dưới cùng.
+
+00:13:35.000 --> 00:13:41.000
+Để tìm ra ô nào để lập bản đồ, hãy bắt đầu bằng cách kiểm tra tốc độ lấy mẫu của mip hiện tại từ bản đồ mật độ.
+
+00:13:41.000 --> 00:13:49.000
+Trong ví dụ này, bản đồ mật độ cho thấy mip hiện tại không đủ, nhưng mức mip tiếp theo là phù hợp.
+
+00:13:49.000 --> 00:13:55.000
+Trong trường hợp này, bạn quảng bá toàn bộ ô bằng cách ánh xạ mip tiếp theo và hủy ánh xạ mip hiện tại.
+
+00:13:55.000 --> 00:13:58.000
+Đây là một kịch bản khác, phức tạp hơn.
+
+00:13:58.000 --> 00:14:03.000
+Bản đồ mật độ cho thấy mip hiện tại đạt yêu cầu cho ít nhất một góc phần tư.
+
+00:14:03.000 --> 00:14:12.000
+Đối với mip tiếp theo, tốc độ mẫu và bản đồ mật độ đáp ứng mục tiêu cho hai góc phần tư, trong khi hai góc còn lại nằm dưới tốc độ mục tiêu.
+
+00:14:12.000 --> 00:14:18.000
+Trong trường hợp này, ánh xạ ô trong mip hiện tại và ánh xạ một nửa ô trong ô tiếp theo.
+
+00:14:18.000 --> 00:14:28.000
+Tiếp theo, một trình đổ bóng tính toán viết một bảng 2D dịch giữa các mức UV và mip, được lưu trữ trong mục lục hoặc bộ đệm TOC của chúng tôi.
+
+00:14:28.000 --> 00:14:37.000
+Trước khi lấy mẫu texel từ STSM, bộ đệm TOC được đọc bằng cách truyền ánh sáng bằng cách lập chỉ mục bảng để lấy mip.
+
+00:14:37.000 --> 00:14:43.000
+Mip sau đó được sử dụng như một tham số LOD rõ ràng khi bạn lấy mẫu bản đồ bóng.
+
+00:14:43.000 --> 00:14:46.000
+Bước tiếp theo là hiển thị bản đồ bóng thưa thớt.
+
+00:14:46.000 --> 00:14:55.000
+Đầu tiên, loại bỏ bóng đổ bằng cách sử dụng bộ đệm TOC, sau đó mã hóa các lệnh vẽ gián tiếp để hiển thị thành kết cấu độ sâu thưa thớt.
+
+00:14:55.000 --> 00:15:00.000
+Kết xuất bề mặt bằng cách điền từng bản đồ mip riêng lẻ bằng bộ đệm lệnh gián tiếp.
+
+00:15:00.000 --> 00:15:11.000
+ICB hoàn toàn phù hợp với nhiệm vụ này vì các đường chuyền tính toán có thể song song loại bỏ và sắp xếp từng lưới hình học bóng đối với các khu vực cư trú.
+
+00:15:11.000 --> 00:15:19.000
+Bộ đổ bóng tính toán mã hóa các lệnh vẽ vào các ICB riêng lẻ bằng cách kiểm tra các mắt lưới dựa trên khối lượng giới hạn của các ô.
+
+00:15:19.000 --> 00:15:34.000
+Đối với các đối tượng lớn trải dài trên bản đồ bóng, trình đổ bóng kiểm tra đối tượng với các ô có liên quan của mỗi mip; và nó mã hóa lệnh vẽ cho ICB của mip nếu có ít nhất một ô chồng lên nhau.
+
+00:15:34.000 --> 00:15:42.000
+Nếu một mip không có bất kỳ ô nào chồng chéo lên nhau, đừng phát ra lệnh vẽ cho đối tượng đến ICB của mip đó.
+
+00:15:42.000 --> 00:15:52.000
+Tập hợp các lệnh vẽ được tối ưu hóa cho mỗi đối tượng được mã hóa bởi thông qua tính toán tiêu hủy bóng bằng cách chạy tất cả các bài kiểm tra giao điểm trong các luồng tính toán song song.
+
+00:15:52.000 --> 00:15:59.000
+Vì lưới màu đỏ gần máy ảnh nhất, nó có tác động lớn nhất ở 11 ô trên bản đồ bóng của chúng tôi.
+
+00:15:59.000 --> 00:16:06.000
+So sánh điều đó với lưới màu cam, lưới xa nhất so với máy ảnh, có tác động nhỏ nhất ở ba ô.
+
+00:16:06.000 --> 00:16:13.000
+Khi lệnh vẽ gián tiếp hoàn tất, STSM đã sẵn sàng để được lấy mẫu trong đường chuyền chiếu sáng.
+
+00:16:13.000 --> 00:16:19.000
+Bảng này so sánh STSM với ánh xạ bóng và ánh xạ bóng xếp tầng.
+
+00:16:19.000 --> 00:16:27.000
+Tốc độ mẫu STSM và chất lượng hiệu quả tương đương với bản đồ bóng đơn nhưng sử dụng ít bộ nhớ hơn nhiều.
+
+00:16:27.000 --> 00:16:33.000
+Trên thực tế, nó sử dụng ít hơn một phần trăm dấu chân bộ nhớ cho cùng một độ phân giải.
+
+00:16:33.000 --> 00:16:42.000
+Tôi hy vọng việc lặn sâu này cung cấp cho bạn một số ý tưởng về cách tạo bóng hiệu quả, chất lượng cao trong các ứng dụng Kim loại của bạn với bản đồ bóng lát gạch thưa thớt.
+
+00:16:42.000 --> 00:16:50.000
+Cuối cùng, tôi rất vui mừng được giới thiệu những bổ sung mới cho tính toán Kim loại trong A15: SIMD xáo trộn và lấp đầy.
+
+00:16:50.000 --> 00:16:57.000
+Trong xử lý hình ảnh hiện đại, hạt nhân tích chập được áp dụng cho các bộ lọc như phát hiện cạnh, làm mờ và làm sắc nét.
+
+00:16:57.000 --> 00:17:02.000
+Đây là một tích chập được áp dụng cho một hình ảnh từ bản demo kết xuất hiện đại của chúng tôi.
+
+00:17:02.000 --> 00:17:11.000
+Khối lượng công việc như thế này thường bị giới hạn bằng cách lấy mẫu kết cấu hoặc đọc từ bộ nhớ nhóm luồng, khiến các đơn vị toán học của GPU không được sử dụng đúng mức.
+
+00:17:11.000 --> 00:17:19.000
+Apple silicon cung cấp một bộ hướng dẫn SIMD phong phú có thể được sử dụng trong bộ đổ bóng tính toán Metal để giúp tối ưu hóa khối lượng công việc này.
+
+00:17:19.000 --> 00:17:28.000
+Khi các luồng của một nhóm SIMD chạy đồng thời trong bước khóa, các hàm nhóm SIMD khai thác việc thực thi bước khóa này để chia sẻ dữ liệu giữa các luồng của nó.
+
+00:17:28.000 --> 00:17:37.000
+Để biết thêm thông tin về các chức năng SIMD hiện có, vui lòng xem các cuộc nói chuyện về A13 Bionic và A14 Bionic, nơi chúng được giới thiệu.
+
+00:17:37.000 --> 00:17:41.000
+Bây giờ hãy thảo luận về các hướng dẫn SIMD mới có sẵn.
+
+00:17:41.000 --> 00:17:47.000
+Điểm mới của A15 Bionic là hỗ trợ cho SIMD và xáo trộn và lấp đầy quad.
+
+00:17:47.000 --> 00:17:55.000
+Những hướng dẫn này được thiết kế để cải thiện hoạt động hình ảnh cửa sổ trượt, giống như tích chập phát hiện cạnh được hiển thị trước đó.
+
+00:17:55.000 --> 00:18:03.000
+Các chức năng này tối ưu hóa khối lượng công việc tính toán bằng cách chia sẻ dữ liệu trên các luồng lân cận trong một nhóm SIMD nhất định mà không cần sử dụng bộ nhớ.
+
+00:18:03.000 --> 00:18:09.000
+Đầu tiên chúng ta hãy xem xét hành vi xáo trộn quad, lần đầu tiên được hỗ trợ trong A13.
+
+00:18:09.000 --> 00:18:19.000
+Bộ đệm dữ liệu có nội dung A, B, C và D, được tải vào thanh ghi của các luồng của một quad: số không, một, hai và ba.
+
+00:18:19.000 --> 00:18:29.000
+Khi áp dụng xáo trộn xuống trên một dịch chuyển của một, dữ liệu đăng ký trong luồng 0, một và hai lấy dữ liệu từ các luồng một, hai và ba.
+
+00:18:29.000 --> 00:18:37.000
+ID làn đường bốn được tính toán không bao quanh, vì vậy luồng ba trong kết quả có giá trị không dịch chuyển D.
+
+00:18:37.000 --> 00:18:45.000
+Thay vào đó, nếu hướng dẫn xáo trộn và điền quad được sử dụng, một bộ đệm điền được cung cấp để cập nhật luồng ba trong kết quả.
+
+00:18:45.000 --> 00:18:51.000
+Bây giờ dữ liệu điền của luồng 0 được xáo trộn thành dữ liệu đầu ra trong luồng ba.
+
+00:18:51.000 --> 00:19:05.000
+Tương tự, đối với một xáo trộn bốn lần và lấp đầy với sự dịch chuyển của hai, chúng ta thấy A và B được xáo trộn thành các luồng hai và ba, và dữ liệu từ bộ đệm lấp đầy được xáo trộn vào các làn đường thấp hơn của đầu ra.
+
+00:19:05.000 --> 00:19:09.000
+Trên Apple silicon, các nhóm SIMD bao gồm 32 luồng.
+
+00:19:09.000 --> 00:19:18.000
+Và hành vi xáo trộn và lấp đầy tương tự có thể được áp dụng trên làn đường SIMD của chúng tôi, nơi các làn đường delta phía dưới được lấp đầy với các làn trên của dữ liệu lấp đầy.
+
+00:19:18.000 --> 00:19:25.000
+SIMD mới và các hướng dẫn xáo trộn và điền quad cũng có một đối số modulo tùy chọn.
+
+00:19:25.000 --> 00:19:28.000
+Điều này cho phép chiều rộng vectơ do người dùng chỉ định.
+
+00:19:28.000 --> 00:19:33.000
+Đối với một mô-đun tám, nhóm SIMD được chia thành bốn vectơ một cách hiệu quả.
+
+00:19:33.000 --> 00:19:41.000
+Các giá trị bộ đệm dữ liệu đầu tiên được xáo trộn hai chỉ số và dữ liệu điền được xáo trộn thành mỗi bộ tám luồng.
+
+00:19:41.000 --> 00:19:53.000
+Hãy sử dụng các hướng dẫn mới này trong một ví dụ trong đó hạt nhân được sử dụng để phát hiện cạnh của hình ảnh kết xuất hiện đại của chúng tôi có thể được tối ưu hóa bằng cách sử dụng SIMD xáo trộn và điền.
+
+00:19:53.000 --> 00:20:00.000
+Để tạo ra kết quả cuối cùng, một hạt nhân tích chập 5 x 5 được áp dụng cho hình ảnh đầu vào.
+
+00:20:00.000 --> 00:20:09.000
+Hình ảnh đầu ra được chia thành một tập hợp các nhóm SIMD, trong đó mỗi nhóm SIMD là một đoạn 4 x 8, mỗi luồng ghi vào một đầu ra duy nhất.
+
+00:20:09.000 --> 00:20:13.000
+Hãy tập trung vào việc tạo ra đầu ra cho một nhóm SIMD duy nhất.
+
+00:20:13.000 --> 00:20:19.000
+Đối với tích chập 5 x 5, mỗi luồng phải đọc 5 x 5 pixel từ đầu vào.
+
+00:20:19.000 --> 00:20:25.000
+Đối với mỗi nhóm SIMD 4 x 8, một vùng 8 x 12 phải được lấy mẫu trong bộ đổ bóng tính toán.
+
+00:20:25.000 --> 00:20:31.000
+Việc thực hiện ngây thơ của tích chập này sẽ yêu cầu 25 mẫu cho mỗi luồng đầu ra.
+
+00:20:31.000 --> 00:20:35.000
+Điều này dẫn đến sự chồng chéo lớn trong nhóm SIMD của chúng tôi.
+
+00:20:35.000 --> 00:20:45.000
+Điều này có thể được tối ưu hóa bằng cách xáo trộn và hướng dẫn điền, loại bỏ các mẫu trùng lặp trong nhóm SIMD và chia sẻ dữ liệu thông qua xáo trộn đăng ký.
+
+00:20:45.000 --> 00:20:49.000
+Hãy xem tại sao chúng ta cần đọc từ những địa điểm này.
+
+00:20:49.000 --> 00:21:03.000
+Đầu tiên A được tải, là một cửa sổ 4 x 8 trong đó mỗi luồng trong nhóm SIMD lấy mẫu một pixel duy nhất; sau đó B cho cửa sổ trên cùng bên phải, C cho phía dưới bên trái và cuối cùng là D cho phía dưới bên phải.
+
+00:21:03.000 --> 00:21:10.000
+Hình chữ nhật phác thảo màu đỏ cho biết vùng đích của nhóm SIMD của chúng tôi cho hình ảnh đầu ra.
+
+00:21:10.000 --> 00:21:19.000
+Thông qua bốn mẫu trên mỗi luồng, vùng đầu vào 8 x 12 đã được tải trên nhóm SIMD của chúng tôi mà không có bất kỳ mẫu chồng chéo nào.
+
+00:21:19.000 --> 00:21:26.000
+Tập trung lại vào vùng 5 x 5 cho luồng 0, các mẫu này có thể được biểu diễn dưới dạng vùng lân cận 5 x 5.
+
+00:21:26.000 --> 00:21:36.000
+Quad xáo trộn và điền có thể được sử dụng để truy cập hàng đầu tiên của hàng xóm, đầu tiên là xáo trộn dữ liệu của A và điền dữ liệu của B.
+
+00:21:36.000 --> 00:21:42.000
+Sau đó, 32 vectơ rộng từ hàng trước được xáo trộn xuống cho hàng tiếp theo.
+
+00:21:42.000 --> 00:21:51.000
+Khi dữ liệu được xáo trộn xuống một hàng đầy đủ, một vectơ điền là cần thiết để xáo trộn các mẫu từ C và D ở làn trên của vectơ rộng 32.
+
+00:21:51.000 --> 00:22:00.000
+Sử dụng cách tiếp cận tương tự, SIMD và quad shuffle down có thể được sử dụng để lấy các mẫu còn lại trong khu vực 5-by 5.
+
+00:22:00.000 --> 00:22:08.000
+Khi toàn bộ vùng lân cận đã được xáo trộn, các mẫu này được sử dụng làm đầu vào cho thuật toán phát hiện cạnh.
+
+00:22:08.000 --> 00:22:24.000
+Trong khi việc triển khai ngây thơ lấy mẫu toàn bộ vùng lân cận cho mỗi luồng, với các hướng dẫn xáo trộn và điền SIMD và quads mới, số lượng mẫu cho mỗi nhóm SIMD giảm 84 phần trăm, loại bỏ các mẫu chồng chéo trên các luồng lân cận.
+
+00:22:24.000 --> 00:22:36.000
+Sử dụng các hoạt động SIMD mới, nhiều thuật toán xử lý hình ảnh và học máy phổ biến có thể áp dụng cùng một cách tiếp cận để tối ưu hóa dữ liệu được chia sẻ giữa các nhóm SIMD.
+
+00:22:36.000 --> 00:22:39.000
+Và đó là nó để xáo trộn và lấp đầy SIMD.
+
+00:22:39.000 --> 00:22:42.000
+Hãy tóm tắt lại những gì chúng ta đã học được.
+
+00:22:42.000 --> 00:22:52.000
+Nén mất dữ liệu là một tính năng dễ bật giúp tiết kiệm dung lượng bộ nhớ và băng thông trong khi vẫn duy trì chất lượng cho kết cấu của bạn.
+
+00:22:52.000 --> 00:22:58.000
+Độ sâu thưa thớt và kết cấu stprint giúp bạn tạo ra các bản đồ bóng hiệu quả, chất lượng cao.
+
+00:22:58.000 --> 00:23:10.000
+Hướng dẫn tính toán mới SIMD xáo trộn và điền giảm sự chồng chéo và cải thiện hoạt động hình ảnh cửa sổ trượt cho các ứng dụng học máy và xử lý hình ảnh.
+
+00:23:10.000 --> 00:23:22.000
+Và cuối cùng, tất cả các ứng dụng Metal đều được tăng thêm về hiệu suất, khả năng phản hồi và tiết kiệm năng lượng từ những cải tiến kiến trúc tổng thể của A15 Bionic GPU.
+
+00:23:22.000 --> 23:59:59.000
+Cảm ơn bạn đã xem.
+

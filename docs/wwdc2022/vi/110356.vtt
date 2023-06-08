@@ -1,0 +1,680 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+♪ nhạc cụ hip hop ♪
+
+00:00:03.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:13.000
+Xin chào! Tên tôi là Konrad và tôi là một kỹ sư trong nhóm Swift.
+
+00:00:13.000 --> 00:00:15.000
+Chào mừng đến với "Gặp gỡ các diễn viên được phân phối trong Swift."
+
+00:00:15.000 --> 00:00:21.000
+Trong phiên này, chúng tôi sẽ tìm hiểu cách bạn có thể đưa các ứng dụng dựa trên Swift đồng thời của mình vượt ra ngoài một quy trình duy nhất.
+
+00:00:21.000 --> 00:00:26.000
+Các diễn viên Swift được thiết kế để bảo vệ bạn khỏi các cuộc đua dữ liệu cấp thấp trong cùng một quy trình.
+
+00:00:26.000 --> 00:00:30.000
+Họ làm điều này bằng cách biên soạn thời gian kiểm tra cách ly diễn viên được thực thi.
+
+00:00:30.000 --> 00:00:39.000
+Các tác nhân phân tán tinh chỉnh cùng một mô hình diễn viên khái niệm và mở rộng nó đến nhiều quy trình, chẳng hạn như nhiều thiết bị hoặc máy chủ trong một cụm.
+
+00:00:39.000 --> 00:00:49.000
+Vì vậy, trong trường hợp bạn chưa quen thuộc với các diễn viên Swift, chúng tôi khuyên bạn trước tiên nên xem phiên "Bảo vệ trạng thái có thể thay đổi với các diễn viên Swift" từ WWDC 2021.
+
+00:00:49.000 --> 00:00:56.000
+Ứng dụng chúng tôi sẽ làm việc trong phiên này là một trò chơi kiểu tic-tac-toe mà tôi đã phát triển gần đây: Tic Tac Fish!
+
+00:00:56.000 --> 00:01:05.000
+Ý tưởng thú vị ở đây là bạn có thể chọn một đội mà bạn đang chơi, sau đó tương ứng với các biểu tượng cảm xúc sẽ được sử dụng để đánh dấu các bước di chuyển của bạn khi bạn chơi trò chơi.
+
+00:01:05.000 --> 00:01:12.000
+Sau đó, khi bạn đánh dấu các bước di chuyển của mình trên sân, biểu tượng cảm xúc từ đội của bạn sẽ được đặt trên sân cho đến khi một trong những người chơi thắng.
+
+00:01:12.000 --> 00:01:23.000
+Ngay bây giờ, tôi chỉ triển khai chế độ ngoại tuyến, nơi tôi có thể chơi với đối thủ bot, nhưng tôi muốn giới thiệu một vài chế độ nhiều người chơi để đưa ứng dụng của mình lên một tầm cao mới.
+
+00:01:23.000 --> 00:01:28.000
+Tôi đã sử dụng các diễn viên trong ứng dụng này để quản lý đồng thời và người chơi mô hình tham gia vào trò chơi.
+
+00:01:28.000 --> 00:01:37.000
+Hãy xem cần những gì để di chuyển các diễn viên người chơi đó sang các quy trình khác nhau và cách các diễn viên phân tán có thể giúp tôi làm điều này.
+
+00:01:37.000 --> 00:01:46.000
+Trước khi chuyển sang mã, chúng ta hãy lùi lại một bước và hình dung lý do tại sao các diễn viên rất phù hợp để xây dựng các ứng dụng đồng thời và phân tán.
+
+00:01:46.000 --> 00:01:52.000
+Trong suốt các phiên WWDC, bạn có thể nghe thấy chúng tôi sử dụng thuật ngữ "biển đồng thời" khi nói về các diễn viên.
+
+00:01:52.000 --> 00:01:56.000
+Điều này là bởi vì đó là một mô hình tinh thần tuyệt vời để nghĩ về họ.
+
+00:01:56.000 --> 00:02:05.000
+Mỗi diễn viên là hòn đảo của riêng mình trong biển đồng thời, và thay vì truy cập trực tiếp vào các hòn đảo của nhau, họ trao đổi tin nhắn giữa họ.
+
+00:02:05.000 --> 00:02:12.000
+Trong Swift, việc gửi những tin nhắn đó qua các hòn đảo được triển khai dưới dạng các cuộc gọi phương thức không đồng bộ và không đồng bộ/chờ đợi.
+
+00:02:12.000 --> 00:02:23.000
+Điều này, kết hợp với cách ly trạng thái diễn viên, cho phép trình biên dịch đảm bảo rằng một khi chương trình dựa trên diễn viên biên dịch, nó sẽ không có các cuộc đua dữ liệu cấp thấp.
+
+00:02:23.000 --> 00:02:30.000
+Bây giờ chúng ta hãy lấy cùng một mô hình khái niệm này và áp dụng nó vào trò chơi của chúng ta, được mô phỏng lại như một hệ thống phân tán.
+
+00:02:30.000 --> 00:02:39.000
+Chúng ta có thể nghĩ về mỗi thiết bị, nút trong một cụm hoặc quy trình của một hệ điều hành như thể đó là một biển đồng thời độc lập, ở đây được đánh dấu là các hình chữ nhật tối nhỏ hơn.
+
+00:02:39.000 --> 00:02:46.000
+Trong số đó, chúng tôi có thể đồng bộ hóa thông tin khá dễ dàng vì chúng vẫn chia sẻ cùng một không gian bộ nhớ.
+
+00:02:46.000 --> 00:02:57.000
+Và trong khi cùng một khái niệm về việc truyền tin nhắn hoạt động hoàn toàn tốt cho đồng thời cũng như phân phối, có một vài hạn chế phân phối cần được đưa ra để tất cả hoạt động.
+
+00:02:57.000 --> 00:03:00.000
+Đây là nơi các diễn viên phân tán xuất hiện trong bức tranh.
+
+00:03:00.000 --> 00:03:07.000
+Bằng cách sử dụng các tác nhân phân tán, chúng tôi có thể thiết lập một kênh giữa hai quy trình và gửi tin nhắn giữa chúng.
+
+00:03:07.000 --> 00:03:17.000
+Nói cách khác, nếu các tác nhân Swift là những hòn đảo trong biển đồng thời, các tác nhân phân tán cũng giống nhau trong biển rộng lớn của các hệ thống phân tán.
+
+00:03:17.000 --> 00:03:27.000
+Từ một mô hình lập trình, không có nhiều thay đổi thực sự - các diễn viên vẫn cô lập trạng thái của họ và vẫn chỉ có thể giao tiếp bằng cách sử dụng các tin nhắn không đồng bộ.
+
+00:03:27.000 --> 00:03:41.000
+Chúng tôi thậm chí có thể có nhiều tác nhân phân tán hơn trong cùng một quy trình và đối với tất cả các ý định và mục đích, chúng hữu ích như các tác nhân địa phương, với sự khác biệt là chúng cũng sẵn sàng tham gia vào các tương tác từ xa bất cứ khi nào cần thiết.
+
+00:03:41.000 --> 00:03:51.000
+Khả năng có khả năng ở xa mà không cần phải thay đổi cách chúng ta tương tác với diễn viên phân tán như vậy được gọi là "sự minh bạch về vị trí".
+
+00:03:51.000 --> 00:03:57.000
+Điều này có nghĩa là bất kể một diễn viên phân tán nằm ở đâu, chúng ta có thể tương tác với nó theo cùng một cách.
+
+00:03:57.000 --> 00:04:10.000
+Điều này không chỉ tuyệt vời để thử nghiệm, vì chúng tôi thực hiện cùng một logic trong các tác nhân cục bộ, mà còn cho phép chúng tôi di chuyển các tác nhân của mình một cách minh bạch đến bất cứ nơi nào họ nên được đặt mà không cần phải thay đổi cách triển khai của họ.
+
+00:04:10.000 --> 00:04:15.000
+Được rồi, tôi nghĩ chúng ta đã sẵn sàng xem xét một số mã và chuyển đổi diễn viên đầu tiên của chúng ta thành một diễn viên phân tán.
+
+00:04:15.000 --> 00:04:21.000
+Đầu tiên, chúng ta hãy xem nhanh giao diện người dùng trò chơi chung và cách nó tương tác với các diễn viên người chơi của tôi.
+
+00:04:21.000 --> 00:04:28.000
+Chế độ xem là một mã SwiftUI khá chuẩn và tôi có một vài yếu tố văn bản và nút đại diện cho lĩnh vực trò chơi.
+
+00:04:28.000 --> 00:04:36.000
+Khi người dùng nhấp vào GameCell, chúng tôi yêu cầu diễn viên người chơi tạo di chuyển và cập nhật các mô hình chế độ xem cung cấp năng lượng cho giao diện người dùng.
+
+00:04:36.000 --> 00:04:40.000
+Nhờ Swift đồng thời, tất cả các bản cập nhật đó đều an toàn với luồng và hoạt động tốt.
+
+00:04:40.000 --> 00:04:45.000
+Hiện tại, diễn viên đại diện cho đầu vào của người dùng được triển khai như một trình phát ngoại tuyến.
+
+00:04:45.000 --> 00:04:47.000
+Hãy cùng xem xét nó tiếp theo.
+
+00:04:47.000 --> 00:04:52.000
+Diễn viên này gói gọn một số trạng thái cho phép nó tạo ra các bước di chuyển trong trò chơi.
+
+00:04:52.000 --> 00:04:58.000
+Cụ thể, nó cần theo dõi xem nó đã thực hiện bao nhiêu nước đi và nó đang chơi cho đội nào.
+
+00:04:58.000 --> 00:05:05.000
+Bởi vì mỗi đội có một số biểu tượng cảm xúc để chọn cho mỗi lần di chuyển, hãy sử dụng số lần di chuyển được thực hiện để chọn ID ký tự biểu tượng cảm xúc.
+
+00:05:05.000 --> 00:05:09.000
+Tôi cũng cần cập nhật mô hình sau khi một động thái đã được tạo ra.
+
+00:05:09.000 --> 00:05:13.000
+Mô hình là một lớp cô lập MainActor, vì vậy các đột biến của nó là an toàn cho luồng.
+
+00:05:13.000 --> 00:05:17.000
+Tuy nhiên, tôi cần sử dụng "chờ đợi" khi tôi thực hiện cuộc gọi userMadeMove.
+
+00:05:17.000 --> 00:05:24.000
+Cuối cùng, người chơi ngoại tuyến cũng tuyên bố một phương thức sẽ được gọi bất cứ khi nào đối thủ thực hiện một động thái.
+
+00:05:24.000 --> 00:05:34.000
+Điều duy nhất chúng ta cần làm ở đây là cập nhật mô hình chế độ xem, điều này sẽ làm cho trường trò chơi hoạt động trở lại để người chơi có thể chọn nước đi của họ và chu kỳ tiếp tục cho đến khi trò chơi kết thúc.
+
+00:05:34.000 --> 00:05:37.000
+Trình phát bot của chúng tôi cũng được đại diện bằng cách sử dụng một diễn viên.
+
+00:05:37.000 --> 00:05:47.000
+Việc triển khai nó thực sự đơn giản hơn một chút so với người chơi ngoại tuyến vì nó không phải lo lắng về việc cập nhật mô hình chế độ xem; nó chỉ theo dõi GameState và tạo ra các bước di chuyển của trò chơi.
+
+00:05:47.000 --> 00:05:53.000
+Vì trình phát bot đơn giản hơn một chút, tôi nghĩ đó là một điều tốt để bắt đầu chuyển đổi của chúng tôi sang các diễn viên phân tán.
+
+00:05:53.000 --> 00:05:59.000
+Được rồi, tôi nghĩ chúng ta đã sẵn sàng xem xét một số mã và chuyển đổi diễn viên đầu tiên của chúng ta thành một diễn viên phân tán.
+
+00:05:59.000 --> 00:06:07.000
+Bước đầu tiên hướng tới trò chơi Tic Tac Fish được phân phối của chúng tôi sẽ là chuyển đổi loại BotPlayer thành một diễn viên phân tán, trong khi vẫn chỉ sử dụng nó cục bộ.
+
+00:06:07.000 --> 00:06:10.000
+Hãy mở Xcode và xem chúng ta có thể làm điều đó như thế nào.
+
+00:06:10.000 --> 00:06:17.000
+Để khai báo một diễn viên phân tán, tôi sẽ cần nhập mô-đun phân tán mới, mà chúng tôi đã giới thiệu trong Swift 5.7.
+
+00:06:17.000 --> 00:06:23.000
+Mô-đun này chứa tất cả các loại cần thiết mà tôi sẽ cần để khai báo và sử dụng các tác nhân phân tán.
+
+00:06:23.000 --> 00:06:28.000
+Bây giờ tôi có thể thêm từ khóa phân tán trước khai báo diễn viên BotPlayer, như thế này.
+
+00:06:28.000 --> 00:06:36.000
+Điều này sẽ khiến tác nhân tự động tuân thủ giao thức DistributedActor và cho phép một số kiểm tra thời gian biên dịch bổ sung.
+
+00:06:36.000 --> 00:06:39.000
+Hãy xem trình biên dịch sẽ yêu cầu chúng tôi sửa loại lỗi nào ngay bây giờ.
+
+00:06:39.000 --> 00:06:44.000
+Trình biên dịch cho chúng ta biết một cách hữu ích rằng BotPlayer không khai báo ActorSystem mà nó có thể được sử dụng cùng.
+
+00:06:44.000 --> 00:06:57.000
+Vì các diễn viên phân tán luôn thuộc về một số hệ thống diễn viên phân tán, xử lý tất cả các tuần tự hóa và kết nối mạng cần thiết để thực hiện các cuộc gọi từ xa; chúng ta cần khai báo loại hệ thống diễn viên mà diễn viên này dự định sử dụng.
+
+00:06:57.000 --> 00:07:10.000
+Vì, hiện tại, mục tiêu duy nhất của tôi là để trình phát bot vượt qua tất cả các kiểm tra cách ly phân tán, mà không thực sự chạy nó trên máy chủ từ xa, tôi có thể sử dụng Hệ thống LocalTestingDistributedActor đi kèm với mô-đun Phân tán.
+
+00:07:10.000 --> 00:07:22.000
+Tôi có thể nói với trình biên dịch về hệ thống diễn viên mà chúng tôi sẽ sử dụng bằng cách khai báo một typealias DefaultDistributedActorSystem trên toàn mô-đun hoặc một typealias ActorSystem trong phần thân của diễn viên cụ thể.
+
+00:07:22.000 --> 00:07:32.000
+Phần sau cụ thể hơn một chút, vì vậy hãy tiếp tục với điều đó.
+
+00:07:32.000 --> 00:07:41.000
+Lỗi tiếp theo là về thuộc tính "id", mà trước đây tôi đã triển khai thủ công để phù hợp với giao thức Nhận dạng mà cả hai diễn viên người chơi của tôi cần phải tuân thủ.
+
+00:07:41.000 --> 00:07:50.000
+Lỗi hiện nói rằng thuộc tính ID không thể được xác định rõ ràng vì nó xung đột với thuộc tính tổng hợp tác nhân phân tán.
+
+00:07:50.000 --> 00:07:53.000
+ID là một phần quan trọng của các diễn viên phân tán.
+
+00:07:53.000 --> 00:08:00.000
+Chúng được sử dụng để xác định duy nhất một diễn viên trong toàn bộ hệ thống diễn viên phân tán mà nó là một phần của nó.
+
+00:08:00.000 --> 00:08:06.000
+Chúng được chỉ định bởi hệ thống diễn viên phân tán khi diễn viên được khởi tạo và sau đó được quản lý bởi hệ thống đó.
+
+00:08:06.000 --> 00:08:12.000
+Như vậy, chúng tôi không thể khai báo hoặc gán thuộc tính ID theo cách thủ công - hệ thống diễn viên sẽ làm điều này cho chúng tôi.
+
+00:08:12.000 --> 00:08:18.000
+Nói cách khác, tôi có thể chỉ cần để nó cho hệ thống diễn viên và xóa thuộc tính ID được khai báo thủ công của mình.
+
+00:08:18.000 --> 00:08:23.000
+Lỗi cuối cùng mà chúng ta cần giải quyết ở đây là trình khởi tạo của diễn viên phân tán.
+
+00:08:23.000 --> 00:08:28.000
+Trình biên dịch nói rằng thuộc tính actorSystem chưa được khởi tạo trước khi sử dụng.
+
+00:08:28.000 --> 00:08:33.000
+Đây là một thuộc tính tổng hợp trình biên dịch khác là một phần của mọi diễn viên phân tán.
+
+00:08:33.000 --> 00:08:43.000
+Chúng ta không chỉ cần khai báo loại hệ thống diễn viên mà chúng ta muốn sử dụng mà còn cần khởi tạo thuộc tính Hệ thống diễn viên tổng hợp với một số hệ thống diễn viên cụ thể.
+
+00:08:43.000 --> 00:08:49.000
+Nói chung, điều đúng đắn cần làm ở đây là chấp nhận một hệ thống diễn viên trong trình khởi tạo và chuyển nó qua tài sản.
+
+00:08:49.000 --> 00:08:56.000
+Bằng cách này, tôi có thể vượt qua việc triển khai hệ thống diễn viên khác trong các bài kiểm tra của mình để tạo điều kiện thuận lợi cho việc kiểm tra đơn vị dễ dàng.
+
+00:08:56.000 --> 00:09:11.000
+Chúng tôi cũng sẽ phải vượt qua một phiên bản bất cứ khi nào chúng tôi tạo một trình phát bot mới, vì vậy hãy làm điều này ngay bây giờ.
+
+00:09:11.000 --> 00:09:14.000
+Tuyệt vời! Chúng tôi đã hoàn thành tất cả các lỗi bên khai báo.
+
+00:09:14.000 --> 00:09:18.000
+Nhưng vẫn còn một số lỗi trang web cuộc gọi mà chúng tôi cần giải quyết.
+
+00:09:18.000 --> 00:09:23.000
+Có vẻ như chỉ có các phương pháp phân tán mới có thể được gọi trên các tác nhân phân tán từ xa tiềm năng.
+
+00:09:23.000 --> 00:09:29.000
+Điều này tương tự như việc chỉ chú thích một số tác nhân trong hệ thống của bạn là tác nhân phân tán.
+
+00:09:29.000 --> 00:09:34.000
+Không phải mọi phương thức trên một diễn viên phân tán đều nhất thiết phải được thiết kế để được gọi từ xa.
+
+00:09:34.000 --> 00:09:40.000
+Họ có thể có các chức năng trợ giúp nhỏ hoặc các chức năng giả sử người gọi đã được xác thực.
+
+00:09:40.000 --> 00:09:47.000
+Đây là lý do tại sao Swift yêu cầu bạn rõ ràng về bề mặt API phân tán, bạn muốn tiếp xúc với những người gọi từ xa.
+
+00:09:47.000 --> 00:09:53.000
+Rất may, điều này cũng dễ dàng được khắc phục bằng cách thêm từ khóa phân tán vào các chức năng đó.
+
+00:09:53.000 --> 00:10:06.000
+Vì cả hai phương thức makeMove và opponentMoved đều được dự định gọi từ xa, hãy để tôi thêm từ khóa phân tán vào cả hai.
+
+00:10:06.000 --> 00:10:11.000
+Được rồi! Với điều đó, chỉ có một điều cuối cùng chúng ta cần quan tâm.
+
+00:10:11.000 --> 00:10:21.000
+Vì các cuộc gọi phương thức phân tán có thể vượt qua ranh giới mạng, chúng ta cần đảm bảo rằng tất cả các tham số và giá trị trả về của chúng phù hợp với yêu cầu tuần tự hóa của hệ thống diễn viên.
+
+00:10:21.000 --> 00:10:26.000
+Trong trường hợp của chúng tôi, hệ thống diễn viên đang sử dụng Codable, cơ chế tuần tự hóa gốc của Swift.
+
+00:10:26.000 --> 00:10:34.000
+Cụ thể, trình biên dịch cho chúng ta biết rằng, "Loại kết quả GameMove không phù hợp với yêu cầu tuần tự hóa Codable."
+
+00:10:34.000 --> 00:10:37.000
+Hãy để tôi xem nhanh loại GameMove.
+
+00:10:37.000 --> 00:10:44.000
+May mắn thay, có vẻ như đó là một loại dữ liệu nhỏ sạch sẽ mà tôi có thể dễ dàng tạo Codable bằng cách chỉ thêm sự phù hợp cần thiết.
+
+00:10:44.000 --> 00:10:49.000
+Trình biên dịch Swift sẽ tổng hợp việc triển khai Codable cần thiết cho tôi.
+
+00:10:49.000 --> 00:10:50.000
+Và với điều đó, chúng ta đã hoàn thành!
+
+00:10:50.000 --> 00:10:55.000
+Tôi có thể kiểm tra trò chơi chạy như mong đợi.
+
+00:10:55.000 --> 00:10:57.000
+Được rồi, một điểm cho cá đồng đội!
+
+00:10:57.000 --> 00:11:04.000
+Và mặc dù trình phát bot vẫn thực thi trên cùng một thiết bị cục bộ, chúng tôi đã mở đường cho bước tiếp theo thú vị.
+
+00:11:04.000 --> 00:11:10.000
+Trong bước này, chúng tôi sẽ thực sự gặt hái những lợi ích từ sức mạnh minh bạch vị trí mới đạt được của người chơi bot.
+
+00:11:10.000 --> 00:11:15.000
+Tôi đã chuẩn bị một hệ thống diễn viên mẫu dựa trên WebSocket mà chúng ta có thể sử dụng cho việc này.
+
+00:11:15.000 --> 00:11:24.000
+Bằng cách sử dụng hệ thống diễn viên này, chúng tôi sẽ có thể di chuyển trình phát bot của mình sang ứng dụng Swift phía máy chủ và giải quyết tham chiếu từ xa đến nó từ trò chơi di động của chúng tôi.
+
+00:11:24.000 --> 00:11:37.000
+Liên quan đến diễn viên, chúng ta chỉ cần thay đổi Hệ thống Diễn viên đã khai báo từ Hệ thống Diễn viên Phân tán Kiểm tra Địa phương sang Hệ thống Diễn viên WebSocket Mẫu mà tôi đã chuẩn bị cho ứng dụng mẫu.
+
+00:11:37.000 --> 00:11:40.000
+Phần còn lại của mã diễn viên vẫn giữ nguyên.
+
+00:11:40.000 --> 00:11:45.000
+Tiếp theo, hãy để chúng tôi giải quyết một tham chiếu trình phát bot từ xa, thay vì tạo một tham chiếu cục bộ.
+
+00:11:45.000 --> 00:11:52.000
+Điều đáng ghi nhớ là các thuật ngữ "địa phương" và "từ xa" là một vấn đề quan điểm khi nói đến các tác nhân phân tán.
+
+00:11:52.000 --> 00:11:59.000
+Đối với mỗi tham chiếu từ xa, có một số phiên bản cục bộ tương ứng trên một số nút khác trong hệ thống diễn viên phân tán.
+
+00:11:59.000 --> 00:12:06.000
+Việc tạo một phiên bản cục bộ của một diễn viên phân tán được thực hiện theo cách tương tự như bất kỳ đối tượng Swift nào khác: bằng cách gọi trình khởi tạo của nó.
+
+00:12:06.000 --> 00:12:12.000
+Tuy nhiên, việc có được một tham chiếu từ xa đến một diễn viên phân tán theo một mô hình hơi khác.
+
+00:12:12.000 --> 00:12:19.000
+Thay vì tạo ra một diễn viên, chúng tôi sẽ cố gắng giải quyết ID diễn viên bằng cách sử dụng một hệ thống diễn viên cụ thể.
+
+00:12:19.000 --> 00:12:31.000
+Phương pháp giải quyết tĩnh cho phép chúng tôi yêu cầu một hệ thống diễn viên cố gắng cung cấp cho chúng tôi một phiên bản diễn viên hiện có cho một diễn viên có ID đó hoặc trả về một tham chiếu từ xa cho một diễn viên được xác định bởi nó.
+
+00:12:31.000 --> 00:12:44.000
+Các hệ thống diễn viên không nên thực hiện tra cứu từ xa thực tế khi giải quyết các số nhận dạng vì như bạn có thể thấy, phương thức giải quyết không đồng bộ và do đó sẽ quay trở lại nhanh chóng và không thực hiện bất kỳ hoạt động kết nối mạng hoặc chặn nào khác.
+
+00:12:44.000 --> 00:12:53.000
+Nếu một danh tính có vẻ hợp lệ và dường như đang trỏ đến một vị trí từ xa hợp lệ, các hệ thống sẽ giả định rằng tác nhân đó tồn tại và trả về một tham chiếu từ xa đến nó.
+
+00:12:53.000 --> 00:13:01.000
+Hãy nhớ rằng tại thời điểm giải quyết ID, phiên bản thực tế trên hệ thống từ xa thậm chí có thể chưa tồn tại!
+
+00:13:01.000 --> 00:13:08.000
+Ví dụ, ở đây chúng tôi đang tạo một mã định danh ngẫu nhiên cho người chơi bot đối thủ nên được dành riêng để chơi trò chơi với chúng tôi.
+
+00:13:08.000 --> 00:13:16.000
+Bot này chưa tồn tại, nhưng nó sẽ được tạo trên hệ thống phía máy chủ khi nhận được tin nhắn đầu tiên được chỉ định cho ID này.
+
+00:13:16.000 --> 00:13:19.000
+Bây giờ chuyển sang ứng dụng Swift phía máy chủ.
+
+00:13:19.000 --> 00:13:24.000
+Nhờ hệ thống diễn viên WebSocket mẫu mà tôi đã chuẩn bị, việc triển khai sẽ thật dễ dàng.
+
+00:13:24.000 --> 00:13:32.000
+Đầu tiên, chúng tôi tạo ra hệ thống diễn viên WebSocket ở chế độ máy chủ, điều này làm cho nó liên kết và lắng nghe cổng thay vì kết nối với nó.
+
+00:13:32.000 --> 00:13:36.000
+Và chúng tôi yêu cầu ứng dụng đợi cho đến khi hệ thống bị chấm dứt.
+
+00:13:36.000 --> 00:13:46.000
+Tiếp theo, bằng cách nào đó chúng tôi sẽ cần xử lý mô hình tạo diễn viên theo yêu cầu khi chúng tôi nhận được tin nhắn được gửi đến các ID chưa được chỉ định bất kỳ trường hợp diễn viên nào.
+
+00:13:46.000 --> 00:13:59.000
+Nói chung, hệ thống diễn viên sẽ nhận được tin nhắn đến, cố gắng giải quyết ID người nhận của họ để xác định vị trí phiên bản diễn viên phân tán cục bộ và sau đó thực hiện cuộc gọi từ xa trên diễn viên được định vị.
+
+00:13:59.000 --> 00:14:11.000
+Tuy nhiên, như chúng ta vừa thảo luận, ID người chơi bot của chúng ta được tạo thành theo đúng nghĩa đen, vì vậy hệ thống không thể biết về chúng và thậm chí ít hơn nên tự tạo ra đúng loại diễn viên.
+
+00:14:11.000 --> 00:14:18.000
+Rất may, việc triển khai hệ thống diễn viên mẫu của chúng tôi có mô hình phù hợp được chuẩn bị cho chúng tôi: tạo diễn viên theo yêu cầu.
+
+00:14:18.000 --> 00:14:25.000
+Xin lưu ý ở đây rằng đây chỉ là một mẫu và không phải là thứ được tích hợp hoặc cung cấp bởi mô-đun diễn viên phân tán.
+
+00:14:25.000 --> 00:14:30.000
+Tuy nhiên, đây là một ví dụ tuyệt vời về việc triển khai hệ thống tác nhân linh hoạt và mạnh mẽ như thế nào.
+
+00:14:30.000 --> 00:14:36.000
+Một hệ thống có thể cung cấp các mẫu khác nhau và làm cho các nhiệm vụ phức tạp trở nên đơn giản để giải quyết.
+
+00:14:36.000 --> 00:14:42.000
+Sử dụng mẫu này, hệ thống diễn viên cố gắng giải quyết một diễn viên cục bộ cho tất cả các ID đến như bình thường.
+
+00:14:42.000 --> 00:14:47.000
+Tuy nhiên, khi nó không tìm thấy một diễn viên hiện có, nó sẽ cố gắng giải quyếtreateOnDemand.
+
+00:14:47.000 --> 00:14:58.000
+Vì chúng tôi đang kiểm soát cả mã máy khách của mình tạo nên ID và phần mã máy chủ, chúng tôi có thể giúp hệ thống diễn viên bằng cách tạo ra các tác nhân cần thiết theo yêu cầu.
+
+00:14:58.000 --> 00:15:15.000
+Vì các số nhận dạng bot mà chúng tôi đã tạo trên máy khách đang sử dụng một số sơ đồ đặt tên dễ nhận biết - như thêm thẻ vào ActorIdentity hoặc chỉ sử dụng một số tên dễ nhận biết - chúng tôi có thể phát hiện các ID đó và tạo đối thủ bot mới cho mọi tin nhắn chưa có hoạt động.
+
+00:15:15.000 --> 00:15:24.000
+Chúng tôi sẽ chỉ tạo một trình phát bot mới cho tin nhắn đầu tiên được chỉ định cho nó, vì các cuộc gọi từ xa tiếp theo sẽ chỉ đơn giản là giải quyết phiên bản hiện có.
+
+00:15:24.000 --> 00:15:25.000
+Và đó là tất cả những gì cần làm!
+
+00:15:25.000 --> 00:15:30.000
+Việc triển khai máy chủ của chúng tôi đã hoàn tất và bây giờ chúng tôi có thể chơi một trò chơi với trình phát bot từ xa của mình.
+
+00:15:30.000 --> 00:15:39.000
+Chúng ta có thể chạy máy chủ từ dòng lệnh bằng Swift run, hoặc sử dụng Xcode và chọn sơ đồ máy chủ và nhấp vào Run như bình thường.
+
+00:15:39.000 --> 00:15:46.000
+Khi chúng tôi hoàn thành bước đầu tiên, chúng tôi yêu cầu trình phát bot làm tương tự bằng cách gọi makeMove trên tham chiếu trình phát từ xa mà chúng tôi đã tạo.
+
+00:15:46.000 --> 00:15:49.000
+Điều này kích hoạt một giải pháp trong hệ thống phía máy chủ.
+
+00:15:49.000 --> 00:15:55.000
+Nó không thể tìm thấy một bot hiện có cho ID này, vì vậy nó cố gắng và thành công, tạo ra một bot theo yêu cầu.
+
+00:15:55.000 --> 00:16:01.000
+Bot nhận được một cuộc gọi makeMove và trả lời với GameMove mà nó đã tạo.
+
+00:16:01.000 --> 00:16:03.000
+Điều đó đã khá tuyệt rồi!
+
+00:16:03.000 --> 00:16:11.000
+Mặc dù chúng tôi đã phải thực hiện một số công việc trả trước để chuyển đổi trình phát bot của mình thành một diễn viên phân tán, nhưng thực tế việc chuyển nó sang hệ thống từ xa khá đơn giản.
+
+00:16:11.000 --> 00:16:16.000
+Và chúng tôi không phải đối phó với bất kỳ chi tiết triển khai mạng hoặc tuần tự hóa nào cả!
+
+00:16:16.000 --> 00:16:19.000
+Tất cả công việc nặng nhọc đã được thực hiện cho chúng tôi bởi hệ thống diễn viên phân tán.
+
+00:16:19.000 --> 00:16:28.000
+Và mặc dù chưa có nhiều triển khai hoàn chỉnh tính năng cứng có sẵn, nhưng sự dễ dàng phân phối này là điều chúng tôi đang phấn đấu với tính năng này.
+
+00:16:28.000 --> 00:16:32.000
+Tiếp theo, hãy xem cách chúng ta có thể xây dựng trải nghiệm nhiều người chơi thực sự cho trò chơi của mình.
+
+00:16:32.000 --> 00:16:39.000
+Ví dụ trước đây của chúng tôi đã sử dụng các tác nhân phân tán trong kịch bản máy khách/máy chủ, mà bạn có thể đã quen thuộc từ các ứng dụng khác mà bạn đã làm việc.
+
+00:16:39.000 --> 00:16:46.000
+Tuy nhiên, các tác nhân phân tán cũng có thể được sử dụng trong các hệ thống ngang hàng, nơi hoàn toàn không có thành phần máy chủ chuyên dụng.
+
+00:16:46.000 --> 00:16:48.000
+Điều này phù hợp với một ý tưởng khác mà tôi đã có cho trò chơi của chúng tôi.
+
+00:16:48.000 --> 00:16:55.000
+Đôi khi khi đi du lịch, bạn kết thúc ở những địa điểm không thực sự có internet tuyệt vời, nhưng Wi-Fi cục bộ hoạt động rất tốt.
+
+00:16:55.000 --> 00:17:02.000
+Tôi vẫn muốn có thể thử thách và chơi với những người bạn của mình - những người được kết nối với cùng một mạng - khi tôi kết thúc trong tình huống như vậy.
+
+00:17:02.000 --> 00:17:10.000
+Tôi đã tiếp tục và triển khai một triển khai hệ thống diễn viên khác, lần này sử dụng các tính năng mạng cục bộ được cung cấp bởi Network framework.
+
+00:17:10.000 --> 00:17:21.000
+Mặc dù chúng tôi không đi sâu vào việc triển khai hệ thống diễn viên đó trong bài nói chuyện này, bạn có thể xem "Những tiến bộ trong Mạng, Phần 2" từ WWDC 2019 để tìm hiểu cách bạn sẽ triển khai giao thức tùy chỉnh như vậy.
+
+00:17:21.000 --> 00:17:29.000
+Cũng đáng để chỉ ra rằng việc truy cập vào mạng cục bộ có thể tiết lộ thông tin rất nhạy cảm về quyền riêng tư, vì vậy hãy cẩn thận sử dụng nó một cách tôn trọng.
+
+00:17:29.000 --> 00:17:38.000
+Vì lần này chúng tôi sẽ xử lý các tác nhân phân tán đã tồn tại trên các thiết bị khác, chúng tôi không còn có thể chỉ tạo ID như chúng tôi đã làm trong ví dụ trước.
+
+00:17:38.000 --> 00:17:42.000
+Chúng ta phải khám phá diễn viên cụ thể trên thiết bị khác mà chúng ta muốn chơi trò chơi cùng.
+
+00:17:42.000 --> 00:17:48.000
+Vấn đề này không phải là duy nhất đối với các tác nhân phân tán và thường được giải quyết bằng cách sử dụng các cơ chế khám phá dịch vụ.
+
+00:17:48.000 --> 00:17:59.000
+Tuy nhiên, trong lĩnh vực của các tác nhân phân tán, có một mô hình và phong cách chung của các hệ thống tác nhân API được mong đợi sẽ cung cấp cho phép bạn gắn bó với các API được nhập mạnh trong tất cả mã của mình.
+
+00:17:59.000 --> 00:18:08.000
+Chúng tôi gọi nó là mô hình lễ tân, bởi vì tương tự như một khách sạn, các diễn viên cần phải nhận phòng với nó để được biết đến và sẵn sàng cho những người khác gặp gỡ.
+
+00:18:08.000 --> 00:18:16.000
+Mỗi hệ thống diễn viên đều có nhân viên lễ tân riêng và họ có thể sử dụng bất kỳ phương tiện nào phù hợp nhất cho các cơ chế vận chuyển cơ bản để thực hiện khám phá diễn viên.
+
+00:18:16.000 --> 00:18:28.000
+Đôi khi điều này có thể dựa vào các API khám phá dịch vụ hiện có và chỉ xếp lớp API an toàn kiểu lên trên chúng hoặc nó có thể triển khai cơ chế dựa trên tin đồn hoặc một cái gì đó hoàn toàn khác.
+
+00:18:28.000 --> 00:18:41.000
+Tuy nhiên, đây là một chi tiết triển khai từ quan điểm của người dùng hệ thống diễn viên; tất cả những gì chúng ta cần quan tâm là kiểm tra diễn viên của mình để làm cho nó có thể phát hiện được và tra cứu diễn viên bằng một số thẻ hoặc loại khi chúng ta cần khám phá chúng.
+
+00:18:41.000 --> 00:18:46.000
+Chúng ta hãy xem một nhân viên lễ tân đơn giản mà tôi đã triển khai cho SampleLocalNetworkActorSystem của chúng tôi.
+
+00:18:46.000 --> 00:18:53.000
+Nó cho phép một diễn viên đăng ký, điều này cho phép tất cả nhân viên tiếp tân trong hệ thống diễn viên phân tán khám phá ra nó.
+
+00:18:53.000 --> 00:19:00.000
+Sau đó, chúng tôi có thể nhận được danh sách tất cả các tác nhân thuộc một loại và thẻ cụ thể khi chúng có sẵn trong hệ thống đó.
+
+00:19:00.000 --> 00:19:06.000
+Hãy sử dụng nhân viên lễ tân này để khám phá một diễn viên đối thủ cụ thể mà chúng tôi muốn chơi cùng.
+
+00:19:06.000 --> 00:19:12.000
+Trước đây, GameView của chúng tôi đã trực tiếp tạo - hoặc giải quyết - một đối thủ trong trình khởi tạo chế độ xem của nó.
+
+00:19:12.000 --> 00:19:18.000
+Chúng ta không thể làm điều này nữa, vì chúng ta cần đợi đối thủ xuất hiện không đồng bộ trên mạng.
+
+00:19:18.000 --> 00:19:25.000
+Để làm điều này, hãy để tôi giới thiệu chế độ xem mai mối sẽ hiển thị thông báo "Tìm kiếm đối thủ ..." trong khi chúng tôi đang cố gắng khám phá một thông báo.
+
+00:19:25.000 --> 00:19:28.000
+Khi chế độ xem này xuất hiện, chúng tôi sẽ bắt đầu mai mối.
+
+00:19:28.000 --> 00:19:39.000
+Việc mai mối sẽ được thực hiện trong một nhiệm vụ phi cấu trúc mới, trong đó chúng tôi sẽ yêu cầu nhân viên lễ tân của hệ thống diễn viên địa phương liệt kê tất cả các diễn viên được gắn thẻ bằng thẻ của đội đối phương.
+
+00:19:39.000 --> 00:19:45.000
+Vì vậy, nếu chúng tôi đang chơi cho cá đồng đội, chúng tôi sẽ tìm kiếm các cầu thủ từ các loài gặm nhấm của đội và ngược lại.
+
+00:19:45.000 --> 00:19:50.000
+Tiếp theo, chúng ta sẽ sử dụng vòng lặp không đồng bộ để chờ đợi các diễn viên đối thủ sắp tới.
+
+00:19:50.000 --> 00:19:56.000
+Khi hệ thống phát hiện ra một thiết bị gần đó với đối thủ mà chúng ta có thể chơi cùng, vòng lặp nhiệm vụ này sẽ được nối lại.
+
+00:19:56.000 --> 00:20:02.000
+Giả sử đối thủ luôn sẵn sàng chơi một trò chơi và ngay lập tức lưu trữ nó trong mô hình của chúng tôi và bắt đầu một trò chơi với họ.
+
+00:20:02.000 --> 00:20:09.000
+Chúng tôi sử dụng chức năng trợ giúp để quyết định ai nên thực hiện bước đầu tiên, và cuối cùng, nói với đối thủ rằng chúng tôi muốn bắt đầu một trò chơi với họ.
+
+00:20:09.000 --> 00:20:16.000
+Hãy chắc chắn quay lại đây, để thoát ra khỏi vòng lặp không đồng bộ, vì chúng ta chỉ cần một đối thủ hoàn thành nhiệm vụ mai mối của mình.
+
+00:20:16.000 --> 00:20:21.000
+Đối với chế độ chơi này, chúng tôi phải thay đổi việc triển khai OfflinePlayer một chút.
+
+00:20:21.000 --> 00:20:27.000
+Hãy gọi nó là LocalNetworkPlayer, và nó sẽ sử dụng SampleLocalNetworkActorSystem.
+
+00:20:27.000 --> 00:20:35.000
+Điều thú vị nhất về nó là phương thức makeMove của diễn viên đại diện cho một người chơi hiện có thể được gọi từ xa!
+
+00:20:35.000 --> 00:20:39.000
+Nhưng thực hiện động thái thực sự là trách nhiệm của một người chơi con người.
+
+00:20:39.000 --> 00:20:46.000
+Để giải quyết thách thức này, chúng tôi giới thiệu chức năng không đồng bộ humanSelectedField vào mô hình xem của chúng tôi.
+
+00:20:46.000 --> 00:20:51.000
+Nó được cung cấp bởi một giá trị @Published được kích hoạt khi người dùng con người nhấp vào một trong các trường.
+
+00:20:51.000 --> 00:20:59.000
+Khi người chơi con người nhấp vào một trường, chức năng makeMove của chúng tôi sẽ tiếp tục và chúng tôi hoàn thành cuộc gọi từ xa bằng cách trả lại GameMove đã thực hiện cho người gọi từ xa.
+
+00:20:59.000 --> 00:21:01.000
+Và một lần nữa, đó là tất cả những gì cần làm!
+
+00:21:01.000 --> 00:21:09.000
+Chúng tôi đã phải thay đổi việc triển khai diễn viên một chút để xử lý chế độ chơi nhiều người chơi thực sự của mình, nhưng không có gì thực sự thay đổi trong thiết kế tổng thể của hệ thống.
+
+00:21:09.000 --> 00:21:16.000
+Và quan trọng nhất, không có gì trong những thay đổi logic trò chơi của chúng tôi thực sự cụ thể đối với thực tế là chúng tôi sẽ sử dụng mạng cục bộ.
+
+00:21:16.000 --> 00:21:21.000
+Chúng tôi phát hiện ra một đối thủ và chơi một trò chơi với họ bằng cách gọi các phương pháp phân tán trên các diễn viên người chơi.
+
+00:21:21.000 --> 00:21:24.000
+Để giới thiệu chế độ trò chơi này, tôi sẽ cần một đối thủ để chơi cùng.
+
+00:21:24.000 --> 00:21:27.000
+Hãy hỏi trợ lý lông bông Caplin the Capybara của tôi.
+
+00:21:27.000 --> 00:21:32.000
+Tôi nghe nói anh ấy khá giỏi về nó!
+
+00:21:32.000 --> 00:21:38.000
+Được rồi, anh ấy khá thông minh.
+
+00:21:38.000 --> 00:21:41.000
+Anh ấy khá giỏi về nó.
+
+00:21:41.000 --> 00:21:44.000
+Hãy để tôi thử ở đây.
+
+00:21:44.000 --> 00:21:46.000
+Ồ, anh ấy đã bắt được tôi!
+
+00:21:46.000 --> 00:21:49.000
+Lần này bạn thắng, sinh vật nhỏ, nhưng chúng ta sẽ chơi một phiên khác.
+
+00:21:49.000 --> 00:21:52.000
+Cảm ơn vì sự giúp đỡ của bạn, Caplin!
+
+00:21:52.000 --> 00:21:57.000
+Cuối cùng nhưng không kém phần quan trọng, hãy để tôi cho bạn ý tưởng về những gì chúng ta có thể đạt được bằng cách kết hợp các hệ thống diễn viên khác nhau.
+
+00:21:57.000 --> 00:22:10.000
+Ví dụ: chúng ta có thể sử dụng hệ thống WebSocket để đăng ký các diễn viên người chơi diễn viên được lưu trữ trên thiết bị trong hệ thống sảnh phía máy chủ sẽ ghép nối chúng và hoạt động như một proxy cho các cuộc gọi phân tán giữa chúng.
+
+00:22:10.000 --> 00:22:16.000
+Chúng tôi có thể triển khai một diễn viên GameLobby, mà các diễn viên người chơi được lưu trữ trên thiết bị có thể tự đăng ký.
+
+00:22:16.000 --> 00:22:23.000
+Khi các thiết bị chuyển sang chế độ chơi trực tuyến, chúng sẽ phát hiện ra GameLobby bằng cách sử dụng nhân viên lễ tân và gọi tham gia vào nó.
+
+00:22:23.000 --> 00:22:30.000
+GameLobby theo dõi những người chơi có sẵn và bắt đầu một phiên trò chơi khi một cặp người chơi đã được xác định.
+
+00:22:30.000 --> 00:22:36.000
+Một phiên trò chơi sẽ đóng vai trò là người điều khiển trò chơi, bỏ phiếu di chuyển và đánh dấu chúng trong đại diện được lưu trữ trên máy chủ của trò chơi.
+
+00:22:36.000 --> 00:22:40.000
+Khi trò chơi hoàn tất, chúng tôi có thể thu thập kết quả và báo cáo lại cho sảnh đợi.
+
+00:22:40.000 --> 00:22:45.000
+Tuy nhiên, thú vị hơn, chúng ta có thể mở rộng thiết kế này theo chiều ngang.
+
+00:22:45.000 --> 00:22:58.000
+Tất nhiên chúng tôi có thể tạo ra nhiều diễn viên phiên trò chơi hơn để phục vụ nhiều trò chơi hơn đồng thời trên một máy chủ duy nhất, nhưng nhờ các diễn viên phân tán, chúng tôi thậm chí có thể tạo một phiên trò chơi trên các nút khác để cân bằng tải số lượng trò chơi đồng thời trên một cụm.
+
+00:22:58.000 --> 00:23:01.000
+Đó là, giá như chúng ta có một hệ thống diễn viên cụm.
+
+00:23:01.000 --> 00:23:03.000
+Và, trên thực tế, chúng tôi làm!
+
+00:23:03.000 --> 00:23:08.000
+Chúng tôi đã mở nguồn một thư viện hệ thống Cluster Actor giàu tính năng để bạn sử dụng trong các tình huống như vậy.
+
+00:23:08.000 --> 00:23:13.000
+Nó được triển khai bằng SwiftNIO và chuyên phân cụm trung tâm dữ liệu phía máy chủ.
+
+00:23:13.000 --> 00:23:20.000
+Nó áp dụng các kỹ thuật tiên tiến để phát hiện lỗi và đi kèm với việc triển khai riêng của một nhân viên lễ tân trên toàn cụm.
+
+00:23:20.000 --> 00:23:28.000
+Chúng tôi khuyến khích bạn xem qua nó, vì nó vừa là triển khai tham chiếu nâng cao của hệ thống tác nhân và vì các ứng dụng phía máy chủ mạnh mẽ của nó.
+
+00:23:28.000 --> 00:23:31.000
+Hãy tóm tắt lại những gì chúng ta đã học được trong buổi học này.
+
+00:23:31.000 --> 00:23:39.000
+Đầu tiên, chúng tôi đã tìm hiểu về các tác nhân phân tán và cách chúng tôi cung cấp thêm khả năng cách ly và kiểm tra tuần tự hóa diễn viên được hỗ trợ bởi trình biên dịch.
+
+00:23:39.000 --> 00:23:48.000
+Chúng tôi đã học được cách họ cho phép tính minh bạch của vị trí và cách chúng tôi có thể sử dụng nó để giải phóng các diễn viên của mình khỏi sự cần thiết phải được định vị trong cùng một quy trình với người gọi của họ.
+
+00:23:48.000 --> 00:23:55.000
+Chúng tôi cũng đã thấy một vài triển khai hệ thống diễn viên đang hoạt động để giúp bạn lấy cảm hứng về những gì bạn có thể xây dựng bằng cách sử dụng các diễn viên phân tán.
+
+00:23:55.000 --> 00:24:00.000
+Các diễn viên phân tán chỉ mạnh mẽ như các hệ thống diễn viên mà họ được sử dụng cùng.
+
+00:24:00.000 --> 00:24:04.000
+Vì vậy, để bạn tham khảo, đây là danh sách các hệ thống diễn viên mà chúng tôi đã thấy trong phiên này.
+
+00:24:04.000 --> 00:24:15.000
+Hệ thống thử nghiệm cục bộ, được vận chuyển theo mặc định với Swift và hai hệ thống diễn viên mẫu: một hệ thống dựa trên WebSocket kiểu máy khách/máy chủ và một hệ thống dựa trên mạng cục bộ.
+
+00:24:15.000 --> 00:24:21.000
+Các hệ thống này khá không đầy đủ và đóng vai trò là nguồn cảm hứng cho những gì bạn có thể xây dựng bằng cách sử dụng các tác nhân phân tán.
+
+00:24:21.000 --> 00:24:25.000
+Bạn có thể xem chúng trong ứng dụng mã mẫu được liên kết với phiên này.
+
+00:24:25.000 --> 00:24:30.000
+Và cuối cùng nhưng không kém phần quan trọng, một triển khai phân cụm phía máy chủ đầy đủ tính năng nguồn mở.
+
+00:24:30.000 --> 00:24:35.000
+Hiện có sẵn dưới dạng gói beta và nó sẽ được trưởng thành cùng với Swift 5.7.
+
+00:24:35.000 --> 00:24:47.000
+Để tìm hiểu thêm về các diễn viên phân tán, bạn có thể tham khảo các tài nguyên sau: mã mẫu được liên kết với phiên này, bao gồm tất cả các bước của trò chơi Tic Tac Fish của chúng tôi để bạn có thể tự đi sâu vào mã.
+
+00:24:47.000 --> 00:24:55.000
+Các đề xuất tiến hóa Swift liên quan đến tính năng ngôn ngữ của các diễn viên phân tán, giải thích các cơ chế cung cấp năng lượng cho chúng rất chi tiết.
+
+00:24:55.000 --> 00:25:04.000
+Bạn cũng có thể liên hệ trên các diễn đàn Swift, nơi bạn có thể tìm thấy danh mục diễn viên phân tán dành riêng cho các nhà phát triển hệ thống diễn viên cũng như người dùng.
+
+00:25:04.000 --> 00:25:08.000
+Cảm ơn vì đã lắng nghe, và tôi rất mong được thấy những gì bạn sẽ sử dụng các diễn viên phân tán trong ứng dụng của mình!
+
+00:25:08.000 --> 23:59:59.000
+♪
+

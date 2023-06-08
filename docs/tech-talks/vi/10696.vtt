@@ -1,0 +1,731 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+Xin chào và chào mừng đến với "Giới thiệu lại mã định danh loại đồng phục."
+
+00:00:05.000 --> 00:00:10.000
+Tên tôi là Jonathan Grynspan, và tôi làm việc trong Nhóm Khám phá và Tương tác Ứng dụng tại Apple.
+
+00:00:10.000 --> 00:00:16.000
+Lần cuối cùng chúng tôi nói về số nhận dạng loại đồng phục là tại WWDC 2004.
+
+00:00:16.000 --> 00:00:21.000
+Đó là một thời gian dài trước đây, nhưng tôi nhớ nó giống như ngày hôm qua.
+
+00:00:21.000 --> 00:00:35.000
+Dòng sản phẩm năm 2004 của Apple rất tuyệt vời, với các sản phẩm như thiết kế hoàn toàn bằng nhôm của PowerBook G4, màu sắc bắt mắt của iPod Mini và trải nghiệm rạp hát gia đình kỳ diệu của iMac G5.
+
+00:00:35.000 --> 00:00:42.000
+Apple vẫn tuyệt vời, nhưng bạn phải thừa nhận rằng năm 2004 thực sự đã là một thời gian dài trước đây.
+
+00:00:42.000 --> 00:00:50.000
+Vì vậy, chúng tôi sẽ đề cập đến những điều cơ bản ngày hôm nay, bắt đầu với cách hệ điều hành của Apple xác định loại tệp.
+
+00:00:50.000 --> 00:00:57.000
+Sau đó, chúng ta sẽ khám phá cách nói với hệ thống về các loại tệp mới mà nó không biết và cách xử lý chúng.
+
+00:00:57.000 --> 00:01:05.000
+Cuối cùng, chúng ta sẽ khám phá một số API mới trong iOS 14 và macOS Big Sur giúp việc làm việc với các loại tệp trở nên dễ dàng.
+
+00:01:05.000 --> 00:01:11.000
+Cho dù bạn có mới làm quen với chủ đề này hay không, chúng tôi đều có thứ gì đó dành cho bạn, vì vậy hãy kiên trì.
+
+00:01:11.000 --> 00:01:17.000
+Chúng ta hãy xem một tệp có thể có trên máy tính của bất kỳ ai: một bức ảnh của một con mèo sử dụng iPad Mini.
+
+00:01:17.000 --> 00:01:22.000
+Khi bạn lưu hình ảnh đó vào đĩa, nó sẽ tạo ra cái được gọi là tệp thông thường.
+
+00:01:22.000 --> 00:01:26.000
+Đó là thuật ngữ POSIX cho một chuỗi các byte được lưu trữ trên đĩa.
+
+00:01:26.000 --> 00:01:34.000
+Sau đó, khi bạn muốn mở lại bức ảnh này, bạn có thể nhấp đúp vào nó và nó sẽ hoạt động, mở trong trình xem ảnh như Xem trước.
+
+00:01:34.000 --> 00:01:44.000
+Nhưng làm thế nào để hệ thống biết rằng đây là một hình ảnh, trong trường hợp này được lưu dưới dạng JPEG, chứ không phải là tệp văn bản hoặc bản nhạc MP3 hoặc tài liệu Pages?
+
+00:01:44.000 --> 00:01:54.000
+Tệp là chuỗi byte, vì vậy bạn có thể mong đợi rằng khi hệ thống cần biết loại tệp, nó sẽ mở nó ra và đọc các bit bên trong để tìm ra nó.
+
+00:01:54.000 --> 00:02:03.000
+Trên thực tế, hệ thống hầu như không bao giờ làm điều đó bởi vì nó cực kỳ đắt tiền và yêu cầu quyền đọc mà hầu hết các quy trình không có.
+
+00:02:03.000 --> 00:02:09.000
+Trên thực tế, hệ điều hành dựa trên hầu hết các quyết định của nó về phần mở rộng đường dẫn của tệp.
+
+00:02:09.000 --> 00:02:18.000
+Đó là chuỗi con được chuẩn hóa theo trường hợp sau ký tự dấu chấm trước, miễn là nó không chứa bất kỳ khoảng trắng hoặc ký tự điều khiển nào.
+
+00:02:18.000 --> 00:02:24.000
+Trên các nền tảng của Apple, chúng tôi thường không hiển thị các tiện ích mở rộng đường dẫn được công nhận cho người dùng, nhưng chúng vẫn ở đó.
+
+00:02:24.000 --> 00:02:32.000
+Nếu chúng tôi tiết lộ phần mở rộng đường dẫn của tệp này, chúng tôi có thể thấy rằng đó là J-P-E-G, vì vậy đây là hình ảnh JPEG.
+
+00:02:32.000 --> 00:02:37.000
+Vậy .jpeg có nghĩa là hình ảnh JPEG, phải không?
+
+00:02:37.000 --> 00:02:41.000
+Có, nhưng có những phần mở rộng đường dẫn khác cho hình ảnh JPEG.
+
+00:02:41.000 --> 00:02:45.000
+.Jpg và .jpe là phổ biến nhất.
+
+00:02:45.000 --> 00:02:48.000
+Tuy nhiên, trên web, đó là một câu chuyện khác.
+
+00:02:48.000 --> 00:02:52.000
+Các máy chủ web thường không xác định các tệp bằng phần mở rộng đường dẫn của chúng.
+
+00:02:52.000 --> 00:02:57.000
+Thay vào đó, họ sử dụng một thứ gọi là loại MIME hoặc loại phương tiện.
+
+00:02:57.000 --> 00:03:01.000
+Đối với JPEG, đó là hình ảnh/jpeg.
+
+00:03:01.000 --> 00:03:11.000
+Tất nhiên, không có gì trong cuộc sống đơn giản như vậy, và một số máy chủ thay vào đó sử dụng loại MIME hình ảnh/jpg phổ biến nhưng không chuẩn.
+
+00:03:11.000 --> 00:03:16.000
+Đó là năm phần siêu dữ liệu khác nhau, tất cả đều đại diện chính xác cho cùng một thứ.
+
+00:03:16.000 --> 00:03:26.000
+Chà, trên các nền tảng của Apple, điều đó không sao, bởi vì chúng tôi sử dụng một chuỗi duy nhất được gọi là mã định danh loại thống nhất để xác định định định dạng tệp này theo giáo luật.
+
+00:03:26.000 --> 00:03:31.000
+Đối với hình ảnh JPEG, mã định danh loại thống nhất là public.jpeg.
+
+00:03:31.000 --> 00:03:37.000
+Một chuỗi này đề cập đến tất cả các hình ảnh JPEG, cho dù chúng là hình ảnh cục bộ hay trên web.
+
+00:03:37.000 --> 00:03:41.000
+Bây giờ, một thuộc tính thú vị của các loại tệp là chúng tồn tại trong một hệ thống phân cấp.
+
+00:03:41.000 --> 00:03:49.000
+Mỗi hình ảnh JPEG cũng là một hình ảnh trừu tượng hơn, cũng như hình ảnh PNG, hình ảnh TIFF, v.v.
+
+00:03:49.000 --> 00:03:57.000
+Khi nói về các số nhận dạng loại thống nhất, chúng tôi nói rằng loại JPEG phù hợp với loại hình ảnh trừu tượng hơn.
+
+00:03:57.000 --> 00:04:01.000
+Cây phù hợp này ngầm cho phép đa kế thừa.
+
+00:04:01.000 --> 00:04:07.000
+Nếu bạn nghĩ về nó, điều này giống như cách các giao thức hoạt động trong Swift và Objective-C.
+
+00:04:07.000 --> 00:04:11.000
+Một lớp hoặc cấu trúc cụ thể có thể kế thừa từ bất kỳ số lượng giao thức nào.
+
+00:04:11.000 --> 00:04:13.000
+Hãy để tôi cho bạn thấy ý tôi là gì.
+
+00:04:13.000 --> 00:04:15.000
+Đây là public.jpeg.
+
+00:04:15.000 --> 00:04:22.000
+Và đây là public.image, là một loại trừu tượng mô tả tất cả các định dạng tệp hình ảnh.
+
+00:04:22.000 --> 00:04:27.000
+Nhưng tất cả các định dạng tệp hình ảnh có thể được biểu diễn dưới dạng chuỗi byte.
+
+00:04:27.000 --> 00:04:39.000
+Vì vậy, public.image phù hợp với public.data, đây là một loại rất trừu tượng đại diện cho bất kỳ tệp thông thường nào trên đĩa hoặc thực sự là bất kỳ chuỗi byte nào, bất kể chúng được lưu trữ ở đâu.
+
+00:04:39.000 --> 00:04:44.000
+Đổi lại, public.data phù hợp với một loại cuối cùng, public.item.
+
+00:04:44.000 --> 00:04:54.000
+Tất cả các đối tượng hệ thống tệp, có thể là tệp, thư mục, liên kết tượng trưng hoặc thậm chí là thứ gì đó bí truyền hơn như đường ống POSIX, được đại diện bởi public.item.
+
+00:04:54.000 --> 00:04:58.000
+Giống như chúng ta có thể đi lên hệ thống phân cấp, chúng ta có thể đi xuống nó.
+
+00:04:58.000 --> 00:05:07.000
+Có các định dạng hình ảnh khác ngoài JPEG, chẳng hạn như public.png và public.tiff, và chúng cũng là các loại phụ của public.image.
+
+00:05:07.000 --> 00:05:11.000
+Tuy nhiên, chúng không phải là một phần của hệ thống phân cấp tuân thủ của public.jpeg.
+
+00:05:11.000 --> 00:05:13.000
+Họ chỉ là anh chị em của nó.
+
+00:05:13.000 --> 00:05:24.000
+Nếu chúng ta tăng cấp độ và tập trung vào public.data, chúng ta có thể thấy rằng có nhiều loại phù hợp với nó, bởi vì gần như mọi thứ trên máy tính của bạn đều có thể được biểu diễn bằng một chuỗi byte.
+
+00:05:24.000 --> 00:05:33.000
+Ở đây, chúng ta thấy public.audio, là một loại trừu tượng mô tả âm thanh có thể nghe được và public.text, là một loại trừu tượng mô tả văn bản dễ đọc.
+
+00:05:33.000 --> 00:05:39.000
+Chúng là các loại phụ của public.data và anh chị em ruột của public.image.
+
+00:05:39.000 --> 00:05:44.000
+Tôi đã đề cập một thời gian trước rằng có thể thừa kế nhiều lần với các số nhận dạng loại thống nhất.
+
+00:05:44.000 --> 00:05:55.000
+Và điều đó đúng với hình ảnh vì hình ảnh là dữ liệu nhưng chúng cũng là nội dung mà người dùng quan tâm, điều mà người dùng có thể muốn tải lên iCloud Drive hoặc chia sẻ qua AirDrop.
+
+00:05:55.000 --> 00:06:09.000
+Vì vậy, public.image cũng phù hợp với public.content, không đại diện cho bất cứ điều gì cụ thể trong hệ thống tệp, nhưng cho chúng ta biết rằng chúng ta nên coi các loại phụ của nó như những thứ quan trọng đối với người dùng.
+
+00:06:09.000 --> 00:06:13.000
+Tôi tập trung khá nhiều vào cách các số nhận dạng loại thống nhất đại diện cho các tệp.
+
+00:06:13.000 --> 00:06:17.000
+Đó có lẽ là cách sử dụng phổ biến nhất đối với họ, theo như người dùng quan tâm.
+
+00:06:17.000 --> 00:06:22.000
+Nhưng chúng tôi cũng sử dụng chúng trên khắp các nền tảng của mình cho các mục đích khác.
+
+00:06:22.000 --> 00:06:26.000
+Ví dụ, chúng tôi cũng sử dụng chúng như một loại nội dung bảng dán kinh điển.
+
+00:06:26.000 --> 00:06:30.000
+Rốt cuộc, nếu bạn có thể lưu nó vào đĩa, bạn cũng có thể sao chép và dán nó.
+
+00:06:30.000 --> 00:06:34.000
+Chúng tôi cũng sử dụng chúng cho các hệ thống phân cấp không liên quan gì đến các tệp.
+
+00:06:34.000 --> 00:06:41.000
+Đây là một bí mật của Apple, nhưng chúng tôi cũng sử dụng số nhận dạng loại thống nhất để xác định các mẫu phần cứng khác nhau mà chúng tôi vận chuyển.
+
+00:06:41.000 --> 00:06:46.000
+Ví dụ, tất cả các mẫu Mac đều phù hợp với com.apple.mac.
+
+00:06:46.000 --> 00:06:56.000
+Và nếu chúng tôi muốn có giả thuyết, bạn thậm chí có thể sử dụng số nhận dạng loại thống nhất để chỉ hệ thống phân cấp không liên quan đến máy tính, chẳng hạn như cây sự sống.
+
+00:06:56.000 --> 00:07:00.000
+Đó là số nhận dạng loại thống nhất và cách chúng tôi sử dụng chúng trên nền tảng của mình.
+
+00:07:00.000 --> 00:07:07.000
+Nhiều ứng dụng tạo và duy trì các định dạng dữ liệu của riêng chúng, và các định dạng này xứng đáng với các loại độc đáo của riêng chúng.
+
+00:07:07.000 --> 00:07:12.000
+Khi bạn tạo một kiểu mới, làm thế nào để bạn thêm nó vào hệ thống phân cấp kiểu?
+
+00:07:12.000 --> 00:07:16.000
+Nếu bạn đang sử dụng các loại được khai báo bởi hệ thống, bạn không cần phải làm gì nhiều.
+
+00:07:16.000 --> 00:07:23.000
+Chúng tôi bao gồm một số lượng lớn các loại trong một gói được gọi là CoreTypes trong /System/Library/CoreServices.
+
+00:07:23.000 --> 00:07:30.000
+Bất kỳ mã định danh loại thống nhất nào trong Info.plist của gói đó đều có thể được tham chiếu bởi ứng dụng của bạn mà không cần thay đổi bổ sung.
+
+00:07:30.000 --> 00:07:37.000
+Nhưng đối với các loại bạn đã phát minh hoặc bạn đang mượn từ một ứng dụng khác, bạn có thể cần phải nói với hệ thống về chúng.
+
+00:07:37.000 --> 00:07:43.000
+Để làm như vậy, bạn cần tạo mã định danh loại thống nhất của riêng mình.
+
+00:07:43.000 --> 00:07:48.000
+Khi tạo mã định danh loại thống nhất của riêng bạn, có một vài quy tắc đặt tên cần tuân theo.
+
+00:07:48.000 --> 00:07:57.000
+Đầu tiên, các số nhận dạng loại thống nhất luôn là ASCII không phân biệt chữ hoa chữ thường và luôn đảo ngược-DNS, chẳng hạn như com.example.file.
+
+00:07:57.000 --> 00:08:00.000
+Lý tưởng nhất, bạn sẽ sử dụng một số định danh mô tả nhiều hơn.
+
+00:08:00.000 --> 00:08:04.000
+Com.example.file không thực sự giúp việc gỡ lỗi trở nên dễ dàng.
+
+00:08:04.000 --> 00:08:13.000
+Com.example.imagetemplate hoặc com.example.encrypteddatabase hoặc một cái gì đó tương tự sẽ tốt hơn.
+
+00:08:13.000 --> 00:08:21.000
+Apple bảo lưu một số tiền tố hoặc không gian tên trong số nhận dạng và bạn không nên tạo số nhận dạng của riêng mình sử dụng các không gian tên này.
+
+00:08:21.000 --> 00:08:24.000
+Hệ thống có thể bỏ qua chúng nếu bạn làm vậy.
+
+00:08:24.000 --> 00:08:29.000
+Đầu tiên là "công khai", được dành riêng cho Apple sử dụng để khai báo các loại tiêu chuẩn hóa.
+
+00:08:29.000 --> 00:08:35.000
+Nếu chúng tôi thiếu một loại tiêu chuẩn, vui lòng cho chúng tôi biết qua Trợ lý Phản hồi.
+
+00:08:35.000 --> 00:08:42.000
+Dyn, viết tắt của dynamic, được dành riêng cho hệ điều hành sử dụng khi tạo ra các miếng chêm tương thích.
+
+00:08:42.000 --> 00:08:49.000
+Chúng thường là các chuỗi mờ đục và chúng có thể thay đổi giữa các bản phát hành hệ điều hành, vì vậy đừng mã hóa cứng các giá trị của chúng.
+
+00:08:49.000 --> 00:08:51.000
+Trên thực tế, ngày nay chúng khá hiếm.
+
+00:08:51.000 --> 00:08:57.000
+Bạn thường chỉ nhìn thấy chúng khi gặp một tệp có phần mở rộng đường dẫn không được công nhận.
+
+00:08:57.000 --> 00:09:03.000
+Com.example được dành riêng cho các mẫu, ví dụ, mã mẫu và những thứ tương tự.
+
+00:09:03.000 --> 00:09:09.000
+Cuối cùng, com.apple được dành riêng cho Apple sử dụng.
+
+00:09:09.000 --> 00:09:15.000
+Có hai bước lớn bạn cần thực hiện khi thêm một loại vào ứng dụng của mình mà hệ thống sẽ nhận ra.
+
+00:09:15.000 --> 00:09:17.000
+Bước đầu tiên là khai báo loại.
+
+00:09:17.000 --> 00:09:25.000
+Khai báo một loại về cơ bản có nghĩa là ứng dụng của bạn đang nói, "Loại này tồn tại", nhưng không có nghĩa là bạn có thể mở loại đó.
+
+00:09:25.000 --> 00:09:33.000
+Nếu bạn thực sự muốn mở một loại, bạn cần hỗ trợ loại đó, đó là cách ứng dụng của bạn nói, "Bất kể ai đã khai báo loại đó, tôi có thể mở nó."
+
+00:09:33.000 --> 00:09:37.000
+Hai bước này rất khác biệt.
+
+00:09:37.000 --> 00:09:42.000
+Khi bạn khai báo loại của mình, bạn cần quyết định xem bạn sẽ nhập hay xuất nó.
+
+00:09:42.000 --> 00:09:50.000
+Nếu bạn đang sử dụng một loại được phát minh hoặc thiết kế bởi người khác hoặc để sử dụng chủ yếu với một ứng dụng khác, bạn thường nên nhập loại đó.
+
+00:09:50.000 --> 00:09:55.000
+Điều đó nói với hệ thống, "Loại này tồn tại. Đây là một số thông tin về nó."
+
+00:09:55.000 --> 00:10:02.000
+Nhưng nếu ứng dụng phát minh ra nó được cài đặt, ứng dụng đó có thể cung cấp nhiều thông tin có thẩm quyền hơn.
+
+00:10:02.000 --> 00:10:09.000
+Mặt khác, nếu bạn phát minh ra loại hoặc nó có nghĩa là để sử dụng cụ thể với ứng dụng của bạn, thì việc xuất nó là phù hợp.
+
+00:10:09.000 --> 00:10:13.000
+Điều này nói với hệ thống, "Tôi có thẩm quyền cho loại này."
+
+00:10:13.000 --> 00:10:20.000
+Cuối cùng, nếu bạn đang sử dụng một loại đi kèm với hệ thống như một phần của Loại lõi, bạn không cần phải nhập hoặc xuất nó.
+
+00:10:20.000 --> 00:10:28.000
+Hệ thống đã cung cấp một khai báo và bạn chỉ có thể sử dụng mã định danh loại thống nhất của loại ngay lập tức.
+
+00:10:28.000 --> 00:10:33.000
+Tôi muốn chỉ cho bạn cách khai báo một loại trong ứng dụng của bạn và cách hiển thị hệ thống mà bạn hỗ trợ mở nó.
+
+00:10:33.000 --> 00:10:39.000
+Vì vậy, chúng ta hãy xem Xcode, nơi tôi đang làm việc chăm chỉ để có trải nghiệm nhà hàng qua web hoàn toàn mới.
+
+00:10:39.000 --> 00:10:46.000
+Ứng dụng này có khả năng đọc thực đơn nhà hàng đã được lưu ở định dạng dựa trên JSON mà chúng tôi đã thiết kế.
+
+00:10:46.000 --> 00:10:51.000
+Chúng tôi muốn có thể mở các tệp menu đó trong ứng dụng của mình, vì vậy trước tiên chúng tôi sẽ cần khai báo một loại cho chúng.
+
+00:10:51.000 --> 00:10:58.000
+Bởi vì chúng tôi đã tự tạo ra loại này và chúng tôi sở hữu định dạng, việc chúng tôi xuất loại này có ý nghĩa.
+
+00:10:58.000 --> 00:11:03.000
+Điều đầu tiên chúng tôi sẽ làm trong Xcode là chọn chính dự án để hiển thị cài đặt của nó.
+
+00:11:03.000 --> 00:11:06.000
+Chúng tôi muốn chọn mục tiêu tương ứng với ứng dụng của chúng tôi.
+
+00:11:06.000 --> 00:11:12.000
+Ngay bây giờ, tôi đang xem ứng dụng iOS của chúng tôi, nhưng chúng tôi sẽ làm điều tương tự cho một ứng dụng macOS.
+
+00:11:12.000 --> 00:11:18.000
+Sau đó, chúng tôi sẽ chuyển sang tab Thông tin, đại diện cho nội dung của tệp Info.plist của ứng dụng.
+
+00:11:18.000 --> 00:11:21.000
+Mở rộng phần Mã định danh loại đã xuất.
+
+00:11:21.000 --> 00:11:25.000
+Nhấp vào nút Thêm ở cuối phần để thêm một loại mới.
+
+00:11:25.000 --> 00:11:32.000
+Điều đầu tiên chúng tôi muốn thêm là mã định danh loại thống nhất mà chúng tôi đã đưa ra.
+
+00:11:32.000 --> 00:11:37.000
+Đối với bản demo này, chúng tôi sẽ sử dụng com.example.restaurantmenu.
+
+00:11:37.000 --> 00:11:42.000
+Hãy nhớ rằng, com.example được Apple dành riêng để sử dụng trong các ví dụ và bản trình diễn.
+
+00:11:42.000 --> 00:11:46.000
+Bạn thường sẽ muốn sử dụng tên DNS ngược mà bạn sở hữu.
+
+00:11:46.000 --> 00:11:53.000
+Ví dụ, công ty Claris sẽ sử dụng com.claris, trong khi Beats sẽ sử dụng com.beatsbydre.
+
+00:11:53.000 --> 00:11:58.000
+Bây giờ chúng ta phải suy nghĩ về sự phù hợp.
+
+00:11:58.000 --> 00:12:11.000
+Các loại đại diện cho các tệp trong hệ thống tệp cần phải phù hợp với public.data nếu chúng là các tệp thông thường - nghĩa là chuỗi byte --- hoặc com.apple.package nếu chúng là thư mục mà hệ điều hành nên coi là tệp.
+
+00:12:11.000 --> 00:12:17.000
+Loại này sẽ được lưu vào đĩa bằng bộ mã hóa JSON của Swift, có nghĩa là nó là một chuỗi các byte.
+
+00:12:17.000 --> 00:12:22.000
+Điều đó có nghĩa là tệp thông thường, và điều đó có nghĩa là public.data.
+
+00:12:22.000 --> 00:12:24.000
+Có vẻ như chúng ta có một quyết định để đưa ra.
+
+00:12:24.000 --> 00:12:30.000
+Bởi vì các tệp này sẽ chứa dữ liệu JSON, chúng sẽ có thể đọc được bởi bất kỳ tệp JSON nào có thể đọc được.
+
+00:12:30.000 --> 00:12:34.000
+Điều đó có nghĩa là loại này cũng có thể phù hợp với public.json.
+
+00:12:34.000 --> 00:12:39.000
+Đó là một thuộc tính thực sự hữu ích cho một số loại tệp mà khả năng chỉnh sửa chúng theo cách thủ công là quan trọng.
+
+00:12:39.000 --> 00:12:44.000
+Nhưng đối với các loại khác, đó chỉ là chi tiết triển khai.
+
+00:12:44.000 --> 00:12:47.000
+Chúng tôi sẽ thêm sự phù hợp với public.json cho loại này.
+
+00:12:47.000 --> 00:12:57.000
+Bạn có thể bỏ qua các loại chi tiết triển khai này khi tạo các loại của mình nếu bạn không muốn các nhà phát triển khác dựa vào chúng hoặc nếu bạn mong đợi định dạng loại của mình có thể thay đổi trong tương lai.
+
+00:12:57.000 --> 00:13:03.000
+Loại tệp này là thứ mà người dùng sẽ xem xét một tài liệu hoặc nội dung đáng để tương tác trực tiếp.
+
+00:13:03.000 --> 00:13:08.000
+Vì vậy, chúng tôi cũng sẽ đảm bảo rằng nó phù hợp với public.content.
+
+00:13:08.000 --> 00:13:15.000
+Tiếp theo, chúng ta sẽ cần quyết định phần mở rộng tên tệp để liên kết với loại của chúng ta.
+
+00:13:15.000 --> 00:13:23.000
+Phần mở rộng này sẽ gắn loại trở lại hệ thống tệp và cho phép hệ thống nhận ra rằng các tệp được đặt tên thích hợp có loại này.
+
+00:13:23.000 --> 00:13:31.000
+Chúng tôi có thể bị cám dỗ để sử dụng tiện ích mở rộng ba ký tự, nhưng không có nhà cung cấp nền tảng lớn nào yêu cầu tiện ích mở rộng ba ký tự kể từ năm 1995.
+
+00:13:31.000 --> 00:13:37.000
+Chúng tôi có rất nhiều chỗ để thở ở đây, và tránh xung đột với các tuyên bố loại của các nhà phát triển khác là rất quan trọng.
+
+00:13:37.000 --> 00:13:42.000
+Vì vậy, chúng tôi sẽ sử dụng một phần mở rộng dài hơn, menu nhà hàng.
+
+00:13:42.000 --> 00:13:43.000
+Lưu ý rằng chúng tôi đã không đặt dấu chấm ở đó.
+
+00:13:43.000 --> 00:13:48.000
+Hệ điều hành biết thêm nó cho chúng tôi khi tạo tên tệp.
+
+00:13:48.000 --> 00:13:53.000
+Cuối cùng, đây cũng là một cơ hội tốt để đưa ra một cái tên có thể đọc được của con người cho loại này.
+
+00:13:53.000 --> 00:14:03.000
+Vì ứng dụng của chúng tôi được gọi đơn giản là Nhà hàng và vì chúng tôi đã chọn tiện ích mở rộng menu nhà hàng, chúng tôi sẽ giữ điều này đơn giản và đặt tên cho nó là Thực đơn Nhà hàng.
+
+00:14:03.000 --> 00:14:07.000
+Chuỗi này có thể định vị trong tệp InfoPlist.strings của chúng tôi.
+
+00:14:07.000 --> 00:14:10.000
+Sử dụng chuỗi mà chúng tôi vừa nhập làm khóa của bạn khi bản địa hóa.
+
+00:14:10.000 --> 00:14:15.000
+Bây giờ chúng tôi đã khai báo loại, chúng tôi cần thông báo cho hệ thống rằng ứng dụng của chúng tôi có thể mở nó.
+
+00:14:15.000 --> 00:14:18.000
+Mở rộng phần Loại Tài liệu.
+
+00:14:18.000 --> 00:14:23.000
+Nhấp vào nút Thêm ở cuối phần để thêm loại được hỗ trợ mới.
+
+00:14:23.000 --> 00:14:27.000
+Phần này đơn giản hơn phần Mã định danh loại đã xuất.
+
+00:14:27.000 --> 00:14:33.000
+Điều duy nhất chúng tôi được yêu cầu chỉ định là danh sách các số nhận dạng loại thống nhất mà ứng dụng hỗ trợ.
+
+00:14:33.000 --> 00:14:40.000
+Để cho phép tính linh hoạt, chúng tôi có thể chỉ định nhiều loại cho một mục nhập duy nhất ở đây hoặc một loại cho mỗi mục nhập.
+
+00:14:40.000 --> 00:14:47.000
+Cá nhân tôi thích có một loại cho mỗi mục nhập, nhưng đó chủ yếu là câu hỏi về sở thích cá nhân, như tab so với khoảng trắng.
+
+00:14:47.000 --> 00:14:55.000
+Dù sao, chúng tôi sẽ thêm mã định danh loại đồng phục của mình vào trường này.
+
+00:14:55.000 --> 00:14:59.000
+Chúng ta cũng nên đặt thứ hạng người xử lý mục nhập này thành Chủ sở hữu.
+
+00:14:59.000 --> 00:15:06.000
+Bước này không bắt buộc nhưng nó được khuyến khích mạnh mẽ vì nó giúp hệ thống chọn ứng dụng phù hợp một cách thông minh cho một công việc nhất định.
+
+00:15:06.000 --> 00:15:09.000
+Kể từ khi chúng tôi phát minh ra loại này, chúng tôi sở hữu nó.
+
+00:15:09.000 --> 00:15:17.000
+Trên macOS, có một trường Quy tắc bổ sung cho phép chúng tôi chỉ định xem chúng tôi có thể mở tệp với tư cách là trình chỉnh sửa hay trình xem hay không.
+
+00:15:17.000 --> 00:15:22.000
+Các biên tập viên có thể vừa mở vừa lưu các tệp thuộc một loại nhất định, trong khi người xem chỉ có thể mở chúng.
+
+00:15:22.000 --> 00:15:27.000
+Bởi vì ứng dụng của chúng tôi có thể đọc và ghi các tệp này, chúng tôi sẽ chỉ định trình chỉnh sửa.
+
+00:15:27.000 --> 00:15:30.000
+Chúng tôi đã chỉnh sửa xong phần Thông tin.
+
+00:15:30.000 --> 00:15:32.000
+Ứng dụng của chúng tôi hiện có thể mở các tệp Menu Nhà hàng của chúng tôi.
+
+00:15:32.000 --> 00:15:40.000
+Chúng tôi sẽ cần viết một số mã SwiftUI, UIkit hoặc AppKit để xử lý tài liệu sau khi hệ thống chuyển nó cho chúng tôi.
+
+00:15:40.000 --> 00:15:49.000
+Để biết thêm thông tin về việc xây dựng ứng dụng dựa trên tài liệu trong Swift UI, hãy xem "Xây dựng ứng dụng dựa trên tài liệu trong SwiftUI" từ WWDC20.
+
+00:15:49.000 --> 00:15:58.000
+Tài liệu để xây dựng các ứng dụng dựa trên tài liệu sử dụng UIkit và AppKit có sẵn trực tuyến tại developer.apple.com.
+
+00:15:58.000 --> 00:16:01.000
+Ứng dụng của chúng tôi có một đối thủ cạnh tranh trên App Store, Compy's Food.
+
+00:16:01.000 --> 00:16:07.000
+Rất nhiều chủ nhà hàng sử dụng ứng dụng đó và đã lưu thực đơn của họ ở định dạng tệp thuộc sở hữu của ứng dụng đó.
+
+00:16:07.000 --> 00:16:10.000
+Chúng tôi cũng muốn hỗ trợ việc đọc các tệp đó.
+
+00:16:10.000 --> 00:16:16.000
+Loại này được phát minh bởi người khác, và chúng tôi chỉ mượn nó, vì vậy chúng tôi cần nhập nó thay vì xuất nó.
+
+00:16:16.000 --> 00:16:22.000
+Hãy quay trở lại tab Thông tin cho mục tiêu ứng dụng của chúng tôi và chọn Mã định danh loại đã nhập.
+
+00:16:22.000 --> 00:16:27.000
+Lưu ý rằng vì chúng tôi đã tạo một ứng dụng SwiftUI mới, chúng tôi có một mục hiện có ở đây cho một loại ví dụ.
+
+00:16:27.000 --> 00:16:32.000
+Chúng tôi có thể thay thế nội dung của biểu mẫu bằng dữ liệu của riêng mình, đó là những gì tôi sẽ làm.
+
+00:16:32.000 --> 00:16:38.000
+Nếu chúng tôi không có loại ví dụ hiện có trong mục tiêu của mình, tất nhiên chúng tôi có thể thêm loại mới bằng nút Thêm bên dưới.
+
+00:16:38.000 --> 00:16:42.000
+Tôi sẽ điền vào phần Thông tin được chỉ định bởi Compy's Food.
+
+00:16:42.000 --> 00:16:45.000
+Tất nhiên, các chi tiết ở đây chỉ là ví dụ.
+
+00:16:45.000 --> 00:16:53.000
+Nếu bạn đang thêm hỗ trợ cho loại đối thủ cạnh tranh thực sự, bạn nên cố gắng khớp với những gì họ đã đưa vào tệp Info.plist của họ.
+
+00:16:53.000 --> 00:16:59.000
+Bởi vì loại này được nhập, nó cho hệ thống biết về loại tệp được tạo bởi ứng dụng Compy's Food.
+
+00:16:59.000 --> 00:17:07.000
+Nhưng nếu người dùng đã cài đặt ứng dụng đó, hệ thống có thể thích khai báo của nó hơn, điều này nên được xuất dưới dạng có thẩm quyền hơn.
+
+00:17:07.000 --> 00:17:13.000
+Bây giờ chúng tôi sẽ thêm hỗ trợ để mở các tệp này để hệ thống có thể chọn ứng dụng của chúng tôi khi người dùng muốn mở một trong số chúng.
+
+00:17:13.000 --> 00:17:17.000
+Chúng ta sẽ quay lại phần Loại Tài liệu.
+
+00:17:17.000 --> 00:17:23.000
+Chúng tôi sẽ tạo một mục riêng cho Danh sách Thực phẩm của Compy và thêm mã định danh loại mới.
+
+00:17:23.000 --> 00:17:28.000
+Mục nhập này hơi khác so với mục kia vì chúng tôi không phải là chủ sở hữu của loại này.
+
+00:17:28.000 --> 00:17:32.000
+Thay vào đó, chúng tôi muốn thứ hạng người xử lý của mình được thay thế.
+
+00:17:32.000 --> 00:17:38.000
+Bởi vì ứng dụng của chúng tôi có thể đọc các tệp này nhưng không thể ghi chúng, chúng tôi sẽ chỉ định vai trò của Trình xem trên macOS.
+
+00:17:38.000 --> 00:17:47.000
+Hệ thống hiện biết rằng chúng tôi có thể mở tệp này nhưng chúng tôi có thể không phải là lựa chọn tốt nhất nếu người dùng đã cài đặt Compy's Food, vì ứng dụng đó là chủ sở hữu của loại tệp.
+
+00:17:47.000 --> 00:17:56.000
+Chúng tôi muốn trở thành những công dân tốt trên nền tảng, vì vậy điều quan trọng là phải tôn trọng quyền sở hữu loại theo cách này mặc dù cả hai chúng tôi đều biết mã của chúng tôi tốt hơn mã của đối thủ cạnh tranh.
+
+00:17:56.000 --> 00:18:03.000
+Giống như chúng tôi đã làm với loại thực đơn nhà hàng của riêng mình, chúng tôi sẽ cần viết một số Swift hoặc Objective-C để thực sự đọc các tệp này trong ứng dụng của chúng tôi.
+
+00:18:03.000 --> 00:18:07.000
+Kiểm tra developer.apple.com để biết thêm thông tin.
+
+00:18:07.000 --> 00:18:14.000
+Vì vậy, bây giờ chúng tôi đã khai báo một loại và nói với hệ thống rằng chúng tôi hỗ trợ nó, đã đến lúc làm việc với loại đó trong mã của chúng tôi.
+
+00:18:14.000 --> 00:18:21.000
+Phần này giả định rằng ít nhất bạn đã quen thuộc rộng rãi với API của mã định danh loại thống nhất trong khuôn khổ Dịch vụ cốt lõi.
+
+00:18:21.000 --> 00:18:25.000
+Ở đây chúng tôi có một chương trình nhỏ đi qua một thư mục hoặc một tập hợp các URL tệp.
+
+00:18:25.000 --> 00:18:34.000
+Nó lấy mã định danh loại thống nhất của mỗi tệp được đại diện và sau đó in mô tả bản địa hóa của mã định danh loại đó.
+
+00:18:34.000 --> 00:18:41.000
+Nếu tệp là một hình ảnh, nó sẽ vẽ nó ở đâu đó và nếu đó là một đoạn âm thanh, nó sẽ phát nó qua loa hoặc AirPods của người dùng.
+
+00:18:41.000 --> 00:18:45.000
+Ngay lập tức, có một số vấn đề có thể nhìn thấy ở đây.
+
+00:18:45.000 --> 00:18:51.000
+Chúng ta phải truyền các chuỗi của mình một cách rõ ràng đến CFStrings để sử dụng chúng với các hàm UTType toàn cầu.
+
+00:18:51.000 --> 00:18:57.000
+Và chúng tôi phải quản lý thủ công vòng đời của CFString mà chúng tôi nhận được từ UTTypeCopyDescription.
+
+00:18:57.000 --> 00:19:11.000
+Nhưng, và tôi rất vui khi được nói chuyện với bạn về điều này, trong iOS 14 và macOS Big Sur, chúng tôi đã giới thiệu một khung nhận dạng loại đồng phục hoàn toàn mới mang lại Swiftiness hạng nhất cho các số nhận dạng loại thống nhất.
+
+00:19:11.000 --> 00:19:19.000
+Nơi trước đây chúng tôi đã sử dụng CFStrings để đại diện cho số nhận dạng loại, giờ đây chúng tôi có thể sử dụng UTType để đại diện cho các loại và thuộc tính của chúng.
+
+00:19:19.000 --> 00:19:24.000
+Hãy xem qua mã này và chuyển đổi nó để sử dụng khuôn khổ mới.
+
+00:19:24.000 --> 00:19:36.000
+Tôi đã nhập khung để có quyền truy cập vào API mà nó chứa và bây giờ tôi sẽ thay đổi thuộc tính URL định danh loại thành contentType, có giá trị là một thể hiện của cấu trúc mới, UTType.
+
+00:19:36.000 --> 00:19:42.000
+Cấu trúc này gói gọn một định danh loại thống nhất cùng với siêu dữ liệu về nó.
+
+00:19:42.000 --> 00:19:45.000
+Tiếp theo, chúng tôi sẽ sửa giá trị chưa được giữ lại này.
+
+00:19:45.000 --> 00:19:48.000
+UTType có một thuộc tính mô tả được bản địa hóa.
+
+00:19:48.000 --> 00:19:55.000
+Các thuộc tính như thế này là một cách tự nhiên hơn nhiều để làm việc với các thuộc tính của loại và các hàm toàn cục.
+
+00:19:55.000 --> 00:20:02.000
+Giá trị của thuộc tính này tương ứng với chuỗi mô tả bạn đã nhập trong Xcode và được bản địa hóa khi bạn bản địa hóa ứng dụng của mình.
+
+00:20:02.000 --> 00:20:07.000
+Tiếp theo, hãy chuyển sang UTTypeConformsTo, một hàm toàn cục khác.
+
+00:20:07.000 --> 00:20:12.000
+Chức năng này lấy CFString, đòi hỏi phải có các diễn viên rõ ràng.
+
+00:20:12.000 --> 00:20:16.000
+Không có gì đáng ngạc nhiên, UTType có phương pháp phù hợp với thành viên.
+
+00:20:16.000 --> 00:20:20.000
+Nhưng đây là những gì: .hình ảnh và .âm thanh?
+
+00:20:20.000 --> 00:20:22.000
+Nhớ slide này không?
+
+00:20:22.000 --> 00:20:35.000
+Khi chúng tôi thiết kế khuôn khổ mới này, chúng tôi đã xem xét tập hợp các loại được khai báo bởi hệ thống cũng như tập hợp các hằng số CFString được hiển thị trong API cũ và chúng tôi đã đưa chúng vào khuôn khổ mới dưới dạng hằng số được đặt tên.
+
+00:20:35.000 --> 00:20:42.000
+Có hơn 120 hằng số như vậy được xác định trong khuôn khổ mới, bao gồm các loại được xác định hệ thống được sử dụng phổ biến nhất.
+
+00:20:42.000 --> 00:20:46.000
+Tất nhiên, trước đó trong phiên này, chúng tôi đã khai báo một số loại trong ứng dụng của mình.
+
+00:20:46.000 --> 00:20:51.000
+Sẽ thật tuyệt nếu chúng ta cũng có thể phơi bày các hằng số cho chúng?
+
+00:20:51.000 --> 00:20:55.000
+Hôm nay tôi chỉ có rất nhiều tin tốt, bởi vì bạn có thể làm chính xác điều đó.
+
+00:20:55.000 --> 00:21:01.000
+Chúng tôi có API để khai báo các hằng số được đặt tên cho các loại mà bạn xuất và cho các loại mà bạn nhập.
+
+00:21:01.000 --> 00:21:04.000
+Ngữ nghĩa có một chút khác biệt đối với mỗi ngữ nghĩa.
+
+00:21:04.000 --> 00:21:11.000
+Khi bạn xuất một loại, bạn đang nói, "Tôi sở hữu loại này. Tôi đã tạo ra nó. Ứng dụng của tôi là thẩm quyền cho loại này."
+
+00:21:11.000 --> 00:21:17.000
+Vì vậy, chúng tôi tiếp tục và tạo ra một phiên bản UTType cho bạn, an toàn khi biết rằng bạn biết mọi thứ về loại này.
+
+00:21:17.000 --> 00:21:27.000
+Khi bạn nhập một loại, bạn đang nói, "Tôi biết về loại này, nhưng ai đó khác có thể biết nhiều hơn tôi," và chủ sở hữu của loại đó có thể khai báo loại đó khác với bạn.
+
+00:21:27.000 --> 00:21:33.000
+Nếu điều đó xảy ra, chúng ta có thể thay thế loại đó một cách nhanh chóng trong các trường hợp sử dụng phổ biến nhất.
+
+00:21:33.000 --> 00:21:35.000
+Tuy nhiên, chúng tôi cần sự hợp tác của bạn.
+
+00:21:35.000 --> 00:21:49.000
+Thay vì khai báo các loại đã nhập của bạn dưới dạng hằng số, hãy khai báo chúng dưới dạng các biến được tính toán tĩnh, để nếu khai báo thay đổi do cài đặt ứng dụng, bạn sẽ tự động nhận loại cập nhật.
+
+00:21:49.000 --> 00:21:53.000
+Chúng tôi đã tích hợp hỗ trợ vào Xcode để phát hiện các vấn đề với các loại bạn khai báo.
+
+00:21:53.000 --> 00:22:01.000
+Chúng tôi có thể phát hiện nếu một loại đã xuất hoặc nhập bị thiếu trong Info.plist của bạn, hoặc nếu bạn đã sử dụng sai trình khởi tạo liên tục.
+
+00:22:01.000 --> 00:22:07.000
+Chúng tôi sẽ làm việc để cải thiện sự hỗ trợ theo thời gian và đầu vào của bạn sẽ là vô giá ở đây, vì vậy vui lòng cung cấp phản hồi.
+
+00:22:07.000 --> 00:22:13.000
+Một số khuôn khổ hỗ trợ API mới của chúng tôi trong iOS 14 và macOS Big Sur.
+
+00:22:13.000 --> 00:22:24.000
+Nền tảng có thuộc tính URL mà tôi vừa chỉ cho bạn và nó cũng có các tiện ích để tạo tên tệp được đề xuất dựa trên chuỗi hoặc URL và một phiên bản của UTType.
+
+00:22:24.000 --> 00:22:27.000
+SwiftUI có hỗ trợ rộng rãi cho UTType.
+
+00:22:27.000 --> 00:22:34.000
+Pasteboard và các API kéo và thả, chẳng hạn như trình xử lý sự kiện onDrop, chỉ sử dụng chúng.
+
+00:22:34.000 --> 00:22:39.000
+Và sự hỗ trợ mới của SwiftUI cho các ứng dụng dựa trên tài liệu được thiết kế để sử dụng UTType.
+
+00:22:39.000 --> 00:22:47.000
+Tôi khuyên bạn nên xem "Xây dựng ứng dụng dựa trên tài liệu trong SwiftUI" từ WWDC 20 để tìm hiểu thêm về nó.
+
+00:22:47.000 --> 00:22:52.000
+Khi sử dụng AppKit, NSWorkspace sẽ cho phép bạn nhận được một biểu tượng cho bất kỳ UTType nào.
+
+00:22:52.000 --> 00:22:56.000
+Và NSOpenPanel và NSSavePanel hỗ trợ UTTypes.
+
+00:22:56.000 --> 00:23:02.000
+UIkit hỗ trợ sử dụng UTTypes khi trình bày bộ chọn tài liệu và trình duyệt tài liệu.
+
+00:23:02.000 --> 00:23:06.000
+Và Core Spotlight cho phép bạn tạo một bộ thuộc tính từ UTType.
+
+00:23:06.000 --> 00:23:13.000
+Có một số API không hỗ trợ UTType trong bản phát hành này và bạn có thể thấy mình cần tương tác với chúng.
+
+00:23:13.000 --> 00:23:15.000
+Nó không khó.
+
+00:23:15.000 --> 00:23:23.000
+Nếu bạn cần chuyển một mã định danh loại thống nhất cho API, hãy lấy thuộc tính định danh của UTType và truyền nó đến CFString.
+
+00:23:23.000 --> 00:23:32.000
+Nếu bạn muốn chuyển đổi mã định danh loại thống nhất trở lại UTType, hãy truyền nó từ CFString sang String và khởi tạo UTType của bạn với chuỗi đó.
+
+00:23:32.000 --> 00:23:37.000
+Đây là một trình khởi tạo không thể thất bại, vì vậy đừng quên kiểm tra số không.
+
+00:23:37.000 --> 00:23:42.000
+Trong Objective-C, nó dài hơn một chút, nhưng ý tưởng thì giống nhau.
+
+00:23:42.000 --> 00:23:51.000
+Truyền mã định danh của UTType vào CFStringRef hoặc truyền CFString sang NSString và tạo UTType từ nó.
+
+00:23:51.000 --> 00:24:01.000
+Hôm nay chúng ta đã thấy cách hệ thống lấy được loại tệp từ siêu dữ liệu của nó và cách Apple gói gọn thông tin đó bằng cách sử dụng số nhận dạng loại thống nhất.
+
+00:24:01.000 --> 00:24:09.000
+Chúng tôi đã học cách khai báo và sử dụng các loại của riêng mình và cách tương tác với các loại có thể được chia sẻ giữa nhiều ứng dụng.
+
+00:24:09.000 --> 00:24:17.000
+Và chúng tôi đã giới thiệu một khung nhận dạng loại thống nhất mới cung cấp một cách hiện đại, hướng đối tượng để tương tác với các loại.
+
+00:24:17.000 --> 00:24:22.000
+Tôi mong muốn được xem cách bạn sử dụng kiến thức này và khuôn khổ mới để xây dựng các ứng dụng của mình.
+
+00:24:22.000 --> 23:59:59.000
+Cảm ơn bạn.
+

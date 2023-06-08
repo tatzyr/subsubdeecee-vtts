@@ -1,0 +1,273 @@
+110338
+
+♪ ♪
+
+Xin chào, tên tôi là Nik, và tôi là một kỹ sư trong nhóm Video.
+
+Hôm nay tôi rất vui được nói chuyện với bạn về việc xuất bản siêu dữ liệu phương tiện và tương tác phát lại.
+
+Vậy chính xác thì điều đó có nghĩa là gì?
+
+Có một số nơi trên các thiết bị Apple nơi thông tin phát lại được hiển thị và nơi phát lại có thể được kiểm soát.
+
+Ví dụ: phần Đang phát của Trung tâm điều khiển hiển thị tác phẩm nghệ thuật, tiêu đề và tiến trình cho phương tiện hiện đang phát trên thiết bị.
+
+Nó cũng cho phép bạn chơi, tạm dừng hoặc thậm chí bỏ qua tiến hoặc lùi.
+
+Mở rộng ô Đang phát hiển thị nhiều chi tiết hơn, như tác phẩm nghệ thuật và tiến trình.
+
+Nó cũng cho phép bạn chà và tăng hoặc giảm âm lượng.
+
+Màn hình khóa cũng hiển thị cùng một thông tin và điều khiển, mang đến cho người dùng một nơi thuận tiện để kiểm tra tiến trình, tạm dừng hoặc thậm chí AirPlay đến một thiết bị khác mà không cần mở khóa.
+
+Bất kể thiết bị nào đang phát, ứng dụng Đang phát trên Apple Watch cung cấp trải nghiệm tương tự.
+
+Nó thậm chí còn có một điều khiển từ xa Apple TV được tích hợp sẵn.
+
+Trên tvOS khi sử dụng AVKit, lớp phủ thông tin khi các điều khiển được trình bày sẽ hiển thị thông tin tiêu đề và chương.
+
+Khi bạn vuốt xuống ngăn thông tin, nhiều chi tiết hơn như tác phẩm nghệ thuật và mô tả sẽ được hiển thị.
+
+Giữ nút TV trên điều khiển từ xa Apple TV của bạn hiển thị Trung tâm điều khiển, giống như iOS có ô Đang phát cũng có thể được mở rộng.
+
+Khi nội dung âm thanh bắt đầu phát từ nền trên tvOS, có thể là từ việc nhấn nút phát trên điều khiển từ xa hoặc từ việc chọn một bản nhạc trong ứng dụng Âm nhạc từ một thiết bị khác, một thông báo với thông tin Đang phát sẽ được hiển bày.
+
+Ngoài ra, sau một thời gian ngắn không hoạt động trên tvOS khi phát âm thanh, một lớp phủ toàn màn hình hiển thị những gì hiện đang phát được trình bày.
+
+Cuối cùng, trên iOS, nút Control Other Speakers and TVs cho phép bạn xem thông tin Đang phát trên tất cả các thiết bị của mình, cũng như điều khiển phát lại.
+
+Với số lượng thiết bị và giao diện người dùng ngày càng tăng, nơi thông tin Đang phát được trình bày và nơi phát lại có thể được kiểm soát, việc xuất bản đúng thông tin Đang phát và phản hồi các lệnh từ xa quan trọng hơn bao giờ hết.
+
+Trong suốt phần còn lại của phiên này, chúng tôi sẽ đề cập đến việc phản hồi các tương tác phát lại dưới dạng lệnh từ xa, xuất bản siêu dữ liệu tự động, xuất bản với AVKit và xuất bản thủ công.
+
+Khi sử dụng AVFoundation để phát lại phương tiện, cách tốt nhất để xuất bản siêu dữ liệu Đang phát và phản hồi các tương tác phát lại là sử dụng lớp MPNowPlayingSession.
+
+Trong lịch sử, lớp học này chỉ có sẵn trên tvOS, nhưng hiện đã có sẵn trên iOS 16.
+
+Nó được sử dụng để đại diện cho một phiên phát lại riêng biệt và cung cấp quyền kiểm soát trạng thái Đang phát nếu ứng dụng của bạn chứa nhiều phiên đang hoạt động.
+
+Nó hỗ trợ cả xuất bản siêu dữ liệu thủ công, cũng như xuất bản tự động mới có sẵn trong iOS và tvOS 16.
+
+MPNowPlayingSession không nên được sử dụng trên tvOS khi sử dụng AVKit, có cơ chế xuất bản tự động riêng mà chúng tôi sẽ đề cập sau trong phiên.
+
+Là ứng dụng "Đang phát" có nghĩa là ứng dụng của bạn sẽ điền vào Trung tâm điều khiển, Màn hình khóa, v.v. và nhận các điều khiển phát lại khi người dùng, ví dụ, nhấn tạm dừng từ một trong các giao diện đó.
+
+Với MPNowPlayingSession, bạn có thể đại diện cho nhiều phiên phát lại đồng thời trong một ứng dụng duy nhất.
+
+Tuy nhiên, khi sử dụng nhiều phiên, ứng dụng của bạn phải quảng bá một phiên hoạt động sẽ xuất hiện trên toàn hệ thống khi điều khiển từ xa ứng dụng của bạn.
+
+Ví dụ, với Picture in Picture, bạn có thể có hai phiên phát lại đồng thời, trong đó phát lại toàn màn hình nên được coi là phiên Đang phát đang hoạt động.
+
+Hệ thống cũng có một vài heuristics để đủ điều kiện cho các ứng dụng đủ điều kiện Now Playing.
+
+Đầu tiên, bạn phải đăng ký trình xử lý cho ít nhất một lệnh từ xa.
+
+Như bạn có thể tưởng tượng, một ứng dụng sẽ không phản hồi với bất kỳ tương tác phát lại nào rất có thể không phải là một ứng cử viên lý tưởng để hiển thị dưới dạng ứng dụng Đang phát.
+
+Thứ hai, ứng dụng AVAudioSession của bạn phải được cấu hình với tùy chọn danh mục và danh mục không thể trộn lẫn.
+
+Các danh mục và tùy chọn phát lại có thể trộn thường được sử dụng khi phát lại thông báo, và do đó đây là một dấu hiệu tốt cho hệ thống rằng bất cứ thứ gì đang phát cũng không phải là ứng cử viên tốt cho Đang phát.
+
+Đây là một vài ví dụ để giúp hiểu các phiên phát lại.
+
+Trong ví dụ này có một phần nội dung duy nhất đang phát, vì vậy điều này sẽ được thể hiện bằng cách sử dụng một MPNowPlayingSession duy nhất.
+
+Nếu ứng dụng của bạn hỗ trợ PiP, bạn sẽ có hai MPNowPlayingSessions: một cho trình phát chính và một cho phát lại PiP.
+
+Một kịch bản phức tạp hơn sẽ là một MPNowPlayingSession duy nhất có nhiều người chơi.
+
+Trong ví dụ này, chúng tôi có bốn người chơi, một người trong mỗi góc phần tư, thể hiện các quan điểm khác nhau cho cùng một cuộc đua.
+
+Các trình phát được thêm vào cùng một MPNowPlayingSession phải luôn là một phần của cùng một nội dung.
+
+Và đây là cách mỗi phiên ví dụ này sẽ được khởi tạo.
+
+Đầu tiên, chúng tôi chỉ chơi một phần nội dung duy nhất, vì vậy chúng tôi có một phiên duy nhất với người chơi đơn.
+
+Ví dụ thứ hai là sử dụng Picture-in-Picture, vì vậy chúng tôi có hai phiên, mỗi phiên có một người chơi duy nhất.
+
+Đầu tiên là nội dung toàn màn hình, và thứ hai là nội dung trong PiP.
+
+Ví dụ cuối cùng, cuộc đua đa chế độ xem, được thể hiện bằng một phiên duy nhất với bốn người chơi.
+
+Khi một ứng dụng có nhiều phiên, đó là trách nhiệm của ứng dụng trong việc quảng bá một phiên nhất định là hoạt động khi áp dụng.
+
+Ví dụ: nếu phương tiện đang phát trong Picture-in-Picture, nếu người dùng mở rộng nó thành toàn màn hình, phiên toàn màn hình trước đó sẽ không còn hoạt động hoặc Đang phát và phiên PiP hiện đang ở chế độ toàn màn hình sẽ hoạt động.
+
+Quá trình chuyển đổi này có thể được thực hiện bằng cách gọi becomeActiveIfPossible trên MPNowPlayingSession.
+
+Bây giờ chúng ta đã đề cập đến những điều cơ bản về thiết lập các phiên bản MPNowPlayingSession và kiểm soát phiên Đang phát, hãy nói về việc nhận và phản hồi các lệnh từ xa, có thể là từ Màn hình khóa hoặc từ HomePod ở phòng khác.
+
+Hãy bắt đầu với một ví dụ cơ bản về việc đăng ký lệnh phát và tạm dừng.
+
+Làm như vậy sẽ cho phép ứng dụng của bạn nhận cuộc gọi lại khi người dùng nhấn phát hoặc tạm dừng từ một thiết bị khác hoặc phát hành lệnh đó bằng Siri.
+
+Đầu tiên, chúng tôi khởi tạo MPNowPlayingSession của mình.
+
+Vì chúng tôi chỉ có một phiên, chúng tôi không cần gọi phương thức 'becomeActiveIfPossible'.
+
+Khi bạn chỉ có một phiên, nó sẽ là phiên mặc định khi ứng dụng của bạn là ứng dụng Đang phát.
+
+Mỗi phiên bản MPNowPlayingSession có phiên bản MPRemoteCommandCenter riêng, được sử dụng để khai báo những lệnh từ xa mà phiên phát lại của bạn có thể phản hồi.
+
+Tiếp theo, chúng tôi thêm một trình xử lý cho lệnh play, nơi chúng tôi gọi phương thức chơi trên trình phát của mình và trả lại thành công.
+
+Sau đó chúng tôi làm điều tương tự cho lệnh tạm dừng.
+
+Bạn nên thêm trình xử lý cho mọi lệnh mà ứng dụng của bạn hỗ trợ và có thể áp dụng cho nội dung hiện đang phát.
+
+Một ví dụ khác là lệnh bỏ qua tiến và bỏ qua lùi.
+
+Lệnh này nên được sử dụng cho hầu hết nội dung và sẽ không thể áp dụng được, ví dụ, các luồng trực tiếp khi không thể nhảy về phía trước.
+
+Đầu tiên chúng ta phải chỉ ra khoảng thời gian ưa thích của chúng ta là gì, hoặc số giây chúng ta muốn nhảy theo một trong hai hướng.
+
+Trong trường hợp này, chúng tôi sử dụng 15 giây.
+
+Sau đó, tương tự như những gì chúng tôi đã làm cho các lệnh phát và tạm dừng, chúng tôi thêm một trình xử lý sẽ được gọi khi người dùng nhấn nút bỏ qua chuyển tiếp hoặc yêu cầu Siri bỏ qua về phía trước.
+
+Trong trình xử lý của chúng tôi, chúng tôi sẽ nhận được MPSkipIntervalCommandEvent, vì vậy trước tiên chúng tôi sẽ chuyển sự kiện sang loại đó.
+
+Sau đó, chúng tôi tính toán thời gian đã trôi qua mới bằng cách lấy thời gian hiện tại và khoảng thời gian được cung cấp cho chúng tôi trong MPSkipIntervalCommandEvent, tìm kiếm nó và trả lại thành công để chỉ ra rằng chúng tôi đã nhảy lên vị trí mới.
+
+Cũng có thể ứng dụng của bạn có các tình huống mà lệnh tạm thời không được phép, ví dụ như bỏ qua khi ở trong quảng cáo.
+
+Trong trường hợp đó, skipForwardCommand có thể bị vô hiệu hóa.
+
+Bây giờ chúng tôi đang phản hồi các lệnh từ xa, chúng tôi sẽ đề cập đến việc xuất bản siêu dữ liệu tự động.
+
+Xuất bản tự động giúp bạn hết sức trong việc giữ siêu dữ liệu chính xác bằng cách tự động duy trì các thuộc tính siêu dữ liệu mà nó có thể quan sát trực tiếp từ trình phát như thời lượng, thời gian đã trôi qua hiện tại, trạng thái phát lại và tiến trình phát lại.
+
+Nếu nội dung có quảng cáo được đưa vào đó mà không nên đóng góp vào tổng thời lượng và thời gian đã trôi qua, nó cũng có thể tính toán thời gian ròng và thay vào đó báo cáo điều đó.
+
+Siêu dữ liệu khác như tiêu đề, mô tả và tác phẩm nghệ thuật có thể được thêm vào AVPlayerItems trực tiếp bằng cách sử dụng thuộc tính nowPlayingInfo.
+
+Trong ví dụ này, chúng tôi sẽ sử dụng xuất bản tự động để thực hiện phần lớn công việc và tự đặt tiêu đề và tác phẩm nghệ thuật.
+
+Đầu tiên, chúng tôi tạo một phiên bản MPMediaItemArtwork mới, chuyển hình ảnh tác phẩm nghệ thuật.
+
+Hầu hết các ứng dụng sẽ thực hiện một yêu cầu mạng để tìm nạp cái này.
+
+Sau đó chúng tôi đặt tiêu đề chuỗi của nội dung.
+
+Sau đó, chúng tôi lấy tác phẩm nghệ thuật và tiêu đề của mình và đặt chúng làm từ điển nowPlayingInfo trên mục trình phát hiện tại bằng MPMediaItemPropertyTitle và MPMediaItemPropertyArtwork.
+
+Siêu dữ liệu Đang phát có thể bao gồm cả MPMediaItemProperty's và MPNowPlayingInfoProperty's.
+
+Cuối cùng, chúng tôi tạo phiên bản MPNowPlayingSession chuyển trong trình phát của chúng tôi và đặt tự động Xuất bảnNowPlayingInfo thành true.
+
+Khi tự động xuất bảnNowPlayingInfo được đặt thành true, phiên bản MPNowPlayingSession sẽ bắt đầu quan sát trình phát để thay đổi trạng thái như xóa, sự kiện phát/tạm dừng hoặc thay đổi mục trình phát hiện tại.
+
+Đây là một ví dụ khác mà chúng tôi sẽ chỉ ra cách sử dụng xuất bản tự động cho các trường hợp quảng cáo được đưa vào nội dung và bạn không muốn tổng thời lượng hoặc thời gian đã trôi qua hiện tại bao gồm thời gian quảng cáo.
+
+Để làm điều này, chúng tôi sẽ tạo các phiên bản của MPAdTimeRange cho mọi quảng cáo mà chúng tôi đã đưa vào.
+
+Trong ví dụ này, chúng tôi có một quảng cáo 30 giây duy nhất bắt đầu ngay từ đầu.
+
+Vì vậy, chúng tôi tạo ra nó với điểm bắt đầu bằng 0 và thời lượng 30 giây.
+
+Tương tự như cách chúng tôi thực hiện tiêu đề và tác phẩm nghệ thuật trước đó, chúng tôi chỉ cần thêm một mảng MPAdTimeRange vào từ điển nowPlayingInfo trên mục trình phát bằng MPNowPlayingInfoPropertyAdTimeRanges.
+
+Sau đó, giống như chúng tôi đã làm trước đây, tạo MPNowPlayingSession và cho phép xuất bản tự động.
+
+Tiếp theo là xuất bản siêu dữ liệu với AVKit.
+
+Xuất bản siêu dữ liệu Đang phát với AVKit trên tvOS hoạt động rất giống với MPNowPlayingSession: siêu dữ liệu được thêm trực tiếp vào AVPlayerItem và các giá trị như thời gian đã trôi qua, thời lượng và trạng thái phát lại được xuất bản và cập nhật cho bạn.
+
+Siêu dữ liệu được thu thập trực tiếp từ trình phát và tài sản, kết hợp với siêu dữ liệu do ứng dụng của bạn cung cấp trên AVPlayerItem cũng được sử dụng để điền vào ngăn thông tin trong giao diện người chơi.
+
+AVKit cũng đảm nhận việc đăng ký và phản hồi các lệnh từ xa.
+
+Sử dụng AVKit là cách tốt nhất và dễ dàng nhất để tích hợp với các tính năng nền tảng mà chúng ta đã thảo luận cho đến nay, cũng như các tính năng khác như AirPlay và Picture-in-Picture.
+
+Cài đặt siêu dữ liệu khi sử dụng AVKit được thực hiện bằng cách sử dụng mảng externalMetadata trên AVPlayerItem, bao gồm các phiên bản AVMetadataItem để mô tả nội dung của bạn.
+
+Bạn thường thiết lập ba giá trị trên mỗi AVMetadataItem.
+
+Đầu tiên, mã định danh, là chìa khóa để chỉ ra siêu dữ liệu mà AVMetadataItem đại diện.
+
+Ví dụ, AVMetadataCommonIdentifierTitle cho tiêu đề nội dung, hoặc AVMetadataCommonIdentifierArtwork cho tác phẩm nghệ thuật.
+
+Thứ hai là giá trị.
+
+Đối với tiêu đề, đây sẽ là một chuỗi chứa tiêu đề.
+
+Đối với tác phẩm nghệ thuật, đây sẽ là một phiên bản NSData chứa dữ liệu hình ảnh.
+
+DataType được sử dụng để chỉ ra định dạng của tác phẩm nghệ thuật được cung cấp.
+
+Nếu nó chứa dữ liệu JPEG, kCMMetadatabaseDataType_JPEG sẽ được sử dụng.
+
+Cuối cùng, extendedLanguageTag được sử dụng để chỉ ra ngôn ngữ được sử dụng cho các chuỗi như tiêu đề và mô tả.
+
+Hầu hết thời gian, giá trị "und" nên được sử dụng ở đây để đảm bảo tất cả khán giả đều nhìn thấy các giá trị giống nhau.
+
+Bạn có thể bị cám dỗ sử dụng "en-us" nếu các giá trị bằng tiếng Anh, nhưng làm như vậy sẽ khiến các thiết bị có ngôn ngữ được đặt thành bất kỳ ngôn ngữ nào khác như tiếng Tây Ban Nha không hiển thị siêu dữ liệu.
+
+Ở đây chúng tôi có một ví dụ trong đó chúng tôi đang thiết lập tác phẩm nghệ thuật và tiêu đề.
+
+Đầu tiên, chúng tôi lấy dữ liệu hình ảnh tác phẩm nghệ thuật từ gói của chúng tôi.
+
+Hầu hết các ứng dụng sẽ tìm nạp cái này từ một tài nguyên mạng.
+
+Sau đó, chúng tôi khởi tạo một AVMetadataItem có thể thay đổi mới.
+
+Chúng tôi đặt mã định danh thành .commonIdentifierArtwork.
+
+Sau đó, chúng tôi đặt giá trị làm dữ liệu hình ảnh tác phẩm nghệ thuật thô là NSData.
+
+Vì dữ liệu hình ảnh là JPEG, chúng tôi đặt dataType thành kCMMetadataBaseDataType_JPEG.
+
+Nếu tác phẩm nghệ thuật của bạn thay vào đó là PNG, bạn sẽ sử dụng kCMMetadataBaseDataType_PNG.
+
+Bởi vì chúng tôi muốn siêu dữ liệu này hiển thị cho người dùng với các thiết bị được đặt thành bất kỳ ngôn ngữ nào, chúng tôi đặt extendedLanguageTag thành "und" hoặc "undefined".
+
+Sau đó, chúng tôi lặp lại các bước tương tự cho tiêu đề, sử dụng .commonIdentifierTitle và tiêu đề chuỗi cho giá trị và "und" một lần nữa cho ExtendedLanguageTag.
+
+Khi chúng tôi đã thiết lập tất cả các mục siêu dữ liệu của mình, chúng tôi thêm chúng vào một mảng và đặt nó thành thuộc tính externalMetadata của AVPlayerItem.
+
+Bây giờ chúng tôi đã thêm tác phẩm nghệ thuật và tiêu đề vào vật phẩm của người chơi, bạn có thể xem cách ánh xạ này đến những gì được hiển thị trong Trung tâm điều khiển và Màn hình khóa trên iOS.
+
+Giống như tác phẩm nghệ thuật, có các loại siêu dữ liệu khác có thể được đặt như mô tả, thông tin phụ đề và xếp hạng nội dung.
+
+Ứng dụng của bạn nên đặt càng nhiều trong số này càng tốt để cung cấp cho người dùng trải nghiệm phong phú nhất có thể.
+
+Cho đến nay chúng tôi đã đề cập đến xuất bản tự động với MPNowPlayingSession và xuất bản với AVKit.
+
+Nhưng MPNowPlayingSession và tính năng xuất bản tự động của nó yêu cầu chuyển một phiên bản AVPlayer cho nó.
+
+Đó có thể không phải là một lựa chọn cho tất cả các ứng dụng và vẫn có thể xuất bản thủ công.
+
+Xuất bản thủ công yêu cầu bạn cung cấp các giá trị cho tất cả siêu dữ liệu.
+
+Không giống như xuất bản tự động, thông tin như thời gian đã trôi qua và tốc độ phát lại không thể được xác định bởi hệ thống cho bạn.
+
+Điều này có nghĩa là bạn có khả năng kiểm soát hạt mịn thủ công đối với trạng thái phát lại mức thấp và ứng dụng của bạn có trách nhiệm giữ cho nó chính xác theo thời gian khi phát lại thay đổi.
+
+Lưu ý rằng việc đăng ký và phản hồi các lệnh từ xa vẫn được yêu cầu và vì chúng tôi không sử dụng MPNowPlayingSession, phiên bản được chia sẻ của MPRemoteCommandCenter phải được sử dụng.
+
+Đây là một ví dụ cơ bản cho thấy cách cập nhật từ điển Thông tin Đang phát.
+
+Đầu tiên, chúng tôi tạo một phiên bản MPMediaItemArtwork chứa hình ảnh, tương tự như những gì chúng tôi đã làm để xuất bản tự động.
+
+Sau đó, chúng tôi tạo một từ điển chứa siêu dữ liệu mà chúng tôi có sẵn.
+
+Trong trường hợp này, chúng tôi đặt tiêu đề, tác phẩm nghệ thuật và giá trị người chơi thời lượng, thời gian đã trôi qua và tốc độ phát lại.
+
+Sau đó chúng tôi đặt nó trên phiên bản mặc định MPNowPlayingInfoCenter.
+
+Các bản cập nhật cho siêu dữ liệu này nên được thực hiện bất cứ khi nào có những thay đổi đáng kể xảy ra trong quá trình phát lại, chẳng hạn như phát hoặc tạm dừng, người dùng quét tiến hoặc lùi hoặc một phần nội dung mới bắt đầu phát.
+
+Bạn không cần phải cập nhật thời gian đã trôi qua định kỳ.
+
+Hệ thống sẽ luôn suy ra thời gian đã trôi qua chính xác dựa trên thời gian đã trôi qua kể từ lần cập nhật cuối cùng.
+
+Bây giờ bạn đã quen thuộc với tất cả các cách khác nhau để xuất bản siêu dữ liệu Đang phát và phản hồi các lệnh từ xa từ các thiết bị và giao diện khác, bạn nên tích hợp để tối đa hóa trải nghiệm người dùng.
+
+Nó dễ dàng hơn bao giờ hết.
+
+Các tích hợp hiện tại cũng có thể mang lại lợi ích - chuyển sang xuất bản tự động là một cách dễ dàng để ngăn chặn hồi quy trong tương lai và giảm thiểu số lượng mã bạn phải duy trì.
+
+Để biết thêm thông tin, hãy xem MediaPlayer trên developer.apple.com.
+
+Cảm ơn vì đã xem.

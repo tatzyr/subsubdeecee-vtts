@@ -1,0 +1,203 @@
+605
+
+Raster Order Groups là một tính năng mới trong Metal 2 và chúng tôi đã mở rộng thêm nó đặc biệt cho GPU A11 mới.
+
+Video này là một trong năm video mô tả khả năng GPU mới của A11.
+
+Để tận dụng tối đa nó, bạn sẽ muốn xem các video trước đó trên Imageblocks và Tile Shaders.
+
+Tôi sẽ bắt đầu với một đánh giá ngắn gọn về Raster Order Groups như đã có sẵn trong Metal 2, trước khi chuyển sang các khả năng mới của A11 mới.
+
+Nhóm thứ tự Raster là một tính năng yêu cầu GPU thực thi một phần các luồng đổ bóng phân đoạn của bạn theo thứ tự với các luồng khác chồng chéo lên nó.
+
+Thứ tự này xuất phát từ thứ tự gửi của các cuộc gọi rút thăm của bạn trong một renderpass và thứ tự của mỗi tam giác trong cuộc gọi vẽ đó.
+
+Sự chồng chéo được xác định bởi Rasterizer.
+
+Hai luồng phân đoạn được xác định trùng lặp nếu chúng nhắm mục tiêu vào cùng một vị trí bộ đệm khung X và Y, cùng một mẫu và cùng một lớp.
+
+Ví dụ, hai mảnh vỡ sẽ được coi là chồng chéo lên nhau nếu cả hai đều kiểm tra độ sâu đối với cùng một mẫu đệm độ sâu.
+
+Đây là một trường hợp điển hình của hai tam giác, với tam giác màu xanh lam đầu tiên và tam giác màu xanh lá cây thứ hai.
+
+Để truy cập vào bộ đệm khung đồ họa cổ điển, pha trộn luôn là thứ mà GPU thực hiện theo thứ tự.
+
+GPU sẽ không đột nhiên trộn lẫn tam giác màu xanh lá cây ở phía sau, vì các biến thể lập lịch từ khung này sang khung khác.
+
+Nhưng các bộ đổ bóng phân mảnh sẽ thực hiện đồng thời và không theo thứ tự.
+
+Không có các nhóm thứ tự raster, công việc chỉ được tuần tự hóa sau khi đổ bóng phân đoạn hoàn tất, nhưng trước khi trộn.
+
+Nhưng nếu bạn không hòa nhập vào bộ đệm khung thì sao?
+
+Nhiều phát triển gần đây trong các thuật toán đồ họa cố gắng xây dựng các cấu trúc dữ liệu thú vị hơn từ các bộ đổ bóng phân đoạn của bạn.
+
+Có nhiều mã hóa nhiều lớp để xử lý hậu kỳ tốt hơn hoặc minh bạch độc lập với đơn hàng.
+
+Có voxelization, và các chức năng pha trộn mục đích đặc biệt.
+
+Tất cả những thứ này được xây dựng trên các bộ đổ bóng phân đoạn đang lưu trữ dữ liệu vào các cấu trúc dữ liệu tùy chỉnh trong bộ nhớ, thay vì chỉ pha trộn màu thành kết cấu đầu ra.
+
+Nhưng nếu truy cập trực tiếp vào bộ nhớ từ phần thân của bộ đổ bóng phân đoạn của bạn có thể xảy ra theo bất kỳ thứ tự nào, bất cứ lúc nào và đồng thời, điều đó bị hạn chế nghiêm trọng.
+
+Đối phó với các cuộc đua dữ liệu đó đã khiến việc triển khai hiện tại của các thuật toán đó đắt hơn nhiều so với trước đây.
+
+Những gì chúng tôi thực sự muốn là có được hành vi có trật tự giống như pha trộn đó, nhưng không phải sau khi kết thúc bộ đổ bóng phân đoạn của chúng tôi, mà là bên trong nó.
+
+Chúng tôi thực sự muốn ảo tưởng rằng việc truy cập bộ nhớ của chúng tôi đang diễn ra theo thứ tự.
+
+Đó là những gì Raster Order Groups làm.
+
+Nó cho phép bạn chú thích các con trỏ của mình vào bộ nhớ với Nhóm Thứ tự Raster.
+
+Việc truy cập thông qua các con trỏ đó sau đó được thực hiện theo thứ tự gửi trên mỗi pixel.
+
+Phần cứng sẽ đợi bất kỳ Chủ đề Shader Mảnh vỡ cũ hơn nào trùng với luồng hiện tại kết thúc trước khi luồng hiện tại được phép tiếp tục.
+
+Điều này mang lại cho bạn sự loại trừ lẫn nhau một cách hiệu quả, nhưng tốt hơn.
+
+Nó cung cấp loại trừ lẫn nhau có thứ tự, nơi bạn biết chủ đề nào sẽ đi vào phần quan trọng trước và chủ đề nào sẽ làm như vậy sau.
+
+Tính năng này đã được trình bày chi tiết hơn tại WWDC 2017 trong phiên Giới thiệu Metal 2, vì vậy nếu bạn muốn tìm hiểu sâu hơn, bạn có thể xem video đó.
+
+Vì vậy, với những điều cơ bản được đề cập, hãy chuyển sang những gì mới trong GPU A11.
+
+Nhóm thứ tự Raster hữu ích hơn, mạnh mẽ hơn và hoạt động cao hơn trên A11.
+
+Đầu tiên, A11 hiển thị bộ nhớ lát gạch bên trong của GPU.
+
+Cũng giống như truy cập thiết bị và kết cấu, bộ nhớ gạch sẽ hữu ích hơn rất nhiều nếu bạn có thể truy cập nó theo thứ tự có thể dự đoán được, và vì vậy Nhóm thứ tự Raster giờ đây cũng có thể áp dụng cho bộ nhớ gạch.
+
+Thứ hai, trong đó Nhóm thứ tự Raster trên các GPU khác chỉ giới hạn ở một mutex trên mỗi pixel, A11 có thể chi tiết hơn thế, cho phép chạm nhẹ hơn và giảm thiểu tần suất luồng của bạn đang chờ truy cập.
+
+Tôi muốn chỉ cho bạn một cặp ví dụ minh họa cách sử dụng những khả năng này để mở khóa hiệu suất mới trong một số thuật toán đồ họa phổ biến.
+
+Ví dụ đầu tiên là bóng râm hoãn lại cổ điển.
+
+Trên GPU truyền thống, việc trì hoãn đổ bóng được thực hiện trong hai lần.
+
+Đầu tiên điền vào G-Buffer và xuất ra nhiều kết cấu, và sau đó là kết xuất thứ hai đọc từ các kết cấu đó, hiển thị khối lượng ánh sáng và tính toán kết quả đổ bóng.
+
+Nhưng việc che bóng bị trì hoãn có xu hướng đốt cháy rất nhiều băng thông bộ nhớ.
+
+Một khả năng tuyệt vời của GPU dòng A của chúng tôi là giữ càng nhiều băng thông càng tốt trên chip, loại bỏ các kết cấu trung gian này bằng cách kết hợp cả hai đường vào một, giữ G-Buffer trong các khối có kích thước lát gạch hoàn toàn với một khối hình ảnh trong GPU.
+
+Cả hai nhiệm vụ này đều trở thành các giai đoạn của một renderpass.
+
+Bạn có thể thấy sâu hơn nhiều về cách xây dựng các RenderRasses kết hợp này trong các video A11 Imageblock và Tile Shading, trong khi video này sẽ chỉ tập trung vào các khía cạnh đồng bộ hóa.
+
+Hiệu suất của bóng mờ hoãn lại một lần thậm chí còn tốt hơn bằng cách tận dụng nhiều Nhóm thứ tự Raster.
+
+Để xem xét điều đó, chúng ta hãy tìm hiểu một số chi tiết của Giai đoạn số hai: Ánh sáng.
+
+Quá trình chiếu sáng cơ bản của chúng tôi bắt đầu bằng cách vẽ một khối lượng bao gồm ảnh hưởng của ánh sáng, tạo ra các sợi đổ bóng mảnh.
+
+Mỗi luồng đang áp dụng hiệu quả một ánh sáng cho một điểm ảnh.
+
+Chuỗi Ánh sáng của chúng tôi bắt đầu bằng cách đọc các trường G-Buffer.
+
+Trên GPU dòng A, bạn sẽ muốn đọc điều này trực tiếp từ một khối hình ảnh, đây là bộ nhớ nhanh nhất hiện có.
+
+Sau đó, bạn sẽ thực hiện mô hình đổ bóng đã chọn của mình, thường khá nhiều phép toán và có thể mất một chút thời gian để thực hiện.
+
+Cuối cùng, bạn sẽ tổng hợp sự đóng góp của ánh sáng này trở lại khối hình ảnh.
+
+Một bước rất nhanh.
+
+Sau đó, chúng ta có một ánh sáng thứ hai được áp dụng bởi một sợi thứ hai.
+
+Đối với việc triển khai đổ bóng hoãn lại một lần trước A11, nó sẽ trông giống như thế này.
+
+Bạn có thể thấy thứ tự được áp dụng cho lần đọc đầu tiên từ khối hình ảnh, buộc toàn bộ việc thực hiện hai đèn này phải chạy nối tiếp.
+
+Điều này là do một GPU chỉ hỗ trợ một Nhóm Thứ tự Raster duy nhất phải đợi tất cả các truy cập từ các luồng trước để hoàn thành trước khi bất kỳ quyền truy cập nào từ các luồng sau có thể bắt đầu.
+
+Điều này áp dụng ngay cả khi cả hai quyền truy cập đều là những lần đọc không thực sự xung đột với nhau.
+
+Sự hỗ trợ của A11 cho nhiều Nhóm Thứ tự Raster giúp loại bỏ sự đồng bộ hóa quá mức này.
+
+Nhiều nhóm cho phép bạn chạy đồng thời các lần đọc không xung đột này và chỉ đồng bộ hóa ở đầu rất ngắn của bộ đổ bóng tích lũy kết quả.
+
+Bạn có thể đạt được điều này bằng cách tuyên bố ba trường G-Buffer của chúng tôi nằm trong một nhóm và kết quả ánh sáng tích lũy của chúng tôi nằm trong nhóm thứ hai.
+
+Phần cứng bây giờ có thể đặt hàng chúng riêng biệt.
+
+Các bài viết nổi bật vào một nhóm không yêu cầu việc đọc trong một nhóm khác phải chờ đợi.
+
+Nhiều độc giả trong một nhóm không phải đợi nhau.
+
+Điều này có nghĩa là nhiều luồng hơn có thể đủ điều kiện để chạy tại bất kỳ thời điểm nào, cho phép song song hơn và cải thiện hiệu suất, vượt xa những gì bạn nhận được bằng cách giữ G-Buffers của mình trên chip ngay từ đầu.
+
+Mã cũng đơn giản như vậy.
+
+Ba trường G-Buffer của tôi được đọc và viết cùng một lúc, và vì vậy tôi sẽ chú thích tất cả chúng để đưa chúng vào nhóm số không.
+
+Bộ tích lũy được đọc và viết vào một thời điểm khác, và vì vậy tôi sẽ chú thích nó vào nhóm một.
+
+Theo như việc nhận con nuôi, đó thực sự là về nó.
+
+Raster Order Groups là một khả năng cực kỳ dễ dàng để bắt đầu sử dụng.
+
+Đến ví dụ thứ hai.
+
+Tôi sẽ làm cho ví dụ đổ bóng hoãn lại của chúng ta phức tạp hơn bằng cách thêm một giai đoạn khác.
+
+Sau khi tôi có một phiên bản sáng của nội dung mờ đục của mình, tôi sẽ thêm một giai đoạn trong suốt vào hỗn hợp, được tô bóng về phía trước và xấp xỉ thứ tự pha trộn ngược lại phía trước.
+
+Một cách để làm điều đó, mà A11 thực sự giỏi, là khai báo khối hình ảnh của chúng tôi để lưu trữ một mảng các cặp màu sắc và độ sâu.
+
+Mỗi đoạn bóng chuyển tiếp thêm một mục nhập vào mảng này với một số xử lý tràn.
+
+Và ở cuối ô của tôi, tôi sẽ sắp xếp và trộn ngược lại phía trước, sử dụng độ sâu đã lưu, cho phép trộn từ sau ra trước.
+
+Vì vậy, đây là một dòng thời gian thể hiện tuổi thọ của một ô và khối hình ảnh của nó từ trái sang phải.
+
+Tôi bắt đầu với khối hình ảnh của A11 được đặt ra để trì hoãn việc che bóng, và tôi kết thúc với màu mờ đục của mình.
+
+Cuối cùng, tôi có giai đoạn trong suốt của mình, nơi tôi đang xây dựng và sau đó sắp xếp các mảng màu sắc và chiều sâu của mình.
+
+Trong mỗi lần vượt qua này, Raster Order Groups sẽ kiểm soát mức độ song song có thể xảy ra giữa các luồng phân đoạn.
+
+Vì lý do hiệu suất, tôi thực sự muốn hai thao tác này là một renderpass.
+
+Tôi không muốn lưu bất cứ thứ gì vào bộ nhớ thiết bị chỉ để tải lại nó sau.
+
+Nhưng khai báo khối hình ảnh cực kỳ khác biệt giữa phần đầu tiên và phần thứ hai của cảnh của tôi, cả về loại dữ liệu và phân công Raster Order Group.
+
+A11 có thể thực hiện quá trình chuyển đổi này với một bước từ phía bạn.
+
+Để thu hẹp khoảng cách giữa các giai đoạn này, bạn cần đặt một bộ đổ bóng gạch ở giữa.
+
+Bộ đổ bóng ô là một nhóm luồng tính toán có thể truy cập toàn bộ bộ nhớ ô và khối hình ảnh.
+
+Bộ đổ bóng ô có hành vi là chúng không khởi chạy cho đến khi tất cả các luồng đổ bóng phân đoạn trước đó hoàn thành, bất kể khai báo của Nhóm Đơn đặt hàng Raster.
+
+Điều này cho phép bạn yên tâm rằng nhóm luồng đổ bóng gạch này có quyền truy cập độc quyền vào bộ nhớ này.
+
+Với bộ đổ bóng gạch, bạn có thể đọc và viết toàn bộ ô, định dạng lại nó theo ý muốn và đặc biệt, đọc từ khối hình ảnh thông qua loại gửi đi cũ của nó và khởi tạo lại nội dung của khối hình ảnh bằng cách sử dụng loại mới của nó.
+
+Giống như các trình đổ bóng gạch có một rào cản đầy đủ trước khi chúng thực hiện, chúng cũng có một rào cản đầy đủ sau khi chúng thực hiện.
+
+Không có chuỗi đổ bóng phân đoạn tiếp theo nào sẽ truy cập bộ nhớ cho đến khi bộ đổ bóng gạch hoàn thành đầy đủ, bất kể bạn đã thiết lập Nhóm thứ tự Raster như thế nào trong giai đoạn sau.
+
+Điều này có nghĩa là bạn có thể dựa vào việc khởi tạo này được hoàn thành trước khi công việc minh bạch bắt đầu.
+
+Yêu cầu ở đây khá đơn giản.
+
+Nếu bạn muốn sắp xếp lại nội dung khối hình ảnh của mình hoặc thay đổi trường mà Nhóm thứ tự Raster bảo vệ, bạn cần đặt một bộ đổ bóng gạch ở giữa để làm cho quá trình chuyển đổi đó được sắp xếp hợp và an toàn.
+
+Một số đoạn mã mẫu mà chúng tôi đang xuất bản cho A11 cho thấy trình tự này trong thực tế.
+
+Vì vậy, đó thực sự là tất cả để sử dụng khả năng mở rộng của Raster Order Groups trên A11.
+
+Bạn đã thấy cách Raster Order Groups thậm chí còn linh hoạt hơn trên A11 so với bất kỳ GPU nào khác.
+
+Phần cứng hỗ trợ nhiều nhóm, có thể loại bỏ đồng bộ hóa quá mức và cải thiện hiệu suất.
+
+Chúng hoạt động song song với quyền truy cập của bộ đổ bóng phân đoạn của A11 vào bộ nhớ gạch và bạn có thể sử dụng bộ đổ bóng gạch để thay đổi hoàn toàn ký tự của các khối hình ảnh của mình, bao gồm cấu hình Nhóm thứ tự Raster, ngay giữa đường chuyền kết xuất của bạn.
+
+Kết hợp tất cả lại với nhau, điều này cho phép bạn xây dựng khối lượng công việc trên A11 cực kỳ nhẹ về băng thông và hoạt động rất tốt.
+
+Để biết thêm thông tin về Metal 2 và A11, và các liên kết đến mã mẫu, vui lòng truy cập trang web của nhà phát triển Metal.
+
+Cảm ơn bạn đã xem.

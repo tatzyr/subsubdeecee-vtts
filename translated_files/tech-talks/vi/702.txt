@@ -1,0 +1,91 @@
+702
+
+Xin chào, tôi là Lawrence từ nhóm NFC.
+
+Chào mừng đến với bản cập nhật Core NFC này.
+
+Chúng tôi đã có một tính năng mới cho Core NFC trong năm nay sẽ không chỉ nâng cao trải nghiệm NFC mà còn đơn giản hóa rất nhiều quá trình xử lý thẻ NFC trong các ứng dụng của bạn.
+
+Nếu bạn chưa quen với Core NFC, tôi khuyên bạn nên xem video "Giới thiệu về Core NFC" được phát hành vào năm ngoái.
+
+Với tính năng đọc thẻ nền mới, iPhone có thể tự động đọc các thẻ NFC và gửi chúng đến các ứng dụng thích hợp.
+
+Cơ chế có thể thực hiện khởi chạy ứng dụng cần thiết hoặc đưa ứng dụng về trạng thái tiền cảnh.
+
+Chúng tôi rất vui khi thấy điều này có thể làm cho trải nghiệm người dùng tốt hơn và giúp các ứng dụng xử lý thẻ NFC dễ dàng hơn như thế nào.
+
+Trong video này, tôi sẽ thảo luận về các yêu cầu dữ liệu thẻ NFC, trải nghiệm người dùng dự kiến, khi việc đọc thẻ nền được hỗ trợ và một số đoạn mã ví dụ để giúp bạn bắt đầu.
+
+Việc đọc thẻ nền sẽ hoạt động với bất kỳ thẻ được định dạng NDEF nào có thông báo NDEF bao gồm bản ghi URL.
+
+Chỉ bản ghi URL được phát hiện đầu tiên trong tin nhắn NDEF mới được xử lý.
+
+Bản ghi URL phải chứa URL Apple Universal Link hợp lệ để tin nhắn được chuyển đến một ứng dụng.
+
+iOS sẽ định tuyến tin nhắn đến ứng dụng đã đăng ký với Apple Universal Link.
+
+Trong khi màn hình đang bật, việc đọc thẻ nền sẽ quét các thẻ NFC gần đó.
+
+Khi một thẻ tương thích được đọc thành công, một cửa sổ bật lên từ Trung tâm Thông báo sẽ xuất hiện trên màn hình iPhone.
+
+Nhấn vào thông báo sẽ kích hoạt việc phân phối đối tượng NSUserActivity đến ứng dụng được liên kết bằng cách sử dụng cơ chế Apple Universal Link.
+
+Theo mặc định, Safari sẽ xử lý tất cả các liên kết ứng dụng chưa đăng ký và nó sẽ chỉ xử lý tải trọng URL.
+
+Ngoài ra còn có các sơ đồ URL khác kích hoạt hành vi iOS mặc định, mà tôi sẽ thảo luận sau.
+
+Mọi thông báo chưa được xử lý sẽ được lưu trong Trung tâm Thông báo để tham khảo trong tương lai.
+
+Đây là những gì xảy ra khi người dùng chạm vào thẻ NFC.
+
+Một thông báo sẽ được hiển thị và nhấn vào thông báo sẽ khởi chạy ứng dụng đã đăng ký.
+
+Khi ứng dụng đang chạy, nhấn vào thẻ NFC một lần nữa sẽ kích hoạt thông báo mới.
+
+Khi một thẻ được đọc ở trạng thái khóa, người dùng sẽ được nhắc mở khóa điện thoại trước khi dữ liệu thẻ có thể được xử lý.
+
+Đọc thẻ nền được hỗ trợ trên iPhone XS, iPhone XS Max và iPhone XR.
+
+Điện thoại trước tiên phải được mở khóa ít nhất một lần sau khi khởi động để việc đọc thẻ nền hoạt động.
+
+Sau lần mở khóa đầu tiên, thiết bị sẽ quét các thẻ NFC trong nền bất cứ khi nào màn hình bật bất kể trạng thái khóa, ngoại trừ các điều kiện sau: phiên đọc Core NFC đang diễn ra, Wallet hoặc Apple Pay đang được sử dụng, máy ảnh đang được sử dụng hoặc thiết bị đang ở Chế độ trên máy bay.
+
+Bây giờ hãy để chúng tôi xem qua các bước triển khai bắt buộc trong ứng dụng của bạn để nhận nội dung của thẻ NFC.
+
+Điều này được chia thành ba bước chính.
+
+Bạn sẽ cần đăng ký các miền liên quan cho ứng dụng của mình theo yêu cầu của Universal Link.
+
+Sau đó, bạn sẽ cần áp dụng giao thức UIApplicationDelegate, chức năng application(_:continue: restorationHandler:).
+
+Cuối cùng, bạn sẽ cần trích xuất tin nhắn NDEF từ thuộc tính ndefMessagePayload của đối tượng NSUserActivity.
+
+Để đăng ký tên miền của bạn trong ứng dụng của bạn, hãy mở dự án của bạn trong Xcode và nhập tên miền máy chủ máy chủ trong phần Tên miền liên kết.
+
+Đây là một đoạn mã minh họa cách nhận đối tượng NSUserActivity trong ứng dụng UIKit của bạn.
+
+Đầu tiên, nhập khung Core NFC.
+
+Triển khai phương thức giao thức UIApplicationDelegate, ứng dụng (_:tiếp tục: restorationHandler:).
+
+Xác thực loại hoạt động là NSUserActivityTypeBrowsingWeb trong trình xử lý.
+
+Đọc NFCNDEFMessage từ thuộc tính ndefMessagePayload.
+
+Cái này chứa toàn bộ tin nhắn NDEF được đọc từ thẻ NFC.
+
+Tin nhắn chứa một mảng các bản ghi tải trọng NFC NDEF.
+
+Mỗi bản ghi NDEF chứa typeNameFormat, Type, Identifier và tải trọng dữ liệu.
+
+Một trong những tải trọng NFC NDEF sẽ chứa bản ghi URL với Liên kết chung đã kích hoạt khởi chạy ứng dụng của bạn.
+
+Vui lòng tham khảo các thông số kỹ thuật của Diễn đàn NFC liên quan đến các định nghĩa loại bản ghi khác nhau.
+
+Nếu đối tượng NSUserActivity nhận được không bắt nguồn từ việc đọc thẻ nền, thì NFCNDEFMessage kết quả sẽ chứa chính xác một đối tượng tải trọng NFC NDEF với thuộc tính typeNameFormat được đặt thành NFCTypeNameFormatEmpty.
+
+Nếu bản ghi URL không chứa Liên kết chung, iOS vẫn có thể xử lý nhiều lược đồ URI giống như trình quét mã QR như HomeKit, SMS, GPS và các sơ đồ khác.
+
+Đây là một ví dụ về một số chương trình được hỗ trợ khác nhau.
+
+Bạn có thể tìm thêm thông tin về Core NFC trên developer.apple.com.

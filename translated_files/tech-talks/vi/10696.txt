@@ -1,0 +1,487 @@
+10696
+
+Xin chào và chào mừng đến với "Giới thiệu lại mã định danh loại đồng phục."
+
+Tên tôi là Jonathan Grynspan, và tôi làm việc trong Nhóm Khám phá và Tương tác Ứng dụng tại Apple.
+
+Lần cuối cùng chúng tôi nói về số nhận dạng loại đồng phục là tại WWDC 2004.
+
+Đó là một thời gian dài trước đây, nhưng tôi nhớ nó giống như ngày hôm qua.
+
+Dòng sản phẩm năm 2004 của Apple rất tuyệt vời, với các sản phẩm như thiết kế hoàn toàn bằng nhôm của PowerBook G4, màu sắc bắt mắt của iPod Mini và trải nghiệm rạp hát gia đình kỳ diệu của iMac G5.
+
+Apple vẫn tuyệt vời, nhưng bạn phải thừa nhận rằng năm 2004 thực sự đã là một thời gian dài trước đây.
+
+Vì vậy, chúng tôi sẽ đề cập đến những điều cơ bản ngày hôm nay, bắt đầu với cách hệ điều hành của Apple xác định loại tệp.
+
+Sau đó, chúng ta sẽ khám phá cách nói với hệ thống về các loại tệp mới mà nó không biết và cách xử lý chúng.
+
+Cuối cùng, chúng ta sẽ khám phá một số API mới trong iOS 14 và macOS Big Sur giúp việc làm việc với các loại tệp trở nên dễ dàng.
+
+Cho dù bạn có mới làm quen với chủ đề này hay không, chúng tôi đều có thứ gì đó dành cho bạn, vì vậy hãy kiên trì.
+
+Chúng ta hãy xem một tệp có thể có trên máy tính của bất kỳ ai: một bức ảnh của một con mèo sử dụng iPad Mini.
+
+Khi bạn lưu hình ảnh đó vào đĩa, nó sẽ tạo ra cái được gọi là tệp thông thường.
+
+Đó là thuật ngữ POSIX cho một chuỗi các byte được lưu trữ trên đĩa.
+
+Sau đó, khi bạn muốn mở lại bức ảnh này, bạn có thể nhấp đúp vào nó và nó sẽ hoạt động, mở trong trình xem ảnh như Xem trước.
+
+Nhưng làm thế nào để hệ thống biết rằng đây là một hình ảnh, trong trường hợp này được lưu dưới dạng JPEG, chứ không phải là tệp văn bản hoặc bản nhạc MP3 hoặc tài liệu Pages?
+
+Tệp là chuỗi byte, vì vậy bạn có thể mong đợi rằng khi hệ thống cần biết loại tệp, nó sẽ mở nó ra và đọc các bit bên trong để tìm ra nó.
+
+Trên thực tế, hệ thống hầu như không bao giờ làm điều đó bởi vì nó cực kỳ đắt tiền và yêu cầu quyền đọc mà hầu hết các quy trình không có.
+
+Trên thực tế, hệ điều hành dựa trên hầu hết các quyết định của nó về phần mở rộng đường dẫn của tệp.
+
+Đó là chuỗi con được chuẩn hóa theo trường hợp sau ký tự dấu chấm trước, miễn là nó không chứa bất kỳ khoảng trắng hoặc ký tự điều khiển nào.
+
+Trên các nền tảng của Apple, chúng tôi thường không hiển thị các tiện ích mở rộng đường dẫn được công nhận cho người dùng, nhưng chúng vẫn ở đó.
+
+Nếu chúng tôi tiết lộ phần mở rộng đường dẫn của tệp này, chúng tôi có thể thấy rằng đó là J-P-E-G, vì vậy đây là hình ảnh JPEG.
+
+Vậy .jpeg có nghĩa là hình ảnh JPEG, phải không?
+
+Có, nhưng có những phần mở rộng đường dẫn khác cho hình ảnh JPEG.
+
+.Jpg và .jpe là phổ biến nhất.
+
+Tuy nhiên, trên web, đó là một câu chuyện khác.
+
+Các máy chủ web thường không xác định các tệp bằng phần mở rộng đường dẫn của chúng.
+
+Thay vào đó, họ sử dụng một thứ gọi là loại MIME hoặc loại phương tiện.
+
+Đối với JPEG, đó là hình ảnh/jpeg.
+
+Tất nhiên, không có gì trong cuộc sống đơn giản như vậy, và một số máy chủ thay vào đó sử dụng loại MIME hình ảnh/jpg phổ biến nhưng không chuẩn.
+
+Đó là năm phần siêu dữ liệu khác nhau, tất cả đều đại diện chính xác cho cùng một thứ.
+
+Chà, trên các nền tảng của Apple, điều đó không sao, bởi vì chúng tôi sử dụng một chuỗi duy nhất được gọi là mã định danh loại thống nhất để xác định định định dạng tệp này theo giáo luật.
+
+Đối với hình ảnh JPEG, mã định danh loại thống nhất là public.jpeg.
+
+Một chuỗi này đề cập đến tất cả các hình ảnh JPEG, cho dù chúng là hình ảnh cục bộ hay trên web.
+
+Bây giờ, một thuộc tính thú vị của các loại tệp là chúng tồn tại trong một hệ thống phân cấp.
+
+Mỗi hình ảnh JPEG cũng là một hình ảnh trừu tượng hơn, cũng như hình ảnh PNG, hình ảnh TIFF, v.v.
+
+Khi nói về các số nhận dạng loại thống nhất, chúng tôi nói rằng loại JPEG phù hợp với loại hình ảnh trừu tượng hơn.
+
+Cây phù hợp này ngầm cho phép đa kế thừa.
+
+Nếu bạn nghĩ về nó, điều này giống như cách các giao thức hoạt động trong Swift và Objective-C.
+
+Một lớp hoặc cấu trúc cụ thể có thể kế thừa từ bất kỳ số lượng giao thức nào.
+
+Hãy để tôi cho bạn thấy ý tôi là gì.
+
+Đây là public.jpeg.
+
+Và đây là public.image, là một loại trừu tượng mô tả tất cả các định dạng tệp hình ảnh.
+
+Nhưng tất cả các định dạng tệp hình ảnh có thể được biểu diễn dưới dạng chuỗi byte.
+
+Vì vậy, public.image phù hợp với public.data, đây là một loại rất trừu tượng đại diện cho bất kỳ tệp thông thường nào trên đĩa hoặc thực sự là bất kỳ chuỗi byte nào, bất kể chúng được lưu trữ ở đâu.
+
+Đổi lại, public.data phù hợp với một loại cuối cùng, public.item.
+
+Tất cả các đối tượng hệ thống tệp, có thể là tệp, thư mục, liên kết tượng trưng hoặc thậm chí là thứ gì đó bí truyền hơn như đường ống POSIX, được đại diện bởi public.item.
+
+Giống như chúng ta có thể đi lên hệ thống phân cấp, chúng ta có thể đi xuống nó.
+
+Có các định dạng hình ảnh khác ngoài JPEG, chẳng hạn như public.png và public.tiff, và chúng cũng là các loại phụ của public.image.
+
+Tuy nhiên, chúng không phải là một phần của hệ thống phân cấp tuân thủ của public.jpeg.
+
+Họ chỉ là anh chị em của nó.
+
+Nếu chúng ta tăng cấp độ và tập trung vào public.data, chúng ta có thể thấy rằng có nhiều loại phù hợp với nó, bởi vì gần như mọi thứ trên máy tính của bạn đều có thể được biểu diễn bằng một chuỗi byte.
+
+Ở đây, chúng ta thấy public.audio, là một loại trừu tượng mô tả âm thanh có thể nghe được và public.text, là một loại trừu tượng mô tả văn bản dễ đọc.
+
+Chúng là các loại phụ của public.data và anh chị em ruột của public.image.
+
+Tôi đã đề cập một thời gian trước rằng có thể thừa kế nhiều lần với các số nhận dạng loại thống nhất.
+
+Và điều đó đúng với hình ảnh vì hình ảnh là dữ liệu nhưng chúng cũng là nội dung mà người dùng quan tâm, điều mà người dùng có thể muốn tải lên iCloud Drive hoặc chia sẻ qua AirDrop.
+
+Vì vậy, public.image cũng phù hợp với public.content, không đại diện cho bất cứ điều gì cụ thể trong hệ thống tệp, nhưng cho chúng ta biết rằng chúng ta nên coi các loại phụ của nó như những thứ quan trọng đối với người dùng.
+
+Tôi tập trung khá nhiều vào cách các số nhận dạng loại thống nhất đại diện cho các tệp.
+
+Đó có lẽ là cách sử dụng phổ biến nhất đối với họ, theo như người dùng quan tâm.
+
+Nhưng chúng tôi cũng sử dụng chúng trên khắp các nền tảng của mình cho các mục đích khác.
+
+Ví dụ, chúng tôi cũng sử dụng chúng như một loại nội dung bảng dán kinh điển.
+
+Rốt cuộc, nếu bạn có thể lưu nó vào đĩa, bạn cũng có thể sao chép và dán nó.
+
+Chúng tôi cũng sử dụng chúng cho các hệ thống phân cấp không liên quan gì đến các tệp.
+
+Đây là một bí mật của Apple, nhưng chúng tôi cũng sử dụng số nhận dạng loại thống nhất để xác định các mẫu phần cứng khác nhau mà chúng tôi vận chuyển.
+
+Ví dụ, tất cả các mẫu Mac đều phù hợp với com.apple.mac.
+
+Và nếu chúng tôi muốn có giả thuyết, bạn thậm chí có thể sử dụng số nhận dạng loại thống nhất để chỉ hệ thống phân cấp không liên quan đến máy tính, chẳng hạn như cây sự sống.
+
+Đó là số nhận dạng loại thống nhất và cách chúng tôi sử dụng chúng trên nền tảng của mình.
+
+Nhiều ứng dụng tạo và duy trì các định dạng dữ liệu của riêng chúng, và các định dạng này xứng đáng với các loại độc đáo của riêng chúng.
+
+Khi bạn tạo một kiểu mới, làm thế nào để bạn thêm nó vào hệ thống phân cấp kiểu?
+
+Nếu bạn đang sử dụng các loại được khai báo bởi hệ thống, bạn không cần phải làm gì nhiều.
+
+Chúng tôi bao gồm một số lượng lớn các loại trong một gói được gọi là CoreTypes trong /System/Library/CoreServices.
+
+Bất kỳ mã định danh loại thống nhất nào trong Info.plist của gói đó đều có thể được tham chiếu bởi ứng dụng của bạn mà không cần thay đổi bổ sung.
+
+Nhưng đối với các loại bạn đã phát minh hoặc bạn đang mượn từ một ứng dụng khác, bạn có thể cần phải nói với hệ thống về chúng.
+
+Để làm như vậy, bạn cần tạo mã định danh loại thống nhất của riêng mình.
+
+Khi tạo mã định danh loại thống nhất của riêng bạn, có một vài quy tắc đặt tên cần tuân theo.
+
+Đầu tiên, các số nhận dạng loại thống nhất luôn là ASCII không phân biệt chữ hoa chữ thường và luôn đảo ngược-DNS, chẳng hạn như com.example.file.
+
+Lý tưởng nhất, bạn sẽ sử dụng một số định danh mô tả nhiều hơn.
+
+Com.example.file không thực sự giúp việc gỡ lỗi trở nên dễ dàng.
+
+Com.example.imagetemplate hoặc com.example.encrypteddatabase hoặc một cái gì đó tương tự sẽ tốt hơn.
+
+Apple bảo lưu một số tiền tố hoặc không gian tên trong số nhận dạng và bạn không nên tạo số nhận dạng của riêng mình sử dụng các không gian tên này.
+
+Hệ thống có thể bỏ qua chúng nếu bạn làm vậy.
+
+Đầu tiên là "công khai", được dành riêng cho Apple sử dụng để khai báo các loại tiêu chuẩn hóa.
+
+Nếu chúng tôi thiếu một loại tiêu chuẩn, vui lòng cho chúng tôi biết qua Trợ lý Phản hồi.
+
+Dyn, viết tắt của dynamic, được dành riêng cho hệ điều hành sử dụng khi tạo ra các miếng chêm tương thích.
+
+Chúng thường là các chuỗi mờ đục và chúng có thể thay đổi giữa các bản phát hành hệ điều hành, vì vậy đừng mã hóa cứng các giá trị của chúng.
+
+Trên thực tế, ngày nay chúng khá hiếm.
+
+Bạn thường chỉ nhìn thấy chúng khi gặp một tệp có phần mở rộng đường dẫn không được công nhận.
+
+Com.example được dành riêng cho các mẫu, ví dụ, mã mẫu và những thứ tương tự.
+
+Cuối cùng, com.apple được dành riêng cho Apple sử dụng.
+
+Có hai bước lớn bạn cần thực hiện khi thêm một loại vào ứng dụng của mình mà hệ thống sẽ nhận ra.
+
+Bước đầu tiên là khai báo loại.
+
+Khai báo một loại về cơ bản có nghĩa là ứng dụng của bạn đang nói, "Loại này tồn tại", nhưng không có nghĩa là bạn có thể mở loại đó.
+
+Nếu bạn thực sự muốn mở một loại, bạn cần hỗ trợ loại đó, đó là cách ứng dụng của bạn nói, "Bất kể ai đã khai báo loại đó, tôi có thể mở nó."
+
+Hai bước này rất khác biệt.
+
+Khi bạn khai báo loại của mình, bạn cần quyết định xem bạn sẽ nhập hay xuất nó.
+
+Nếu bạn đang sử dụng một loại được phát minh hoặc thiết kế bởi người khác hoặc để sử dụng chủ yếu với một ứng dụng khác, bạn thường nên nhập loại đó.
+
+Điều đó nói với hệ thống, "Loại này tồn tại. Đây là một số thông tin về nó."
+
+Nhưng nếu ứng dụng phát minh ra nó được cài đặt, ứng dụng đó có thể cung cấp nhiều thông tin có thẩm quyền hơn.
+
+Mặt khác, nếu bạn phát minh ra loại hoặc nó có nghĩa là để sử dụng cụ thể với ứng dụng của bạn, thì việc xuất nó là phù hợp.
+
+Điều này nói với hệ thống, "Tôi có thẩm quyền cho loại này."
+
+Cuối cùng, nếu bạn đang sử dụng một loại đi kèm với hệ thống như một phần của Loại lõi, bạn không cần phải nhập hoặc xuất nó.
+
+Hệ thống đã cung cấp một khai báo và bạn chỉ có thể sử dụng mã định danh loại thống nhất của loại ngay lập tức.
+
+Tôi muốn chỉ cho bạn cách khai báo một loại trong ứng dụng của bạn và cách hiển thị hệ thống mà bạn hỗ trợ mở nó.
+
+Vì vậy, chúng ta hãy xem Xcode, nơi tôi đang làm việc chăm chỉ để có trải nghiệm nhà hàng qua web hoàn toàn mới.
+
+Ứng dụng này có khả năng đọc thực đơn nhà hàng đã được lưu ở định dạng dựa trên JSON mà chúng tôi đã thiết kế.
+
+Chúng tôi muốn có thể mở các tệp menu đó trong ứng dụng của mình, vì vậy trước tiên chúng tôi sẽ cần khai báo một loại cho chúng.
+
+Bởi vì chúng tôi đã tự tạo ra loại này và chúng tôi sở hữu định dạng, việc chúng tôi xuất loại này có ý nghĩa.
+
+Điều đầu tiên chúng tôi sẽ làm trong Xcode là chọn chính dự án để hiển thị cài đặt của nó.
+
+Chúng tôi muốn chọn mục tiêu tương ứng với ứng dụng của chúng tôi.
+
+Ngay bây giờ, tôi đang xem ứng dụng iOS của chúng tôi, nhưng chúng tôi sẽ làm điều tương tự cho một ứng dụng macOS.
+
+Sau đó, chúng tôi sẽ chuyển sang tab Thông tin, đại diện cho nội dung của tệp Info.plist của ứng dụng.
+
+Mở rộng phần Mã định danh loại đã xuất.
+
+Nhấp vào nút Thêm ở cuối phần để thêm một loại mới.
+
+Điều đầu tiên chúng tôi muốn thêm là mã định danh loại thống nhất mà chúng tôi đã đưa ra.
+
+Đối với bản demo này, chúng tôi sẽ sử dụng com.example.restaurantmenu.
+
+Hãy nhớ rằng, com.example được Apple dành riêng để sử dụng trong các ví dụ và bản trình diễn.
+
+Bạn thường sẽ muốn sử dụng tên DNS ngược mà bạn sở hữu.
+
+Ví dụ, công ty Claris sẽ sử dụng com.claris, trong khi Beats sẽ sử dụng com.beatsbydre.
+
+Bây giờ chúng ta phải suy nghĩ về sự phù hợp.
+
+Các loại đại diện cho các tệp trong hệ thống tệp cần phải phù hợp với public.data nếu chúng là các tệp thông thường - nghĩa là chuỗi byte --- hoặc com.apple.package nếu chúng là thư mục mà hệ điều hành nên coi là tệp.
+
+Loại này sẽ được lưu vào đĩa bằng bộ mã hóa JSON của Swift, có nghĩa là nó là một chuỗi các byte.
+
+Điều đó có nghĩa là tệp thông thường, và điều đó có nghĩa là public.data.
+
+Có vẻ như chúng ta có một quyết định để đưa ra.
+
+Bởi vì các tệp này sẽ chứa dữ liệu JSON, chúng sẽ có thể đọc được bởi bất kỳ tệp JSON nào có thể đọc được.
+
+Điều đó có nghĩa là loại này cũng có thể phù hợp với public.json.
+
+Đó là một thuộc tính thực sự hữu ích cho một số loại tệp mà khả năng chỉnh sửa chúng theo cách thủ công là quan trọng.
+
+Nhưng đối với các loại khác, đó chỉ là chi tiết triển khai.
+
+Chúng tôi sẽ thêm sự phù hợp với public.json cho loại này.
+
+Bạn có thể bỏ qua các loại chi tiết triển khai này khi tạo các loại của mình nếu bạn không muốn các nhà phát triển khác dựa vào chúng hoặc nếu bạn mong đợi định dạng loại của mình có thể thay đổi trong tương lai.
+
+Loại tệp này là thứ mà người dùng sẽ xem xét một tài liệu hoặc nội dung đáng để tương tác trực tiếp.
+
+Vì vậy, chúng tôi cũng sẽ đảm bảo rằng nó phù hợp với public.content.
+
+Tiếp theo, chúng ta sẽ cần quyết định phần mở rộng tên tệp để liên kết với loại của chúng ta.
+
+Phần mở rộng này sẽ gắn loại trở lại hệ thống tệp và cho phép hệ thống nhận ra rằng các tệp được đặt tên thích hợp có loại này.
+
+Chúng tôi có thể bị cám dỗ để sử dụng tiện ích mở rộng ba ký tự, nhưng không có nhà cung cấp nền tảng lớn nào yêu cầu tiện ích mở rộng ba ký tự kể từ năm 1995.
+
+Chúng tôi có rất nhiều chỗ để thở ở đây, và tránh xung đột với các tuyên bố loại của các nhà phát triển khác là rất quan trọng.
+
+Vì vậy, chúng tôi sẽ sử dụng một phần mở rộng dài hơn, menu nhà hàng.
+
+Lưu ý rằng chúng tôi đã không đặt dấu chấm ở đó.
+
+Hệ điều hành biết thêm nó cho chúng tôi khi tạo tên tệp.
+
+Cuối cùng, đây cũng là một cơ hội tốt để đưa ra một cái tên có thể đọc được của con người cho loại này.
+
+Vì ứng dụng của chúng tôi được gọi đơn giản là Nhà hàng và vì chúng tôi đã chọn tiện ích mở rộng menu nhà hàng, chúng tôi sẽ giữ điều này đơn giản và đặt tên cho nó là Thực đơn Nhà hàng.
+
+Chuỗi này có thể định vị trong tệp InfoPlist.strings của chúng tôi.
+
+Sử dụng chuỗi mà chúng tôi vừa nhập làm khóa của bạn khi bản địa hóa.
+
+Bây giờ chúng tôi đã khai báo loại, chúng tôi cần thông báo cho hệ thống rằng ứng dụng của chúng tôi có thể mở nó.
+
+Mở rộng phần Loại Tài liệu.
+
+Nhấp vào nút Thêm ở cuối phần để thêm loại được hỗ trợ mới.
+
+Phần này đơn giản hơn phần Mã định danh loại đã xuất.
+
+Điều duy nhất chúng tôi được yêu cầu chỉ định là danh sách các số nhận dạng loại thống nhất mà ứng dụng hỗ trợ.
+
+Để cho phép tính linh hoạt, chúng tôi có thể chỉ định nhiều loại cho một mục nhập duy nhất ở đây hoặc một loại cho mỗi mục nhập.
+
+Cá nhân tôi thích có một loại cho mỗi mục nhập, nhưng đó chủ yếu là câu hỏi về sở thích cá nhân, như tab so với khoảng trắng.
+
+Dù sao, chúng tôi sẽ thêm mã định danh loại đồng phục của mình vào trường này.
+
+Chúng ta cũng nên đặt thứ hạng người xử lý mục nhập này thành Chủ sở hữu.
+
+Bước này không bắt buộc nhưng nó được khuyến khích mạnh mẽ vì nó giúp hệ thống chọn ứng dụng phù hợp một cách thông minh cho một công việc nhất định.
+
+Kể từ khi chúng tôi phát minh ra loại này, chúng tôi sở hữu nó.
+
+Trên macOS, có một trường Quy tắc bổ sung cho phép chúng tôi chỉ định xem chúng tôi có thể mở tệp với tư cách là trình chỉnh sửa hay trình xem hay không.
+
+Các biên tập viên có thể vừa mở vừa lưu các tệp thuộc một loại nhất định, trong khi người xem chỉ có thể mở chúng.
+
+Bởi vì ứng dụng của chúng tôi có thể đọc và ghi các tệp này, chúng tôi sẽ chỉ định trình chỉnh sửa.
+
+Chúng tôi đã chỉnh sửa xong phần Thông tin.
+
+Ứng dụng của chúng tôi hiện có thể mở các tệp Menu Nhà hàng của chúng tôi.
+
+Chúng tôi sẽ cần viết một số mã SwiftUI, UIkit hoặc AppKit để xử lý tài liệu sau khi hệ thống chuyển nó cho chúng tôi.
+
+Để biết thêm thông tin về việc xây dựng ứng dụng dựa trên tài liệu trong Swift UI, hãy xem "Xây dựng ứng dụng dựa trên tài liệu trong SwiftUI" từ WWDC20.
+
+Tài liệu để xây dựng các ứng dụng dựa trên tài liệu sử dụng UIkit và AppKit có sẵn trực tuyến tại developer.apple.com.
+
+Ứng dụng của chúng tôi có một đối thủ cạnh tranh trên App Store, Compy's Food.
+
+Rất nhiều chủ nhà hàng sử dụng ứng dụng đó và đã lưu thực đơn của họ ở định dạng tệp thuộc sở hữu của ứng dụng đó.
+
+Chúng tôi cũng muốn hỗ trợ việc đọc các tệp đó.
+
+Loại này được phát minh bởi người khác, và chúng tôi chỉ mượn nó, vì vậy chúng tôi cần nhập nó thay vì xuất nó.
+
+Hãy quay trở lại tab Thông tin cho mục tiêu ứng dụng của chúng tôi và chọn Mã định danh loại đã nhập.
+
+Lưu ý rằng vì chúng tôi đã tạo một ứng dụng SwiftUI mới, chúng tôi có một mục hiện có ở đây cho một loại ví dụ.
+
+Chúng tôi có thể thay thế nội dung của biểu mẫu bằng dữ liệu của riêng mình, đó là những gì tôi sẽ làm.
+
+Nếu chúng tôi không có loại ví dụ hiện có trong mục tiêu của mình, tất nhiên chúng tôi có thể thêm loại mới bằng nút Thêm bên dưới.
+
+Tôi sẽ điền vào phần Thông tin được chỉ định bởi Compy's Food.
+
+Tất nhiên, các chi tiết ở đây chỉ là ví dụ.
+
+Nếu bạn đang thêm hỗ trợ cho loại đối thủ cạnh tranh thực sự, bạn nên cố gắng khớp với những gì họ đã đưa vào tệp Info.plist của họ.
+
+Bởi vì loại này được nhập, nó cho hệ thống biết về loại tệp được tạo bởi ứng dụng Compy's Food.
+
+Nhưng nếu người dùng đã cài đặt ứng dụng đó, hệ thống có thể thích khai báo của nó hơn, điều này nên được xuất dưới dạng có thẩm quyền hơn.
+
+Bây giờ chúng tôi sẽ thêm hỗ trợ để mở các tệp này để hệ thống có thể chọn ứng dụng của chúng tôi khi người dùng muốn mở một trong số chúng.
+
+Chúng ta sẽ quay lại phần Loại Tài liệu.
+
+Chúng tôi sẽ tạo một mục riêng cho Danh sách Thực phẩm của Compy và thêm mã định danh loại mới.
+
+Mục nhập này hơi khác so với mục kia vì chúng tôi không phải là chủ sở hữu của loại này.
+
+Thay vào đó, chúng tôi muốn thứ hạng người xử lý của mình được thay thế.
+
+Bởi vì ứng dụng của chúng tôi có thể đọc các tệp này nhưng không thể ghi chúng, chúng tôi sẽ chỉ định vai trò của Trình xem trên macOS.
+
+Hệ thống hiện biết rằng chúng tôi có thể mở tệp này nhưng chúng tôi có thể không phải là lựa chọn tốt nhất nếu người dùng đã cài đặt Compy's Food, vì ứng dụng đó là chủ sở hữu của loại tệp.
+
+Chúng tôi muốn trở thành những công dân tốt trên nền tảng, vì vậy điều quan trọng là phải tôn trọng quyền sở hữu loại theo cách này mặc dù cả hai chúng tôi đều biết mã của chúng tôi tốt hơn mã của đối thủ cạnh tranh.
+
+Giống như chúng tôi đã làm với loại thực đơn nhà hàng của riêng mình, chúng tôi sẽ cần viết một số Swift hoặc Objective-C để thực sự đọc các tệp này trong ứng dụng của chúng tôi.
+
+Kiểm tra developer.apple.com để biết thêm thông tin.
+
+Vì vậy, bây giờ chúng tôi đã khai báo một loại và nói với hệ thống rằng chúng tôi hỗ trợ nó, đã đến lúc làm việc với loại đó trong mã của chúng tôi.
+
+Phần này giả định rằng ít nhất bạn đã quen thuộc rộng rãi với API của mã định danh loại thống nhất trong khuôn khổ Dịch vụ cốt lõi.
+
+Ở đây chúng tôi có một chương trình nhỏ đi qua một thư mục hoặc một tập hợp các URL tệp.
+
+Nó lấy mã định danh loại thống nhất của mỗi tệp được đại diện và sau đó in mô tả bản địa hóa của mã định danh loại đó.
+
+Nếu tệp là một hình ảnh, nó sẽ vẽ nó ở đâu đó và nếu đó là một đoạn âm thanh, nó sẽ phát nó qua loa hoặc AirPods của người dùng.
+
+Ngay lập tức, có một số vấn đề có thể nhìn thấy ở đây.
+
+Chúng ta phải truyền các chuỗi của mình một cách rõ ràng đến CFStrings để sử dụng chúng với các hàm UTType toàn cầu.
+
+Và chúng tôi phải quản lý thủ công vòng đời của CFString mà chúng tôi nhận được từ UTTypeCopyDescription.
+
+Nhưng, và tôi rất vui khi được nói chuyện với bạn về điều này, trong iOS 14 và macOS Big Sur, chúng tôi đã giới thiệu một khung nhận dạng loại đồng phục hoàn toàn mới mang lại Swiftiness hạng nhất cho các số nhận dạng loại thống nhất.
+
+Nơi trước đây chúng tôi đã sử dụng CFStrings để đại diện cho số nhận dạng loại, giờ đây chúng tôi có thể sử dụng UTType để đại diện cho các loại và thuộc tính của chúng.
+
+Hãy xem qua mã này và chuyển đổi nó để sử dụng khuôn khổ mới.
+
+Tôi đã nhập khung để có quyền truy cập vào API mà nó chứa và bây giờ tôi sẽ thay đổi thuộc tính URL định danh loại thành contentType, có giá trị là một thể hiện của cấu trúc mới, UTType.
+
+Cấu trúc này gói gọn một định danh loại thống nhất cùng với siêu dữ liệu về nó.
+
+Tiếp theo, chúng tôi sẽ sửa giá trị chưa được giữ lại này.
+
+UTType có một thuộc tính mô tả được bản địa hóa.
+
+Các thuộc tính như thế này là một cách tự nhiên hơn nhiều để làm việc với các thuộc tính của loại và các hàm toàn cục.
+
+Giá trị của thuộc tính này tương ứng với chuỗi mô tả bạn đã nhập trong Xcode và được bản địa hóa khi bạn bản địa hóa ứng dụng của mình.
+
+Tiếp theo, hãy chuyển sang UTTypeConformsTo, một hàm toàn cục khác.
+
+Chức năng này lấy CFString, đòi hỏi phải có các diễn viên rõ ràng.
+
+Không có gì đáng ngạc nhiên, UTType có phương pháp phù hợp với thành viên.
+
+Nhưng đây là những gì: .hình ảnh và .âm thanh?
+
+Nhớ slide này không?
+
+Khi chúng tôi thiết kế khuôn khổ mới này, chúng tôi đã xem xét tập hợp các loại được khai báo bởi hệ thống cũng như tập hợp các hằng số CFString được hiển thị trong API cũ và chúng tôi đã đưa chúng vào khuôn khổ mới dưới dạng hằng số được đặt tên.
+
+Có hơn 120 hằng số như vậy được xác định trong khuôn khổ mới, bao gồm các loại được xác định hệ thống được sử dụng phổ biến nhất.
+
+Tất nhiên, trước đó trong phiên này, chúng tôi đã khai báo một số loại trong ứng dụng của mình.
+
+Sẽ thật tuyệt nếu chúng ta cũng có thể phơi bày các hằng số cho chúng?
+
+Hôm nay tôi chỉ có rất nhiều tin tốt, bởi vì bạn có thể làm chính xác điều đó.
+
+Chúng tôi có API để khai báo các hằng số được đặt tên cho các loại mà bạn xuất và cho các loại mà bạn nhập.
+
+Ngữ nghĩa có một chút khác biệt đối với mỗi ngữ nghĩa.
+
+Khi bạn xuất một loại, bạn đang nói, "Tôi sở hữu loại này. Tôi đã tạo ra nó. Ứng dụng của tôi là thẩm quyền cho loại này."
+
+Vì vậy, chúng tôi tiếp tục và tạo ra một phiên bản UTType cho bạn, an toàn khi biết rằng bạn biết mọi thứ về loại này.
+
+Khi bạn nhập một loại, bạn đang nói, "Tôi biết về loại này, nhưng ai đó khác có thể biết nhiều hơn tôi," và chủ sở hữu của loại đó có thể khai báo loại đó khác với bạn.
+
+Nếu điều đó xảy ra, chúng ta có thể thay thế loại đó một cách nhanh chóng trong các trường hợp sử dụng phổ biến nhất.
+
+Tuy nhiên, chúng tôi cần sự hợp tác của bạn.
+
+Thay vì khai báo các loại đã nhập của bạn dưới dạng hằng số, hãy khai báo chúng dưới dạng các biến được tính toán tĩnh, để nếu khai báo thay đổi do cài đặt ứng dụng, bạn sẽ tự động nhận loại cập nhật.
+
+Chúng tôi đã tích hợp hỗ trợ vào Xcode để phát hiện các vấn đề với các loại bạn khai báo.
+
+Chúng tôi có thể phát hiện nếu một loại đã xuất hoặc nhập bị thiếu trong Info.plist của bạn, hoặc nếu bạn đã sử dụng sai trình khởi tạo liên tục.
+
+Chúng tôi sẽ làm việc để cải thiện sự hỗ trợ theo thời gian và đầu vào của bạn sẽ là vô giá ở đây, vì vậy vui lòng cung cấp phản hồi.
+
+Một số khuôn khổ hỗ trợ API mới của chúng tôi trong iOS 14 và macOS Big Sur.
+
+Nền tảng có thuộc tính URL mà tôi vừa chỉ cho bạn và nó cũng có các tiện ích để tạo tên tệp được đề xuất dựa trên chuỗi hoặc URL và một phiên bản của UTType.
+
+SwiftUI có hỗ trợ rộng rãi cho UTType.
+
+Pasteboard và các API kéo và thả, chẳng hạn như trình xử lý sự kiện onDrop, chỉ sử dụng chúng.
+
+Và sự hỗ trợ mới của SwiftUI cho các ứng dụng dựa trên tài liệu được thiết kế để sử dụng UTType.
+
+Tôi khuyên bạn nên xem "Xây dựng ứng dụng dựa trên tài liệu trong SwiftUI" từ WWDC 20 để tìm hiểu thêm về nó.
+
+Khi sử dụng AppKit, NSWorkspace sẽ cho phép bạn nhận được một biểu tượng cho bất kỳ UTType nào.
+
+Và NSOpenPanel và NSSavePanel hỗ trợ UTTypes.
+
+UIkit hỗ trợ sử dụng UTTypes khi trình bày bộ chọn tài liệu và trình duyệt tài liệu.
+
+Và Core Spotlight cho phép bạn tạo một bộ thuộc tính từ UTType.
+
+Có một số API không hỗ trợ UTType trong bản phát hành này và bạn có thể thấy mình cần tương tác với chúng.
+
+Nó không khó.
+
+Nếu bạn cần chuyển một mã định danh loại thống nhất cho API, hãy lấy thuộc tính định danh của UTType và truyền nó đến CFString.
+
+Nếu bạn muốn chuyển đổi mã định danh loại thống nhất trở lại UTType, hãy truyền nó từ CFString sang String và khởi tạo UTType của bạn với chuỗi đó.
+
+Đây là một trình khởi tạo không thể thất bại, vì vậy đừng quên kiểm tra số không.
+
+Trong Objective-C, nó dài hơn một chút, nhưng ý tưởng thì giống nhau.
+
+Truyền mã định danh của UTType vào CFStringRef hoặc truyền CFString sang NSString và tạo UTType từ nó.
+
+Hôm nay chúng ta đã thấy cách hệ thống lấy được loại tệp từ siêu dữ liệu của nó và cách Apple gói gọn thông tin đó bằng cách sử dụng số nhận dạng loại thống nhất.
+
+Chúng tôi đã học cách khai báo và sử dụng các loại của riêng mình và cách tương tác với các loại có thể được chia sẻ giữa nhiều ứng dụng.
+
+Và chúng tôi đã giới thiệu một khung nhận dạng loại thống nhất mới cung cấp một cách hiện đại, hướng đối tượng để tương tác với các loại.
+
+Tôi mong muốn được xem cách bạn sử dụng kiến thức này và khuôn khổ mới để xây dựng các ứng dụng của mình.
+
+Cảm ơn bạn.

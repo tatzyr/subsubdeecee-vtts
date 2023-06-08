@@ -1,0 +1,440 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+♪ nhạc cụ hip hop ♪
+
+00:00:03.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:12.000
+Chào mừng đến với "Sử dụng SwiftUI với AppKit."
+
+00:00:12.000 --> 00:00:16.000
+Tôi là Ian, một kỹ sư làm việc trên Shortcuts.
+
+00:00:16.000 --> 00:00:20.000
+Trong macOS Monterey, Phím tắt đã đến với macOS.
+
+00:00:20.000 --> 00:00:23.000
+Phím tắt sử dụng rất nhiều SwiftUI trên Mac.
+
+00:00:23.000 --> 00:00:31.000
+SwiftUI giúp tùy chỉnh trải nghiệm cho nền tảng, đồng thời chia sẻ các chế độ xem chung với các ứng dụng trên iOS và watchOS.
+
+00:00:31.000 --> 00:00:40.000
+Trong video này, tôi sẽ chỉ ra cách bạn có thể bắt đầu áp dụng SwiftUI trong ứng dụng Mac của mình, bằng cách xem một số ví dụ từ Phím tắt.
+
+00:00:40.000 --> 00:00:50.000
+Đầu tiên, tôi sẽ chỉ cho bạn một ví dụ về cách lưu trữ các lượt xem SwiftUI trong ứng dụng của bạn, và sau đó nói về cách truyền dữ liệu giữa AppKit và SwiftUI.
+
+00:00:50.000 --> 00:01:12.000
+Tôi cũng sẽ đề cập đến việc lưu trữ các chế độ xem SwiftUI trong các ô của bộ sưu tập hoặc chế độ xem bảng, cách xử lý bố cục và kích thước của chế độ xem SwiftUI khi chúng được nhúng vào AppKit, cách làm cho chế độ xem SwiftUI của bạn tham gia vào chuỗi phản hồi và có thể tập trung, và cuối cùng, cách lưu trữ chế
+
+00:01:12.000 --> 00:01:16.000
+Được rồi, tôi sẽ bắt đầu với cách lưu trữ SwiftUI trong AppKit.
+
+00:01:16.000 --> 00:01:28.000
+Trong Phím tắt, cửa sổ chính chứa bộ điều khiển chế độ xem phân chia AppKit và thanh bên bên trái được viết bằng SwiftUI.
+
+00:01:28.000 --> 00:01:38.000
+Chế độ xem thanh bên được triển khai dưới dạng Danh sách SwiftUI và danh sách hiển thị các phần có hàng cho tất cả các địa điểm bạn có thể điều hướng đến trong ứng dụng.
+
+00:01:38.000 --> 00:01:45.000
+Chế độ xem theo dõi mục nào được chọn, thông qua ràng buộc mục đã chọn.
+
+00:01:45.000 --> 00:01:53.000
+Các mục có thể được chọn được biểu diễn dưới dạng các trường hợp trong loại SidebarItem.
+
+00:01:53.000 --> 00:01:56.000
+Trong trường hợp này, vì đã có bộ điều khiển chế độ xem phân tách.
+
+00:01:56.000 --> 00:02:03.000
+Để lưu trữ chế độ xem thanh bên này, chúng tôi sử dụng một lớp từ SwiftUI được gọi là NSHostingController.
+
+00:02:03.000 --> 00:02:10.000
+Chế độ xem thanh bên SwiftUI được chuyển vào làm chế độ xem gốc của bộ điều khiển lưu trữ đó.
+
+00:02:10.000 --> 00:02:23.000
+Vì bộ điều khiển lưu trữ có thể được sử dụng giống như bất kỳ bộ điều khiển chế độ xem nào khác, ở đây, chúng tôi định cấu hình nó như một splitViewItem và thêm nó vào splitViewController.
+
+00:02:23.000 --> 00:02:35.000
+Bây giờ thanh bên được lưu trữ trong chế độ xem phân chia, nhưng để nó hoạt động khi lựa chọn thay đổi, phía bên phải của chế độ xem phân tách cần hiển thị một trang khác.
+
+00:02:35.000 --> 00:02:40.000
+Hiện tại, trạng thái mục đã chọn chỉ tồn tại trong SwiftUI.
+
+00:02:40.000 --> 00:02:47.000
+Những gì chúng ta cần làm là di chuyển nó đến một nơi có thể được chia sẻ giữa chế độ xem phân chia và thanh bên.
+
+00:02:47.000 --> 00:02:56.000
+Một cách tốt để làm điều này là tạo một đối tượng mô hình có thể được lưu trữ bên ngoài SwiftUI và chứa trạng thái cần được chia sẻ.
+
+00:02:56.000 --> 00:02:59.000
+Tôi sẽ gọi đối tượng này là SelectionModel.
+
+00:02:59.000 --> 00:03:05.000
+Bây giờ, thanh bên vẫn có thể đọc và ghi trạng thái trong SelectionModel.
+
+00:03:05.000 --> 00:03:11.000
+Trong mã, SelectionModel là một lớp phù hợp với ObservableObject.
+
+00:03:11.000 --> 00:03:18.000
+Là một đối tượng có thể quan sát được cho phép SwiftUI tải lại chế độ xem khi trạng thái được lưu trữ trong mô hình thay đổi.
+
+00:03:18.000 --> 00:03:23.000
+Nó lưu trữ mục thanh bên nào hiện đang được chọn.
+
+00:03:23.000 --> 00:03:31.000
+Thuộc tính này được xuất bản để chế độ xem thanh bên SwiftUI có thể cập nhật khi mục đã chọn thay đổi.
+
+00:03:31.000 --> 00:03:39.000
+Bất cứ khi nào ai đó thay đổi lựa chọn trong thanh bên, mô hình có thể hiển thị một trang mới trong chế độ xem chi tiết.
+
+00:03:39.000 --> 00:03:46.000
+Bây giờ tôi đã đề cập đến cách lưu trữ SwiftUI trong AppKit, hãy chuyển sang các ô bộ sưu tập và bảng.
+
+00:03:46.000 --> 00:04:00.000
+Khi đưa Phím tắt từ các nền tảng khác vào macOS, đã có một chế độ xem SwiftUI mang tính biểu tượng được xây dựng để hiển thị lối tắt trong ô chế độ xem bộ sưu tập hoặc tiện ích Màn hình chính.
+
+00:04:00.000 --> 00:04:06.000
+Trên macOS, những chế độ xem tương tự này được hiển thị trong các ô của NSCollectionView.
+
+00:04:06.000 --> 00:04:17.000
+Trong chế độ xem bộ sưu tập hoặc bảng với nhiều mục, mỗi chế độ xem ô được tái chế khi bạn cuộn, hiển thị nội dung khác nhau theo thời gian.
+
+00:04:17.000 --> 00:04:26.000
+Để đảm bảo việc tái sử dụng ô có hiệu quả, bạn cần tránh thêm và xóa các chế độ xem phụ khỏi các ô khi người dùng cuộn.
+
+00:04:26.000 --> 00:04:37.000
+Khi hiển thị chế độ xem SwiftUI trong mỗi ô, hãy sử dụng chế độ xem lưu trữ duy nhất và cập nhật nó với chế độ xem gốc khác khi nội dung của ô cần thay đổi.
+
+00:04:37.000 --> 00:04:42.000
+Đây là tất cả những gì bạn cần để xây dựng một ô xem bộ sưu tập để lưu trữ SwiftUI.
+
+00:04:42.000 --> 00:04:47.000
+Trong ví dụ ở đây, tôi đang xây dựng ô hiển thị chế độ xem phím tắt.
+
+00:04:47.000 --> 00:04:52.000
+Mỗi ô chứa một NSHostingView để lưu trữ SwiftUI.
+
+00:04:52.000 --> 00:05:03.000
+Vì các ô được tạo trước khi chúng được cấu hình với bất kỳ nội dung nào, điều này sẽ bắt đầu là số không và sẽ được đặt lần đầu tiên một phím tắt sẵn sàng được hiển thị.
+
+00:05:03.000 --> 00:05:10.000
+Phương thức displayShortcut được gọi bởi nguồn dữ liệu khi định cấu hình ô để hiển thị một phím tắt.
+
+00:05:10.000 --> 00:05:14.000
+Phương pháp này tạo ra một SwiftUI ShortcutView.
+
+00:05:14.000 --> 00:05:21.000
+Sau đó, nếu đã có hostingView, rootView của hostingView đó được đặt thành chế độ xem mới.
+
+00:05:21.000 --> 00:05:30.000
+Mặt khác, nếu đây là lần đầu tiên, một newHostingView sẽ được tạo và thêm vào dưới dạng chế độ xem phụ của ô.
+
+00:05:30.000 --> 00:05:34.000
+Đây là vòng đời của ô đang lưu trữ SwiftUI.
+
+00:05:34.000 --> 00:05:41.000
+Đầu tiên, ô được khởi tạo và nó bắt đầu mà không có chế độ xem phụ, vì chưa có lối tắt nào để hiển thị.
+
+00:05:41.000 --> 00:05:49.000
+Lần đầu tiên displayShortcut được gọi, hostingView được tạo bằng shortcutView để hiển thị.
+
+00:05:49.000 --> 00:05:59.000
+Điều này tạo ra một hệ thống phân cấp chế độ xem SwiftUI, chứa VStack, một hình ảnh, một miếng đệm và hai chế độ xem văn bản.
+
+00:05:59.000 --> 00:06:08.000
+Nếu ô này sau đó được cuộn ra khỏi màn hình, nó sẽ có khả năng bị hệ thống xếp hàng và cần hiển thị một phím tắt khác.
+
+00:06:08.000 --> 00:06:15.000
+Khi điều này xảy ra, một ShortcutView mới được tạo và trao cho HostingView.
+
+00:06:15.000 --> 00:06:30.000
+Vì HostingView đã hiển thị một chế độ xem phím tắt khác, nó sẽ sử dụng lại cấu trúc tổng thể của chế độ xem, bao gồm VStack và miếng đệm, và chỉ cập nhật hình ảnh, văn bản và nền đã thay đổi.
+
+00:06:30.000 --> 00:06:35.000
+Được rồi, tiếp theo, hãy nói về bố cục và kích thước.
+
+00:06:35.000 --> 00:06:43.000
+Bộ điều khiển lưu trữ và chế độ xem lưu trữ có kích thước nội tại dựa trên chiều rộng và chiều cao lý tưởng của chế độ xem SwiftUI.
+
+00:06:43.000 --> 00:06:53.000
+SwiftUI tự động tạo và cập nhật các ràng buộc Bố cục Tự động, mà hệ thống bố cục AppKit sử dụng để định cỡ chế độ xem một cách thích hợp.
+
+00:06:53.000 --> 00:07:00.000
+Lượt xem cũng linh hoạt, có nghĩa là chúng hỗ trợ nhiều kích cỡ khác nhau, giữa mức tối thiểu và tối đa.
+
+00:07:00.000 --> 00:07:05.000
+SwiftUI cũng tạo ra những ràng buộc cho những điều này.
+
+00:07:05.000 --> 00:07:15.000
+Khi nhúng các chế độ xem lưu trữ SwiftUI vào hệ thống phân cấp của bạn, bạn nên áp dụng các ràng buộc Bố cục Tự động của riêng mình cho chế độ xem trên hoặc các chế độ xem liền kề khác.
+
+00:07:15.000 --> 00:07:28.000
+Sử dụng công cụ sửa đổi khung hoặc bố cục SwiftUI khác sẽ dẫn đến việc cập nhật các ràng buộc được tạo, chẳng hạn như ghi đè chiều rộng thành kích thước cố định.
+
+00:07:28.000 --> 00:07:35.000
+Vì người dùng có thể thay đổi kích thước cửa sổ, chúng có kích thước tối thiểu và tối đa.
+
+00:07:35.000 --> 00:07:47.000
+Khi HostingViews được đặt làm contentView cấp cao nhất của một cửa sổ, SwiftUI sẽ tự động cập nhật kích thước tối thiểu và tối đa của cửa sổ đó dựa trên nội dung đang được hiển thị.
+
+00:07:47.000 --> 00:07:55.000
+Và điều này cho phép các cửa sổ có thể thay đổi kích thước theo chiều dọc, chiều ngang hoặc cả hai, tùy thuộc vào nội dung.
+
+00:07:55.000 --> 00:08:02.000
+Chế độ xem SwiftUI, được đặt trong bộ điều khiển lưu trữ, cũng có kích thước dựa trên nội dung khi được trình bày theo phương thức.
+
+00:08:02.000 --> 00:08:15.000
+Ví dụ: bạn có thể dễ dàng đặt chế độ xem SwiftUI vào cửa sổ bật lên AppKit, bằng cách trình bày bộ điều khiển lưu trữ bằng API trình bày cửa sổ bật lên trên NSViewController, như được hiển thị ở đây.
+
+00:08:15.000 --> 00:08:20.000
+Bạn cũng có thể trình bày các chế độ xem SwiftUI dưới dạng trang tính, sử dụng phương thức presentAsSheet.
+
+00:08:20.000 --> 00:08:30.000
+Và cuối cùng, đối với một cửa sổ phương thức, bạn có thể sử dụng phương thức presentAsModalWindow để trình bày một cửa sổ chặn tương tác cho đến khi đóng.
+
+00:08:30.000 --> 00:08:34.000
+Cửa sổ có kích thước phù hợp với nội dung.
+
+00:08:34.000 --> 00:08:45.000
+Trong macOS Ventura, có các API mới trên NSHostingView và NSHostingController cho phép bạn tùy chỉnh các ràng buộc được tự động thêm vào.
+
+00:08:45.000 --> 00:08:53.000
+Theo mặc định, bộ điều khiển lưu trữ và chế độ xem tạo ra các ràng buộc cho kích thước tối thiểu, kích thước nội tại và kích thước tối đa.
+
+00:08:53.000 --> 00:09:05.000
+Bạn có thể muốn vô hiệu hóa một số trong số này vì lý do hiệu suất nếu bạn muốn chế độ xem luôn có kích thước linh hoạt hoặc các ràng buộc đã được thêm vào chế độ xem xung quanh trong AppKit.
+
+00:09:05.000 --> 00:09:15.000
+Đối với bộ điều khiển lưu trữ, để kích thước lý tưởng của chế độ xem xác định kích thước nội dung ưa thích, bạn có thể bật tùy chọn Kích thước nội dung ưa thích.
+
+00:09:15.000 --> 00:09:26.000
+Khi bạn bắt đầu thêm chế độ xem SwiftUI vào ứng dụng của mình, điều quan trọng là chúng phải tham gia vào chuỗi phản hồi và hệ thống tập trung giống như các chế độ xem khác trong ứng dụng của bạn.
+
+00:09:26.000 --> 00:09:32.000
+Trong Phím tắt, trình chỉnh sửa của chúng tôi được triển khai dưới dạng Chế độ xem SwiftUI.
+
+00:09:32.000 --> 00:09:40.000
+Nhưng trình chỉnh sửa cần xử lý các lệnh thanh menu được xác định trong menu chính, được triển khai trong AppKit.
+
+00:09:40.000 --> 00:09:45.000
+Các lệnh này bao gồm cắt, sao chép, dán và các lệnh khác.
+
+00:09:45.000 --> 00:09:52.000
+Chúng tôi cũng đã triển khai một vài mục menu tùy chỉnh của riêng mình, để di chuyển các hành động lên xuống.
+
+00:09:52.000 --> 00:09:58.000
+Trong AppKit, hệ thống phân cấp chế độ xem của bạn tạo thành một chuỗi các chế độ xem được gọi là "chuỗi phản hồi".
+
+00:09:58.000 --> 00:10:02.000
+Người phản hồi tập trung được gọi là người phản hồi đầu tiên.
+
+00:10:02.000 --> 00:10:08.000
+Khi một mục menu được chọn, bộ chọn cho mục đó sẽ được gửi đến người phản hồi đầu tiên.
+
+00:10:08.000 --> 00:10:20.000
+Nhưng nếu người phản hồi đầu tiên không trả lời bộ chọn đó, thì bộ chọn sẽ được gửi đến mỗi người phản hồi tiếp theo, cho đến khi có thứ gì đó xử lý bộ chọn hoặc nó đến ứng dụng.
+
+00:10:20.000 --> 00:10:26.000
+Tương đương với phản hồi đầu tiên trong SwiftUI là chế độ xem tập trung.
+
+00:10:26.000 --> 00:10:35.000
+Chế độ xem SwiftUI có thể tập trung có thể phản hồi đầu vào bàn phím và xử lý các bộ chọn được gửi đến chuỗi phản hồi.
+
+00:10:35.000 --> 00:10:46.000
+Một số chế độ xem như trường văn bản đã có thể lấy nét được, nhưng bạn có thể sử dụng công cụ sửa đổi có thể lấy nét để làm cho các chế độ xem khác cũng có thể lấy nét được.
+
+00:10:46.000 --> 00:10:52.000
+SwiftUI có một vài công cụ sửa đổi để xử lý các lệnh phổ biến, chẳng hạn như sao chép, cắt và dán.
+
+00:10:52.000 --> 00:11:00.000
+Những giá trị này vượt qua các giá trị vào và ra khỏi bảng dán, và đó là một cách dễ dàng để cho phép mọi người chuyển dữ liệu vào và ra khỏi ứng dụng của bạn.
+
+00:11:00.000 --> 00:11:09.000
+Trình chỉnh sửa phím tắt sử dụng công cụ sửa đổi lệnh onMoveCommand và onExit để xử lý các phím mũi tên và phím thoát.
+
+00:11:09.000 --> 00:11:17.000
+Công cụ sửa đổi onCommand có thể được sử dụng để xử lý bất kỳ bộ chọn phổ biến nào từ AppKit hoặc bộ chọn tùy chỉnh của riêng bạn được xác định trong ứng dụng của bạn.
+
+00:11:17.000 --> 00:11:28.000
+Ở đây, chúng tôi xử lý lệnh selectAll từ AppKit và các lệnh moveActionUp và moveActionDown được xác định trong ứng dụng Phím tắt.
+
+00:11:28.000 --> 00:11:44.000
+Khi kiểm tra tiêu điểm và khả năng điều hướng bàn phím trong ứng dụng của bạn, hãy đảm bảo mở Cài đặt hệ thống bàn phím và kiểm tra với Điều hướng bàn phím đầy đủ được bật và tắt, vì nhiều điều khiển chỉ có thể lấy nét khi được bật.
+
+00:11:44.000 --> 00:11:48.000
+Bạn có thể làm nhiều hơn nữa để làm cho ứng dụng của mình hoạt động tốt với bàn phím.
+
+00:11:48.000 --> 00:11:58.000
+Ví dụ, có các API như FocusState và công cụ sửa đổi tập trung cho phép bạn thay đổi theo chương trình chế độ xem nào được tập trung.
+
+00:11:58.000 --> 00:12:06.000
+Để tìm hiểu thêm về tiêu điểm và bàn phím, bạn nên xem video "Trực tiếp và phản ánh tiêu điểm trong SwiftUI".
+
+00:12:06.000 --> 00:12:11.000
+Cuối cùng, hãy nói về việc lưu trữ các chế độ xem AppKit trong SwiftUI.
+
+00:12:11.000 --> 00:12:24.000
+Có một số trường hợp Phím tắt đang lưu trữ các chế độ xem AppKit bên trong bố cục SwiftUI và bạn cũng có thể cần lưu trữ các chế độ xem AppKit khi bạn áp dụng SwiftUI trong ứng dụng của mình.
+
+00:12:24.000 --> 00:12:37.000
+Một ví dụ là bên trong trình chỉnh sửa phím tắt SwiftUI, nơi có chế độ xem trình chỉnh sửa AppleScript được nhúng, đó là điều khiển AppKit được chia sẻ với một vài ứng dụng hệ thống khác trên macOS.
+
+00:12:37.000 --> 00:12:48.000
+SwiftUI cung cấp hai giao thức có thể đại diện cho phép các chế độ xem AppKit và bộ điều khiển chế độ xem được nhúng trong hệ thống phân cấp chế độ xem SwiftUI.
+
+00:12:48.000 --> 00:12:57.000
+Giống như chế độ xem SwiftUI, các biểu diễn là mô tả về cách tạo và cập nhật chế độ xem AppKit.
+
+00:12:57.000 --> 00:13:15.000
+Vì nhiều lớp trong AppKit có đại biểu, người quan sát hoặc dựa vào KVO hoặc thông báo để quan sát, các giao thức cũng bao gồm một đối tượng điều phối viên tùy chọn mà bạn có thể triển khai để đi kèm với chế độ xem hoặc bộ điều khiển chế độ xem của mình.
+
+00:13:15.000 --> 00:13:20.000
+Đây là vòng đời của đối tượng được lưu trữ và điều phối viên của nó.
+
+00:13:20.000 --> 00:13:23.000
+Chúng tôi bắt đầu với chế độ xem được lưu trữ đang được khởi tạo.
+
+00:13:23.000 --> 00:13:28.000
+Điều này xảy ra khi chế độ xem sắp được hiển thị lần đầu tiên.
+
+00:13:28.000 --> 00:13:33.000
+Điều đầu tiên SwiftUI làm trong quá trình khởi tạo là làm điều phối viên.
+
+00:13:33.000 --> 00:13:41.000
+Đây là tùy chọn, nhưng bạn có thể xác định loại của riêng mình và trả lại từ makeCoordinator nếu bạn cần nó để ủy quyền hoặc quản lý nhà nước.
+
+00:13:41.000 --> 00:13:47.000
+Một ví dụ duy nhất của điều phối viên sẽ ở lại trong suốt thời gian xem.
+
+00:13:47.000 --> 00:13:53.000
+Thứ hai, phương thức makeNSView hoặc makeNSViewController được gọi.
+
+00:13:53.000 --> 00:14:00.000
+Đây là nơi bạn mô tả cho SwiftUI cách tạo một ví dụ mới cho chế độ xem của bạn.
+
+00:14:00.000 --> 00:14:13.000
+Bối cảnh chứa điều phối viên vừa được thực hiện, nếu có, vì vậy đây là một nơi tốt để chỉ định điều phối viên làm đại diện của quan điểm hoặc loại quan sát viên khác.
+
+00:14:13.000 --> 00:14:22.000
+Khi chế độ xem đã được tạo, phương thức chế độ xem cập nhật sẽ được gọi bất cứ khi nào trạng thái SwiftUI hoặc môi trường thay đổi.
+
+00:14:22.000 --> 00:14:33.000
+Tại đây, bạn có trách nhiệm cập nhật bất kỳ thuộc tính hoặc trạng thái nào được lưu trữ trong chế độ xem AppKit để giữ cho nó đồng bộ với trạng thái và môi trường SwiftUI xung quanh.
+
+00:14:33.000 --> 00:14:40.000
+Phương thức cập nhật có thể được gọi thường xuyên, vì vậy những thay đổi bạn thực hiện đối với chế độ xem phải càng tối thiểu càng tốt.
+
+00:14:40.000 --> 00:14:47.000
+Bạn nên kiểm tra những gì đã thay đổi và chỉ tải lại phần bị ảnh hưởng của chế độ xem khi các thay đổi được thực hiện.
+
+00:14:47.000 --> 00:14:53.000
+Khi SwiftUI hiển thị xong chế độ xem được lưu trữ, nó sẽ bị tháo dỡ.
+
+00:14:53.000 --> 00:14:57.000
+Chế độ xem được tổ chức và điều phối viên đều sẽ được phân bổ.
+
+00:14:57.000 --> 00:15:06.000
+Trước khi những thứ này được phân bổ, các giao thức có thể đại diện cung cấp cho bạn một phương pháp tùy chọn để triển khai, nơi bạn có thể dọn dẹp trạng thái nếu cần.
+
+00:15:06.000 --> 00:15:18.000
+Được rồi, bây giờ bạn đã biết vòng đời và đã quen thuộc với các giao thức có thể đại diện được, tôi sẽ chỉ cho bạn cách Phím tắt lưu trữ chế độ xem trình chỉnh sửa tập lệnh tùy chỉnh trong ứng dụng.
+
+00:15:18.000 --> 00:15:22.000
+Trình soạn thảo tập lệnh là một NSView được gọi là ScriptEditorView.
+
+00:15:22.000 --> 00:15:32.000
+Mã được viết trong trình chỉnh sửa có thể được truy cập và sửa đổi thông qua thuộc tính sourceCode và chế độ xem có thể bị vô hiệu hóa để ngăn các thay đổi được thực hiện.
+
+00:15:32.000 --> 00:15:40.000
+Trình chỉnh sửa tập lệnh cũng có một đại diện, được thông báo bất cứ khi nào ai đó sửa đổi mã nguồn.
+
+00:15:40.000 --> 00:15:50.000
+Khi lưu trữ chế độ xem AppKit, trước tiên hãy nghĩ về vị trí của chế độ xem sẽ được đặt trong SwiftUI và dữ liệu nào cần được chuyển vào và ra.
+
+00:15:50.000 --> 00:15:57.000
+Trong Phím tắt, chế độ xem này được đặt vào chế độ xem vùng chứa bên cạnh nút biên dịch.
+
+00:15:57.000 --> 00:16:03.000
+Trình xử lý của nút biên dịch cần truy cập mã nguồn được nhập vào chế độ xem.
+
+00:16:03.000 --> 00:16:08.000
+Mã nguồn được lưu trữ trong SwiftUI bằng cách sử dụng trình bao bọc thuộc tính Nhà nước.
+
+00:16:08.000 --> 00:16:13.000
+Người đại diện sẽ cần phải đọc và ghi vào trạng thái này.
+
+00:16:13.000 --> 00:16:22.000
+Để xây dựng có thể đại diện, hãy bắt đầu bằng cách tạo một loại phù hợp với NSViewRepresentable, vì nó sẽ lưu trữ một NSView.
+
+00:16:22.000 --> 00:16:28.000
+Thêm các thuộc tính cho mỗi thứ cần được cấu hình từ SwiftUI.
+
+00:16:28.000 --> 00:16:36.000
+Đối với mã nguồn, một ràng buộc được sử dụng, sẽ đọc và ghi trạng thái được lưu trữ trong SwiftUI.
+
+00:16:36.000 --> 00:16:40.000
+Phương pháp đầu tiên bạn cần thực hiện là makeNSView.
+
+00:16:40.000 --> 00:16:47.000
+Đây là nơi bạn mô tả cách tạo một phiên bản mới của chế độ xem và nơi bạn nên thực hiện bất kỳ thiết lập một lần nào được yêu cầu.
+
+00:16:47.000 --> 00:16:51.000
+Ở đây, đại biểu được đặt thành điều phối viên.
+
+00:16:51.000 --> 00:16:55.000
+Tôi sẽ nói về điều phối viên nhiều hơn một chút.
+
+00:16:55.000 --> 00:16:58.000
+Tiếp theo, triển khai updateNSView.
+
+00:16:58.000 --> 00:17:05.000
+Điều này sẽ được gọi khi sourceCode thay đổi hoặc khi môi trường SwiftUI thay đổi.
+
+00:17:05.000 --> 00:17:17.000
+Vì trình chỉnh sửa tập lệnh thực hiện một loạt công việc khi thuộc tính sourceCode được đặt, chúng tôi so sánh giá trị đã có trong chế độ xem và chỉ đặt thuộc tính nếu nó thay đổi để tránh công việc không cần thiết.
+
+00:17:17.000 --> 00:17:23.000
+Ngữ cảnh được chuyển đến updateNSView chứa môi trường SwiftUI.
+
+00:17:23.000 --> 00:17:35.000
+Khóa môi trường isEnabled được chuyển đến thuộc tính isEditable trên trình chỉnh sửa tập lệnh, vì vậy việc chỉnh sửa sẽ bị vô hiệu hóa nếu phần còn lại của hệ thống phân cấp chế độ xem SwiftUI.
+
+00:17:35.000 --> 00:17:42.000
+Bất cứ khi nào ai đó sửa đổi mã nguồn trong chế độ xem, liên kết mã nguồn cần nắm bắt giá trị mới.
+
+00:17:42.000 --> 00:17:49.000
+Để làm điều này, chúng tôi sẽ xây dựng một điều phối viên phù hợp với ScriptEditorViewDelegate.
+
+00:17:49.000 --> 00:17:56.000
+Điều phối viên sẽ lưu trữ giá trị có thể đại diện, chứa ràng buộc mã nguồn mà nó cần cập nhật.
+
+00:17:56.000 --> 00:18:04.000
+Và trong phương thức sourceCodeDidChange, liên kết được đặt thành giá trị chuỗi mới từ chế độ xem.
+
+00:18:04.000 --> 00:18:10.000
+Cuối cùng, chúng ta cần nói với SwiftUI đại diện cách tạo và cập nhật điều phối viên.
+
+00:18:10.000 --> 00:18:17.000
+Đầu tiên, bạn cần triển khai phương pháp makeCoordinator để tạo một điều phối viên mới.
+
+00:18:17.000 --> 00:18:29.000
+Các điều phối viên có cùng tuổi thọ với chế độ xem được lưu trữ và giống như các chế độ xem được lưu trữ, các thuộc tính bạn thêm vào điều phối viên cần được cập nhật khi các thay đổi có thể đại diện được.
+
+00:18:29.000 --> 00:18:40.000
+Vì updateNSView được gọi khi các giá trị được lưu trữ trong thay đổi có thể đại diện, ở đây, thuộc tính có thể đại diện trên điều phối viên được cập nhật.
+
+00:18:40.000 --> 00:18:50.000
+Bây giờ bạn đã biết cách thêm AppKit vào SwiftUI và cũng thêm SwiftUI vào AppKit, bạn nên bắt đầu tích hợp SwiftUI vào ứng dụng của mình.
+
+00:18:50.000 --> 00:18:55.000
+Một nơi tuyệt vời để bắt đầu là trong thanh bên của bạn, hoặc các ô xem bảng và bộ sưu tập.
+
+00:18:55.000 --> 00:19:01.000
+Đảm bảo rằng quan điểm của bạn đang tự định cỡ chính xác và xử lý các lệnh và tiêu điểm chung.
+
+00:19:01.000 --> 23:59:59.000
+Cảm ơn bạn đã dành thời gian, và tôi nóng lòng muốn xem những gì bạn xây dựng ♪
+

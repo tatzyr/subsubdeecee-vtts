@@ -1,0 +1,519 @@
+10155
+
+♪ Nhạc hip-hop nhạc cụ êm dịu ♪
+
+♪
+
+Meng Yang: Xin chào, tên tôi là Meng Yang, một kỹ sư từ Phần mềm GPU tại Apple.
+
+Hôm nay tôi sẽ đề cập đến một vài chủ đề nâng cao về ScreenCaptureKit và cách nó có thể đưa trải nghiệm chia sẻ màn hình của ứng dụng của bạn lên một tầm cao mới.
+
+Sau đó, đồng nghiệp Drew của tôi sẽ trình diễn API mới thú vị này đang hoạt động.
+
+Chụp màn hình là trọng tâm của các ứng dụng chia sẻ màn hình như Zoom, Google Meet, SharePlay và thậm chí các dịch vụ phát trực tuyến trò chơi phổ biến như Twitch, đã trở thành tiêu chuẩn mới về cách chúng tôi làm việc, học tập, cộng tác và giao lưu trong vài năm qua.
+
+ScreenCaptureKit là một khung chụp màn hình hoàn toàn mới, hiệu suất cao được xây dựng từ đầu với bộ tính năng mạnh mẽ.
+
+Bộ tính năng phong phú bao gồm kiểm soát nội dung có khả năng tùy chỉnh cao cho phép bạn dễ dàng chọn và sau đó chọn bất kỳ sự kết hợp nào của cửa sổ, ứng dụng và màn hình để chụp.
+
+Khả năng chụp độ phân giải và tốc độ khung hình gốc của nội dung màn hình.
+
+Các điều khiển thuộc tính luồng động như độ phân giải, tốc độ khung hình, định dạng pixel.
+
+Và những điều khiển này có thể được sửa đổi nhanh chóng mà không cần tái tạo luồng.
+
+Chụp bộ đệm được hỗ trợ bộ nhớ GPU để giảm các bản sao bộ nhớ.
+
+Chụp nội dung tăng tốc phần cứng, chia tỷ lệ, chuyển đổi định dạng pixel và màu để đạt được khả năng chụp hiệu suất cao với mức sử dụng CPU giảm.
+
+Cuối cùng nhưng không kém phần quan trọng, hỗ trợ cho cả quay video và âm thanh.
+
+Trước khi bắt đầu, bài nói chuyện này giả định rằng bạn đã quen thuộc với các khái niệm cơ bản, khối xây dựng và quy trình làm việc về cách hoạt động của khung.
+
+Vui lòng truy cập phiên giới thiệu "Gặp gỡ ScreenCaptureKit" để tìm hiểu thêm.
+
+Trong phiên này, tôi sẽ nói về cách chụp và hiển thị một cửa sổ duy nhất.
+
+Tiếp theo, cách thêm nội dung màn hình để chụp toàn màn hình.
+
+Cách xóa nội dung khỏi ảnh chụp màn hình.
+
+Sau đó tôi sẽ chỉ cho bạn một vài cách để định cấu hình luồng cho các trường hợp sử dụng khác nhau.
+
+Và cuối cùng, bạn sẽ thấy bản demo về cách ScreenCaptureKit chuyển đổi trải nghiệm chụp màn hình và âm thanh của OBS Studio, một ứng dụng chụp màn hình mã nguồn mở phổ biến.
+
+Bây giờ, hãy bắt đầu với ví dụ đầu tiên và có lẽ là trường hợp sử dụng phổ biến nhất: chụp một cửa sổ duy nhất.
+
+Ví dụ này sẽ bao gồm cách thiết lập một bộ lọc cửa sổ duy nhất; những gì mong đợi từ đầu ra luồng khi cửa sổ được chụp được thay đổi kích thước, bị tắc, di chuyển ra khỏi màn hình hoặc thu nhỏ.
+
+Bạn cũng sẽ học cách sử dụng siêu dữ liệu trên mỗi khung hình và cách hiển thị đúng cửa sổ đã chụp.
+
+Hãy đi sâu vào.
+
+Để chụp một cửa sổ duy nhất độc lập với màn hình hiển thị mà nó đang bật, bạn có thể bắt đầu bằng cách sử dụng một bộ lọc cửa sổ duy nhất và khởi tạo bộ lọc chỉ với một cửa sổ.
+
+Trong ví dụ ở đây, bộ lọc được cấu hình để bao gồm một cửa sổ Safari duy nhất.
+
+Đầu ra video chỉ bao gồm cửa sổ đó và không có gì khác.
+
+Không có cửa sổ con, cửa sổ bật lên hoặc các cửa sổ khác từ Safari sẽ được bao gồm.
+
+Mặt khác, chính sách thu âm thanh của ScreenCaptureKit luôn hoạt động ở cấp ứng dụng.
+
+Khi một bộ lọc cửa sổ duy nhất được sử dụng, tất cả nội dung âm thanh từ ứng dụng chứa cửa sổ sẽ được ghi lại, ngay cả từ những cửa sổ không có trong đầu ra video.
+
+Bây giờ chúng ta hãy xem mẫu mã.
+
+Để tạo một luồng với một cửa sổ duy nhất, hãy bắt đầu bằng cách lấy tất cả nội dung có sẵn để chia sẻ qua SCShareableContent.
+
+Tiếp theo, lấy cửa sổ bạn muốn chia sẻ từ SCShareableContent bằng cách khớp windowID.
+
+Sau đó, tạo một SCContentFilter với loại desktopIndependentWindow với SCWindow được chỉ định.
+
+Bạn có thể định cấu hình thêm luồng để bao gồm âm thanh như một phần của đầu ra luồng.
+
+Bây giờ bạn đã sẵn sàng để tạo một luồng với contentFilter và streamConfig.
+
+Sau đó bạn có thể thêm StreamOutput và bắt đầu luồng.
+
+Chúng ta hãy xem xét đầu ra luồng tiếp theo.
+
+Trong ví dụ ở đây, màn hình nguồn ở bên trái và đầu ra luồng ở bên phải.
+
+Bộ lọc luồng bao gồm một cửa sổ Safari duy nhất.
+
+Bây giờ tôi sẽ bắt đầu cuộn cửa sổ Safari đang được chụp.
+
+Đầu ra luồng bao gồm nội dung trực tiếp từ cửa sổ Safari duy nhất và đang cập nhật với cùng nhịp với cửa sổ nguồn, lên đến tốc độ khung hình gốc của màn hình nguồn.
+
+Ví dụ, khi cửa sổ nguồn liên tục cập nhật trên màn hình 120Hz, đầu ra luồng cũng có thể đạt được cập nhật lên đến 120 khung hình / giây.
+
+Bạn có thể tự hỏi điều gì sẽ xảy ra khi cửa sổ thay đổi kích thước.
+
+Xin lưu ý rằng việc thường xuyên thay đổi kích thước đầu ra của luồng có thể dẫn đến việc phân bổ bộ nhớ bổ sung và do đó không được khuyến nghị.
+
+Kích thước đầu ra của luồng hầu như cố định và nó không thay đổi kích thước với cửa sổ nguồn.
+
+Bây giờ hãy để tôi bắt đầu thay đổi kích thước cửa sổ nguồn và xem điều gì xảy ra với đầu ra của luồng.
+
+ScreenCaptureKit luôn thực hiện chia tỷ lệ phần cứng trên cửa sổ đã chụp để nó không bao giờ vượt quá đầu ra khung khi cửa sổ nguồn thay đổi kích thước.
+
+Còn những cửa sổ được bao phủ bởi các cửa sổ khác thì sao?
+
+Khi cửa sổ nguồn bị chặn hoặc bị chặn một phần, đầu ra luồng luôn bao gồm toàn bộ nội dung của cửa sổ.
+
+Và điều này cũng áp dụng cho trường hợp khi cửa sổ hoàn toàn tắt màn hình hoặc chuyển sang các màn hình khác.
+
+Và đối với các cửa sổ thu nhỏ, khi cửa sổ nguồn được thu nhỏ, đầu ra luồng bị tạm dừng và nó tiếp tục khi cửa sổ nguồn không còn được thu nhỏ nữa.
+
+Tiếp theo, hãy chuyển sang đầu ra âm thanh.
+
+Trong ví dụ này ở đây, có hai cửa sổ Safari với các bản âm thanh và cửa sổ bên trái đang được chụp.
+
+Đầu ra video chỉ bao gồm cửa sổ đầu tiên và các bản âm thanh từ cả hai cửa sổ Safari sẽ được bao gồm trong đầu ra âm thanh.
+
+Hãy xem và lắng nghe.
+
+♪ Nhạc khiêu vũ điện tử ♪
+
+Đầu bếp: Và tôi đã viết ra công thức guacamole yêu thích của mình.
+
+Nó yêu cầu bốn quả bơ.
+
+Meng: Với luồng đang hoạt động, ứng dụng của bạn sẽ nhận được bản cập nhật khung bất cứ khi nào có khung mới.
+
+Đầu ra của khung bao gồm bề mặt IOS đại diện cho khung được chụp và siêu dữ liệu trên mỗi khung hình.
+
+Tôi muốn dành chút thời gian để nói về siêu dữ liệu.
+
+Tôi sẽ chỉ cho bạn các ví dụ về siêu dữ liệu có thể khá hữu ích cho ứng dụng của bạn.
+
+Và chúng bao gồm rects bẩn, rect nội dung, quy mô nội dung và hệ số tỷ lệ.
+
+Hãy bắt đầu với những điểm ngả bẩn thỉu.
+
+Các rects bẩn cho biết nội dung mới ở đâu từ khung trước đó.
+
+Trong ví dụ ở đây, các rect bẩn đang được tô sáng để minh họa các vùng cập nhật khung hình.
+
+Thay vì luôn mã hóa toàn bộ khung hình hoặc tính toán delta giữa hai khung hình trong bộ mã hóa, bạn có thể chỉ cần sử dụng các rects bẩn để chỉ mã hóa và truyền các khu vực có bản cập nhật mới và sao chép các bản cập nhật vào khung trước đó ở phía máy thu để tạo khung mới.
+
+Các rects bẩn có thể được truy xuất từ từ điển siêu dữ liệu đầu ra CMSampleBuffer bằng cách sử dụng khóa phù hợp.
+
+Bây giờ hãy chuyển sang nội dung trực tiếp và quy mô nội dung.
+
+Cửa sổ nguồn cần chụp ở bên trái và đầu ra luồng ở bên phải.
+
+Vì một cửa sổ có thể được thay đổi kích thước, kích thước bề mặt sao lưu gốc của cửa sổ nguồn thường không khớp với kích thước của đầu ra luồng.
+
+Trong ví dụ ở đây, cửa sổ chụp có tỷ lệ khung hình khác với đầu ra của khung hình và lớn hơn.
+
+Cửa sổ bị bắt được thu nhỏ lại để phù hợp với đầu ra.
+
+Một trực tiếp nội dung, được đánh dấu màu xanh lá cây ở đây, cho biết khu vực quan tâm của nội dung được chụp trên đầu ra luồng.
+
+Và thang đo nội dung cho biết nội dung được thu nhỏ bao nhiêu để phù hợp.
+
+Ở đây cửa sổ Safari được chụp được thu nhỏ xuống 0,77 để vừa với khung hình.
+
+Bây giờ bạn có thể sử dụng siêu dữ liệu vừa thảo luận để hiển thị chính xác cửa sổ đã chụp càng gần với giao diện gốc của nó càng tốt.
+
+Đầu tiên, hãy bắt đầu bằng cách cắt nội dung từ đầu ra của nó bằng cách sử dụng trực tràng nội dung.
+
+Tiếp theo, chia tỷ lệ nội dung sao lưu bằng cách chia tỷ lệ nội dung.
+
+Bây giờ nội dung đã chụp được chia tỷ lệ để khớp với kích thước pixel 1-1 như cửa sổ nguồn.
+
+Nhưng cửa sổ được chụp sẽ trông như thế nào trên màn hình mục tiêu?
+
+Để trả lời câu hỏi đó, tôi muốn bắt đầu bằng cách mô tả cách hoạt động của hệ số tỷ lệ.
+
+Hệ số tỷ lệ của màn hình cho biết tỷ lệ tỷ lệ giữa kích thước điểm logic của màn hình hoặc cửa sổ và kích thước điểm ảnh của bề mặt nền của nó.
+
+Hệ số tỷ lệ 2, hoặc chế độ 2x, có nghĩa là mỗi một điểm trên màn hình bằng bốn điểm ảnh trên bề mặt nền.
+
+Một cửa sổ có thể được di chuyển từ màn hình Retina với hệ số tỷ lệ 2, chẳng hạn như trong ví dụ ở đây, sang màn hình không phải Retina với hệ số tỷ lệ 1 trong khi đang được chụp.
+
+Với hệ số tỷ lệ 1, mỗi điểm logic trên màn hình tương ứng với một điểm ảnh trên bề mặt nền.
+
+Ngoài ra, màn hình nguồn có thể có hệ số tỷ lệ không khớp từ màn hình mục tiêu nơi nội dung được chụp sẽ được hiển thị.
+
+Trong ví dụ này, một cửa sổ đang được chụp từ màn hình Retina ở bên trái với hệ số tỷ lệ 2 và được hiển thị trên màn hình không phải Retina ở bên phải.
+
+Nếu cửa sổ được chụp được hiển thị nguyên trạng mà không có tỷ lệ trên màn hình không phải Retina đích với ánh xạ một điểm đến một điểm ảnh, cửa sổ sẽ trông lớn gấp bốn lần.
+
+Để khắc phục điều này, bạn nên luôn kiểm tra hệ số tỷ lệ từ siêu dữ liệu của khung hình so với hệ số tỷ lệ của màn hình mục tiêu.
+
+Khi có sự không phù hợp, hãy chia tỷ lệ kích thước của nội dung đã chụp theo hệ số tỷ lệ trước khi hiển thị nó.
+
+Sau khi chia tỷ lệ, cửa sổ được chụp trên màn hình mục tiêu hiện có cùng kích thước với cửa sổ nguồn của nó.
+
+Bây giờ chúng ta hãy xem mã, và nó khá đơn giản.
+
+Trực tràng nội dung, tỷ lệ nội dung và yếu tố tỷ lệ cũng có thể được truy xuất từ tệp đính kèm siêu dữ liệu của CMSampleBuffer đầu ra.
+
+Sau đó, bạn có thể sử dụng siêu dữ liệu này để cắt và chia tỷ lệ nội dung đã chụp để hiển thị chính xác.
+
+Tóm lại, một bộ lọc cửa sổ duy nhất luôn bao gồm nội dung cửa sổ đầy đủ ngay cả khi cửa sổ nguồn ở ngoài màn hình hoặc bị tắc.
+
+Nó hiển thị và độc lập với không gian.
+
+Đầu ra luôn được bù ở góc trên cùng bên trái.
+
+Cửa sổ bật lên hoặc cửa sổ con không được bao gồm.
+
+Cân nhắc sử dụng siêu dữ liệu để hiển thị nội dung tốt nhất.
+
+Và âm thanh bao gồm các bản nhạc từ toàn bộ ứng dụng chứa.
+
+Bây giờ bạn vừa học về cách chụp và hiển thị một cửa sổ duy nhất, hãy để tôi chuyển sang lớp bộ lọc nội dung dựa trên màn hình tiếp theo.
+
+Trong ví dụ tiếp theo này, bạn sẽ học cách tạo bộ lọc dựa trên màn hình với các cửa sổ hoặc ứng dụng và tôi sẽ chứng minh một số khác biệt giữa các quy tắc lọc video và âm thanh.
+
+Bộ lọc bao gồm dựa trên màn hình chỉ định màn hình nào bạn muốn chụp nội dung.
+
+Theo mặc định, không có cửa sổ nào bị bắt.
+
+Bạn có thể chọn nội dung bạn muốn chụp bằng cửa sổ.
+
+Trong ví dụ ở đây, một cửa sổ Safari và một cửa sổ Keynote được thêm vào bộ lọc hiển thị.
+
+Đầu ra video chỉ bao gồm hai cửa sổ này được đặt trong không gian hiển thị và đầu ra âm thanh bao gồm tất cả các bản nhạc từ các ứng dụng Keynote và Safari.
+
+Mẫu mã này minh họa cách tạo các bộ lọc dựa trên màn hình với các cửa sổ đi kèm.
+
+Bắt đầu bằng cách tạo một danh sách SCWindows sử dụng SCShareableContent và windowIDs.
+
+Và sau đó, tạo một SCContentFilter dựa trên màn hình với một màn hình nhất định và một danh sách các cửa sổ được bao gồm.
+
+Sau đó, bạn có thể tạo một luồng bằng cách sử dụng bộ lọc và cấu hình giống như cửa sổ độc lập với máy tính để bàn và bắt đầu luồng.
+
+Với luồng đang hoạt động, chúng ta hãy xem đầu ra của luồng.
+
+Bộ lọc được cấu hình để bao gồm hai cửa sổ Safari, thanh menu và cửa sổ hình nền.
+
+Nếu một cửa sổ bị di chuyển ra khỏi màn hình, nó sẽ bị xóa khỏi đầu ra luồng.
+
+Khi một cửa sổ Safari mới được tạo, cửa sổ mới không hiển thị trong đầu ra luồng vì cửa sổ mới không có trong bộ lọc.
+
+Quy tắc tương tự cũng áp dụng cho các cửa sổ con hoặc cửa sổ bật lên, không hiển thị trong đầu ra của luồng.
+
+Nếu bạn muốn đảm bảo rằng các cửa sổ con được bao gồm tự động trong đầu ra luồng của mình, bạn có thể sử dụng bộ lọc dựa trên màn hình với các ứng dụng đi kèm.
+
+Trong ví dụ này, việc thêm các ứng dụng Safari và Keynote vào bộ lọc đảm bảo rằng đầu ra âm thanh và video từ tất cả các cửa sổ và nhạc nền từ hai ứng dụng này được bao gồm trong đầu ra Bộ lọc ngoại lệ Window là một cách mạnh mẽ để loại trừ các cửa sổ cụ thể khỏi đầu ra của bạn khi bộ lọc được chỉ định làm màn hình hiển thị
+
+Ví dụ, một cửa sổ Safari duy nhất bị xóa khỏi đầu ra.
+
+ScreenCaptureKit cho phép ghi lại âm thanh ở cấp ứng dụng, vì vậy việc loại trừ âm thanh từ một cửa sổ Safari duy nhất tương đương với việc xóa các bản âm thanh cho tất cả các ứng dụng Safari.
+
+Mặc dù đầu ra video của luồng vẫn bao gồm cửa sổ Safari, tất cả các bản âm thanh từ các ứng dụng Safari đều bị xóa và đầu ra âm thanh chỉ bao gồm nhạc nền từ Keynote.
+
+Trong ví dụ mã ở đây, chúng tôi thay đổi SCContentFilter để bao gồm danh sách SCRunningApplications thay vì SCWindows.
+
+Nếu có các cửa sổ riêng lẻ mà bạn muốn loại trừ thêm, hãy xây dựng danh sách SCWindows và sau đó tạo SCContentFilter bằng cách sử dụng danh sách các ứng dụng SCA với danh sách các cửa sổ ngoại trừ để loại trừ.
+
+Chúng ta hãy xem đầu ra luồng trông như thế nào bây giờ khi các cửa sổ mới hoặc cửa sổ con được tạo bằng cách chỉ định các ứng dụng đi kèm.
+
+Lần này, ứng dụng Safari và cửa sổ hệ thống được thêm vào bộ lọc.
+
+Một cửa sổ Safari mới hiện được tự động bao gồm trong đầu ra luồng và quy tắc tương tự áp dụng cho các cửa sổ con và cửa sổ bật lên.
+
+Điều này có thể khá hữu ích khi bạn đang thực hiện một hướng dẫn và muốn chứng minh toàn bộ hành động bao gồm gọi cửa sổ bật lên hoặc cửa sổ mới.
+
+Tôi vừa trình bày cách thêm nội dung vào đầu ra luồng thông qua một vài cách khác nhau.
+
+Ví dụ tiếp theo của tôi sẽ chỉ cho bạn cách xóa nội dung khỏi đầu ra luồng.
+
+Ví dụ này bao gồm một ứng dụng thử nghiệm mô phỏng một ứng dụng hội nghị truyền hình có chứa bản xem trước của màn hình đang được chia sẻ.
+
+Bởi vì ứng dụng thử nghiệm hiển thị đệ quy trong bản xem trước, nó đang tạo ra cái gọi là hiệu ứng hội trường gương.
+
+Ngay cả trong quá trình chia sẻ màn hình đầy đủ, các ứng dụng chia sẻ màn hình thường xóa cửa sổ của chính nó, xem trước chụp, chế độ xem camera của người tham gia để tránh hiệu ứng hội trường phản chiếu hoặc giao diện người dùng hệ thống khác như cửa sổ thông báo.
+
+ScreenCaptureKit cung cấp cho bạn một bộ lọc dựa trên loại trừ cho phép bạn nhanh chóng xóa nội dung khỏi ảnh chụp màn hình.
+
+Bộ lọc hiển thị dựa trên loại trừ chụp tất cả các cửa sổ từ màn hình đã cho theo mặc định.
+
+Sau đó, bạn có thể bắt đầu xóa các cửa sổ hoặc ứng dụng riêng lẻ bằng cách thêm chúng vào bộ lọc loại trừ.
+
+Ví dụ, bạn có thể thêm ứng dụng kiểm tra chụp nội dung và Trung tâm thông báo vào danh sách các ứng dụng bị loại trừ.
+
+Để tạo bộ lọc dựa trên màn hình không bao gồm danh sách các ứng dụng, hãy bắt đầu bằng cách truy xuất các ứng dụng SCA để loại trừ bằng cách khớp ID gói.
+
+Nếu có các cửa sổ riêng lẻ mà bạn muốn chọn lại đầu ra luồng, bạn cũng có thể xây dựng một danh sách tùy chọn ngoại trừ SCWindows.
+
+Và sau đó sử dụng một màn hình nhất định, danh sách các ứng dụng cần loại trừ và danh sách các cửa sổ ngoại lệ để tạo bộ lọc nội dung.
+
+Hãy cùng xem kết quả.
+
+Ứng dụng kiểm tra chụp nội dung gây ra sự cố hội trường phản chiếu và các cửa sổ thông báo đều bị xóa khỏi đầu ra luồng.
+
+Cửa sổ mới hoặc cửa sổ con từ các ứng dụng này cũng sẽ tự động bị xóa.
+
+Nếu các ứng dụng bị xóa này bao gồm bất kỳ âm thanh nào, âm thanh của chúng sẽ bị xóa khỏi đầu ra âm thanh.
+
+Chúng tôi vừa xem cách chụp một cửa sổ duy nhất, cách thêm và xóa cửa sổ khỏi bộ lọc hiển thị.
+
+Hãy chuyển sang cấu hình luồng tiếp theo.
+
+Trong một vài ví dụ tiếp theo, bạn sẽ tìm hiểu về các thuộc tính luồng khác nhau mà bạn có thể định cấu hình, cách thiết lập luồng để chụp màn hình và phát trực tuyến, và cách xây dựng bộ chọn cửa sổ với bản xem trước trực tiếp.
+
+Hãy bắt đầu với các thuộc tính cấu hình.
+
+Đây là một số thuộc tính luồng phổ biến mà bạn có thể định cấu hình, chẳng hạn như kích thước đầu ra luồng, ngả nguồn và đích, không gian màu, ma trận màu và định dạng pixel, có bao gồm con trỏ và điều khiển tốc độ khung hình hay không.
+
+Chúng tôi sẽ xem xét chi tiết từng tài sản tiếp theo.
+
+Hãy bắt đầu với kích thước đầu ra, có thể được chỉ định là chiều rộng và chiều cao tính bằng pixel.
+
+Kích thước và tỷ lệ khung hình của màn hình nguồn không phải lúc nào cũng khớp với kích thước đầu ra.
+
+Và khi sự không phù hợp này xảy ra trong khi chụp màn hình đầy đủ, sẽ có trụ cột hoặc hộp thư trong đầu ra luồng.
+
+Bạn cũng có thể chỉ định một rect nguồn xác định khu vực để chụp và kết quả sẽ được hiển thị và chia tỷ lệ đến rect đích trên đầu ra khung.
+
+ScreenCaptureKit hỗ trợ phần cứng tăng tốc không gian màu, ma trận màu và chuyển đổi định dạng pixel.
+
+Các định dạng BGRA và YUV phổ biến được hỗ trợ.
+
+Vui lòng truy cập trang nhà phát triển của chúng tôi để biết danh sách đầy đủ.
+
+Khi con trỏ hiển thị được bật, đầu ra luồng bao gồm một con trỏ được kết xuất trước vào khung.
+
+Điều này áp dụng cho tất cả các con trỏ hệ thống, ngay cả con trỏ tùy chỉnh như con trỏ hình máy ảnh ở đây.
+
+Bạn có thể sử dụng khoảng thời gian khung hình tối thiểu để kiểm soát tốc độ khung hình đầu ra mong muốn.
+
+Ví dụ, khi yêu cầu 60 khung hình / giây, hãy đặt khoảng thời gian tối thiểu thành 1/60.
+
+Bạn sẽ nhận được bản cập nhật khung hình không quá 60 khung hình / giây và không quá tốc độ khung hình gốc của nội dung.
+
+Độ sâu hàng đợi có thể được chỉ định để xác định số lượng bề mặt trong nhóm bề mặt phía máy chủ.
+
+Nhiều bề mặt hơn trong nhóm có thể dẫn đến tốc độ khung hình và hiệu suất tốt hơn, nhưng nó dẫn đến việc sử dụng bộ nhớ hệ thống cao hơn và có khả năng đánh đổi độ trễ, điều mà tôi sẽ thảo luận chi tiết hơn sau.
+
+ScreenCaptureKit chấp nhận phạm vi độ sâu hàng đợi từ ba đến tám với độ sâu hàng đợi mặc định là ba.
+
+Trong ví dụ này ở đây, nhóm bề mặt được cấu hình để bao gồm bốn bề mặt có sẵn để ScreenCaptureKit hiển thị.
+
+Bề mặt hoạt động hiện tại là bề mặt 1 và ScreenCaptureKit đang hiển thị khung hình tiếp theo cho nó.
+
+Khi bề mặt 1 hoàn tất, ScreenCaptureKit sẽ gửi bề mặt 1 đến ứng dụng của bạn.
+
+Ứng dụng của bạn đang xử lý và giữ bề mặt 1, trong khi ScreenCaptureKit đang hiển thị lên bề mặt 2.
+
+Surface 1 hiện được đánh dấu là không khả dụng trong nhóm vì ứng dụng của bạn vẫn đang sử dụng nó.
+
+Khi bề mặt 2 hoàn tất, nó được gửi đến ứng dụng của bạn và ScreenCaptureKit hiện hiển thị lên bề mặt 3.
+
+Nhưng nếu ứng dụng của bạn vẫn đang xử lý bề mặt 1, nó sẽ bắt đầu tụt lại phía sau vì các khung hiện được cung cấp nhanh hơn chúng có thể được xử lý.
+
+Nếu hồ bơi bề mặt chứa một số lượng lớn các bề mặt, các bề mặt mới sẽ bắt đầu chồng chất và bạn có thể cần cân nhắc bắt đầu thả khung để theo kịp.
+
+Trong trường hợp này, nhiều bề mặt hơn trong hồ bơi có khả năng dẫn đến độ trễ cao hơn.
+
+Số lượng bề mặt còn lại trong nhóm để ScreenCaptureKit sử dụng, bằng độ sâu hàng đợi trừ đi số lượng bề mặt do ứng dụng của bạn nắm giữ.
+
+Trong ví dụ ở đây, cả bề mặt 1 và 2 vẫn được giữ bởi ứng dụng của bạn.
+
+Có 2 bề mặt còn lại trong hồ bơi bề mặt.
+
+Sau khi bề mặt 3 hoàn tất và được gửi đến ứng dụng của bạn, bề mặt duy nhất còn lại trong hồ bơi là bề mặt 4.
+
+Nếu ứng dụng của bạn tiếp tục giữ được bề mặt 1, 2 và 3, ScreenCaptureKit sẽ sớm hết bề mặt để hiển thị và bạn sẽ bắt đầu thấy mất khung hình và trục trặc.
+
+Ứng dụng của bạn cần hoàn thiện và phát hành bề mặt 1 trước khi ScreenCaptureKit bắt đầu hiển thị khung hình tiếp theo sau bề mặt 4 để tránh mất khung hình.
+
+Bây giờ ứng dụng của bạn phát hành bề mặt 1 và nó có sẵn để ScreenCaptureKit sử dụng lại.
+
+Tóm lại: có hai quy tắc mà ứng dụng của bạn cần tuân theo để tránh độ trễ khung hình và mất khung hình.
+
+Để tránh khung hình bị trì hoãn, bạn cần có khả năng xử lý khung trong Khoảng thời gian Khung tối thiểu.
+
+Để tránh mất khung hình, thời gian ứng dụng của bạn giải phóng các bề mặt trở lại nhóm phải nhỏ hơn MinimumFrameInterval times QueueDepth trừ 1, sau đó ScreenCaptureKit hết bề mặt để sử dụng, đi vào một gian hàng và sẽ bắt đầu bỏ lỡ các khung hình mới.
+
+Bây giờ bạn đã thấy các thuộc tính khác nhau mà bạn có thể định cấu hình, hãy đi sâu vào một số ví dụ để định cấu hình luồng để chụp màn hình và phát trực tuyến.
+
+Một số nội dung màn hình bao gồm video, trò chơi hoặc hình ảnh động được cập nhật liên tục và yêu cầu tốc độ khung hình cao hơn.
+
+Trong khi những người khác bao gồm hầu hết văn bản tĩnh như cửa sổ bài phát biểu chính, ưu tiên độ phân giải cao hơn tốc độ khung hình, bạn có thể điều chỉnh trực tiếp cấu hình của luồng dựa trên nội dung được chia sẻ và điều kiện mạng.
+
+Trong ví dụ mã này, bạn sẽ thấy cách định cấu hình chụp để phát trực tuyến trò chơi 4K, 60-fps.
+
+Bạn có thể bắt đầu bằng cách đặt kích thước đầu ra luồng thành 4K ở kích thước pixel.
+
+Và sau đó, đặt tốc độ khung hình đầu ra thành 60 khung hình / giây bằng cách đặt khoảng thời gian khung hình tối thiểu thành 1/60.
+
+Tiếp theo, sử dụng định dạng pixel YUV420 để mã hóa và phát trực tuyến.
+
+Đặt nguồn trực tràng tùy chọn để chỉ chụp một phần của màn hình.
+
+Tiếp theo, thay đổi màu tô nền thành màu đen, và sau đó bao gồm một con trỏ trong đầu ra khung.
+
+Định cấu hình độ sâu hàng đợi bề mặt thành năm để có tốc độ khung hình và hiệu suất tối ưu.
+
+Cuối cùng, bật âm thanh trên luồng đầu ra.
+
+Tất cả các cấu hình luồng bạn vừa thấy trong ví dụ trước có thể được thay đổi động một cách nhanh chóng mà không cần tạo lại luồng.
+
+Ví dụ, bạn có thể điều chỉnh trực tiếp một số thuộc tính như kích thước đầu ra, tự động thay đổi tốc độ khung hình và cập nhật bộ lọc luồng.
+
+Đây là một ví dụ để chuyển kích thước đầu ra từ 4K xuống 720p.
+
+Và hạ cấp tốc độ khung hình từ 60 khung hình / giây xuống 15 khung hình / giây.
+
+Sau đó, bạn có thể chỉ cần gọi updateConfiguration để áp dụng các cài đặt mới một cách nhanh chóng mà không làm gián đoạn luồng.
+
+Trong ví dụ cuối cùng, tôi muốn hướng dẫn bạn xây dựng một công cụ chọn cửa sổ với bản xem trước trực tiếp.
+
+Đây là một ví dụ về một bộ chọn cửa sổ điển hình trông như thế nào.
+
+Các ứng dụng chia sẻ màn hình hội nghị web thường cung cấp cho người dùng tùy chọn chọn cửa sổ chính xác để chia sẻ.
+
+ScreenCaptureKit cung cấp một giải pháp hiệu quả và hiệu suất cao để tạo ra số lượng lớn các luồng có kích thước hình thu nhỏ với cập nhật nội dung trực tiếp và việc triển khai rất đơn giản.
+
+Hãy chia nhỏ nó để xem cần những gì để xây dựng một bộ chọn cửa sổ như thế này bằng cách sử dụng ScreenCaptureKit.
+
+Để thiết lập bộ chọn, bạn có thể bắt đầu bằng cách tạo một bộ lọc cửa sổ duy nhất cho mỗi cửa sổ đủ điều kiện mà ứng dụng của bạn cho phép người dùng chọn với cửa sổ độc lập trên máy tính để bàn làm loại bộ lọc.
+
+Tiếp theo, thiết lập cấu hình luồng có kích thước hình thu nhỏ, 5 khung hình / giây, với định dạng pixel BGRA để hiển thị trên màn hình, độ sâu hàng đợi mặc định, không có con trỏ hoặc âm thanh.
+
+Sử dụng bộ lọc cửa sổ đơn và cấu hình luồng ở đây để tạo một luồng cho mỗi cửa sổ.
+
+Để làm điều này bằng mã, bạn có thể bắt đầu bằng cách lấy SCShareableContent bằng cách loại trừ các cửa sổ máy tính để bàn và hệ thống.
+
+Tiếp theo, tạo một bộ lọc nội dung loại cửa sổ độc lập trên máy tính để bàn cho mỗi cửa sổ đủ điều kiện.
+
+Sau đó, chuyển sang phần cấu hình luồng.
+
+Chọn một kích thước hình thu nhỏ thích hợp - trong ví dụ này, nó là 284 x 182 - và sau đó đặt khoảng khung hình tối thiểu thành một trên năm.
+
+Với định dạng pixel của BGRA để hiển thị trên màn hình, hãy tắt âm thanh và con trỏ vì chúng tôi không cần chúng trong bản xem trước.
+
+Và đặt độ sâu hàng đợi thành ba vì chúng tôi không mong đợi các bản cập nhật quá thường xuyên.
+
+Với bộ lọc nội dung luồng và cấu hình được tạo, bây giờ bạn đã sẵn sàng để tạo các luồng.
+
+Tạo một luồng cho mỗi cửa sổ, thêm đầu ra luồng cho mỗi luồng, và sau đó bắt đầu luồng.
+
+Cuối cùng, thêm nó vào danh sách phát trực tuyến.
+
+Đây là trình chọn cửa sổ với bản xem trước trực tiếp được tạo bằng mã mẫu mà chúng tôi đã thấy trước đó.
+
+Mỗi hình thu nhỏ được cập nhật trực tiếp và sau đó được hỗ trợ bởi một luồng riêng lẻ với bộ lọc một cửa sổ.
+
+Với ScreenCaptureKit, bạn có thể dễ dàng xây dựng một bộ chọn xem trước trực tiếp như thế này, cho phép bạn đồng thời chụp đồng thời rất nhiều nội dung màn hình trực tiếp mà không làm quá tải hệ thống.
+
+Bây giờ hãy để tôi giao nó cho đồng nghiệp của tôi, Drew, người sẽ cung cấp cho bạn một bản demo thú vị về việc áp dụng OBS của ScreenCaptureKit.
+
+Drew Mills: Cảm ơn, Meng.
+
+Xin chào, tên tôi là Drew, và tôi là Kỹ sư Đối tác tại Apple.
+
+OBS Studio là một ứng dụng mã nguồn mở cho phép người dùng quản lý việc ghi và phát trực tuyến nội dung từ máy tính của họ.
+
+Nó chứa một triển khai của ScreenCaptureKit mà chúng tôi đã làm việc với dự án tích hợp vào mùa xuân này.
+
+ScreenCaptureKit rất dễ triển khai nhờ sử dụng mã tương tự như khả năng chụp dựa trên CGDisplayStream hiện có của OBS.
+
+Việc triển khai ScreenCaptureKit thể hiện nhiều tính năng được thảo luận trong phiên "Gặp gỡ ScreenCaptureKit".
+
+Điều này bao gồm: chụp toàn bộ màn hình nền, tất cả các cửa sổ của một ứng dụng hoặc chỉ một cửa sổ cụ thể.
+
+ScreenCaptureKit có chi phí thấp hơn so với chụp dựa trên CGWindowListCreateImage của OBS.
+
+Điều này có nghĩa là khi chụp một phần màn hình của bạn, bạn còn lại nhiều tài nguyên hơn mà bạn có thể sử dụng để sản xuất nội dung của mình.
+
+Hãy đi sâu vào bản demo để xem những gì chúng ta đã thảo luận trong hành động.
+
+Ở bên trái, có một ví dụ xấu nhất về Chụp cửa sổ của OBS.
+
+Ảnh chụp này sử dụng API CGWindowListCreateImage và nói lắp đáng kể.
+
+Trong thử nghiệm của chúng tôi, chúng tôi đã thấy tốc độ khung hình giảm xuống thấp tới 7 khung hình / giây.
+
+Trong khi đó, việc triển khai ScreenCaptureKit ở bên phải có kết quả mượt mà hơn nhiều, cung cấp video đầu ra với chuyển động mượt mà hơn đáng kể.
+
+Trong trường hợp này, cung cấp 60 khung hình / giây.
+
+Trong khi OBS sử dụng RAM ít hơn tới 15 phần trăm so với Window Capture.
+
+Và trong khi việc sử dụng CPU của OBS bị cắt giảm tới một nửa khi sử dụng ScreenCaptureKit thay vì Window Capture của OBS.
+
+Hãy xem xét các cải tiến khác mà ScreenCaptureKit cung cấp cho người dùng OBS.
+
+Tôi vẫn đang cố gắng theo dõi tất cả các Xếp hạng Vàng trong Sayonara Wild Hearts.
+
+Tôi muốn thể hiện khả năng chạy tốt nhất của mình, vì vậy tôi đã ghi lại trò chơi của mình.
+
+Nhờ ScreenCaptureKit, giờ đây tôi có thể ghi lại luồng âm thanh trực tiếp từ trò chơi, vì vậy khi tôi nhận được thông báo trên máy Mac của mình, nó sẽ không làm hỏng âm thanh hoặc video của bản ghi âm của tôi.
+
+Và điều này có thể thực hiện được mà không cần phải cài đặt bất kỳ phần mềm định tuyến âm thanh bổ sung nào.
+
+♪
+
+Bây giờ, sử dụng tất cả các cải tiến được cung cấp bởi ScreenCaptureKit trên Apple silicon, tôi có thể phát trực tuyến các trò chơi như Taiko no Tatsujin Pop Tap Beat từ máy Mac của mình sang các dịch vụ phát trực tuyến phổ biến.
+
+Một tùy chọn tốc độ bit không đổi mới cho bộ mã hóa phần cứng của Apple silicon có nghĩa là tôi có thể mã hóa nội dung phát trực tuyến của mình cho các dịch vụ yêu cầu tốc độ bit không đổi mà không ảnh hưởng đáng kể đến hiệu suất trò chơi của tôi.
+
+Giờ đây, nhờ việc sử dụng tài nguyên thấp hơn và giảm tải mã hóa của ScreenCaptureKit, tôi thậm chí còn có nhiều hiệu suất hơn cho nội dung quan trọng.
+
+Trở lại với bạn, Meng.
+
+Meng: Cảm ơn bạn, Drew.
+
+Thông qua các bản trình diễn và ví dụ, bạn đã tìm hiểu về các bộ lọc nội dung màn hình nâng cao.
+
+Một số cách để cấu hình luồng cho các trường hợp sử dụng khác nhau.
+
+Và cách sử dụng siêu dữ liệu trên mỗi khung hình và hiển thị chính xác nội dung đã chụp.
+
+Một số phương pháp hay nhất để giúp bạn đạt được hiệu suất tốt nhất.
+
+Và cuối cùng, Drew đã giới thiệu khả năng đáng kể và cải thiện hiệu suất mà ScreenCaptureKit mang đến cho OBS.
+
+Tôi nóng lòng muốn xem cách bạn xác định lại trải nghiệm chia sẻ màn hình, phát trực tuyến và cộng tác của ứng dụng bằng cách sử dụng ScreenCaptureKit.
+
+Cảm ơn bạn đã xem!
+
+♪

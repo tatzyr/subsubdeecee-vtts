@@ -1,0 +1,653 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:12.000
+Xin chào, và chào mừng đến với WWDC 2022.
+
+00:00:12.000 --> 00:00:15.000
+Tên tôi là Ben, và tôi là một kỹ sư trong nhóm hệ thống xây dựng Xcode.
+
+00:00:15.000 --> 00:00:19.000
+Xin chào, tên tôi là Artem, và tôi là một kỹ sư trong nhóm Swift Compiler.
+
+00:00:19.000 --> 00:00:25.000
+Trong buổi nói chuyện này, chúng tôi sẽ cung cấp cho bạn một cái nhìn sâu về quy trình xây dựng của Xcode để làm sáng tỏ sự song song bên trong các bản dựng.
+
+00:00:25.000 --> 00:00:34.000
+Ben sẽ bắt đầu với việc giới thiệu các khái niệm cốt lõi về các bản dựng và xem xét các công cụ có sẵn mà Xcode cung cấp để giúp điều tra các vấn đề về hiệu suất của bản dựng.
+
+00:00:34.000 --> 00:00:39.000
+Sau đó, anh ấy sẽ giải thích cách Xcode tăng song song hóa trong khi xây dựng mục tiêu.
+
+00:00:39.000 --> 00:00:48.000
+Trên hết, tôi sẽ giải thích cách Xcode song song hóa một bản dựng một cách toàn diện trong khi xây dựng các dự án bao gồm nhiều mục tiêu và cuối cùng tóm tắt những điều rút ra.
+
+00:00:48.000 --> 00:00:50.000
+Ben?
+
+00:00:50.000 --> 00:00:55.000
+Hãy nhắc lại những gì xảy ra khi nhấn CMD+B trong Xcode để xây dựng một ứng dụng.
+
+00:00:55.000 --> 00:01:07.000
+Hệ thống xây dựng, như một phần của Xcode, được gọi với một đại diện của toàn bộ dự án, bao gồm tất cả các tệp nguồn, tài sản, cài đặt xây dựng và các cấu hình khác như đích chạy.
+
+00:01:07.000 --> 00:01:11.000
+Hệ thống xây dựng là nguồn duy nhất của sự thật về cách một ứng dụng nên được xây dựng.
+
+00:01:11.000 --> 00:01:18.000
+Nó biết công cụ nào cần gọi bằng cách sử dụng cài đặt nào và tệp trung gian nào sẽ tạo ra để cuối cùng tạo ra một ứng dụng.
+
+00:01:18.000 --> 00:01:26.000
+Trong bước tiếp theo, hệ thống xây dựng gọi các công cụ để xử lý các tệp đầu vào của dự án, ví dụ, các trình biên dịch.
+
+00:01:26.000 --> 00:01:34.000
+Cả hai trình biên dịch, Clang và Swift, sẽ tạo ra các tệp đối tượng mà trình liên kết cần để liên kết chương trình thực thi đại diện cho ứng dụng.
+
+00:01:34.000 --> 00:01:37.000
+Mặc dù đơn đặt hàng này có ý nghĩa, nhưng không rõ nó đến từ đâu.
+
+00:01:37.000 --> 00:01:46.000
+Vì vậy, chúng ta hãy xem xét một ví dụ về quy trình đó và cách hệ thống xây dựng quyết định thực hiện tất cả các nhiệm vụ theo thứ tự nào.
+
+00:01:46.000 --> 00:01:55.000
+Sử dụng các tệp nguồn đầu vào, trình biên dịch Swift nắm bắt ý định của lập trình viên và chuyển nó thành tệp nhị phân có thể thực thi bằng máy, kiểm tra mã nguồn để tìm lỗi trên đường đi.
+
+00:01:55.000 --> 00:02:02.000
+Quá trình này có thể thất bại, điều này sẽ hủy bỏ việc xây dựng, nhưng nếu nó thành công, nó sẽ tạo ra một tệp đối tượng cho mỗi đầu vào.
+
+00:02:02.000 --> 00:02:11.000
+Các tệp đối tượng đó được sử dụng để gọi trình liên kết kết hợp chúng và thêm các tham chiếu vào các thư viện được liên kết bên ngoài để tạo ra tệp thực thi.
+
+00:02:11.000 --> 00:02:15.000
+Hai nhiệm vụ có sự phụ thuộc dựa trên những gì họ tiêu thụ và sản xuất.
+
+00:02:15.000 --> 00:02:19.000
+Các tệp đối tượng do trình biên dịch tạo ra được tiêu thụ bởi trình liên kết.
+
+00:02:19.000 --> 00:02:22.000
+Điều này tạo ra sự phụ thuộc vào biểu đồ hệ thống xây dựng.
+
+00:02:22.000 --> 00:02:28.000
+Bản thân nội dung tệp không được hệ thống xây dựng quan tâm, nhưng sự phụ thuộc giữa các tác vụ là.
+
+00:02:28.000 --> 00:02:35.000
+Trong khi thực hiện bản dựng, nó cần đảm bảo rằng một nhiệm vụ tạo ra đầu vào của nhiệm vụ khác kết thúc trước khi nhiệm vụ nói trên có thể bắt đầu.
+
+00:02:35.000 --> 00:02:44.000
+Và vì khái niệm cốt lõi này có giá trị cho tất cả các loại nhiệm vụ, hãy chuyển sang một hình ảnh trực quan chung hơn cho thấy sự phụ thuộc giữa Nhiệm vụ A và Nhiệm vụ B.
+
+00:02:44.000 --> 00:02:49.000
+Trong trường hợp này, A tạo ra một số hoặc tất cả các đầu vào của B.
+
+00:02:49.000 --> 00:03:03.000
+Biên dịch và Liên kết chỉ là một vài trong số nhiều loại tác vụ khác nhau cần được thực hiện để xây dựng toàn bộ mục tiêu, vì vậy hãy thêm một số tác vụ chung vào biểu đồ đại diện cho các loại khác như biên dịch tài sản, sao chép tệp hoặc đồng thiết kế.
+
+00:03:03.000 --> 00:03:07.000
+Cùng nhau, họ đại diện cho việc xây dựng một mục tiêu Khung.
+
+00:03:07.000 --> 00:03:12.000
+Một lần nữa, những nhiệm vụ đó đã xác định sự phụ thuộc dựa trên đầu vào và đầu ra của chúng.
+
+00:03:12.000 --> 00:03:21.000
+Vì vậy, hoàn thành nhiệm vụ thực hiện A bỏ chặn nhiệm vụ đang chạy B và C, trong khi hoàn thành nhiệm vụ B bỏ chặn nhiệm vụ D và E.
+
+00:03:21.000 --> 00:03:27.000
+Các nhiệm vụ được bỏ chặn được gọi là 'hạ lưu' và các nhiệm vụ chặn 'thượng nguồn'.
+
+00:03:27.000 --> 00:03:34.000
+Nhiều dự án chứa nhiều hơn một mục tiêu khung, vì vậy hãy thêm hai mục tiêu nữa đại diện cho một ứng dụng và một tiện ích mở rộng ứng dụng.
+
+00:03:34.000 --> 00:03:39.000
+Các mục tiêu xác định sự phụ thuộc lẫn nhau trong dự án thông qua các phụ thuộc rõ ràng hoặc ngầm định.
+
+00:03:39.000 --> 00:03:45.000
+Ví dụ, bằng cách được thêm vào giai đoạn xây dựng 'Liên kết nhị phân với thư viện'.
+
+00:03:45.000 --> 00:03:50.000
+Trong trường hợp này, ứng dụng nhúng tiện ích mở rộng ứng dụng và liên kết với Khung.
+
+00:03:50.000 --> 00:03:56.000
+Tiện ích mở rộng ứng dụng không sử dụng Khung, vì vậy chúng không có mối quan hệ phụ thuộc.
+
+00:03:56.000 --> 00:04:00.000
+Khi thực hiện biểu đồ xây dựng, các nhiệm vụ khác nhau mất một khoảng thời gian khác nhau.
+
+00:04:00.000 --> 00:04:10.000
+Điều này phụ thuộc vào mức độ phức tạp cần thiết để hoàn thành công việc, tùy thuộc vào tính toán cần thiết cũng như kích thước của đầu vào.
+
+00:04:10.000 --> 00:04:19.000
+Việc biên dịch nhiều tệp thường mất nhiều thời gian hơn so với sao chép một vài tệp tiêu đề và việc xem xét điều này sẽ kết thúc với một cái gì đó như thế này.
+
+00:04:19.000 --> 00:04:25.000
+Khi hệ thống xây dựng thực hiện bản dựng này, nó bắt đầu bằng cách chạy các tác vụ không có phụ thuộc.
+
+00:04:25.000 --> 00:04:35.000
+Và một khi những người đó hoàn thành, họ bỏ chặn các nhiệm vụ hạ nguồn, v.v., tuân theo quy trình này cho đến khi tất cả các nhiệm vụ đã lên kế hoạch hoàn thành.
+
+00:04:35.000 --> 00:04:43.000
+Trên các bản dựng tiếp theo, hệ thống xây dựng có thể bỏ qua các tác vụ mà đầu vào không thay đổi trong khi đầu ra vẫn được cập nhật.
+
+00:04:43.000 --> 00:04:52.000
+Nếu một tác vụ cần chạy lại do đầu vào bị thay đổi, như B của mục tiêu Ứng dụng trong trường hợp này, các tác vụ hạ nguồn cũng phải chạy lại nếu đầu ra của nó thay đổi.
+
+00:04:52.000 --> 00:04:58.000
+Bỏ qua tất cả các nhiệm vụ khác cho phép thời gian quay vòng rất nhanh khi làm việc lặp đi lặp lại trong dự án.
+
+00:04:58.000 --> 00:05:03.000
+Đây được gọi là bản dựng gia tăng, nhưng hãy gắn bó với các bản dựng đầy đủ ngay bây giờ.
+
+00:05:03.000 --> 00:05:10.000
+Sự phụ thuộc và thời gian thực hiện nhiệm vụ xác định thời gian có thể đầu tiên một nhiệm vụ hạ nguồn có thể bắt đầu.
+
+00:05:10.000 --> 00:05:18.000
+Với thông tin này, có thể tính toán con đường quan trọng là thời gian ngắn nhất mà bản dựng cần chạy với tài nguyên lý thuyết không giới hạn.
+
+00:05:18.000 --> 00:05:25.000
+Một mô hình phổ biến trong suốt buổi nói chuyện này sẽ là rút ngắn con đường này để tạo ra một biểu đồ xây dựng có khả năng song song và có thể mở rộng cao.
+
+00:05:25.000 --> 00:05:34.000
+Đường dẫn quan trọng ngắn hơn không nhất thiết dẫn đến thời gian xây dựng tổng thể ngắn hơn, nhưng nó đảm bảo rằng quy mô xây dựng với phần cứng.
+
+00:05:34.000 --> 00:05:43.000
+Đường dẫn xây dựng quan trọng xác định yếu tố giới hạn về tốc độ xây dựng - nó không thể hoàn thành nhanh hơn, ngay cả khi phần cứng cho phép nó.
+
+00:05:43.000 --> 00:05:47.000
+Rút ngắn con đường quan trọng được thực hiện bằng cách phá vỡ các phụ thuộc bên trong nó.
+
+00:05:47.000 --> 00:05:55.000
+Khi xem xét cách một bản dựng được thực hiện và để hiểu thêm về việc thực hiện nó, dữ liệu cần được vẽ dựa trên thời gian chúng được thực thi.
+
+00:05:55.000 --> 00:05:58.000
+Chiều rộng vẫn biểu thị độ dài của các nhiệm vụ.
+
+00:05:58.000 --> 00:06:07.000
+Các yếu tố rộng như hai yếu tố này biểu thị một nhiệm vụ chạy dài trong khi các yếu tố hẹp như thế này đại diện cho các nhiệm vụ hoàn thành nhanh.
+
+00:06:07.000 --> 00:06:12.000
+Chiều cao của biểu đồ cho thấy số lượng nhiệm vụ thực hiện song song tại một thời điểm nhất định.
+
+00:06:12.000 --> 00:06:18.000
+Lưu ý rằng điều này không trực tiếp ánh xạ đến việc sử dụng CPU hoặc bộ nhớ.
+
+00:06:18.000 --> 00:06:24.000
+Không gian trống bắt nguồn từ các tác vụ chặn các tác vụ hạ nguồn của nó như trong hai kịch bản đó.
+
+00:06:24.000 --> 00:06:29.000
+Và cuối cùng, màu sắc của các yếu tố đại diện cho mục tiêu liên quan của chúng.
+
+00:06:29.000 --> 00:06:37.000
+Tôi rất vui mừng thông báo rằng hình ảnh trực quan này là mới trong Xcode 14 và sẽ giúp hiểu hiệu suất của bản dựng sau khi hoàn thành.
+
+00:06:37.000 --> 00:06:40.000
+Dòng thời gian xây dựng Xcode là một bổ sung mới tuyệt vời cho nhật ký xây dựng.
+
+00:06:40.000 --> 00:06:46.000
+Nó trực quan hóa dựa trên sự song song hóa, thay vì phân cấp để hiểu hiệu suất của bản dựng.
+
+00:06:46.000 --> 00:06:51.000
+Số lượng hàng tại thời điểm nhất định thể hiện mức độ song song trong thời gian đó.
+
+00:06:51.000 --> 00:06:57.000
+Độ dài ngang của các nhiệm vụ riêng lẻ đại diện cho thời gian họ cần để hoàn thành công việc của mình.
+
+00:06:57.000 --> 00:07:04.000
+Khoảng trống trong biểu đồ cho thấy nơi các tác vụ chưa hoàn thành chặn các tác vụ hạ nguồn bắt đầu đến khi thực hiện.
+
+00:07:04.000 --> 00:07:10.000
+Các màu sắc khác nhau được áp dụng cho các yếu tố dòng thời gian giúp phân biệt các mục tiêu khác nhau là một phần của bản dựng.
+
+00:07:10.000 --> 00:07:22.000
+Và trên các bản dựng gia tăng, dòng thời gian sẽ chỉ chứa các tác vụ đã thực sự được thực thi, cho phép phát hiện các tác vụ chạy lâu dài, đặc biệt là những tác vụ có thể không được mong đợi sẽ chạy trong quá trình xây dựng này.
+
+00:07:22.000 --> 00:07:25.000
+Đây là bản demo của Dòng thời gian xây dựng trong Xcode 14.
+
+00:07:25.000 --> 00:07:31.000
+Trong cửa sổ này, tôi đã mở một bản sao của dự án swift-docc từ Github để xây dựng trình biên dịch tài liệu.
+
+00:07:31.000 --> 00:07:36.000
+Để có cái nhìn tổng quan về các mục tiêu được xây dựng cho sơ đồ, hãy xem trình chỉnh sửa sơ đồ.
+
+00:07:36.000 --> 00:07:40.000
+Để mở ra, tôi nhấp vào sơ đồ và chọn "Chỉnh sửa sơ đồ".
+
+00:07:40.000 --> 00:07:43.000
+Tab 'xây dựng' chứa danh sách tất cả các mục tiêu.
+
+00:07:43.000 --> 00:07:50.000
+Các mục tiêu có thể được thêm rõ ràng vào sơ đồ hoặc ngầm bằng cách là sự phụ thuộc của mục tiêu đã là một phần của sơ đồ.
+
+00:07:50.000 --> 00:08:00.000
+Trong trường hợp này, tôi đang sử dụng gói Swift với sơ đồ được tạo tự động cho gói, vì vậy tất cả các mục tiêu từ bản kê khai được xác định rõ ràng.
+
+00:08:00.000 --> 00:08:04.000
+Nhật ký này đại diện cho một bản dựng của sơ đồ mà tôi đã thực hiện trước đó.
+
+00:08:04.000 --> 00:08:08.000
+Trong chứa các mục nhập cho tất cả các tác vụ mà hệ thống xây dựng đã thực hiện.
+
+00:08:08.000 --> 00:08:14.000
+Các mục nhập được tổ chức theo hệ thống phân cấp dựa trên các mục tiêu mà chúng thuộc về, như mục tiêu 'docc' ở đây.
+
+00:08:14.000 --> 00:08:21.000
+Để xây dựng thành công tệp thực thi của mục tiêu đó, Xcode đã chạy tất cả các tác vụ được đại diện bởi các con của nút này.
+
+00:08:21.000 --> 00:08:28.000
+Vì nhật ký xây dựng hiện đang ở trạng thái 'Tất cả', nó cũng hiển thị các tác vụ từ các bản dựng trước đó không cần phải chạy lại trong bản dựng gia tăng.
+
+00:08:28.000 --> 00:08:34.000
+Chọn 'Gần đây' chỉ hiển thị các tác vụ đã thực sự được thực hiện, ẩn tất cả các tác vụ đã bỏ qua.
+
+00:08:34.000 --> 00:08:43.000
+Thêm vào đó, nhật ký xây dựng cũng hỗ trợ các bộ lọc để chỉ hiển thị các tác vụ có vấn đề hoặc thậm chí không thành công.
+
+00:08:43.000 --> 00:08:49.000
+Để mở dòng thời gian xây dựng cho bản dựng này, tôi vào các tùy chọn trình chỉnh sửa và mở trợ lý.
+
+00:08:49.000 --> 00:08:52.000
+Dòng thời gian xây dựng mở ra bên cạnh nhật ký xây dựng.
+
+00:08:52.000 --> 00:08:57.000
+Như thường lệ, các tùy chọn trình chỉnh sửa cung cấp cài đặt để hiển thị trợ lý ở bên phải hoặc dưới cùng.
+
+00:08:57.000 --> 00:08:59.000
+Tôi sẽ ở lại với đáy bây giờ.
+
+00:08:59.000 --> 00:09:05.000
+Dòng thời gian trực quan hóa dữ liệu giống như nhật ký xây dựng 'gần đây' dựa trên sự song song của bản dựng.
+
+00:09:05.000 --> 00:09:08.000
+Chọn một phần tử trong cái này cũng chọn nó trong cái kia.
+
+00:09:08.000 --> 00:09:12.000
+Điều này cho phép xem việc thực hiện nhiệm vụ trong ngữ cảnh.
+
+00:09:12.000 --> 00:09:18.000
+Dòng thời gian ở đây cung cấp ý nghĩa về các nhiệm vụ được thực hiện song song với nhiệm vụ đã chọn.
+
+00:09:18.000 --> 00:09:26.000
+Tôi đang sử dụng một cử chỉ chụm trên bàn di chuột để thu nhỏ lại.
+
+00:09:26.000 --> 00:09:30.000
+Chọn một phần tử trong dòng thời gian hiển thị nó trong nhật ký xây dựng.
+
+00:09:30.000 --> 00:09:38.000
+Và vì nhật ký xây dựng trực quan hóa dựa trên cấu trúc phân cấp, nó cho phép xem tệp nào được biên dịch như một phần của lệnh gọi trình biên dịch này.
+
+00:09:38.000 --> 00:09:46.000
+Nó cũng cho phép xem toàn bộ dòng lệnh của lời gọi đó.
+
+00:09:46.000 --> 00:09:52.000
+Giữ Tùy chọn trong khi chọn một khu vực trong dòng thời gian xây dựng điều chỉnh cổng xem để phù hợp với khung thời gian này.
+
+00:09:52.000 --> 00:09:59.000
+Ở đây chúng ta có thể xác minh rằng liên kết của ArgumentParser mục tiêu trên thực tế đang chờ biên dịch cùng một mục tiêu.
+
+00:09:59.000 --> 00:10:03.000
+Giữ Tùy chọn trong khi cuộn lên cho phép tôi thu nhỏ nhanh chóng.
+
+00:10:03.000 --> 00:10:08.000
+Số lượng hàng trong dòng thời gian đại diện cho số lượng nhiệm vụ chạy song song tại thời điểm đó.
+
+00:10:08.000 --> 00:10:14.000
+Một khoảng trống như thế này cho biết các tác vụ đang chờ đầu vào chưa được tạo ra.
+
+00:10:14.000 --> 00:10:18.000
+Lý tưởng nhất, dòng thời gian được lấp đầy theo chiều dọc và có càng ít không gian trống càng tốt.
+
+00:10:18.000 --> 00:10:23.000
+Điều này mở rộng biểu đồ xây dựng tốt nhất và làm cho việc xây dựng nhanh hơn, phần cứng càng nhanh.
+
+00:10:23.000 --> 00:10:28.000
+Để đạt được điều này, Xcode đi kèm với nhiều cải tiến trong năm nay để rút ngắn con đường quan trọng.
+
+00:10:28.000 --> 00:10:35.000
+Tiếp theo, hãy xem Xcode xác định và xây dựng các mục tiêu riêng lẻ như cách nó có thể tăng tính song song như thế nào.
+
+00:10:35.000 --> 00:10:41.000
+Khi cấu hình một mục tiêu, các giai đoạn xây dựng mô tả công việc cần được thực hiện để tạo ra sản phẩm của mục tiêu đó.
+
+00:10:41.000 --> 00:10:54.000
+Chúng được xác định trong trình chỉnh sửa dự án và có thể chứa một tập hợp các tệp mã nguồn và nội dung để biên dịch, các tệp cần được sao chép như tiêu đề hoặc tài nguyên, cũng như các thư viện cần được liên kết hoặc các tập lệnh cần được thực thi.
+
+00:10:54.000 --> 00:11:00.000
+Nhiều giai đoạn xây dựng mô tả các nhiệm vụ với đầu vào hoặc đầu ra từ các giai đoạn xây dựng khác, tạo ra sự phụ thuộc giữa chúng.
+
+00:11:00.000 --> 00:11:04.000
+Ví dụ, các tệp nguồn của mục tiêu phải được biên dịch trước khi nó được liên kết.
+
+00:11:04.000 --> 00:11:08.000
+Tuy nhiên, điều này không áp dụng cho tất cả các giai đoạn xây dựng.
+
+00:11:08.000 --> 00:11:17.000
+Thay vì chạy các tác vụ từ mỗi giai đoạn xây dựng theo thứ tự tuyến tính, hệ thống xây dựng sẽ xem xét các đầu vào và đầu ra của các giai đoạn xây dựng để xác định xem chúng có thể chạy song song hay không.
+
+00:11:17.000 --> 00:11:24.000
+Ví dụ, Biên dịch và sao chép Tài nguyên có thể chạy song song vì cả hai đều không phụ thuộc vào bất kỳ đầu ra nào của cái kia.
+
+00:11:24.000 --> 00:11:30.000
+Tuy nhiên, liên kết vẫn phải tuân theo quá trình biên dịch vì nó phụ thuộc vào các tệp đối tượng được tạo ra bởi giai đoạn đó.
+
+00:11:30.000 --> 00:11:35.000
+Bây giờ, hãy xem xét một mục tiêu khác có chứa các giai đoạn xây dựng 'Run Script'.
+
+00:11:35.000 --> 00:11:41.000
+Không giống như các giai đoạn xây dựng khác, đầu vào và đầu ra của các giai đoạn tập lệnh phải được cấu hình thủ công trong trình chỉnh sửa mục tiêu.
+
+00:11:41.000 --> 00:11:49.000
+Kết quả là, hệ thống xây dựng sẽ chạy từng giai đoạn tập lệnh liên tiếp một để tránh giới thiệu cuộc đua dữ liệu trong quá trình xây dựng.
+
+00:11:49.000 --> 00:12:03.000
+Nếu các tập lệnh trong một mục tiêu được cấu hình để chạy dựa trên phân tích phụ thuộc và chỉ định danh sách đầy đủ các đầu vào và đầu ra của chúng, thì cài đặt xây dựng FUSE_BUILD_SCRIPT_PHASES có thể được đặt thành CÓ để chỉ ra hệ thống xây dựng nên cố gắng chạy chúng song song.
+
+00:12:03.000 --> 00:12:09.000
+Tuy nhiên, khi chạy song song các giai đoạn tập lệnh, hệ thống xây dựng phải dựa vào các đầu vào và đầu ra được chỉ định.
+
+00:12:09.000 --> 00:12:17.000
+Vì vậy, hãy lưu ý rằng một danh sách không đầy đủ các đầu vào hoặc đầu ra của giai đoạn tập lệnh có thể dẫn đến các cuộc đua dữ liệu rất khó gỡ lỗi.
+
+00:12:17.000 --> 00:12:24.000
+Để giảm thiểu điều này, Xcode hỗ trợ hộp cát tập lệnh người dùng để khai báo chính xác các phụ thuộc của từng giai đoạn tập lệnh.
+
+00:12:24.000 --> 00:12:35.000
+Sandboxing là một tính năng chọn tham gia chặn các tập lệnh shell vô tình truy cập các tệp nguồn và các đối tượng xây dựng trung gian, trừ khi chúng được khai báo rõ ràng là đầu vào hoặc đầu ra cho giai đoạn.
+
+00:12:35.000 --> 00:12:41.000
+Trong ví dụ này, cả input và output.txt đều không được khai báo là phụ thuộc cho giai đoạn tập lệnh đó.
+
+00:12:41.000 --> 00:12:46.000
+Hộp cát sẽ chặn tập lệnh đọc và ghi vào cả hai tệp khi xây dựng dự án.
+
+00:12:46.000 --> 00:12:52.000
+Khi tập lệnh vi phạm hộp cát, nó sẽ thất bại với mã thoát khác 0 khiến bản dựng thất bại.
+
+00:12:52.000 --> 00:13:00.000
+Thêm vào đó, Xcode sẽ liệt kê tất cả các đường dẫn mà giai đoạn tập lệnh đang cố gắng truy cập mà không khai báo chúng đúng cách.
+
+00:13:00.000 --> 00:13:04.000
+Thêm cả hai tệp làm thông tin phụ thuộc vào giai đoạn tập lệnh này sẽ khắc phục sự cố này.
+
+00:13:04.000 --> 00:13:12.000
+Bằng cách này, hộp cát đảm bảo rằng tập lệnh không truy cập nhầm vào bất kỳ tệp nào khác ngoài đầu vào và đầu ra được khai báo của nó.
+
+00:13:12.000 --> 00:13:19.000
+Bây giờ, hãy khám phá một ví dụ với nhiều hơn một giai đoạn tập lệnh và xem cách hộp cát ngăn chặn các cuộc đua dữ liệu và các bản dựng không chính xác.
+
+00:13:19.000 --> 00:13:21.000
+Có hai giai đoạn kịch bản.
+
+00:13:21.000 --> 00:13:30.000
+Cái đầu tiên đọc một tệp văn bản, tính tổng kiểm tra nội dung của nó và ghi giá trị đó vào một tệp trung gian trong DERIVED_FILE_DIR.
+
+00:13:30.000 --> 00:13:38.000
+Tập lệnh khác đọc cùng một tệp văn bản cũng như tổng kiểm tra được tạo và đưa chúng vào tệp html để hiển thị sau này trong ứng dụng.
+
+00:13:38.000 --> 00:13:48.000
+Nếu tập hợp chính xác các phụ thuộc đầu vào và đầu ra cho các giai đoạn này không được khai báo, Xcode sẽ chạy song song hai tập lệnh khi FUSE_BUILD_SCRIPT_PHASES được bật.
+
+00:13:48.000 --> 00:13:51.000
+Hãy kiểm tra kịch bản có vấn đề này một cách chi tiết.
+
+00:13:51.000 --> 00:14:01.000
+Giả sử "Tạo HTML" thiếu khai báo đầu vào của "checksum.txt", nhưng tất cả các đầu vào và đầu ra khác của cả hai tập lệnh đã được khai báo chính xác.
+
+00:14:01.000 --> 00:14:07.000
+Nếu không có hộp cát, cấu hình sai này có thể không được chú ý, gây ra sự cố trong quá trình xây dựng.
+
+00:14:07.000 --> 00:14:16.000
+Điều đó có nghĩa là Xcode sẽ không suy ra mối quan hệ phụ thuộc giữa cả hai giai đoạn và lên lịch chạy chúng song song khi FUSE_BUILD_SCRIPT_PHASES được bật.
+
+00:14:16.000 --> 00:14:18.000
+Có một vài mối nguy hiểm ở đây.
+
+00:14:18.000 --> 00:14:29.000
+Vì checksum.txt không được liệt kê như một phụ thuộc đầu vào cho "Tạo HTML" trong quá trình xây dựng sạch, tập lệnh sẽ cố gắng đọc tệp mà không có sẵn trên hệ thống tệp.
+
+00:14:29.000 --> 00:14:40.000
+Mối nguy hiểm khác là nếu checksum.txt có sẵn trên đĩa do các lần chạy trước của "Tính toán tổng kiểm tra", "Tạo HTML" có thể nhận tệp lỗi thời khi hai tập lệnh chạy song song.
+
+00:14:40.000 --> 00:14:45.000
+Đây là lỗi của người dùng và việc thực thi các tập lệnh trong hộp cát giúp ngăn chặn vấn đề này.
+
+00:14:45.000 --> 00:14:51.000
+Khi bật hộp cát, "Tạo HTML" sẽ thất bại ngay lập tức khi nó cố gắng đọc "checksum.txt".
+
+00:14:51.000 --> 00:14:56.000
+Thông báo lỗi sẽ hướng dẫn thêm đầu vào bị thiếu cho giai đoạn xây dựng đó.
+
+00:14:56.000 --> 00:15:05.000
+Có các đầu vào và đầu ra được xác định chính xác hướng dẫn Xcode để tôn trọng mối quan hệ phụ thuộc giữa cả hai giai đoạn để "tính toán tổng kiểm tra" chạy trước "Tạo HTML".
+
+00:15:05.000 --> 00:15:09.000
+Trong khi các giai đoạn xây dựng không liên quan vẫn có thể thực hiện song song.
+
+00:15:09.000 --> 00:15:17.000
+Để bật Sandboxed Shell Scripts cho một mục tiêu, hãy đặt ENABLE_USER_SCRIPT_SANDBOXING thành CÓ trong trình chỉnh sửa cài đặt xây dựng hoặc tệp xcconfig.
+
+00:15:17.000 --> 00:15:34.000
+Tóm lại, các tập lệnh shell hộp cát cho phép có thông tin phụ thuộc chính xác để cho phép các bản dựng gia tăng nhanh hơn và mạnh mẽ hơn vì hệ thống xây dựng có thể tự tin bỏ qua các giai đoạn tập lệnh nếu đầu vào không thay đổi và đầu ra vẫn hợp lệ, trong khi chạy lại tập lệnh nếu không.
+
+00:15:34.000 --> 00:15:46.000
+Cho phép cài đặt xây dựng cho mục tiêu của tập lệnh chặn quyền truy cập vào các tệp bên trong thư mục gốc nguồn của dự án cũng như thư mục dữ liệu dẫn xuất nếu chúng không được xác định rõ ràng là đầu vào hoặc đầu ra của tập lệnh trong dự án.
+
+00:15:46.000 --> 00:15:52.000
+Hộp cát sẽ không ngăn chặn truy cập trái phép vào bất kỳ thư mục nào khác, vì vậy đừng coi đây là một tính năng bảo mật.
+
+00:15:52.000 --> 00:16:11.000
+Sử dụng tính năng này giúp gỡ lỗi các đầu vào hoặc đầu ra bị thiếu của các giai đoạn tập lệnh hiện có để đảm bảo cấu hình hợp lệ Và kết hợp với cài đặt xây dựng được giải thích trước đó FUSE_BUILD_SCRIPT_PHASES, các giai đoạn tập lệnh với các cạnh phụ thuộc được xác định chính xác thông qua hộp cát có thể thực hiện song song để giảm
+
+00:16:11.000 --> 00:16:14.000
+Đó là để song song các bước xây dựng mục tiêu.
+
+00:16:14.000 --> 00:16:18.000
+Bây giờ Artem sẽ làm sáng tỏ sự song song hóa khi xây dựng nhiều mục tiêu.
+
+00:16:18.000 --> 00:16:20.000
+Artem: Cảm ơn, Ben.
+
+00:16:20.000 --> 00:16:38.000
+Bây giờ chúng tôi đã đề cập đến những điều cơ bản về các nhiệm vụ và giai đoạn xây dựng hệ thống có thể đi vào việc xây dựng mục tiêu trong dự án của bạn, hãy có cái nhìn toàn cầu hơn và khám phá cách Xcode sử dụng sự phụ thuộc giữa các mục tiêu Swift để trích xuất số lượng song song tối đa từ các bản dựng của bạn và cách cấu trúc
+
+00:16:38.000 --> 00:16:41.000
+Có khả năng có một số cấp độ phân cấp soạn thảo dự án của bạn.
+
+00:16:41.000 --> 00:16:49.000
+Ví dụ, một mục tiêu Ứng dụng phụ thuộc vào một tập hợp các thư viện cục bộ được chia thành các mục tiêu dọc theo ranh giới ngữ nghĩa và trong một số khuôn khổ.
+
+00:16:49.000 --> 00:16:57.000
+Mỗi mục tiêu chứa nhiều giai đoạn và bước xây dựng khác nhau, tạo ra và tiêu thụ các phụ thuộc tệp đến và đi từ các giai đoạn xây dựng trong các mục tiêu khác.
+
+00:16:57.000 --> 00:17:04.000
+Khi quy mô dự án của bạn tăng lên, các biểu đồ nhiệm vụ này có xu hướng tăng kích thước và độ phức tạp.
+
+00:17:04.000 --> 00:17:11.000
+Trong khi Hệ thống Xây dựng Xcode làm phẳng các hệ thống phân cấp này, hãy chia nhỏ việc xây dựng thành một biển các nhiệm vụ tương ứng với các giai đoạn xây dựng của tất cả các mục tiêu.
+
+00:17:11.000 --> 00:17:15.000
+Một loại nhiệm vụ đặc biệt đối với mục tiêu Swift là biên dịch.
+
+00:17:15.000 --> 00:17:26.000
+Xây dựng mã nguồn của mục tiêu Swift thành sản phẩm nhị phân là một hoạt động phức tạp thường bao gồm nhiều tác vụ phụ để lập kế hoạch xây dựng, biên dịch và liên kết.
+
+00:17:26.000 --> 00:17:32.000
+Sự phối hợp của các nhiệm vụ này được giao cho một công cụ chuyên biệt trong chuỗi công cụ Xcode - Trình điều khiển Swift.
+
+00:17:32.000 --> 00:17:39.000
+Trình điều khiển có kiến thức chuyên môn về thời điểm và cách xây dựng các lệnh gọi trình biên dịch và liên kết cần thiết cho mã nguồn của mục tiêu.
+
+00:17:39.000 --> 00:17:45.000
+Bất kỳ mục tiêu nào bao gồm mã Swift cũng tương ứng với một đơn vị phân phối mã: một mô-đun.
+
+00:17:45.000 --> 00:17:52.000
+Tệp mô-đun nhị phân nắm bắt giao diện công khai của mục tiêu này là một sản phẩm xây dựng được yêu cầu để các mục tiêu hạ nguồn bắt đầu biên dịch.
+
+00:17:52.000 --> 00:17:58.000
+Chúng ta hãy xem xét kỹ hơn một ví dụ về những gì Swift Driver làm để xây dựng một trong những mục tiêu.
+
+00:17:58.000 --> 00:18:02.000
+Mục tiêu của bạn có thể bao gồm một bộ sưu tập một số tệp nguồn.
+
+00:18:02.000 --> 00:18:10.000
+Trong các bản dựng phát hành hoặc tối ưu hóa, trình điều khiển sẽ lên lịch một nhiệm vụ trình biên dịch bao gồm tất cả các tệp nguồn để tối đa hóa cơ hội tối ưu hóa.
+
+00:18:10.000 --> 00:18:15.000
+Nhiệm vụ biên dịch duy nhất này cũng sẽ tạo ra mô-đun Swift của mục tiêu.
+
+00:18:15.000 --> 00:18:26.000
+Trong các chế độ gỡ lỗi hoặc biên dịch gia tăng, Trình điều khiển Swift chia nhỏ nỗ lực biên dịch cần thiết thành các tác vụ phụ nhỏ hơn có thể chạy song song, một số trong đó có thể không cần chạy lại trên bản dựng gia tăng.
+
+00:18:26.000 --> 00:18:33.000
+Sản xuất một mô-đun Swift sau đó yêu cầu một bước bổ sung để hợp nhất các sản phẩm trung gian một phần của mỗi tác vụ biên dịch lại với nhau.
+
+00:18:33.000 --> 00:18:45.000
+Nếu, như trong ví dụ này, số lượng tệp nguồn trong mục tiêu của bạn cao, các tệp riêng lẻ cũng có thể được chỉ định cho các tác vụ phụ biên dịch hàng loạt, theo heuristics của hệ thống xây dựng.
+
+00:18:45.000 --> 00:18:52.000
+Nhật ký xây dựng làm nổi bật những tệp nguồn nào được chỉ định cho các công việc biên dịch hàng loạt, với một mục nhập riêng cho chẩn đoán của mỗi tệp.
+
+00:18:52.000 --> 00:19:04.000
+Có thể song song hóa bản dựng của mục tiêu trên các tệp nguồn khác nhau là rất quan trọng đối với cả bản dựng gia tăng nhanh hơn và nhỏ hơn, vì vậy hãy đảm bảo rằng các bản dựng Gỡ lỗi của bạn đang sử dụng cài đặt Chế độ Biên dịch Gia tăng.
+
+00:19:04.000 --> 00:19:22.000
+Trước Xcode 14, do ranh giới giữa Hệ thống xây dựng Xcode và Trình điều khiển Swift, việc điều phối các giai đoạn xây dựng mục tiêu và các tác vụ phụ biên dịch được tạo ra bởi phiên bản Trình điều khiển của mỗi mục tiêu xảy ra độc lập với nhau, với mỗi thành phần cố gắng hết sức để tận dụng tối đa các tài nguyên hệ thống có sẵn.
+
+00:19:22.000 --> 00:19:30.000
+Hãy lấy ví dụ này xây dựng biểu đồ và đi sâu hơn vào những gì đi vào việc lên lịch các giai đoạn biên dịch của nó đối với nhau.
+
+00:19:30.000 --> 00:19:39.000
+Như chúng ta đã biết trước đó, các phụ thuộc mục tiêu Swift được giải quyết bằng cách yêu cầu người phụ thuộc của họ cung cấp một tệp mô-đun nhị phân nắm bắt giao diện công khai của người phụ thuộc.
+
+00:19:39.000 --> 00:19:50.000
+Giải quyết các mối quan hệ phụ thuộc này dẫn chúng ta đến thứ tự sau, được ghi lại trong dòng thời gian hiển thị các tác vụ Trình điều khiển Swift cấp cao nhất cho từng mục tiêu, cũng như các nhiệm vụ phụ riêng lẻ của chúng.
+
+00:19:50.000 --> 00:19:58.000
+Với Xcode 14, nhờ vào việc triển khai Swift Driver hoàn toàn mới - bản thân nó hiện được viết bằng Swift - hệ thống xây dựng và trình biên dịch được tích hợp đầy đủ.
+
+00:19:58.000 --> 00:20:05.000
+Hệ thống xây dựng Xcode hoạt động như bộ lập lịch trung tâm cho tất cả các tác vụ phải được thực hiện để biên dịch mã của bạn.
+
+00:20:05.000 --> 00:20:20.000
+Cơ chế lập kế hoạch trung tâm này cho phép Xcode đưa ra các quyết định lập kế hoạch chi tiết, cung cấp sự đảm bảo tốt hơn rằng việc xây dựng dự án của bạn sẽ chỉ sử dụng càng nhiều tài nguyên có sẵn, mà không đăng ký quá nhiều CPU của bạn và giảm hiệu suất hệ thống tổng thể.
+
+00:20:20.000 --> 00:20:30.000
+Và những gì trước đây là một tập hợp các đảo nhiệm vụ phụ bên ngoài phạm vi của Hệ thống Xây dựng Xcode giờ đây hoàn toàn nằm trong phạm vi của bộ lập lịch của hệ thống xây dựng.
+
+00:20:30.000 --> 00:20:37.000
+Với tất cả các nhiệm vụ phụ riêng lẻ trong một nhóm nhiệm vụ trung tâm, điều quan trọng là phải xem xét sự đánh đổi được thực hiện bởi người lập lịch xây dựng.
+
+00:20:37.000 --> 00:20:49.000
+Ví dụ: trên máy 8 lõi, mặc định của bộ lập lịch là chỉ định các nhiệm vụ có sẵn - những nhiệm vụ có phụ thuộc đã được thỏa mãn và sẵn sàng - đến một trong tám vị trí thực thi có sẵn.
+
+00:20:49.000 --> 00:20:55.000
+Ngay sau khi một trong những vị trí được giải phóng, Hệ thống Xây dựng cố gắng lấp đầy nó bằng những công việc xuất sắc hơn.
+
+00:20:55.000 --> 00:20:59.000
+Trên một máy có số lượng lõi cao hơn, chúng tôi có thể thực hiện nhiều công việc đồng thời hơn.
+
+00:20:59.000 --> 00:21:11.000
+Nhưng điều đó có nghĩa là chúng ta cũng có nhiều khả năng có các lõi nhàn rỗi có sẵn để thực hiện nhiều công việc hơn, nhưng tất cả các nhiệm vụ nổi bật vẫn đang chờ đầu vào của chúng, như được tạo ra bởi các nhiệm vụ khác hiện đang bay hoặc đang chờ đợi.
+
+00:21:11.000 --> 00:21:17.000
+Hệ thống xây dựng tích hợp mới cho phép bộ lập lịch giảm đáng kể thời gian nhàn rỗi này.
+
+00:21:17.000 --> 00:21:25.000
+Để xem cách thực hiện, hãy xem lại cách các phụ thuộc của mục tiêu để biên dịch, các tệp mô-đun nhị phân, được giải quyết.
+
+00:21:25.000 --> 00:21:32.000
+Như chúng tôi đã đề cập trước đó, kết quả một phần của các tác vụ phụ biên dịch được hợp nhất thành sản phẩm mô-đun cuối cùng của mục tiêu.
+
+00:21:32.000 --> 00:21:36.000
+Khi sản phẩm này có sẵn, các mục tiêu hạ nguồn có thể bắt đầu biên dịch.
+
+00:21:36.000 --> 00:21:46.000
+Mới trong Xcode 14 và Swift 5.7, việc xây dựng mô-đun của mục tiêu được thực hiện trong một tác vụ mô-đun phát riêng biệt trực tiếp từ tất cả các tệp nguồn chương trình.
+
+00:21:46.000 --> 00:21:55.000
+Điều này có nghĩa là các phụ thuộc của mục tiêu có thể bắt đầu biên dịch ngay sau khi tác vụ mô-đun phát hoàn tất mà không cần đợi tất cả các tác vụ trình biên dịch khác của mục tiêu phụ thuộc.
+
+00:21:55.000 --> 00:22:08.000
+Có thể bỏ chặn việc biên dịch mục tiêu hạ nguồn sớm hơn nhiều sẽ cắt giảm thời gian chờ đợi công việc có sẵn với các lõi CPU nhàn rỗi - không gian trống giữa các hoạt động thúc đẩy trong dòng thời gian xây dựng.
+
+00:22:08.000 --> 00:22:22.000
+Mở rộng điều này cho phần còn lại của dự án của chúng tôi cho thấy rằng mặc dù chúng tôi đang thực hiện một lượng công việc tổng thể tương tự, hệ thống xây dựng có thể sử dụng tài nguyên của máy tính hiệu quả hơn, thường hoàn thành bản dựng nhanh hơn đáng kể.
+
+00:22:22.000 --> 00:22:28.000
+Bây giờ, chúng ta hãy xem xét tối ưu hóa mục tiêu chéo thứ hai mà hệ thống xây dựng có thể thực hiện khi xây dựng Swift- Eager Linking.
+
+00:22:28.000 --> 00:22:34.000
+Dựa trên ví dụ trước, chúng tôi đã thêm các tác vụ liên kết cho từng mục tiêu, cả hai đều nằm trên đường dẫn quan trọng của bản dựng.
+
+00:22:34.000 --> 00:22:46.000
+Trong trường hợp này, vì Mục tiêu B liên kết Mục tiêu A, nhiệm vụ liên kết của Mục tiêu B phải đợi đầu ra được liên kết của Mục tiêu A được tạo ra và các tác vụ biên dịch của chính nó hoàn thành trước khi nó có thể chạy.
+
+00:22:46.000 --> 00:22:53.000
+Tuy nhiên, với liên kết háo hức, nhiệm vụ liên kết của Mục tiêu B có thể phụ thuộc vào nhiệm vụ phát mô-đun của Mục tiêu A thay thế.
+
+00:22:53.000 --> 00:23:01.000
+Kết quả là, Mục tiêu B có thể bắt đầu liên kết sớm hơn trong bản dựng, chạy song song với liên kết Mục tiêu A và rút ngắn đường dẫn quan trọng.
+
+00:23:01.000 --> 00:23:03.000
+Cái này hoạt động như thế nào?
+
+00:23:03.000 --> 00:23:09.000
+Thông thường, biểu đồ phụ thuộc của hai mục tiêu với sự phụ thuộc sản phẩm được liên kết trông giống như thế này.
+
+00:23:09.000 --> 00:23:16.000
+Liên kết mục tiêu phụ thuộc yêu cầu sản phẩm được liên kết của các phụ thuộc của nó ngoài đầu ra tổng hợp của chính mục tiêu.
+
+00:23:16.000 --> 00:23:23.000
+Khi liên kết một cách háo hức, sự phụ thuộc này bị phá vỡ, cho phép mục tiêu phụ thuộc bắt đầu liên kết sớm hơn.
+
+00:23:23.000 --> 00:23:33.000
+Thay vì phụ thuộc vào một sản phẩm được liên kết của sự phụ thuộc, bây giờ nó phụ thuộc vào sơ khai thư viện động dựa trên văn bản được tạo ra trước đó trong quá trình xây dựng bởi tác vụ phát mô-đun.
+
+00:23:33.000 --> 00:23:38.000
+Sơ khai này chứa một danh sách các biểu tượng sẽ xuất hiện trong sản phẩm được liên kết để người phụ thuộc sử dụng.
+
+00:23:38.000 --> 00:23:42.000
+Bạn có thể kích hoạt tối ưu hóa này bằng cách sử dụng cài đặt xây dựng Xcode hiển thị trên màn hình.
+
+00:23:42.000 --> 00:23:47.000
+Eager Linking áp dụng cho tất cả các mục tiêu Swift thuần túy được liên kết động bởi những người phụ thuộc của chúng.
+
+00:23:47.000 --> 00:23:57.000
+Tóm lại, Hệ thống Xây dựng Xcode là một công cụ lập kế hoạch tinh vi tìm cách trích xuất càng nhiều tính song song càng tốt bằng cách chạy song song các giai đoạn xây dựng.
+
+00:23:57.000 --> 00:24:03.000
+Và các tính năng như Script Sandboxing cho phép bạn đảm bảo các bản dựng của mình vừa song song tối đa vừa đáng tin cậy.
+
+00:24:03.000 --> 00:24:06.000
+Xcode và Swift được tích hợp nhiều hơn bao giờ hết.
+
+00:24:06.000 --> 00:24:25.000
+Và cấu trúc dự án: mô đun hóa của nó, hình dạng tổng thể của biểu đồ được tạo thành từ sự phụ thuộc giữa các sản phẩm mục tiêu và số lượng và độ phức tạp của các giai đoạn xây dựng bên trong chúng, kết hợp với các tài nguyên tính toán có sẵn của máy của bạn - tất cả những điều này là những yếu tố góp phần vào mức độ Xcode
+
+00:24:25.000 --> 00:24:33.000
+Với kiến thức này và các công cụ mới mạnh mẽ như dòng thời gian xây dựng, bạn được trang bị tốt để kiểm tra dự án của mình và hiểu rõ hơn về các bản dựng của mình.
+
+00:24:33.000 --> 00:24:41.000
+Và nếu bạn tò mò muốn tìm hiểu thêm về các chi tiết kỹ thuật hậu trường, nhiều công nghệ mà chúng tôi mô tả được Xcode sử dụng được phát triển trong mã nguồn mở.
+
+00:24:41.000 --> 00:24:46.000
+Bạn có thể tìm thấy kho lưu trữ cho Swift Driver trên GitHub tại liên kết bên dưới.
+
+00:24:46.000 --> 00:24:51.000
+Để biết thêm các phiên tuyệt vời về Xcode, hãy xem tất cả các tính năng và cải tiến mới từ năm nay trong "Có gì mới trong Xcode".
+
+00:24:51.000 --> 00:24:59.000
+Và tìm hiểu cách trình liên kết của Xcode 14 cải thiện thời gian liên kết lên đến hai lần trong phiên "Liên kết nhanh: Cải thiện thời gian xây dựng và khởi chạy".
+
+00:24:59.000 --> 00:25:00.000
+Cảm ơn vì đã theo dõi.
+
+00:25:00.000 --> 00:25:03.000
+Chúng tôi hy vọng bạn đã học được một số hiểu biết mới về các bản dựng Xcode.
+
+00:25:03.000 --> 00:25:06.000
+Chúng tôi nóng lòng muốn xem bạn sẽ tạo ra cái gì.
+
+00:25:06.000 --> 23:59:59.000
+Chúc bạn có một phần còn lại tuyệt vời của hội nghị.
+

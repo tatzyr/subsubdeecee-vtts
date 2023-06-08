@@ -1,0 +1,779 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:13.000
+Alex Hoppen: Ai thích viết mã soạn sẵn lặp đi lặp lại?
+
+00:00:13.000 --> 00:00:15.000
+Không ai làm cả!
+
+00:00:15.000 --> 00:00:20.000
+Và đó là lý do tại sao trong Swift 5.9 chúng tôi giới thiệu các macro Swift.
+
+00:00:20.000 --> 00:00:29.000
+Các macro Swift cho phép bạn tạo mã lặp đi lặp lại đó tại thời điểm biên dịch, làm cho cơ sở mã của ứng dụng của bạn biểu cảm hơn và dễ đọc hơn.
+
+00:00:29.000 --> 00:00:36.000
+Tên tôi là Alex Hoppen, và hôm nay tôi sẽ chỉ cho bạn cách bạn có thể viết macro của riêng mình.
+
+00:00:36.000 --> 00:00:42.000
+Tôi sẽ bắt đầu bằng cách cung cấp cho bạn một cái nhìn tổng quan ngắn gọn về cách các macro hoạt động.
+
+00:00:42.000 --> 00:00:50.000
+Sau đó, chúng tôi sẽ nhảy thẳng vào Xcode và xem cách bạn có thể tạo macro đầu tiên của mình.
+
+00:00:50.000 --> 00:01:05.000
+Sau khi xem macro đầu tiên của chúng tôi trong Xcode, chúng tôi sẽ khám phá thêm nhiều vai trò mà bạn có thể sử dụng macro và tôi sẽ chỉ cho bạn cách tôi sử dụng macro để đơn giản hóa cơ sở mã của một ứng dụng mà tôi hiện đang làm việc.
+
+00:01:05.000 --> 00:01:15.000
+Cuối cùng, tôi sẽ chỉ cho bạn cách các macro có thể truyền lỗi hoặc cảnh báo trở lại trình biên dịch nếu chúng không được áp dụng trong một ngữ cảnh nhất định.
+
+00:01:15.000 --> 00:01:17.000
+Vậy hãy bắt đầu nào.
+
+00:01:17.000 --> 00:01:23.000
+Ở đây chúng tôi có một danh sách các phép tính mà sinh viên năm nhất có thể sử dụng để thực hành các kỹ năng số học của họ.
+
+00:01:23.000 --> 00:01:31.000
+Chúng ta có kết quả dưới dạng một số nguyên ở bên trái và phép tính dưới dạng một chuỗi theo nghĩa đen ở phía bên phải của bộ.
+
+00:01:31.000 --> 00:01:41.000
+Lưu ý cách điều này lặp đi lặp lại, dư thừa và thậm chí dễ bị lỗi vì không ai có thể đảm bảo rằng kết quả thực sự khớp với tính toán.
+
+00:01:41.000 --> 00:01:48.000
+May mắn thay, với Swift 5.9 chúng ta có thể xác định một macro stringify để đơn giản hóa điều này.
+
+00:01:48.000 --> 00:01:53.000
+Macro này cũng tình cờ là macro được bao gồm trong mẫu của Xcode.
+
+00:01:53.000 --> 00:01:58.000
+Macro stringify chỉ lấy phép tính như một tham số duy nhất.
+
+00:01:58.000 --> 00:02:07.000
+Tại thời điểm biên dịch, nó mở rộng đến bộ mà chúng ta đã thấy trước đây, đảm bảo rằng phép tính và kết quả khớp.
+
+00:02:07.000 --> 00:02:09.000
+Vậy cái này hoạt động như thế nào?
+
+00:02:09.000 --> 00:02:13.000
+Chúng ta hãy xem xét định nghĩa của chính macro.
+
+00:02:13.000 --> 00:02:16.000
+Lưu ý rằng nó trông rất giống một chức năng.
+
+00:02:16.000 --> 00:02:28.000
+Macro stringify lấy một số nguyên làm tham số đầu vào và xuất ra một bộ chứa kết quả, số nguyên và phép tính - một chuỗi.
+
+00:02:28.000 --> 00:02:40.000
+Nếu các đối số của biểu thức vĩ mô không khớp với các tham số của macro hoặc không tự nhập kiểm tra, trình biên dịch sẽ phát ra lỗi mà không áp dụng mở rộng macro.
+
+00:02:40.000 --> 00:02:51.000
+Ví dụ, nếu tôi chuyển một chuỗi theo nghĩa đen cho macro này, trình biên dịch sẽ phàn nàn rằng 'Chuỗi' không thể chuyển đổi thành loại đối số dự kiến 'Int'.
+
+00:02:51.000 --> 00:02:59.000
+Điều này khác với, ví dụ, macro C, được đánh giá ở giai đoạn tiền xử lý trước khi kiểm tra kiểu.
+
+00:02:59.000 --> 00:03:08.000
+Nhưng nó cho phép chúng tôi sử dụng tất cả các sức mạnh mà bạn biết và yêu thích từ các chức năng Swift, như có thể làm cho macro của bạn trở nên chung chung.
+
+00:03:08.000 --> 00:03:14.000
+Cũng lưu ý rằng macro này được khai báo với vai trò macro biểu thức độc lập.
+
+00:03:14.000 --> 00:03:24.000
+Điều này có nghĩa là bạn có thể sử dụng macro bất cứ nơi nào bạn có thể sử dụng biểu thức và nó sẽ được biểu thị bằng ký tự băm, như chúng ta thấy với #stringify.
+
+00:03:24.000 --> 00:03:30.000
+Các loại macro khác là macro đính kèm có thể tăng khai báo.
+
+00:03:30.000 --> 00:03:32.000
+Tôi sẽ đề cập đến những thứ đó sau.
+
+00:03:32.000 --> 00:03:40.000
+Sau khi kiểm tra xem tất cả các đối số có khớp với các tham số của macro hay không, trình biên dịch thực hiện mở rộng macro.
+
+00:03:40.000 --> 00:03:47.000
+Để xem nó hoạt động như thế nào, hãy tập trung vào một biểu thức vĩ mô duy nhất.
+
+00:03:47.000 --> 00:03:53.000
+Để thực hiện việc mở rộng, mỗi macro xác định việc triển khai nó trong một trình cắm trình biên dịch.
+
+00:03:53.000 --> 00:03:59.000
+Trình biên dịch sẽ gửi mã nguồn của toàn bộ biểu thức vĩ mô đến trình cắm đó.
+
+00:03:59.000 --> 00:04:08.000
+Điều đầu tiên mà trình cắm macro thực hiện là phân tích mã nguồn của macro thành cây SwiftSyntax.
+
+00:04:08.000 --> 00:04:17.000
+Cây này là một đại diện cấu trúc, chính xác về nguồn của vĩ mô và nó sẽ là cơ sở để vĩ mô hoạt động.
+
+00:04:17.000 --> 00:04:26.000
+Ví dụ, macro 'stringify' của chúng tôi được biểu diễn trong cây dưới dạng nút biểu thức mở rộng macro.
+
+00:04:26.000 --> 00:04:31.000
+Biểu thức đó có tên vĩ mô 'stringify'.
+
+00:04:31.000 --> 00:04:38.000
+Và nó cần một đối số duy nhất, đó là toán tử infix cộng với áp dụng cho 2 và 3.
+
+00:04:38.000 --> 00:04:51.000
+Điều thực sự mạnh mẽ về macro Swift là việc triển khai macro tự nó là một chương trình được viết bằng Swift và có thể thực hiện bất kỳ chuyển đổi nào sang cây cú pháp mà nó muốn.
+
+00:04:51.000 --> 00:04:56.000
+Trong trường hợp của chúng tôi, nó tạo ra một bộ như chúng ta đã thấy trước đây.
+
+00:04:56.000 --> 00:05:09.000
+Sau đó, nó sẽ tuần tự hóa cây cú pháp đã tạo thành mã nguồn một lần nữa và gửi nó đến trình biên dịch, điều này sẽ thay thế biểu thức vĩ mô bằng mã mở rộng.
+
+00:05:09.000 --> 00:05:16.000
+Điều đó thực sự tuyệt vời, nhưng bây giờ tôi muốn hiểu tất cả những điều này thực sự trông như thế nào trong mã.
+
+00:05:16.000 --> 00:05:22.000
+Mẫu macro mới trong Xcode xác định macro stringify mà chúng ta vừa thấy.
+
+00:05:22.000 --> 00:05:31.000
+Hãy để chúng tôi xem qua mẫu đó và khám phá định nghĩa của macro, cách mở rộng hoạt động và cách macro có thể được kiểm tra.
+
+00:05:31.000 --> 00:05:43.000
+Để tạo mẫu, tôi nhấp vào Tệp, Mới, Gói và bây giờ tôi chọn mẫu Swift Macro.
+
+00:05:43.000 --> 00:05:55.000
+Hãy gọi macro đầu tiên của chúng ta là "WWDC".
+
+00:05:55.000 --> 00:05:58.000
+Vậy chúng ta nhận được gì với mẫu?
+
+00:05:58.000 --> 00:06:05.000
+Ở đây chúng ta có một lời kêu gọi về vĩ mô #stringify, tương tự như những gì chúng ta đã thấy trước đây.
+
+00:06:05.000 --> 00:06:12.000
+Nó lấy một tham số "a + b" và trả về kết quả, cũng như mã đã tạo ra nó.
+
+00:06:12.000 --> 00:06:20.000
+Nếu tôi muốn biết macro mở rộng thành gì, tôi có thể nhấp chuột phải vào nó và chọn Mở rộng Macro.
+
+00:06:20.000 --> 00:06:23.000
+Đó chính xác là những gì chúng ta đã thấy trước đây.
+
+00:06:23.000 --> 00:06:26.000
+Nhưng vĩ mô được định nghĩa như thế nào?
+
+00:06:26.000 --> 00:06:32.000
+Hãy chuyển sang định nghĩa của nó.
+
+00:06:32.000 --> 00:06:38.000
+Ở đây chúng tôi có một phiên bản tổng quát hóa một chút của macro 'stringify' trước đây của chúng tôi.
+
+00:06:38.000 --> 00:06:47.000
+Thay vì lấy một số nguyên, macro này là chung chung và có thể nhận bất kỳ loại T nào.
+
+00:06:47.000 --> 00:06:52.000
+Macro được khai báo là macro bên ngoài.
+
+00:06:52.000 --> 00:07:04.000
+Điều này cho trình biên dịch biết rằng để thực hiện việc mở rộng, nó cần xem xét loại StringifyMacro trong mô-đun WWDCMacros.
+
+00:07:04.000 --> 00:07:07.000
+Loại đó được xác định như thế nào?
+
+00:07:07.000 --> 00:07:10.000
+Chúng ta hãy xem xét kỹ hơn về nó.
+
+00:07:10.000 --> 00:07:20.000
+Bởi vì stringify được khai báo là một macro biểu thức độc lập, loại StringifyMacro cần phải phù hợp với giao thức ExpressionMacro.
+
+00:07:20.000 --> 00:07:26.000
+Giao thức này có một yêu cầu duy nhất: Chức năng mở rộng.
+
+00:07:26.000 --> 00:07:36.000
+Nó lấy cây cú pháp của chính biểu thức vĩ mô, cũng như một ngữ cảnh có thể được sử dụng để giao tiếp với trình biên dịch.
+
+00:07:36.000 --> 00:07:42.000
+Hàm mở rộng sau đó trả về cú pháp biểu thức được viết lại.
+
+00:07:42.000 --> 00:07:45.000
+Nó làm gì trong quá trình thực hiện?
+
+00:07:45.000 --> 00:07:52.000
+Lúc đầu, nó truy xuất đối số duy nhất cho biểu thức vĩ mô.
+
+00:07:52.000 --> 00:08:05.000
+Nó biết rằng đối số này tồn tại bởi vì stringify được khai báo là lấy một tham số duy nhất và tất cả các đối số cần kiểm tra kiểu trước khi mở rộng vĩ mô có thể được áp dụng.
+
+00:08:05.000 --> 00:08:10.000
+Sau đó, nó sử dụng phép nội suy chuỗi để tạo ra cây cú pháp của một bộ.
+
+00:08:10.000 --> 00:08:20.000
+Phần tử đầu tiên là chính đối số và phần tử thứ hai là một chuỗi ký tự chứa mã nguồn của đối số.
+
+00:08:20.000 --> 00:08:24.000
+Lưu ý rằng hàm không trả về một chuỗi ở đây.
+
+00:08:24.000 --> 00:08:27.000
+Nó đang trả về một cú pháp biểu thức.
+
+00:08:27.000 --> 00:08:34.000
+Macro sẽ tự động gọi trình phân tích cú pháp Swift để chuyển đổi ký tự này thành cây cú pháp.
+
+00:08:34.000 --> 00:08:44.000
+Và bởi vì nó đang sử dụng kiểu nội suy theo nghĩa đen cho đối số thứ hai, nó sẽ đảm bảo rằng nội dung của nghĩa đen được thoát đúng cách.
+
+00:08:44.000 --> 00:08:46.000
+Không ai thích lỗi.
+
+00:08:46.000 --> 00:08:54.000
+Nhưng điều tôi thích thậm chí còn ít hơn là các lỗi trong mã mà tôi không thấy trừ khi tôi yêu cầu rõ ràng nó bằng cách mở rộng macro.
+
+00:08:54.000 --> 00:08:58.000
+Đó là lý do tại sao bạn muốn đảm bảo rằng macro của bạn đã được kiểm tra tốt.
+
+00:08:58.000 --> 00:09:08.000
+Bởi vì macro không có tác dụng phụ và mã nguồn của cây cú pháp rất dễ so sánh, một cách tuyệt vời để kiểm tra chúng là viết các bài kiểm tra đơn vị.
+
+00:09:08.000 --> 00:09:12.000
+Mẫu macro đã đi kèm với một cái.
+
+00:09:12.000 --> 00:09:23.000
+Trường hợp thử nghiệm này sử dụng chức năng 'assertMacroExpansion' từ gói SwiftSyntax để xác minh rằng macro 'stringify' mở rộng chính xác.
+
+00:09:23.000 --> 00:09:29.000
+Nó lấy biểu thức '#stringify(a + b)', mà chúng ta đã thấy trước đây, làm đầu vào.
+
+00:09:29.000 --> 00:09:42.000
+Và khẳng định rằng sau khi macro được mở rộng, nó tạo ra một bộ chứa 'a + b' và chuỗi ký tự 'a + b'.
+
+00:09:42.000 --> 00:09:55.000
+Để cho trường hợp thử nghiệm biết cách mở rộng các macro, nó sẽ chuyển tham số 'testMacros', chỉ định rằng macro '#stringify' nên được mở rộng bằng cách sử dụng loại 'StringifyMacro'.
+
+00:09:55.000 --> 00:10:09.000
+Hãy chạy các bài kiểm tra giống như cách mà bạn có thể đã chạy các bài kiểm tra của ứng dụng của mình, để xem liệu chúng có thực sự vượt qua hay không.
+
+00:10:09.000 --> 00:10:16.000
+Các bài kiểm tra đã vượt qua, và cùng với điều đó, chúng tôi đã có vĩ mô đầu tiên của mình.
+
+00:10:16.000 --> 00:10:20.000
+Trong đó, chúng tôi đã thấy các khối xây dựng cơ bản của nó.
+
+00:10:20.000 --> 00:10:24.000
+Khai báo vĩ mô xác định chữ ký của vĩ mô.
+
+00:10:24.000 --> 00:10:28.000
+Nó cũng tuyên bố vai trò vĩ mô.
+
+00:10:28.000 --> 00:10:31.000
+Trình biên dịch plug-in thực hiện việc mở rộng.
+
+00:10:31.000 --> 00:10:39.000
+Bản thân nó là một chương trình được viết bằng Swift và hoạt động trên cây cú pháp SwiftSyntax.
+
+00:10:39.000 --> 00:10:51.000
+Chúng tôi cũng thấy rằng macro rất có thể kiểm tra được vì chúng là những biến đổi xác định của cây cú pháp và mã nguồn của cây cú pháp rất dễ so sánh.
+
+00:10:51.000 --> 00:10:56.000
+Vì vậy, bạn có thể tự hỏi, "Chúng ta có thể sử dụng macro trong những tình huống nào khác?"
+
+00:10:56.000 --> 00:11:00.000
+Chúng ta đã thấy một macro biểu thức độc lập.
+
+00:11:00.000 --> 00:11:07.000
+Tóm lại, macro này được đánh vần bằng hàm băm và cho phép bạn viết lại toàn bộ biểu thức macro.
+
+00:11:07.000 --> 00:11:14.000
+Ngoài ra còn có một vai trò tuyên bố độc lập mở rộng thành một tuyên bố thay vì một biểu hiện.
+
+00:11:14.000 --> 00:11:18.000
+Các loại macro khác là macro đính kèm.
+
+00:11:18.000 --> 00:11:25.000
+Chúng được đánh vần bằng @, giống như các thuộc tính và cho phép macro tăng cường khai báo mà chúng được đính kèm.
+
+00:11:25.000 --> 00:11:32.000
+Ví dụ, một macro thành viên đính kèm thêm các thành viên mới thuộc loại mà nó được đính kèm.
+
+00:11:32.000 --> 00:11:40.000
+Để tìm hiểu thêm về những vai trò khác này, tôi thực sự khuyên bạn nên xem "Mở rộng trên macro Swift", nơi Becca xem xét chúng rất chi tiết.
+
+00:11:40.000 --> 00:11:48.000
+Nhưng tôi muốn tập trung vào vai trò thành viên đính kèm vì nó đã giúp tôi cải thiện cơ sở mã của một ứng dụng mà tôi hiện đang làm việc.
+
+00:11:48.000 --> 00:11:57.000
+Tôi cũng là một người hướng dẫn trượt tuyết, và gần đây tôi đã làm việc trên một ứng dụng cho phép tôi lên kế hoạch cho các chuyến tham quan mà tôi muốn đưa học sinh của mình đi.
+
+00:11:57.000 --> 00:12:04.000
+Một điều bạn hoàn toàn muốn tránh với tư cách là một người hướng dẫn trượt tuyết là đưa những người mới bắt đầu lên những con dốc quá khó đối với họ.
+
+00:12:04.000 --> 00:12:08.000
+Tôi muốn sử dụng hệ thống kiểu Swift để thực thi điều đó.
+
+00:12:08.000 --> 00:12:20.000
+Đó là lý do tại sao, ngoài Slope enum chứa tất cả các dốc trong khu nghỉ mát trượt tuyết yêu thích của tôi, tôi cũng có một loại EasySlope chỉ chứa các sườn dốc phù hợp cho người mới bắt đầu.
+
+00:12:20.000 --> 00:12:34.000
+Nó có một trình khởi tạo để chuyển đổi độ dốc thành độ dốc dễ dàng, nếu độ dốc thực sự dễ dàng và một thuộc tính được tính toán để chuyển đổi độ dốc dễ dàng trở lại độ dốc chung.
+
+00:12:34.000 --> 00:12:38.000
+Mặc dù điều này cung cấp sự an toàn tuyệt vời, nhưng nó thực sự lặp đi lặp lại.
+
+00:12:38.000 --> 00:12:45.000
+Nếu tôi muốn thêm một độ dốc dễ dàng, tôi cần thêm nó vào Độ dốc...
+
+00:12:45.000 --> 00:12:53.000
+EasySlope, trình khởi tạo và thuộc tính được tính toán.
+
+00:12:53.000 --> 00:12:56.000
+Hãy xem liệu chúng ta có thể cải thiện mọi thứ bằng cách sử dụng macro hay không.
+
+00:12:56.000 --> 00:13:03.000
+Những gì chúng tôi muốn làm là tự động tạo trình khởi tạo và thuộc tính được tính toán.
+
+00:13:03.000 --> 00:13:06.000
+Làm thế nào chúng ta có thể làm điều này?
+
+00:13:06.000 --> 00:13:16.000
+Cả trình khởi tạo và thuộc tính được tính toán đều là thành viên của loại EasySlope, vì vậy chúng tôi cần khai báo một macro thành viên đính kèm.
+
+00:13:16.000 --> 00:13:23.000
+Tiếp theo, chúng tôi sẽ tạo trình cắm trình biên dịch có chứa việc triển khai macro.
+
+00:13:23.000 --> 00:13:29.000
+Để đảm bảo rằng macro của chúng tôi hoạt động như mong đợi, chúng tôi muốn phát triển nó theo cách thử nghiệm.
+
+00:13:29.000 --> 00:13:36.000
+Do đó, chúng tôi sẽ để trống việc triển khai của nó cho đến khi chúng tôi viết một trường hợp thử nghiệm cho nó.
+
+00:13:36.000 --> 00:13:45.000
+Sau khi chúng tôi xác định hành vi của macro trong một trường hợp thử nghiệm, chúng tôi sẽ viết triển khai để phù hợp với trường hợp thử nghiệm đó.
+
+00:13:45.000 --> 00:13:50.000
+Và cuối cùng, chúng tôi sẽ tích hợp macro mới vào ứng dụng của tôi.
+
+00:13:50.000 --> 00:13:58.000
+Nếu mọi việc suôn sẻ, chúng tôi sẽ có thể loại bỏ trình khởi tạo và yêu cầu macro tạo nó cho chúng tôi.
+
+00:13:58.000 --> 00:14:04.000
+Để phát triển macro, chúng tôi làm việc với mẫu mà chúng tôi đã tạo trước đó.
+
+00:14:04.000 --> 00:14:09.000
+Và vì tôi không thực sự cần macro '#stringify' trong ứng dụng của mình, tôi đã xóa nó rồi.
+
+00:14:09.000 --> 00:14:18.000
+Tôi bắt đầu bằng cách khai báo một macro thành viên đính kèm mới bằng cách sử dụng thuộc tính '@attached(member)'.
+
+00:14:18.000 --> 00:14:24.000
+Tôi gọi nó là SlopeSubset vì EasySlope là một tập hợp con của Slope.
+
+00:14:24.000 --> 00:14:30.000
+Macro cũng xác định tên của các thành viên mà nó giới thiệu.
+
+00:14:30.000 --> 00:14:34.000
+Trong bản demo này, tôi sẽ chỉ cho bạn cách tạo trình khởi tạo.
+
+00:14:34.000 --> 00:14:42.000
+Việc tạo ra thuộc tính được tính toán rất giống nhau, bởi vì nó cũng chỉ là một câu lệnh chuyển đổi chuyển đổi trên tất cả các trường hợp.
+
+00:14:42.000 --> 00:14:50.000
+Với tuyên bố này, chúng tôi đã xác định vĩ mô, nhưng chúng tôi chưa triển khai mở rộng mà nó thực sự thực hiện.
+
+00:14:50.000 --> 00:14:58.000
+Đối với điều này, macro của chúng tôi tham chiếu đến loại SlopeSubsetMacro trong mô-đun WWDCMacros.
+
+00:14:58.000 --> 00:15:06.000
+Hãy để chúng tôi đi và tạo ra loại đó để chúng tôi có thể tiếp tục đến phần thực sự thú vị: Triển khai vĩ mô thực tế.
+
+00:15:06.000 --> 00:15:15.000
+Vì chúng tôi đã khai báo SlopeSubset là một macro thành viên đính kèm, việc triển khai tương ứng cần phải phù hợp với giao thức MemberMacro.
+
+00:15:15.000 --> 00:15:24.000
+Giao thức này có một yêu cầu duy nhất: Hàm 'mở rộng', tương tự như ExpressionMacro.
+
+00:15:24.000 --> 00:15:36.000
+Hàm 'mở rộng' lấy thuộc tính mà chúng ta áp dụng vĩ mô cho một khai báo, cũng như khai báo mà vĩ mô đang được áp dụng.
+
+00:15:36.000 --> 00:15:42.000
+Trong trường hợp của chúng tôi, đây sẽ là tuyên bố liệt kê EasySlope.
+
+00:15:42.000 --> 00:15:50.000
+Macro sau đó trả về danh sách tất cả các thành viên mới mà nó muốn thêm vào tuyên bố đó.
+
+00:15:50.000 --> 00:16:00.000
+Tôi biết rằng rất hấp dẫn khi bắt đầu thực hiện chuyển đổi này ngay lập tức, nhưng chúng tôi đã đồng ý rằng chúng tôi muốn bắt đầu bằng cách viết một trường hợp thử nghiệm cho nó.
+
+00:16:00.000 --> 00:16:12.000
+Vì vậy, bây giờ, chúng ta hãy trả về một mảng trống, cho biết rằng không nên thêm thành viên mới.
+
+00:16:12.000 --> 00:16:17.000
+Cuối cùng, chúng ta cần làm cho SlopeSubset hiển thị với trình biên dịch.
+
+00:16:17.000 --> 00:16:26.000
+Đối với điều này, tôi thêm nó vào thuộc tính 'providingMacros' ở dưới đây.
+
+00:16:26.000 --> 00:16:32.000
+Trước khi lặn sâu hơn, tôi muốn chắc chắn rằng những gì chúng ta có cho đến nay hoạt động.
+
+00:16:32.000 --> 00:16:51.000
+Mặc dù tôi có thể thử áp dụng macro trong Xcode và xem mã mở rộng, tôi thích viết một trường hợp thử nghiệm cho nó mà tôi có thể chạy lại bất cứ khi nào tôi thực hiện thay đổi đối với macro, để đảm bảo rằng tôi không giới thiệu hồi quy.
+
+00:16:51.000 --> 00:17:03.000
+Cũng giống như trong trường hợp thử nghiệm trong mẫu, chúng tôi sử dụng chức năng 'assertMacroExpansion' để xác minh hành vi vĩ mô của chúng tôi.
+
+00:17:03.000 --> 00:17:16.000
+Những gì chúng tôi muốn kiểm tra là những gì macro tạo ra khi áp dụng cho loại EasySlope, vì vậy chúng tôi sử dụng nó làm đầu vào của trường hợp thử nghiệm.
+
+00:17:16.000 --> 00:17:36.000
+Và vì macro chưa làm gì cả, chúng tôi chỉ hy vọng nó sẽ xóa thuộc tính và không thêm bất kỳ thành viên mới nào, vì vậy mã mở rộng dự kiến giống như đầu vào, chỉ không có '@SlopeSubset'.
+
+00:17:36.000 --> 00:17:46.000
+Cuối cùng, chúng ta cần cho trường hợp thử nghiệm biết rằng nó nên mở rộng macro SlopeSubset bằng cách sử dụng triển khai SlopeSubsetMacro.
+
+00:17:46.000 --> 00:18:04.000
+Đối với điều đó, chúng ta cần ánh xạ tên vĩ mô đến loại triển khai của nó trong từ điển 'testMacros' và chuyển từ điển đó đến hàm xác nhận.
+
+00:18:04.000 --> 00:18:18.000
+Hãy chạy các bài kiểm tra của chúng ta ngay bây giờ để kiểm tra xem những gì chúng ta đã viết cho đến nay có thực sự hoạt động hay không.
+
+00:18:18.000 --> 00:18:19.000
+Nó có.
+
+00:18:19.000 --> 00:18:20.000
+Tuyệt vời.
+
+00:18:20.000 --> 00:18:29.000
+Nhưng chúng tôi thực sự muốn kiểm tra xem macro của chúng tôi có thực sự tạo ra trình khởi tạo hay không, không chỉ xóa thuộc tính.
+
+00:18:29.000 --> 00:18:42.000
+Vì vậy, tôi sẽ sao chép mã mà trước đây tôi đã viết bằng tay vào trường hợp thử nghiệm bởi vì thực sự, đó là những gì chúng tôi muốn trình cắm thêm tạo ra.
+
+00:18:42.000 --> 00:18:53.000
+Nếu chúng tôi chạy lại bài kiểm tra... ...nó không thành công vì macro của chúng tôi chưa thực sự tạo ra trình khởi tạo.
+
+00:18:53.000 --> 00:19:01.000
+Hãy thay đổi điều đó ngay bây giờ.
+
+00:19:01.000 --> 00:19:07.000
+Trình khởi tạo chuyển qua tất cả các phần tử enum được khai báo trong enum EasySlopes.
+
+00:19:07.000 --> 00:19:15.000
+Vì vậy, điều đầu tiên chúng ta cần làm là lấy các phần tử liệt kê này từ khai báo.
+
+00:19:15.000 --> 00:19:27.000
+Vì các phần tử enum chỉ có thể được khai báo bên trong khai báo enum, chúng tôi bắt đầu bằng cách truyền 'tuyên bố' vào khai báo enum.
+
+00:19:27.000 --> 00:19:33.000
+Nếu macro được gắn vào một loại không phải là enum, chúng ta sẽ phát ra lỗi.
+
+00:19:33.000 --> 00:19:39.000
+Tôi đã thêm một TODO để chúng tôi không quên làm điều đó sau và trả về một mảng trống ngay bây giờ.
+
+00:19:39.000 --> 00:19:44.000
+Tiếp theo, chúng ta cần lấy tất cả các yếu tố mà enum khai báo.
+
+00:19:44.000 --> 00:19:52.000
+Để tìm ra cách thực hiện điều đó, tôi muốn kiểm tra cấu trúc cú pháp của enum của chúng tôi trong cây SwiftSyntax.
+
+00:19:52.000 --> 00:20:02.000
+Vì việc triển khai macro chỉ là một chương trình Swift thông thường, tôi có thể sử dụng tất cả các công cụ mà bạn biết từ Xcode để gỡ lỗi các chương trình của bạn.
+
+00:20:02.000 --> 00:20:17.000
+Ví dụ, tôi có thể đặt một điểm dừng bên trong hàm mở rộng và chạy các trường hợp thử nghiệm để đạt được điểm dừng đó.
+
+00:20:17.000 --> 00:20:25.000
+Bây giờ chúng tôi đã tạm dừng trình gỡ lỗi bên trong việc triển khai macro và 'enumDecl' là enum EasySlopes.
+
+00:20:25.000 --> 00:20:34.000
+Chúng ta có thể in nó trong trình gỡ lỗi bằng cách gõ 'po enumDecl'.
+
+00:20:34.000 --> 00:20:38.000
+Hãy kiểm tra đầu ra.
+
+00:20:38.000 --> 00:20:46.000
+Các nút trong cùng của cây cú pháp đại diện cho các phần tử enum, các sườn dốc 'beginnersParadise' và 'practiceRun'.
+
+00:20:46.000 --> 00:20:52.000
+Để lấy lại chúng, chúng ta cần tuân theo cấu trúc được phác thảo cho chúng ta trong cây cú pháp.
+
+00:20:52.000 --> 00:20:59.000
+Hãy để chúng tôi đi qua cấu trúc đó từng bước và viết mã truy cập khi chúng tôi đi.
+
+00:20:59.000 --> 00:21:04.000
+Khai báo liệt kê có một đứa con được gọi là 'memberBlock'.
+
+00:21:04.000 --> 00:21:09.000
+Khối thành viên này chứa cả dấu ngoặc nhọn và thành viên thực tế.
+
+00:21:09.000 --> 00:21:18.000
+Vì vậy, để truy cập các thành viên, chúng tôi bắt đầu với 'enumDecl.memberBlock.members'.
+
+00:21:18.000 --> 00:21:23.000
+Những thành viên này chứa tuyên bố thực tế, cũng như dấu chấm phẩy tùy chọn.
+
+00:21:23.000 --> 00:21:31.000
+Chúng tôi quan tâm đến các tuyên bố, đặc biệt là những tuyên bố thực sự tuyên bố các trường hợp liệt kê.
+
+00:21:31.000 --> 00:21:38.000
+Tôi đang sử dụng bản đồ nhỏ gọn để có được danh sách tất cả các khai báo thành viên là các trường hợp liệt kê.
+
+00:21:38.000 --> 00:21:42.000
+Mỗi tuyên bố trường hợp có thể khai báo nhiều yếu tố.
+
+00:21:42.000 --> 00:21:57.000
+Điều này là do thay vì khai báo mỗi độ dốc trên một dòng mới sau một từ khóa trường hợp riêng biệt, tôi có thể đã viết chúng trên cùng một dòng với 'case beginnersParadise, practiceRun'.
+
+00:21:57.000 --> 00:22:03.000
+Để lấy lại tất cả chúng, chúng ta có thể sử dụng 'flatMap'.
+
+00:22:03.000 --> 00:22:14.000
+Và bây giờ chúng tôi đã truy xuất tất cả các phần tử, chúng tôi có thể bắt đầu xây dựng trình khởi tạo mà chúng tôi thực sự muốn thêm vào EasySlope.
+
+00:22:14.000 --> 00:22:22.000
+Khai báo khởi tạo có một mục duy nhất: Một biểu thức chuyển đổi.
+
+00:22:22.000 --> 00:22:31.000
+Biểu thức chuyển đổi này chứa một trường hợp cho mỗi phần tử trong enum, cũng như một trường hợp mặc định trả về nil.
+
+00:22:31.000 --> 00:22:36.000
+Chúng ta cần tạo các nút cú pháp cho tất cả những thứ này.
+
+00:22:36.000 --> 00:22:48.000
+Hai cách tuyệt vời để tìm các nút cú pháp để tạo, là bằng cách in cây cú pháp như chúng tôi đã làm trước đây hoặc bằng cách đọc tài liệu của SwiftSyntax.
+
+00:22:48.000 --> 00:22:56.000
+Chúng tôi bắt đầu bằng cách xây dựng một cú pháp InitializerDeclS.
+
+00:22:56.000 --> 00:23:07.000
+Loại này có thể được xây dựng bằng cách xây dựng nội dung bằng cách sử dụng trình tạo kết quả và chỉ định tiêu đề - đó là từ khóa 'init' và tất cả các tham số.
+
+00:23:07.000 --> 00:23:17.000
+Điều này sẽ cho phép chúng tôi sử dụng vòng lặp for bên trong trình tạo kết quả để lặp lại tất cả các yếu tố, chính xác những gì chúng tôi cần.
+
+00:23:17.000 --> 00:23:24.000
+Tôi chỉ sao chép tiêu đề init từ trường hợp thử nghiệm của chúng tôi.
+
+00:23:24.000 --> 00:23:33.000
+Bên trong cơ thể, chúng ta cần một biểu thức chuyển đổi.
+
+00:23:33.000 --> 00:23:39.000
+Loại này cũng có một trình khởi tạo lấy tiêu đề và trình tạo kết quả.
+
+00:23:39.000 --> 00:23:44.000
+Hãy sử dụng nó một lần nữa.
+
+00:23:44.000 --> 00:23:54.000
+Bây giờ chúng ta có thể sử dụng sức mạnh của các nhà xây dựng kết quả bằng cách lặp lại tất cả các yếu tố mà chúng ta đã thu thập trước đó.
+
+00:23:54.000 --> 00:24:06.000
+Đối với mỗi phần tử, chúng tôi muốn tạo một mục trường hợp mới, mà chúng tôi có thể xây dựng bằng cách sử dụng nội suy chuỗi giống như chúng tôi đã thấy cho '#stringify'.
+
+00:24:06.000 --> 00:24:14.000
+Chúng ta cũng cần thêm một trường hợp mặc định trả về số không.
+
+00:24:14.000 --> 00:24:22.000
+Và cuối cùng, chúng ta có thể trả lại trình khởi tạo.
+
+00:24:22.000 --> 00:24:32.000
+Hãy chạy các bài kiểm tra để xem liệu chúng ta có thực sự tạo ra trình khởi tạo chính xác hay không.
+
+00:24:32.000 --> 00:24:33.000
+Chúng tôi là.
+
+00:24:33.000 --> 00:24:42.000
+Vì vậy, chúng tôi biết rằng macro của chúng tôi hoạt động và chúng tôi có thể bắt đầu sử dụng nó trong ứng dụng của tôi.
+
+00:24:42.000 --> 00:24:50.000
+Để thêm gói macro của chúng tôi vào dự án Xcode của tôi, tôi có thể nhấp chuột phải vào nó và chọn "Thêm phụ thuộc gói".
+
+00:24:50.000 --> 00:25:00.000
+Bây giờ tôi có thể chọn gói cục bộ mà chúng tôi vừa tạo.
+
+00:25:00.000 --> 00:25:12.000
+Để có thể sử dụng macro, tôi thêm mục tiêu WWDC làm phụ thuộc vào ứng dụng của mình.
+
+00:25:12.000 --> 00:25:23.000
+Bây giờ chúng ta có thể nhập mô-đun WWDC từ gói và áp dụng macro SlopeSubset cho loại EasySlope.
+
+00:25:23.000 --> 00:25:35.000
+... Nếu chúng ta xây dựng...
+
+00:25:35.000 --> 00:25:41.000
+...Trình biên dịch phàn nàn rằng trình khởi tạo viết tay là một tuyên bố lại không hợp lệ.
+
+00:25:41.000 --> 00:25:46.000
+Và đó là bởi vì vĩ mô bây giờ tạo ra nó cho chúng ta.
+
+00:25:46.000 --> 00:25:53.000
+Vì vậy chúng ta có thể xóa nó.
+
+00:25:53.000 --> 00:25:56.000
+Việc xóa mã luôn thú vị. Đúng không?
+
+00:25:56.000 --> 00:26:06.000
+Vì vậy, nếu chúng ta muốn xem macro thực sự đã tạo ra những gì, chúng ta có thể nhấp chuột phải vào SlopeSubset và nhấp vào Expand Macro.
+
+00:26:06.000 --> 00:26:16.000
+Và nếu tôi quên macro làm gì, tôi cũng có thể Option-nhấp vào nó để đọc tài liệu của nó.
+
+00:26:16.000 --> 00:26:23.000
+Bước tiếp theo cũng sẽ là tạo ra tài sản được tính toán, nhưng tôi sẽ làm điều đó vào cuối ngày hôm nay.
+
+00:26:23.000 --> 00:26:32.000
+Bằng cách sử dụng macro, chúng tôi có thể có được loại an toàn của EasySlopes mà không cần phải viết mã lặp đi lặp lại.
+
+00:26:32.000 --> 00:26:35.000
+Chúng ta đã làm điều đó như thế nào?
+
+00:26:35.000 --> 00:26:39.000
+Chúng tôi bắt đầu với mẫu gói macro Swift.
+
+00:26:39.000 --> 00:26:48.000
+Để khám phá cấu trúc của cây cú pháp, chúng tôi đã dừng việc thực thi macro và in nút cú pháp bên trong trình gỡ lỗi.
+
+00:26:48.000 --> 00:26:56.000
+Điều này cho phép chúng tôi xem những thuộc tính nào chúng tôi cần truy cập để có được tất cả các yếu tố enum.
+
+00:26:56.000 --> 00:27:00.000
+Và thật dễ dàng để tự phát triển macro bằng cách sử dụng một trường hợp thử nghiệm.
+
+00:27:00.000 --> 00:27:05.000
+Sau khi chúng tôi thêm nó vào ứng dụng của tôi, nó hoạt động ngay lập tức.
+
+00:27:05.000 --> 00:27:11.000
+Nhưng điều gì sẽ xảy ra nếu macro của bạn được sử dụng trong các tình huống mà nó không hỗ trợ?
+
+00:27:11.000 --> 00:27:23.000
+Giống như bạn không bao giờ muốn đưa một người mới bắt đầu trượt tuyết lên một con dốc khó, bạn không bao giờ muốn để bạn thực hiện các bản mở rộng bất ngờ hoặc tạo mã không biên dịch.
+
+00:27:23.000 --> 00:27:37.000
+Nếu macro của bạn được sử dụng theo những cách mà nó không hỗ trợ, hãy luôn phát ra thông báo lỗi thông báo cho người chấp nhận của bạn về những gì đang xảy ra, thay vì yêu cầu họ đọc mã được tạo để gỡ lỗi macro của bạn.
+
+00:27:37.000 --> 00:27:42.000
+Với tinh thần đó, chúng ta hãy đi và sửa TODO mà chúng ta đã để lại trong cơ sở mã của mình.
+
+00:27:42.000 --> 00:27:51.000
+Khi SlopeSubset được áp dụng cho một loại không phải là enum, macro sẽ phát ra lỗi, nói rằng nó chỉ áp dụng cho enums.
+
+00:27:51.000 --> 00:28:01.000
+Cũng giống như trước đây, hãy bắt đầu bằng cách thêm một trường hợp thử nghiệm.
+
+00:28:01.000 --> 00:28:08.000
+Lần này, chúng tôi đang áp dụng macro SlopeSubset cho một cấu trúc.
+
+00:28:08.000 --> 00:28:15.000
+Vì không có phần tử liệt kê trong cấu trúc, chúng tôi không mong đợi macro tạo ra trình khởi tạo.
+
+00:28:15.000 --> 00:28:24.000
+Thay vào đó, nó sẽ phát ra một chẩn đoán, đó là một lỗi, thông báo cho chúng tôi rằng SlopeSubset chỉ có thể được áp dụng cho một enum.
+
+00:28:24.000 --> 00:28:30.000
+Nếu chúng ta chạy bài kiểm tra này...
+
+00:28:30.000 --> 00:28:34.000
+...Nó thất bại vì chúng tôi chưa xuất ra thông báo lỗi.
+
+00:28:34.000 --> 00:28:41.000
+Hãy vào trình cắm trình biên dịch để làm ngay bây giờ.
+
+00:28:41.000 --> 00:28:48.000
+Các lỗi vĩ mô có thể được biểu diễn bằng bất kỳ loại nào phù hợp với giao thức Lỗi Swift.
+
+00:28:48.000 --> 00:29:01.000
+Tôi sử dụng một enum với một trường hợp duy nhất để mô tả thông báo lỗi nếu SlopeSubset được áp dụng cho một loại không phải là một enum.
+
+00:29:01.000 --> 00:29:12.000
+Nếu chúng ta ném lỗi từ hàm mở rộng, nó sẽ được hiển thị tại thuộc tính gọi mở rộng vĩ mô.
+
+00:29:12.000 --> 00:29:27.000
+Nếu bạn muốn hiển thị thông báo lỗi ở một vị trí khác với thuộc tính, tạo cảnh báo hoặc thậm chí hiển thị Fix-Its trong Xcode, có một phương thức 'addDiagnostic' trên tham số ngữ cảnh cho phép bạn tạo ra các chẩn đoán phong phú.
+
+00:29:27.000 --> 00:29:33.000
+Nhưng tôi nghĩ trong trường hợp này, thật hiệu quả khi chỉ hiển thị một thông báo lỗi đơn giản ở thuộc tính.
+
+00:29:33.000 --> 00:29:43.000
+Bây giờ, hãy xem liệu chúng ta đã làm mọi thứ đúng chưa và liệu các bài kiểm tra của chúng ta có vượt qua hay không.
+
+00:29:43.000 --> 00:29:45.000
+Tuyệt vời, họ làm.
+
+00:29:45.000 --> 00:29:51.000
+Vậy nó trông như thế nào trong Xcode nếu tôi áp dụng SlopeSubset cho một cấu trúc?
+
+00:29:51.000 --> 00:30:02.000
+Đối với điều này, hãy để tôi sao chép trường hợp thử nghiệm vào một tệp.
+
+00:30:02.000 --> 00:30:07.000
+Xcode hiển thị thông báo lỗi tùy chỉnh nội tuyến với tất cả các lỗi biên dịch khác.
+
+00:30:07.000 --> 00:30:13.000
+Điều đó giúp những người chấp nhận macro của tôi dễ dàng thấy những gì họ đang làm sai.
+
+00:30:13.000 --> 00:30:15.000
+Và bạn biết gì không?
+
+00:30:15.000 --> 00:30:24.000
+Bây giờ chúng ta đã xử lý lỗi tốt, tôi nghĩ macro này cũng có thể hữu ích cho các nhà phát triển khác chỉ định các tập hợp con enum, không chỉ cho các độ dốc.
+
+00:30:24.000 --> 00:30:29.000
+Hãy đi và khái quát hóa nó.
+
+00:30:29.000 --> 00:30:44.000
+Để chỉ định siêu tập hợp của enum, mà cho đến nay chúng tôi đã được mã hóa cứng là Dốc, chúng tôi thêm một tham số chung vào khai báo vĩ mô.
+
+00:30:44.000 --> 00:31:03.000
+Và vì macro bây giờ không còn cụ thể cho các sườn dốc, hãy đổi tên nó thành EnumSubset bằng cách nhấp chuột phải vào SlopeSubset và chọn Refactor, Rename.
+
+00:31:03.000 --> 00:31:14.000
+Tôi cũng có thể chọn đổi tên tất cả các lần xuất hiện bên trong chuỗi ký tự và nhận xét bằng cách nhấp lệnh vào chúng.
+
+00:31:14.000 --> 00:31:22.000
+Bây giờ chúng ta cần điều chỉnh việc triển khai vĩ mô của mình để sử dụng tham số chung, thay vì loại Độ dốc được mã hóa cứng.
+
+00:31:22.000 --> 00:31:43.000
+Nếu chúng ta in thuộc tính bên trong trình gỡ lỗi và kiểm tra bố cục của nó, giống như chúng ta đã làm cho 'enumDecl', chúng ta có thể thấy rằng chúng ta có thể truy xuất tham số chung bằng cách truy cập 'argumentType' của đối số đầu tiên trong 'genericArgumentClause' của tên thuộc tính.
+
+00:31:43.000 --> 00:32:00.000
+Vì vậy, bây giờ chúng tôi đã truy xuất tham số chung, chúng tôi có thể thay thế loại Độ dốc được mã hóa cứng cho đến nay bằng biến 'supersetType'.
+
+00:32:00.000 --> 00:32:11.000
+Tôi vẫn cần thực hiện thêm một vài thay đổi, như đổi tên tham số của trình khởi tạo, thay đổi tên loại triển khai vĩ mô và cập nhật tài liệu.
+
+00:32:11.000 --> 00:32:13.000
+Tôi sẽ làm điều đó sau.
+
+00:32:13.000 --> 00:32:22.000
+Thay vào đó, bây giờ, hãy đảm bảo rằng các bài kiểm tra của chúng ta vẫn vượt qua.
+
+00:32:22.000 --> 00:32:43.000
+Vì chúng tôi đã tạo EnumSubset chung, chúng tôi cần xác định rõ ràng rằng EasySlope là một tập hợp con của Slope bằng cách chuyển độ dốc làm tham số chung cho macro EnumSubset.
+
+00:32:43.000 --> 00:32:50.000
+Hãy xem liệu các bài kiểm tra có vượt qua được không.
+
+00:32:50.000 --> 00:32:52.000
+Họ là.
+
+00:32:52.000 --> 00:32:57.000
+Tôi thực sự nên cân nhắc việc xuất bản macro này cho những người khác dưới dạng gói Swift.
+
+00:32:57.000 --> 00:33:00.000
+Vì vậy, đó là rất nhiều nền tảng mà chúng tôi đã bao phủ ngày hôm nay.
+
+00:33:00.000 --> 00:33:03.000
+Hãy tóm tắt lại những gì chúng ta đã trải qua.
+
+00:33:03.000 --> 00:33:11.000
+Để tạo một macro, bạn có thể bắt đầu với mẫu gói macro, bao gồm macro stringify như một điểm khởi đầu tuyệt vời.
+
+00:33:11.000 --> 00:33:21.000
+Trong khi phát triển macro của bạn, chúng tôi rất khuyến khích bạn viết các trường hợp thử nghiệm để đảm bảo rằng mã mà macro của bạn tạo ra thực sự hợp lệ.
+
+00:33:21.000 --> 00:33:33.000
+Và nếu bạn đang làm điều này, bạn có thể kiểm tra bố cục của cây cú pháp bằng cách đặt điểm dừng trong hàm mở rộng, chạy thử nghiệm và in cây cú pháp trong trình gỡ lỗi.
+
+00:33:33.000 --> 00:33:45.000
+Và cuối cùng, nếu macro của bạn không được áp dụng trong một số trường hợp nhất định, bạn nên luôn phát ra các thông báo lỗi tùy chỉnh để ngay cả khi có sự cố xảy ra, macro của bạn sẽ tỏa sáng.
+
+00:33:45.000 --> 00:33:50.000
+Cảm ơn vì đã xem, và tôi rất vui khi thấy bạn sẽ tạo ra loại macro nào.
+
+00:33:50.000 --> 23:59:59.000
+♪ ♪
+

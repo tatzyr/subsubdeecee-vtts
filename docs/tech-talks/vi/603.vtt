@@ -1,0 +1,299 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:09.000
+Trong bài thuyết trình này, chúng tôi sẽ tập trung vào các khối hình ảnh, cho phép bạn mô tả dữ liệu hình ảnh trong bộ nhớ ô mà GPU có thể thao tác hiệu quả.
+
+00:00:09.000 --> 00:00:14.000
+Các khối hình ảnh cung cấp quyền truy cập được tối ưu hóa vào dữ liệu hình ảnh nằm trong bộ nhớ ô.
+
+00:00:14.000 --> 00:00:17.000
+Và với GPU A11, chúng tôi sẽ cho bạn quyền kiểm soát trực tiếp nó.
+
+00:00:17.000 --> 00:00:26.000
+Bạn sẽ có thể bố trí các điểm ảnh theo cách có ý nghĩa đối với ứng dụng của mình, cũng như di chuyển dữ liệu một cách rõ ràng đến và đi từ nó.
+
+00:00:26.000 --> 00:00:31.000
+Các khối hình ảnh được tích hợp sâu với xử lý phân đoạn và giai đoạn tô bóng gạch mới.
+
+00:00:31.000 --> 00:00:33.000
+Chúng cũng có sẵn cho máy tính truyền thống.
+
+00:00:33.000 --> 00:00:41.000
+Bất kể bạn đang ở giai đoạn nào, các khối hình ảnh được khuyến nghị để thể hiện hình ảnh của bạn vì chúng tối ưu hóa quyền truy cập vào lưới dữ liệu 2D.
+
+00:00:41.000 --> 00:00:47.000
+Imageblocks là một khối xây dựng quan trọng cho một số tính năng khác mà chúng ta sẽ thảo luận trong loạt bài thuyết trình này.
+
+00:00:47.000 --> 00:00:50.000
+Hãy bắt đầu bằng cách xác định các khối hình ảnh chính xác hơn.
+
+00:00:50.000 --> 00:00:54.000
+Imageblock là một cấu trúc dữ liệu 2D trong bộ nhớ gạch.
+
+00:00:54.000 --> 00:00:57.000
+Nó có chiều rộng, chiều cao và chiều sâu điểm ảnh.
+
+00:00:57.000 --> 00:01:02.000
+Các chức năng phân mảnh chỉ có thể truy cập một điểm ảnh duy nhất tương ứng với vị trí của nó.
+
+00:01:02.000 --> 00:01:07.000
+Mặt khác, hạt nhân tính toán có quyền truy cập vào toàn bộ khối hình ảnh.
+
+00:01:07.000 --> 00:01:15.000
+Mỗi điểm ảnh có thể khá phức tạp, bao gồm nhiều thành phần và mỗi thành phần có thể được giải quyết dưới dạng mặt phẳng hình ảnh riêng của nó.
+
+00:01:15.000 --> 00:01:22.000
+Điều này cho phép các thành phần liền kề được lưu trữ hiệu quả đến một hoặc nhiều kết cấu trong bộ nhớ thiết bị dưới dạng các hoạt động hàng loạt.
+
+00:01:22.000 --> 00:01:27.000
+Imageblocks cũng cung cấp quyền truy cập hàng loạt vào phần cứng chuyển đổi định dạng của GPU.
+
+00:01:27.000 --> 00:01:33.000
+Các điểm ảnh dấu phẩy động sẽ được chuyển đổi sang định dạng kết cấu đích khi được lưu trữ vào bộ nhớ thiết bị.
+
+00:01:33.000 --> 00:01:42.000
+Bây giờ chúng ta hãy xem xét kỹ hơn một trong những lợi ích của việc sử dụng khối hình ảnh, tăng tốc chuyển động dữ liệu hình ảnh ra khỏi bộ nhớ gạch.
+
+00:01:42.000 --> 00:01:50.000
+Trước khi chặn hình ảnh, bạn có thể di chuyển các phần kết cấu của mình vào bộ nhớ nhóm luồng trước khi hoạt động trên chúng, từng pixel một.
+
+00:01:50.000 --> 00:01:59.000
+Nhưng GPU không hiểu rằng bạn đang vận hành trên dữ liệu hình ảnh, vì vậy bạn cũng phải lưu trữ các pixel đó trở lại kết cấu bộ nhớ của thiết bị, từng pixel một.
+
+00:01:59.000 --> 00:02:06.000
+Với imageblocks, thay vào đó bạn có thể lưu trữ dữ liệu hình ảnh bằng một thao tác duy nhất, hiệu quả hơn nhiều.
+
+00:02:06.000 --> 00:02:10.000
+Bây giờ hãy chuyển sang cách bạn mô tả các thuộc tính khối hình ảnh thành Metal.
+
+00:02:10.000 --> 00:02:15.000
+Trong một đường chuyền tính toán, bạn mô tả chiều rộng và chiều cao của khối hình ảnh bằng cách sử dụng API được hiển thị ở đây.
+
+00:02:15.000 --> 00:02:18.000
+Kích thước có thể khác nhau cho mỗi công văn.
+
+00:02:18.000 --> 00:02:22.000
+Độ sâu điểm ảnh của khối hình ảnh được mô tả bằng ngôn ngữ đổ bóng như một cấu trúc.
+
+00:02:22.000 --> 00:02:28.000
+Toàn bộ khối hình ảnh được cung cấp dưới dạng đối số có loại được tạo mẫu bởi cấu trúc đó.
+
+00:02:28.000 --> 00:02:32.000
+Chúng ta hãy xem xét kỹ hơn cú pháp ngôn ngữ tô bóng.
+
+00:02:32.000 --> 00:02:38.000
+Trong ví dụ này, chúng tôi đang mô tả một điểm ảnh bao gồm ba phần tử, mỗi phần tử có số lượng thành phần khác nhau.
+
+00:02:38.000 --> 00:02:42.000
+Khối hình ảnh được cung cấp cho hạt nhân như một đối số.
+
+00:02:42.000 --> 00:02:54.000
+Hạt nhân truy cập bất kỳ vị trí nào trong khối hình ảnh bằng cách tham chiếu bằng cách sử dụng phương thức dữ liệu, phương thức này lấy vị trí làm đối số và trả về một con trỏ đến một không gian địa chỉ mới được gọi là threadgroup_imageblock.
+
+00:02:54.000 --> 00:03:01.000
+Với tham chiếu đến một vị trí cụ thể, chúng ta có thể đọc và ghi vào các yếu tố tại vị trí đó.
+
+00:03:01.000 --> 00:03:06.000
+Tôi đã đề cập trước đó rằng các khối hình ảnh được đặt trong các mặt phẳng có thể được lưu trữ hiệu quả vào kết cấu bộ nhớ của thiết bị.
+
+00:03:06.000 --> 00:03:11.000
+Trong ngôn ngữ tô bóng, chúng tôi gọi các mặt phẳng liền kề có thể được lưu trữ cùng nhau là một lát cắt.
+
+00:03:11.000 --> 00:03:14.000
+Hãy xem xét một hạt nhân ví dụ.
+
+00:03:14.000 --> 00:03:24.000
+Trong ví dụ này, chúng tôi đã tải kết cấu nguồn vào một khối hình ảnh, thực hiện một số xử lý hình ảnh trên khối đó và sẵn sàng lưu trữ các yếu tố màu ra kết cấu đích.
+
+00:03:24.000 --> 00:03:32.000
+Chúng tôi chỉ cần một luồng của nhóm luồng của mình để thực hiện ghi, vì vậy trước tiên chúng tôi phải rào cản để đảm bảo tất cả các luồng đã xử lý xong khối hình ảnh.
+
+00:03:32.000 --> 00:03:40.000
+Lưu ý rằng Metal thêm một mục tiêu bộ nhớ mới cho rào cản, tuyên bố rằng chúng ta chỉ cần đợi quá trình ghi trên khối hình ảnh hoàn tất.
+
+00:03:40.000 --> 00:03:45.000
+Sau đó, chúng tôi có được lát cắt mong muốn từ khối hình ảnh bằng phương pháp lát cắt.
+
+00:03:45.000 --> 00:03:49.000
+Phương pháp lát cắt có tham chiếu đến bất kỳ phần tử pixel nào là một phần của lát cắt.
+
+00:03:49.000 --> 00:03:55.000
+Cuối cùng, chúng tôi viết lát cắt vào kết cấu đích.
+
+00:03:55.000 --> 00:04:02.000
+Mỗi khối hình ảnh có thể chỉ đại diện cho một vùng kết cấu của bạn, vì vậy chúng tôi chỉ định độ lệch kết cấu để viết khối hình ảnh.
+
+00:04:02.000 --> 00:04:07.000
+Bây giờ chúng ta hãy chuyển sang cách các khối hình ảnh trong các hàm phân đoạn được chỉ định.
+
+00:04:07.000 --> 00:04:16.000
+Không giống như các khối hình ảnh trong các đường chuyền tính toán, kích thước khối hình ảnh trong đường chuyền kết xuất là không đổi cho toàn bộ đường chuyền và được đặt bằng cách sử dụng các thuộc tính được hiển thị ở đây.
+
+00:04:16.000 --> 00:04:22.000
+Độ sâu điểm ảnh khối hình ảnh có thể được khai báo bằng ngôn ngữ đổ bóng như một cấu trúc, giống như tôi đã hiển thị cho hạt nhân.
+
+00:04:22.000 --> 00:04:28.000
+Tuy nhiên, các chức năng phân đoạn cũng hỗ trợ khai báo độ sâu điểm ảnh bằng cách sử dụng các tệp đính kèm vượt qua kết xuất.
+
+00:04:28.000 --> 00:04:31.000
+Hãy cùng xem cú pháp.
+
+00:04:31.000 --> 00:04:35.000
+Trong ví dụ này, chúng tôi đã khai báo cấu trúc pixel một cách rõ ràng trong ngôn ngữ đổ bóng.
+
+00:04:35.000 --> 00:04:46.000
+Vì các hàm phân đoạn chỉ có quyền truy cập vào vị trí ngụ ý của chúng trong khối hình ảnh, loại đối số là chính cấu trúc, nhưng được gắn thẻ với thuộc tính imageblock_data.
+
+00:04:46.000 --> 00:04:50.000
+Chúng ta cũng cần gắn thẻ giá trị trả về với cùng một thuộc tính.
+
+00:04:50.000 --> 00:04:55.000
+Làm như vậy cho phép Metal tạo ra các hướng dẫn truy cập chính xác.
+
+00:04:55.000 --> 00:05:03.000
+Bây giờ hãy xem ví dụ tương tự này trông như thế nào khi chúng ta khai báo cấu trúc pixel bằng cách sử dụng các tệp đính kèm vượt qua kết xuất truyền thống.
+
+00:05:03.000 --> 00:05:06.000
+Biểu mẫu này giống hệt với cú pháp mà bạn đã biết.
+
+00:05:06.000 --> 00:05:13.000
+Trên thực tế, bạn luôn sử dụng các khối hình ảnh trong các đường chuyền kết xuất vì bộ nhớ ô luôn là một khía cạnh quan trọng của GPU dòng A.
+
+00:05:13.000 --> 00:05:18.000
+Điều mới là Metal 2 hiện làm cho bộ nhớ gạch thường có thể truy cập được.
+
+00:05:18.000 --> 00:05:25.000
+Biểu mẫu này tóm tắt định dạng lưu trữ imageblock cơ bản, có nguồn gốc từ các kết cấu được đính kèm với đường kết xuất.
+
+00:05:25.000 --> 00:05:34.000
+Bất kể loại lưu trữ kết cấu nào, dữ liệu được trình bày dưới dạng dấu phẩy động hoặc số nguyên trong hàm phân đoạn.
+
+00:05:34.000 --> 00:05:40.000
+Một sự khác biệt khác giữa A11 và các kiến trúc trước đó là nơi xảy ra các chuyển đổi định dạng khối hình ảnh ngầm đó.
+
+00:05:40.000 --> 00:05:47.000
+Trên GPU từ A7 đến A10, các định dạng lưu trữ đã được mở rộng thành dấu phẩy động trong bộ nhớ ô.
+
+00:05:47.000 --> 00:05:56.000
+Đây là lý do tại sao Metal ghi lại hai kích thước cho mọi định dạng pixel: một khi được lưu trữ trong bộ nhớ thiết bị và một khi được lưu trữ trong bộ nhớ gạch dưới dạng tệp đính kèm kết xuất.
+
+00:05:56.000 --> 00:06:03.000
+Trên A11, việc chuyển đổi định dạng xảy ra trên mỗi lần tải và lưu trữ từ bộ nhớ gạch sang các thanh ghi tạm thời trong lõi đổ bóng.
+
+00:06:03.000 --> 00:06:09.000
+Làm như vậy cho phép bạn sử dụng nhiều hơn nữa khỏi bộ nhớ gạch.
+
+00:06:09.000 --> 00:06:15.000
+Bây giờ bạn có lựa chọn về cách khai báo cấu trúc pixel của mình, vì vậy hãy xem lại các phương pháp hay nhất có thể giúp bạn quyết định.
+
+00:06:15.000 --> 00:06:23.000
+Các khối hình ảnh tiềm ẩn rất tuyệt khi chức năng phân đoạn của bạn phải hỗ trợ nhiều bố cục tệp đính kèm vượt qua kết xuất vì chúng trừu tượng hóa các định dạng lưu trữ cơ bản.
+
+00:06:23.000 --> 00:06:30.000
+Các khối hình ảnh ngầm cũng tương thích với các hành động tải và lưu trữ vì cấu trúc được API biết đến.
+
+00:06:30.000 --> 00:06:35.000
+Mặt khác, các khối hình ảnh rõ ràng cho phép bạn thể hiện cấu trúc điểm ảnh phức tạp hơn.
+
+00:06:35.000 --> 00:06:45.000
+Các khối hình ảnh rõ ràng cũng không yêu cầu sao lưu bộ nhớ chính, vì vậy chúng rất phù hợp với dữ liệu tạm thời được tạo và tiêu thụ hoàn toàn trong phạm vi của một đường chuyền kết xuất.
+
+00:06:45.000 --> 00:06:50.000
+Bây giờ chúng ta hãy xem xét kỹ hơn ý nghĩa của cấu trúc điểm ảnh phức tạp.
+
+00:06:50.000 --> 00:06:59.000
+Trong ví dụ này, chúng tôi sẽ lưu trữ nhiều màu mờ và độ sâu của chúng trên mỗi pixel để sau này chúng tôi có thể sắp xếp và tổng hợp để có hiệu ứng trong suốt chính xác hơn.
+
+00:06:59.000 --> 00:07:10.000
+Chúng tôi bắt đầu với một khai báo đoạn duy nhất, khai báo một mảng của chúng và sau đó lồng nó trong một cấu trúc cấp cao nhất mà chúng tôi có thể chuyển đến và đi từ bộ đổ bóng của mình.
+
+00:07:10.000 --> 00:07:17.000
+Thể hiện cấu trúc này bằng cách sử dụng các tệp đính kèm vượt qua kết xuất sẽ rất khó xử và sẽ che khuất ý định của tác giả.
+
+00:07:17.000 --> 00:07:23.000
+Tất nhiên, bạn không cần phải lựa chọn giữa các biểu mẫu ngầm và rõ ràng vì Metal cho phép bạn chọn công cụ phù hợp cho công việc.
+
+00:07:23.000 --> 00:07:33.000
+Trộn cũng cho phép bạn áp dụng từng bước các khối hình ảnh vào cơ sở mã của mình và dễ dàng tích hợp các tính năng mới vào các trình đổ bóng hiện có được hưởng lợi từ biểu mẫu rõ ràng.
+
+00:07:33.000 --> 00:07:37.000
+Sử dụng cả hai biểu mẫu cùng nhau thật dễ dàng, chỉ cần cung cấp hai đối số khối hình ảnh.
+
+00:07:37.000 --> 00:07:40.000
+Hãy xem xét một ví dụ.
+
+00:07:40.000 --> 00:07:45.000
+Như bạn có thể thấy, chúng tôi có thể cung cấp hai khối hình ảnh dưới dạng cả đầu vào và đầu ra.
+
+00:07:45.000 --> 00:07:52.000
+Các thuộc tính màu sắc và imageblock_data làm cho Metal rõ ràng những lát cắt nào xuất phát từ các tệp đính kèm vượt qua kết xuất và những lát cắt nào không.
+
+00:07:52.000 --> 00:07:58.000
+Có thể khai báo tối đa hai khối hình ảnh cho mỗi đầu vào và đầu ra cho mỗi hàm.
+
+00:07:58.000 --> 00:08:03.000
+Các khối hình ảnh rõ ràng cho phép bạn kiểm soát bố cục pixel chính xác bằng cách sử dụng các loại đóng gói.
+
+00:08:03.000 --> 00:08:11.000
+Ngôn ngữ đổ bóng kim loại đã cung cấp các loại vectơ dấu phẩy động đóng gói, theo truyền thống mô tả các bố cục dữ liệu không đổi và đỉnh.
+
+00:08:11.000 --> 00:08:19.000
+Nhưng bây giờ chúng ta cần các loại đóng gói phù hợp với những gì có thể đã được mô tả trước đây bằng cách sử dụng các khối hình ảnh ngầm và định dạng pixel kết cấu.
+
+00:08:19.000 --> 00:08:22.000
+Metal 2 thêm các loại như vậy vào ngôn ngữ đổ bóng.
+
+00:08:22.000 --> 00:08:28.000
+Các định dạng này được chuyển đổi sang và từ dấu phẩy động bằng cách sử dụng phần cứng tải/lưu trữ mà chúng ta đã thảo luận trước đó.
+
+00:08:28.000 --> 00:08:34.000
+Hơn nữa, các định dạng đóng gói mới này cũng có thể được sử dụng để mô tả bố cục dữ liệu đỉnh và không đổi.
+
+00:08:34.000 --> 00:08:38.000
+Hãy xem cách bạn khai báo các loại mới này trong ngôn ngữ đổ bóng.
+
+00:08:38.000 --> 00:08:44.000
+Trong ví dụ này, chúng ta thấy một vài loại đóng gói mới được sử dụng để mô tả cả khối hình ảnh và dữ liệu đỉnh.
+
+00:08:44.000 --> 00:08:54.000
+Các loại này yêu cầu bạn khai báo cả định dạng lưu trữ và định dạng giải nén được sử dụng trong lõi đổ bóng.
+
+00:08:54.000 --> 00:08:58.000
+Bây giờ chúng ta hãy xem qua tất cả các loại dữ liệu đóng gói mới đã được thêm vào.
+
+00:08:58.000 --> 00:09:07.000
+Như bạn có thể thấy, ngôn ngữ đổ bóng kim loại thêm một, hai và bốn loại chuẩn hóa thành phần, mỗi loại hỗ trợ các thành phần tám hoặc 16 bit.
+
+00:09:07.000 --> 00:09:20.000
+Chúng tôi cũng đã thêm cả hai biến thể đã ký và chưa ký cũng như hỗ trợ cho các định dạng 32-bit chuyên biệt hơn như 10a2, mini floats, shared exponent và sRGB.
+
+00:09:20.000 --> 00:09:27.000
+Cuối cùng, trình gỡ lỗi GPU trong Xcode trực tiếp hỗ trợ trực quan hóa và kiểm tra các khối hình ảnh.
+
+00:09:27.000 --> 00:09:31.000
+Mỗi lát có thể được kiểm tra như thể nó là một kết cấu.
+
+00:09:31.000 --> 00:09:35.000
+Ở đây chúng ta thấy ở trên cùng một bố cục G-Buffer ví dụ từ mã mẫu của chúng tôi.
+
+00:09:35.000 --> 00:09:41.000
+Và ở phía dưới, chúng tôi có cùng một chương trình hiển thị khối hình ảnh trong Trình gỡ lỗi GPU của Xcode.
+
+00:09:41.000 --> 00:09:46.000
+Phần gạch của chế độ xem tài nguyên bị ràng buộc hiển thị các lát khối hình ảnh dưới dạng một tập hợp các kết cấu.
+
+00:09:46.000 --> 00:09:51.000
+Từ đây bạn có thể kiểm tra từng lát giống như bất kỳ kết cấu nào khác.
+
+00:09:51.000 --> 00:10:04.000
+Trong bài thuyết trình này, chúng tôi đã thấy cách các khối hình ảnh cho phép bạn di chuyển hiệu quả nhiều điểm ảnh từ bộ nhớ ô sang bộ nhớ thiết bị và kiểm soát bố cục dữ liệu hình ảnh trong bộ nhớ ô một cách chính xác để cải thiện mật độ lưu trữ.
+
+00:10:04.000 --> 00:10:13.000
+Chúng tôi cũng đã thấy cách chúng tôi cũng có thể tận dụng phần cứng gói/giải nén mới của GPU A11 trong cả khối hình ảnh và các không gian địa chỉ khác.
+
+00:10:13.000 --> 00:10:21.000
+Để biết thêm thông tin về Metal 2 và các liên kết đến mã mẫu, vui lòng truy cập trang web của Nhà phát triển tại developer.apple.com/metal.
+
+00:10:21.000 --> 23:59:59.000
+Cảm ơn bạn đã xem!
+

@@ -1,0 +1,617 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:11.000
+- Xin chào và chào mừng.
+
+00:00:11.000 --> 00:00:17.000
+Tên tôi là Marco Giordano, và tôi làm việc với nhóm Kỹ thuật Phần mềm GPU tại Apple.
+
+00:00:17.000 --> 00:00:23.000
+Trong phiên này, tôi sẽ nói chuyện với bạn về cách mở rộng khối lượng công việc trên các GPU Apple M1.
+
+00:00:23.000 --> 00:00:33.000
+Nếu bạn làm việc trên khối lượng công việc tính toán phức tạp và muốn biết cách tận dụng tối đa phần cứng silicon của Apple và đạt được quy mô lớn, bài nói chuyện này là bài dành cho bạn.
+
+00:00:33.000 --> 00:00:42.000
+Tôi sẽ bắt đầu bằng cách thảo luận về các khái niệm khả năng mở rộng tính toán và cách các ứng dụng có thể mở rộng hiệu suất một cách tự nhiên trên dòng GPU M1.
+
+00:00:42.000 --> 00:00:52.000
+Và sau đó, tôi sẽ chia sẻ "cách thực hiện" từng bước và nói về những công cụ có sẵn để tối đa hóa quy mô tính toán cho khối lượng công việc của bạn.
+
+00:00:52.000 --> 00:00:59.000
+Hãy bắt đầu bằng cách hiểu khả năng mở rộng là gì và tại sao nó lại quan trọng đối với khối lượng công việc của bạn.
+
+00:00:59.000 --> 00:01:08.000
+GPU Apple M1 được thiết kế từ đầu đến quy mô và cho phép khối lượng công việc của bạn đạt được hiệu suất tuyệt vời trên toàn bộ gia đình SOC.
+
+00:01:08.000 --> 00:01:17.000
+Cùng một GPU hỗ trợ tất cả các tính năng của Metal 3 có quy mô từ iPad 8 lõi đến Mac Studio 64 lõi của bạn.
+
+00:01:17.000 --> 00:01:24.000
+Để tận dụng mức độ mở rộng quy mô cao, có một ứng dụng được tối ưu hóa cho M1 là một điểm khởi đầu tuyệt vời.
+
+00:01:24.000 --> 00:01:34.000
+Nhiều ứng dụng chuyên nghiệp nổi bật đã được tối ưu hóa cho Apple M1 và đã trải qua quy mô tuyệt vời trên tất cả các thiết bị.
+
+00:01:34.000 --> 00:01:44.000
+Ví dụ, ở đây chúng tôi có Affinity Photo và DaVinci Resolve - các biên tập viên ảnh và video từ ngành hậu kỳ.
+
+00:01:44.000 --> 00:01:47.000
+Những ứng dụng này đang đạt được quy mô lớn.
+
+00:01:47.000 --> 00:01:53.000
+Hãy xác định ý nghĩa thực sự của khả năng mở rộng và cách bạn có thể đạt được tỷ lệ "lý tưởng".
+
+00:01:53.000 --> 00:02:01.000
+Khả năng mở rộng khối lượng công việc GPU là khả năng cải thiện hiệu suất với số lượng lõi GPU tăng lên.
+
+00:02:01.000 --> 00:02:07.000
+Biểu đồ bên phải cho thấy tốc độ ứng dụng với số lượng lõi GPU ngày càng tăng.
+
+00:02:07.000 --> 00:02:12.000
+Cải thiện tỷ lệ tuyến tính được coi là lý tưởng.
+
+00:02:12.000 --> 00:02:25.000
+Tuy nhiên, trong khi làm việc trên ứng dụng của mình, bạn có thể nhận thấy một loại tỷ lệ đạt đến cao nguyên và quy mô với lợi nhuận giảm dần hoặc hoàn toàn không mở rộng quy mô do khoảng trống trong dòng thời gian GPU.
+
+00:02:25.000 --> 00:02:44.000
+Hoặc bạn có thể thấy một loại mở rộng khác trong đó hiệu suất được cải thiện nhưng không đồng đều trên ngăn xếp nơi khối lượng công việc đang chạm vào một số bộ giới hạn GPU, như ở đây, từ 24 đến 32 hoặc 48 đến 64 lõi.
+
+00:02:44.000 --> 00:02:56.000
+Mục tiêu của bạn là tiến gần nhất có thể đến quy mô tuyến tính, và tôi sẽ chỉ cho bạn các công cụ và kỹ thuật để xác định các nút thắt cổ chai và đạt được kết quả bạn muốn.
+
+00:02:56.000 --> 00:03:01.000
+Trong phần tiếp theo tôi sẽ thảo luận về các cách tiếp cận để tối đa hóa quy mô GPU.
+
+00:03:01.000 --> 00:03:06.000
+Đối với mọi khối lượng công việc, trước tiên bạn nên xác định nút cổ chai ở đâu.
+
+00:03:06.000 --> 00:03:11.000
+Khối lượng công việc có thể bị giới hạn bằng tính toán hoặc băng thông.
+
+00:03:11.000 --> 00:03:16.000
+Trong quá trình tối ưu hóa, cuối cùng bạn có thể nảy giữa cái này và cái kia.
+
+00:03:16.000 --> 00:03:26.000
+Nếu bạn bị ràng buộc về tính toán, bạn có thể cố gắng chuyển một số tải để tận dụng bộ nhớ để giảm tính toán hoặc ngược lại.
+
+00:03:26.000 --> 00:03:29.000
+Tắc nghẽn có thể thay đổi khi bạn mở rộng quy mô.
+
+00:03:29.000 --> 00:03:35.000
+Một giải pháp tốt có thể là sử dụng các khung của Apple như MPS hoặc MPSGraph.
+
+00:03:35.000 --> 00:03:41.000
+Nếu bạn có thể tận dụng nguyên thủy của chúng, chúng tôi đảm bảo mọi hạt nhân tính toán đều chạy tốt nhất trên tất cả các phần cứng.
+
+00:03:41.000 --> 00:03:50.000
+Tuy nhiên, bạn không thể thay thế mọi thứ bằng MPS, vì vậy điều quan trọng là phải lập hồ sơ và hiểu khối lượng công việc của bạn.
+
+00:03:50.000 --> 00:04:02.000
+Trước tiên, tôi sẽ đề cập đến ba mục có thể giúp giảm thiểu khoảng trống GPU: Cải thiện phân phối công việc của bạn, loại bỏ khoảng trống dòng thời gian GPU và cân nhắc hoạt động nguyên tử.
+
+00:04:02.000 --> 00:04:18.000
+Sau đó, tôi sẽ giải thích cách tối ưu hóa cho bộ giới hạn GPU bằng cách trước tiên điều tra ảnh hưởng của hình dạng lưới tính toán và bố cục bộ nhớ của khối lượng công việc của bạn và cuối cùng bằng cách xem xét một ví dụ cụ thể trong Blender Cycles.
+
+00:04:18.000 --> 00:04:22.000
+Bắt đầu bằng cách tập trung vào việc giảm thiểu khoảng cách GPU.
+
+00:04:22.000 --> 00:04:32.000
+Kiểu mở rộng quy mô này có thể là kết quả của việc GPU không được sử dụng đầy đủ, với những khoảng trống trong dòng thời gian GPU nơi phần cứng không hoạt động.
+
+00:04:32.000 --> 00:04:37.000
+Hãy xem liệu chúng ta có thể cải thiện quy mô bằng cách điều tra phân phối công việc hay không.
+
+00:04:37.000 --> 00:04:47.000
+Khối lượng công việc nhỏ thường không bão hòa toàn bộ GPU và đồng bộ hóa hạt nhân có chi phí của nó, vì vậy cả hai đều có thể ngăn chặn việc mở rộng quy mô thích hợp.
+
+00:04:47.000 --> 00:04:55.000
+Điều rất quan trọng là phải hiểu khối lượng công việc được ánh xạ đến phần cứng như thế nào, vì vậy hãy nói về nó.
+
+00:04:55.000 --> 00:05:00.000
+Một khối lượng công việc được gửi dưới dạng lưới 3D của các nhóm luồng.
+
+00:05:00.000 --> 00:05:12.000
+Các nhóm luồng được phân phối đồng đều cho các lõi GPU và có quyền truy cập vào bộ nhớ nhóm luồng, có kích thước giới hạn, nhưng rất nhanh, cục bộ vào lõi GPU.
+
+00:05:12.000 --> 00:05:21.000
+Một nhóm luồng duy nhất được chia thành các nhóm SIMD, còn được gọi là sóng hoặc sợi dọc trong các phương ngữ tính toán khác.
+
+00:05:21.000 --> 00:05:33.000
+Kiểm tra "threadExecutionWidth" trên đối tượng trạng thái đường ống tính toán sẽ trả về chiều rộng SIMD và trên tất cả các GPU của Apple, nó bằng 32.
+
+00:05:33.000 --> 00:05:42.000
+Các nhóm chủ đề có thể có tối đa 1024 luồng trên mỗi nhóm chủ đề và các chủ đề có thể chia sẻ tối đa 32 nghìn bộ nhớ nhóm chủ đề.
+
+00:05:42.000 --> 00:05:48.000
+Để giữ cho GPU bận rộn, cần có đủ việc phải làm trên tất cả các lõi GPU.
+
+00:05:48.000 --> 00:05:51.000
+Đây là một ví dụ về lưới để gửi đi.
+
+00:05:51.000 --> 00:05:59.000
+Các nhóm chủ đề được gửi đến các cụm GPU và được phân phối giữa các lõi GPU.
+
+00:05:59.000 --> 00:06:04.000
+Nếu có quá ít nhóm luồng, khối lượng công việc sẽ không bão hòa hoàn toàn máy.
+
+00:06:04.000 --> 00:06:08.000
+Đây là cách khắc phục điều này.
+
+00:06:08.000 --> 00:06:16.000
+Bắt đầu bằng cách tính toán khối lượng công việc tạo ra bao nhiêu luồng và xem liệu công văn có bão hòa toàn bộ máy hay không.
+
+00:06:16.000 --> 00:06:30.000
+Đối với các hạt nhân tương đối phức tạp, các luồng đồng thời từ 1K đến 2K trên mỗi lõi đổ bóng được coi là một công suất rất tốt, vì vậy hãy lấy các luồng từ 1 đến 2K trên mỗi lõi GPU làm nguyên tắc chung.
+
+00:06:30.000 --> 00:06:35.000
+Bây giờ bạn có thể tính toán nếu bạn có đủ công việc để bão hòa hoàn toàn phần cứng.
+
+00:06:35.000 --> 00:06:43.000
+Bảng ở đây hiển thị số lượng luồng được đề xuất thấp nhất để bão hòa các SOC khác nhau.
+
+00:06:43.000 --> 00:06:48.000
+Một điều khác cần xem xét là tránh sử dụng kích thước nhóm chủ đề lớn không cần thiết.
+
+00:06:48.000 --> 00:06:54.000
+Làm cho các nhóm luồng nhỏ hơn sẽ ánh xạ tải đến phần cứng đồng đều hơn.
+
+00:06:54.000 --> 00:07:02.000
+Sử dụng các nhóm luồng lớn hơn có thể ngăn chặn sự phân bố đồng đều hơn, dẫn đến sự mất cân bằng trong các lõi GPU.
+
+00:07:02.000 --> 00:07:08.000
+Tốt nhất là sử dụng bội số nhỏ nhất của chiều rộng SIMD để ánh xạ tốt với khối lượng công việc của bạn.
+
+00:07:08.000 --> 00:07:16.000
+Bằng cách sử dụng các nhóm luồng nhỏ hơn, GPU có nhiều cơ hội hơn để cân bằng khối lượng công việc của nó tốt hơn.
+
+00:07:16.000 --> 00:07:23.000
+Vui lòng luôn kiểm tra hiệu suất thời gian chạy hạt nhân của bạn bằng Xcode hoặc Công cụ GPU Công cụ.
+
+00:07:23.000 --> 00:07:28.000
+Ví dụ, trong quá trình chụp GPU này, có một hạt nhân thực hiện một số tính toán.
+
+00:07:28.000 --> 00:07:32.000
+Công suất khá thấp, điều này thật bất ngờ.
+
+00:07:32.000 --> 00:07:40.000
+Thống kê trình biên dịch cho thấy công suất sử dụng lý thuyết tối đa, mới trong Xcode 14, là 100%.
+
+00:07:40.000 --> 00:07:51.000
+Điều này cho thấy có thể không có đủ luồng - và thực sự, chúng ta có thể thấy các thuật toán bắt đầu gửi ngày càng ít luồng hơn, không làm bão hòa máy nữa.
+
+00:07:51.000 --> 00:07:55.000
+Công suất thấp có thể có một số nguyên nhân khác.
+
+00:07:55.000 --> 00:08:01.000
+Để có được tất cả các chi tiết, hãy kiểm tra Metal Compute trên MacBook Pro Tech talk.
+
+00:08:01.000 --> 00:08:09.000
+Được rồi, bây giờ khối lượng công việc đã được phân phối chính xác, đã đến lúc đảm bảo GPU luôn bận.
+
+00:08:09.000 --> 00:08:18.000
+Sử dụng ít GPU không bao giờ dẫn đến việc mở rộng quy mô lý tưởng và trường hợp xấu nhất của việc sử dụng ít là giữ cho nó không hoạt động.
+
+00:08:18.000 --> 00:08:23.000
+GPU có thể không hoạt động vì khoảng trống dòng thời gian GPU.
+
+00:08:23.000 --> 00:08:26.000
+Hãy xem xét ví dụ này.
+
+00:08:26.000 --> 00:08:34.000
+Đây là khối lượng công việc chỉ sử dụng 50% GPU do tuần tự hóa công việc giữa CPU và GPU.
+
+00:08:34.000 --> 00:08:42.000
+Trong trường hợp này, thời lượng tác vụ tổng thể là tổng công việc của CPU và GPU mà không có sự chồng chéo.
+
+00:08:42.000 --> 00:08:49.000
+Tăng gấp đôi lõi GPU làm cho việc theo dõi GPU hoàn thành nhanh hơn, nhưng theo dõi CPU không bị ảnh hưởng.
+
+00:08:49.000 --> 00:08:57.000
+Hiệu suất tổng thể chỉ tăng 33%, khác xa với quy mô lý tưởng.
+
+00:08:57.000 --> 00:09:08.000
+Nếu lõi GPU tăng gấp đôi một lần nữa, khối lượng công việc thậm chí còn nhanh hơn trên GPU, nhưng độ trễ tổng thể chỉ giảm 60% so với thời gian ban đầu!
+
+00:09:08.000 --> 00:09:13.000
+Vì vậy, việc mở rộng quy mô lõi GPU mang lại lợi nhuận giảm dần trong những trường hợp như vậy.
+
+00:09:13.000 --> 00:09:17.000
+Điều này không phải là lý tưởng. Hãy sửa nó!
+
+00:09:17.000 --> 00:09:28.000
+Dấu vết Instrument này từ M1 pro cho thấy khoảng trống dòng thời gian GPU lớn và điều này rõ ràng sẽ ngăn chặn việc mở rộng quy mô thích hợp.
+
+00:09:28.000 --> 00:09:38.000
+Trên M1 Ultra, khối lượng công việc tương tự thực sự nhanh hơn một chút, nhưng thời gian nhàn rỗi GPU trở nên cao hơn và khối lượng công việc không mở rộng tốt.
+
+00:09:38.000 --> 00:09:45.000
+Những khoảng trống lớn là do đồng bộ hóa CPU bằng cách sử dụng waitUntilCompleted trên bộ đệm lệnh.
+
+00:09:45.000 --> 00:09:54.000
+Sau khi thay đổi logic chờ đợi và loại bỏ tuần tự hóa, GPU đã được sử dụng đầy đủ, điều này thật tuyệt.
+
+00:09:54.000 --> 00:10:03.000
+So sánh việc mở rộng quy mô khối lượng công việc trước và sau, chúng ta có thể nói rằng việc mở rộng quy mô trở nên gần hơn với quy mô lý tưởng.
+
+00:10:03.000 --> 00:10:15.000
+Trong ví dụ trước, có thể loại bỏ hoàn toàn đồng bộ hóa CPU/GPU, tuy nhiên điều này không phải lúc nào cũng đúng, do tính chất ứng dụng của bạn.
+
+00:10:15.000 --> 00:10:20.000
+Có những cách tiếp cận khác mà bạn có thể thực hiện để giảm thời gian nhàn rỗi.
+
+00:10:20.000 --> 00:10:30.000
+Sử dụng MTLSharedEvents để báo hiệu CPU, làm việc nhiều hơn, cân nhắc sử dụng mã hóa dựa trên GPU và sử dụng các công văn đồng thời.
+
+00:10:30.000 --> 00:10:35.000
+Vì vậy, hãy thảo luận về những cách tiếp cận đó để giảm thiểu khoảng trống dòng thời gian GPU.
+
+00:10:35.000 --> 00:10:39.000
+Một số trong số chúng có thể phù hợp với quy trình làm việc của bạn.
+
+00:10:39.000 --> 00:10:44.000
+Chờ đợi CPU để hoàn thành GPU dẫn đến việc mở rộng quy mô không lý tưởng.
+
+00:10:44.000 --> 00:10:51.000
+Nếu ứng dụng của bạn đang sử dụng WaitUntilCompleted, bạn có thể muốn thử sử dụng MTLSharedEvents thay thế.
+
+00:10:51.000 --> 00:10:57.000
+MTLSharedEvents có chi phí thấp hơn và có thể giúp bạn giảm khoảng cách dòng thời gian.
+
+00:10:57.000 --> 00:11:02.000
+Điều tiếp theo cần xem xét là phác thảo khối lượng công việc.
+
+00:11:02.000 --> 00:11:13.000
+Nếu thuật toán có dữ liệu cần thiết cho lô tiếp theo hoạt động, có thể mã hóa trước một hoặc nhiều lô trước khi chờ MTLSharedEvents.
+
+00:11:13.000 --> 00:11:19.000
+Bằng cách đó, GPU sẽ không bị cạn kiệt và sẽ luôn có công việc để xử lý.
+
+00:11:19.000 --> 00:11:26.000
+Nếu công việc không thể được mã hóa trước trên cùng một hàng đợi, hãy cân nhắc sử dụng hàng đợi thứ hai để chồng chéo công việc.
+
+00:11:26.000 --> 00:11:35.000
+Sử dụng nhiều hàng đợi cho phép bạn gửi tác phẩm độc lập và chúng không làm đình trệ chuỗi gửi khác khi chờ đợi một sự kiện.
+
+00:11:35.000 --> 00:11:41.000
+Bằng cách này, GPU có cơ hội tiếp tục công việc nhận và xử lý.
+
+00:11:41.000 --> 00:11:47.000
+Trong một số trường hợp, một thuật toán có thể mã hóa hoạt động trực tiếp từ GPU.
+
+00:11:47.000 --> 00:11:56.000
+Sử dụng bộ đệm lệnh gián tiếp, bạn có thể di chuyển mã hóa của lô tiếp theo trực tiếp trên GPU, tránh mọi nhu cầu đồng bộ hóa.
+
+00:11:56.000 --> 00:12:02.000
+Để biết thêm chi tiết về bộ đệm lệnh gián tiếp, vui lòng kiểm tra "Kết xuất hiện đại với kim loại".
+
+00:12:02.000 --> 00:12:09.000
+Khối lượng công việc hiện loại bỏ hoặc giảm thiểu đồng bộ hóa tốn kém giữa CPU và GPU càng nhiều càng tốt.
+
+00:12:09.000 --> 00:12:15.000
+Nhưng ngay cả với dòng thời gian GPU bận rộn, những thách thức về quy mô vẫn có thể tồn tại.
+
+00:12:15.000 --> 00:12:17.000
+Hãy điều tra.
+
+00:12:17.000 --> 00:12:23.000
+Biểu đồ này là từ khối lượng công việc xử lý hình ảnh trong đó hình ảnh được xử lý 1 khung hình tại một thời điểm.
+
+00:12:23.000 --> 00:12:29.000
+Rất nhiều công văn nối tiếp tính toán liên tiếp cũng có thể hạn chế việc mở rộng quy mô.
+
+00:12:29.000 --> 00:12:41.000
+GPU đang bận, nhưng đồng bộ hóa hạt nhân có chi phí và ngoài ra, mỗi công văn có một đoạn đường nối nhỏ nơi các nhóm luồng đang được phân phối và chưa bão hòa các lõi.
+
+00:12:41.000 --> 00:12:49.000
+Tương tự như vậy, khi các nhóm luồng kết thúc và nghỉ hưu, có thể không có đủ công việc để bão hòa hoàn toàn các lõi nữa.
+
+00:12:49.000 --> 00:12:54.000
+Trong tình huống này, lời khuyên là hãy chồng chéo công việc độc lập khi có thể.
+
+00:12:54.000 --> 00:12:56.000
+Hãy xem một ví dụ trực quan.
+
+00:12:56.000 --> 00:13:00.000
+Ở đây chúng tôi có một khối lượng công việc xử lý hai hình ảnh, lần lượt từng hình ảnh.
+
+00:13:00.000 --> 00:13:04.000
+Thông thường, các hạt nhân cần đồng bộ hóa với nhau.
+
+00:13:04.000 --> 00:13:07.000
+Tuy nhiên, đây không phải là cách duy nhất để lên lịch làm việc.
+
+00:13:07.000 --> 00:13:13.000
+Bạn có thể xen kẽ công việc độc lập của hai hình ảnh bằng cách sử dụng các công văn đồng thời.
+
+00:13:13.000 --> 00:13:19.000
+Ở đây tài xế có thể xen kẽ các công việc khác nhau, nhờ vào các công văn đồng thời.
+
+00:13:19.000 --> 00:13:27.000
+Chúng ta có thể thấy rằng hai hạt nhân trước đây liên tiếp bây giờ được phân tách bởi một số công việc độc lập.
+
+00:13:27.000 --> 00:13:33.000
+Tuy nhiên, khi bạn sử dụng MTLDispatchTypeConcurrent, các rào cản phải được đặt thủ công.
+
+00:13:33.000 --> 00:13:47.000
+Các công văn đồng thời cho phép trình điều khiển đóng gói công việc chặt chẽ hơn, che giấu hầu hết chi phí đồng bộ hóa giữa các hạt nhân phụ thuộc, cũng như lấp đầy đoạn đường nối và cuối của các hạt nhân khác nhau.
+
+00:13:47.000 --> 00:13:55.000
+Tối ưu hóa này đã cải thiện đáng kể hiệu suất khối lượng công việc và mở rộng quy mô khi chuyển từ M1 Max sang M1 Ultra.
+
+00:13:55.000 --> 00:14:07.000
+Khối lượng công việc chạy nhanh hơn 30% với hai hình ảnh xen kẽ, nhanh hơn 70% với 3 hình ảnh song song, so với tỷ lệ trước đó.
+
+00:14:07.000 --> 00:14:11.000
+Điều quan trọng là phải xem xét cẩn thận các hoạt động nguyên tử mà hạt nhân đang thực hiện.
+
+00:14:11.000 --> 00:14:15.000
+Hãy chắc chắn rằng nó được làm theo cách hiệu quả nhất.
+
+00:14:15.000 --> 00:14:22.000
+Hoạt động nguyên tử cho phép đọc và ghi dữ liệu từ nhiều luồng một cách an toàn.
+
+00:14:22.000 --> 00:14:26.000
+Nguyên tử toàn cầu được kết hợp trên toàn bộ GPU.
+
+00:14:26.000 --> 00:14:32.000
+Khi nhiều chủ đề cố gắng đọc và viết cùng một giá trị toàn cầu, điều này dẫn đến tranh chấp.
+
+00:14:32.000 --> 00:14:38.000
+Tăng số lượng lõi GPU không giúp ích gì và trên thực tế dẫn đến nhiều tranh cãi hơn.
+
+00:14:38.000 --> 00:14:45.000
+Hãy điều tra cách bạn có thể cải thiện hành vi nguyên tử trong một thuật toán với một ví dụ.
+
+00:14:45.000 --> 00:14:51.000
+Đây là một thuật toán giảm, trong đó tất cả các giá trị trong bộ đệm sẽ được tổng hợp lại với nhau.
+
+00:14:51.000 --> 00:14:57.000
+Cách tiếp cận đơn giản nhất là thực hiện thao tác thêm nguyên tử trên mỗi luồng trong bộ nhớ chính.
+
+00:14:57.000 --> 00:15:09.000
+Tuy nhiên, điều này không lý tưởng vì điều đó đặt một mức độ áp lực lớn lên một giá trị duy nhất trong bộ nhớ chính, tuần tự hóa hiệu quả mỗi lần ghi bộ nhớ.
+
+00:15:09.000 --> 00:15:18.000
+Có hai thứ mà phần cứng cung cấp để giúp tranh chấp bộ nhớ nguyên tử: hướng dẫn nhóm Simd và nguyên tử nhóm luồng.
+
+00:15:18.000 --> 00:15:31.000
+Các hướng dẫn SIMD như prefix_exlusive sum và simd_min và nhiều hướng dẫn khác cho phép thực hiện các thao tác và trao đổi bộ nhớ giữa các thanh ghi trong nhóm SIMD mà không cần quay lại bộ nhớ.
+
+00:15:31.000 --> 00:15:35.000
+Các nguyên tử nhóm luồng được hoàn thành bởi bộ nhớ nhóm luồng.
+
+00:15:35.000 --> 00:15:42.000
+Mỗi lõi GPU có bộ nhớ nhóm luồng riêng cho phép mở rộng quy mô với số lượng lõi GPU.
+
+00:15:42.000 --> 00:15:48.000
+Hãy xem hai tính năng này có thể giúp bạn cải thiện khối lượng công việc của mình như thế nào.
+
+00:15:48.000 --> 00:15:56.000
+Ở đây chúng ta có cùng một vấn đề giảm, nhưng lần này nó bắt đầu sử dụng lệnh nhóm SIMD, một tổng bộ nhớ bao gồm.
+
+00:15:56.000 --> 00:16:03.000
+Thao tác như vậy sẽ để lại tổng của tất cả các số trong nhóm SIMD trong chuỗi cuối cùng.
+
+00:16:03.000 --> 00:16:14.000
+Luồng cuối cùng từ mỗi nhóm SIMD sau đó có thể thực hiện thêm nguyên tử duy nhất trong bộ nhớ nhóm luồng để giảm tất cả các nhóm SIMD xuống một giá trị duy nhất trong bộ nhớ nhóm luồng.
+
+00:16:14.000 --> 00:16:24.000
+Bằng cách này, sử dụng hướng dẫn nhóm SIMD và bộ nhớ nhóm luồng, toàn bộ nhóm luồng đã bị thu nhỏ mà không cần chạm vào bộ nhớ chính.
+
+00:16:24.000 --> 00:16:29.000
+Mỗi nhóm sẽ có thể giảm độc lập và song song.
+
+00:16:29.000 --> 00:16:37.000
+Bây giờ mỗi nhóm luồng đã được giảm xuống một giá trị duy nhất, một luồng trên mỗi nhóm luồng có thể thực hiện một nguyên tử duy nhất trong bộ nhớ chính.
+
+00:16:37.000 --> 00:16:50.000
+Không chỉ điều này chỉ yêu cầu một nguyên tử trên mỗi nhóm luồng, mà vì các nhóm luồng hoàn thành vào các thời điểm khác nhau, nó phân tán các nguyên tử theo thời gian, làm giảm tranh chấp bộ nhớ hơn nữa.
+
+00:16:50.000 --> 00:17:02.000
+Tóm lại, để tối đa hóa hiệu quả nguyên tử, hãy cố gắng tận dụng vị trí bộ nhớ, cố gắng sử dụng hoạt động nhóm SIMD, cũng như tận dụng nguyên tử bộ nhớ nhóm luồng.
+
+00:17:02.000 --> 00:17:08.000
+Tất cả điều này sẽ giúp giảm đáng kể áp suất hoạt động nguyên tử ngăn chặn sự mở rộng quy mô.
+
+00:17:08.000 --> 00:17:15.000
+Bây giờ các khoảng trống GPU đã được khắc phục, đã đến lúc xem liệu việc mở rộng quy mô có gần với lý tưởng hơn hay không.
+
+00:17:15.000 --> 00:17:25.000
+Bộ giới hạn GPU trong Xcode và Metal System Trace giúp tối ưu hóa mọi tắc nghẽn và thiếu hiệu quả trong quy trình thực thi lõi GPU.
+
+00:17:25.000 --> 00:17:36.000
+Ví dụ, các mẫu truy cập bộ nhớ không hiệu quả luôn gây ra Bộ nhớ đệm cấp cuối cùng hoặc Đơn vị quản lý bộ nhớ cao, hoặc bộ giới hạn MMU và mức sử dụng khá thấp.
+
+00:17:36.000 --> 00:17:43.000
+Điều đầu tiên cần giải quyết là cách điều chỉnh các nhóm luồng và bố cục bộ nhớ.
+
+00:17:43.000 --> 00:17:54.000
+Chìa khóa trong việc giảm khoảng thời gian bộ nhớ và sự phân kỳ là phải có sự hiểu biết rõ ràng về mô hình truy cập bộ nhớ khối lượng công việc, cả về mặt không gian và thời gian.
+
+00:17:54.000 --> 00:18:09.000
+Một khi điều đó đã được hiểu, có hai hướng điều chỉnh khả thi: Sắp xếp lại bố cục dữ liệu để cải thiện vị trí truy cập dữ liệu hoặc điều chỉnh mẫu truy cập để phù hợp hơn với bố cục dữ liệu và cải thiện bộ nhớ và bộ nhớ đệm.
+
+00:18:09.000 --> 00:18:12.000
+Hãy xem một ví dụ.
+
+00:18:12.000 --> 00:18:18.000
+Đây là một bộ đệm bộ nhớ nơi dữ liệu được bố trí theo chiều ngang, hết hàng này đến hàng khác.
+
+00:18:18.000 --> 00:18:29.000
+Tuy nhiên, khi hạt nhân tính toán được gửi đi, người ta thường có một mẫu giống như 2D với các nhóm luồng vuông được phân phối, được bản địa hóa khá không gian.
+
+00:18:29.000 --> 00:18:36.000
+Mô hình truy cập và bố cục dữ liệu này không phù hợp với địa phương dữ liệu.
+
+00:18:36.000 --> 00:18:42.000
+Ví dụ, khi nhóm SIMD đầu tiên truy cập dữ liệu, các yêu cầu được đóng gói trong một dòng bộ nhớ cache.
+
+00:18:42.000 --> 00:18:50.000
+Hầu hết dòng bộ nhớ cache sẽ không được sử dụng, tuy nhiên vẫn chiếm không gian trong bộ nhớ cache.
+
+00:18:50.000 --> 00:19:01.000
+Sắp xếp lại dữ liệu để phù hợp với mẫu truy cập tốt hơn, ví dụ, thay vì kéo dài toàn bộ hàng, nó được bản địa hóa thành các sọc.
+
+00:19:01.000 --> 00:19:12.000
+Với bố cục bộ nhớ mới này, một nhóm luồng sẽ có thể sử dụng hầu hết dữ liệu sẽ được yêu cầu trong một dòng bộ nhớ cache, giảm sự phân kỳ và cải thiện hiệu quả bộ nhớ cache.
+
+00:19:12.000 --> 00:19:19.000
+Tùy chọn khác là thay đổi cách gửi lưới 3D để phù hợp hơn với bố cục dữ liệu hiện tại.
+
+00:19:19.000 --> 00:19:29.000
+Hãy thử chơi với kích thước nhóm chủ đề để tạo các nhóm ánh xạ tốt hơn đến bố cục bộ nhớ của bạn, chẳng hạn như hình dạng hình chữ nhật hơn.
+
+00:19:29.000 --> 00:19:37.000
+Trong trường hợp này, mẫu truy cập được căn chỉnh với bố cục bộ nhớ, mang lại hiệu quả bộ nhớ đệm cao hơn nhiều.
+
+00:19:37.000 --> 00:19:41.000
+Bạn có thể cần thử nghiệm để tìm ra thứ phù hợp nhất với khối lượng công việc của mình.
+
+00:19:41.000 --> 00:19:54.000
+Đôi khi bạn có thể cần phải đánh đổi, hy sinh sự phân kỳ luồng cho bộ nhớ cục bộ nhớ hoặc ngược lại, thay đổi bố cục dữ liệu, điều phối lưới hoặc kết hợp tất cả chúng.
+
+00:19:54.000 --> 00:20:00.000
+Mỗi khối lượng công việc và mô hình truy cập là khác nhau.
+
+00:20:00.000 --> 00:20:08.000
+Bây giờ bạn đã biết các cách để cải thiện vị trí bộ nhớ, hãy xem một ví dụ cụ thể hơn trong Blender Cycles.
+
+00:20:08.000 --> 00:20:13.000
+Cycles là trình theo dõi đường dẫn dựa trên vật lý của Blender để kết xuất sản xuất.
+
+00:20:13.000 --> 00:20:24.000
+Nó được thiết kế để cung cấp các kết quả dựa trên vật lý ngay từ đầu, với sự kiểm soát nghệ thuật và các nút tạo bóng linh hoạt cho nhu cầu sản xuất.
+
+00:20:24.000 --> 00:20:36.000
+Dấu vết Công cụ này cho thấy rõ ràng Băng thông Đọc thấp, Bộ giới hạn GPU Hàng đầu cao, Bộ giới hạn Bộ nhớ cache cao và Sử dụng Bộ nhớ đệm Mức cuối cùng thấp.
+
+00:20:36.000 --> 00:20:42.000
+Kiểm soát băng thông và bộ giới hạn MMU rất quan trọng để mở rộng quy mô.
+
+00:20:42.000 --> 00:20:50.000
+Nếu bộ giới hạn hàng đầu của bạn là Bộ nhớ đệm cấp cuối cùng hoặc MMU, bạn cần giảm khoảng bộ nhớ và tối đa hóa vị trí dữ liệu.
+
+00:20:50.000 --> 00:20:53.000
+Hãy xem một ví dụ.
+
+00:20:53.000 --> 00:20:57.000
+Các chu kỳ sử dụng việc sắp xếp dữ liệu để cố gắng giảm sự phân kỳ.
+
+00:20:57.000 --> 00:21:01.000
+Nó thực hiện điều đó bằng cách phân loại các tia đánh theo loại vật liệu.
+
+00:21:01.000 --> 00:21:11.000
+Điều này rất tốt để giảm sự phân kỳ luồng, nhưng nó làm tăng sự phân kỳ bộ nhớ không gian, dẫn đến Bộ giới hạn MMU cao.
+
+00:21:11.000 --> 00:21:17.000
+Để giải quyết vấn đề này, chúng tôi đã thử nghiệm phân vùng phạm vi bộ nhớ trước khi sắp xếp để tăng vị trí dữ liệu.
+
+00:21:17.000 --> 00:21:18.000
+Hãy hình dung nó.
+
+00:21:18.000 --> 00:21:28.000
+Khi các tia được bắn vào hiện trường để mô phỏng ánh sáng truyền đi, chúng va vào các vật thể và dữ liệu được thu thập vào bộ đệm.
+
+00:21:28.000 --> 00:21:39.000
+Tại điểm giao nhau, chúng ta biết nhiều thứ - loại vật liệu bị va chạm, như thủy tinh, kim loại, v.v., vị trí giao nhau, tia, v.v.
+
+00:21:39.000 --> 00:21:43.000
+Để đơn giản, hãy chỉ tập trung vào loại vật liệu.
+
+00:21:43.000 --> 00:21:47.000
+Đây là các tài liệu trong bộ đệm trong bộ nhớ.
+
+00:21:47.000 --> 00:21:53.000
+Vì rất nhiều dữ liệu được thu thập trên mỗi tia, bộ đệm bộ nhớ có thể trở nên khá lớn.
+
+00:21:53.000 --> 00:22:00.000
+Để tránh di chuyển nhiều bộ nhớ xung quanh, hãy điền vào danh sách các chỉ số và thay vào đó sắp xếp chúng.
+
+00:22:00.000 --> 00:22:06.000
+Sau khi sắp xếp, các chỉ số cho cùng một loại vật liệu hiện được đóng gói lại với nhau.
+
+00:22:06.000 --> 00:22:11.000
+Các nhóm SIMD có thể bắt đầu tải các chỉ số và xử lý các tài liệu.
+
+00:22:11.000 --> 00:22:18.000
+Nhóm SIMD sẽ sử dụng chỉ mục để tải dữ liệu tương ứng trong bộ đệm ban đầu.
+
+00:22:18.000 --> 00:22:25.000
+Tuy nhiên, nhóm SIMD sẽ đọc trong toàn bộ khoảng thời gian bộ nhớ, gây áp lực lên MMU.
+
+00:22:25.000 --> 00:22:28.000
+Hãy điều tra cách tiếp cận mới.
+
+00:22:28.000 --> 00:22:36.000
+Phạm vi bộ nhớ được phân vùng trong một phân vùng lý tưởng hóa đơn giản là sẽ không cho phép các chỉ số từ các phân vùng khác nhau trộn lẫn.
+
+00:22:36.000 --> 00:22:46.000
+Khi sắp xếp, rõ ràng là phạm vi dữ liệu được truy cập được chứa bên trong phân vùng thay vì mở rộng toàn bộ phạm vi bộ nhớ như trước đây.
+
+00:22:46.000 --> 00:22:52.000
+Đó là sự đánh đổi và cân bằng giữa sự phân kỳ luồng và sự phân kỳ bộ nhớ.
+
+00:22:52.000 --> 00:22:58.000
+Số lượng phân vùng và kích thước lý tưởng phụ thuộc nhiều vào khối lượng công việc.
+
+00:22:58.000 --> 00:23:02.000
+Bạn có thể phải thử nghiệm để xem cái nào hoạt động tốt nhất.
+
+00:23:02.000 --> 00:23:07.000
+Hãy lấy một Dấu vết Hệ thống Kim loại khác và xem khối lượng công việc có được cải thiện hay không.
+
+00:23:07.000 --> 00:23:11.000
+Ở đây chúng ta thấy các bộ giới hạn và cách sử dụng cho phiên bản được tối ưu hóa.
+
+00:23:11.000 --> 00:23:17.000
+Bộ giới hạn Hiệu suất Hàng đầu đã giảm, cũng như bộ giới hạn Bộ nhớ đệm Cấp độ Cuối cùng.
+
+00:23:17.000 --> 00:23:22.000
+Kết quả là, băng thông và thời gian chạy đổ bóng được cải thiện đáng kể.
+
+00:23:22.000 --> 00:23:24.000
+Hãy xem bao nhiêu.
+
+00:23:24.000 --> 00:23:29.000
+Bộ giới hạn hàng đầu và bộ giới hạn LLC giảm khoảng 20%.
+
+00:23:29.000 --> 00:23:32.000
+Điều đó có nghĩa là luồng dữ liệu hiệu quả hơn.
+
+00:23:32.000 --> 00:23:39.000
+Băng thông đọc GPU tăng lên đáng kể, cho phép đẩy nhiều dữ liệu hơn vào lõi GPU.
+
+00:23:39.000 --> 00:23:48.000
+Nhìn chung, việc tăng địa phương bộ nhớ với thí nghiệm này đã cải thiện hiệu suất từ 10 đến 30%, tùy thuộc vào cảnh.
+
+00:23:48.000 --> 00:23:54.000
+Đây chỉ là một ví dụ về nhiều cách bạn có thể cố gắng cải thiện mẫu truy cập bộ nhớ.
+
+00:23:54.000 --> 00:23:58.000
+Tiếp tục thử nghiệm và tối ưu hóa cho Trình giới hạn hiệu suất hàng đầu.
+
+00:23:58.000 --> 00:24:03.000
+Các công cụ GPU có nhiều bộ đếm hữu ích hơn để điều chỉnh.
+
+00:24:03.000 --> 00:24:08.000
+Xcode có một công suất lý thuyết mới trong cửa sổ thống kê trình biên dịch.
+
+00:24:08.000 --> 00:24:24.000
+Cả Xcode và Instruments hiện có một số bộ giới hạn và bộ đếm liên quan đến MMU, cụ thể là Bộ giới hạn MMU mới, Bộ đếm sử dụng MMU và Bộ đếm tỷ lệ bỏ lỡ MMU TLB.
+
+00:24:24.000 --> 00:24:27.000
+Hôm nay tôi đã bao phủ rất nhiều mặt đất.
+
+00:24:27.000 --> 00:24:36.000
+Tôi đã thảo luận về khả năng mở rộng GPU và cách các nút thắt cổ chai có thể thay đổi khi mở rộng quy mô và cách các công cụ có thể giúp bạn tìm và khắc phục các vấn đề về khả năng mở rộng.
+
+00:24:36.000 --> 00:24:43.000
+Tôi cũng đã thảo luận về cách bạn có thể cần thử nghiệm và đánh đổi để có được kết quả tốt nhất cho đơn đăng ký của mình.
+
+00:24:43.000 --> 00:24:48.000
+Tôi rất mong được thấy tất cả các ứng dụng tuyệt vời của bạn có quy mô tốt một cách đáng kinh ngạc trên Apple silicon.
+
+00:24:48.000 --> 23:59:59.000
+Cảm ơn bạn đã xem.
+

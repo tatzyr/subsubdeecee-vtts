@@ -1,0 +1,491 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:12.000
+Zheng Naiwei: Xin chào và chào mừng đến với WWDC.
+
+00:00:12.000 --> 00:00:16.000
+Tên tôi là Zheng Naiwei từ Nhóm AVFoundation của Apple.
+
+00:00:16.000 --> 00:00:26.000
+Trong phiên này, chúng ta sẽ nói về cách cải thiện độ tin cậy phân phối phát trực tuyến với các tính năng mới mà chúng tôi đã thêm vào Chỉ đạo nội dung HLS.
+
+00:00:26.000 --> 00:00:29.000
+Chúng tôi sẽ đề cập đến ba chủ đề hôm nay.
+
+00:00:29.000 --> 00:00:31.000
+Nếu bạn chưa nghe nói về Chỉ đạo Nội dung, đừng lo lắng.
+
+00:00:31.000 --> 00:00:39.000
+Đó là một phần của công nghệ HLS có thể tự động điều khiển lưu lượng phát trực tuyến, để cải thiện chất lượng dịch vụ phát trực tuyến.
+
+00:00:39.000 --> 00:00:44.000
+Tôi sẽ cung cấp cho bạn một bài đánh giá ngắn để giúp bạn đi đúng hướng.
+
+00:00:44.000 --> 00:00:56.000
+Sau đó, tôi sẽ giới thiệu tính năng nhân bản Pathway mới, có thể mang lại khả năng lái năng động vượt quá giới hạn, để cải thiện hơn nữa độ tin cậy của dịch vụ phát trực tuyến của bạn.
+
+00:00:56.000 --> 00:01:07.000
+Cuối cùng, tôi sẽ sử dụng các ví dụ cụ thể để hướng dẫn bạn cách tác động đến logic phía máy chủ để điều khiển lưu lượng truy cập. Đừng chờ đợi nữa và bắt đầu.
+
+00:01:07.000 --> 00:01:16.000
+Quay trở lại thời điểm chúng tôi không có Chỉ đạo nội dung, lựa chọn biến thể trong trường hợp lỗi dự phòng không được chuẩn hóa trong thông số kỹ thuật HLS.
+
+00:01:16.000 --> 00:01:22.000
+Và các triển khai khách hàng khác nhau có thể hoạt động khác nhau trong việc chọn biến thể dự phòng tiếp theo.
+
+00:01:22.000 --> 00:01:28.000
+Nhưng một cách điển hình để làm điều này là làm theo thứ tự biến thể trong danh sách phát đa biến.
+
+00:01:28.000 --> 00:01:38.000
+Nếu nhà cung cấp dịch vụ phát trực tuyến muốn chỉ định một tập hợp các CDN dự phòng, họ cần liệt kê mọi biến thể từ mọi CDN và sắp xếp chúng đúng cách trong danh sách phát đa biến.
+
+00:01:38.000 --> 00:01:50.000
+Bằng cách này, trong trường hợp trình phát khách hàng gặp lỗi trong biến thể đầu tiên, nó có thể chuyển sang biến thể tiếp theo trong danh sách phát với biến thể không thành công bị phạt khỏi lựa chọn.
+
+00:01:50.000 --> 00:02:04.000
+Trong trường hợp này, chúng tôi thấy rằng trình phát khách hàng gặp sự cố với biến thể 6 Mbps từ CDN1 và do đó chuyển sang biến thể 3 Mbps tiếp theo từ CDN1, theo thứ tự trong danh sách phát đa biến.
+
+00:02:04.000 --> 00:02:18.000
+Nếu không may biến thể 3 Mbps từ CDN1 cũng thất bại, trình phát máy khách sẽ không còn biến thể nào từ CDN1 và chuyển sang biến thể 6 Mbps từ CDN2.
+
+00:02:18.000 --> 00:02:22.000
+Nó có thể làm điều này liên tục cho đến khi không có biến thể dự phòng.
+
+00:02:22.000 --> 00:02:39.000
+Tuy nhiên, mặc dù máy chủ tác giả danh sách phát có thể kiểm soát thứ tự của các biến thể dự phòng, việc kiểm soát như vậy chỉ xảy ra tại thời điểm khách hàng yêu cầu danh sách phát đa biến và một khi danh sách phát được phát hành, không có cách nào để thay đổi thứ tự dự phòng.
+
+00:02:39.000 --> 00:02:42.000
+Đây là nơi Chỉ đạo Nội dung xuất hiện trong bức tranh.
+
+00:02:42.000 --> 00:02:50.000
+Với Chỉ đạo Nội dung, nhà cung cấp phát trực tuyến hiện có thể nhóm các biến thể thành Đường dẫn với các máy chủ CDN khác nhau.
+
+00:02:50.000 --> 00:02:55.000
+Hành vi dự phòng lỗi hiện đã được chuẩn hóa cho Chỉ đạo nội dung.
+
+00:02:55.000 --> 00:02:57.000
+Các con đường được sắp xếp theo sở thích.
+
+00:02:57.000 --> 00:03:05.000
+Trong ví dụ này, Đường dẫn CDN1 ở trên cùng được ưa thích nhất, sau CDN2 và CDN3.
+
+00:03:05.000 --> 00:03:13.000
+Nhà cung cấp dịch vụ phát trực tuyến cũng lưu trữ một Máy chủ Chỉ đạo, tạo Bản kê khai Chỉ đạo cho mỗi trình phát khách hàng.
+
+00:03:13.000 --> 00:03:23.000
+Bản kê khai chỉ đạo xác định các quy tắc ưu tiên Pathway, vì vậy người chơi có thể tuân theo các quy tắc trong việc lựa chọn và dự phòng giữa các luồng biến thể.
+
+00:03:23.000 --> 00:03:31.000
+Ví dụ, giả sử nhà cung cấp dịch vụ phát trực tuyến đang cố gắng giảm tải một số lưu lượng truy cập từ CDN1 sang CND2.
+
+00:03:31.000 --> 00:03:48.000
+Nó sẽ tạo ra một Bản kê khai chỉ đạo với các quy tắc ưu tiên Pathway mới và khi trình phát khách hàng phát từ CDN1 yêu cầu cập nhật Bản kê khai chỉ đạo, Máy chủ chỉ đạo có thể gửi Bản kê khai chỉ đạo đã chuẩn bị với các thay đổi quy tắc cho khách hàng.
+
+00:03:48.000 --> 00:03:55.000
+Khách hàng sẽ phân tích cú pháp và xem các quy tắc Ưu tiên Đường dẫn mới và áp dụng nó cho phiên phát lại của nó.
+
+00:03:55.000 --> 00:04:07.000
+Trong trường hợp này, thay đổi quy tắc đã chuyển thứ tự ưu tiên giữa Pathway CDN1 và CDN2 để trình phát máy khách sẽ chuyển đổi và phát từ CDN2 ngay lập tức.
+
+00:04:07.000 --> 00:04:20.000
+Sau đó, trong trường hợp thất bại, trước tiên khách hàng sẽ sử dụng hết các biến thể dự phòng trong Con đường hiện tại và dự phòng cho Con đường được ưu tiên nhất theo Ưu tiên Con đường hiện tại của nó.
+
+00:04:20.000 --> 00:04:30.000
+Trong trường hợp này, nếu tất cả các biến thể từ CDN2 bị lỗi, trình phát máy khách có thể bắt đầu chọn từ các biến thể từ CDN1, đây là Con đường ưa thích tiếp theo.
+
+00:04:30.000 --> 00:04:37.000
+Khi chúng tôi áp dụng Chỉ đạo Nội dung lên quy mô toàn cầu, nó có thể giải quyết các vấn đề cân bằng tải khu vực lớn hơn.
+
+00:04:37.000 --> 00:04:44.000
+Giả sử nhà cung cấp dịch vụ phát trực tuyến của chúng tôi hoạt động trên toàn thế giới, với hai nhà cung cấp CDN chính.
+
+00:04:44.000 --> 00:04:56.000
+Để gán các CDN này cho người chơi khách hàng trên toàn cầu, Máy chủ Chỉ đạo đã chuẩn bị hai Bản kê khai Chỉ đạo khác nhau, một cái thích CDN1 và cái còn lại thích CDN2.
+
+00:04:56.000 --> 00:05:10.000
+Sau đó, nó phân phối các Bản kê khai chỉ đạo này dựa trên khu vực của người chơi khách hàng để Bắc và Nam Mỹ sử dụng CDN1 và phần còn lại của thế giới sử dụng CDN2.
+
+00:05:10.000 --> 00:05:18.000
+Ở đầu bản đồ thế giới, chúng tôi hiển thị một thanh xếp chồng ngang đại diện cho sự phân bố lưu lượng giữa CDN1 và CDN2.
+
+00:05:18.000 --> 00:05:24.000
+Hiện tại, cả hai CDN đang phục vụ một nửa lưu lượng truy cập trên toàn thế giới.
+
+00:05:24.000 --> 00:05:34.000
+Tuy nhiên, theo thời gian, nhà cung cấp dịch vụ phát trực tuyến đã quan sát thấy sự gia tăng đáng kể lưu lượng truy cập tới CDN2 do sự thay đổi ánh sáng ban ngày toàn cầu.
+
+00:05:34.000 --> 00:05:39.000
+Đồng thời, lưu lượng truy cập đến CDN1 đang giảm.
+
+00:05:39.000 --> 00:05:44.000
+Vì vậy, nhà cung cấp dịch vụ phát trực tuyến đã quyết định chỉ đạo khu vực Châu Âu sử dụng CDN1.
+
+00:05:44.000 --> 00:05:52.000
+Nó làm như vậy bằng cách chuẩn bị một Bản kê khai chỉ đạo thích CDN1 và gửi nó đến các khách hàng từ khu vực Châu Âu.
+
+00:05:52.000 --> 00:05:58.000
+Bây giờ những người chơi khách hàng trong khu vực đó sẽ điều khiển lưu lượng truy cập đến CDN1, giảm tải từ CDN2.
+
+00:05:58.000 --> 00:06:01.000
+Và lưu lượng truy cập toàn cầu trở nên cân bằng hơn.
+
+00:06:01.000 --> 00:06:07.000
+Bây giờ chúng ta hãy xem danh sách phát đa biến HLS với hỗ trợ Chỉ đạo Nội dung.
+
+00:06:07.000 --> 00:06:16.000
+Đầu tiên chúng ta thấy thẻ EXT-X-CONTENT-STEERING cho biết danh sách phát đa biến này sử dụng Chỉ đạo nội dung.
+
+00:06:16.000 --> 00:06:25.000
+Sau đó, chúng tôi có thuộc tính SERVER-URI chỉ định nơi khách hàng nên yêu cầu cập nhật Bản kê khai chỉ đạo.
+
+00:06:25.000 --> 00:06:33.000
+Sau đó, thuộc tính PATHWAY-ID tiếp theo chỉ định con đường ban đầu để chọn phát lại khi khởi động.
+
+00:06:33.000 --> 00:06:40.000
+Sau đó, chúng ta có thể thấy rằng mỗi luồng biến thể được cung cấp một thuộc tính PATHWAY-ID để nhóm chúng thành Pathways.
+
+00:06:40.000 --> 00:06:48.000
+Mỗi Pathway nên có cùng một tập hợp các luồng biến thể, chỉ có sự khác biệt là URI và tên nhóm phương tiện của chúng.
+
+00:06:48.000 --> 00:06:53.000
+Trong ví dụ này, chúng ta có hai Con đường, cụ thể là CDN1 và CDN2.
+
+00:06:53.000 --> 00:07:02.000
+Cả hai đều chứa hai luồng biến thể, một video độ phân giải cao 6 Mbps và một video độ phân giải thấp hơn 3 Mbps.
+
+00:07:02.000 --> 00:07:06.000
+Với sự khác biệt duy nhất là tên máy chủ URI của họ.
+
+00:07:06.000 --> 00:07:13.000
+Ngoài ra còn có hai nhóm âm thanh riêng biệt cho mỗi Pathway nơi chúng có tên máy chủ URI khác nhau.
+
+00:07:13.000 --> 00:07:17.000
+Đây là một ví dụ về Bản kê khai chỉ đạo, đó là một tài liệu JSON.
+
+00:07:17.000 --> 00:07:22.000
+Trường PATHWAY-PRIORITY là một danh sách các ID Pathway theo thứ tự ưu tiên.
+
+00:07:22.000 --> 00:07:27.000
+Vì vậy, trong trường hợp này, trình phát khách hàng nhận sẽ thích CDN1 hơn CDN2.
+
+00:07:27.000 --> 00:07:34.000
+Đây là Bản kê khai chỉ đạo mà Máy chủ chỉ đạo sẽ cung cấp cho các khách hàng châu Âu, để cho phép họ thích CDN1.
+
+00:07:34.000 --> 00:07:42.000
+Bằng cách thay đổi trường PATHWAY-PRIORITY trong Bản kê khai chỉ đạo, Máy chủ chỉ đạo có thể kiểm soát chính sách chỉ đạo cho mọi khách hàng.
+
+00:07:42.000 --> 00:07:45.000
+Đó là nó để có cái nhìn tổng quan nhanh về Chỉ đạo Nội dung.
+
+00:07:45.000 --> 00:07:56.000
+Nếu bạn muốn có lời giải thích chuyên sâu hơn, vui lòng xem bài nói chuyện WWDC21 của tôi, Cải thiện tính khả dụng phát trực tuyến toàn cầu với Chỉ đạo nội dung HLS.
+
+00:07:56.000 --> 00:08:03.000
+Tuy nhiên, hành trình của chúng tôi để hỗ trợ một dịch vụ phát trực tuyến có thể mở rộng hơn và đáng tin cậy hơn không dừng lại ở đây.
+
+00:08:03.000 --> 00:08:16.000
+Ngày nay, các công ty có thể truy cập các cơ sở hạ tầng và công cụ đám mây linh hoạt hơn để đạt được những điều không thể tưởng tượng được trong quá khứ và chúng ta phải bắt kịp bước nhảy vọt trong công nghệ.
+
+00:08:16.000 --> 00:08:27.000
+Giả sử nhà cung cấp dịch vụ phát trực tuyến của chúng tôi đã phát triển lớn hơn trong năm nay và họ đang thử nghiệm một cách mới để đáp ứng nhu cầu lưu lượng truy cập động của cơ sở người dùng đang phát triển.
+
+00:08:27.000 --> 00:08:35.000
+Họ đang làm điều đó bằng cách tự động tạo ra các đội máy chủ CDN trong thời gian thực để giảm bớt căng thẳng giao thông tạm thời.
+
+00:08:35.000 --> 00:08:41.000
+Ví dụ, nó có thể tạo ra một đội CDN3 mới và muốn quảng cáo nó cho các khách hàng hiện tại.
+
+00:08:41.000 --> 00:08:53.000
+Tuy nhiên, thách thức ở đây là thông tin CDN được tạo động không được bao gồm trong danh sách phát đa biến khi khách hàng hiện tại yêu cầu, bởi vì nó không tồn tại.
+
+00:08:53.000 --> 00:08:59.000
+Vậy chúng ta có thể làm gì để nói với những người chơi khách hàng của mình về sự xuất hiện của một CDN mới?
+
+00:08:59.000 --> 00:09:03.000
+Đây là nơi tính năng Nhân bản Con đường mới của chúng tôi có ích.
+
+00:09:03.000 --> 00:09:11.000
+Đó là một tính năng mới với khả năng tương thích ngược với Content Steering 1.2 được giới thiệu trong WWDC21.
+
+00:09:11.000 --> 00:09:20.000
+Với Nhân bản Đường dẫn, Máy chủ Chỉ đạo có thể thông báo các CDN mới cho các khách hàng hiện tại bằng cách sử dụng định nghĩa kê khai nhỏ gọn.
+
+00:09:20.000 --> 00:09:27.000
+Bằng cách giả định Pathways giống hệt nhau về cấu trúc, Pathways mới có thể được tạo ra bằng cách sao chép và sửa đổi Pathways hiện có.
+
+00:09:27.000 --> 00:09:31.000
+Chúng ta hãy nhìn vào cấu trúc của một Con đường.
+
+00:09:31.000 --> 00:09:35.000
+Một Pathway bao gồm một hoặc nhiều luồng biến thể.
+
+00:09:35.000 --> 00:09:39.000
+Mỗi luồng biến thể chỉ có thể nằm trong một và chỉ một Con đường.
+
+00:09:39.000 --> 00:09:45.000
+Nếu không chỉ định thuộc tính PATHWAY-ID, nó hoàn toàn thuộc về Đường dẫn "chấm" mặc định.
+
+00:09:45.000 --> 00:09:54.000
+Mỗi luồng biến thể có thể đề cập đến không hoặc một nhóm phương tiện cho mỗi loại phương tiện, ngoài âm thanh, phụ đề và phụ đề đóng.
+
+00:09:54.000 --> 00:09:59.000
+Mỗi nhóm phương tiện có thể được tham chiếu bởi nhiều luồng biến thể, thậm chí từ các Lộ trình khác nhau.
+
+00:09:59.000 --> 00:10:10.000
+Khi chúng ta sao chép một Con đường mới ra khỏi một Con đường hiện có, chúng ta không chỉ nên sao chép các luồng biến thể của nó mà còn cả các nhóm phương tiện được tham chiếu, nếu có.
+
+00:10:10.000 --> 00:10:19.000
+Sau đó, để biến nó thành một Con đường mới, chúng ta cần sửa đổi các URI của các luồng biến thể và kết xuất của Con đường mới được nhân bản.
+
+00:10:19.000 --> 00:10:25.000
+Hãy lấy luồng biến thể 6 Mbps từ Đường dẫn nhân bản làm ví dụ.
+
+00:10:25.000 --> 00:10:30.000
+Giả sử luồng biến thể cụ thể này có URI như được hiển thị.
+
+00:10:30.000 --> 00:10:38.000
+Để sửa đổi nó để trở thành URI cho Pathway mới, cách linh hoạt nhất là thay thế toàn bộ dòng URI đầy đủ.
+
+00:10:38.000 --> 00:10:44.000
+Điều này có nghĩa là chúng ta cần lưu trữ một bộ URI đầy đủ trong Bản kê khai chỉ đạo cho mỗi Con đường nhân bản.
+
+00:10:44.000 --> 00:10:48.000
+Tuy nhiên, trong thực tế chúng ta thường có thể làm tốt hơn thế.
+
+00:10:48.000 --> 00:10:56.000
+Nó phổ biến trong ngành để triển khai các tài sản phát trực tuyến trên nhiều CDN giữ lại cùng một cấu trúc đường dẫn URI.
+
+00:10:56.000 --> 00:11:03.000
+Và các tài sản được phục vụ từ cùng một URI chia sẻ cùng một tên máy chủ URI và các tham số truy vấn.
+
+00:11:03.000 --> 00:11:15.000
+Nếu đúng như vậy, chúng ta chỉ cần lưu trữ sự thay thế của máy chủ và các tham số truy vấn trong bản kê khai và thay thế các thành phần của tất cả các URI được nhân bản và chúng ta đã có Đường dẫn mới.
+
+00:11:15.000 --> 00:11:21.000
+Chúng ta hãy xem cách chúng ta có thể xác định Pathway Clone trong một đối tượng Manifest.
+
+00:11:21.000 --> 00:11:25.000
+Chúng tôi đã thêm trường PATHWAY-CLONES với một mảng các đối tượng Pathway Clone.
+
+00:11:25.000 --> 00:11:31.000
+Mỗi đối tượng Pathway Clone xác định một Pathway mới được nhân bản từ một Pathway hiện có.
+
+00:11:31.000 --> 00:11:35.000
+Trong ví dụ này, chúng ta có một đối tượng Pathway Clone.
+
+00:11:35.000 --> 00:11:41.000
+Trường BASE-ID chỉ định CDN1 là Đường dẫn ban đầu để sao chép.
+
+00:11:41.000 --> 00:11:46.000
+Trường ID chỉ định ID Pathway mới là CDN3.
+
+00:11:46.000 --> 00:11:54.000
+Tiếp theo, chúng ta có trường URI-REPLACEMENT với một đối tượng của các quy tắc thay thế URI.
+
+00:11:54.000 --> 00:12:06.000
+Trong ví dụ này, chúng tôi đang sử dụng các quy tắc thay thế HOST và tham số truy vấn, điều này sẽ thay thế phần máy chủ và chèn hoặc thay thế các tham số truy vấn của các URI luồng tương ứng.
+
+00:12:06.000 --> 00:12:21.000
+Trong trường hợp này, chúng tôi đang thay thế phần máy chủ là cdn3.example.com và thêm hoặc đặt tham số truy vấn "foo" bằng giá trị xyz và tham số truy vấn "bar" bằng giá trị 123.
+
+00:12:21.000 --> 00:12:27.000
+Hãy thử áp dụng thay thế máy chủ và tham số URI trên URI ví dụ trước của chúng tôi.
+
+00:12:27.000 --> 00:12:34.000
+Đầu tiên chúng ta có URI luồng biến thể được giải quyết dựa trên URI của danh sách phát đa biến.
+
+00:12:34.000 --> 00:12:38.000
+Trong Bản kê khai chỉ đạo, chúng tôi đã sử dụng quy tắc thay thế HOST URI.
+
+00:12:38.000 --> 00:12:51.000
+Vì vậy, đối với phần máy chủ của URI, chúng tôi thay thế nó bằng cdn3.example.com và có phần máy chủ mới cho URI mới.
+
+00:12:51.000 --> 00:12:59.000
+Sau đó, chúng tôi giữ lại thành phần đường dẫn URI từ URI được nhân bản.
+
+00:12:59.000 --> 00:13:03.000
+Cuối cùng, chúng tôi áp dụng quy tắc thay thế tham số truy vấn URI.
+
+00:13:03.000 --> 00:13:08.000
+Ở đây chúng tôi thay thế tham số "foo" vì nó tồn tại trên URI gốc.
+
+00:13:08.000 --> 00:13:13.000
+Sau đó, chúng tôi nối thêm tham số "thanh" vì đó là một tham số mới.
+
+00:13:13.000 --> 00:13:19.000
+Sau đó, chúng tôi có phần tham số truy vấn được thay thế của URI mới.
+
+00:13:19.000 --> 00:13:27.000
+Kết quả cuối cùng URI sẽ là URI cho luồng biến thể 6 Mbps từ Pathway CDN3 mới.
+
+00:13:27.000 --> 00:13:34.000
+Chúng tôi áp dụng cùng một quy tắc thay thế URI cho phần còn lại của các biến thể và phiên bản trong Đường dẫn nhân bản.
+
+00:13:34.000 --> 00:13:44.000
+Đối với luồng biến thể 3 Mbps, chúng tôi có URI gốc và áp dụng quy tắc thay thế máy chủ và tham số để lấy URI mới.
+
+00:13:44.000 --> 00:13:48.000
+Chúng tôi cũng làm như vậy đối với các phiên bản âm thanh và phụ đề.
+
+00:13:48.000 --> 00:13:58.000
+Sau khi chúng tôi áp dụng quy tắc thay thế URI cho tất cả các biến thể và phiên bản được nhân bản, chúng tôi có một Lộ trình mới phục vụ từ máy chủ CDN mới.
+
+00:13:58.000 --> 00:14:13.000
+Hãy lấy một ví dụ khác và giả sử nhà cung cấp dịch vụ phát trực tuyến muốn phục vụ các luồng video và âm thanh băng thông cao nhất của họ từ một máy chủ CDN được điều chỉnh đặc biệt, nhanh nhất, khác với phần còn lại của các luồng tốc độ bit thấp hơn.
+
+00:14:13.000 --> 00:14:18.000
+Đây là nơi mà quy tắc thay thế URI cho mỗi ID ổn định có ích.
+
+00:14:18.000 --> 00:14:27.000
+Trong HLS, các thuộc tính STABLE-VARIANT-ID và STABLE-RENDITION-ID đã được giới thiệu để xác định các luồng biến thể và kết xuất.
+
+00:14:27.000 --> 00:14:41.000
+Bằng cách đặt chúng trong danh sách phát đa biến, sau này chúng ta có thể tham chiếu từng biến thể hoặc luồng biểu diễn, bằng ID ổn định của chúng trong đối tượng Pathway Clone, trong Bản kê khai chỉ đạo và chỉ định các quy tắc thay thế URI cho mỗi luồng.
+
+00:14:41.000 --> 00:14:51.000
+Để xác định các quy tắc thay thế URI đặc biệt cụ thể này, chúng ta cần gán ID ổn định cho tất cả các luồng biến thể và kết xuất trong danh sách phát đa biến.
+
+00:14:51.000 --> 00:15:05.000
+Ví dụ: chúng tôi gán STABLE-RENDITION-ID "audio-en-ac3" cho âm thanh tiếng Anh AC3 và STABLE-VARIANT-ID "video-4k-dv" cho luồng biến thể 25 Mbps 4K.
+
+00:15:05.000 --> 00:15:13.000
+Sau đó, trong Bản kê khai chỉ đạo, chúng ta có thể thêm hai quy tắc thay thế linh hoạt bằng cách tham khảo ID ổn định của chúng.
+
+00:15:13.000 --> 00:15:24.000
+Đối với các luồng biến thể, chúng tôi đã thêm trường "PER-VARIANT-URIS" vào đối tượng "URI-REPLACEMENT", với từ điển STABLE-VARIANT-ID đến các bản ghi URI.
+
+00:15:24.000 --> 00:15:33.000
+Ở đây chúng tôi chỉ định để thay thế URI của luồng biến thể bằng STABLE-VARIANT-ID "video-4k-dv" bằng URI sau.
+
+00:15:33.000 --> 00:15:44.000
+Đối với luồng kết xuất, chúng tôi đã thêm trường "PER-RENDITION-URIS" vào đối tượng "URI-REPLACEMENT", với từ điển STABLE-RENDITION-ID vào các bản ghi URI.
+
+00:15:44.000 --> 00:15:55.000
+Ở đây chúng tôi chỉ định để thay thế URI của luồng kết xuất bằng STABLE-RENDITION-ID "audio-en-ac3" bằng URI sau.
+
+00:15:55.000 --> 00:16:20.000
+Ở đây chúng ta thấy rằng sau khi áp dụng thay thế URI, tất cả các luồng đang phục vụ từ máy chủ cdn3.exmaple.com mới ngoại trừ biến thể video 4K và kết xuất âm thanh tiếng Anh AC3, nơi chúng có các quy tắc thay thế URI đặc biệt trỏ chúng đến máy chủ faster.example.com và với các thành phần truy
+
+00:16:20.000 --> 00:16:35.000
+Với Nhân bản Đường dẫn, khi nhà cung cấp phát trực tuyến tự động tạo ra đội CDN mới, trong ví dụ này, CDN3, máy chủ chỉ đạo có thể thêm CDN3 làm Bản sao Đường dẫn cho các khách hàng hiện tại trong Bản kê khai Chỉ đạo của họ.
+
+00:16:35.000 --> 00:16:44.000
+Nó cũng có thể chọn một khu vực, ví dụ như Châu Âu, để ưu tiên CDN3 làm Con đường chính.
+
+00:16:44.000 --> 00:16:51.000
+Khi khách hàng ở Châu Âu nhận được bản cập nhật Bản kê khai Chỉ đạo, họ sẽ hướng lưu lượng truy cập của mình về phía CDN3.
+
+00:16:51.000 --> 00:17:06.000
+Đối với phần cuối cùng của cuộc nói chuyện này, hãy chuyển trọng tâm của chúng ta sang các chi tiết của Máy chủ Chỉ đạo, để giải thích cách triển khai logic máy chủ, với các ví dụ cụ thể, để điều khiển lưu lượng người chơi máy khách để cân bằng tải.
+
+00:17:06.000 --> 00:17:16.000
+Một cách để quản lý và sắp xếp một đầm lầy người chơi khách hàng và áp dụng các quy tắc được phân vùng là đặt mọi khách hàng vào một nhóm và áp dụng các quy tắc ở cấp độ nhóm.
+
+00:17:16.000 --> 00:17:23.000
+Thật đơn giản để thực hiện việc nhóm tại Máy chủ Chỉ đạo mà không cần duy trì bất kỳ trạng thái phiên máy khách nào.
+
+00:17:23.000 --> 00:17:31.000
+Khi một trình phát khách hàng yêu cầu Bản kê khai chỉ đạo ban đầu, nó sẽ thực hiện yêu cầu HTTP GET tại URI Máy chủ Chỉ đạo.
+
+00:17:31.000 --> 00:17:37.000
+Máy chủ sau đó tạo ra một số ngẫu nhiên thống nhất trong số 12 nhóm có thể.
+
+00:17:37.000 --> 00:17:50.000
+Khi trả về Bản kê khai chỉ đạo, máy chủ sẽ thêm số nhóm, trong trường hợp này là 7, vào thuộc tính RELOAD-URI, sẽ là URI Bản kê khai chỉ đạo cho yêu cầu tiếp theo từ trình phát máy khách.
+
+00:17:50.000 --> 00:18:03.000
+Vì vậy, lần tới khi người chơi khách hàng yêu cầu Bản kê khai chỉ đạo, nó sẽ mang số nhóm trong tham số yêu cầu của nó và máy chủ có thể trích xuất nó và áp dụng các quy tắc chỉ đạo dựa trên số nhóm.
+
+00:18:03.000 --> 00:18:06.000
+Bây giờ chúng ta hãy xem xét một quy tắc lái hai phân vùng đơn giản.
+
+00:18:06.000 --> 00:18:15.000
+Trong trường hợp này, chúng tôi muốn điều khiển 50% lưu lượng truy cập để thích CDN1 và 50% lưu lượng truy cập khác để thích CDN2.
+
+00:18:15.000 --> 00:18:18.000
+Chúng ta có thể viết quy tắc như vậy theo số nhóm.
+
+00:18:18.000 --> 00:18:32.000
+Nếu số nhóm của người chơi khách hàng rơi vào 6 nhóm đầu tiên, chúng tôi sẽ trả về Bản kê khai chỉ đạo với PATHWAY-PRIORITY thích CDN1 và nếu không thì trả về cái đó với PATHWAY-PRIORITY thích CDN2.
+
+00:18:32.000 --> 00:18:43.000
+Vì khách hàng được chỉ định vào các nhóm đồng đều, việc chia 12 nhóm thành 6 nhóm có thể phân chia đồng đều lưu lượng truy cập.
+
+00:18:43.000 --> 00:18:49.000
+Bây giờ giả sử một Con đường mới được gọi là CDN3 được sinh ra một cách linh hoạt.
+
+00:18:49.000 --> 00:18:57.000
+Máy chủ chỉ đạo có thể quảng cáo nó bằng cách sử dụng nhân bản Pathway cho những khách hàng không biết nó từ danh sách phát đa biến của họ.
+
+00:18:57.000 --> 00:19:08.000
+Một câu hỏi phổ biến khi xây dựng Bản kê khai chỉ đạo với Nhân bản đường dẫn, là xác định tập hợp các Đường dẫn cần được đưa vào mảng PATHWAY-CLONES.
+
+00:19:08.000 --> 00:19:13.000
+Quy tắc là sao chép Pathways không có trong danh sách phát đa biến của khách hàng.
+
+00:19:13.000 --> 00:19:24.000
+Tuy nhiên, nếu không duy trì bất kỳ trạng thái phía máy chủ nào về phiên máy khách, làm thế nào Máy chủ Chỉ đạo có thể biết tập hợp các Đường dẫn trong danh sách phát đa biến của máy khách?
+
+00:19:24.000 --> 00:19:35.000
+Một cách để làm điều đó là bao gồm tập hợp Pathways trong URI máy chủ điều khiển ban đầu như một tham số truy vấn, trong quá trình tạo danh sách phát đa biến.
+
+00:19:35.000 --> 00:19:42.000
+Trong trường hợp này, danh sách phát đa biến chứa hai con đường, CDN1 và CDN2.
+
+00:19:42.000 --> 00:19:48.000
+Do đó, nó bao gồm chúng trong thuộc tính SERVER-URI như một tham số truy vấn.
+
+00:19:48.000 --> 00:19:56.000
+Sau đó, trình phát khách hàng sẽ gửi yêu cầu đến URI, mang các thông số đến máy chủ điều khiển.
+
+00:19:56.000 --> 00:20:03.000
+Sau đó, máy chủ chỉ đạo có thể trích xuất tham số dưới dạng tập hợp Pathways trong danh sách phát đa biến của khách hàng.
+
+00:20:03.000 --> 00:20:13.000
+Sau đó, nó có thể tính toán tập hợp các Đường dẫn được nhân bản, bằng cách trừ tập hợp các Đường dẫn có sẵn với tập hợp Đường dẫn trong danh sách phát đa biến của khách hàng.
+
+00:20:13.000 --> 00:20:31.000
+Trong trường hợp này, các Đường dẫn có sẵn là CDN1, 2 và 3, và các Đường dẫn trong danh sách phát đa biến của khách hàng là CDN1 và CDN2, do đó, Đường dẫn cần được đưa vào mảng PATHWAY-CLONES là CDN3.
+
+00:20:31.000 --> 00:20:38.000
+Chúng ta cũng hãy xem Máy chủ Chỉ đạo có thể thay đổi các quy tắc lái của nó như thế nào khi có ba Con đường có sẵn.
+
+00:20:38.000 --> 00:20:45.000
+Trong trường hợp này, máy chủ muốn phân vùng lưu lượng khách hàng đồng đều trên CDN1, 2 và 3.
+
+00:20:45.000 --> 00:21:10.000
+Chúng tôi viết quy tắc này bằng cách trả về PATHWAY-PRIORITY thích CDN1 nếu số nhóm của khách hàng rơi vào một phần ba đầu tiên của 12 nhóm, trả về PATHWAY-PRIORITY thích CDN2 nếu số nhóm của khách hàng nằm trong phạm vi thứ ba thứ hai và nếu không thì trả về PATHWAY-PRIORITY thích CDN3.
+
+00:21:10.000 --> 00:21:15.000
+Bằng cách này, mỗi Pathway sẽ phục vụ một phần ba lưu lượng khách hàng.
+
+00:21:15.000 --> 00:21:23.000
+Với mọi thứ chúng tôi đề cập, giờ đây bạn đã được trang bị đầy đủ để xây dựng Máy chủ Chỉ đạo của mình với các quy tắc lái năng động của riêng bạn.
+
+00:21:23.000 --> 00:21:28.000
+Làm như vậy có thể cải thiện hơn nữa độ tin cậy của dịch vụ phát trực tuyến của bạn.
+
+00:21:28.000 --> 00:21:32.000
+Đó là nó cho các cập nhật của chúng tôi trong Chỉ đạo Nội dung năm nay.
+
+00:21:32.000 --> 00:21:43.000
+Nếu bạn chưa làm điều đó, hãy thử áp dụng Chỉ đạo nội dung làm cơ chế dự phòng HLS CDN của bạn vì nó linh hoạt hơn và cung cấp hệ thống điều khiển giao thông năng động.
+
+00:21:43.000 --> 00:21:50.000
+Vui lòng cũng tận dụng tính năng Nhân bản Đường dẫn mới để cải thiện độ tin cậy của dịch vụ của bạn.
+
+00:21:50.000 --> 00:21:57.000
+Như thường lệ, hãy xem thông số kỹ thuật IETF HLS mới nhất để biết thêm chi tiết kỹ thuật.
+
+00:21:57.000 --> 00:22:04.000
+Và hãy nhớ sử dụng Công cụ Phát trực tiếp HTTP của chúng tôi để xác thực danh sách phát của bạn khi bạn thực hiện thay đổi.
+
+00:22:04.000 --> 00:22:13.000
+Cuối cùng, nếu bạn có thêm câu hỏi hoặc đề xuất, vui lòng liên hệ tại hls-interest@ietf.org.
+
+00:22:13.000 --> 23:59:59.000
+Cảm ơn bạn đã tham gia, và chúc một ngày tốt lành.
+

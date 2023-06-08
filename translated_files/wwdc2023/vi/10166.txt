@@ -1,0 +1,519 @@
+10166
+
+♪ ♪
+
+Alex Hoppen: Ai thích viết mã soạn sẵn lặp đi lặp lại?
+
+Không ai làm cả!
+
+Và đó là lý do tại sao trong Swift 5.9 chúng tôi giới thiệu các macro Swift.
+
+Các macro Swift cho phép bạn tạo mã lặp đi lặp lại đó tại thời điểm biên dịch, làm cho cơ sở mã của ứng dụng của bạn biểu cảm hơn và dễ đọc hơn.
+
+Tên tôi là Alex Hoppen, và hôm nay tôi sẽ chỉ cho bạn cách bạn có thể viết macro của riêng mình.
+
+Tôi sẽ bắt đầu bằng cách cung cấp cho bạn một cái nhìn tổng quan ngắn gọn về cách các macro hoạt động.
+
+Sau đó, chúng tôi sẽ nhảy thẳng vào Xcode và xem cách bạn có thể tạo macro đầu tiên của mình.
+
+Sau khi xem macro đầu tiên của chúng tôi trong Xcode, chúng tôi sẽ khám phá thêm nhiều vai trò mà bạn có thể sử dụng macro và tôi sẽ chỉ cho bạn cách tôi sử dụng macro để đơn giản hóa cơ sở mã của một ứng dụng mà tôi hiện đang làm việc.
+
+Cuối cùng, tôi sẽ chỉ cho bạn cách các macro có thể truyền lỗi hoặc cảnh báo trở lại trình biên dịch nếu chúng không được áp dụng trong một ngữ cảnh nhất định.
+
+Vậy hãy bắt đầu nào.
+
+Ở đây chúng tôi có một danh sách các phép tính mà sinh viên năm nhất có thể sử dụng để thực hành các kỹ năng số học của họ.
+
+Chúng ta có kết quả dưới dạng một số nguyên ở bên trái và phép tính dưới dạng một chuỗi theo nghĩa đen ở phía bên phải của bộ.
+
+Lưu ý cách điều này lặp đi lặp lại, dư thừa và thậm chí dễ bị lỗi vì không ai có thể đảm bảo rằng kết quả thực sự khớp với tính toán.
+
+May mắn thay, với Swift 5.9 chúng ta có thể xác định một macro stringify để đơn giản hóa điều này.
+
+Macro này cũng tình cờ là macro được bao gồm trong mẫu của Xcode.
+
+Macro stringify chỉ lấy phép tính như một tham số duy nhất.
+
+Tại thời điểm biên dịch, nó mở rộng đến bộ mà chúng ta đã thấy trước đây, đảm bảo rằng phép tính và kết quả khớp.
+
+Vậy cái này hoạt động như thế nào?
+
+Chúng ta hãy xem xét định nghĩa của chính macro.
+
+Lưu ý rằng nó trông rất giống một chức năng.
+
+Macro stringify lấy một số nguyên làm tham số đầu vào và xuất ra một bộ chứa kết quả, số nguyên và phép tính - một chuỗi.
+
+Nếu các đối số của biểu thức vĩ mô không khớp với các tham số của macro hoặc không tự nhập kiểm tra, trình biên dịch sẽ phát ra lỗi mà không áp dụng mở rộng macro.
+
+Ví dụ, nếu tôi chuyển một chuỗi theo nghĩa đen cho macro này, trình biên dịch sẽ phàn nàn rằng 'Chuỗi' không thể chuyển đổi thành loại đối số dự kiến 'Int'.
+
+Điều này khác với, ví dụ, macro C, được đánh giá ở giai đoạn tiền xử lý trước khi kiểm tra kiểu.
+
+Nhưng nó cho phép chúng tôi sử dụng tất cả các sức mạnh mà bạn biết và yêu thích từ các chức năng Swift, như có thể làm cho macro của bạn trở nên chung chung.
+
+Cũng lưu ý rằng macro này được khai báo với vai trò macro biểu thức độc lập.
+
+Điều này có nghĩa là bạn có thể sử dụng macro bất cứ nơi nào bạn có thể sử dụng biểu thức và nó sẽ được biểu thị bằng ký tự băm, như chúng ta thấy với #stringify.
+
+Các loại macro khác là macro đính kèm có thể tăng khai báo.
+
+Tôi sẽ đề cập đến những thứ đó sau.
+
+Sau khi kiểm tra xem tất cả các đối số có khớp với các tham số của macro hay không, trình biên dịch thực hiện mở rộng macro.
+
+Để xem nó hoạt động như thế nào, hãy tập trung vào một biểu thức vĩ mô duy nhất.
+
+Để thực hiện việc mở rộng, mỗi macro xác định việc triển khai nó trong một trình cắm trình biên dịch.
+
+Trình biên dịch sẽ gửi mã nguồn của toàn bộ biểu thức vĩ mô đến trình cắm đó.
+
+Điều đầu tiên mà trình cắm macro thực hiện là phân tích mã nguồn của macro thành cây SwiftSyntax.
+
+Cây này là một đại diện cấu trúc, chính xác về nguồn của vĩ mô và nó sẽ là cơ sở để vĩ mô hoạt động.
+
+Ví dụ, macro 'stringify' của chúng tôi được biểu diễn trong cây dưới dạng nút biểu thức mở rộng macro.
+
+Biểu thức đó có tên vĩ mô 'stringify'.
+
+Và nó cần một đối số duy nhất, đó là toán tử infix cộng với áp dụng cho 2 và 3.
+
+Điều thực sự mạnh mẽ về macro Swift là việc triển khai macro tự nó là một chương trình được viết bằng Swift và có thể thực hiện bất kỳ chuyển đổi nào sang cây cú pháp mà nó muốn.
+
+Trong trường hợp của chúng tôi, nó tạo ra một bộ như chúng ta đã thấy trước đây.
+
+Sau đó, nó sẽ tuần tự hóa cây cú pháp đã tạo thành mã nguồn một lần nữa và gửi nó đến trình biên dịch, điều này sẽ thay thế biểu thức vĩ mô bằng mã mở rộng.
+
+Điều đó thực sự tuyệt vời, nhưng bây giờ tôi muốn hiểu tất cả những điều này thực sự trông như thế nào trong mã.
+
+Mẫu macro mới trong Xcode xác định macro stringify mà chúng ta vừa thấy.
+
+Hãy để chúng tôi xem qua mẫu đó và khám phá định nghĩa của macro, cách mở rộng hoạt động và cách macro có thể được kiểm tra.
+
+Để tạo mẫu, tôi nhấp vào Tệp, Mới, Gói và bây giờ tôi chọn mẫu Swift Macro.
+
+Hãy gọi macro đầu tiên của chúng ta là "WWDC".
+
+Vậy chúng ta nhận được gì với mẫu?
+
+Ở đây chúng ta có một lời kêu gọi về vĩ mô #stringify, tương tự như những gì chúng ta đã thấy trước đây.
+
+Nó lấy một tham số "a + b" và trả về kết quả, cũng như mã đã tạo ra nó.
+
+Nếu tôi muốn biết macro mở rộng thành gì, tôi có thể nhấp chuột phải vào nó và chọn Mở rộng Macro.
+
+Đó chính xác là những gì chúng ta đã thấy trước đây.
+
+Nhưng vĩ mô được định nghĩa như thế nào?
+
+Hãy chuyển sang định nghĩa của nó.
+
+Ở đây chúng tôi có một phiên bản tổng quát hóa một chút của macro 'stringify' trước đây của chúng tôi.
+
+Thay vì lấy một số nguyên, macro này là chung chung và có thể nhận bất kỳ loại T nào.
+
+Macro được khai báo là macro bên ngoài.
+
+Điều này cho trình biên dịch biết rằng để thực hiện việc mở rộng, nó cần xem xét loại StringifyMacro trong mô-đun WWDCMacros.
+
+Loại đó được xác định như thế nào?
+
+Chúng ta hãy xem xét kỹ hơn về nó.
+
+Bởi vì stringify được khai báo là một macro biểu thức độc lập, loại StringifyMacro cần phải phù hợp với giao thức ExpressionMacro.
+
+Giao thức này có một yêu cầu duy nhất: Chức năng mở rộng.
+
+Nó lấy cây cú pháp của chính biểu thức vĩ mô, cũng như một ngữ cảnh có thể được sử dụng để giao tiếp với trình biên dịch.
+
+Hàm mở rộng sau đó trả về cú pháp biểu thức được viết lại.
+
+Nó làm gì trong quá trình thực hiện?
+
+Lúc đầu, nó truy xuất đối số duy nhất cho biểu thức vĩ mô.
+
+Nó biết rằng đối số này tồn tại bởi vì stringify được khai báo là lấy một tham số duy nhất và tất cả các đối số cần kiểm tra kiểu trước khi mở rộng vĩ mô có thể được áp dụng.
+
+Sau đó, nó sử dụng phép nội suy chuỗi để tạo ra cây cú pháp của một bộ.
+
+Phần tử đầu tiên là chính đối số và phần tử thứ hai là một chuỗi ký tự chứa mã nguồn của đối số.
+
+Lưu ý rằng hàm không trả về một chuỗi ở đây.
+
+Nó đang trả về một cú pháp biểu thức.
+
+Macro sẽ tự động gọi trình phân tích cú pháp Swift để chuyển đổi ký tự này thành cây cú pháp.
+
+Và bởi vì nó đang sử dụng kiểu nội suy theo nghĩa đen cho đối số thứ hai, nó sẽ đảm bảo rằng nội dung của nghĩa đen được thoát đúng cách.
+
+Không ai thích lỗi.
+
+Nhưng điều tôi thích thậm chí còn ít hơn là các lỗi trong mã mà tôi không thấy trừ khi tôi yêu cầu rõ ràng nó bằng cách mở rộng macro.
+
+Đó là lý do tại sao bạn muốn đảm bảo rằng macro của bạn đã được kiểm tra tốt.
+
+Bởi vì macro không có tác dụng phụ và mã nguồn của cây cú pháp rất dễ so sánh, một cách tuyệt vời để kiểm tra chúng là viết các bài kiểm tra đơn vị.
+
+Mẫu macro đã đi kèm với một cái.
+
+Trường hợp thử nghiệm này sử dụng chức năng 'assertMacroExpansion' từ gói SwiftSyntax để xác minh rằng macro 'stringify' mở rộng chính xác.
+
+Nó lấy biểu thức '#stringify(a + b)', mà chúng ta đã thấy trước đây, làm đầu vào.
+
+Và khẳng định rằng sau khi macro được mở rộng, nó tạo ra một bộ chứa 'a + b' và chuỗi ký tự 'a + b'.
+
+Để cho trường hợp thử nghiệm biết cách mở rộng các macro, nó sẽ chuyển tham số 'testMacros', chỉ định rằng macro '#stringify' nên được mở rộng bằng cách sử dụng loại 'StringifyMacro'.
+
+Hãy chạy các bài kiểm tra giống như cách mà bạn có thể đã chạy các bài kiểm tra của ứng dụng của mình, để xem liệu chúng có thực sự vượt qua hay không.
+
+Các bài kiểm tra đã vượt qua, và cùng với điều đó, chúng tôi đã có vĩ mô đầu tiên của mình.
+
+Trong đó, chúng tôi đã thấy các khối xây dựng cơ bản của nó.
+
+Khai báo vĩ mô xác định chữ ký của vĩ mô.
+
+Nó cũng tuyên bố vai trò vĩ mô.
+
+Trình biên dịch plug-in thực hiện việc mở rộng.
+
+Bản thân nó là một chương trình được viết bằng Swift và hoạt động trên cây cú pháp SwiftSyntax.
+
+Chúng tôi cũng thấy rằng macro rất có thể kiểm tra được vì chúng là những biến đổi xác định của cây cú pháp và mã nguồn của cây cú pháp rất dễ so sánh.
+
+Vì vậy, bạn có thể tự hỏi, "Chúng ta có thể sử dụng macro trong những tình huống nào khác?"
+
+Chúng ta đã thấy một macro biểu thức độc lập.
+
+Tóm lại, macro này được đánh vần bằng hàm băm và cho phép bạn viết lại toàn bộ biểu thức macro.
+
+Ngoài ra còn có một vai trò tuyên bố độc lập mở rộng thành một tuyên bố thay vì một biểu hiện.
+
+Các loại macro khác là macro đính kèm.
+
+Chúng được đánh vần bằng @, giống như các thuộc tính và cho phép macro tăng cường khai báo mà chúng được đính kèm.
+
+Ví dụ, một macro thành viên đính kèm thêm các thành viên mới thuộc loại mà nó được đính kèm.
+
+Để tìm hiểu thêm về những vai trò khác này, tôi thực sự khuyên bạn nên xem "Mở rộng trên macro Swift", nơi Becca xem xét chúng rất chi tiết.
+
+Nhưng tôi muốn tập trung vào vai trò thành viên đính kèm vì nó đã giúp tôi cải thiện cơ sở mã của một ứng dụng mà tôi hiện đang làm việc.
+
+Tôi cũng là một người hướng dẫn trượt tuyết, và gần đây tôi đã làm việc trên một ứng dụng cho phép tôi lên kế hoạch cho các chuyến tham quan mà tôi muốn đưa học sinh của mình đi.
+
+Một điều bạn hoàn toàn muốn tránh với tư cách là một người hướng dẫn trượt tuyết là đưa những người mới bắt đầu lên những con dốc quá khó đối với họ.
+
+Tôi muốn sử dụng hệ thống kiểu Swift để thực thi điều đó.
+
+Đó là lý do tại sao, ngoài Slope enum chứa tất cả các dốc trong khu nghỉ mát trượt tuyết yêu thích của tôi, tôi cũng có một loại EasySlope chỉ chứa các sườn dốc phù hợp cho người mới bắt đầu.
+
+Nó có một trình khởi tạo để chuyển đổi độ dốc thành độ dốc dễ dàng, nếu độ dốc thực sự dễ dàng và một thuộc tính được tính toán để chuyển đổi độ dốc dễ dàng trở lại độ dốc chung.
+
+Mặc dù điều này cung cấp sự an toàn tuyệt vời, nhưng nó thực sự lặp đi lặp lại.
+
+Nếu tôi muốn thêm một độ dốc dễ dàng, tôi cần thêm nó vào Độ dốc...
+
+EasySlope, trình khởi tạo và thuộc tính được tính toán.
+
+Hãy xem liệu chúng ta có thể cải thiện mọi thứ bằng cách sử dụng macro hay không.
+
+Những gì chúng tôi muốn làm là tự động tạo trình khởi tạo và thuộc tính được tính toán.
+
+Làm thế nào chúng ta có thể làm điều này?
+
+Cả trình khởi tạo và thuộc tính được tính toán đều là thành viên của loại EasySlope, vì vậy chúng tôi cần khai báo một macro thành viên đính kèm.
+
+Tiếp theo, chúng tôi sẽ tạo trình cắm trình biên dịch có chứa việc triển khai macro.
+
+Để đảm bảo rằng macro của chúng tôi hoạt động như mong đợi, chúng tôi muốn phát triển nó theo cách thử nghiệm.
+
+Do đó, chúng tôi sẽ để trống việc triển khai của nó cho đến khi chúng tôi viết một trường hợp thử nghiệm cho nó.
+
+Sau khi chúng tôi xác định hành vi của macro trong một trường hợp thử nghiệm, chúng tôi sẽ viết triển khai để phù hợp với trường hợp thử nghiệm đó.
+
+Và cuối cùng, chúng tôi sẽ tích hợp macro mới vào ứng dụng của tôi.
+
+Nếu mọi việc suôn sẻ, chúng tôi sẽ có thể loại bỏ trình khởi tạo và yêu cầu macro tạo nó cho chúng tôi.
+
+Để phát triển macro, chúng tôi làm việc với mẫu mà chúng tôi đã tạo trước đó.
+
+Và vì tôi không thực sự cần macro '#stringify' trong ứng dụng của mình, tôi đã xóa nó rồi.
+
+Tôi bắt đầu bằng cách khai báo một macro thành viên đính kèm mới bằng cách sử dụng thuộc tính '@attached(member)'.
+
+Tôi gọi nó là SlopeSubset vì EasySlope là một tập hợp con của Slope.
+
+Macro cũng xác định tên của các thành viên mà nó giới thiệu.
+
+Trong bản demo này, tôi sẽ chỉ cho bạn cách tạo trình khởi tạo.
+
+Việc tạo ra thuộc tính được tính toán rất giống nhau, bởi vì nó cũng chỉ là một câu lệnh chuyển đổi chuyển đổi trên tất cả các trường hợp.
+
+Với tuyên bố này, chúng tôi đã xác định vĩ mô, nhưng chúng tôi chưa triển khai mở rộng mà nó thực sự thực hiện.
+
+Đối với điều này, macro của chúng tôi tham chiếu đến loại SlopeSubsetMacro trong mô-đun WWDCMacros.
+
+Hãy để chúng tôi đi và tạo ra loại đó để chúng tôi có thể tiếp tục đến phần thực sự thú vị: Triển khai vĩ mô thực tế.
+
+Vì chúng tôi đã khai báo SlopeSubset là một macro thành viên đính kèm, việc triển khai tương ứng cần phải phù hợp với giao thức MemberMacro.
+
+Giao thức này có một yêu cầu duy nhất: Hàm 'mở rộng', tương tự như ExpressionMacro.
+
+Hàm 'mở rộng' lấy thuộc tính mà chúng ta áp dụng vĩ mô cho một khai báo, cũng như khai báo mà vĩ mô đang được áp dụng.
+
+Trong trường hợp của chúng tôi, đây sẽ là tuyên bố liệt kê EasySlope.
+
+Macro sau đó trả về danh sách tất cả các thành viên mới mà nó muốn thêm vào tuyên bố đó.
+
+Tôi biết rằng rất hấp dẫn khi bắt đầu thực hiện chuyển đổi này ngay lập tức, nhưng chúng tôi đã đồng ý rằng chúng tôi muốn bắt đầu bằng cách viết một trường hợp thử nghiệm cho nó.
+
+Vì vậy, bây giờ, chúng ta hãy trả về một mảng trống, cho biết rằng không nên thêm thành viên mới.
+
+Cuối cùng, chúng ta cần làm cho SlopeSubset hiển thị với trình biên dịch.
+
+Đối với điều này, tôi thêm nó vào thuộc tính 'providingMacros' ở dưới đây.
+
+Trước khi lặn sâu hơn, tôi muốn chắc chắn rằng những gì chúng ta có cho đến nay hoạt động.
+
+Mặc dù tôi có thể thử áp dụng macro trong Xcode và xem mã mở rộng, tôi thích viết một trường hợp thử nghiệm cho nó mà tôi có thể chạy lại bất cứ khi nào tôi thực hiện thay đổi đối với macro, để đảm bảo rằng tôi không giới thiệu hồi quy.
+
+Cũng giống như trong trường hợp thử nghiệm trong mẫu, chúng tôi sử dụng chức năng 'assertMacroExpansion' để xác minh hành vi vĩ mô của chúng tôi.
+
+Những gì chúng tôi muốn kiểm tra là những gì macro tạo ra khi áp dụng cho loại EasySlope, vì vậy chúng tôi sử dụng nó làm đầu vào của trường hợp thử nghiệm.
+
+Và vì macro chưa làm gì cả, chúng tôi chỉ hy vọng nó sẽ xóa thuộc tính và không thêm bất kỳ thành viên mới nào, vì vậy mã mở rộng dự kiến giống như đầu vào, chỉ không có '@SlopeSubset'.
+
+Cuối cùng, chúng ta cần cho trường hợp thử nghiệm biết rằng nó nên mở rộng macro SlopeSubset bằng cách sử dụng triển khai SlopeSubsetMacro.
+
+Đối với điều đó, chúng ta cần ánh xạ tên vĩ mô đến loại triển khai của nó trong từ điển 'testMacros' và chuyển từ điển đó đến hàm xác nhận.
+
+Hãy chạy các bài kiểm tra của chúng ta ngay bây giờ để kiểm tra xem những gì chúng ta đã viết cho đến nay có thực sự hoạt động hay không.
+
+Nó có.
+
+Tuyệt vời.
+
+Nhưng chúng tôi thực sự muốn kiểm tra xem macro của chúng tôi có thực sự tạo ra trình khởi tạo hay không, không chỉ xóa thuộc tính.
+
+Vì vậy, tôi sẽ sao chép mã mà trước đây tôi đã viết bằng tay vào trường hợp thử nghiệm bởi vì thực sự, đó là những gì chúng tôi muốn trình cắm thêm tạo ra.
+
+Nếu chúng tôi chạy lại bài kiểm tra... ...nó không thành công vì macro của chúng tôi chưa thực sự tạo ra trình khởi tạo.
+
+Hãy thay đổi điều đó ngay bây giờ.
+
+Trình khởi tạo chuyển qua tất cả các phần tử enum được khai báo trong enum EasySlopes.
+
+Vì vậy, điều đầu tiên chúng ta cần làm là lấy các phần tử liệt kê này từ khai báo.
+
+Vì các phần tử enum chỉ có thể được khai báo bên trong khai báo enum, chúng tôi bắt đầu bằng cách truyền 'tuyên bố' vào khai báo enum.
+
+Nếu macro được gắn vào một loại không phải là enum, chúng ta sẽ phát ra lỗi.
+
+Tôi đã thêm một TODO để chúng tôi không quên làm điều đó sau và trả về một mảng trống ngay bây giờ.
+
+Tiếp theo, chúng ta cần lấy tất cả các yếu tố mà enum khai báo.
+
+Để tìm ra cách thực hiện điều đó, tôi muốn kiểm tra cấu trúc cú pháp của enum của chúng tôi trong cây SwiftSyntax.
+
+Vì việc triển khai macro chỉ là một chương trình Swift thông thường, tôi có thể sử dụng tất cả các công cụ mà bạn biết từ Xcode để gỡ lỗi các chương trình của bạn.
+
+Ví dụ, tôi có thể đặt một điểm dừng bên trong hàm mở rộng và chạy các trường hợp thử nghiệm để đạt được điểm dừng đó.
+
+Bây giờ chúng tôi đã tạm dừng trình gỡ lỗi bên trong việc triển khai macro và 'enumDecl' là enum EasySlopes.
+
+Chúng ta có thể in nó trong trình gỡ lỗi bằng cách gõ 'po enumDecl'.
+
+Hãy kiểm tra đầu ra.
+
+Các nút trong cùng của cây cú pháp đại diện cho các phần tử enum, các sườn dốc 'beginnersParadise' và 'practiceRun'.
+
+Để lấy lại chúng, chúng ta cần tuân theo cấu trúc được phác thảo cho chúng ta trong cây cú pháp.
+
+Hãy để chúng tôi đi qua cấu trúc đó từng bước và viết mã truy cập khi chúng tôi đi.
+
+Khai báo liệt kê có một đứa con được gọi là 'memberBlock'.
+
+Khối thành viên này chứa cả dấu ngoặc nhọn và thành viên thực tế.
+
+Vì vậy, để truy cập các thành viên, chúng tôi bắt đầu với 'enumDecl.memberBlock.members'.
+
+Những thành viên này chứa tuyên bố thực tế, cũng như dấu chấm phẩy tùy chọn.
+
+Chúng tôi quan tâm đến các tuyên bố, đặc biệt là những tuyên bố thực sự tuyên bố các trường hợp liệt kê.
+
+Tôi đang sử dụng bản đồ nhỏ gọn để có được danh sách tất cả các khai báo thành viên là các trường hợp liệt kê.
+
+Mỗi tuyên bố trường hợp có thể khai báo nhiều yếu tố.
+
+Điều này là do thay vì khai báo mỗi độ dốc trên một dòng mới sau một từ khóa trường hợp riêng biệt, tôi có thể đã viết chúng trên cùng một dòng với 'case beginnersParadise, practiceRun'.
+
+Để lấy lại tất cả chúng, chúng ta có thể sử dụng 'flatMap'.
+
+Và bây giờ chúng tôi đã truy xuất tất cả các phần tử, chúng tôi có thể bắt đầu xây dựng trình khởi tạo mà chúng tôi thực sự muốn thêm vào EasySlope.
+
+Khai báo khởi tạo có một mục duy nhất: Một biểu thức chuyển đổi.
+
+Biểu thức chuyển đổi này chứa một trường hợp cho mỗi phần tử trong enum, cũng như một trường hợp mặc định trả về nil.
+
+Chúng ta cần tạo các nút cú pháp cho tất cả những thứ này.
+
+Hai cách tuyệt vời để tìm các nút cú pháp để tạo, là bằng cách in cây cú pháp như chúng tôi đã làm trước đây hoặc bằng cách đọc tài liệu của SwiftSyntax.
+
+Chúng tôi bắt đầu bằng cách xây dựng một cú pháp InitializerDeclS.
+
+Loại này có thể được xây dựng bằng cách xây dựng nội dung bằng cách sử dụng trình tạo kết quả và chỉ định tiêu đề - đó là từ khóa 'init' và tất cả các tham số.
+
+Điều này sẽ cho phép chúng tôi sử dụng vòng lặp for bên trong trình tạo kết quả để lặp lại tất cả các yếu tố, chính xác những gì chúng tôi cần.
+
+Tôi chỉ sao chép tiêu đề init từ trường hợp thử nghiệm của chúng tôi.
+
+Bên trong cơ thể, chúng ta cần một biểu thức chuyển đổi.
+
+Loại này cũng có một trình khởi tạo lấy tiêu đề và trình tạo kết quả.
+
+Hãy sử dụng nó một lần nữa.
+
+Bây giờ chúng ta có thể sử dụng sức mạnh của các nhà xây dựng kết quả bằng cách lặp lại tất cả các yếu tố mà chúng ta đã thu thập trước đó.
+
+Đối với mỗi phần tử, chúng tôi muốn tạo một mục trường hợp mới, mà chúng tôi có thể xây dựng bằng cách sử dụng nội suy chuỗi giống như chúng tôi đã thấy cho '#stringify'.
+
+Chúng ta cũng cần thêm một trường hợp mặc định trả về số không.
+
+Và cuối cùng, chúng ta có thể trả lại trình khởi tạo.
+
+Hãy chạy các bài kiểm tra để xem liệu chúng ta có thực sự tạo ra trình khởi tạo chính xác hay không.
+
+Chúng tôi là.
+
+Vì vậy, chúng tôi biết rằng macro của chúng tôi hoạt động và chúng tôi có thể bắt đầu sử dụng nó trong ứng dụng của tôi.
+
+Để thêm gói macro của chúng tôi vào dự án Xcode của tôi, tôi có thể nhấp chuột phải vào nó và chọn "Thêm phụ thuộc gói".
+
+Bây giờ tôi có thể chọn gói cục bộ mà chúng tôi vừa tạo.
+
+Để có thể sử dụng macro, tôi thêm mục tiêu WWDC làm phụ thuộc vào ứng dụng của mình.
+
+Bây giờ chúng ta có thể nhập mô-đun WWDC từ gói và áp dụng macro SlopeSubset cho loại EasySlope.
+
+... Nếu chúng ta xây dựng...
+
+...Trình biên dịch phàn nàn rằng trình khởi tạo viết tay là một tuyên bố lại không hợp lệ.
+
+Và đó là bởi vì vĩ mô bây giờ tạo ra nó cho chúng ta.
+
+Vì vậy chúng ta có thể xóa nó.
+
+Việc xóa mã luôn thú vị. Đúng không?
+
+Vì vậy, nếu chúng ta muốn xem macro thực sự đã tạo ra những gì, chúng ta có thể nhấp chuột phải vào SlopeSubset và nhấp vào Expand Macro.
+
+Và nếu tôi quên macro làm gì, tôi cũng có thể Option-nhấp vào nó để đọc tài liệu của nó.
+
+Bước tiếp theo cũng sẽ là tạo ra tài sản được tính toán, nhưng tôi sẽ làm điều đó vào cuối ngày hôm nay.
+
+Bằng cách sử dụng macro, chúng tôi có thể có được loại an toàn của EasySlopes mà không cần phải viết mã lặp đi lặp lại.
+
+Chúng ta đã làm điều đó như thế nào?
+
+Chúng tôi bắt đầu với mẫu gói macro Swift.
+
+Để khám phá cấu trúc của cây cú pháp, chúng tôi đã dừng việc thực thi macro và in nút cú pháp bên trong trình gỡ lỗi.
+
+Điều này cho phép chúng tôi xem những thuộc tính nào chúng tôi cần truy cập để có được tất cả các yếu tố enum.
+
+Và thật dễ dàng để tự phát triển macro bằng cách sử dụng một trường hợp thử nghiệm.
+
+Sau khi chúng tôi thêm nó vào ứng dụng của tôi, nó hoạt động ngay lập tức.
+
+Nhưng điều gì sẽ xảy ra nếu macro của bạn được sử dụng trong các tình huống mà nó không hỗ trợ?
+
+Giống như bạn không bao giờ muốn đưa một người mới bắt đầu trượt tuyết lên một con dốc khó, bạn không bao giờ muốn để bạn thực hiện các bản mở rộng bất ngờ hoặc tạo mã không biên dịch.
+
+Nếu macro của bạn được sử dụng theo những cách mà nó không hỗ trợ, hãy luôn phát ra thông báo lỗi thông báo cho người chấp nhận của bạn về những gì đang xảy ra, thay vì yêu cầu họ đọc mã được tạo để gỡ lỗi macro của bạn.
+
+Với tinh thần đó, chúng ta hãy đi và sửa TODO mà chúng ta đã để lại trong cơ sở mã của mình.
+
+Khi SlopeSubset được áp dụng cho một loại không phải là enum, macro sẽ phát ra lỗi, nói rằng nó chỉ áp dụng cho enums.
+
+Cũng giống như trước đây, hãy bắt đầu bằng cách thêm một trường hợp thử nghiệm.
+
+Lần này, chúng tôi đang áp dụng macro SlopeSubset cho một cấu trúc.
+
+Vì không có phần tử liệt kê trong cấu trúc, chúng tôi không mong đợi macro tạo ra trình khởi tạo.
+
+Thay vào đó, nó sẽ phát ra một chẩn đoán, đó là một lỗi, thông báo cho chúng tôi rằng SlopeSubset chỉ có thể được áp dụng cho một enum.
+
+Nếu chúng ta chạy bài kiểm tra này...
+
+...Nó thất bại vì chúng tôi chưa xuất ra thông báo lỗi.
+
+Hãy vào trình cắm trình biên dịch để làm ngay bây giờ.
+
+Các lỗi vĩ mô có thể được biểu diễn bằng bất kỳ loại nào phù hợp với giao thức Lỗi Swift.
+
+Tôi sử dụng một enum với một trường hợp duy nhất để mô tả thông báo lỗi nếu SlopeSubset được áp dụng cho một loại không phải là một enum.
+
+Nếu chúng ta ném lỗi từ hàm mở rộng, nó sẽ được hiển thị tại thuộc tính gọi mở rộng vĩ mô.
+
+Nếu bạn muốn hiển thị thông báo lỗi ở một vị trí khác với thuộc tính, tạo cảnh báo hoặc thậm chí hiển thị Fix-Its trong Xcode, có một phương thức 'addDiagnostic' trên tham số ngữ cảnh cho phép bạn tạo ra các chẩn đoán phong phú.
+
+Nhưng tôi nghĩ trong trường hợp này, thật hiệu quả khi chỉ hiển thị một thông báo lỗi đơn giản ở thuộc tính.
+
+Bây giờ, hãy xem liệu chúng ta đã làm mọi thứ đúng chưa và liệu các bài kiểm tra của chúng ta có vượt qua hay không.
+
+Tuyệt vời, họ làm.
+
+Vậy nó trông như thế nào trong Xcode nếu tôi áp dụng SlopeSubset cho một cấu trúc?
+
+Đối với điều này, hãy để tôi sao chép trường hợp thử nghiệm vào một tệp.
+
+Xcode hiển thị thông báo lỗi tùy chỉnh nội tuyến với tất cả các lỗi biên dịch khác.
+
+Điều đó giúp những người chấp nhận macro của tôi dễ dàng thấy những gì họ đang làm sai.
+
+Và bạn biết gì không?
+
+Bây giờ chúng ta đã xử lý lỗi tốt, tôi nghĩ macro này cũng có thể hữu ích cho các nhà phát triển khác chỉ định các tập hợp con enum, không chỉ cho các độ dốc.
+
+Hãy đi và khái quát hóa nó.
+
+Để chỉ định siêu tập hợp của enum, mà cho đến nay chúng tôi đã được mã hóa cứng là Dốc, chúng tôi thêm một tham số chung vào khai báo vĩ mô.
+
+Và vì macro bây giờ không còn cụ thể cho các sườn dốc, hãy đổi tên nó thành EnumSubset bằng cách nhấp chuột phải vào SlopeSubset và chọn Refactor, Rename.
+
+Tôi cũng có thể chọn đổi tên tất cả các lần xuất hiện bên trong chuỗi ký tự và nhận xét bằng cách nhấp lệnh vào chúng.
+
+Bây giờ chúng ta cần điều chỉnh việc triển khai vĩ mô của mình để sử dụng tham số chung, thay vì loại Độ dốc được mã hóa cứng.
+
+Nếu chúng ta in thuộc tính bên trong trình gỡ lỗi và kiểm tra bố cục của nó, giống như chúng ta đã làm cho 'enumDecl', chúng ta có thể thấy rằng chúng ta có thể truy xuất tham số chung bằng cách truy cập 'argumentType' của đối số đầu tiên trong 'genericArgumentClause' của tên thuộc tính.
+
+Vì vậy, bây giờ chúng tôi đã truy xuất tham số chung, chúng tôi có thể thay thế loại Độ dốc được mã hóa cứng cho đến nay bằng biến 'supersetType'.
+
+Tôi vẫn cần thực hiện thêm một vài thay đổi, như đổi tên tham số của trình khởi tạo, thay đổi tên loại triển khai vĩ mô và cập nhật tài liệu.
+
+Tôi sẽ làm điều đó sau.
+
+Thay vào đó, bây giờ, hãy đảm bảo rằng các bài kiểm tra của chúng ta vẫn vượt qua.
+
+Vì chúng tôi đã tạo EnumSubset chung, chúng tôi cần xác định rõ ràng rằng EasySlope là một tập hợp con của Slope bằng cách chuyển độ dốc làm tham số chung cho macro EnumSubset.
+
+Hãy xem liệu các bài kiểm tra có vượt qua được không.
+
+Họ là.
+
+Tôi thực sự nên cân nhắc việc xuất bản macro này cho những người khác dưới dạng gói Swift.
+
+Vì vậy, đó là rất nhiều nền tảng mà chúng tôi đã bao phủ ngày hôm nay.
+
+Hãy tóm tắt lại những gì chúng ta đã trải qua.
+
+Để tạo một macro, bạn có thể bắt đầu với mẫu gói macro, bao gồm macro stringify như một điểm khởi đầu tuyệt vời.
+
+Trong khi phát triển macro của bạn, chúng tôi rất khuyến khích bạn viết các trường hợp thử nghiệm để đảm bảo rằng mã mà macro của bạn tạo ra thực sự hợp lệ.
+
+Và nếu bạn đang làm điều này, bạn có thể kiểm tra bố cục của cây cú pháp bằng cách đặt điểm dừng trong hàm mở rộng, chạy thử nghiệm và in cây cú pháp trong trình gỡ lỗi.
+
+Và cuối cùng, nếu macro của bạn không được áp dụng trong một số trường hợp nhất định, bạn nên luôn phát ra các thông báo lỗi tùy chỉnh để ngay cả khi có sự cố xảy ra, macro của bạn sẽ tỏa sáng.
+
+Cảm ơn vì đã xem, và tôi rất vui khi thấy bạn sẽ tạo ra loại macro nào.
+
+♪ ♪

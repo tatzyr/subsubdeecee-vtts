@@ -1,0 +1,392 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+♪ Nhạc hip-hop nhạc cụ êm dịu ♪
+
+00:00:03.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:11.000
+Xin chào! Tên tôi là Adam Bradford.
+
+00:00:11.000 --> 00:00:18.000
+Tôi là một kỹ sư trong nhóm VisionKit và nếu bạn đang muốn thêm Live Text vào ứng dụng của mình, bạn đã đến đúng nơi.
+
+00:00:18.000 --> 00:00:21.000
+Nhưng trước tiên, Live Text là gì?
+
+00:00:21.000 --> 00:00:39.000
+Live Text phân tích một hình ảnh và cung cấp các tính năng để người dùng tương tác với nội dung của nó, chẳng hạn như chọn và sao chép văn bản, thực hiện các hành động như tra cứu và dịch, cung cấp quy trình phát hiện dữ liệu, chẳng hạn như lập bản đồ địa chỉ, quay số hoặc chuyển đến URL.
+
+00:00:39.000 --> 00:00:43.000
+Văn bản trực tiếp thậm chí còn cho phép tương tác mã QR.
+
+00:00:43.000 --> 00:00:45.000
+Hãy tưởng tượng làm thế nào bạn có thể đưa cái này vào sử dụng trong ứng dụng của mình?
+
+00:00:45.000 --> 00:00:49.000
+Bạn muốn biết thêm? Chà, bạn đang ở đúng nơi.
+
+00:00:49.000 --> 00:00:54.000
+Đối với phiên này, tôi sẽ bắt đầu với tổng quan chung về API Văn bản Trực tiếp.
+
+00:00:54.000 --> 00:01:00.000
+Sau đó tôi sẽ khám phá cách triển khai API này trong một ứng dụng hiện có.
+
+00:01:00.000 --> 00:01:06.000
+Tiếp theo, tôi sẽ đi sâu vào một số mẹo và thủ thuật có thể giúp bạn khi thêm Live Text vào ứng dụng của bạn.
+
+00:01:06.000 --> 00:01:10.000
+Bây giờ để có cái nhìn tổng quan về API Văn bản Trực tiếp.
+
+00:01:10.000 --> 00:01:14.000
+Ở cấp độ cao, Live Text API có sẵn trong Swift.
+
+00:01:14.000 --> 00:01:20.000
+Nó hoạt động tốt trên các hình ảnh tĩnh và có thể được điều chỉnh để sử dụng cho các khung hình video bị tạm dừng.
+
+00:01:20.000 --> 00:01:28.000
+Nếu bạn cần phân tích video trong luồng camera trực tiếp để tìm kiếm các mục như văn bản hoặc mã QR, VisionKit cũng có sẵn trình quét dữ liệu.
+
+00:01:28.000 --> 00:01:33.000
+Kiểm tra phiên này từ đồng nghiệp Ron của tôi để biết thêm thông tin.
+
+00:01:33.000 --> 00:01:44.000
+Live Text API có sẵn bắt đầu từ iOS 16 cho các thiết bị có Apple Neural Engine và cho tất cả các thiết bị hỗ trợ macOS 13.
+
+00:01:44.000 --> 00:01:46.000
+Nó bao gồm bốn lớp chính.
+
+00:01:46.000 --> 00:01:49.000
+Để sử dụng nó, trước tiên, bạn sẽ cần một hình ảnh.
+
+00:01:49.000 --> 00:01:54.000
+Hình ảnh này sau đó được đưa vào ImageAnalyzer, thực hiện phân tích không đồng bộ.
+
+00:01:54.000 --> 00:02:05.000
+Khi phân tích hoàn tất, đối tượng ImageAnalysis kết quả được cung cấp cho ImageAnalysisInteraction hoặc ImageAnalysisOverlayView, tùy thuộc vào nền tảng của bạn.
+
+00:02:05.000 --> 00:02:08.000
+Có vẻ khá đơn giản cho đến nay, phải không?
+
+00:02:08.000 --> 00:02:13.000
+Bây giờ, tôi sẽ chứng minh cách người ta sẽ thêm nó vào một ứng dụng hiện có.
+
+00:02:13.000 --> 00:02:16.000
+Và đây là ứng dụng của chúng tôi.
+
+00:02:16.000 --> 00:02:21.000
+Đây là một trình xem hình ảnh đơn giản, có chế độ xem hình ảnh bên trong chế độ xem cuộn.
+
+00:02:21.000 --> 00:02:24.000
+Lưu ý, tôi có thể vừa phóng to vừa xoay.
+
+00:02:24.000 --> 00:02:30.000
+Nhưng hãy cố gắng hết sức có thể, tôi không thể chọn bất kỳ văn bản nào trong số này hoặc kích hoạt bất kỳ máy dò dữ liệu nào trong số này.
+
+00:02:30.000 --> 00:02:33.000
+Điều này đơn giản là sẽ không làm được.
+
+00:02:33.000 --> 00:02:35.000
+Đây là dự án trong Xcode.
+
+00:02:35.000 --> 00:02:40.000
+Để thêm Live Text vào ứng dụng này, tôi sẽ sửa đổi một lớp con của bộ điều khiển chế độ xem.
+
+00:02:40.000 --> 00:02:48.000
+Đầu tiên, tôi sẽ cần một ImageAnalyzer, và một ImageAnalysisInteraction.
+
+00:02:48.000 --> 00:02:54.000
+Ở đây, tôi chỉ đơn giản là ghi đè viewDidLoad và thêm tương tác vào chế độ xem hình ảnh.
+
+00:02:54.000 --> 00:03:01.000
+Tiếp theo, tôi cần biết khi nào nên thực hiện phân tích.
+
+00:03:01.000 --> 00:03:10.000
+Lưu ý rằng khi một hình ảnh mới được đặt, trước tiên tôi đặt lại các Loại Tương tác ưa thích và phân tích dành cho hình ảnh cũ.
+
+00:03:10.000 --> 00:03:13.000
+Bây giờ mọi thứ đã sẵn sàng cho một phân tích mới.
+
+00:03:13.000 --> 00:03:23.000
+Tiếp theo, tôi sẽ tạo ra chức năng mà chúng ta sẽ sử dụng và sau đó kiểm tra xem hình ảnh của chúng ta có tồn tại không.
+
+00:03:23.000 --> 00:03:28.000
+Nếu vậy, hãy tạo một nhiệm vụ.
+
+00:03:28.000 --> 00:03:34.000
+Tiếp theo, tạo một cấu hình để cho máy phân tích biết những gì nó nên tìm kiếm.
+
+00:03:34.000 --> 00:03:39.000
+Trong trường hợp này, tôi sẽ sử dụng văn bản và mã có thể đọc được bằng máy.
+
+00:03:39.000 --> 00:03:43.000
+Tạo ra phân tích có thể ném, vì vậy hãy xử lý điều đó khi thích hợp.
+
+00:03:43.000 --> 00:03:51.000
+Và bây giờ cuối cùng, tôi đã sẵn sàng gọi phương thức analyzeImageWithConfiguration, phương thức này sẽ bắt đầu quá trình phân tích.
+
+00:03:51.000 --> 00:04:05.000
+Sau khi phân tích hoàn tất, một khoảng thời gian không xác định đã trôi qua và trạng thái của ứng dụng có thể đã thay đổi, vì vậy tôi sẽ kiểm tra xem cả hai phân tích đã thành công và hình ảnh được hiển thị không thay đổi.
+
+00:04:05.000 --> 00:04:12.000
+Nếu tất cả các kiểm tra này vượt qua, tôi có thể chỉ cần đặt phân tích về tương tác và đặt các Loại Tương tác ưa thích.
+
+00:04:12.000 --> 00:04:17.000
+Tôi đang sử dụng .automatic ở đây, điều này sẽ cho tôi hành vi hệ thống mặc định.
+
+00:04:17.000 --> 00:04:20.000
+Tôi nghĩ cái này đã sẵn sàng cho một bài kiểm tra.
+
+00:04:20.000 --> 00:04:22.000
+Ồ, nhìn kìa!
+
+00:04:22.000 --> 00:04:28.000
+Tôi thấy nút Văn bản Trực tiếp đã xuất hiện, và vâng, bây giờ tôi có thể chọn văn bản.
+
+00:04:28.000 --> 00:04:39.000
+Chú ý cách các yếu tố giao diện này được định vị tự động cho tôi và giữ vị trí của chúng bên trong cả giới hạn hình ảnh và khu vực hiển thị, mà không cần làm việc từ phía tôi.
+
+00:04:39.000 --> 00:04:48.000
+Được rồi, lưu ý rằng nhấn vào nút Văn bản Trực tiếp sẽ làm nổi bật bất kỳ mục nào có thể lựa chọn, gạch chân máy dò dữ liệu và hiển thị Hành động nhanh.
+
+00:04:48.000 --> 00:04:54.000
+Tôi có thể dễ dàng nhấn vào Hành động nhanh này để thực hiện cuộc gọi và thậm chí xem nhiều tùy chọn hơn bằng cách nhấn và giữ.
+
+00:04:54.000 --> 00:04:58.000
+Bạn phải thừa nhận, điều này khá tuyệt.
+
+00:04:58.000 --> 00:05:04.000
+Chỉ với vài dòng mã này, tôi đã chụp một bức ảnh bình thường và đưa nó vào cuộc sống.
+
+00:05:04.000 --> 00:05:14.000
+Ứng dụng đơn giản này hiện có khả năng chọn văn bản trên hình ảnh, kích hoạt máy dò dữ liệu, mã QR, tra cứu, dịch văn bản và hơn thế nữa.
+
+00:05:14.000 --> 00:05:18.000
+Không quá tồi tàn chỉ từ vài dòng mã này, nếu bạn hỏi tôi.
+
+00:05:18.000 --> 00:05:26.000
+Và bây giờ bạn đã thấy cách triển khai Live Text, tôi sẽ xem xét một vài mẹo và thủ thuật có thể giúp bạn áp dụng.
+
+00:05:26.000 --> 00:05:29.000
+Tôi sẽ bắt đầu bằng cách khám phá các loại tương tác.
+
+00:05:29.000 --> 00:05:36.000
+Hầu hết các nhà phát triển sẽ muốn .automatic, cung cấp lựa chọn văn bản, nhưng cũng sẽ làm nổi bật các trình phát hiện dữ liệu nếu nút Live Text đang hoạt động.
+
+00:05:36.000 --> 00:05:43.000
+Điều này sẽ vẽ một đường bên dưới bất kỳ mục nào được phát hiện có thể áp dụng và cho phép truy cập một lần nhấn để kích hoạt chúng.
+
+00:05:43.000 --> 00:05:48.000
+Đây chính xác là hành vi mà bạn sẽ thấy từ các ứng dụng tích hợp sẵn.
+
+00:05:48.000 --> 00:05:59.000
+Nếu ứng dụng của bạn chỉ có lựa chọn văn bản mà không có trình phát hiện dữ liệu, bạn có thể đặt loại thành .textSelection và nó sẽ không thay đổi theo trạng thái của nút Văn bản Trực tiếp.
+
+00:05:59.000 --> 00:06:06.000
+Tuy nhiên, nếu ứng dụng của bạn chỉ có máy dò dữ liệu mà không có lựa chọn văn bản, hãy đặt loại thành .dataDetectors.
+
+00:06:06.000 --> 00:06:17.000
+Lưu ý rằng trong chế độ này, vì lựa chọn bị vô hiệu hóa, bạn sẽ không thấy nút Văn bản Trực tiếp, nhưng các trình phát hiện dữ liệu sẽ được gạch chân và sẵn sàng để truy cập một lần nhấn.
+
+00:06:17.000 --> 00:06:21.000
+Đặt các Loại Tương tác ưa thích thành một tập hợp trống sẽ vô hiệu hóa tương tác.
+
+00:06:21.000 --> 00:06:31.000
+Ngoài ra, lưu ý cuối cùng, với lựa chọn văn bản hoặc chế độ tự động, bạn sẽ thấy mình vẫn có thể kích hoạt máy dò dữ liệu bằng cách nhấn và giữ.
+
+00:06:31.000 --> 00:06:39.000
+Điều này được kiểm soát bởi thuộc tính allowLongPressForDataDetectorsIn TextMode, sẽ hoạt động khi được đặt thành true, mặc định.
+
+00:06:39.000 --> 00:06:43.000
+Chỉ cần đặt thành sai để vô hiệu hóa điều này nếu cần thiết.
+
+00:06:43.000 --> 00:06:49.000
+Bây giờ tôi muốn dành một chút thời gian và nói về các nút này ở dưới cùng, được gọi chung là giao diện bổ sung.
+
+00:06:49.000 --> 00:06:56.000
+Điều này bao gồm nút Văn bản Trực tiếp, thường nằm ở góc dưới cùng bên phải, cũng như Hành động Nhanh xuất hiện ở phía dưới bên trái.
+
+00:06:56.000 --> 00:07:02.000
+Hành động nhanh đại diện cho bất kỳ máy dò dữ liệu nào từ phân tích và hiển thị khi nút Văn bản Trực tiếp đang hoạt động.
+
+00:07:02.000 --> 00:07:07.000
+Kích thước, vị trí và khả năng hiển thị được kiểm soát bởi sự tương tác.
+
+00:07:07.000 --> 00:07:16.000
+Và trong khi vị trí và giao diện mặc định phù hợp với hệ thống, ứng dụng của bạn có thể có các yếu tố giao diện tùy chỉnh có thể can thiệp hoặc sử dụng các phông chữ và trọng số biểu tượng khác nhau.
+
+00:07:16.000 --> 00:07:20.000
+Hãy xem cách bạn có thể tùy chỉnh giao diện này.
+
+00:07:20.000 --> 00:07:23.000
+Trước hết, thuộc tính isSupplementary InterfaceHidden.
+
+00:07:23.000 --> 00:07:37.000
+Nếu tôi muốn cho phép ứng dụng của mình vẫn chọn văn bản nhưng tôi không muốn hiển thị nút Văn bản Trực tiếp, nếu tôi đặt Giao diện Bổ sung Ẩn thành đúng, bạn sẽ không thấy bất kỳ nút Văn bản Trực tiếp hoặc Hành động Nhanh nào.
+
+00:07:37.000 --> 00:07:40.000
+Chúng tôi cũng có sẵn một thuộc tính nội dung.
+
+00:07:40.000 --> 00:07:52.000
+Nếu bạn có các yếu tố giao diện chồng lên giao diện bổ sung, bạn có thể điều chỉnh nội dung để nút Văn bản trực tiếp và Hành động nhanh thích ứng tốt với nội dung ứng dụng hiện có của bạn khi hiển thị.
+
+00:07:52.000 --> 00:08:04.000
+Nếu ứng dụng của bạn đang sử dụng phông chữ tùy chỉnh mà bạn muốn giao diện áp dụng, việc đặt Phông chữ giao diện bổ sung sẽ khiến nút Văn bản trực tiếp và Hành động nhanh sử dụng phông chữ được chỉ định cho văn bản và trọng lượng phông chữ cho các ký hiệu.
+
+00:08:04.000 --> 00:08:10.000
+Xin lưu ý rằng để nhất quán về kích thước nút, Live Text sẽ bỏ qua kích thước điểm.
+
+00:08:10.000 --> 00:08:18.000
+Chuyển đổi bánh răng trong giây lát, nếu bạn không sử dụng UIImageview, bạn có thể phát hiện ra rằng các điểm nổi bật không khớp với hình ảnh của bạn.
+
+00:08:18.000 --> 00:08:26.000
+Điều này là do với UIImageView, VisionKit có thể sử dụng thuộc tính ContentMode của nó để tính toán contentsRect tự động cho bạn.
+
+00:08:26.000 --> 00:08:36.000
+Ở đây, chế độ xem của tương tác có giới hạn lớn hơn nội dung hình ảnh của nó nhưng đang sử dụng trực tràng nội dung mặc định, là một hình chữ nhật đơn vị.
+
+00:08:36.000 --> 00:08:49.000
+Điều này có thể dễ dàng giải quyết bằng cách triển khai phương thức đại diện contentsRectForInteraction và trả về một hình chữ nhật trong không gian tọa độ đơn vị mô tả cách nội dung hình ảnh liên quan đến giới hạn của tương tác để sửa lỗi này.
+
+00:08:49.000 --> 00:08:59.000
+Ví dụ: trả về một hình chữ nhật với các giá trị này sẽ khắc phục sự cố, nhưng vui lòng trả lại hình chữ nhật chuẩn hóa chính xác dựa trên nội dung và bố cục hiện tại của ứng dụng của bạn.
+
+00:08:59.000 --> 00:09:15.000
+contentsRectForInteraction sẽ được gọi bất cứ khi nào giới hạn của tương tác thay đổi, tuy nhiên, nếu contentsRect của bạn đã thay đổi nhưng giới hạn tương tác của bạn thì không, bạn có thể yêu cầu tương tác cập nhật bằng cách gọi setContentsRectNeedsUpdate().
+
+00:09:15.000 --> 00:09:21.000
+Một câu hỏi khác mà bạn có thể có khi áp dụng Live Text có thể là, Đâu là nơi tốt nhất để đặt sự tương tác này?
+
+00:09:21.000 --> 00:09:27.000
+Lý tưởng nhất, các tương tác Văn bản Trực tiếp được đặt trực tiếp trên chế độ xem lưu trữ nội dung hình ảnh của bạn.
+
+00:09:27.000 --> 00:09:36.000
+Như đã đề cập trước đó, UIImageView sẽ xử lý các phép tính contentsRect cho bạn và trong khi không cần thiết, được ưu tiên hơn.
+
+00:09:36.000 --> 00:09:43.000
+Nếu bạn đang sử dụng UIImageview, chỉ cần đặt tương tác trên imageView và VisionKit sẽ xử lý phần còn lại.
+
+00:09:43.000 --> 00:09:58.000
+Tuy nhiên, nếu ImageView của bạn nằm bên trong ScrollView, bạn có thể bị cám dỗ để đặt tương tác trên ScrollView, tuy nhiên, điều này không được khuyến khích và có thể khó quản lý vì nó sẽ có nội dung thay đổi liên tụcRect.
+
+00:09:58.000 --> 00:10:08.000
+Giải pháp ở đây là như nhau, đặt tương tác trên chế độ xem lưu trữ nội dung hình ảnh của bạn, ngay cả khi nó nằm trong ScrollView với độ phóng đại được áp dụng.
+
+00:10:08.000 --> 00:10:16.000
+Tôi sẽ nói về cử chỉ trong giây lát, Live Text có một bộ nhận dạng cử chỉ rất, rất phong phú, để nói rằng ít nhất.
+
+00:10:16.000 --> 00:10:25.000
+Tùy thuộc vào cách ứng dụng của bạn được cấu trúc, bạn có thể thấy sự tương tác phản hồi với các cử chỉ và sự kiện mà ứng dụng của bạn thực sự nên xử lý hoặc ngược lại.
+
+00:10:25.000 --> 00:10:26.000
+Đừng hoảng sợ.
+
+00:10:26.000 --> 00:10:31.000
+Đây là một vài kỹ thuật bạn có thể sử dụng để giúp sửa chữa nếu bạn thấy những vấn đề này xảy ra.
+
+00:10:31.000 --> 00:10:39.000
+Một cách phổ biến để sửa lỗi này là triển khai phương thức đại diện interactionShouldBeginAtPointFor InteractionType.
+
+00:10:39.000 --> 00:10:42.000
+Nếu bạn trả về false, hành động sẽ không được thực hiện.
+
+00:10:42.000 --> 00:10:50.000
+Một nơi tốt để bắt đầu là kiểm tra xem tương tác có một mục tương tác tại điểm đã cho hay nó có lựa chọn văn bản đang hoạt động hay không.
+
+00:10:50.000 --> 00:10:58.000
+Kiểm tra lựa chọn văn bản được sử dụng ở đây để bạn có thể có khả năng nhấn vào văn bản để bỏ chọn nó.
+
+00:10:58.000 --> 00:11:08.000
+Mặt khác, nếu bạn thấy sự tương tác của mình dường như không phản hồi với cử chỉ, có thể là do có một công cụ nhận dạng cử chỉ trong ứng dụng của bạn đang xử lý chúng thay thế.
+
+00:11:08.000 --> 00:11:17.000
+Trong trường hợp này, bạn có thể tạo ra một giải pháp tương tự bằng cách sử dụng phương thức ủy quyền gestureRecognizerShouldBegin của gestureRecognizer.
+
+00:11:17.000 --> 00:11:25.000
+Ở đây, tôi thực hiện kiểm tra tương tự và trả về sai nếu có một mục tương tác tại vị trí hoặc có lựa chọn văn bản đang hoạt động.
+
+00:11:25.000 --> 00:11:26.000
+Trên một lưu ý phụ.
+
+00:11:26.000 --> 00:11:36.000
+Trong ví dụ này, trước tiên tôi chuyển đổi vị trí của gestureRecognizer thành không gian tọa độ của cửa sổ bằng cách chuyển bằng nil, và sau đó chuyển đổi nó sang chế độ xem tương tác.
+
+00:11:36.000 --> 00:11:42.000
+Điều này có thể cần thiết nếu sự tương tác của bạn nằm bên trong ScrollView với độ phóng đại được áp dụng.
+
+00:11:42.000 --> 00:11:46.000
+Nếu bạn thấy điểm của mình không khớp, hãy thử kỹ thuật này.
+
+00:11:46.000 --> 00:11:52.000
+Một lựa chọn tương tự khác mà tôi thấy hữu ích là ghi đè hitTest:WithEvent của UIView.
+
+00:11:52.000 --> 00:12:00.000
+Ở đây, một lần nữa, câu chuyện tương tự, tôi thực hiện các loại kiểm tra giống như trước đây, và trong trường hợp này, trả lại chế độ xem thích hợp.
+
+00:12:00.000 --> 00:12:12.000
+Như mọi khi, chúng tôi muốn ứng dụng của bạn phản hồi nhanh nhất có thể và trong khi Neural Engine giúp phân tích cực kỳ hiệu quả, có một vài mẹo ImageAnalyzer mà tôi muốn chia sẻ để có hiệu suất tốt nhất.
+
+00:12:12.000 --> 00:12:16.000
+Lý tưởng nhất, bạn chỉ muốn một ImageAnalyzer được chia sẻ trong ứng dụng của mình.
+
+00:12:16.000 --> 00:12:19.000
+Ngoài ra, chúng tôi hỗ trợ một số loại hình ảnh.
+
+00:12:19.000 --> 00:12:29.000
+Bạn nên luôn giảm thiểu chuyển đổi hình ảnh bằng cách chuyển sang loại gốc mà bạn có; tuy nhiên, nếu bạn tình cờ có CVPixelBuffer, đó sẽ là hiệu quả nhất.
+
+00:12:29.000 --> 00:12:38.000
+Ngoài ra, để sử dụng tốt nhất tài nguyên hệ thống, bạn chỉ nên bắt đầu phân tích khi hoặc ngay trước đó, một hình ảnh xuất hiện trên màn hình.
+
+00:12:38.000 --> 00:12:47.000
+Nếu cuộn nội dung của ứng dụng của bạn - ví dụ, nó có dòng thời gian - chỉ bắt đầu phân tích khi quá trình cuộn đã dừng lại.
+
+00:12:47.000 --> 00:12:56.000
+Bây giờ API này không phải là nơi duy nhất bạn sẽ thấy Live Text, hỗ trợ được cung cấp tự động trong một vài khuôn khổ trên toàn hệ thống mà ứng dụng của bạn có thể đã sử dụng.
+
+00:12:56.000 --> 00:13:04.000
+Ví dụ, UITextField hoặc UITextView có hỗ trợ Văn bản Trực tiếp sử dụng Máy ảnh để nhập bàn phím.
+
+00:13:04.000 --> 00:13:08.000
+Và Live Text cũng được hỗ trợ trong WebKit và Quick Look.
+
+00:13:08.000 --> 00:13:12.000
+Để biết thêm thông tin, vui lòng xem các phiên này.
+
+00:13:12.000 --> 00:13:16.000
+Mới trong năm nay cho iOS 16, chúng tôi đã thêm hỗ trợ Văn bản Trực tiếp trong AVKit.
+
+00:13:16.000 --> 00:13:27.000
+AVPlayerView và ViewController tự động hỗ trợ Live Text trong các khung hình bị tạm dừng thông qua thuộc tính allowsVideoFrameAnalysis, được bật theo mặc định.
+
+00:13:27.000 --> 00:13:32.000
+Xin lưu ý, điều này chỉ khả dụng với nội dung không được bảo vệ FairPlay.
+
+00:13:32.000 --> 00:13:45.000
+Nếu bạn đang sử dụng AVPlayerLayer, thì bạn có trách nhiệm quản lý phân tích và tương tác nhưng điều rất quan trọng là sử dụng thuộc tính currentlyDisplayedPixelBuffer để có được khung hiện tại.
+
+00:13:45.000 --> 00:13:49.000
+Đây là cách duy nhất để đảm bảo khung thích hợp đang được phân tích.
+
+00:13:49.000 --> 00:13:58.000
+Điều này sẽ chỉ trả về một giá trị hợp lệ nếu tốc độ phát video bằng 0 và đây là một bản sao nông và hoàn toàn không an toàn để ghi vào.
+
+00:13:58.000 --> 00:14:04.000
+Và một lần nữa, chỉ có sẵn cho nội dung không được bảo vệ FairPlay.
+
+00:14:04.000 --> 00:14:07.000
+Chúng tôi rất vui mừng được giúp mang chức năng Live Text đến ứng dụng của bạn.
+
+00:14:07.000 --> 00:14:12.000
+Thay mặt cho tất cả mọi người trong nhóm Live Text, cảm ơn bạn đã tham gia cùng chúng tôi trong phiên này.
+
+00:14:12.000 --> 00:14:16.000
+Tôi rất vui khi thấy cách bạn sử dụng nó cho hình ảnh trong ứng dụng của mình.
+
+00:14:16.000 --> 00:14:18.000
+Và như mọi khi, hãy vui vẻ!
+
+00:14:18.000 --> 23:59:59.000
+♪
+

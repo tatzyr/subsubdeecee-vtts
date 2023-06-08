@@ -1,0 +1,971 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:13.000
+Nick Kledzik: Xin chào, tôi là Nick Kledzik, Kỹ sư trưởng trong nhóm Linker của Apple.
+
+00:00:13.000 --> 00:00:16.000
+Hôm nay, tôi muốn chia sẻ với bạn cách liên kết nhanh.
+
+00:00:16.000 --> 00:00:25.000
+Tôi sẽ cho bạn biết Apple đã làm gì để cải thiện liên kết, cũng như giúp bạn hiểu điều gì thực sự xảy ra trong quá trình liên kết để bạn có thể cải thiện hiệu suất liên kết của ứng dụng của mình.
+
+00:00:25.000 --> 00:00:27.000
+Vậy liên kết là gì?
+
+00:00:27.000 --> 00:00:33.000
+Bạn đã viết mã, nhưng bạn cũng sử dụng mã mà người khác đã viết dưới dạng thư viện hoặc khuôn khổ.
+
+00:00:33.000 --> 00:00:38.000
+Để mã của bạn sử dụng các thư viện đó, cần có trình liên kết.
+
+00:00:38.000 --> 00:00:41.000
+Bây giờ, thực sự có hai loại liên kết.
+
+00:00:41.000 --> 00:00:44.000
+Có "liên kết tĩnh", xảy ra khi bạn xây dựng ứng dụng của mình.
+
+00:00:44.000 --> 00:00:50.000
+Điều này có thể ảnh hưởng đến việc mất bao lâu để ứng dụng của bạn xây dựng và ứng dụng của bạn kết thúc lớn như thế nào.
+
+00:00:50.000 --> 00:00:52.000
+Và có "liên kết động".
+
+00:00:52.000 --> 00:00:54.000
+Điều này xảy ra khi ứng dụng của bạn được khởi chạy.
+
+00:00:54.000 --> 00:00:59.000
+Điều này có thể ảnh hưởng đến việc khách hàng của bạn phải đợi ứng dụng của bạn khởi chạy trong bao lâu.
+
+00:00:59.000 --> 00:01:04.000
+Trong phiên này tôi sẽ nói về cả liên kết tĩnh và động.
+
+00:01:04.000 --> 00:01:10.000
+Đầu tiên, tôi sẽ xác định liên kết tĩnh là gì và nó đến từ đâu, với một số ví dụ.
+
+00:01:10.000 --> 00:01:16.000
+Tiếp theo, tôi sẽ tiết lộ những gì mới trong ld64, trình liên kết tĩnh của Apple.
+
+00:01:16.000 --> 00:01:22.000
+Sau đó, với nền tảng này về liên kết tĩnh, tôi sẽ trình bày chi tiết các phương pháp hay nhất cho liên kết tĩnh.
+
+00:01:22.000 --> 00:01:26.000
+Nửa sau của bài nói chuyện này sẽ bao gồm liên kết động.
+
+00:01:26.000 --> 00:01:32.000
+Tôi sẽ chỉ ra liên kết động là gì và nó đến từ đâu, và điều gì xảy ra trong liên kết động.
+
+00:01:32.000 --> 00:01:38.000
+Tiếp theo, tôi sẽ tiết lộ có gì mới trong dyld năm nay.
+
+00:01:38.000 --> 00:01:44.000
+Sau đó, tôi sẽ nói về những gì bạn có thể làm để cải thiện hiệu suất thời gian liên kết động của ứng dụng.
+
+00:01:44.000 --> 00:01:50.000
+Và cuối cùng, chúng tôi sẽ kết thúc với hai công cụ mới sẽ giúp bạn nhìn trộm đằng sau rèm cửa.
+
+00:01:50.000 --> 00:01:57.000
+Bạn sẽ có thể thấy những gì có trong các tệp nhị phân của mình và những gì đang xảy ra trong quá trình liên kết động.
+
+00:01:57.000 --> 00:02:02.000
+Để hiểu liên kết tĩnh, chúng ta hãy quay lại thời điểm tất cả bắt đầu.
+
+00:02:02.000 --> 00:02:06.000
+Ban đầu, các chương trình rất đơn giản và chỉ có một tệp nguồn.
+
+00:02:06.000 --> 00:02:08.000
+Xây dựng thật dễ dàng.
+
+00:02:08.000 --> 00:02:13.000
+Bạn vừa chạy trình biên dịch trên một tệp nguồn của mình và nó đã tạo ra chương trình thực thi.
+
+00:02:13.000 --> 00:02:18.000
+Nhưng có tất cả mã nguồn của bạn trong một tệp không mở rộng quy mô.
+
+00:02:18.000 --> 00:02:21.000
+Làm thế nào để bạn xây dựng với nhiều tệp nguồn?
+
+00:02:21.000 --> 00:02:24.000
+Và điều này không chỉ vì bạn không muốn chỉnh sửa một tệp văn bản lớn.
+
+00:02:24.000 --> 00:02:29.000
+Khoản tiết kiệm thực sự không phải là biên dịch lại mọi chức năng, mỗi khi bạn xây dựng.
+
+00:02:29.000 --> 00:02:33.000
+Những gì họ đã làm là chia trình biên dịch thành hai phần.
+
+00:02:33.000 --> 00:02:39.000
+Phần đầu tiên biên dịch mã nguồn thành tệp "đối tượng có thể di chuyển" trung gian mới.
+
+00:02:39.000 --> 00:02:45.000
+Phần thứ hai đọc tệp .o có thể định vị lại và tạo ra một chương trình thực thi.
+
+00:02:45.000 --> 00:02:49.000
+Bây giờ chúng ta gọi phần thứ hai là 'ld', trình liên kết tĩnh.
+
+00:02:49.000 --> 00:02:52.000
+Vì vậy, bây giờ bạn đã biết liên kết tĩnh đến từ đâu.
+
+00:02:52.000 --> 00:02:56.000
+Khi phần mềm phát triển, chẳng mấy chốc mọi người đã chuyển các tệp .o.
+
+00:02:56.000 --> 00:02:58.000
+Nhưng điều đó trở nên cồng kềnh.
+
+00:02:58.000 --> 00:03:04.000
+Ai đó đã nghĩ, "Sẽ thật tuyệt nếu chúng ta có thể đóng gói một bộ tệp .o vào một 'thư viện'?"
+
+00:03:04.000 --> 00:03:09.000
+Vào thời điểm đó, cách tiêu chuẩn để gói các tệp lại với nhau là với công cụ lưu trữ 'ar'.
+
+00:03:09.000 --> 00:03:12.000
+Nó được sử dụng để sao lưu và phân phối.
+
+00:03:12.000 --> 00:03:15.000
+Vì vậy, quy trình làm việc đã trở thành điều này.
+
+00:03:15.000 --> 00:03:25.000
+Bạn có thể 'nâng cấp' nhiều tệp .o vào một kho lưu trữ và trình liên kết đã được tăng cường để biết cách đọc tệp .o trực tiếp từ tệp lưu trữ.
+
+00:03:25.000 --> 00:03:28.000
+Đây là một cải tiến tuyệt vời để chia sẻ mã chung.
+
+00:03:28.000 --> 00:03:32.000
+Vào thời điểm đó nó chỉ được gọi là thư viện hoặc kho lưu trữ.
+
+00:03:32.000 --> 00:03:35.000
+Hôm nay, chúng tôi gọi nó là một thư viện tĩnh.
+
+00:03:35.000 --> 00:03:44.000
+Nhưng bây giờ chương trình cuối cùng đã trở nên lớn vì hàng nghìn chức năng từ các thư viện này đã được sao chép vào nó, ngay cả khi chỉ một vài trong số các chức năng đó được sử dụng.
+
+00:03:44.000 --> 00:03:46.000
+Vì vậy, một tối ưu hóa thông minh đã được thêm vào.
+
+00:03:46.000 --> 00:03:57.000
+Thay vì để trình liên kết sử dụng tất cả các tệp .o từ thư viện tĩnh, trình liên kết sẽ chỉ kéo các tệp .o từ thư viện tĩnh nếu làm như vậy sẽ giải quyết một số biểu tượng không xác định.
+
+00:03:57.000 --> 00:04:05.000
+Điều đó có nghĩa là ai đó có thể xây dựng một thư viện tĩnh libc.a lớn, chứa tất cả các chức năng thư viện tiêu chuẩn C.
+
+00:04:05.000 --> 00:04:12.000
+Mọi chương trình đều có thể liên kết với một libc.a, nhưng mỗi chương trình chỉ có những phần của libc mà chương trình thực sự cần.
+
+00:04:12.000 --> 00:04:15.000
+Và chúng ta vẫn có mô hình đó ngày hôm nay.
+
+00:04:15.000 --> 00:04:20.000
+Nhưng việc tải có chọn lọc từ các thư viện tĩnh không rõ ràng và thu được nhiều lập trình viên.
+
+00:04:20.000 --> 00:04:26.000
+Để làm cho việc tải có chọn lọc các thư viện tĩnh rõ ràng hơn một chút, tôi có một kịch bản đơn giản.
+
+00:04:26.000 --> 00:04:32.000
+Trong main.c, có một hàm được gọi là "main" gọi một hàm "foo".
+
+00:04:32.000 --> 00:04:36.000
+Trong foo.c, có foo gọi là bar.
+
+00:04:36.000 --> 00:04:45.000
+Trong bar.c, có việc triển khai bar nhưng cũng có một việc triển khai một chức năng khác không được sử dụng.
+
+00:04:45.000 --> 00:04:51.000
+Cuối cùng, trong baz.c, có một hàm baz gọi một hàm có tên undef.
+
+00:04:51.000 --> 00:04:56.000
+Bây giờ chúng tôi biên dịch mỗi tệp .o của riêng nó.
+
+00:04:56.000 --> 00:05:02.000
+Bạn sẽ thấy foo, bar và undef không có hộp màu xám vì chúng không được xác định.
+
+00:05:02.000 --> 00:05:06.000
+Đó là, sử dụng một biểu tượng chứ không phải một định nghĩa.
+
+00:05:06.000 --> 00:05:12.000
+Bây giờ, giả sử bạn quyết định kết hợp bar.o và baz.o thành một thư viện tĩnh.
+
+00:05:12.000 --> 00:05:16.000
+Tiếp theo, bạn liên kết hai tệp .o và thư viện tĩnh.
+
+00:05:16.000 --> 00:05:20.000
+Hãy cùng bước qua những gì thực sự xảy ra.
+
+00:05:20.000 --> 00:05:23.000
+Đầu tiên, trình liên kết hoạt động thông qua các tệp theo thứ tự dòng lệnh.
+
+00:05:23.000 --> 00:05:26.000
+Đầu tiên nó tìm thấy là main.o.
+
+00:05:26.000 --> 00:05:31.000
+Nó tải main.o và tìm định nghĩa cho "main", được hiển thị ở đây trong bảng ký hiệu.
+
+00:05:31.000 --> 00:05:36.000
+Nhưng cũng thấy rằng main có một "foo" không xác định.
+
+00:05:36.000 --> 00:05:41.000
+Trình liên kết sau đó phân tích tệp tiếp theo trên dòng lệnh là foo.o.
+
+00:05:41.000 --> 00:05:44.000
+Tệp này thêm một định nghĩa về "foo".
+
+00:05:44.000 --> 00:05:47.000
+Điều đó có nghĩa là foo không còn là không xác định nữa.
+
+00:05:47.000 --> 00:05:52.000
+Nhưng tải foo.o cũng thêm một biểu tượng không xác định mới cho "thanh".
+
+00:05:52.000 --> 00:05:59.000
+Bây giờ tất cả các tệp .o trên dòng lệnh đã được tải, trình liên kết sẽ kiểm tra xem có bất kỳ ký hiệu không xác định nào còn lại không.
+
+00:05:59.000 --> 00:06:10.000
+Trong trường hợp này, "thanh" vẫn không được xác định, vì vậy trình liên kết bắt đầu xem xét các thư viện trên dòng lệnh để xem liệu một thư viện có thỏa mãn biểu tượng "thanh" bị thiếu không xác định đó hay không.
+
+00:06:10.000 --> 00:06:16.000
+Trình liên kết tìm thấy bar.o trong thư viện tĩnh xác định ký hiệu "bar".
+
+00:06:16.000 --> 00:06:20.000
+Vì vậy, trình liên kết tải bar.o ra khỏi kho lưu trữ.
+
+00:06:20.000 --> 00:06:26.000
+Tại thời điểm đó không còn bất kỳ biểu tượng không xác định nào nữa, vì vậy trình liên kết dừng xử lý các thư viện.
+
+00:06:26.000 --> 00:06:33.000
+Trình liên kết chuyển sang giai đoạn tiếp theo và gán địa chỉ cho tất cả các chức năng và dữ liệu sẽ có trong chương trình.
+
+00:06:33.000 --> 00:06:38.000
+Sau đó, nó sao chép tất cả các chức năng và dữ liệu vào tệp đầu ra.
+
+00:06:38.000 --> 00:06:40.000
+Et thì đấy! Bạn có chương trình đầu ra của mình.
+
+00:06:40.000 --> 00:06:46.000
+Lưu ý rằng baz.o đã ở trong thư viện tĩnh nhưng không được tải vào chương trình.
+
+00:06:46.000 --> 00:06:52.000
+Nó không được tải vì cách trình liên kết tải có chọn lọc từ các thư viện tĩnh.
+
+00:06:52.000 --> 00:06:56.000
+Điều này không rõ ràng, nhưng là khía cạnh quan trọng của các thư viện tĩnh.
+
+00:06:56.000 --> 00:07:00.000
+Bây giờ bạn đã hiểu những điều cơ bản của liên kết tĩnh và thư viện tĩnh.
+
+00:07:00.000 --> 00:07:06.000
+Hãy chuyển sang những cải tiến gần đây trên trình liên kết tĩnh của Apple, được gọi là ld64.
+
+00:07:06.000 --> 00:07:10.000
+Theo nhu cầu phổ biến, chúng tôi đã dành một chút thời gian trong năm nay để tối ưu hóa ld64.
+
+00:07:10.000 --> 00:07:12.000
+Và liên kết năm nay là...
+
+00:07:12.000 --> 00:07:15.000
+Nhanh gấp đôi cho nhiều dự án.
+
+00:07:15.000 --> 00:07:16.000
+Chúng ta đã làm điều này như thế nào?
+
+00:07:16.000 --> 00:07:21.000
+Bây giờ chúng tôi sử dụng tốt hơn các lõi trên máy phát triển của bạn.
+
+00:07:21.000 --> 00:07:25.000
+Chúng tôi đã tìm thấy một số lĩnh vực mà chúng tôi có thể sử dụng nhiều lõi để thực hiện công việc liên kết song song.
+
+00:07:25.000 --> 00:07:40.000
+Điều đó bao gồm sao chép nội dung từ đầu vào tệp đầu ra, xây dựng song song các phần khác nhau của LINKEDIT và thay đổi các hàm băm tính toán và đồng thiết kế UUID được thực hiện song song.
+
+00:07:40.000 --> 00:07:44.000
+Tiếp theo, chúng tôi đã cải thiện một số thuật toán.
+
+00:07:44.000 --> 00:07:53.000
+Hóa ra trình tạo exports-trie hoạt động rất tốt nếu bạn chuyển sang sử dụng các đối tượng C++ string_view để biểu diễn các lát chuỗi của mỗi biểu tượng.
+
+00:07:53.000 --> 00:08:04.000
+Chúng tôi cũng đã sử dụng các thư viện tiền điện tử mới nhất tận dụng khả năng tăng tốc phần cứng khi tính toán UUID của tệp nhị phân và chúng tôi cũng đã cải thiện các thuật toán khác.
+
+00:08:04.000 --> 00:08:12.000
+Trong khi làm việc để cải thiện hiệu suất của trình liên kết, chúng tôi nhận thấy các vấn đề về cấu hình trong một số ứng dụng ảnh hưởng đến thời gian liên kết.
+
+00:08:12.000 --> 00:08:17.000
+Tiếp theo, tôi sẽ nói về những gì bạn có thể làm trong dự án của mình để cải thiện thời gian liên kết.
+
+00:08:17.000 --> 00:08:19.000
+Tôi sẽ đề cập đến năm chủ đề.
+
+00:08:19.000 --> 00:08:22.000
+Đầu tiên, liệu bạn có nên sử dụng các thư viện tĩnh hay không.
+
+00:08:22.000 --> 00:08:27.000
+Và sau đó ba lựa chọn ít được biết đến có ảnh hưởng lớn đến thời gian liên kết của bạn.
+
+00:08:27.000 --> 00:08:32.000
+Cuối cùng, tôi sẽ thảo luận về một số hành vi liên kết tĩnh có thể khiến bạn ngạc nhiên.
+
+00:08:32.000 --> 00:08:40.000
+Chủ đề đầu tiên là nếu bạn đang tích cực làm việc trên một tệp nguồn được xây dựng thành một thư viện tĩnh, bạn đã giới thiệu sự chậm lại cho thời gian xây dựng của mình.
+
+00:08:40.000 --> 00:08:47.000
+Bởi vì sau khi tệp được biên dịch, toàn bộ thư viện tĩnh phải được xây dựng lại, bao gồm cả mục lục của nó.
+
+00:08:47.000 --> 00:08:50.000
+Đây chỉ là rất nhiều I/O bổ sung.
+
+00:08:50.000 --> 00:08:53.000
+Các thư viện tĩnh có ý nghĩa nhất đối với mã ổn định.
+
+00:08:53.000 --> 00:08:56.000
+Đó là, mã không được thay đổi tích cực.
+
+00:08:56.000 --> 00:09:03.000
+Bạn nên cân nhắc việc di chuyển mã đang được phát triển tích cực ra khỏi thư viện tĩnh để giảm thời gian xây dựng.
+
+00:09:03.000 --> 00:09:06.000
+Trước đó chúng tôi đã cho thấy việc tải có chọn lọc từ kho lưu trữ.
+
+00:09:06.000 --> 00:09:10.000
+Nhưng một nhược điểm của điều đó là nó làm chậm trình liên kết.
+
+00:09:10.000 --> 00:09:21.000
+Đó là bởi vì để làm cho các bản dựng có thể tái tạo và tuân theo ngữ nghĩa thư viện tĩnh truyền thống, trình liên kết phải xử lý các thư viện tĩnh theo thứ tự nối tiếp, cố định.
+
+00:09:21.000 --> 00:09:26.000
+Điều đó có nghĩa là một số chiến thắng song song của ld64 không thể được sử dụng với các thư viện tĩnh.
+
+00:09:26.000 --> 00:09:33.000
+Nhưng nếu bạn không thực sự cần hành vi lịch sử này, bạn có thể sử dụng tùy chọn liên kết để tăng tốc độ xây dựng của mình.
+
+00:09:33.000 --> 00:09:37.000
+Tùy chọn liên kết đó được gọi là "tất cả tải".
+
+00:09:37.000 --> 00:09:42.000
+Nó yêu cầu trình liên kết tải một cách mù quáng tất cả các tệp .o từ tất cả các thư viện tĩnh.
+
+00:09:42.000 --> 00:09:49.000
+Điều này rất hữu ích nếu ứng dụng của bạn sẽ tải có chọn lọc hầu hết nội dung từ tất cả các thư viện tĩnh.
+
+00:09:49.000 --> 00:09:55.000
+Sử dụng -all_load sẽ cho phép trình liên kết phân tích cú pháp song song tất cả các thư viện tĩnh và nội dung của chúng.
+
+00:09:55.000 --> 00:10:10.000
+Nhưng nếu ứng dụng của bạn thực hiện các thủ thuật thông minh trong đó nó có nhiều thư viện tĩnh thực hiện cùng một biểu tượng và phụ thuộc vào thứ tự dòng lệnh của các thư viện tĩnh để thúc đẩy việc triển khai nào được sử dụng, thì tùy chọn này không dành cho bạn.
+
+00:10:10.000 --> 00:10:18.000
+Bởi vì trình liên kết sẽ tải tất cả các triển khai và không nhất thiết phải nhận được ngữ nghĩa biểu tượng được tìm thấy trong chế độ liên kết tĩnh thông thường.
+
+00:10:18.000 --> 00:10:26.000
+Nhược điểm khác của -all_load là nó có thể làm cho chương trình của bạn lớn hơn vì mã "không sử dụng" hiện đang được thêm vào.
+
+00:10:26.000 --> 00:10:31.000
+Để bù đắp cho điều đó, bạn có thể sử dụng tùy chọn liên kết -dead_strip.
+
+00:10:31.000 --> 00:10:36.000
+Tùy chọn đó sẽ khiến trình liên kết xóa mã và dữ liệu không thể truy cập được.
+
+00:10:36.000 --> 00:10:42.000
+Bây giờ, thuật toán tước chết rất nhanh và thường tự trả tiền bằng cách giảm kích thước của tệp đầu ra.
+
+00:10:42.000 --> 00:10:54.000
+Nhưng nếu bạn quan tâm đến việc sử dụng -all_load và -dead_strip, bạn nên tính thời gian cho trình liên kết có và không có các tùy chọn đó để xem liệu đó có phải là chiến thắng cho trường hợp cụ thể của bạn hay không.
+
+00:10:54.000 --> 00:10:58.000
+Tùy chọn liên kết tiếp theo là -no_exported_symbols.
+
+00:10:58.000 --> 00:11:00.000
+Một chút nền tảng ở đây.
+
+00:11:00.000 --> 00:11:10.000
+Một phần của phân đoạn LINKEDIT mà trình liên kết tạo ra là bộ ba xuất khẩu, là cây tiền tố mã hóa tất cả các tên, địa chỉ và cờ ký hiệu đã xuất.
+
+00:11:10.000 --> 00:11:18.000
+Trong khi tất cả các dylibs cần phải có các ký hiệu đã xuất, một ứng dụng chính nhị phân thường không cần bất kỳ ký hiệu đã xuất nào.
+
+00:11:18.000 --> 00:11:23.000
+Đó là, thường không có gì tìm kiếm các biểu tượng trong tệp thực thi chính.
+
+00:11:23.000 --> 00:11:33.000
+Nếu đúng như vậy, bạn có thể sử dụng -no_exported_symbols cho mục tiêu ứng dụng để bỏ qua việc tạo cấu trúc dữ liệu trie trong LINKEDIT, điều này sẽ cải thiện thời gian liên kết.
+
+00:11:33.000 --> 00:11:51.000
+Nhưng nếu ứng dụng của bạn tải các plugin liên kết trở lại tệp thực thi chính hoặc bạn sử dụng xctest với ứng dụng của mình làm môi trường máy chủ để chạy các gói xctest, ứng dụng của bạn phải có tất cả các bản xuất, có nghĩa là bạn không thể sử dụng -no_exported_symbols cho cấu hình đó.
+
+00:11:51.000 --> 00:11:55.000
+Bây giờ, chỉ có ý nghĩa khi cố gắng ngăn chặn việc xuất khẩu trie nếu nó lớn.
+
+00:11:55.000 --> 00:12:00.000
+Bạn có thể chạy lệnh dyld_info được hiển thị ở đây để đếm số lượng ký hiệu đã xuất.
+
+00:12:00.000 --> 00:12:04.000
+Một ứng dụng lớn mà chúng tôi thấy có khoảng một triệu biểu tượng được xuất.
+
+00:12:04.000 --> 00:12:09.000
+Và trình liên kết mất hai đến ba giây để xây dựng trie xuất khẩu cho nhiều biểu tượng đó.
+
+00:12:09.000 --> 00:12:14.000
+Vì vậy, việc thêm -no_exported_symbols đã giảm thời gian liên kết của ứng dụng đó từ hai đến ba giây.
+
+00:12:14.000 --> 00:12:18.000
+Tôi sẽ cho bạn biết thêm về công cụ dyld_info sau trong buổi nói chuyện này.
+
+00:12:18.000 --> 00:12:23.000
+Lựa chọn tiếp theo là: -no_deduplicate.
+
+00:12:23.000 --> 00:12:29.000
+Vài năm trước, chúng tôi đã thêm một đường chuyền mới vào trình liên kết để hợp nhất các chức năng có cùng hướng dẫn nhưng tên khác nhau.
+
+00:12:29.000 --> 00:12:33.000
+Hóa ra, với việc mở rộng mẫu C++, bạn có thể nhận được rất nhiều trong số đó.
+
+00:12:33.000 --> 00:12:36.000
+Nhưng đây là một thuật toán đắt tiền.
+
+00:12:36.000 --> 00:12:42.000
+Trình liên kết phải băm đệ quy các hướng dẫn của mọi hàm, để giúp tìm kiếm các bản sao.
+
+00:12:42.000 --> 00:12:48.000
+Do chi phí, chúng tôi đã giới hạn thuật toán nên trình liên kết chỉ xem xét các ký hiệu độ phân giải yếu.
+
+00:12:48.000 --> 00:12:54.000
+Đó là những thứ mà trình biên dịch C++ phát ra cho các bản mở rộng mẫu không được nội tuyến.
+
+00:12:54.000 --> 00:13:01.000
+Bây giờ, de-dup là một tối ưu hóa kích thước và các bản dựng gỡ lỗi là về các bản dựng nhanh chứ không phải về kích thước.
+
+00:13:01.000 --> 00:13:11.000
+Vì vậy, theo mặc định, Xcode vô hiệu hóa tối ưu hóa de-dup bằng cách chuyển -no_deduplicate đến trình liên kết cho các cấu hình Gỡ lỗi.
+
+00:13:11.000 --> 00:13:19.000
+Và clang cũng sẽ chuyển tùy chọn no-dedup cho trình liên kết nếu bạn chạy dòng liên kết clang với -O0.
+
+00:13:19.000 --> 00:13:36.000
+Tóm lại, nếu bạn sử dụng C++ và có bản dựng tùy chỉnh, nghĩa là bạn sử dụng cấu hình không chuẩn trong Xcode hoặc bạn sử dụng một số hệ thống xây dựng khác, bạn nên đảm bảo các bản dựng gỡ lỗi của mình thêm -no_deduplicate để cải thiện thời gian liên kết.
+
+00:13:36.000 --> 00:13:40.000
+Các tùy chọn mà tôi vừa nói đến là các đối số dòng lệnh thực tế cho ld.
+
+00:13:40.000 --> 00:13:44.000
+Khi sử dụng Xcode, bạn cần thay đổi cài đặt xây dựng sản phẩm của mình.
+
+00:13:44.000 --> 00:13:49.000
+Bên trong cài đặt xây dựng, hãy tìm "Cờ liên kết khác".
+
+00:13:49.000 --> 00:13:52.000
+Đây là những gì bạn sẽ đặt cho -all_load.
+
+00:13:52.000 --> 00:13:56.000
+Và lưu ý rằng tùy chọn "Xuất mã chết" cũng ở đây.
+
+00:13:56.000 --> 00:13:58.000
+Và có -no_exported_symbols.
+
+00:13:58.000 --> 00:14:03.000
+Và đây là -no_deduplicate.
+
+00:14:03.000 --> 00:14:07.000
+Bây giờ hãy nói về một số điều bất ngờ mà bạn có thể gặp phải khi sử dụng các thư viện tĩnh.
+
+00:14:07.000 --> 00:14:16.000
+Điều ngạc nhiên đầu tiên là khi bạn có mã nguồn được xây dựng thành một thư viện tĩnh mà ứng dụng của bạn liên kết và mã đó không kết thúc trong ứng dụng cuối cùng.
+
+00:14:16.000 --> 00:14:22.000
+Ví dụ, bạn đã thêm "thuộc tính được sử dụng" vào một số hàm hoặc bạn có danh mục Objective-C.
+
+00:14:22.000 --> 00:14:35.000
+Do tải có chọn lọc mà trình liên kết thực hiện, nếu các tệp đối tượng đó trong thư viện tĩnh cũng không xác định một số biểu tượng cần thiết trong liên kết, các tệp đối tượng đó sẽ không được trình liên kết tải.
+
+00:14:35.000 --> 00:14:40.000
+Một tương tác thú vị khác là các thư viện tĩnh và thoát chết.
+
+00:14:40.000 --> 00:14:44.000
+Hóa ra việc tước chết có thể che giấu nhiều vấn đề thư viện tĩnh.
+
+00:14:44.000 --> 00:14:50.000
+Thông thường, các biểu tượng bị thiếu hoặc các biểu tượng trùng lặp sẽ khiến trình liên kết bị lỗi.
+
+00:14:50.000 --> 00:15:05.000
+Nhưng việc tước chết khiến trình liên kết chạy đường chuyền khả năng truy cập qua tất cả mã và dữ liệu, bắt đầu từ chính và nếu hóa ra biểu tượng bị thiếu là từ mã không thể truy cập, trình liên kết sẽ ngăn chặn lỗi biểu tượng bị thiếu.
+
+00:15:05.000 --> 00:15:13.000
+Tương tự, nếu có các ký hiệu trùng lặp từ các thư viện tĩnh, trình liên kết sẽ chọn ký hiệu đầu tiên chứ không phải lỗi.
+
+00:15:13.000 --> 00:15:20.000
+Điều ngạc nhiên lớn cuối cùng với việc sử dụng các thư viện tĩnh, là khi một thư viện tĩnh được tích hợp vào nhiều khuôn khổ.
+
+00:15:20.000 --> 00:15:32.000
+Mỗi khuôn khổ đó chạy tốt một cách cô lập, nhưng sau đó tại một số thời điểm, một số ứng dụng sử dụng cả hai khuôn khổ và bùng nổ, bạn gặp phải các vấn đề kỳ lạ về thời gian chạy vì nhiều định nghĩa.
+
+00:15:32.000 --> 00:15:39.000
+Trường hợp phổ biến nhất mà bạn sẽ thấy là cảnh báo thời gian chạy Objective-C về nhiều trường hợp của cùng một tên lớp.
+
+00:15:39.000 --> 00:15:45.000
+Nhìn chung, các thư viện tĩnh rất mạnh, nhưng bạn cần hiểu chúng để tránh những cạm bẫy.
+
+00:15:45.000 --> 00:15:47.000
+Điều đó kết thúc liên kết tĩnh.
+
+00:15:47.000 --> 00:15:51.000
+Bây giờ, hãy chuyển sang liên kết động.
+
+00:15:51.000 --> 00:15:56.000
+Đầu tiên, hãy xem sơ đồ ban đầu để liên kết tĩnh với thư viện tĩnh.
+
+00:15:56.000 --> 00:16:02.000
+Bây giờ hãy nghĩ về cách điều này sẽ mở rộng theo thời gian, vì ngày càng có nhiều mã nguồn.
+
+00:16:02.000 --> 00:16:09.000
+Rõ ràng là khi ngày càng có nhiều thư viện được cung cấp, chương trình cuối cùng có thể phát triển về quy mô.
+
+00:16:09.000 --> 00:16:14.000
+Điều đó có nghĩa là thời gian liên kết tĩnh để xây dựng chương trình đó cũng sẽ tăng theo thời gian.
+
+00:16:14.000 --> 00:16:18.000
+Bây giờ hãy xem những thư viện này được tạo ra như thế nào.
+
+00:16:18.000 --> 00:16:21.000
+Điều gì sẽ xảy ra nếu chúng ta thực hiện chuyển đổi này?
+
+00:16:21.000 --> 00:16:27.000
+Chúng tôi thay đổi 'ar' thành 'ld' và thư viện đầu ra bây giờ là một tệp nhị phân thực thi.
+
+00:16:27.000 --> 00:16:31.000
+Đây là sự khởi đầu của các thư viện năng động vào những năm 90.
+
+00:16:31.000 --> 00:16:34.000
+Như một cách viết tắt, chúng tôi gọi các thư viện động là "dylibs".
+
+00:16:34.000 --> 00:16:38.000
+Trên các nền tảng khác, chúng được gọi là DSO hoặc DLL.
+
+00:16:38.000 --> 00:16:41.000
+Vậy chính xác thì chuyện gì đang xảy ra ở đây vậy?
+
+00:16:41.000 --> 00:16:44.000
+Và điều đó giúp khả năng mở rộng như thế nào?
+
+00:16:44.000 --> 00:16:49.000
+Điều quan trọng là trình liên kết tĩnh xử lý liên kết với một thư viện động khác nhau.
+
+00:16:49.000 --> 00:16:56.000
+Thay vì sao chép mã ra khỏi thư viện vào chương trình cuối cùng, trình liên kết chỉ ghi lại một loại lời hứa.
+
+00:16:56.000 --> 00:17:03.000
+Đó là, nó ghi lại tên biểu tượng được sử dụng từ thư viện động và đường dẫn của thư viện sẽ là gì trong thời gian chạy.
+
+00:17:03.000 --> 00:17:05.000
+Đây là một lợi thế như thế nào?
+
+00:17:05.000 --> 00:17:08.000
+Nó có nghĩa là kích thước tệp chương trình của bạn nằm dưới sự kiểm soát của bạn.
+
+00:17:08.000 --> 00:17:13.000
+Nó chỉ chứa mã của bạn và một danh sách các thư viện động mà nó cần trong thời gian chạy.
+
+00:17:13.000 --> 00:17:16.000
+Bạn không còn nhận được các bản sao mã thư viện trong chương trình của mình nữa.
+
+00:17:16.000 --> 00:17:24.000
+Thời gian liên kết tĩnh của chương trình của bạn hiện tỷ lệ thuận với kích thước mã của bạn và không phụ thuộc vào số lượng dylibs bạn liên kết.
+
+00:17:24.000 --> 00:17:27.000
+Ngoài ra, hệ thống Bộ nhớ Ảo giờ đây có thể tỏa sáng.
+
+00:17:27.000 --> 00:17:37.000
+Khi nó thấy cùng một thư viện động được sử dụng trong nhiều quy trình, hệ thống Bộ nhớ ảo sẽ sử dụng lại cùng một trang RAM vật lý cho dylib đó trong tất cả các quy trình sử dụng dylib đó.
+
+00:17:37.000 --> 00:17:42.000
+Tôi đã chỉ cho bạn cách các thư viện động bắt đầu và chúng giải quyết vấn đề gì.
+
+00:17:42.000 --> 00:17:46.000
+Nhưng "chi phí" cho những "lợi ích" đó là bao nhiêu?
+
+00:17:46.000 --> 00:17:51.000
+Đầu tiên, một lợi ích của việc sử dụng các thư viện động là chúng tôi đã tăng tốc thời gian xây dựng.
+
+00:17:51.000 --> 00:17:54.000
+Nhưng chi phí là việc khởi chạy ứng dụng của bạn bây giờ chậm hơn.
+
+00:17:54.000 --> 00:17:59.000
+Điều này là do khởi chạy không còn chỉ tải một tệp chương trình nữa.
+
+00:17:59.000 --> 00:18:03.000
+Bây giờ tất cả các dylibs cũng cần được tải và kết nối với nhau.
+
+00:18:03.000 --> 00:18:08.000
+Nói cách khác, bạn vừa hoãn một số chi phí liên kết từ thời gian xây dựng đến thời gian ra mắt.
+
+00:18:08.000 --> 00:18:13.000
+Thứ hai, một chương trình dựa trên thư viện động sẽ có nhiều trang bẩn hơn.
+
+00:18:13.000 --> 00:18:22.000
+Trong trường hợp thư viện tĩnh, trình liên kết sẽ đồng định vị tất cả các toàn cục từ tất cả các thư viện tĩnh vào cùng một trang DỮ LIỆU trong tệp thực thi chính.
+
+00:18:22.000 --> 00:18:26.000
+Nhưng với dylibs, mỗi thư viện có trang DỮ LIỆU của nó.
+
+00:18:26.000 --> 00:18:33.000
+Cuối cùng, một chi phí khác của liên kết động là nó giới thiệu nhu cầu về một cái gì đó mới: một liên kết động!
+
+00:18:33.000 --> 00:18:37.000
+Bạn có nhớ lời hứa đó đã được ghi lại trong tệp thực thi tại thời điểm xây dựng không?
+
+00:18:37.000 --> 00:18:44.000
+Bây giờ chúng ta cần một cái gì đó trong thời gian chạy sẽ thực hiện lời hứa đó để tải thư viện của chúng ta.
+
+00:18:44.000 --> 00:18:48.000
+Đó là mục đích của dyld, trình liên kết động.
+
+00:18:48.000 --> 00:18:52.000
+Hãy đi sâu vào cách liên kết động hoạt động trong thời gian chạy.
+
+00:18:52.000 --> 00:18:59.000
+Một tệp nhị phân thực thi được chia thành các phân đoạn, thường ít nhất là TEXT, DATA và LINKEDIT.
+
+00:18:59.000 --> 00:19:03.000
+Các phân đoạn luôn là bội số của kích thước trang cho hệ điều hành.
+
+00:19:03.000 --> 00:19:05.000
+Mỗi phân đoạn có một sự cho phép khác nhau.
+
+00:19:05.000 --> 00:19:09.000
+Ví dụ, phân đoạn TEXT có quyền "thực thi".
+
+00:19:09.000 --> 00:19:14.000
+Điều đó có nghĩa là CPU có thể coi các byte trên trang là hướng dẫn mã máy.
+
+00:19:14.000 --> 00:19:22.000
+Trong thời gian chạy, dyld phải mmap() các tệp thực thi vào bộ nhớ với quyền của từng phân đoạn, như được hiển thị ở đây.
+
+00:19:22.000 --> 00:19:33.000
+Bởi vì các phân đoạn có kích thước trang và căn chỉnh trang, điều đó giúp hệ thống bộ nhớ ảo dễ dàng thiết lập chương trình hoặc tệp dylib làm kho lưu trữ sao lưu cho phạm vi VM.
+
+00:19:33.000 --> 00:19:48.000
+Điều đó có nghĩa là không có gì được tải vào RAM cho đến khi có một số quyền truy cập bộ nhớ trên các trang đó, điều này gây ra lỗi trang, khiến hệ thống VM đọc phạm vi con thích hợp của tệp và điền vào trang RAM cần thiết với nội dung của nó.
+
+00:19:48.000 --> 00:19:50.000
+Nhưng chỉ lập bản đồ là không đủ.
+
+00:19:50.000 --> 00:19:55.000
+Bằng cách nào đó chương trình cần được "dây nối" hoặc liên kết với dylib.
+
+00:19:55.000 --> 00:19:58.000
+Đối với điều đó, chúng tôi có một khái niệm gọi là "sửa chữa".
+
+00:19:58.000 --> 00:20:04.000
+Trong sơ đồ, chúng ta thấy chương trình có các con trỏ được thiết lập điểm đó đến các phần của dylib mà nó sử dụng.
+
+00:20:04.000 --> 00:20:07.000
+Hãy đi sâu vào việc sửa chữa là gì.
+
+00:20:07.000 --> 00:20:10.000
+Đây là bạn của chúng tôi, tập tin mach-o.
+
+00:20:10.000 --> 00:20:11.000
+Bây giờ, TEXT là bất biến.
+
+00:20:11.000 --> 00:20:15.000
+Và trên thực tế, nó phải nằm trong một hệ thống dựa trên việc ký mã.
+
+00:20:15.000 --> 00:20:18.000
+Vậy nếu có một hàm gọi malloc() thì sao?
+
+00:20:18.000 --> 00:20:20.000
+Điều đó có thể hoạt động như thế nào?
+
+00:20:20.000 --> 00:20:24.000
+Không thể biết địa chỉ tương đối của _malloc khi nào chương trình được xây dựng.
+
+00:20:24.000 --> 00:20:31.000
+Chà, điều xảy ra là, trình liên kết tĩnh thấy rằng malloc đang ở trong trạng thái dylib và đã chuyển đổi trang web cuộc gọi.
+
+00:20:31.000 --> 00:20:45.000
+Trang web cuộc gọi trở thành cuộc gọi đến sơ khai được tổng hợp bởi trình liên kết trong cùng một phân đoạn VĂN BẢN, vì vậy địa chỉ tương đối được biết tại thời điểm xây dựng, có nghĩa là hướng dẫn BL có thể được hình thành chính xác.
+
+00:20:45.000 --> 00:20:51.000
+Điều đó giúp ích như thế nào khi sơ khai tải một con trỏ từ DỮ LIỆU và nhảy đến vị trí đó.
+
+00:20:51.000 --> 00:20:57.000
+Bây giờ, không cần thay đổi nào đối với VĂN BẢN trong thời gian chạy - chỉ cần DỮ LIỆU được thay đổi bởi dyld.
+
+00:20:57.000 --> 00:21:07.000
+Trên thực tế, bí quyết để hiểu dyld là tất cả các sửa chữa được thực hiện bởi dyld chỉ là dyld đặt một con trỏ trong DỮ LIỆU.
+
+00:21:07.000 --> 00:21:10.000
+Vì vậy, hãy tìm hiểu thêm về các sửa chữa mà dyld thực hiện.
+
+00:21:10.000 --> 00:21:16.000
+Đâu đó trong LINKEDIT là thông tin dyld cần để điều khiển những gì sửa chữa được thực hiện.
+
+00:21:16.000 --> 00:21:19.000
+Có hai loại sửa chữa.
+
+00:21:19.000 --> 00:21:25.000
+Đầu tiên được gọi là rebases, và chúng là khi một dylib hoặc ứng dụng có một con trỏ trỏ vào bên trong chính nó.
+
+00:21:25.000 --> 00:21:33.000
+Bây giờ có một tính năng bảo mật được gọi là ASLR, khiến dyld tải dylibs tại các địa chỉ ngẫu nhiên.
+
+00:21:33.000 --> 00:21:38.000
+Và điều đó có nghĩa là những con trỏ bên trong đó không thể chỉ được đặt tại thời điểm xây dựng.
+
+00:21:38.000 --> 00:21:44.000
+Thay vào đó, dyld cần điều chỉnh hoặc "tái căn cứ" những con trỏ đó khi khởi chạy.
+
+00:21:44.000 --> 00:21:51.000
+Trên đĩa, những con trỏ đó chứa địa chỉ đích của chúng, nếu dylib được tải ở địa chỉ bằng không.
+
+00:21:51.000 --> 00:21:56.000
+Bằng cách đó, tất cả những gì LINKEDIT cần ghi lại là vị trí của mỗi vị trí rebase.
+
+00:21:56.000 --> 00:22:06.000
+Dyld sau đó chỉ có thể thêm địa chỉ tải thực tế của dylib vào từng vị trí rebase để sửa chúng một cách chính xác.
+
+00:22:06.000 --> 00:22:08.000
+Loại sửa chữa thứ hai là ràng buộc.
+
+00:22:08.000 --> 00:22:11.000
+Ràng buộc là tài liệu tham khảo mang tính biểu tượng.
+
+00:22:11.000 --> 00:22:15.000
+Đó là, mục tiêu của họ là một tên biểu tượng chứ không phải một con số.
+
+00:22:15.000 --> 00:22:18.000
+Ví dụ, một con trỏ đến hàm "malloc".
+
+00:22:18.000 --> 00:22:31.000
+Chuỗi "_malloc" thực sự được lưu trữ trong LINKEDIT và dyld sử dụng chuỗi đó để tra cứu địa chỉ thực tế của malloc trong bộ ba xuất của libSystem.dylib.
+
+00:22:31.000 --> 00:22:37.000
+Sau đó, dyld lưu trữ giá trị đó ở vị trí được chỉ định bởi ràng buộc.
+
+00:22:37.000 --> 00:22:44.000
+Năm nay chúng tôi công bố một cách mới để mã hóa các bản sửa lỗi, mà chúng tôi gọi là "các bản sửa lỗi theo chuỗi".
+
+00:22:44.000 --> 00:22:47.000
+Ưu điểm đầu tiên là làm cho LINKEDIT nhỏ hơn.
+
+00:22:47.000 --> 00:23:00.000
+LINKEDIT nhỏ hơn vì thay vì lưu trữ tất cả các vị trí sửa chữa, định dạng mới chỉ lưu trữ vị trí cố định đầu tiên trong mỗi trang DỮ LIỆU, cũng như danh sách các ký hiệu đã nhập.
+
+00:23:00.000 --> 00:23:08.000
+Sau đó, phần còn lại của thông tin được mã hóa trong chính phân đoạn DỮ LIỆU, ở nơi mà các bản sửa lỗi cuối cùng sẽ được thiết lập.
+
+00:23:08.000 --> 00:23:16.000
+Định dạng mới này được đặt tên là, các bản sửa lỗi theo chuỗi, từ thực tế là các vị trí sửa chữa được "chuỗi" lại với nhau.
+
+00:23:16.000 --> 00:23:28.000
+LINKEDIT chỉ cho biết lần sửa lỗi đầu tiên ở đâu, sau đó ở vị trí con trỏ 64-bit trong DATA, một số bit chứa độ lệch cho vị trí sửa chữa tiếp theo.
+
+00:23:28.000 --> 00:23:33.000
+Cũng được đóng gói trong đó có một chút cho biết liệu việc sửa chữa là một ràng buộc hay một rebase.
+
+00:23:33.000 --> 00:23:37.000
+Nếu nó là một liên kết, các bit còn lại là chỉ mục của biểu tượng.
+
+00:23:37.000 --> 00:23:44.000
+Nếu đó là một rebase, phần còn lại của các bit là độ lệch của mục tiêu trong hình ảnh.
+
+00:23:44.000 --> 00:23:49.000
+Cuối cùng, hỗ trợ thời gian chạy cho các bản sửa lỗi theo chuỗi đã tồn tại trong iOS 13.4 trở lên.
+
+00:23:49.000 --> 00:23:57.000
+Điều đó có nghĩa là bạn có thể bắt đầu sử dụng định dạng mới này ngay hôm nay, miễn là mục tiêu triển khai của bạn là iOS 13.4 trở lên.
+
+00:23:57.000 --> 00:24:02.000
+Và định dạng sửa chữa theo chuỗi cho phép một tính năng hệ điều hành mới mà chúng tôi sẽ công bố trong năm nay.
+
+00:24:02.000 --> 00:24:08.000
+Nhưng để hiểu điều đó, tôi cần nói về cách hoạt động của dyld.
+
+00:24:08.000 --> 00:24:11.000
+Dyld bắt đầu với tệp thực thi chính - nói ứng dụng của bạn.
+
+00:24:11.000 --> 00:24:18.000
+Phân tích cú pháp mach-o đó để tìm các dylibs phụ thuộc, nghĩa là, những gì đã hứa với các thư viện động mà nó cần.
+
+00:24:18.000 --> 00:24:21.000
+Nó tìm thấy những dylibs và mmap()s chúng.
+
+00:24:21.000 --> 00:24:30.000
+Sau đó, đối với mỗi thứ đó, nó phân tích cú pháp cấu trúc mach-o của chúng, tải bất kỳ dylibs bổ sung nào khi cần thiết.
+
+00:24:30.000 --> 00:24:37.000
+Khi mọi thứ đã được tải, dyld sẽ tra cứu tất cả các ký hiệu ràng buộc cần thiết và sử dụng các địa chỉ đó khi thực hiện sửa chữa.
+
+00:24:37.000 --> 00:24:44.000
+Cuối cùng, một khi tất cả các bản sửa lỗi được thực hiện, dyld sẽ chạy trình khởi tạo, từ dưới lên.
+
+00:24:44.000 --> 00:24:47.000
+Năm năm trước chúng tôi đã công bố một công nghệ dyld mới.
+
+00:24:47.000 --> 00:24:53.000
+Chúng tôi nhận ra các bước màu xanh lá cây ở trên giống nhau mỗi khi ứng dụng của bạn được khởi chạy.
+
+00:24:53.000 --> 00:25:02.000
+Vì vậy, miễn là chương trình và dylibs không thay đổi, tất cả các bước màu xanh lá cây có thể được lưu vào bộ nhớ cache trong lần khởi chạy đầu tiên và được sử dụng lại trong các lần khởi chạy tiếp theo.
+
+00:25:02.000 --> 00:25:07.000
+Năm nay chúng tôi công bố những cải tiến hiệu suất dyld bổ sung.
+
+00:25:07.000 --> 00:25:12.000
+Chúng tôi đang công bố một tính năng dyld mới được gọi là "liên kết trang trong".
+
+00:25:12.000 --> 00:25:23.000
+Thay vì dyld áp dụng tất cả các bản sửa lỗi cho tất cả các dylibs khi khởi chạy, hạt nhân hiện có thể áp dụng các bản sửa lỗi cho các trang DỮ LIỆU của bạn một cách lười biếng, trên trang vào.
+
+00:25:23.000 --> 00:25:31.000
+Luôn luôn là trường hợp lần đầu tiên sử dụng một số địa chỉ trong một số trang của vùng mmap()ed đã kích hoạt hạt nhân đọc trong trang đó.
+
+00:25:31.000 --> 00:25:38.000
+Nhưng bây giờ, nếu đó là một trang DATA, hạt nhân cũng sẽ áp dụng sửa chữa mà trang đó cần.
+
+00:25:38.000 --> 00:25:45.000
+Chúng tôi đã có một trường hợp đặc biệt về liên kết trang trong hơn một thập kỷ cho các dylibs hệ điều hành trong bộ nhớ cache được chia sẻ dyld.
+
+00:25:45.000 --> 00:25:49.000
+Năm nay chúng tôi đã khái quát hóa nó và cung cấp nó cho mọi người.
+
+00:25:49.000 --> 00:25:53.000
+Cơ chế này làm giảm bộ nhớ bẩn và thời gian khởi chạy.
+
+00:25:53.000 --> 00:26:02.000
+Nó cũng có nghĩa là các trang DATA_CONST sạch sẽ, có nghĩa là chúng có thể bị đuổi và tạo lại giống như các trang TEXT, giúp giảm áp lực bộ nhớ.
+
+00:26:02.000 --> 00:26:09.000
+Tính năng liên kết trang này sẽ có trong bản phát hành sắp tới của iOS, macOS và watchOS.
+
+00:26:09.000 --> 00:26:13.000
+Nhưng liên kết trang trong chỉ hoạt động cho các tệp nhị phân được xây dựng với các bản sửa lỗi theo chuỗi.
+
+00:26:13.000 --> 00:26:23.000
+Đó là bởi vì với các bản sửa lỗi được xâu chuỗi, hầu hết thông tin sửa chữa sẽ được mã hóa trong phân đoạn DỮ LIỆU trên đĩa, có nghĩa là nó có sẵn cho hạt nhân trong quá trình vào trang.
+
+00:26:23.000 --> 00:26:28.000
+Một lưu ý là dyld chỉ sử dụng cơ chế này trong quá trình phóng.
+
+00:26:28.000 --> 00:26:32.000
+Bất kỳ dylibs dlopen()ed nào sau này không nhận được liên kết trang trong.
+
+00:26:32.000 --> 00:26:38.000
+Trong trường hợp đó, dyld đi theo con đường truyền thống và áp dụng các sửa chữa trong cuộc gọi dốc.
+
+00:26:38.000 --> 00:26:43.000
+Với ý nghĩ đó, chúng ta hãy quay lại sơ đồ quy trình làm việc dyld.
+
+00:26:43.000 --> 00:26:52.000
+Trong năm năm nay, dyld đã tối ưu hóa các bước trên bằng màu xanh lá cây bằng cách lưu vào bộ nhớ đệm hoạt động khi ra mắt lần đầu tiên và sử dụng lại nó khi ra mắt sau.
+
+00:26:52.000 --> 00:27:03.000
+Bây giờ, dyld có thể tối ưu hóa bước "áp dụng sửa chữa" bằng cách không thực sự thực hiện sửa chữa và để hạt nhân thực hiện chúng một cách lười biếng trên trang.
+
+00:27:03.000 --> 00:27:11.000
+Bây giờ bạn đã thấy có gì mới trong dyld, hãy nói về các phương pháp hay nhất để liên kết động.
+
+00:27:11.000 --> 00:27:14.000
+Bạn có thể làm gì để giúp cải thiện hiệu suất liên kết động?
+
+00:27:14.000 --> 00:27:20.000
+Như tôi vừa chỉ ra, dyld đã tăng tốc hầu hết các bước trong liên kết động.
+
+00:27:20.000 --> 00:27:24.000
+Một điều bạn có thể kiểm soát là bạn có bao nhiêu dylibs.
+
+00:27:24.000 --> 00:27:28.000
+Càng có nhiều dylibs, dyld càng phải làm nhiều công việc để tải chúng.
+
+00:27:28.000 --> 00:27:33.000
+Ngược lại, càng ít dylibs, dyld công việc càng phải thực hiện ít hơn.
+
+00:27:33.000 --> 00:27:39.000
+Điều tiếp theo bạn có thể xem xét là trình khởi tạo tĩnh, đó là mã luôn chạy, chính trước.
+
+00:27:39.000 --> 00:27:44.000
+Ví dụ, không thực hiện I/O hoặc kết nối mạng trong trình khởi tạo tĩnh.
+
+00:27:44.000 --> 00:27:49.000
+Bất cứ điều gì có thể mất hơn vài mili giây không bao giờ nên được thực hiện trong trình khởi tạo.
+
+00:27:49.000 --> 00:27:54.000
+Như chúng ta đã biết, thế giới đang trở nên phức tạp hơn và người dùng của bạn muốn có nhiều chức năng hơn.
+
+00:27:54.000 --> 00:27:59.000
+Vì vậy, thật hợp lý khi sử dụng các thư viện để quản lý tất cả các chức năng đó.
+
+00:27:59.000 --> 00:28:04.000
+Mục tiêu của bạn là tìm ra điểm ngọt ngào giữa các thư viện động và tĩnh.
+
+00:28:04.000 --> 00:28:09.000
+Quá nhiều thư viện tĩnh và chu kỳ xây dựng/gỡ lỗi lặp đi lặp lại của bạn bị chậm lại.
+
+00:28:09.000 --> 00:28:15.000
+Mặt khác, quá nhiều thư viện động và thời gian khởi chạy của bạn chậm và khách hàng của bạn nhận thấy.
+
+00:28:15.000 --> 00:28:28.000
+Nhưng chúng tôi đã tăng tốc ld64 trong năm nay, vì vậy điểm ngọt ngào của bạn có thể đã thay đổi, vì bây giờ bạn có thể sử dụng nhiều thư viện tĩnh hơn hoặc nhiều tệp nguồn hơn trực tiếp trong ứng dụng của mình và vẫn được xây dựng trong cùng một khoảng thời gian.
+
+00:28:28.000 --> 00:28:39.000
+Cuối cùng, nếu nó hoạt động cho cơ sở đã cài đặt của bạn, việc cập nhật lên mục tiêu triển khai mới hơn có thể cho phép các công cụ tạo các bản sửa lỗi theo chuỗi, làm cho các tệp nhị phân của bạn nhỏ hơn và cải thiện thời gian khởi chạy.
+
+00:28:39.000 --> 00:28:47.000
+Điều cuối cùng tôi muốn tất cả các bạn biết là hai công cụ mới sẽ giúp bạn nhìn vào bên trong quá trình liên kết.
+
+00:28:47.000 --> 00:28:49.000
+Công cụ đầu tiên là dyld_usage.
+
+00:28:49.000 --> 00:28:53.000
+Bạn có thể sử dụng nó để theo dõi những gì dyld đang làm.
+
+00:28:53.000 --> 00:29:03.000
+Công cụ này chỉ có trên macOS, nhưng bạn có thể sử dụng nó để theo dõi ứng dụng của mình khi khởi chạy trong trình giả lập hoặc nếu ứng dụng của bạn được xây dựng cho Mac Catalyst.
+
+00:29:03.000 --> 00:29:08.000
+Đây là một ví dụ chạy với TextEdit trên macOS.
+
+00:29:08.000 --> 00:29:18.000
+Như bạn có thể thấy qua một vài dòng trên cùng, việc ra mắt tổng cộng mất 15ms, nhưng chỉ có 1ms để sửa chữa, nhờ vào liên kết trang.
+
+00:29:18.000 --> 00:29:23.000
+Phần lớn thời gian hiện được dành cho các trình khởi tạo tĩnh.
+
+00:29:23.000 --> 00:29:26.000
+Công cụ tiếp theo là dyld_info.
+
+00:29:26.000 --> 00:29:31.000
+Bạn có thể sử dụng nó để kiểm tra các tệp nhị phân, cả trên đĩa và trong bộ nhớ cache dyld hiện tại.
+
+00:29:31.000 --> 00:29:36.000
+Công cụ này có nhiều lựa chọn, nhưng tôi sẽ chỉ cho bạn cách xem xuất và sửa chữa.
+
+00:29:36.000 --> 00:29:43.000
+Ở đây tùy chọn -fixup hiển thị tất cả các vị trí sửa chữa mà dyld sẽ xử lý và các mục tiêu của chúng.
+
+00:29:43.000 --> 00:29:50.000
+Đầu ra giống nhau bất kể tệp là bản sửa lỗi kiểu cũ hay bản sửa lỗi chuỗi mới.
+
+00:29:50.000 --> 00:30:00.000
+Ở đây tùy chọn -exports sẽ hiển thị tất cả các ký hiệu đã xuất trong dylib và độ lệch của từng ký hiệu từ đầu dylib.
+
+00:30:00.000 --> 00:30:07.000
+Trong trường hợp này, nó đang hiển thị thông tin về Foundation.framework là dylib trong bộ nhớ cache dyld.
+
+00:30:07.000 --> 00:30:15.000
+Không có tệp nào trên đĩa, nhưng công cụ dyld_info sử dụng cùng mã với dyld và do đó có thể tìm thấy nó.
+
+00:30:15.000 --> 00:30:25.000
+Bây giờ bạn đã hiểu lịch sử và sự đánh đổi của các thư viện tĩnh so với động, bạn nên xem lại những gì ứng dụng của bạn làm và xác định xem bạn đã tìm thấy điểm ngọt ngào của mình chưa.
+
+00:30:25.000 --> 00:30:35.000
+Tiếp theo, nếu bạn có một ứng dụng lớn và nhận thấy việc xây dựng mất một lúc để liên kết, hãy thử Xcode 14 có trình liên kết nhanh hơn mới.
+
+00:30:35.000 --> 00:30:45.000
+Nếu bạn vẫn muốn tăng tốc liên kết tĩnh của mình nhiều hơn, hãy xem xét ba tùy chọn liên kết mà tôi đã trình bày chi tiết và xem liệu chúng có hợp lý trong việc xây dựng của bạn không và cải thiện thời gian liên kết của bạn.
+
+00:30:45.000 --> 00:30:54.000
+Cuối cùng, bạn cũng có thể thử xây dựng ứng dụng của mình và bất kỳ khung nhúng nào cho iOS 13.4 trở lên để cho phép sửa chữa theo chuỗi.
+
+00:30:54.000 --> 00:30:58.000
+Sau đó xem liệu ứng dụng của bạn có nhỏ hơn và khởi chạy nhanh hơn trên iOS 16 hay không.
+
+00:30:58.000 --> 23:59:59.000
+Cảm ơn vì đã xem, và chúc bạn có một WWDC tuyệt vời.
+

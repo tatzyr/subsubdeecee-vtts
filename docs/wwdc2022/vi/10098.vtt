@@ -1,0 +1,446 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:12.000
+Brady Eidson: Xin chào. Tên tôi là Brady Eidson.
+
+00:00:12.000 --> 00:00:15.000
+Tôi là một kỹ sư trong nhóm Kiến trúc WebKit.
+
+00:00:15.000 --> 00:00:19.000
+Tôi rất vui được giới thiệu với bạn Web Push trong Safari.
+
+00:00:19.000 --> 00:00:24.000
+Web Push cho phép bạn gửi thông báo từ xa đến người dùng ứng dụng web của mình.
+
+00:00:24.000 --> 00:00:30.000
+Tại đây, một thông báo hiển thị từ webkit.org ở phía trên bên phải của màn hình.
+
+00:00:30.000 --> 00:00:34.000
+Nhấp vào thông báo sẽ mở ra một bài đăng trên blog WebKit trong một cửa sổ mới.
+
+00:00:34.000 --> 00:00:43.000
+Trước khi tôi đi vào các chi tiết khác về cách thức hoạt động của nó, tôi muốn trả lời một vài câu hỏi trước mà tôi biết nhiều người trong số các bạn sẽ có.
+
+00:00:43.000 --> 00:00:47.000
+Web Push được hỗ trợ trong Mac Safari bắt đầu với macOS Ventura.
+
+00:00:47.000 --> 00:00:53.000
+Và Web Push sẽ đến với iOS và iPadOS vào năm tới.
+
+00:00:53.000 --> 00:00:59.000
+Thông báo đẩy Safari của Apple đã là một lựa chọn để tiếp cận người dùng Mac Safari trong một thời gian khá dài.
+
+00:00:59.000 --> 00:01:08.000
+Mặc dù nó sẽ tiếp tục hoạt động, nhưng hôm nay tôi vui mừng thông báo rằng chúng tôi đã thêm hỗ trợ cho Web Push và đây thực sự là Web Push!
+
+00:01:08.000 --> 00:01:13.000
+Sự kết hợp tương tự của các tiêu chuẩn web khác nhau như được triển khai trong các trình duyệt khác.
+
+00:01:13.000 --> 00:01:25.000
+Chúng tôi sẽ xem xét các tiêu chuẩn đó sau, nhưng... điều quan trọng nhất là nếu bạn đã mã hóa ứng dụng của mình theo tiêu chuẩn web, bạn sẽ không cần thực hiện bất kỳ thay đổi nào để nó hoạt động trong Safari.
+
+00:01:25.000 --> 00:01:30.000
+Tất nhiên, nếu bạn loại trừ Safari thông qua phát hiện trình duyệt, thì bạn có một số công việc phía trước.
+
+00:01:30.000 --> 00:01:37.000
+Bây giờ sẽ là thời điểm tuyệt vời để chuyển từ phát hiện trình duyệt sang phát hiện tính năng, đây luôn là phương pháp hay nhất.
+
+00:01:37.000 --> 00:01:48.000
+Chúng tôi đang sử dụng cùng một dịch vụ Thông báo Đẩy của Apple cung cấp năng đẩy gốc trên tất cả các thiết bị Mac và iOS, nhưng không yêu cầu tài khoản Nhà phát triển Apple để tiếp cận người dùng Safari.
+
+00:01:48.000 --> 00:01:57.000
+Chúng tôi đang sử dụng các URL điểm cuối mới cho Web Push, điều này đưa ra một điều khác mà bạn có thể đang làm để vô tình loại trừ Safari.
+
+00:01:57.000 --> 00:02:05.000
+Nếu bạn quản lý chặt chẽ các điểm cuối đẩy trên máy chủ của mình, hãy đảm bảo rằng bạn cho phép URL từ bất kỳ tên miền phụ nào của push.apple.com.
+
+00:02:05.000 --> 00:02:10.000
+Vượt ra ngoài câu trả lời cho những câu hỏi quan trọng đó, chúng ta hãy đi vào chi tiết hơn.
+
+00:02:10.000 --> 00:02:15.000
+Đầu tiên, chúng ta sẽ xem xét trải nghiệm Web Push trong Safari từ quan điểm của người dùng.
+
+00:02:15.000 --> 00:02:23.000
+Sau đó, chúng tôi sẽ đề cập đến toàn bộ luồng Web Push, từ việc xin phép đến việc xử lý một cú nhấp chuột vào một mục nhập trong Trung tâm Thông báo.
+
+00:02:23.000 --> 00:02:29.000
+Cuối cùng, chúng ta sẽ xem những gì cần thiết để thêm Web Push vào một ứng dụng web hiện có.
+
+00:02:29.000 --> 00:02:32.000
+Nhưng trước tiên, trải nghiệm người dùng Mac Safari.
+
+00:02:32.000 --> 00:02:36.000
+Và tôi không thể nghĩ ra cách nào tốt hơn để che đậy điều đó hơn là với một bản demo.
+
+00:02:36.000 --> 00:02:39.000
+Đây là Safari trên macOS Ventura.
+
+00:02:39.000 --> 00:02:43.000
+Tôi đã mở webkit.org trong tab trình duyệt này.
+
+00:02:43.000 --> 00:02:49.000
+Tôi cần cập nhật dự án mã nguồn mở WebKit và Web Push là một cách tuyệt vời để làm điều đó.
+
+00:02:49.000 --> 00:02:56.000
+Webkit.org không được phép yêu cầu quyền đẩy mà không có người dùng yêu cầu bằng cử chỉ của người dùng.
+
+00:02:56.000 --> 00:03:01.000
+Vì vậy, tôi sẽ nhấp vào nút hình chuông này ở đây để đăng ký nhận thông báo.
+
+00:03:01.000 --> 00:03:07.000
+Những gì bạn thấy ở đây là lời nhắc thông báo hệ thống - giống như bạn sẽ thấy cho bất kỳ ứng dụng nào khác.
+
+00:03:07.000 --> 00:03:11.000
+Trong trường hợp này, nó thay mặt cho webkit.org.
+
+00:03:11.000 --> 00:03:15.000
+Tôi sẽ nhấp vào "cho phép" và tôi đã sẵn sàng.
+
+00:03:15.000 --> 00:03:23.000
+Webkit.org đang cung cấp cho tôi tùy chọn để được thông báo về các bài đăng blog mới cũng như các cam kết mới đối với kho lưu trữ mã nguồn.
+
+00:03:23.000 --> 00:03:31.000
+Tôi biết việc được thông báo cho mọi cam kết sẽ khiến tôi mất tập trung vào công việc quan trọng, nhưng tôi hoàn toàn muốn được thông báo về các bài đăng blog mới.
+
+00:03:31.000 --> 00:03:33.000
+Vì vậy tôi sẽ đánh dấu vào ô đó ngay bây giờ.
+
+00:03:33.000 --> 00:03:39.000
+Thật trùng hợp, chắc hẳn ai đó vừa xuất bản bài đăng trên blog WebKit về Web Push.
+
+00:03:39.000 --> 00:03:44.000
+Thông báo này trông giống như bất kỳ thông báo nào khác và được quy cho webkit.org.
+
+00:03:44.000 --> 00:03:50.000
+Tôi có thể nhấp vào nó để kích hoạt, và có bài đăng trên blog, đang mở trong Safari.
+
+00:03:50.000 --> 00:03:56.000
+Khi người dùng đã cấp quyền cho một trang web, họ sẽ duy trì quyền kiểm soát quyền đó.
+
+00:03:56.000 --> 00:04:07.000
+Là người dùng macOS, tôi đã quen với việc quản lý các tùy chọn Thông báo bên trong Cài đặt Hệ thống và đó là nơi tôi có thể định cấu hình thông báo của webkit.org.
+
+00:04:07.000 --> 00:04:12.000
+Cấu hình phong phú giống như tôi tìm thấy cho bất kỳ ứng dụng hoặc dịch vụ nào khác.
+
+00:04:12.000 --> 00:04:18.000
+Là một người dùng Safari, tôi đã quen với việc quản lý cài đặt trang web từ bên trong tùy chọn Safari.
+
+00:04:18.000 --> 00:04:24.000
+Tôi cũng có thể đến đó để bật hoặc tắt quyền của webkit.org.
+
+00:04:24.000 --> 00:04:28.000
+Và đó là cách Web Push hoạt động cho người dùng trong Mac Safari.
+
+00:04:28.000 --> 00:04:32.000
+Trước khi chúng ta tiếp tục, tôi muốn nhắc lại một vài điều được đề cập trong bản demo đó.
+
+00:04:32.000 --> 00:04:38.000
+Đầu tiên, chúng tôi không muốn người dùng bị gửi thư rác bởi các yêu cầu đăng ký mà họ chưa yêu cầu.
+
+00:04:38.000 --> 00:04:44.000
+Vì vậy, một trang web chỉ có thể yêu cầu đăng ký đẩy để đáp ứng với một cú nhấp chuột hoặc tổ hợp phím.
+
+00:04:44.000 --> 00:04:50.000
+Khi một trang web có quyền hiển thị thông báo cho người dùng, người dùng sẽ kiểm soát quyền đó.
+
+00:04:50.000 --> 00:04:54.000
+Họ có thể chọn quản lý nó trong tùy chọn của Safari hoặc Cài đặt Hệ thống.
+
+00:04:54.000 --> 00:04:58.000
+Và cài đặt sẽ vẫn đồng bộ nếu họ tình cờ quản lý nó trong cả hai.
+
+00:04:58.000 --> 00:05:09.000
+Cuối cùng, nếu bạn cung cấp thông báo cho các loại sự kiện khác nhau, cách tốt nhất là cung cấp các điều khiển chi tiết cho các loại thông báo trong ứng dụng web của bạn, giống như các ứng dụng khác.
+
+00:05:09.000 --> 00:05:14.000
+Bây giờ bạn đã thấy Web Push hoạt động, hãy tìm hiểu những gì đang xảy ra ở mỗi bước.
+
+00:05:14.000 --> 00:05:17.000
+Một số bạn đã quen thuộc với điều này.
+
+00:05:17.000 --> 00:05:25.000
+Nhưng đối với những người bạn mới sử dụng Web Push, tôi sẽ đi từng bước một, giới thiệu cho bạn các tiêu chuẩn và tài liệu liên quan trên đường đi.
+
+00:05:25.000 --> 00:05:30.000
+Điều đầu tiên xảy ra là người dùng truy cập trang web của bạn trong tab trình duyệt.
+
+00:05:30.000 --> 00:05:33.000
+Đây là webkit.org đang mở trong Safari.
+
+00:05:33.000 --> 00:05:37.000
+Vì nó được mở trong một tab, nó có thể cài đặt Nhân viên Dịch vụ.
+
+00:05:37.000 --> 00:05:45.000
+Nhân viên dịch vụ là một đơn vị JavaScript hoạt động thay mặt cho toàn bộ miền, tách biệt với tab trình duyệt hiện đang mở.
+
+00:05:45.000 --> 00:05:52.000
+Khi tập lệnh Service Worker được cài đặt, ứng dụng web của bạn đủ điều kiện để yêu cầu đăng ký đẩy.
+
+00:05:52.000 --> 00:05:56.000
+Như đã đề cập, yêu cầu này phải được gắn với cử chỉ của người dùng.
+
+00:05:56.000 --> 00:06:04.000
+Webkit.org yêu cầu quyền khi nhấp vào nút hình chuông này, đáp ứng yêu cầu cử chỉ của người dùng.
+
+00:06:04.000 --> 00:06:09.000
+Khi trang web của bạn yêu cầu đăng ký đẩy, người dùng sẽ thấy lời nhắc hệ thống này.
+
+00:06:09.000 --> 00:06:15.000
+Đây là nơi họ có thể thực hiện lời kêu gọi cuối cùng về việc cấp cho trang web của bạn khả năng mạnh mẽ này.
+
+00:06:15.000 --> 00:06:18.000
+Có thể người dùng có thể từ chối yêu cầu.
+
+00:06:18.000 --> 00:06:21.000
+JavaScript của bạn nên được chuẩn bị để xử lý điều đó.
+
+00:06:21.000 --> 00:06:26.000
+Nhưng giả sử người dùng cấp quyền, JavaScript của bạn sẽ lấy lại một đối tượng PushSubscription.
+
+00:06:26.000 --> 00:06:32.000
+Điều này bao gồm mọi thứ máy chủ của bạn cần để gửi tin nhắn đẩy đến người dùng này trong trình duyệt này.
+
+00:06:32.000 --> 00:06:36.000
+Thông tin như điểm cuối URL chính xác để sử dụng.
+
+00:06:36.000 --> 00:06:42.000
+Bạn gửi tải trọng PushSubscription này trở lại máy chủ của mình theo bất kỳ cách nào hoạt động tốt nhất cho ứng dụng web của bạn.
+
+00:06:42.000 --> 00:06:49.000
+Nhiều gói máy chủ phổ biến có hỗ trợ Web Push để quản lý đăng ký hoặc bạn có thể tự cuộn.
+
+00:06:49.000 --> 00:06:56.000
+Điều tương tự cũng liên quan đến cách thức và thời điểm thực sự gửi tin nhắn đẩy đến các điểm cuối URL mà máy chủ của bạn biết.
+
+00:06:56.000 --> 00:07:00.000
+Tôi không thể nói cho bạn biết khi nào nên làm như vậy. Điều đó tùy thuộc vào bạn và trang web của bạn.
+
+00:07:00.000 --> 00:07:05.000
+Nhưng một khi bạn đã quyết định gửi tin nhắn đẩy đó, tôi có thể giúp với những gì xảy ra tiếp theo.
+
+00:07:05.000 --> 00:07:09.000
+Hãy nhớ cách đẩy yêu cầu một Nhân viên Dịch vụ được cài đặt?
+
+00:07:09.000 --> 00:07:18.000
+Khi máy chủ của bạn đã gửi tin nhắn đẩy và Safari nhận được nó, Safari sẽ đánh thức Nhân viên Dịch vụ của bạn và gửi cho nó một sự kiện đẩy JavaScript.
+
+00:07:18.000 --> 00:07:25.000
+Hiển thị thông báo cho người dùng trong Trung tâm thông báo là một yêu cầu trong khi xử lý sự kiện đẩy.
+
+00:07:25.000 --> 00:07:32.000
+Nhận sự kiện đẩy và hiển thị thông báo xảy ra nếu trang web của bạn hiện đang mở trong tab trình duyệt.
+
+00:07:32.000 --> 00:07:36.000
+Nó cũng xảy ra nếu trang web của bạn hiện không mở trong tab trình duyệt.
+
+00:07:36.000 --> 00:07:43.000
+Trong trường hợp của Safari trên macOS Ventura, điều này xảy ra ngay cả khi Safari hiện không chạy.
+
+00:07:43.000 --> 00:07:53.000
+Bước cuối cùng: Nếu người dùng của bạn nhấp vào thông báo đó, một sự kiện nhấp chuột thông báo sẽ được gửi đến Nhân viên Dịch vụ của bạn để nó có thể phản hồi một cách thích hợp.
+
+00:07:53.000 --> 00:07:59.000
+Ví dụ, bằng cách mở một cửa sổ mới đến URL được liên kết với thông báo đó.
+
+00:07:59.000 --> 00:08:09.000
+Với sự hiểu biết đó về quy trình Web Push dưới vành đai của chúng tôi, đã đến lúc đi sâu vào chi tiết hơn nữa bằng cách thực sự thêm hỗ trợ Web Push vào một ứng dụng web hiện có.
+
+00:08:09.000 --> 00:08:17.000
+Bên cạnh webkit.org, Browser Pets là công cụ nội bộ quan trọng nhất cho các nhóm Safari và WebKit.
+
+00:08:17.000 --> 00:08:27.000
+Luôn cập nhật cho mọi người trong bộ phận về WebKittens và Pups yêu thích của họ trên Safari luôn là tuyên bố sứ mệnh của Browser Pets và Web Push đã làm cho điều đó dễ dàng hơn bao giờ hết.
+
+00:08:27.000 --> 00:08:36.000
+Miền BrowserPets nội bộ của chúng tôi đã có tập lệnh ServiceWorker được đăng ký để tăng tốc độ tải trang và đồng bộ hóa giữa nhiều tab.
+
+00:08:36.000 --> 00:08:40.000
+Ở cấp độ cao, một kịch bản ServiceWorker trông rất giống như thế này.
+
+00:08:40.000 --> 00:08:51.000
+Khi một kỹ sư truy cập trang Browser Pets trong một tab, đoạn trích JavaScript này sẽ xác định xem tập lệnh Service Worker đã được đăng ký hay chưa hoặc đăng ký nó nếu cần.
+
+00:08:51.000 --> 00:08:57.000
+Lưu ý rằng chúng tôi đang thực hành phát hiện tính năng ở đây, trước đây đã đề cập như một phương pháp hay nhất.
+
+00:08:57.000 --> 00:09:03.000
+Với điều kiện tiên quyết của Nhân viên Dịch vụ được xử lý, chúng tôi sẵn sàng đăng ký để thúc đẩy.
+
+00:09:03.000 --> 00:09:10.000
+Hãy nhớ rằng, bạn không thể yêu cầu đăng ký đẩy mà không có cử chỉ người dùng rõ ràng.
+
+00:09:10.000 --> 00:09:16.000
+Chạy tập lệnh này để đáp ứng với trình xử lý nhấp chuột của nút là một trong nhiều cách để đáp ứng yêu cầu đó.
+
+00:09:16.000 --> 00:09:22.000
+Khi người dùng nhấp vào nút đó, đây là mã để yêu cầu đăng ký đẩy.
+
+00:09:22.000 --> 00:09:24.000
+Tôi sẽ đi sâu vào từng điểm này chi tiết hơn.
+
+00:09:24.000 --> 00:09:29.000
+Đầu tiên, chúng ta cần định cấu hình yêu cầu đăng ký đẩy.
+
+00:09:29.000 --> 00:09:36.000
+Một phần quan trọng cho điều đó là khóa công khai mà máy chủ của chúng tôi sử dụng để xác định bản thân với các máy chủ đẩy của Apple.
+
+00:09:36.000 --> 00:09:41.000
+Ở đây chúng tôi sử dụng công nghệ tiêu chuẩn được gọi là VAPID, giống như các trình duyệt khác.
+
+00:09:41.000 --> 00:09:51.000
+Tôi sẽ không xem xét các chi tiết đôi khi phức tạp của VAPID ở đây, nhưng có các tài nguyên trên web để giúp bạn có giải pháp tốt nhất cho thiết lập máy chủ của bạn.
+
+00:09:51.000 --> 00:09:56.000
+Với bộ khóa VAPID, chúng tôi đã sẵn sàng định cấu hình yêu cầu đăng ký.
+
+00:09:56.000 --> 00:10:03.000
+Lưu ý rằng chúng tôi đang tuyên bố rõ ràng rằng chúng tôi hứa sẽ luôn hiển thị các cú đẩy của người dùng.
+
+00:10:03.000 --> 00:10:13.000
+Mặc dù tiêu chuẩn cho JavaScript Push API tùy chọn chứa thời gian chạy JavaScript im lặng để đáp ứng với việc đẩy, hầu hết các trình duyệt không hỗ trợ điều đó.
+
+00:10:13.000 --> 00:10:16.000
+Safari không hỗ trợ điều đó.
+
+00:10:16.000 --> 00:10:20.000
+Và giống như hầu hết các trang web, Browser Pets không cần điều đó.
+
+00:10:20.000 --> 00:10:23.000
+Sau đó chúng tôi yêu cầu sự cho phép để đẩy.
+
+00:10:23.000 --> 00:10:30.000
+Dòng JavaScript này dẫn đến lời nhắc cho phép người dùng phê duyệt hoặc từ chối.
+
+00:10:30.000 --> 00:10:40.000
+Giả sử người dùng cấp quyền - điều mà tất cả các thành viên trong nhóm Safari làm cho Browser Pets - điều này cung cấp cho chúng tôi một đối tượng PushSubscription với các chi tiết về cách tiếp cận người dùng này trong trình duyệt của họ.
+
+00:10:40.000 --> 00:10:47.000
+Những thứ như điểm kết thúc URL và khóa được sử dụng để mã hóa tin nhắn đẩy để chuyển tiếp.
+
+00:10:47.000 --> 00:10:51.000
+Cuối cùng, chúng ta cần gửi tất cả những chi tiết đó đến máy chủ của chúng ta.
+
+00:10:51.000 --> 00:10:57.000
+Như đã đề cập trước đây, các chi tiết cụ thể của việc này sẽ thay đổi dựa trên đơn đăng ký chính xác của bạn.
+
+00:10:57.000 --> 00:11:04.000
+Máy chủ BrowserPets của chúng tôi sử dụng WordPress, đã có một vài plugin để hỗ trợ Web Push tiêu chuẩn.
+
+00:11:04.000 --> 00:11:12.000
+Có khả năng bạn sẽ thấy điều tương tự cũng đúng với phần phụ trợ của mình và có các tài nguyên trên web để giúp tìm ra giải pháp phù hợp cho bất kỳ thiết lập nào.
+
+00:11:12.000 --> 00:11:16.000
+Bây giờ chúng ta cần quay lại mã JavaScript Service Worker của chúng ta.
+
+00:11:16.000 --> 00:11:20.000
+Nó sẽ cần xử lý một vài sự kiện mới, bắt đầu với sự kiện đẩy.
+
+00:11:20.000 --> 00:11:28.000
+Khi một tin nhắn đẩy đi từ máy chủ Browser Pets đến trình duyệt này, Nhân viên Dịch vụ này có một sự kiện đẩy được gửi đến nó.
+
+00:11:28.000 --> 00:11:35.000
+Sự kiện đó chứa một đối tượng PushMessageData có nhiều cách để truy cập dữ liệu được gửi bởi máy chủ của bạn.
+
+00:11:35.000 --> 00:11:39.000
+Chúng tôi sử dụng trình truy cập JSON ở đây.
+
+00:11:39.000 --> 00:11:45.000
+Hãy nhớ rằng khi chúng tôi đăng ký push, JavaScript của chúng tôi đã hứa rằng chúng sẽ luôn hiển thị cho người dùng như thế nào?
+
+00:11:45.000 --> 00:11:50.000
+Điều đó có nghĩa là chúng ta phải luôn hiển thị một thông báo gốc của nền tảng để đáp ứng với mỗi lần đẩy.
+
+00:11:50.000 --> 00:11:55.000
+Tốt nhất là làm điều này càng sớm càng tốt trong trình xử lý sự kiện đẩy của bạn.
+
+00:11:55.000 --> 00:12:02.000
+Chúng tôi đang lấy mọi thứ chúng tôi cần ra khỏi đốm màu JSON đó để định cấu hình thông báo, bao gồm cả việc thiết lập một hành động với URL.
+
+00:12:02.000 --> 00:12:05.000
+Điều đó sẽ có ích chỉ trong giây lát.
+
+00:12:05.000 --> 00:12:09.000
+Sau khi thông báo được hiển thị, chúng ta cần xử lý việc người dùng nhấp vào nó.
+
+00:12:09.000 --> 00:12:13.000
+Một sự kiện nữa để kịch bản Nhân viên Dịch vụ của chúng tôi xử lý.
+
+00:12:13.000 --> 00:12:21.000
+Trong trình xử lý nhấp chuột thông báo này, BrowserPets sẽ lấy URL từ thông báo đã được nhấp để mở một cửa sổ mới.
+
+00:12:21.000 --> 00:12:24.000
+Lưu ý: Đây là một mô hình rất phổ biến.
+
+00:12:24.000 --> 00:12:28.000
+Đó là tất cả JavaScript chúng ta cần viết để hỗ trợ Web Push.
+
+00:12:28.000 --> 00:12:31.000
+Tất nhiên, tốt nhất là nên có một số trợ giúp trong khi phát triển.
+
+00:12:31.000 --> 00:12:35.000
+Như thường lệ, đó là nơi Thanh tra Web đến.
+
+00:12:35.000 --> 00:12:45.000
+Ngoài việc giúp gỡ lỗi trang web của bạn mở trong tab trình duyệt, Trình kiểm tra web cũng có thể kiểm tra các phiên bản Nhân viên Dịch vụ và đặt điểm dừng trên trình xử lý sự kiện.
+
+00:12:45.000 --> 00:12:55.000
+Tất cả những điều này cùng nhau sẽ cho phép bạn kiểm tra và gỡ lỗi JavaScript đăng ký đẩy cũng như mã nhân viên dịch vụ xử lý sự kiện đẩy và các sự kiện thông báo.
+
+00:12:55.000 --> 00:13:04.000
+Ngoài ra, các máy chủ Thông báo Đẩy của Apple sẽ cung cấp cho bạn các lỗi có thể đọc được nếu có sự cố xảy ra khi bạn cố gắng xuất bản tin nhắn đẩy.
+
+00:13:04.000 --> 00:13:08.000
+Kiểm tra các liên kết liên quan đến phiên này để biết thêm tài liệu.
+
+00:13:08.000 --> 00:13:17.000
+Tôi cũng muốn đi vào chi tiết hơn về một vài điểm xuất hiện trong khi viết mã đó, liên quan trực tiếp đến quyền riêng tư của người dùng và việc sử dụng năng lượng.
+
+00:13:17.000 --> 00:13:24.000
+Quan trọng hơn - và đây không phải là lần đầu tiên tôi nói điều này - đăng ký push yêu cầu cử chỉ của người dùng.
+
+00:13:24.000 --> 00:13:34.000
+Cũng như các tính năng đặc quyền khác của nền tảng web, việc yêu cầu người dùng thực sự yêu cầu bật Web Push là điều đúng đắn đối với sự tin tưởng của người dùng.
+
+00:13:34.000 --> 00:13:42.000
+Như đã đề cập khi tôi chỉ cho bạn mã về cách yêu cầu đăng ký đẩy, bạn phải hứa rằng pushes sẽ hiển thị cho người dùng.
+
+00:13:42.000 --> 00:13:48.000
+Xử lý một sự kiện đẩy không phải là một lời mời để JavaScript của bạn có được thời gian chạy nền im lặng.
+
+00:13:48.000 --> 00:13:53.000
+Làm như vậy sẽ vi phạm cả niềm tin của người dùng và thời lượng pin của người dùng.
+
+00:13:53.000 --> 00:13:59.000
+Khi xử lý một sự kiện đẩy, trên thực tế bạn được yêu cầu đăng thông báo lên Trung tâm Thông báo.
+
+00:13:59.000 --> 00:14:07.000
+Các trình duyệt khác đều có các biện pháp đối phó chống lại việc vi phạm lời hứa làm cho người dùng có thể nhìn thấy sự thúc đẩy, và Safari cũng vậy.
+
+00:14:07.000 --> 00:14:16.000
+Trong bản dựng beta của macOS Ventura, sau ba sự kiện đẩy mà bạn không đăng thông báo kịp thời, đăng ký đẩy của trang web của bạn sẽ bị thu hồi.
+
+00:14:16.000 --> 00:14:19.000
+Bạn sẽ cần phải trải qua quy trình cấp phép một lần nữa.
+
+00:14:19.000 --> 00:14:21.000
+Đó là tất cả.
+
+00:14:21.000 --> 00:14:29.000
+Chúng tôi thực sự tự hào khi hỗ trợ Web Push và vui mừng vì bất kỳ trang web nào cũng có thể sử dụng nó, không yêu cầu tài khoản Nhà phát triển Apple.
+
+00:14:29.000 --> 00:14:41.000
+Miễn là bạn đã mã hóa theo tiêu chuẩn và sử dụng tính năng phát hiện, để bạn không vô tình loại trừ Safari, người dùng của bạn sẽ nhận được lợi ích của Web Push trong Safari 16 trên macOS Ventura.
+
+00:14:41.000 --> 00:14:48.000
+Như thường lệ, chúng tôi đã thêm rất nhiều nội dung mới khác vào Safari và WebKit trong năm nay và tôi hy vọng bạn sẽ kiểm tra phiên đó để tìm hiểu thêm.
+
+00:14:48.000 --> 00:14:50.000
+Cảm ơn bạn đã xem.
+
+00:14:50.000 --> 23:59:59.000
+Tôi hy vọng bạn có một phần còn lại tuyệt vời của WWDC 2022.
+

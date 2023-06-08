@@ -1,0 +1,445 @@
+10055
+
+♪ ♪
+
+Dima: Xin chào, và chào mừng đến với "Có gì mới trong UIKit trong iOS 17".
+
+Tôi là Dima, một quản lý kỹ thuật trong nhóm UIKit.
+
+UIKit, khung mạnh mẽ đằng sau các ứng dụng của bạn, đã được nâng cấp để hỗ trợ các tính năng mới cho iOS 17.
+
+Trong video này, tôi sẽ hướng dẫn bạn: Các tính năng chính mới và cải tiến kiến trúc cốt lõi, những tiến bộ trong việc xây dựng giao diện cho tất cả người dùng bất kể cài đặt ngôn ngữ, cải tiến cho các ứng dụng iPadOS, cũng như nhiều cải tiến chung có trong bản phát hành.
+
+Chúng tôi đã giới thiệu những cải tiến kiến trúc chính cho UIKit, giúp tạo các ứng dụng mạnh mẽ dễ dàng hơn, cũng như cải thiện đáng kể khả năng tích hợp với SwiftUI.
+
+Tôi sẽ hướng dẫn bạn 5 tính năng mới chính.
+
+Tôi sẽ xem qua hỗ trợ xem trước Xcode, xem các bản cập nhật vòng đời của bộ điều khiển, những tiến bộ trong hệ thống đặc điểm, hình ảnh biểu tượng hoạt hình và API mới để thể hiện trạng thái trống trong ứng dụng của bạn.
+
+Đầu tiên, một sự thay đổi lớn.
+
+Bạn có thể sử dụng bản xem trước Xcode trực tiếp với UIKit.
+
+Để tận dụng tính năng này, hãy sử dụng macro Xem trước để chỉ định tên của bản xem trước và trả lại bộ điều khiển chế độ xem.
+
+Tôi có thể đặt bất kỳ thuộc tính nào trên bộ điều khiển chế độ xem chỉ để định cấu hình và điền dữ liệu vào bản xem trước.
+
+Bạn cũng có thể xem trước UIViews trực tiếp, không cần bộ điều khiển chế độ xem.
+
+Xem trước giúp bạn hình dung các thành phần giao diện người dùng và đưa ra phản hồi ngay lập tức khi bạn lặp lại mã của mình.
+
+Và một khi ứng dụng của bạn đã được tạo, Xcode Previews cho phép thử nghiệm trên một loạt các cấu hình và cài đặt.
+
+Tiếp theo, tôi muốn đề cập đến một cải tiến quan trọng đối với vòng đời của bộ điều khiển chế độ xem trong quá trình chuyển đổi giao diện, chẳng hạn như khi bạn trình bày bộ điều khiển chế độ xem hoặc đẩy hoặc bật bộ điều khiển điều hướng.
+
+Có một cuộc gọi lại bộ điều khiển chế độ xem mới có tên là viewIsAppearing, được gọi sau viewWillAppear nhưng trước viewDidAppear.
+
+viewIsAppearing là nơi tốt nhất để làm mọi thứ mỗi khi chế độ xem xuất hiện.
+
+Khi nó được gọi, cả bộ điều khiển chế độ xem và chế độ xem đều có bộ sưu tập đặc điểm cập nhật.
+
+Ngoài ra, chế độ xem đã được thêm vào hệ thống phân cấp và đã được đặt ra bởi chế độ xem của nó.
+
+Điều này làm cho viewIsAppearing trở thành một cuộc gọi lại lý tưởng để chạy mã phụ thuộc vào hình học ban đầu của chế độ xem, bao gồm cả kích thước của nó.
+
+Cuối cùng, phương pháp viewIsAppearing mới này triển khai lại tất cả các cách cho iOS 13, vì vậy bạn có thể tận dụng nó ngay cả khi ứng dụng của bạn chạy trên các phiên bản iOS cũ hơn.
+
+Đây là hình minh họa về cách cuộc gọi lại viewIsAppearing mới phù hợp với một số sự kiện quan trọng khác trong quá trình chuyển đổi giao diện bộ điều khiển chế độ xem điển hình.
+
+Tôi muốn chỉ ra một vài điều.
+
+Đầu tiên, lưu ý cách viewWillAppear được gọi trước khi chế độ xem được thêm vào hệ thống phân cấp và trước khi bố cục bắt đầu.
+
+Đây là lý do tại sao còn quá sớm để sử dụng bộ sưu tập đặc điểm hoặc làm bất cứ điều gì phụ thuộc vào kích thước của chế độ xem hoặc hình học khác.
+
+Tiếp theo, chú ý cách viewDidAppear được gọi trong một CATransaction riêng biệt ở cuối, sau khi bất kỳ hình ảnh động nào diễn ra.
+
+Điều này có nghĩa là bất kỳ thay đổi nào bạn thực hiện trong viewDidAppear sẽ không hiển thị cho đến khi quá trình chuyển đổi hoàn tất, vì vậy đã quá muộn để thực hiện các thay đổi bạn muốn hiển thị trong quá trình chuyển đổi.
+
+Mặt khác, viewIsAppearing được gọi trong cùng một giao dịch với viewWillAppear.
+
+Điều này có nghĩa là bất kỳ thay đổi nào bạn thực hiện trong một trong hai cuộc gọi lại đó đều hiển thị với người dùng cùng một lúc, ngay từ khung đầu tiên của quá trình chuyển đổi.
+
+Cuối cùng, mặc dù thời gian của chúng có thể giống nhau, nhưng có một sự khác biệt chính giữa viewIsAppearing và bố cục gọi lại như viewWillLayoutSubviews.
+
+Gọi lại bố cục được thực hiện bất cứ khi nào chế độ xem chạy layoutSubviews, điều này có thể xảy ra nhiều lần trong quá trình chuyển đổi hoặc bất kỳ lúc nào sau đó trong khi chế độ xem hiển thị.
+
+Nhưng viewIsAppearing chỉ được gọi một lần trong quá trình chuyển đổi giao diện và nó vẫn được gọi ngay cả khi chế độ xem không cần bố cục.
+
+Đây là lý do tại sao tôi thích nghĩ về viewIsAppearing dưới dạng cuộc gọi lại Goldilocks: nó không được gọi quá sớm, hoặc quá muộn, hoặc quá thường xuyên.
+
+Nó vừa phải.
+
+Hệ thống đặc điểm trong UIKit đã được nâng cấp trong iOS 17.
+
+Các đặc điểm tự động truyền dữ liệu thông qua hệ thống phân cấp ứng dụng của bạn.
+
+UITraitCollection chứa nhiều đặc điểm hệ thống, chẳng hạn như kiểu giao diện người dùng, các lớp kích thước ngang và dọc, và danh mục kích thước nội dung ưa thích.
+
+Bây giờ bạn có thể xác định các đặc điểm tùy chỉnh để thêm dữ liệu của riêng bạn vào UITraitCollection.
+
+Đây là một cách hoàn toàn mới để bạn truyền dữ liệu đến chế độ xem và bộ điều khiển chế độ xem trong ứng dụng của mình.
+
+Chúng tôi cũng đã thêm các API ghi đè đặc điểm mới để dễ dàng sửa đổi các giá trị đặc điểm trên bất kỳ chế độ xem hoặc bộ điều khiển chế độ xem nào.
+
+Bạn cũng có thể áp dụng các API linh hoạt hơn để nhận lệnh gọi lại khi các đặc điểm thay đổi giá trị, thay vì cần ghi đè traitCollectionDidChange trong một lớp con.
+
+Cuối cùng, bạn có thể kết nối các đặc điểm UIKit tùy chỉnh với các khóa môi trường SwiftUI tùy chỉnh để chuyển dữ liệu liền mạch giữa các thành phần UIKit và SwiftUI trong ứng dụng của bạn.
+
+Để tìm hiểu tất cả về những cải tiến mới thú vị này, hãy xem video "Giải phóng hệ thống đặc điểm UIKit".
+
+Trên tất cả các nền tảng của chúng tôi, các biểu tượng SF cho phép giao diện nhất quán cho các biểu tượng thanh công cụ, thanh điều hướng và các yếu tố giao diện người dùng khác.
+
+Chúng được thiết kế để tự động căn chỉnh với nhãn văn bản và có thể dễ dàng tùy chỉnh về trọng lượng, tỷ lệ và giao diện để phù hợp với thiết kế ứng dụng của bạn.
+
+Trong iOS 17, UIKit hỗ trợ các biểu tượng hoạt hình với API hiệu ứng biểu tượng mới.
+
+Những hiệu ứng này có thể được áp dụng cho bất kỳ hình ảnh biểu tượng nào, ngay cả những hình ảnh tùy chỉnh.
+
+Để áp dụng các hiệu ứng biểu tượng, hãy sử dụng phương thức addSymbolEffect() mới trên UIImageView.
+
+Ở đây, tôi thêm hiệu ứng nảy, khiến biểu tượng bật lên một lần duy nhất.
+
+Bây giờ tôi sẽ thêm một hiệu ứng màu thay đổi.
+
+Không giống như bounce, hiệu ứng màu thay đổi hoạt hình vô thời hạn khi được thêm vào.
+
+Sử dụng phương thức removeSymbolEffect() để kết thúc hiệu ứng.
+
+Cuối cùng, tôi có thể sử dụng phương thức setSymbolImage() mới để thực hiện hiệu ứng chuyển tiếp trên các ký hiệu.
+
+Có nhiều hiệu ứng biểu tượng hơn ba tính năng mà tôi đã xem qua.
+
+Xem video "Tác động các biểu tượng trong ứng dụng của bạn" để tìm hiểu thêm.
+
+Tiếp theo, chúng tôi đã thêm một API mới để giúp dễ dàng biểu diễn các trạng thái trống.
+
+Trạng thái trống là những khoảnh khắc trong ứng dụng của bạn mà không có nội dung để hiển thị.
+
+Chúng thường xảy ra khi ứng dụng của bạn khởi chạy lần đầu tiên, vì không có nội dung nào được tạo.
+
+Chúng cũng phát sinh khi ứng dụng của bạn không thể hiển thị nội dung do hạn chế, chẳng hạn như thiếu kết nối Internet.
+
+UIContentUnavailableConfiguration là một mô tả có thể kết hợp về trạng thái trống và có thể được cung cấp nội dung giữ chỗ, chẳng hạn như hình ảnh hoặc văn bản.
+
+Trong ví dụ này, tôi thông báo rằng không có bản dịch yêu thích nào để hiển thị.
+
+Để thể hiện trạng thái trống này, tôi đặt cấu hình làm nội dung của bộ điều khiển chế độ xem Cấu hình không khả dụng.
+
+Ngoài cấu hình .empty(), UIKit cung cấp cấu hình .loading() để thể hiện nội dung đang được chuẩn bị.
+
+Hơn nữa, bạn có thể tận dụng UIHostingConfiguration API để thể hiện trạng thái trống của ứng dụng với chế độ xem SwiftUI.
+
+Điều này hoạt động giống như sử dụng UIHostingConfiguration với các ô.
+
+Nơi tốt nhất để cập nhật cấu hình không khả dụng của bộ điều khiển chế độ xem của bạn là bên trong phương thức mới, updateContentUnavailableConfiguration (sử dụng: state).
+
+Ví dụ này sử dụng cấu hình .search đã được thiết kế cho các truy vấn không trả về kết quả.
+
+Cấu hình cung cấp văn bản chính và phụ được bản địa hóa, với truy vấn được nội suy từ bộ điều khiển tìm kiếm gần đó.
+
+Bất cứ khi nào tính khả dụng của nội dung trong bộ điều khiển chế độ xem của bạn thay đổi, hãy gọi setNeedsUpdateContentUnavailable Configuration để yêu cầu cập nhật.
+
+Trên tất cả các nền tảng của Apple, điều cần thiết là cung cấp trải nghiệm nhất quán, chất lượng cao, bất kể cài đặt ngôn ngữ.
+
+Để tạo điều kiện thuận lợi cho điều đó, chúng tôi đã đạt được những tiến bộ đáng kể trong lĩnh vực phông chữ và kết xuất văn bản.
+
+Trong phần này, tôi sẽ cho bạn biết về các điều chỉnh chiều cao dòng động giúp ngăn chặn việc cắt và va chạm văn bản trong một số phông chữ và ngôn ngữ nhất định.
+
+Bạn cũng sẽ tìm hiểu về các quy tắc ngắt dòng và gạch nối được cải thiện, cũng như API mới để yêu cầu hình ảnh dựa trên ngôn ngữ.
+
+Đầu tiên, xem xét kỹ hơn các phông chữ và số liệu của chúng.
+
+Số liệu phông chữ được xác định bằng cách sử dụng một số thuật ngữ.
+
+Đường cơ sở đại diện cho một dòng tưởng tượng mà các chữ cái hoặc từ nằm trên đó.
+
+Chiều cao đường đề cập đến khoảng trống giữa các đường cơ sở này.
+
+Và, chiều cao x là một dòng nằm trên các chữ cái viết thường.
+
+Một số phông chữ có bộ tăng dần và giảm dần vượt ra ngoài những dòng này.
+
+Ascenders là các phần của phông chữ mở rộng trên x-height.
+
+Mặt khác, những người đi xuống treo bên dưới đường cơ sở.
+
+Đối với một số ngôn ngữ như tiếng Ả Rập, tiếng Hindi và tiếng Thái, những yếu tố này đòi hỏi không gian dọc nhiều hơn đáng kể so với các chữ cái Latinh, dẫn đến các vấn đề va chạm hoặc cắt xén có thể xảy ra.
+
+Để ngăn chặn sự chồng chéo của bộ lên và xuống trong tất cả các ngôn ngữ, chúng tôi đã giới thiệu tính năng điều chỉnh chiều cao dòng động.
+
+Điều này đảm bảo rằng các phần tử văn bản, chẳng hạn như UILabels, tự động điều chỉnh chiều cao dòng và kích thước dọc của chúng để dễ đọc tối ưu.
+
+Chúng tôi cũng đã thực hiện những cải tiến đáng kể đối với hành vi ngắt dòng cho các ngôn ngữ như tiếng Trung, tiếng Đức, tiếng Nhật và tiếng Hàn.
+
+Những cải tiến này áp dụng các quy tắc khác nhau dựa trên loại kiểu văn bản bạn đang sử dụng.
+
+Điều này sẽ hoạt động tự động trong hầu hết các trường hợp, miễn là bạn áp dụng các kiểu văn bản, nhưng để biết thêm thông tin về các phương pháp hay nhất và cách đảm bảo ứng dụng của bạn hoạt động với tất cả các ngôn ngữ, hãy xem "Có gì mới với Tương tác Văn bản và Văn bản."
+
+Trong một số tình huống nhất định, một phần đáng kể của giao diện người dùng có thể được hiển thị bằng ngôn ngữ khác với ngôn ngữ đã chọn của người dùng.
+
+Ví dụ, khi nội dung đến từ web.
+
+Trong những trường hợp này, bạn có thể sử dụng đặc điểm ngôn ngữ sắp chữ mới để chỉ ra ngôn ngữ của giao diện, điều này sẽ giúp điều chỉnh các quy tắc về chiều cao dòng và dấu gạch nối cho phù hợp.
+
+UIKit hiện hỗ trợ truy cập các biến thể hình ảnh được bản địa hóa cụ thể.
+
+Ví dụ, character.textbox SF Symbol có tám biến thể dựa trên ngôn ngữ khác nhau.
+
+Theo mặc định, UIKit kéo biến thể phù hợp với cài đặt ngôn ngữ hiện tại trên thiết bị.
+
+Vậy nếu ngôn ngữ hiện tại là Hoa Kỳ. Tiếng Anh, sau đó biến thể tiếng Latinh được hiển thị.
+
+Trên iOS 17, các ứng dụng có thể yêu cầu các biến thể cụ thể bằng cách cung cấp Ngôn ngữ trong cấu hình của hình ảnh.
+
+Ở đây, tôi tra cứu phiên bản tiếng Nhật của biểu tượng bằng cách cung cấp cấu hình với ngôn ngữ tiếng Nhật.
+
+Với tất cả những thay đổi này đối với kết xuất văn bản và hỗ trợ ngôn ngữ, các ứng dụng của bạn có thể cảm thấy gần nhà hơn cho mọi người.
+
+Bây giờ, tôi sẽ đưa bạn qua các cải tiến để xây dựng ứng dụng cho iPad.
+
+Tôi sẽ đề cập đến những cải tiến trong 5 lĩnh vực: tương tác kéo cửa sổ mới, hành vi thanh bên nâng cao trong Trình quản lý sân khấu, hỗ trợ cuộn bàn phím, tiến bộ trong việc xây dựng các ứng dụng tập trung vào tài liệu và các tính năng và API mới của Apple Pencil.
+
+Trong iOS 17, chúng tôi đã cập nhật chức năng kéo cửa sổ trong Trình quản lý giai đoạn bằng cách mở rộng khu vực mà cử chỉ kéo có thể bắt đầu.
+
+Bây giờ, kéo bất cứ nơi nào bên trong UINavigationBar sẽ bắt đầu di chuyển một cửa sổ.
+
+Cử chỉ này hoạt động tốt với các công cụ nhận dạng cử chỉ khác có thể có trong ứng dụng của bạn, chẳng hạn như cử chỉ xoay hoặc vuốt.
+
+Nếu bạn không sử dụng UINavigationBar như một phần của giao diện người dùng trong ứng dụng của mình, bạn có thể áp dụng UIWindowSceneDragInteraction và thêm nó vào bất kỳ chế độ xem nào.
+
+Bạn cũng có thể thiết lập các mối quan hệ cử chỉ với các cử chỉ xoay khác trong ứng dụng của mình để đảm bảo không có bất kỳ xung đột nào.
+
+Điều này cũng hoạt động với Mac Catalyst ngay lập tức.
+
+UISplitViewControllers kiểu cột đã đạt được hành vi thay đổi kích thước mới duyên dáng trong Trình quản lý sân khấu.
+
+Các thanh bên được tự động ẩn khi cần thiết và chúng sẽ vẫn ẩn cho đến khi được hiển thị cụ thể.
+
+Khi các thanh bên được yêu cầu ở độ rộng hẹp hơn, UISplitViewController sử dụng hành vi lớp phủ hoặc thay thế khi cần thiết.
+
+Một thanh bên được phủ vẫn tồn tại khi cửa sổ thay đổi kích thước lớn hơn.
+
+Khi bị loại bỏ và thu hồi ở chiều rộng lớn hơn, nó sẽ trở lại lát gạch.
+
+Bộ điều khiển chế độ xem phân chia ba cột, chẳng hạn như trong Thư, hoạt động tương tự.
+
+Hành vi mới này xảy ra với UISplitViewControllers được tạo ra với kiểu cột đôi hoặc ba cột.
+
+Tóm lại: hành vi tự động gạch các cột bất cứ khi nào có thể, ẩn các thanh bên khi cần thiết khi chiều rộng giảm, phủ hoặc thay thế cột phụ bằng thanh bên nếu không có đủ chỗ để gạch khi nhấn nút thanh bên và bạn có thể ghi đè hành vi trong ứng dụng của mình bằng cách sử dụng preferredDisplayMode và preferredSplitBehavi
+
+Trong iPadOS 17, chúng tôi đã cải thiện hỗ trợ cho các ứng dụng lấy tài liệu làm trung tâm.
+
+UIKit cung cấp một UIDocumentViewController mới đóng vai trò là lớp cơ sở của bộ điều khiển chế độ xem nội dung của bạn.
+
+Nó đảm bảo trải nghiệm mặc định của hệ thống và cung cấp nhiều tính năng mà không cần áp dụng thêm, chẳng hạn như tự động định cấu hình menu tiêu đề, chia sẻ, kéo và thả, các lệnh chính và hơn thế nữa.
+
+Ngoài ra, UIDocument hiện phù hợp với UINavigationItemRenameDelegate và cung cấp trải nghiệm đổi tên đầy đủ khi được đặt làm đại diện đổi tên của mục điều hướng của bộ điều khiển chế độ xem.
+
+Để tìm hiểu thêm về những tính năng này và các tính năng mới khác cho các ứng dụng tập trung vào quản lý tài liệu, hãy xem 'Xây dựng các ứng dụng dựa trên tài liệu tốt hơn'.
+
+Apple Pencil bổ sung thêm một khía cạnh cho các ứng dụng iPadOS và cũng có rất nhiều API mới.
+
+Với iPad Pro và iOS 16.4 mới, chúng tôi đã giới thiệu di chuột với Apple Pencil.
+
+Để chụp di chuột từ bút chì, bạn có thể sử dụng UIHoverGestureRecognizer.
+
+Độ lệch z phản ánh khoảng cách di chuột chuẩn hóa từ màn hình, dao động từ 0 đến 1.
+
+Bạn cũng có thể chụp độ cao và góc phương vị của bút chì khi ở trong phạm vi di chuột để hiển thị chính xác bản xem trước nét cọ của bạn có thể trông như thế nào trên màn hình.
+
+Với di chuột bút chì, bạn cũng có thể di chuột qua màn hình chính và các biểu tượng thanh công cụ trong ứng dụng.
+
+Nếu bạn đang sử dụng UIPointerInteraction, không cần áp dụng thêm.
+
+Tuy nhiên, điều đáng chú ý là, các tương tác trực quan khi sử dụng đầu vào chuột hoặc bàn di chuột so với đầu vào Apple Pencil hơi khác một chút.
+
+Ví dụ, các kiểu con trỏ như con trỏ hệ thống không hiển thị khi sử dụng Apple Pencil.
+
+Đảm bảo dùng thử di chuột bút chì với ứng dụng của bạn.
+
+Trong iOS 17, PencilKit thậm chí còn trở nên biểu cảm hơn và giới thiệu các loại mực mới.
+
+Bút monoline rất phù hợp để chi tiết, mang đến cho bạn chiều rộng có kích thước phù hợp.
+
+Bút máy bắt chước thư pháp, với những nét xuống dày và những nét lên mỏng.
+
+Màu nước cho phép những nét đẹp và biểu cảm.
+
+Và bút chì màu là một sự bổ sung thú vị.
+
+Với các loại mực mới, hãy ghi nhớ khả năng tương thích ngược.
+
+Các phiên bản trước của iOS không thể tải PKDrawings có chứa mực mới.
+
+Thuộc tính phiên bản nội dung mới trên các loại mô hình dữ liệu như PKDrawing, PKStroke và các loại khác cho biết phiên bản PencilKit nào được yêu cầu để tải đối tượng.
+
+Phiên bản nội dung của 1 biểu thị các loại mực được vận chuyển trong iOS 14 và 2 dành cho các loại mực mới trong iOS 17.
+
+Để cung cấp trải nghiệm người dùng tốt, hãy sử dụng API này để phát hiện sự không tương thích và cung cấp thông báo hoặc hiển thị hình ảnh dự phòng.
+
+Khi không thể duy trì khả năng tương thích ngược, hãy sử dụng APISupportedContentVersion tối đa mới để giới hạn các tính năng nào có sẵn thông qua canvas và trình chọn công cụ.
+
+Để làm cho iPad trở nên mạnh mẽ hơn khi kết hợp với bàn phím phần cứng như Magic Keyboard, chúng tôi đã thêm hỗ trợ cuộn bàn phím.
+
+Tính mới trong iOS 17, UIScrollViews có thể được cuộn bằng cách sử dụng các phím Page Up, Page Down, Home và End, nếu có.
+
+Bạn có thể ghi đè hành vi này bằng cách sử dụng API mới trên UIScrollView, cho phépKeyboardScrolling.
+
+Cuối cùng, tôi sẽ hướng dẫn bạn thông qua các cải tiến chung mà chúng tôi đã thực hiện trong nhiều lĩnh vực của UIKit.
+
+Tôi sẽ cho bạn biết tất cả về 8 cải tiến chung: cải tiến chế độ xem bộ sưu tập, thông số hoạt hình mùa xuân mới, tương tác văn bản và hơn thế nữa.
+
+Tôi sẽ bắt đầu với các chế độ xem bộ sưu tập đã được tối ưu hóa rất nhiều, với nhiều cải tiến hiệu suất trong iOS 17.
+
+Những biểu đồ này cho thấy chế độ xem bộ sưu tập nhanh hơn bao nhiêu trong iOS 17 khi thực hiện các thao tác với một số lượng lớn các mục.
+
+iOS 17 nhanh gần gấp đôi so với iOS 16 để đảo ngược thứ tự sắp xếp của chế độ xem bộ sưu tập chứa mười nghìn mục và nhanh gấp ba lần để thực hiện cập nhật xóa một nửa số mục đó.
+
+Hơn nữa, khi bạn thực hiện cập nhật mà không có hình ảnh động, hiệu suất xem bộ sưu tập sẽ được cải thiện hơn nữa.
+
+Cho dù bạn đang áp dụng ảnh chụp nhanh cho nguồn dữ liệu có thể phân biệt hay thực hiện cập nhật hàng loạt theo cách thủ công, chế độ xem bộ sưu tập sẽ nhanh hơn trên bảng trong iOS 17.
+
+Những cải tiến này làm cho ứng dụng của bạn cảm thấy phản hồi nhanh hơn và dẫn đến ít trở ngại hơn trong ứng dụng của bạn.
+
+Bây giờ, tôi sẽ nói về một tính năng mới mạnh mẽ trong Bố cục Thành phần, trước tiên bắt đầu với một ví dụ về bố cục khá điển hình.
+
+Đây là ứng dụng Sức khỏe hoàn toàn mới trên iPad, trong đó phần yêu thích đang sử dụng bố cục bố cục với các hàng gồm 2 mục, tất cả đều tự định cỡ bằng NSCollectionLayoutDimension.estimated.
+
+Chú ý cách tế bào thuốc có chiều cao không khớp với chiều cao của tế bào bên cạnh nó.
+
+Điều này sẽ trông tốt hơn nhiều nếu các mục trong hàng này có cùng chiều cao.
+
+Trong iOS 17, Bố cục bố cục có một kích thước bố cục hoàn toàn mới: uniformAcrossSiblings.
+
+Tính năng mới này cho phép tự thay đổi kích thước các mục trong bố cục của bạn để nhận được kích thước nhất quán dựa trên kích thước của mặt hàng lớn nhất.
+
+Khi bạn cần loại bố cục này, chỉ cần thay thế kích thước ước tính của bạn bằng uniformAcrossSiblings.
+
+Hãy nhớ rằng, khi bạn sử dụng tính năng này, nó yêu cầu tất cả các mục anh chị em phải được tạo và định kích thước để xác định kích thước của mặt hàng lớn nhất; vì vậy hãy tránh sử dụng nó khi bạn có số lượng lớn các mục trong một nhóm.
+
+Quay lại ví dụ này của ứng dụng Sức khỏe.
+
+Có hai mục trong nhóm này với chiều cao vật phẩm khác nhau.
+
+Chúng tôi đã cập nhật tất cả các mục trong bố cục này để sử dụng uniformAcrossSiblings, vì vậy ô Thuốc phát triển để phù hợp với chiều cao của ô Mức âm thanh, có được bố cục mà chúng tôi muốn.
+
+Tiếp theo, đối với hoạt ảnh mùa xuân, chúng tôi đã tinh chỉnh một cách mới để chỉ định các thông số dễ hiểu và dễ làm việc hơn.
+
+Nó chỉ sử dụng 2 thông số: thời lượng và độ nảy.
+
+Thời lượng xác định thời gian cho đến khi bạn cảm nhận được hoạt hình mùa xuân để giải quyết, không phải mất bao lâu để hoàn thành hoạt ảnh và nó độc lập với độ nảy.
+
+Và tăng độ nảy từ 0 làm tăng độ nảy cho hoạt ảnh, mà không thay đổi thời gian hoạt hình.
+
+Chúng tôi đã thêm một phương pháp mới trên UIView lấy các tham số lò xo này.
+
+Và tất cả chúng đều là tùy chọn, vì vậy bây giờ bạn thậm chí có thể chỉ viết "animate" và nhận được một hình ảnh động mùa xuân phù hợp với mặc định của hệ thống.
+
+Xem bài nói chuyện "Animate with Springs" để có cái nhìn sâu sắc hơn về cách mô tả lò xo mới này.
+
+Tiếp theo, tôi sẽ đề cập đến các tính năng và API mới để tương tác với văn bản.
+
+Chúng tôi đã thực hiện một số cải tiến đáng kể đối với con trỏ văn bản và giao diện người dùng lựa chọn văn bản trong iOS 17, bao gồm cả một loupe lựa chọn được thiết kế lại mới.
+
+Các nhà phát triển có chế độ xem văn bản tùy chỉnh, ví dụ như trình xử lý văn bản, giờ đây có thể sử dụng chế độ xem do hệ thống cung cấp cho giao diện người dùng lựa chọn mà không cần áp dụng tất cả UITextInteraction.
+
+Tương tác mục văn bản trong chế độ xem văn bản hiện có thể tùy chỉnh nhiều hơn thông qua các API mới trên UITextViewDelegate, giúp có thể sửa đổi hành động hoặc menu chính cho các mục văn bản như liên kết hoặc tệp đính kèm văn bản.
+
+Hơn nữa, bạn cũng có thể gắn thẻ các phạm vi tùy chỉnh của nội dung để cho phép tương tác trên chúng, giúp việc thêm các hành động hoặc menu vào văn bản không phải là liên kết dễ dàng hơn.
+
+Để tìm hiểu thêm về các cải tiến con trỏ văn bản và các hành động và menu mục văn bản, hãy xem "Có gì mới với tương tác văn bản và văn bản."
+
+Bây giờ tôi sẽ cung cấp bản cập nhật về một yếu tố được thiết lập tốt của iOS: thanh trạng thái.
+
+Kiểu dáng thanh trạng thái trên iOS được điều khiển bởi ứng dụng bên dưới nó, với kiểu mặc định chuyển đổi dựa trên ứng dụng hoặc bộ điều khiển chế độ xem ở chế độ tối hoặc sáng.
+
+Có những trường hợp với nội dung người dùng có thể khó khăn để làm đúng để đảm bảo độ tương phản.
+
+Kiểu mặc định ở đây tối vì ứng dụng đang sử dụng giao diện người dùng sáng.
+
+Nhưng một số nội dung người dùng bị tối.
+
+Bây giờ, trong iOS 17, kiểu mặc định liên tục điều chỉnh nội dung của ứng dụng và tự động thay đổi giữa kiểu tối và sáng để duy trì độ tương phản.
+
+Nó thậm chí còn cho phép thanh trạng thái đổ các kiểu khi cần thiết.
+
+Vì các ứng dụng không còn cần chỉ định tối và sáng một cách rõ ràng cho tất cả các trường hợp này, nên có nhiều cơ hội để xóa mã tùy chỉnh và sử dụng kiểu mặc định.
+
+Kéo và thả đang trở nên mạnh mẽ hơn trong iOS 17.
+
+Các tệp và nội dung được hỗ trợ hiện có thể được thả vào các biểu tượng trên Màn hình chính và mở trực tiếp trong các ứng dụng tương ứng.
+
+Điều này sẽ hoạt động tự động ngay hôm nay cho nhiều ứng dụng dựa trên tài liệu mà không có bất kỳ thay đổi nào.
+
+Hệ thống sử dụng CFBundleDocumentTypes như được định nghĩa trong tệp Info.plist của ứng dụng của bạn để xác định xem tệp bị rơi có được hỗ trợ hay không.
+
+Khi thả, các tệp được mở bằng các phương thức đại diện cảnh hiện có, giống như bất kỳ URL nào khác.
+
+Chỉ cần đảm bảo rằng ứng dụng của bạn xác định các loại tài liệu được hỗ trợ để chọn tham gia tính năng này.
+
+UIKit bổ sung hỗ trợ cho Hình ảnh ISO HDR, cho phép bạn dễ dàng hiển thị những hình ảnh này với UIImageView và thao tác chúng với UIGraphicsImageRenderer.
+
+Ngoài ra, UIImageReader mới cung cấp cho bạn nhiều quyền kiểm soát hơn khi tải hình ảnh, bao gồm chuyển đổi một số định dạng hình ảnh HDR, chẳng hạn như các định dạng từ Camera Roll sang ISO HDR.
+
+Để biết thêm thông tin, hãy xem phiên "Hỗ trợ hình ảnh HDR trong ứng dụng của bạn."
+
+UIPageControl đã đạt được các tính năng mới để thể hiện tiến trình trang phân đoạn.
+
+Ngày nay, các điều khiển trang thường được sử dụng trong các ứng dụng để hiển thị nội dung trình chiếu tự động trang trong một khoảng thời gian đã đặt hoặc dọc theo nội dung video.
+
+Với API tiến trình hẹn giờ và tiến trình hẹn giờ mới, giờ đây bạn có thể hiện tiến trình trang phân đoạn trong chỉ báo hoạt động để cung cấp ngữ cảnh tốt hơn khi trang sẽ thay đổi.
+
+Để thiết lập điều khiển trang tiến trình phân đoạn, chỉ cần đặt thuộc tính tiến trình mới trên UIPageControl với một đối tượng tiến trình.
+
+UIPageControlTimerProgress có bộ hẹn giờ tích hợp để giúp dễ dàng định cấu hình thời lượng của mỗi trang.
+
+UIPageControl sẽ tự động thay đổi trang của nó khi thời lượng hẹn giờ được đáp ứng.
+
+Đối với các trang cần theo dõi trình phát video hoặc bộ hẹn giờ bên ngoài, có nguồn sự thật riêng, hãy sử dụng loại UIPageControlProgress cơ bản để cập nhật thủ công giá trị currentProgress khi nội dung tiến triển.
+
+iOS 17 và macOS Sonoma giới thiệu Palette Menus.
+
+Bảng màu là một hàng các yếu tố menu thường được sử dụng để lựa chọn từ một bộ sưu tập các mục.
+
+Kiểu điều khiển này có thể được tìm thấy trong ứng dụng Sách trên iOS hoặc trong Mail và Finder trên Mac.
+
+Bây giờ nó có sẵn dưới dạng điều khiển hạng nhất trong UIKit.
+
+Để biến bất kỳ menu nào thành bảng màu, chỉ cần thêm .displayAsPalette vào các tùy chọn của nó như thế này.
+
+Vì các yếu tố trong bảng màu tương đối nhỏ, lựa chọn không được chỉ định bằng dấu kiểm, như trong các yếu tố menu thông thường.
+
+Thay vào đó, UIKit sẽ chọn chỉ báo lựa chọn thích hợp dựa trên hình ảnh được cung cấp.
+
+Nếu tất cả các yếu tố trong bảng màu sử dụng Biểu tượng SF đơn sắc hoặc hình ảnh mẫu, phần tử được chọn sẽ được nhuộm màu của ứng dụng.
+
+Nếu các phần tử có biểu tượng SF nhiều màu, một nét màu sẽ được vẽ xung quanh biểu tượng đã chọn.
+
+Nếu bạn đang sử dụng hình ảnh hoàn toàn tùy chỉnh cho các phần tử menu của mình hoặc nếu bạn muốn ghi đè hành vi tích hợp bằng cách cung cấp chỉ báo lựa chọn của riêng mình, bạn có thể sử dụng thuộc tính selectedImage mới trên giao thức UIMenuLeaf.
+
+Trong ví dụ này, Hình ảnh được chọn đang được đặt trong trình khởi tạo của UIAction.
+
+Các API menu của UIKit có sẵn trên iOS, iPadOS và Mac Catalyst, cho phép bạn xây dựng các menu phức tạp với cùng một API quen thuộc.
+
+Và bắt đầu với tvOS 17, tất cả các API giống nhau đều có sẵn trên Apple TV với giao diện hoàn toàn mới và các hành vi tvOS gốc.
+
+Ồ! Chúng tôi đã bao phủ rất nhiều mặt đất.
+
+UIKit chắc chắn đã có được một loạt các tính năng, nâng cao khả năng của nó hơn nữa.
+
+Tiếp theo là gì?
+
+Biên dịch ứng dụng của bạn bằng iOS 17 SDK.
+
+Kết hợp các tính năng UIKit mới và tận dụng các bản xem trước Xcode trong các dự án của bạn.
+
+Và đảm bảo rằng giao diện người dùng của bạn linh hoạt để phù hợp với các chỉ số văn bản khác nhau bằng các ngôn ngữ không phải tiếng Latinh.
+
+Tôi hy vọng bạn thích cái nhìn tổng quan ngắn gọn về những chủ đề này.
+
+Để có cái nhìn sâu sắc hơn, hãy xem các video liên quan.
+
+Cảm ơn bạn.
+
+♪ ♪

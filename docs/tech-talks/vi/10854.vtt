@@ -1,0 +1,974 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:05.000
+Xin chào. Tôi là Jeri Mason. Tôi là một kỹ sư phần mềm trong nhóm HomePod.
+
+00:00:05.000 --> 00:00:13.000
+Và tôi sẽ hướng dẫn bạn cách đưa dịch vụ truyền thông của bạn vào nhà với SiriKit Media Intents, hiện được cung cấp bởi Cloud Extensions.
+
+00:00:13.000 --> 00:00:17.000
+Hãy bắt đầu với mọi thứ bạn cần để bắt đầu phát triển.
+
+00:00:17.000 --> 00:00:38.000
+Đầu tiên, chúng tôi sẽ đề cập đến một số điều kiện tiên quyết quan trọng để phát triển dịch vụ một cách hiệu quả: cách định cấu hình nhà thử nghiệm, cách thiết lập HomePod của bạn để thử nghiệm, cách thiết lập thiết bị iOS của bạn để phát triển và cuối cùng, áp dụng khung MediaSetup trong ứng dụng của bạn để đưa dịch vụ của bạn vào
+
+00:00:38.000 --> 00:00:46.000
+Khi bạn đã thực hiện các bước này, bạn đang trên đường tạo ra trải nghiệm phát lại tuyệt vời trên HomePod cho những người yêu thích nội dung của bạn.
+
+00:00:46.000 --> 00:00:48.000
+Hãy đi sâu vào các điều kiện tiên quyết.
+
+00:00:48.000 --> 00:00:55.000
+Để hỗ trợ SiriKit Media Intents trên HomePod, dịch vụ của bạn phải hỗ trợ Media Intents trong ứng dụng iOS của bạn.
+
+00:00:55.000 --> 00:01:00.000
+Bạn sẽ cần đăng ký chương trình trên developer.apple.com/siri.
+
+00:01:00.000 --> 00:01:09.000
+Sau khi bạn đăng ký, bạn sẽ nhận được thêm thông tin chi tiết về việc truy cập thông số kỹ thuật API Mở rộng Đám mây mà dịch vụ của bạn phải triển khai.
+
+00:01:09.000 --> 00:01:14.000
+Sau đó, bạn có thể đăng ký dịch vụ của mình với chúng tôi để có được các quyền và hồ sơ để bắt đầu phát triển.
+
+00:01:14.000 --> 00:01:27.000
+Và cuối cùng, trước khi HomePod có thể liên hệ với dịch vụ của bạn thông qua Cloud Extension APIs, bạn phải triển khai luồng OAuth và Dịch vụ Web Cấu hình được xác định trong thông số kỹ thuật của chúng tôi.
+
+00:01:27.000 --> 00:01:29.000
+Hãy nói nhiều hơn về việc đăng ký.
+
+00:01:29.000 --> 00:01:47.000
+Để đăng ký dịch vụ của mình, bạn sẽ cần cung cấp tên dịch vụ của mình, khóa ký công khai mà bạn tạo để xác minh dịch vụ trên thiết bị, URL tĩnh để truy xuất biểu tượng cho dịch vụ của bạn từ các thiết bị iOS trong nhà và danh sách ID gói của các ứng dụng đang sử dụng dịch vụ.
+
+00:01:47.000 --> 00:01:53.000
+Thông tin này sẽ được sử dụng để tạo hồ sơ phát triển mà bạn có thể cài đặt trên các thiết bị thử nghiệm và phát triển của mình.
+
+00:01:53.000 --> 00:01:58.000
+Chỉ những thiết bị có hồ sơ mới có thể kiểm tra dịch vụ của bạn.
+
+00:01:58.000 --> 00:02:07.000
+Không có gì ngạc nhiên, vì Cloud Extension APIs sử dụng công nghệ Web, chúng tôi đã áp dụng xác thực bằng điểm cuối OAuth 2.0.
+
+00:02:07.000 --> 00:02:13.000
+Nhưng vì ứng dụng của bạn đóng vai trò của một khách hàng đáng tin cậy, một dịch vụ triển khai luồng thông tin đăng nhập của khách hàng là bắt buộc.
+
+00:02:13.000 --> 00:02:19.000
+Cần có một ClientID và ClientSecret duy nhất cho mỗi tài khoản dịch vụ được thêm vào nhà.
+
+00:02:19.000 --> 00:02:30.000
+Mặc dù không phổ biến đối với luồng này, nhưng nên phát hành mã thông báo gia hạn, để tránh việc sử dụng lại phổ biến các thông tin đăng nhập này được cung cấp trực tiếp cho dịch vụ Xác thực.
+
+00:02:30.000 --> 00:02:35.000
+Điều này là do nếu không có luồng mã thông báo gia hạn, ClientID và ClientSecret có thể tồn tại lâu dài.
+
+00:02:35.000 --> 00:02:41.000
+Miễn là ai đó đang sử dụng dịch vụ của bạn từ nhà, mã thông báo gia hạn hoặc xác thực ban đầu phải được hỗ trợ.
+
+00:02:41.000 --> 00:02:51.000
+Ứng dụng iOS của bạn phải có khả năng cung cấp các thông tin đăng nhập này bằng cách yêu cầu chúng từ dịch vụ của bạn và cung cấp chúng cho các API thiết lập phương tiện iOS.
+
+00:02:51.000 --> 00:02:54.000
+HomePods liên hệ với dịch vụ của bạn để giải quyết ý định.
+
+00:02:54.000 --> 00:02:59.000
+Trên iOS, chi tiết về ý định bạn hỗ trợ là một phần trong gói ứng dụng của bạn.
+
+00:02:59.000 --> 00:03:08.000
+Trong Cloud Extension, bạn phải triển khai một hoặc nhiều điểm cuối tài nguyên cấu hình để xác định các điểm cuối được hỗ trợ và URL nào bạn sử dụng để tiếp cận chúng.
+
+00:03:08.000 --> 00:03:10.000
+Có rất nhiều sự linh hoạt ở đây.
+
+00:03:10.000 --> 00:03:20.000
+Bạn có thể có nhiều URL tĩnh hoặc triển khai một điểm cuối tạo chúng một cách linh hoạt, tất cả đều hữu ích cho việc phát triển và dàn dựng các cấu hình thử nghiệm.
+
+00:03:20.000 --> 00:03:26.000
+Điểm cuối của bạn thậm chí có thể kiểm tra tiêu đề ủy quyền yêu cầu, xác định tài khoản truy xuất cấu hình.
+
+00:03:26.000 --> 00:03:35.000
+Phần thân của cấu hình được mã hóa bằng cách sử dụng các tiêu chuẩn Mã hóa và Ký đối tượng JavaScript và nó phải được ký đúng cách để thiết bị chấp nhận nó.
+
+00:03:35.000 --> 00:03:44.000
+Tuy nhiên bạn phục vụ tài nguyên, nó phải cung cấp các tiêu đề điều khiển bộ nhớ cache HTTP tiêu chuẩn để khách hàng không phải truy xuất nó thường xuyên.
+
+00:03:44.000 --> 00:03:51.000
+Mỗi khi ứng dụng của bạn thêm dịch vụ của bạn vào nhà, nó sẽ cung cấp URL cho tài nguyên này cũng như thông tin đăng nhập của khách hàng.
+
+00:03:51.000 --> 00:03:57.000
+Với những điều kiện tiên quyết này được đáp ứng, hãy nói về việc cấu hình một ngôi nhà thử nghiệm.
+
+00:03:57.000 --> 00:04:04.000
+Trong khi bạn đang phát triển và thử nghiệm dịch vụ của mình, nên có một trang chủ thử nghiệm chuyên dụng trong ứng dụng Apple Home.
+
+00:04:04.000 --> 00:04:13.000
+Bằng cách đó, bạn sẽ không ảnh hưởng đến bất kỳ ngôi nhà HomeKit nào mà bạn có thể sử dụng cá nhân và bạn chỉ phải quản lý cấu hình của các thiết bị trong ngôi nhà thử nghiệm của mình.
+
+00:04:13.000 --> 00:04:19.000
+Bạn cũng sẽ muốn có nhiều tài khoản iCloud thử nghiệm để bạn có thể kiểm tra dịch vụ của mình với các tài khoản khác nhau trong cùng một ngôi nhà.
+
+00:04:19.000 --> 00:04:25.000
+Và một cách tự nhiên, bạn muốn đảm bảo rằng bạn đang sử dụng cùng một tài khoản trên HomePod và các thiết bị thử nghiệm iOS của mình.
+
+00:04:25.000 --> 00:04:28.000
+Tạo một ngôi nhà mới trong ứng dụng Home thật dễ dàng.
+
+00:04:28.000 --> 00:04:37.000
+Đầu tiên, nhấn vào Cài đặt Trang chủ, thêm một ngôi nhà, nhập tên của ngôi nhà.
+
+00:04:37.000 --> 00:04:44.000
+Bây giờ bạn có thể thêm những người là những người dùng thử nghiệm khác của bạn.
+
+00:04:44.000 --> 00:04:50.000
+Được rồi. Bây giờ bạn đã thiết lập trang chủ thử nghiệm của mình, bạn sẽ cần thêm HomePod vào đó và sau đó thiết lập nó.
+
+00:04:50.000 --> 00:04:59.000
+Bạn thường sẽ muốn cài đặt bản phát hành tvOS Developer Beta mới nhất trên HomePod của mình hoặc bản phát hành mà Apple hiện đang tư vấn để phát triển.
+
+00:04:59.000 --> 00:05:05.000
+Điều quan trọng cần biết là bạn không thể sử dụng bản phát hành tvOS thông thường cho đến khi bạn sẵn sàng gửi ứng dụng của mình.
+
+00:05:05.000 --> 00:05:12.000
+Cho đến lúc đó, bạn cũng sẽ cần cài đặt hồ sơ phát triển do Apple cung cấp cho dịch vụ của mình trong ứng dụng Home trên iOS.
+
+00:05:12.000 --> 00:05:17.000
+Hãy chắc chắn lặp lại quy trình này cho mỗi thiết bị bạn dự định thử nghiệm tại nhà.
+
+00:05:17.000 --> 00:05:22.000
+Khi bạn cập nhật lên phiên bản tvOS mới, bạn có thể phải cài đặt lại hồ sơ.
+
+00:05:22.000 --> 00:05:29.000
+Để cài đặt hồ sơ trên HomePod, trước tiên hãy đảm bảo rằng nhà thử nghiệm của bạn được chọn trong ứng dụng Home.
+
+00:05:29.000 --> 00:05:32.000
+Mở hồ sơ trên thiết bị iOS.
+
+00:05:32.000 --> 00:05:36.000
+Chọn HomePod làm loại thiết bị để cài đặt.
+
+00:05:36.000 --> 00:05:45.000
+Nhấn Cài đặt, nhập mật mã của bạn, đồng ý với các thỏa thuận và nhấn Cài đặt để hoàn tất cài đặt.
+
+00:05:45.000 --> 00:05:49.000
+Sau đó, bạn có thể chọn HomePod nào trong nhà thử nghiệm của mình để cài đặt hồ sơ.
+
+00:05:49.000 --> 00:05:51.000
+Thế là xong.
+
+00:05:51.000 --> 00:05:56.000
+Bạn cũng sẽ cần thiết lập các thiết bị iOS của mình để thử nghiệm và phát triển.
+
+00:05:56.000 --> 00:06:00.000
+Bạn sẽ cần sử dụng bản beta dành cho nhà phát triển trên thiết bị iOS của mình.
+
+00:06:00.000 --> 00:06:07.000
+Thông thường, bạn sẽ muốn phiên bản được phát hành cùng lúc với tvOS, nhưng hãy kiểm tra với Apple để biết phiên bản được đề xuất mới nhất.
+
+00:06:07.000 --> 00:06:11.000
+Giống như HomePod, bạn sẽ cần cài đặt hồ sơ phát triển của mình.
+
+00:06:11.000 --> 00:06:23.000
+Nhấn vào gói cấu hình di động trong tệp đính kèm e-mail hoặc iMessage, chọn cài đặt nó trên thiết bị iOS của bạn và làm theo quy trình điển hình để chấp nhận và cài đặt hồ sơ trong Cài đặt.
+
+00:06:23.000 --> 00:06:30.000
+Bạn nên kiểm tra xem thiết bị iOS và thiết bị HomePod của bạn có đang chạy các bản phát hành dự kiến vào thời điểm này hay không.
+
+00:06:30.000 --> 00:06:33.000
+Bạn có thể lặp lại thiết lập này cho bất kỳ thiết bị kiểm tra nào bạn có thể cần.
+
+00:06:33.000 --> 00:06:37.000
+Chúng có thể là thiết bị iPhone hoặc iPad.
+
+00:06:37.000 --> 00:06:42.000
+Với các thiết bị của bạn được cấu hình, bây giờ bạn có thể áp dụng khung MediaSetup trong ứng dụng của mình.
+
+00:06:42.000 --> 00:06:48.000
+Đây là những gì, cuối cùng, sẽ cho phép mọi người thiết lập dịch vụ của bạn để sử dụng trong nhà của họ.
+
+00:06:48.000 --> 00:07:04.000
+Để sử dụng MediaSetup, bạn sẽ cần triển khai chức năng trong ứng dụng của mình để truy xuất hoặc tạo tài liệu OAuth, chọn URL Tài nguyên Cấu hình phù hợp với tài khoản đang được tích hợp và sau đó bạn sẽ phải thêm Quyền lợi mà bạn nhận được sau khi đăng ký dịch vụ của mình với Apple.
+
+00:07:04.000 --> 00:07:07.000
+Nếu không, bạn sẽ không thể sử dụng khuôn khổ.
+
+00:07:07.000 --> 00:07:17.000
+Đảm bảo thêm ngữ cảnh trình bày giới thiệu nổi bật, có thể khám phá được trong ứng dụng của bạn để kích hoạt quy trình cài đặt tài khoản bằng MSSetupSession.
+
+00:07:17.000 --> 00:07:20.000
+Mọi người sẽ được hướng dẫn thông qua quá trình thiết lập tài khoản gia đình.
+
+00:07:20.000 --> 00:07:29.000
+Quá trình thiết lập sẽ sử dụng dịch vụ OAuth của bạn để truy xuất mã thông báo API và xác minh URL Tài nguyên Cấu hình của bạn đã được ký và phân tích cú pháp đúng cách.
+
+00:07:29.000 --> 00:07:35.000
+Vì vậy, tất cả các điều kiện tiên quyết mà tôi đã đề cập trước đó phải được đáp ứng trước khi thiết lập thành công hoàn tất.
+
+00:07:35.000 --> 00:07:40.000
+Bạn có thể biết thêm chi tiết tại developer.apple.com.
+
+00:07:40.000 --> 00:07:46.000
+Bây giờ môi trường phát triển và thử nghiệm của bạn đã sẵn sàng, HomePod trong nhà thử nghiệm của bạn có thể liên hệ với dịch vụ của bạn.
+
+00:07:46.000 --> 00:07:50.000
+Hãy xem qua kiến trúc hệ thống xử lý ý định trên đám mây.
+
+00:07:50.000 --> 00:08:00.000
+Trên iPhone, iPad hoặc Apple TV, khi bạn yêu cầu Siri phát phương tiện trong ứng dụng iOS của mình, bạn có thể xử lý ý định trực tiếp hoặc thông qua tiện ích mở rộng trong gói ứng dụng của mình.
+
+00:08:00.000 --> 00:08:14.000
+Thông thường, khi ai đó yêu cầu Siri phát nội dung từ ứng dụng của bạn, Siri xử lý yêu cầu này, xác định gói ứng dụng của bạn là mục tiêu của ý định và tải tiện ích mở rộng ứng dụng của bạn, triển khai độ phân giải ý định.
+
+00:08:14.000 --> 00:08:23.000
+Tiện ích mở rộng của bạn có thể giao tiếp với các dịch vụ của bạn và việc xử lý ý định sẽ kích hoạt khởi chạy ứng dụng của bạn để bắt đầu phát lại hoặc chỉ báo hiệu cho nó xử lý các thay đổi.
+
+00:08:23.000 --> 00:08:36.000
+Với Cloud Extension, quá trình giải quyết những ý định đó chuyển từ việc triển khai tiện ích mở rộng của bạn trên thiết bị sang API trên dịch vụ của bạn khi HomePod trực tiếp cận với các điểm cuối Cloud Extension Intent của bạn thay thế.
+
+00:08:36.000 --> 00:08:41.000
+Cloud Extension API là một đặc tả Web API được thiết kế để xử lý Intent.
+
+00:08:41.000 --> 00:08:51.000
+Nó sử dụng lược đồ OpenAPI để xác định các đối tượng tuân thủ chặt chẽ các API Ý định SiriKit mà bạn đã quen thuộc trên iOS.
+
+00:08:51.000 --> 00:08:59.000
+Các URL cấu hình mà tôi đã thảo luận khi chúng tôi bắt đầu cũng là một phần của thông số kỹ thuật và nội dung của chúng được xác định trong đó.
+
+00:08:59.000 --> 00:09:08.000
+Mỗi loại SiriKit Media Intent có cấu hình điểm cuối giao thức và chúng tôi có thể liên hệ với các URL khác nhau khi cần thiết cho việc triển khai của bạn.
+
+00:09:08.000 --> 00:09:15.000
+Các giao thức được hỗ trợ là: phát phương tiện, thêm phương tiện và cập nhật mối quan hệ phương tiện.
+
+00:09:15.000 --> 00:09:23.000
+Bạn có thể nhận thấy giao thức tìm kiếm không được cung cấp trên HomePod vì không có ngữ cảnh để hiển thị kết quả trên HomePod, không giống như trên các thiết bị iOS.
+
+00:09:23.000 --> 00:09:26.000
+Hãy xem điều gì sẽ xảy ra khi tôi bảo Siri phát nội dung.
+
+00:09:26.000 --> 00:09:33.000
+Khi tôi nói với Siri, "Phát 'Strange' của Celeste", điều này kích hoạt luồng PlayMediaIntentHandling.
+
+00:09:33.000 --> 00:09:38.000
+HomePod bắt đầu giải quyết PlayMediaIntent với một đối tượng tìm kiếm phương tiện.
+
+00:09:38.000 --> 00:09:42.000
+Nó được đăng nhiều kỳ trong JSON và được gửi đến dịch vụ của bạn.
+
+00:09:42.000 --> 00:09:48.000
+Khi bạn khớp tìm kiếm phương tiện với thứ gì đó phù hợp trong danh mục của mình, nó sẽ tạo ra một đối tượng phản hồi.
+
+00:09:48.000 --> 00:09:58.000
+Mục phương tiện có mã định danh, loại và siêu dữ liệu bổ sung mà Siri có thể sử dụng để xây dựng hộp thoại để nói với người dùng, "Hiện đang phát 'Strange' của Celeste."
+
+00:09:58.000 --> 00:10:04.000
+Ngoài ra, giao thức này có một phương thức xử lý được gọi sau khi giải quyết các trường khác theo ý định.
+
+00:10:04.000 --> 00:10:10.000
+Nếu các trường trên ý định đã được chấp nhận, không có lý do gì để trì hoãn việc trả lại phương thức xử lý cuối cùng.
+
+00:10:10.000 --> 00:10:13.000
+Vì vậy, hãy bao gồm nó trong phản hồi của bạn cho yêu cầu ban đầu.
+
+00:10:13.000 --> 00:10:20.000
+Không làm như vậy gây ra các chuyến đi khứ hồi bổ sung đến dịch vụ của bạn một cách không cần thiết và làm chậm thời gian phản hồi có ý định.
+
+00:10:20.000 --> 00:10:32.000
+Bên trong phản hồi xử lý, bạn có thể bao gồm một đối tượng được gọi là UserActivity, chứa persistentIdentifier và userInfo sẽ được trả lại cho dịch vụ của bạn khi HomePod bắt đầu phát nội dung của bạn.
+
+00:10:32.000 --> 00:10:42.000
+Dịch vụ của bạn trả lời với những kết quả này và có thể bắt đầu tạo thành một hàng đợi nội dung để phát dựa trên yêu cầu khi HomePod xử lý các kết quả này và bắt đầu phiên phát lại.
+
+00:10:42.000 --> 00:10:49.000
+Bây giờ, khi phương tiện đang phát từ dịch vụ của bạn, hãy xem xét điều gì sẽ xảy ra khi tôi nói với Siri, "Thêm cái này vào thư viện của tôi."
+
+00:10:49.000 --> 00:11:03.000
+Luồng AddMediaIntentHandling bắt đầu bằng việc giải quyết các mục phương tiện, như trước đây, ngoại trừ bây giờ Siri biết những gì hiện đang phát từ dịch vụ của bạn, số nhận dạng cho nội dung hiện đang phát cũng là một phần của các thông số tìm kiếm phương tiện.
+
+00:11:03.000 --> 00:11:10.000
+Như trước đây, dịch vụ của bạn phải xác định nội dung đang phát và thêm nó vào thư viện của tài khoản được sử dụng để thực hiện yêu cầu.
+
+00:11:10.000 --> 00:11:19.000
+Sau đó, bạn sẽ tạo một đối tượng để đại diện cho ResolveMediaItem và kết hợp kết quả phương thức xử lý cho thấy thao tác này đã thành công.
+
+00:11:19.000 --> 00:11:25.000
+Sau đó, bạn sẽ trả lại phản hồi đó cho HomePod, nơi Siri sẽ xác nhận kết quả.
+
+00:11:25.000 --> 00:11:27.000
+Và cuối cùng, khi tôi nói với Siri, "Tôi thích điều này!"
+
+00:11:27.000 --> 00:11:47.000
+UpdateMediaAffinityIntentHandling bắt đầu, một lần nữa với việc giải quyết các mục phương tiện như trước đây và dịch vụ của bạn sẽ xác định nội dung, tạo kết quả ResolveMediaItem, đăng ký mối quan hệ này với hồ sơ sở thích mà tài khoản đã sử dụng để xác thực yêu cầu và giống như các ví dụ trước, bao gồm kết quả
+
+00:11:47.000 --> 00:11:56.000
+Các yêu cầu cụ thể theo ngữ cảnh này sẽ chỉ bao gồm mã định danh nội dung nếu dịch vụ của bạn là dịch vụ đang phát trên HomePod khi yêu cầu được thực hiện.
+
+00:11:56.000 --> 00:12:03.000
+Ngoài ra, đừng quên rằng người nghe chỉ có thể nói rằng họ muốn thêm thứ gì đó hiện không phát vào thư viện của họ.
+
+00:12:03.000 --> 00:12:08.000
+Trong trường hợp này, bạn sẽ được cung cấp tên phương tiện và tên nghệ sĩ để giải quyết.
+
+00:12:08.000 --> 00:12:11.000
+Tuy nhiên, đây là một trường hợp sử dụng ít phổ biến hơn.
+
+00:12:11.000 --> 00:12:18.000
+Hãy xem một yêu cầu và phản hồi phương tiện phát cơ bản vì nó trông giống như trong giao thức dưới dạng JSON.
+
+00:12:18.000 --> 00:12:29.000
+Nếu tôi yêu cầu HomePod của mình yêu cầu cơ bản nhất, để phát nhạc trên dịch vụ của bạn, mọi yêu cầu đến các điểm cuối ý định trên dịch vụ của bạn sẽ cung cấp mô tả phiên trước mục đầu tiên cần giải quyết.
+
+00:12:29.000 --> 00:12:35.000
+Hầu hết các đối tượng trong thông số kỹ thuật bao gồm số phiên bản Cloud Extension của đối tượng đang được trình bày.
+
+00:12:35.000 --> 00:12:39.000
+Dịch vụ của bạn nên hỗ trợ các phiên bản cũ hơn của các đối tượng này khi có thể.
+
+00:12:39.000 --> 00:12:44.000
+Các phiên bản mới hơn cũng nên tương thích ngược với số phiên bản chính mới.
+
+00:12:44.000 --> 00:12:51.000
+Phiên giải quyết ý định có một mã định danh, cũng được mang trong một tiêu đề trên các yêu cầu HTTPS.
+
+00:12:51.000 --> 00:13:00.000
+Nó sẽ vẫn giữ nguyên trong quá trình giải quyết tương tác ý định và nếu nhiều yêu cầu được thực hiện để giải quyết ý định này, mã định danh này sẽ nhất quán giữa chúng.
+
+00:13:00.000 --> 00:13:09.000
+Hai dấu thời gian được cung cấp - thời gian UTC khi yêu cầu được chuẩn bị và thời hạn chót sau đó khách hàng sẽ hết thời gian yêu cầu.
+
+00:13:09.000 --> 00:13:14.000
+Nếu thời hạn bị bỏ lỡ, Siri sẽ giải thích dịch vụ không thể giải quyết được ý định.
+
+00:13:14.000 --> 00:13:17.000
+Cung cấp phản hồi kịp thời là rất quan trọng.
+
+00:13:17.000 --> 00:13:30.000
+Thời gian chờ xảy ra sau mười giây, vì vậy hãy xem xét cách bạn có thể chia nhỏ công việc trả lại kết quả ý định và chuẩn bị nội dung để phát lại để dịch vụ của bạn có thể tận dụng thời gian giữa các yêu cầu từ HomePod.
+
+00:13:30.000 --> 00:13:34.000
+Những ràng buộc này và các đối tượng ngữ cảnh của người chơi sẽ được thảo luận sâu hơn sau.
+
+00:13:34.000 --> 00:13:40.000
+Họ cung cấp thông tin quan trọng về những gì đang xảy ra trên HomePod khi yêu cầu được thực hiện.
+
+00:13:40.000 --> 00:13:44.000
+Hầu hết các yêu cầu bắt đầu với phương thức resolveMediaItems trên giao thức.
+
+00:13:44.000 --> 00:13:49.000
+Phần quan trọng nhất của yêu cầu này nằm trong tham số và đối tượng ý định.
+
+00:13:49.000 --> 00:13:59.000
+Đây là PlayMediaIntent và tất cả các đối tượng PlayMediaIntent đều có Tìm kiếm phương tiện xác định các thuộc tính của phương tiện được Siri phân tích cú pháp từ lời nói.
+
+00:13:59.000 --> 00:14:10.000
+Các thông số khác của ý định bao gồm thông tin về việc tôi đã yêu cầu phát nội dung bị xáo trộn hoặc lặp lại, hoặc tiếp tục phát nội dung, hoặc liệu tôi đã nói chơi thứ gì đó tiếp theo hay sau đó thay vì bây giờ.
+
+00:14:10.000 --> 00:14:16.000
+Đối tượng này sẽ xuất hiện quen thuộc với bạn nếu bạn đã xử lý PlayMediaIntents trên iOS.
+
+00:14:16.000 --> 00:14:22.000
+Phản hồi bạn trả lời từ yêu cầu này cũng sẽ trông quen thuộc, nhưng có một vài bước ngoặt mới.
+
+00:14:22.000 --> 00:14:38.000
+Bên trong một mảng kết quả, bạn cung cấp tên phương thức, một đối tượng kết quả, trong trường hợp này là một mảng resolutionResult với một mục, lớp resolutionResult phù hợp với phương thức này, trong trường hợp này, là một thuộc tính thành công.
+
+00:14:38.000 --> 00:14:45.000
+Và như bạn có thể thấy, MediaItem đã được giải quyết này đại diện cho Mục yêu thích của bạn, một đài dựa trên hồ sơ sở thích của tôi.
+
+00:14:45.000 --> 00:14:47.000
+Đây là một cái gì đó mới cho Cloud Extension.
+
+00:14:47.000 --> 00:14:53.000
+Mỗi phương pháp bạn xử lý sẽ trả về một đối tượng số liệu mô tả thời gian tính bằng giây để dịch vụ của bạn cung cấp kết quả.
+
+00:14:53.000 --> 00:15:02.000
+Apple có thể sử dụng dữ liệu này tổng hợp để xác định đại khái trải nghiệm của người nghe và đánh giá tốt hơn khi nào sự chậm trễ do kết nối mạng gây ra.
+
+00:15:02.000 --> 00:15:07.000
+Bạn có thể thấy mục kết quả tiếp theo đang nhìn trộm xung quanh khoảng nghỉ ở đây - phương thức xử lý cho giao thức này.
+
+00:15:07.000 --> 00:15:16.000
+Kết quả của phương thức xử lý là một đối tượng phản hồi phù hợp với mục đích đó, có mã trạng thái và sau đó là mô tả về đối tượng UserActivity.
+
+00:15:16.000 --> 00:15:21.000
+Hãy nghĩ về các hoạt động của người dùng như một vật lưu niệm đại diện cho kết quả ý định.
+
+00:15:21.000 --> 00:15:33.000
+Để phát kết quả MediaIntent, UserActivity được sử dụng khi bắt đầu hoặc sửa đổi phát lại nội dung của bạn, trong khi trên các thiết bị iOS, đối tượng UserActivity được cung cấp cho ứng dụng của bạn khi nó được khởi chạy.
+
+00:15:33.000 --> 00:15:41.000
+Trên HomePod, dịch vụ của bạn xác định trải nghiệm nghe với một API mở rộng đám mây khác để phát lại khối phương tiện.
+
+00:15:41.000 --> 00:15:48.000
+Cho đến thời điểm này, việc xử lý ý định nên cực kỳ quen thuộc nếu bạn đã triển khai SiriKit Media Intents trên iOS trước đây.
+
+00:15:48.000 --> 00:15:52.000
+Phát phương tiện từ dịch vụ đám mây của bạn là tính năng thúc đẩy của Cloud Extension.
+
+00:15:52.000 --> 00:16:00.000
+Và trong phần này, tôi sẽ cung cấp cho bạn các khái niệm và chi tiết cụ thể để triển khai hàng đợi phương tiện trên đám mây.
+
+00:16:00.000 --> 00:16:04.000
+Hãy xem lại điều gì sẽ xảy ra khi một người yêu cầu Siri phát đa phương tiện trên HomePod.
+
+00:16:04.000 --> 00:16:12.000
+Yêu cầu được xử lý bởi Siri và tiện ích mở rộng Dịch vụ Truyền thông Đám mây của chúng tôi được chọn để xử lý nó thay mặt cho dịch vụ của bạn.
+
+00:16:12.000 --> 00:16:18.000
+HomePod sử dụng Cloud Extension APIs được triển khai bởi dịch vụ của bạn để giải quyết một ý định.
+
+00:16:18.000 --> 00:16:28.000
+Khi chúng tôi đã giải quyết được ý định, một thành phần Cloud Media Player sẽ liên hệ với các điểm cuối hàng đợi của dịch vụ của bạn và đó là những điểm cuối hàng đợi xác định nội dung cần phát.
+
+00:16:28.000 --> 00:16:33.000
+Trong hầu hết các dịch vụ, dịch vụ phân phối nội dung thường cung cấp các tệp âm thanh thực tế để phát.
+
+00:16:33.000 --> 00:16:36.000
+Bạn có thể nhận thấy rằng có hai HomePods được mô tả ở đây.
+
+00:16:36.000 --> 00:16:43.000
+Trong một số tình huống nhất định, HomePod giải quyết ý định có thể không giống HomePod đang phát nội dung của bạn.
+
+00:16:43.000 --> 00:16:57.000
+Nếu một gia đình có nhiều HomePods, HomePod gần nhất với ai đó trong phòng khách có thể đáp ứng yêu cầu của họ ngay cả khi dịch vụ của bạn đã phát ở nhiều địa điểm trong nhà và phiên đó đã bắt đầu trong nhà bếp.
+
+00:16:57.000 --> 00:17:00.000
+Hãy xem dịch vụ của bạn cung cấp nội dung thông qua hàng đợi như thế nào.
+
+00:17:00.000 --> 00:17:09.000
+Tôi sẽ hướng dẫn bạn một số khái niệm cấp cao về hàng đợi phương tiện, bao gồm các thành ngữ và trường hợp sử dụng khác nhau cho các trải nghiệm nghe khác nhau.
+
+00:17:09.000 --> 00:17:13.000
+Và sau đó đi sâu vào chi tiết về việc quản lý hàng đợi và vòng đời của chúng.
+
+00:17:13.000 --> 00:17:18.000
+Và cuối cùng, tôi sẽ giải thích cách dịch vụ của bạn xác định các điều khiển phát lại trên HomePod.
+
+00:17:18.000 --> 00:17:23.000
+Được rồi, hãy cùng khám phá ý nghĩa của việc cung cấp một hàng đợi từ dịch vụ của bạn.
+
+00:17:23.000 --> 00:17:29.000
+Tất cả các trải nghiệm nghe được hỗ trợ bởi Cloud Extension được xác định bằng cách phát các mục Hàng đợi Nội dung.
+
+00:17:29.000 --> 00:17:36.000
+Hàng đợi được tạo hoặc sửa đổi bằng cách gửi các đối tượng Hoạt động Người dùng do giải quyết ý định cho dịch vụ của bạn.
+
+00:17:36.000 --> 00:17:41.000
+Dịch vụ của bạn trả về một Hàng đợi các mục Nội dung cùng một lúc hoặc, nhiều khả năng hơn, trong các phân đoạn.
+
+00:17:41.000 --> 00:17:46.000
+Hãy xem xét một số trường hợp sử dụng và cách khái niệm hóa chúng như một hàng đợi.
+
+00:17:46.000 --> 00:17:58.000
+Nội dung radio trên Internet thường bắt đầu bằng một bản nhạc quảng cáo, sau đó là nhiều bài hát, thường là quảng cáo, nhiều bài hát hơn và sau đó nó tiếp tục vô thời hạn cho đến khi người nghe ngừng phát lại.
+
+00:17:58.000 --> 00:18:06.000
+Các yêu cầu âm nhạc theo yêu cầu có thể giải quyết thành một album duy nhất hoặc bộ sưu tập khác như danh sách phát và bị giới hạn trong một hàng đợi hữu hạn.
+
+00:18:06.000 --> 00:18:15.000
+Và nội dung phát trực tiếp thường sẽ có một mục nội dung duy nhất tạo thành phản hồi hàng đợi tối thiểu có một phần nội dung tham chiếu đến nguồn phát trực tiếp.
+
+00:18:15.000 --> 00:18:24.000
+Các mục nội dung trong hàng đợi có thể được mô tả bằng mã định danh, URL và các thuộc tính mô tả khác nhau như tên của nội dung, nghệ sĩ, v.v.
+
+00:18:24.000 --> 00:18:35.000
+Lựa chọn nội dung có thể lấy bất kỳ số lượng biểu mẫu thuật toán nào trong dịch vụ của bạn từ thứ tự bản nhạc album cứng nhắc đến lựa chọn hoàn toàn động.
+
+00:18:35.000 --> 00:18:38.000
+Hàng đợi nhằm hỗ trợ tất cả các trường hợp sử dụng này.
+
+00:18:38.000 --> 00:18:45.000
+Bây giờ hãy nói về những cách khác nhau mà bạn có thể thể hiện chuỗi các mục nội dung của mình trong một hàng đợi một cách thành ngữ.
+
+00:18:45.000 --> 00:18:50.000
+Các thành ngữ tôi sẽ mô tả là các biến thể của việc sử dụng hàng đợi được chia thành các phân đoạn cho các mục đích khác nhau.
+
+00:18:50.000 --> 00:18:55.000
+Vì vậy, ở đây chúng tôi có nội dung của chúng tôi được hiện thực hóa về mặt khái niệm theo thời gian được mô tả bởi các đối tượng.
+
+00:18:55.000 --> 00:19:02.000
+Giả sử bốn phần nội dung này là trải nghiệm nghe hoàn chỉnh mà bạn muốn thể hiện như là kết quả của một giải pháp có ý định.
+
+00:19:02.000 --> 00:19:09.000
+Bạn có thể đóng gói chúng vào một đối tượng hàng đợi có số nhận dạng riêng và một mảng đơn giản của tất cả các mục nội dung này.
+
+00:19:09.000 --> 00:19:11.000
+Đó là một đối tượng hàng đợi khá cơ bản.
+
+00:19:11.000 --> 00:19:17.000
+Đây là thành ngữ nội dung tĩnh trong đó một hàng đợi chứa một danh sách nội dung hữu hạn, không thay đổi.
+
+00:19:17.000 --> 00:19:24.000
+Nó có thể phù hợp với một phân đoạn hàng đợi hoặc có thể không, nhưng về mặt khái niệm, nó là một danh sách cứng nhắc các mục nội dung có thể được phát theo thứ tự.
+
+00:19:24.000 --> 00:19:36.000
+Các trường hợp sử dụng cho thành ngữ này bao gồm yêu cầu nhạc theo yêu cầu cho album hoặc danh sách phát hoặc trường hợp sử dụng phát trực tiếp, trong đó hàng đợi là trình bao bọc đơn giản cho một phần nội dung phát trực tuyến vô thời hạn.
+
+00:19:36.000 --> 00:19:40.000
+Tuy nhiên, dịch vụ của bạn có thể có hàng đợi phức tạp hơn.
+
+00:19:40.000 --> 00:19:47.000
+Hàng đợi có thể được chia thành các phân đoạn và chúng liên kết nội bộ đến nội dung tiếp theo và các mục nội dung trước đó thông qua các tham chiếu URL.
+
+00:19:47.000 --> 00:20:04.000
+HomePod sẽ truy xuất các phân đoạn này khi dịch vụ của bạn xác định chúng và bất kỳ phân đoạn cụ thể nào cũng có thể được tạo động và trả về các kết quả khác nhau khi phiên nghe chuyển sang phân đoạn mới, bằng cách chuyển đổi tự nhiên hoặc bằng cách bỏ qua tiến hoặc lùi qua các mục nội dung của bạn.
+
+00:20:04.000 --> 00:20:10.000
+Ví dụ cụ thể này có thể phù hợp với trường hợp sử dụng trong đó một dịch vụ cung cấp quảng cáo bên trong một tập hợp các phân đoạn nội dung cố định.
+
+00:20:10.000 --> 00:20:16.000
+Và mỗi khi người chơi gặp Queue segment B, một quảng cáo khác nhau có thể phát.
+
+00:20:16.000 --> 00:20:24.000
+Điều này có nghĩa là nội dung hàng đợi dịch vụ của bạn được truy xuất động, vì vậy dịch vụ của bạn sẽ nhận được nhiều yêu cầu hơn cho mỗi phân đoạn hàng đợi hơn là như thể nó được nhập.
+
+00:20:24.000 --> 00:20:28.000
+Dịch vụ của bạn có thể muốn có quyền kiểm soát rời rạc nhất đối với nội dung và các tùy chọn phát lại.
+
+00:20:28.000 --> 00:20:38.000
+Và trong thành ngữ hoàn toàn động, mỗi phân đoạn hàng đợi chứa một mục nội dung và một nội dung mới cho hàng đợi có thể được truy xuất động khi người nghe tiếp tục thông qua nó.
+
+00:20:38.000 --> 00:20:43.000
+Đây là một thành ngữ phổ biến cho các trường hợp sử dụng radio trên Internet vì hàng đợi thường có kích thước không xác định.
+
+00:20:43.000 --> 00:20:47.000
+Và cũng bởi vì bản thân nội dung hàng đợi là một chức năng của hành vi lắng nghe.
+
+00:20:47.000 --> 00:20:58.000
+Bỏ qua các bản nhạc và cung cấp mối quan hệ nội dung thông qua ý định của Siri có thể thay đổi hồ sơ sở thích được liên kết với tài khoản và do đó, các mục nội dung sắp tới có thể được chọn khác nhau.
+
+00:20:58.000 --> 00:21:04.000
+Đương nhiên, đây cũng là thành ngữ đại diện cho việc xử lý yêu cầu nhiều nhất trên dịch vụ của bạn.
+
+00:21:04.000 --> 00:21:17.000
+Vì các thành ngữ này là những cách khác nhau để sử dụng cùng một kiến trúc hàng đợi, dịch vụ của bạn có thể cung cấp hàng đợi bằng cách sử dụng bất kỳ sự kết hợp nào của các thành ngữ này và thậm chí bạn có thể chọn các thành ngữ thay thế để triển khai cho một loại yêu cầu cụ thể.
+
+00:21:17.000 --> 00:21:22.000
+Chúng rất hữu ích để xem xét sự đánh đổi về độ phức tạp và khả năng.
+
+00:21:22.000 --> 00:21:27.000
+Đủ lý thuyết rồi. Hãy nói về cách dịch vụ của bạn tạo và quản lý các hàng đợi này.
+
+00:21:27.000 --> 00:21:42.000
+Khi yêu cầu PlayMediaIntentHandling trả về từ điểm cuối ý định của bạn, dịch vụ của bạn sẽ bắt đầu tạo biểu diễn hàng đợi của bạn, bởi vì ngay sau đó, một yêu cầu trên điểm cuối phương tiện phát hàng đợi của bạn sẽ được thực hiện để truy xuất phân đoạn hàng đợi ban đầu hoặc hoàn chỉnh.
+
+00:21:42.000 --> 00:21:50.000
+Mỗi phân đoạn có thể liên kết đến phân đoạn tiếp theo và trước đó theo mong muốn dịch vụ của bạn, cung cấp một tập hợp nội dung có khả năng vô tận hoặc tròn trịa.
+
+00:21:50.000 --> 00:21:54.000
+Thông thường, một hàng đợi mới được truy xuất bắt đầu phát từ mục nội dung đầu tiên.
+
+00:21:54.000 --> 00:22:07.000
+Để hỗ trợ tiếp tục phát lại từ phiên trước, một đối tượng playPointer có thể được cung cấp trong phân đoạn hàng đợi ban đầu và phát lại bắt đầu từ mục nội dung được chỉ định tại thời gian bù đắp mà bạn cung cấp.
+
+00:22:07.000 --> 00:22:20.000
+Để hỗ trợ phát lại mượt mà, không có khoảng trống, vì điểm nghe ở gần cuối mục nội dung cuối cùng trong phân đoạn hàng đợi, phân đoạn tiếp theo sẽ được truy xuất và thêm vào trong khoảng thời gian cuộn trước có thể định cấu hình.
+
+00:22:20.000 --> 00:22:28.000
+Hãy cùng xem xét các đối tượng JSON thực tế được trao đổi với dịch vụ của bạn sau khi xử lý PlayMusicIntent thành công.
+
+00:22:28.000 --> 00:22:31.000
+Giống như tất cả các yêu cầu, chúng tôi bắt đầu với phiên bản của khách hàng.
+
+00:22:31.000 --> 00:22:42.000
+Có thể có một bộ thiết bị không đồng nhất trong nhà, vì vậy phiên bản được hỗ trợ bởi thiết bị phát nội dung của bạn thực sự có thể cũ hơn hoặc mới hơn phiên bản đã giải quyết ý định.
+
+00:22:42.000 --> 00:22:48.000
+Mã định danh cho yêu cầu PlayMedia kế thừa mã định danh được sử dụng trong độ phân giải ý định.
+
+00:22:48.000 --> 00:22:54.000
+Tuy nhiên, nếu vì lý do nào đó mà việc phát lại phải khởi động lại, mã định danh này có thể là một mã định danh mới, duy nhất.
+
+00:22:54.000 --> 00:23:03.000
+Bạn không nên dựa vào điều này để liên kết kết quả ý định của mình với hàng đợi, nơi hoạt động của người dùng phù hợp hơn nhiều, mặc dù những số nhận dạng này có thể hữu ích cho việc gỡ lỗi.
+
+00:23:03.000 --> 00:23:08.000
+Một đối tượng ràng buộc xác định những giới hạn nhất định để phát lại trên thiết bị.
+
+00:23:08.000 --> 00:23:13.000
+Bạn có thể nhớ nó cũng được cung cấp trên các điểm cuối ý định và tôi sẽ đi vào chi tiết hơn về những điều này sau.
+
+00:23:13.000 --> 00:23:24.000
+Cuối cùng, nếu độ phân giải ý định của bạn trả về một đối tượng UserActivity, đối tượng đó được bao gồm để cung cấp ngữ cảnh cho cách điểm cuối hàng đợi của bạn sẽ chuẩn bị các mục nội dung cho phiên này.
+
+00:23:24.000 --> 00:23:27.000
+Dịch vụ của bạn đáp ứng yêu cầu bằng một đối tượng hàng đợi.
+
+00:23:27.000 --> 00:23:37.000
+Nó có một mã định danh sẽ được trình bày sau trong báo cáo và cho ngữ cảnh và ý định và thường sẽ giữ nguyên giữa các phân đoạn khác nhau của cùng một hàng đợi.
+
+00:23:37.000 --> 00:23:44.000
+Bạn có thể cung cấp một loạt các mục nội dung để chơi qua, mặc dù trong ví dụ nhỏ này, chỉ có một mục được cung cấp.
+
+00:23:44.000 --> 00:23:56.000
+Có các thuộc tính mô tả từng mục nội dung, số nhận dạng cho mỗi mục, phải là duy nhất cho hàng đợi này, nếu không phải là toàn bộ danh mục của bạn và URL đến nội dung của nội dung.
+
+00:23:56.000 --> 00:24:00.000
+Đây là nơi các liên kết nội dung trước đó và tiếp theo được mô tả cho phân đoạn.
+
+00:24:00.000 --> 00:24:06.000
+Nội dung của phản hồi từ các URL này là một định nghĩa phân đoạn hàng đợi khác giống như định nghĩa này.
+
+00:24:06.000 --> 00:24:18.000
+Cuối cùng, bằng cách chỉ định cuộn trước năm giây, khoảng năm giây trước khi kết thúc phát lại mục nội dung cuối cùng trong mảng, URL nội dung tiếp theo sẽ được truy xuất để mở rộng nội dung hàng đợi về phía trước.
+
+00:24:18.000 --> 00:24:22.000
+Đó là tất cả những gì HomePod cần để bắt đầu phát lại nội dung của bạn.
+
+00:24:22.000 --> 00:24:28.000
+Bây giờ, điều gì sẽ xảy ra nếu ai đó yêu cầu Siri phát một bản nhạc khác tiếp theo trong khi đã nghe hàng đợi của bạn?
+
+00:24:28.000 --> 00:24:34.000
+Điều này được chỉ ra trong giao thức PlayMediaIntentHandling bằng cách phân giải vị trí hàng đợi phát lại tiếp theo.
+
+00:24:34.000 --> 00:24:41.000
+Nếu HomePod đang phát mục nội dung thứ hai trong hàng đợi ví dụ này, bạn có thể không muốn cung cấp kết quả hàng đợi hoàn toàn mới.
+
+00:24:41.000 --> 00:24:46.000
+Trong trường hợp này, bạn thực sự muốn chèn một hoặc nhiều mục nội dung vào hàng đợi này.
+
+00:24:46.000 --> 00:25:02.000
+Bạn làm điều này bằng cách cung cấp một phân đoạn hàng đợi từ điểm cuối PlayMedia của bạn có cùng số nhận dạng hàng đợi như những gì hiện đang phát và một đối tượng insertPointer về nơi nội dung được mang trong phân đoạn nên được chèn vào phân đoạn hàng đợi hiện tại.
+
+00:25:02.000 --> 00:25:10.000
+Nếu không có mã định danh nội dung cụ thể nào được cung cấp cho điểm chèn, các mục đó cũng được chèn sau mục hiện đang phát.
+
+00:25:10.000 --> 00:25:19.000
+Hành vi này làm giảm tác động của các điều kiện chủng tộc khi nội dung chơi trong quá trình chuyển đổi giữa việc giải quyết ý định và cập nhật hàng đợi.
+
+00:25:19.000 --> 00:25:25.000
+Nên sử dụng kỹ thuật này ngay cả khi dịch vụ của bạn sử dụng thành ngữ hàng đợi hoàn toàn động.
+
+00:25:25.000 --> 00:25:30.000
+Cuối cùng, hãy đề cập đến một số sắc thái của quản lý hàng đợi.
+
+00:25:30.000 --> 00:25:47.000
+Mặc dù nó sẽ dẫn đến số lượng yêu cầu lớn nhất trên các điểm cuối dịch vụ của bạn, nhưng thành ngữ hoàn toàn động có cách cung cấp nội dung linh hoạt nhất cho hầu hết các dịch vụ truyền thông và dễ quản lý hơn về mặt khái niệm nếu nội dung của bạn không hoàn toàn tĩnh trong tự nhiên.
+
+00:25:47.000 --> 00:26:00.000
+Mặc dù giao thức hàng đợi đủ linh hoạt để cung cấp bất kỳ bộ nội dung nào khi điều hướng hàng đợi, tốt nhất bạn nên duy trì tính nhất quán trong lịch sử hàng đợi của mình nếu bạn cho phép người nghe điều hướng ngược lại trong hàng đợi.
+
+00:26:00.000 --> 00:26:16.000
+Để thực hiện hành vi lặp lại và xáo trộn, dịch vụ của bạn phải xác định các tùy chọn này từ mục đích xử lý và cung cấp nội dung hàng đợi theo thứ tự xáo trộn hoặc lặp lại vô thời hạn bằng các kỹ thuật như URL nội dung tiếp theo dẫn đến các mục đã chơi trước đó trong hàng đợi.
+
+00:26:16.000 --> 00:26:24.000
+Những hành vi này không thể thực hiện được nếu không có kiến thức đầy đủ về phạm vi hàng đợi nên HomePod thậm chí không cố gắng hỗ trợ chúng một cách tự nhiên.
+
+00:26:24.000 --> 00:26:38.000
+Các URL nội dung tiếp theo và trước đó có thể được tạo mẫu để một lượng nhỏ ngữ cảnh có thể được cung cấp cho việc triển khai của bạn, chẳng hạn như mục nội dung cuối cùng trong phân đoạn hàng đợi hoặc hàng đợi hoạt động hiện đang phát hoặc số nhận dạng nội dung.
+
+00:26:38.000 --> 00:26:46.000
+Nếu dịch vụ của bạn triển khai điểm cuối hoạt động của người dùng cập nhật hàng đợi, bạn thậm chí có thể cập nhật hàng đợi đang phát thông qua các sự kiện báo cáo.
+
+00:26:46.000 --> 00:26:48.000
+Tôi sẽ nói về việc báo cáo trong thời gian ngắn.
+
+00:26:48.000 --> 00:26:58.000
+Tôi hy vọng bạn nắm vững bộ công cụ quản lý hàng đợi phong phú mà dịch vụ của bạn có thể sử dụng để cung cấp khả năng truy xuất và cập nhật nội dung linh hoạt và kịp thời.
+
+00:26:58.000 --> 00:27:06.000
+Cuối cùng, trong phần này, tôi sẽ mở rộng việc kiểm soát phát lại và xác định cách người nghe tương tác với dịch vụ của bạn.
+
+00:27:06.000 --> 00:27:11.000
+Không phải mọi loại hàng đợi đều giống nhau, và không phải tất cả nội dung trong một hàng đợi đều có thể được xử lý giống nhau.
+
+00:27:11.000 --> 00:27:17.000
+Ví dụ, trường hợp sử dụng radio Internet thường chỉ hỗ trợ chuyển động chuyển tiếp qua hàng đợi.
+
+00:27:17.000 --> 00:27:23.000
+Ngoài ra, khi một quảng cáo đang phát, bạn có thể không muốn hỗ trợ bỏ qua nội dung đó chút nào.
+
+00:27:23.000 --> 00:27:32.000
+Bỏ qua hàng đợi đài phát thanh có thể bị giới hạn bởi nhiều biến số - đăng ký trả phí, mô hình freemium, các giới hạn bí truyền khác.
+
+00:27:32.000 --> 00:27:36.000
+Thành ngữ hoàn toàn năng động thường là cách duy nhất để hỗ trợ những yêu cầu này.
+
+00:27:36.000 --> 00:27:41.000
+Việc di chuyển giữa các nội dung khác nhau trong hàng đợi có thể bị giới hạn tùy ý.
+
+00:27:41.000 --> 00:27:44.000
+Hãy nói về cách bạn định nghĩa sự tương tác này.
+
+00:27:44.000 --> 00:27:52.000
+API hàng đợi mở rộng đám mây cho phép dịch vụ của bạn xác định tương tác với các đối tượng PlayMediaControl mà bạn cung cấp trong đối tượng hàng đợi.
+
+00:27:52.000 --> 00:27:59.000
+Mỗi đối tượng PlayMediaControl có thể chọn một sơ đồ được xác định trước hỗ trợ một số trường hợp sử dụng phổ biến.
+
+00:27:59.000 --> 00:28:05.000
+Tập hợp các tương tác được xác định này có thể được chỉ định trên mỗi mục nội dung với thuộc tính điều khiển.
+
+00:28:05.000 --> 00:28:14.000
+Hãy xem xét một định nghĩa kiểm soát ví dụ có thể phù hợp với dịch vụ theo yêu cầu với các quảng cáo xen kẽ với các bài hát.
+
+00:28:14.000 --> 00:28:18.000
+Bạn bao gồm các định nghĩa này bên trong thuộc tính điều khiển cho mọi đối tượng hàng đợi.
+
+00:28:18.000 --> 00:28:33.000
+Trong ví dụ này, có hai định nghĩa - định nghĩa mặc định bắt buộc, được sử dụng khi bất kỳ mục nội dung nào không chỉ định điều khiển và định nghĩa quảng cáo được chỉ định trên tất cả các mục nội dung là quảng cáo.
+
+00:28:33.000 --> 00:28:36.000
+Tất cả các định nghĩa kiểm soát đều có sơ đồ nguyên mẫu.
+
+00:28:36.000 --> 00:28:43.000
+Theo mặc định, các mục nội dung trong hàng đợi sẽ là sơ đồ theo yêu cầu và đối với nội dung quảng cáo, sơ đồ quảng cáo.
+
+00:28:43.000 --> 00:28:48.000
+Sơ đồ sửa đổi hộp thoại Siri khi người dùng yêu cầu chuyển sang mục nội dung tiếp theo.
+
+00:28:48.000 --> 00:28:52.000
+Siri sau đó có thể trả lời rằng không được phép bỏ qua quảng cáo.
+
+00:28:52.000 --> 00:28:59.000
+Sơ đồ cũng mặc định tất cả các lệnh điều hướng bị vô hiệu hóa, mặc dù bạn có thể bật lại chúng một cách có chọn lọc.
+
+00:28:59.000 --> 00:29:10.000
+Một ví dụ về các lệnh bật cũng được cung cấp ở đây, trong đó các lệnh dislikeTrack và likeTrack, thường bị tắt theo mặc định, đang được bật bởi nội dung theo yêu cầu của bạn.
+
+00:29:10.000 --> 00:29:18.000
+Bạn có thể thấy cách, với một tập hợp nhỏ các định nghĩa kiểm soát được liên kết với các mục trong hàng đợi của bạn, bạn có thể tùy chỉnh đáng kể các tương tác với nội dung của mình.
+
+00:29:18.000 --> 00:29:31.000
+Cuối cùng, các định nghĩa kiểm soát cũng cho phép chỉ định các tùy chọn để báo cáo hoạt động của người dùng, đó là cách dịch vụ của bạn nhận được các sự kiện lệnh tùy chọn, thông tin điều hướng và trạng thái phát nội dung của bạn.
+
+00:29:31.000 --> 00:29:34.000
+Đây là tất cả các chủ đề tôi sắp đề cập tiếp theo.
+
+00:29:34.000 --> 00:29:41.000
+Cho đến nay, bạn đã thấy cách HomePod liên hệ với dịch vụ của bạn để giải quyết ý định và quản lý hàng đợi nội dung để phát.
+
+00:29:41.000 --> 00:30:03.000
+Bây giờ tôi sẽ nói về cách dịch vụ của bạn được nhận thức về các sự kiện phát lại và có thể bối cảnh hóa các yêu cầu theo thời gian, bắt đầu với cách hoạt động nghe có thể được báo cáo cho dịch vụ của bạn, cách ngữ cảnh phát lại được cung cấp khi đã phát bất kỳ hàng đợi nào từ dịch vụ của bạn và cuối cùng, cách dịch vụ của
+
+00:30:03.000 --> 00:30:06.000
+Vậy hãy bắt đầu với báo cáo.
+
+00:30:06.000 --> 00:30:13.000
+Hoạt động của người nghe được báo cáo bằng cách sử dụng hàng đợi phương tiện Cập nhật điểm cuối Hoạt động trong API Mở rộng Đám mây.
+
+00:30:13.000 --> 00:30:20.000
+Điểm cuối này là tùy chọn về mặt kỹ thuật, nhưng hầu hết các dịch vụ đều triển khai nó để nhận báo cáo trạng thái từ HomePod khi mọi người nghe nội dung.
+
+00:30:20.000 --> 00:30:30.000
+Dịch vụ của bạn nhận được báo cáo về quá trình chuyển đổi và các sự kiện kiểm soát phương tiện như bỏ qua, tạm dừng, tiếp tục phát lại và xóa trong một bản nhạc.
+
+00:30:30.000 --> 00:30:36.000
+Nội dung hàng đợi của bạn có thể bị ảnh hưởng bởi các báo cáo này, đặc biệt nếu bạn đã triển khai thành ngữ hàng đợi động một phần hoặc toàn bộ.
+
+00:30:36.000 --> 00:30:40.000
+Dịch vụ của bạn thậm chí có thể trả về các phân đoạn hàng đợi mới dưới dạng phản hồi.
+
+00:30:40.000 --> 00:30:58.000
+Vì các yêu cầu hoạt động cập nhật được thực hiện không đồng bộ từ việc truy xuất nội dung cho hàng đợi của bạn, việc trả lại hàng đợi mới trên báo cáo bỏ qua bản nhạc có thể không hiển thị nội dung hàng đợi của bạn một cách sạch sẽ và có thể chống lại logic chuyển tiếp thông thường, một số bước nhảy trong phát lại có thể xảy ra.
+
+00:30:58.000 --> 00:31:04.000
+Chỉ sử dụng phản hồi hàng đợi từ báo cáo để thay đổi hoàn toàn việc phát lại hoặc chèn nội dung mới.
+
+00:31:04.000 --> 00:31:10.000
+Sử dụng nội dung URL tạo mẫu để có thêm ngữ cảnh về lý do tại sao một phân đoạn hàng đợi được truy xuất.
+
+00:31:10.000 --> 00:31:15.000
+Hãy xem xét một yêu cầu ví dụ được thực hiện cho điểm cuối hoạt động cập nhật.
+
+00:31:15.000 --> 00:31:18.000
+Trong ví dụ này, tôi đã yêu cầu Siri chuyển sang bản nhạc tiếp theo.
+
+00:31:18.000 --> 00:31:22.000
+Những tương tác đơn giản này không phải là ý định mà là sự kiểm soát của phương tiện truyền thông.
+
+00:31:22.000 --> 00:31:25.000
+Trong JSON, báo cáo trông như thế này.
+
+00:31:25.000 --> 00:31:30.000
+Như bạn có thể thấy, loại báo cáo đang được thực hiện được gắn thẻ là bỏ qua_tiếp theo.
+
+00:31:30.000 --> 00:31:42.000
+Tập hợp đầy đủ các loại báo cáo được xác định trong thông số kỹ thuật và bao gồm các chuyển tiếp tự nhiên giữa các bản nhạc, cọ rửa trong một bản nhạc và khi một hàng đợi mới thay thế hàng đợi hiện có.
+
+00:31:42.000 --> 00:31:50.000
+Bối cảnh nowPlaying được cung cấp, bao gồm hoạt động, hàng đợi và số nhận dạng nội dung và phần bù vào nội dung hiện đang được phát.
+
+00:31:50.000 --> 00:31:54.000
+Đối với quá trình chuyển đổi, một ngữ cảnh chơi trước đó cũng được cung cấp.
+
+00:31:54.000 --> 00:32:02.000
+Nó đại diện cho các số nhận dạng liên quan đến nội dung cuối cùng đang được phát và độ lệch bên trong nội dung khi chuyển đổi phát lại.
+
+00:32:02.000 --> 00:32:06.000
+Bạn có thể sử dụng cái này để cập nhật hồ sơ sở thích của người nghe nếu họ bỏ qua nhanh chóng.
+
+00:32:06.000 --> 00:32:12.000
+Nhưng trong trường hợp này, tôi đã nghe một phần hay của bài hát đó, như bạn có thể thấy trong giá trị offsetInMillis.
+
+00:32:12.000 --> 00:32:17.000
+Vì vậy, dịch vụ của bạn có thể cho rằng tôi có thể thích nó, ít nhất là đủ để không hạ thấp xếp hạng tương đối của nó.
+
+00:32:17.000 --> 00:32:29.000
+Và giống như các điểm cuối khác trong API hàng đợi, đối tượng hoạt động của người dùng được trình bày đầy đủ trong trường hợp dữ liệu thông tin người dùng hữu ích cho dịch vụ của bạn để khôi phục trạng thái và nhanh chóng xử lý thông tin này.
+
+00:32:29.000 --> 00:32:32.000
+Dịch vụ của bạn cũng có thể sử dụng nhiều khả năng nâng cao hơn.
+
+00:32:32.000 --> 00:32:42.000
+Ví dụ: bạn có thể yêu cầu báo cáo khoảng thời gian phát lại khi nội dung đang phát để biết rằng một điểm nhất định đã đạt được hoặc mỗi lần một khoảng thời gian lặp lại cụ thể đã trôi qua.
+
+00:32:42.000 --> 00:32:50.000
+Bạn có thể bật và nhận báo cáo về một số lệnh MPRemoteCommandCenter nhất định khi các thiết bị iOS điều khiển phát lại trên HomePod.
+
+00:32:50.000 --> 00:32:57.000
+Lưu ý rằng các lệnh từ xa cho likeTrack và dislikeTrack không giống như việc xử lý ý định mối quan hệ phương tiện cập nhật.
+
+00:32:57.000 --> 00:33:02.000
+Chúng không phải là ý định bằng giọng nói, mà là những cú chạm đơn giản từ một thiết bị iOS ở bất cứ đâu trong nhà.
+
+00:33:02.000 --> 00:33:11.000
+Trong khi tôi đã thảo luận về việc trả lại hàng đợi mới trước đó, bạn cũng có thể cập nhật các đối tượng Hoạt động của Người dùng trong khi phát lại bằng cách trả lại phiên bản cập nhật của đối tượng.
+
+00:33:11.000 --> 00:33:17.000
+Đây là một ví dụ mà chúng ta đã thấy trước đó về các sơ đồ kiểm soát tùy chỉnh bao gồm các định nghĩa hoạt động.
+
+00:33:17.000 --> 00:33:27.000
+Điều khiển mặc định bao gồm playElapsedInterval là 60 giây, có nghĩa là một báo cáo được tạo sau mỗi 60 giây dưới dạng các mục nội dung không có thuộc tính điều khiển được phát.
+
+00:33:27.000 --> 00:33:36.000
+Nhưng đối với các mục có thuộc tính kiểm soát của quảng cáo, ngay sau khi năm giây của nội dung trôi qua, một báo cáo được tạo ra và sau đó một báo cáo khác được tạo ra cứ sau mười giây.
+
+00:33:36.000 --> 00:33:42.000
+Có một số giới hạn về khoảng thời gian báo cáo được xác định trong thông số kỹ thuật.
+
+00:33:42.000 --> 00:33:51.000
+Báo cáo cung cấp cho dịch vụ của bạn rất nhiều dữ liệu, nhưng việc theo dõi bối cảnh đó trong dịch vụ của bạn có thể tốn kém vì hàng triệu người nghe xử lý ý định.
+
+00:33:51.000 --> 00:33:59.000
+Một ngữ cảnh phiên có thể được cung cấp cho dịch vụ của bạn để giúp kết nối phát lại hàng đợi và ngữ cảnh điểm cuối xử lý ý định.
+
+00:33:59.000 --> 00:34:05.000
+Ngữ cảnh phiên chỉ khả dụng nếu HomePod hiện đang phát phương tiện từ dịch vụ của bạn.
+
+00:34:05.000 --> 00:34:18.000
+Khi tôi nói với Siri rằng tôi thích một phần nội dung cụ thể, điểm cuối dịch vụ ý định của bạn nhận được một đối tượng playerContext, giống như cách đối tượng nowPlaying được thảo luận trong phần báo cáo được gửi trên mọi báo cáo.
+
+00:34:18.000 --> 00:34:24.000
+Bối cảnh người chơi bao gồm Nội dung, Hàng đợi và Hoạt động Người dùng persistentIdentifier values.
+
+00:34:24.000 --> 00:34:41.000
+Chúng bao gồm ba cấp độ định nghĩa mà tôi đã giới thiệu trước đây - Mã định danh liên tục hoạt động, xác định một phiên nghe có khả năng tồn tại lâu dài, Hàng đợi, xác định trải nghiệm của người nghe hiện tại và nội dung cụ thể hiện đang phát tại thời điểm giải quyết ý định.
+
+00:34:41.000 --> 00:34:48.000
+Mục này cũng được mang trong đối tượng tìm kiếm phương tiện có ý định và bạn có thể đã quen với việc sử dụng nó trên các thiết bị iOS.
+
+00:34:48.000 --> 00:34:58.000
+Xem xét liệu bối cảnh phiên có đủ thông tin cho dịch vụ của bạn để tránh nhu cầu triển khai điểm cuối hoạt động cập nhật và xử lý các sự kiện báo cáo phức tạp hơn hay không.
+
+00:34:58.000 --> 00:35:08.000
+Trong ví dụ này, yêu cầu UpdateMediaAffinityIntentHandling, HomePod đã phát một hàng đợi từ dịch vụ của bạn, vì vậy một đối tượng playerContext được cung cấp cho điểm cuối ý định.
+
+00:35:08.000 --> 00:35:16.000
+Bên trong đối tượng phiên, bạn sẽ tìm thấy playerContext hoặc một giá trị null nếu dịch vụ của bạn hiện không phát.
+
+00:35:16.000 --> 00:35:27.000
+Nếu hồ sơ sở thích của dịch vụ của bạn rõ ràng chỉ được thúc đẩy bởi mối quan hệ truyền thông và phát các yêu cầu phương tiện, ngữ cảnh trình phát có thể xử lý tất cả các yêu cầu của bạn mà không cần thực hiện báo cáo đầy đủ.
+
+00:35:27.000 --> 00:35:35.000
+Nhưng trước khi dịch vụ của bạn sử dụng thông tin hồ sơ sở thích từ các công cụ này, nó cũng phải tôn trọng các ràng buộc về việc sử dụng được gửi với mọi yêu cầu.
+
+00:35:35.000 --> 00:35:41.000
+Trong một ngôi nhà, có một loại nhận thức theo ngữ cảnh khác mà dịch vụ của bạn phải biết và tôn trọng.
+
+00:35:41.000 --> 00:35:46.000
+Mỗi HomePod có thể được cấu hình với các tùy chọn nhất định tạo thành các ràng buộc đối với dịch vụ của bạn.
+
+00:35:46.000 --> 00:35:53.000
+Ví dụ, HomePod trong phòng trẻ em có thể có tùy chọn loại trừ nội dung khiêu dâm khỏi kết quả.
+
+00:35:53.000 --> 00:35:58.000
+Bất cứ khi nào một yêu cầu được thực hiện trên HomePod này, nó sẽ không trả về nội dung khiêu dâm.
+
+00:35:58.000 --> 00:36:06.000
+Nhưng một yêu cầu đến HomePod trong phòng ngủ không bật cài đặt nên được phép trả lại nội dung khiêu dâm.
+
+00:36:06.000 --> 00:36:07.000
+Ràng buộc không phải là tùy chọn.
+
+00:36:07.000 --> 00:36:11.000
+Dịch vụ của bạn phải tuân theo ý nghĩa của các ràng buộc được trình bày.
+
+00:36:11.000 --> 00:36:22.000
+Khi một vị khách trong nhà tôi yêu cầu phát một số loại nội dung, họ có thể đưa ra yêu cầu trên dịch vụ của bạn và họ tạm thời sử dụng tài khoản của tôi, nhưng sự tương tác này sẽ không ảnh hưởng đến hồ sơ sở thích của tôi.
+
+00:36:22.000 --> 00:36:32.000
+Vì Siri có một ý tưởng khá hay về âm thanh của tôi, chúng tôi phát hiện ra rằng yêu cầu không phải do tôi đưa ra và yêu cầu dịch vụ của bạn không sử dụng yêu cầu này để thay đổi hồ sơ sở thích của tôi.
+
+00:36:32.000 --> 00:36:39.000
+Các giá trị ràng buộc chỉ phải hạn chế hơn nữa các giới hạn hiện có của cài đặt tài khoản dịch vụ của bạn.
+
+00:36:39.000 --> 00:36:47.000
+Nếu dịch vụ của bạn có các điều khiển dành riêng cho tài khoản cho các hạn chế tương tự, chúng nên được kết hợp để cung cấp những gì người nghe mong đợi từ dịch vụ của bạn.
+
+00:36:47.000 --> 00:36:53.000
+Đây là một ví dụ nữa về yêu cầu ý định bắt đầu bằng một đối tượng phiên và các định nghĩa ràng buộc.
+
+00:36:53.000 --> 00:37:00.000
+Chúng là những đồ vật nhỏ, nhưng có tác động đáng kể đến cách dịch vụ của bạn tương tác trong môi trường gia đình.
+
+00:37:00.000 --> 00:37:13.000
+updateUserTasteProfile là một ràng buộc Boolean cho biết liệu việc giải quyết ý định này có được sử dụng để theo dõi lượt thích, không thích, số lượt phát và bất kỳ lịch sử nghe hiển thị nào mà dịch vụ của bạn đã liên kết với tài khoản của tôi hay không.
+
+00:37:13.000 --> 00:37:20.000
+Khi nó sai, dịch vụ của bạn không thể cho rằng tài khoản được sử dụng là của người kiểm soát hoặc bắt đầu phát lại.
+
+00:37:20.000 --> 00:37:28.000
+Nó cũng có thể sai vì HomePod này có thể đã được định cấu hình để không bao giờ đóng góp vào hồ sơ sở thích tài khoản của tôi, ngay cả khi nhận ra giọng nói của tôi.
+
+00:37:28.000 --> 00:37:35.000
+Hãy tưởng tượng tôi có một chiếc HomePod trong phòng gia đình của mình và tôi thường xuyên yêu cầu nó chơi nhạc thay mặt cho trẻ nhỏ.
+
+00:37:35.000 --> 00:37:42.000
+Nếu tôi không có cách nào để thiết lập tùy chọn này, đài âm nhạc yêu thích của tôi có thể chiết trung hơn tôi thích.
+
+00:37:42.000 --> 00:37:47.000
+allowExplicitContent là một ràng buộc Boolean khác phản ánh cài đặt trên ứng dụng HomePod và Home.
+
+00:37:47.000 --> 00:37:52.000
+Và dịch vụ của bạn phải xem xét nó để lọc nội dung rõ ràng trong kết quả từ ý định.
+
+00:37:52.000 --> 00:38:07.000
+Trên thực tế, nếu một yêu cầu ý định cụ thể không thể được thực hiện do thiếu bất kỳ nội dung không rõ ràng nào phù hợp với tìm kiếm, kết quả lỗi cụ thể cho các phương thức MediaItem đã được giải quyết sẽ được cung cấp trong SiriKit Media Intents.
+
+00:38:07.000 --> 00:38:10.000
+Cuối cùng, ngay cả phần cứng cũng có những hạn chế.
+
+00:38:10.000 --> 00:38:14.000
+Các phân đoạn hàng đợi chỉ có thể có kích thước hữu hạn và giá trị đó là động trên mỗi thiết bị.
+
+00:38:14.000 --> 00:38:20.000
+Nếu hàng đợi của bạn lớn hơn giá trị này, bạn phải triển khai thành ngữ hàng đợi được phân đoạn để tuân thủ giới hạn này.
+
+00:38:20.000 --> 00:38:24.000
+Kích thước tối thiểu là một trăm mục nội dung trên mỗi phân đoạn.
+
+00:38:24.000 --> 00:38:28.000
+Hôm nay tôi đã đề cập rất nhiều, và bạn có thể mất một thời gian để tiêu hóa tất cả.
+
+00:38:28.000 --> 00:38:32.000
+Khi bạn có quyền truy cập, tôi khuyến khích bạn khám phá thêm thông số kỹ thuật.
+
+00:38:32.000 --> 00:38:37.000
+Nó đi vào chi tiết hơn nhiều về tất cả các điểm cuối mà tôi đã đề cập hôm nay.
+
+00:38:37.000 --> 00:38:48.000
+Thông số kỹ thuật có định nghĩa API mở cho các điểm cuối dịch vụ bạn cần triển khai và nó đủ hoàn chỉnh để tạo mã xác minh và phân tích cú pháp mô hình dữ liệu cơ bản khi bạn phát triển dịch vụ của mình.
+
+00:38:48.000 --> 00:38:50.000
+Điều đó cực kỳ hữu ích.
+
+00:38:50.000 --> 00:38:56.000
+Định nghĩa Cloud Extension API theo dõi những thay đổi trong iOS SiriKit Media APIs với mỗi bản phát hành mới.
+
+00:38:56.000 --> 00:39:03.000
+Chỉ với một vài ngoại lệ, hầu hết mọi thứ có sẵn thông qua SiriKit Media APIs trên thiết bị đều có sẵn thông qua Cloud Extension APIs.
+
+00:39:03.000 --> 00:39:10.000
+Và các API hàng đợi cung cấp định nghĩa phát lại mạnh mẽ, kiểm soát và báo cáo trực tiếp cho các dịch vụ của bạn.
+
+00:39:10.000 --> 23:59:59.000
+Cảm ơn bạn đã quan tâm đến SiriKit Media Intents và luôn cập nhật các thay đổi API SiriKit Media trong tương lai tại developer.apple.com/siri.
+

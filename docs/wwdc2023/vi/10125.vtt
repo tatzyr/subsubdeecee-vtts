@@ -1,0 +1,569 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:13.000
+Georgi: Xin chào và chào mừng!
+
+00:00:13.000 --> 00:00:19.000
+Tôi là Georgi Rakidov, Kỹ sư phần mềm về GPU, Đồ họa và Phần mềm Hiển thị.
+
+00:00:19.000 --> 00:00:24.000
+Phiên này là phiên thứ ba trong loạt ba phần giúp bạn đưa trò chơi của mình lên Mac.
+
+00:00:24.000 --> 00:00:47.000
+Phiên đầu tiên bao gồm cách bạn có thể sử dụng Bộ công cụ chuyển đổi trò chơi mới để chạy trò chơi Windows đã sửa đổi trên Mac để đánh giá các tính năng đồ họa, âm thanh và hiển thị của bạn Phiên thứ hai cho thấy thời gian phát triển bạn có thể tiết kiệm được bao nhiêu bằng cách biên dịch các bộ đổ bóng HLSL hiện tại của mình thành Metal bằng
+
+00:00:47.000 --> 00:00:59.000
+Phiên này hoàn thành quá trình đưa trò chơi của bạn lên Mac bằng cách cung cấp cho bạn thông tin chi tiết về cách chuyển trình kết xuất của bạn sang Metal và có được hiệu suất tuyệt vời từ Apple Silicon.
+
+00:00:59.000 --> 00:01:08.000
+Khi bạn chuyển trình kết xuất của mình sang Metal, bạn sẽ nhận thấy công cụ của mình yêu cầu ánh xạ các khái niệm từ các API đồ họa nền tảng khác sang Metal.
+
+00:01:08.000 --> 00:01:18.000
+Để giúp bạn điều đó, phiên này bao gồm bốn chủ đề, với các phương pháp hay nhất của Metal, vì vậy bạn có thể tận dụng kiến trúc mạnh mẽ của GPU Apple.
+
+00:01:18.000 --> 00:01:30.000
+Mỗi trò chơi chịu trách nhiệm tạo tài nguyên GPU, bao gồm kết cấu và bộ đệm dữ liệu, có sẵn cho GPU và định cấu hình cách bộ đổ bóng của bạn có thể truy cập chúng.
+
+00:01:30.000 --> 00:01:40.000
+Trò chơi của bạn có thể tận dụng kiến trúc đồ họa mạnh mẽ của bộ xử lý Apple bằng cách tối ưu hóa cách nó gửi lệnh đến GPU.
+
+00:01:40.000 --> 00:01:46.000
+Các trò chơi thường thực hiện các kỹ thuật kết xuất hiện đại bằng cách sử dụng kết xuất gián tiếp.
+
+00:01:46.000 --> 00:01:57.000
+MetalFX giúp các trò chơi tiết kiệm thời gian cho mỗi khung hình bằng cách kết xuất ở độ phân giải thấp hơn và sau đó nâng cấp với MetalFX lên độ phân giải cuối cùng.
+
+00:01:57.000 --> 00:02:07.000
+Khi nói đến việc quản lý tài nguyên, mỗi công cụ phải quyết định cách GPU truy cập vào từng kết cấu, bộ đệm dữ liệu, v.v.
+
+00:02:07.000 --> 00:02:21.000
+Trên Metal, điều quan trọng là phải suy nghĩ về việc cung cấp cho người đổ bóng quyền truy cập vào tài nguyên bằng các ràng buộc và Làm cho tài nguyên cư trú vào bộ nhớ có thể truy cập GPU và đồng bộ hóa quyền truy cập vào chúng.
+
+00:02:21.000 --> 00:02:24.000
+Các ràng buộc tài nguyên và đổ bóng đi cùng nhau.
+
+00:02:24.000 --> 00:02:36.000
+Bắt đầu bằng cách dịch các bộ đổ bóng hiện có của bạn bằng Bộ chuyển đổi bộ đổ bóng kim loại, đây là một công cụ mới trong năm nay, có thể giúp bạn tiết kiệm rất nhiều thời gian khi chuyển bộ đổ bóng của mình sang Kim loại.
+
+00:02:36.000 --> 00:02:40.000
+Bạn có thể tìm hiểu thêm từ phiên "Biên soạn Shaders của bạn" trong loạt bài này.
+
+00:02:40.000 --> 00:02:45.000
+Metal Shader Converter cung cấp cho bạn hai mô hình ràng buộc để lựa chọn.
+
+00:02:45.000 --> 00:02:57.000
+Với "Bố cục tự động", bộ chuyển đổi tự động tạo thông tin ràng buộc hoặc bạn có thể chuyển thông tin ràng buộc sang Bộ chuyển đổi bóng kim loại với "Bố cục rõ ràng".
+
+00:02:57.000 --> 00:03:06.000
+Bố cục rõ ràng rất linh hoạt và có thể hữu ích khi bạn cần triển khai các mô hình ràng buộc từ các nền tảng khác.
+
+00:03:06.000 --> 00:03:30.000
+Ví dụ: một số thiết kế API sử dụng chữ ký gốc đổ bóng và đây là một thiết kế điển hình có bốn mục nhập: bảng mô tả trỏ đến một loạt kết cấu, tham số gốc đệm, hằng số 32 bit và một bảng mô tả khác trỏ đến một loạt các bộ lấy mẫu.
+
+00:03:30.000 --> 00:03:42.000
+Mỗi bảng mô tả là một mảng tài nguyên chứa các phần tử cùng loại, chẳng hạn như tất cả các kết cấu, tất cả các bộ lấy mẫu hoặc tất cả các bộ đệm.
+
+00:03:42.000 --> 00:03:47.000
+Bộ đệm đối số của kim loại linh hoạt hơn ở chỗ các phần tử có thể thuộc nhiều loại.
+
+00:03:47.000 --> 00:03:54.000
+Nhưng nếu công cụ của bạn mong đợi một mảng đồng nhất, bạn có thể dễ dàng mã hóa chúng bằng bộ đệm đối số.
+
+00:03:54.000 --> 00:03:59.000
+Ví dụ này mã hóa tương đương với bảng mô tả kết cấu.
+
+00:03:59.000 --> 00:04:10.000
+Nó bắt đầu bằng cách phân bổ một bộ đệm Kim loại đóng vai trò như một bảng mô tả kết cấu bằng cách lưu trữ ID tài nguyên Kim loại cho mỗi kết cấu.
+
+00:04:10.000 --> 00:04:19.000
+Khi nó tạo ra từng kết cấu, mã lưu trữ resourceID của nó trực tiếp vào bảng.
+
+00:04:19.000 --> 00:04:25.000
+Điều tuyệt vời là bạn có thể chạy mã như thế này ở phía trước và bên ngoài vòng lặp kết xuất của mình!
+
+00:04:25.000 --> 00:04:32.000
+Quá trình mã hóa bảng mô tả mẫu gần như giống nhau.
+
+00:04:32.000 --> 00:04:41.000
+Cũng giống như với kết cấu, mã bắt đầu bằng cách tạo bộ đệm Kim loại đóng vai trò là bảng mô tả mẫu.
+
+00:04:41.000 --> 00:04:49.000
+Khi mã định cấu hình bộ mô tả của mỗi bộ lấy mẫu, nó đặt thuộc tính supportArgumentBuffers thành có.
+
+00:04:49.000 --> 00:04:57.000
+Sau khi mã tạo bộ lấy mẫu với bộ mô tả, nó sẽ lưu ID tài nguyên của bộ lấy mẫu vào bảng.
+
+00:04:57.000 --> 00:05:04.000
+Bạn cũng có thể sử dụng bộ đệm đối số để thể hiện chính chữ ký gốc cấp cao nhất.
+
+00:05:04.000 --> 00:05:15.000
+Ví dụ này xác định một cấu trúc cho chữ ký gốc và tạo ra một bộ đệm Kim loại có thể lưu trữ một phiên bản của nó.
+
+00:05:15.000 --> 00:05:26.000
+Mã gán cho từng trường của các trường cấu trúc với các giá trị thích hợp, bao gồm địa chỉ GPU cho các bảng kết cấu và bảng lấy mẫu.
+
+00:05:26.000 --> 00:05:29.000
+Đó là tất cả những gì cần thiết để chuyển đổi chữ ký gốc.
+
+00:05:29.000 --> 00:05:33.000
+Bộ đệm đối số siêu hiệu quả trong Metal 3!
+
+00:05:33.000 --> 00:05:38.000
+Bây giờ bạn chỉ có thể liên kết bộ đệm đối số cấp cao nhất với bộ đổ bóng.
+
+00:05:38.000 --> 00:05:48.000
+Phần này được thực hiện trong vòng lặp kết xuất, nhưng bạn có thể tạo các bảng mô tả và cấu trúc gốc trước bên ngoài vòng lặp kết xuất.
+
+00:05:48.000 --> 00:06:00.000
+Bộ đệm đối số Metal 3 cung cấp một cách linh hoạt, hiệu quả để dịch các mô hình ràng buộc khác, bao gồm chữ ký gốc và bảng mô tả.
+
+00:06:00.000 --> 00:06:08.000
+Các tài nguyên cần phải cư trú trong quá trình thực hiện một giai đoạn vượt qua hoặc kết xuất nhất định để các trình đổ bóng truy cập chúng.
+
+00:06:08.000 --> 00:06:16.000
+Và nếu một tài nguyên được chia sẻ giữa các lần vượt qua, thứ tự thực hiện các lần vượt qua đó phải được đồng bộ hóa.
+
+00:06:16.000 --> 00:06:30.000
+Việc sử dụng các tài nguyên không liên kết với bộ đệm đối số Metal yêu cầu quản lý cư trú rõ ràng trên tất cả các kiến trúc GPU và Metal cung cấp các cách hiệu quả để kiểm soát cư trú.
+
+00:06:30.000 --> 00:06:35.000
+Khuyến nghị là nhóm tất cả các tài nguyên chỉ đọc thành đống lớn.
+
+00:06:35.000 --> 00:06:50.000
+Bằng cách đó, bạn chỉ có thể gọi useHeap một lần cho mỗi bộ mã hóa và tất cả các tài nguyên chỉ đọc của bạn sẽ được cư trú trong suốt thời gian của giai đoạn vượt qua hoặc kết xuất đó, sẵn sàng để được truy cập bởi các trình đổ bóng.
+
+00:06:50.000 --> 00:06:52.000
+Đây là cách bạn có thể làm điều đó.
+
+00:06:52.000 --> 00:07:02.000
+Tạo một đống với kích thước cần thiết để phân bổ tất cả các tài nguyên chỉ đọc của bạn, sau đó phân bổ từng tài nguyên ra khỏi đống này.
+
+00:07:02.000 --> 00:07:09.000
+Và tại thời điểm kết xuất, chỉ cần gọi useHeap để làm cho tất cả các tài nguyên này cư trú.
+
+00:07:09.000 --> 00:07:13.000
+Đối với các tài nguyên có thể ghi được, câu chuyện hơi khác một chút.
+
+00:07:13.000 --> 00:07:21.000
+Cân nhắc phân bổ tài nguyên có thể ghi riêng lẻ và gọi useResource với cờ sử dụng phù hợp.
+
+00:07:21.000 --> 00:07:27.000
+Trong trường hợp này, Metal sẽ xử lý đồng bộ hóa cho bạn và tối ưu hóa hiệu suất.
+
+00:07:27.000 --> 00:07:35.000
+Điều này sẽ giúp bạn tránh được gánh nặng đồng bộ hóa tài nguyên theo cách thủ công trên các bộ mã hóa Metal.
+
+00:07:35.000 --> 00:07:42.000
+Tương tự như trước đây, bạn bắt đầu bằng cách phân bổ các nguồn lực, lần này không được hỗ trợ bởi một đống.
+
+00:07:42.000 --> 00:07:51.000
+Sau đó, chỉ đối với các bộ mã hóa sẽ truy cập các tài nguyên này, hãy gọi useResource với cờ sử dụng phù hợp.
+
+00:07:51.000 --> 00:07:59.000
+Trong ví dụ này, bộ mã hóa đang ghi vào kết cấu và đọc từ bộ đệm.
+
+00:07:59.000 --> 00:08:02.000
+Đây là một bảng với đề xuất này.
+
+00:08:02.000 --> 00:08:09.000
+Cả hai tài nguyên chỉ đọc và có thể ghi, đều được truy cập từ bộ đệm đối số cấp cao nhất.
+
+00:08:09.000 --> 00:08:14.000
+Trong trường hợp lý tưởng, chỉ đặt một lần cho mỗi bộ mã hóa.
+
+00:08:14.000 --> 00:08:21.000
+Tài nguyên chỉ đọc, được nhóm thành đống, chế độ theo dõi mối nguy hiểm được đặt thành Không theo dõi.
+
+00:08:21.000 --> 00:08:28.000
+Để tạo tất cả các tài nguyên trong heap resident, hãy gọi useHeap một lần cho mỗi bộ mã hóa.
+
+00:08:28.000 --> 00:08:35.000
+Tài nguyên có thể ghi, được phân bổ riêng lẻ, để lại theo dõi mối nguy hiểm và đồng bộ hóa với Metal.
+
+00:08:35.000 --> 00:08:41.000
+Và đối với mỗi cuộc gọi tài nguyên, hãy sử dụng Tài nguyên một lần cho mỗi bộ mã hóa.
+
+00:08:41.000 --> 00:08:43.000
+Đây là một cách tiếp cận hiệu quả!
+
+00:08:43.000 --> 00:08:57.000
+Nó triển khai một mô hình không ràng buộc với chi phí CPU thấp và Ứng dụng không phải lo lắng về việc theo dõi và đồng bộ hóa mối nguy hiểm, các tác vụ phức tạp đòi hỏi nỗ lực nghiêm túc và thời gian phát triển.
+
+00:08:57.000 --> 00:09:18.000
+Để biết thêm chi tiết về không ràng buộc, cư trú và đồng bộ hóa, hãy tham khảo phiên "Không ràng buộc với Kim loại 3." Khi bạn có các ràng buộc tài nguyên, cư trú và đồng bộ hóa được triển khai trong mã, để hiển thị bất kỳ thứ gì trên màn hình, công cụ sẽ phải gửi lệnh đến trình kết xuất.
+
+00:09:18.000 --> 00:09:24.000
+Bộ xử lý Apple có nhiều tính năng để tối ưu hóa việc thực thi lệnh.
+
+00:09:24.000 --> 00:09:34.000
+GPU là Trình kết xuất hoãn lại dựa trên ô, hoặc TBDR, với kiến trúc bộ nhớ thống nhất nơi CPU và GPU đang chia sẻ bộ nhớ hệ thống.
+
+00:09:34.000 --> 00:09:40.000
+Ngoài ra, GPU có một bộ nhớ nhanh, trên chip được gọi là Tile Memory.
+
+00:09:40.000 --> 00:09:51.000
+Để tận dụng kiến trúc này, Metal có khái niệm về đường chuyền và mục tiêu của bạn là nhóm các lệnh kết xuất thành đường chuyền và định cấu hình đúng các đường chuyền đó.
+
+00:09:51.000 --> 00:10:05.000
+Để tìm hiểu sâu hơn về kiến trúc TBDR, vui lòng tham khảo các bài thuyết trình liên quan "Mang ứng dụng Metal của bạn đến Apple Silicon Macs" và "Harness AppleGPUs with Metal".
+
+00:10:05.000 --> 00:10:16.000
+Các API khác có thể có các lệnh GPU trộn luồng liên tục thuộc các loại khác nhau và công cụ của bạn có thể giả định điều này.
+
+00:10:16.000 --> 00:10:21.000
+Dịch các lệnh sang Metal, trước tiên bạn tạo một bộ đệm lệnh.
+
+00:10:21.000 --> 00:10:28.000
+Sau đó, tùy thuộc vào loại lệnh, Đồ họa, Tính toán hoặc Blit, bạn nhóm chúng thành các đường chuyền.
+
+00:10:28.000 --> 00:10:35.000
+Bạn viết các lệnh cho mỗi lần chuyển vào bộ đệm lệnh bằng cách sử dụng bộ mã hóa lệnh.
+
+00:10:35.000 --> 00:10:46.000
+Cuối cùng, khi tất cả các lệnh được mã hóa, hãy gửi bộ đệm lệnh đến hàng đợi lệnh để GPU thực thi.
+
+00:10:46.000 --> 00:10:53.000
+Công cụ của bạn có thể xem xét bốn phương pháp hay nhất để dịch hiệu quả các lệnh kết xuất sang Metal.
+
+00:10:53.000 --> 00:11:04.000
+Bắt đầu bằng cách sao chép hàng loạt trước khi bắt đầu kết xuất, nhóm các lệnh cùng loại và tránh có bộ mã hóa trống để xóa các mục tiêu kết xuất.
+
+00:11:04.000 --> 00:11:11.000
+Và cuối cùng, tối ưu hóa các hành động Tải và Lưu trữ Kim loại của bạn để giảm thiểu băng thông bộ nhớ.
+
+00:11:11.000 --> 00:11:16.000
+Những phương pháp hay nhất này rất dễ giải thích bằng cách sử dụng một ví dụ.
+
+00:11:16.000 --> 00:11:25.000
+Giả sử bạn có trình tự sau: một mục tiêu kết xuất rõ ràng, một bản vẽ, một bản sao, một công văn và một bản vẽ khác.
+
+00:11:25.000 --> 00:11:32.000
+Đặc biệt, hãy xem xét tất cả lưu lượng bộ nhớ giữa hệ thống và bộ nhớ ô được tạo theo trình tự này.
+
+00:11:32.000 --> 00:11:34.000
+Điều này không lý tưởng!
+
+00:11:34.000 --> 00:11:42.000
+Bản sao ở giữa luồng sao chép dữ liệu thống nhất cho các lần vẽ tiếp theo, trong trường hợp này là Bản vẽ 1.
+
+00:11:42.000 --> 00:11:53.000
+Khuyến nghị là, nếu có thể, di chuyển và hàng loạt các bản sao này trước khi kết xuất để tránh làm gián đoạn quá trình kết xuất.
+
+00:11:53.000 --> 00:12:01.000
+Sau khi thay đổi, bản sao bây giờ là đầu tiên, sau đó là xóa, vẽ 0, gửi và vẽ 1.
+
+00:12:01.000 --> 00:12:13.000
+Nếu không có sự phụ thuộc giữa hai cuộc gọi vẽ và công văn, bạn nên sắp xếp lại chúng để bạn có thể vẽ hàng loạt và gửi cùng nhau.
+
+00:12:13.000 --> 00:12:23.000
+Trong ví dụ này, sau khi chuyển đổi thứ tự rút thăm và các cuộc gọi điều phối, bây giờ bạn có hai lần kết xuất sau nhau.
+
+00:12:23.000 --> 00:12:35.000
+Kịch bản này hoàn hảo để hợp nhất chúng thành một lần kết xuất duy nhất nếu chúng chia sẻ cùng một mục tiêu kết xuất, tiết kiệm băng thông bộ nhớ đáng kể.
+
+00:12:35.000 --> 00:12:48.000
+Bằng cách đó, bạn loại bỏ một số lưu lượng bộ nhớ không cần thiết, vì dữ liệu không cần phải chuyển từ bộ nhớ gạch sang bộ nhớ hệ thống và quay lại giữa hai lần rút thăm.
+
+00:12:48.000 --> 00:12:52.000
+Điều này đã tốt hơn, nhưng có thể được tối ưu hóa hơn nữa.
+
+00:12:52.000 --> 00:13:01.000
+Xóa là một bộ mã hóa trống, chỉ với một mục đích: xóa các mục tiêu kết xuất được sử dụng bởi các lần rút thăm tiếp theo.
+
+00:13:01.000 --> 00:13:04.000
+Trong Metal, có một cách rất hiệu quả để làm điều này.
+
+00:13:04.000 --> 00:13:12.000
+Chỉ cần sử dụng LoadActionClear cho lần kết xuất đầu tiên sử dụng các mục tiêu kết xuất.
+
+00:13:12.000 --> 00:13:21.000
+Điều này tốt hơn nhiều, nhưng có một đề xuất nữa Bạn có thể tối ưu hóa các hành động tải và lưu trữ.
+
+00:13:21.000 --> 00:13:29.000
+Bạn chỉ phải lưu trữ trong bộ nhớ hệ thống nội dung của các mục tiêu kết xuất sẽ được sử dụng trong các lần tiếp theo.
+
+00:13:29.000 --> 00:13:36.000
+Từ ví dụ này, giả sử sau khi vẽ 1, chỉ mục tiêu kết xuất đầu tiên sẽ được sử dụng.
+
+00:13:36.000 --> 00:13:43.000
+Tất cả các mục tiêu kết xuất khác là trung gian và nội dung không cần phải được bảo tồn.
+
+00:13:43.000 --> 00:13:49.000
+Kim loại cho phép kiểm soát hành động của cửa hàng cho mỗi mục tiêu kết xuất.
+
+00:13:49.000 --> 00:13:58.000
+Trong trường hợp này, bạn có thể sử dụng StoreActionStore cho mục tiêu kết xuất đầu tiên và StoreActionDontCare cho các mục tiêu khác.
+
+00:13:58.000 --> 00:14:02.000
+Và thế là xong! Đây là chuỗi lệnh ban đầu.
+
+00:14:02.000 --> 00:14:08.000
+Có năm chuyến đi khứ hồi giữa bộ nhớ gạch và bộ nhớ hệ thống.
+
+00:14:08.000 --> 00:14:13.000
+Và đây là cách chuỗi lệnh trông như thế nào sau một vài tối ưu hóa dễ dàng.
+
+00:14:13.000 --> 00:14:17.000
+Chỉ có một lần xả cuối cùng từ bộ nhớ gạch sang bộ nhớ hệ thống.
+
+00:14:17.000 --> 00:14:21.000
+Băng thông bộ nhớ bị giảm đáng kể!
+
+00:14:21.000 --> 00:14:36.000
+Và điều đó đã đạt được bằng cách di chuyển các bản sao trước khi kết xuất, nhóm các lệnh cùng loại, tránh xóa các mục tiêu kết xuất bằng các bộ mã hóa trống và tối ưu hóa các hành động tải và lưu trữ.
+
+00:14:36.000 --> 00:14:39.000
+Các công cụ GPU có thể giúp bạn xác định những vấn đề này.
+
+00:14:39.000 --> 00:14:48.000
+Trình gỡ lỗi kim loại trong Xcode tự động tìm các cơ hội tối ưu hóa, vì vậy bạn có thể có được hiệu suất tốt nhất trong trò chơi của mình.
+
+00:14:48.000 --> 00:15:00.000
+Nó cho phép bạn kiểm tra và hiểu các phụ thuộc của thẻ Metal của bạn, và đi kèm với một bộ công cụ gỡ lỗi và lập hồ sơ đầy đủ tính năng.
+
+00:15:00.000 --> 00:15:06.000
+Thật dễ dàng để sử dụng Metal Debugger để xác định các vấn đề đã được đề cập.
+
+00:15:06.000 --> 00:15:13.000
+Khi tôi nắm bắt được khối lượng công việc Metal, Metal Debugger sẽ hiển thị trình xem Tóm tắt.
+
+00:15:13.000 --> 00:15:27.000
+Phần Thông tin chi tiết ở dưới cùng cho tôi thấy các cơ hội tối ưu hóa được nhóm thành bốn loại: Bộ nhớ, Băng thông, Hiệu suất và Sử dụng API.
+
+00:15:27.000 --> 00:15:33.000
+Có hai thông tin chi tiết về băng thông mà tôi muốn làm nổi bật trong khối lượng công việc này.
+
+00:15:33.000 --> 00:15:36.000
+Cái đầu tiên dành cho các tài nguyên không sử dụng.
+
+00:15:36.000 --> 00:15:45.000
+Khi tôi chọn một Insight, tôi có thể tìm thấy một bản tóm tắt và một số lời khuyên có thể hành động để giải quyết nó trong bảng điều khiển bên phải.
+
+00:15:45.000 --> 00:15:51.000
+Thẻ GBuffer đang lưu trữ nhiều tệp đính kèm hơn mức cần thiết.
+
+00:15:51.000 --> 00:15:58.000
+Trong trường hợp này, GBuffer pass tải kết cấu albedo/alpha và lưu trữ nó.
+
+00:15:58.000 --> 00:16:11.000
+Tuy nhiên, vì kết cấu suất phản chiếu không được sử dụng sau này trong khung này, cửa hàng là dư thừa, vì vậy chúng tôi có thể khắc phục điều này bằng cách đặt hành động cửa hàng thành DontCare.
+
+00:16:11.000 --> 00:16:14.000
+Hãy kiểm tra Insight tiếp theo.
+
+00:16:14.000 --> 00:16:27.000
+Kết hợp các đường chuyền kết xuất có thể giúp giảm băng thông và ở đây, thông tin chi tiết cho thấy rằng tôi có thể kết hợp các đường chuyền GBuffer và Forward thành một đường chuyền duy nhất.
+
+00:16:27.000 --> 00:16:40.000
+Tôi cũng có thể tìm hiểu thêm về những gì những đường chuyền này đang đọc và viết bằng cách nhấp vào nút Tiết lộ trong Phụ thuộc ở bên phải để tìm đường chuyền kết xuất này trong trình xem Phụ thuộc.
+
+00:16:40.000 --> 00:16:45.000
+Trình xem Phụ thuộc là một công cụ tuyệt vời để kiểm tra sự phụ thuộc giữa các lần vượt qua!
+
+00:16:45.000 --> 00:16:54.000
+Ở đây, tôi có thể thấy trong nháy mắt các hành động tải và lưu trữ, được hiển thị ở trên và bên dưới các tệp đính kèm kết xuất.
+
+00:16:54.000 --> 00:17:03.000
+Tất cả các tệp đính kèm trong thẻ này đều có cửa hàng hành động lưu trữ, nhưng chỉ có tệp đính kèm màu 0 và tệp đính kèm độ sâu được sử dụng trong thẻ trong tương lai.
+
+00:17:03.000 --> 00:17:07.000
+Cái nhìn sâu sắc trước đó đã tiết lộ điều này.
+
+00:17:07.000 --> 00:17:16.000
+Thu nhỏ một chút và các cạnh dữ liệu được hiển thị chảy từ đường chuyền GBuffer đến đường chuyền Chuyển tiếp.
+
+00:17:16.000 --> 00:17:27.000
+Như thông tin chi tiết đã chỉ ra, GBuffer và Forward pass có thể được hợp nhất để tiết kiệm băng thông, vì chúng đang lưu trữ và tải từ cùng một tệp đính kèm.
+
+00:17:27.000 --> 00:17:33.000
+Hợp nhất hai đường chuyền này sẽ tiết kiệm băng thông và cải thiện hiệu suất.
+
+00:17:33.000 --> 00:17:41.000
+Đó chỉ là một ví dụ về cách bạn có thể sử dụng Metal Debugger để tìm cơ hội tối ưu hóa trong trò chơi của mình.
+
+00:17:41.000 --> 00:17:55.000
+Để tìm hiểu thêm về Trình gỡ lỗi kim loại, vui lòng xem các phiên liên quan "Nhận thông tin chi tiết về ứng dụng Kim loại của bạn với Xcode 12" và "Khám phá các công cụ gỡ lỗi, lập hồ sơ và tạo tài sản Metal."
+
+00:17:55.000 --> 00:18:03.000
+Kết xuất gián tiếp là một chức năng quan trọng mà các trò chơi cao cấp sử dụng để thực hiện các kỹ thuật kết xuất nâng cao.
+
+00:18:03.000 --> 00:18:10.000
+Chủ đề này sẽ xem xét cách thức hoạt động của ExecuteIndirect và cách dịch lệnh cụ thể này sang Metal.
+
+00:18:10.000 --> 00:18:33.000
+Với kết xuất gián tiếp, thay vì mã hóa nhiều lệnh vẽ, các đối số của chúng được lưu trữ trong một bộ đệm thông thường trong bộ nhớ và chỉ có một lệnh ExecuteIndirect được mã hóa tham chiếu đến bộ đệm và chỉ định số lượng lệnh gọi vẽ mà GPU phải thực hiện bằng cách tìm nạp các đối số cho từng lệnh từ bộ đệm.
+
+00:18:33.000 --> 00:18:47.000
+Ý tưởng chính của cách tiếp cận này là có thể điền nội dung của bộ đệm gián tiếp bằng bộ đổ bóng tính toán được lên lịch để thực hiện trước lệnh ExecuteIndirect.
+
+00:18:47.000 --> 00:18:53.000
+Bằng cách này, GPU chuẩn bị công việc cho chính nó và quyết định những gì sẽ hiển thị.
+
+00:18:53.000 --> 00:19:03.000
+Thực thi các lệnh với các đối số gián tiếp là một tính năng chính để thực hiện các kỹ thuật nâng cao như vòng lặp kết xuất dựa trên GPU.
+
+00:19:03.000 --> 00:19:14.000
+Có hai cách để dịch lệnh này sang Metal, bằng cách sử dụng Draw Indirect và Metal Indirect Command Buffers, hoặc ICBs.
+
+00:19:14.000 --> 00:19:23.000
+Trong Metal, trình kết xuất phải dịch mỗi ExecuteIndirect thành một loạt các lệnh gọi API sang DrawIndirect.
+
+00:19:23.000 --> 00:19:30.000
+Mỗi người tham chiếu bộ đệm và cung cấp độ lệch cho các đối số vẽ.
+
+00:19:30.000 --> 00:19:32.000
+Đây là mã.
+
+00:19:32.000 --> 00:19:37.000
+Xem qua số lần gọi rút thăm tối đa mà ExecuteIndirect này có thể có.
+
+00:19:37.000 --> 00:19:46.000
+Đối với mỗi người, mã hóa một bản vẽ riêng biệt chỉ định bộ đệm đối số gián tiếp và bù đắp trong bộ đệm đó.
+
+00:19:46.000 --> 00:19:53.000
+Khi kết thúc lần lặp, di chuyển phần bù để trỏ đến tập hợp các đối số gián tiếp tiếp theo.
+
+00:19:53.000 --> 00:19:59.000
+Cách tiếp cận này rất dễ thực hiện và sẽ hoạt động trong hầu hết mọi tình huống.
+
+00:19:59.000 --> 00:20:11.000
+Tuy nhiên, nếu bạn có cảnh với hàng nghìn cuộc gọi rút thăm và hiệu suất trong trò chơi của bạn bị giới hạn bởi thời gian mã hóa CPU, bạn nên xem xét Bộ đệm lệnh gián tiếp trong Metal.
+
+00:20:11.000 --> 00:20:17.000
+ICB là một siêu tập hợp các bộ đệm với các đối số vẽ gián tiếp.
+
+00:20:17.000 --> 00:20:26.000
+Ngoài việc vẽ các đối số, bạn cũng có thể đặt các ràng buộc bộ đệm và hiển thị các Đối tượng Trạng thái Đường ống từ GPU.
+
+00:20:26.000 --> 00:20:37.000
+Để lên lịch các lệnh từ ICB để thực thi trên GPU, bạn phải mã hóa lệnh executeCommandsInBuffer.
+
+00:20:37.000 --> 00:20:44.000
+Thông thường với ExecuteIndirect, tất cả các cuộc gọi vẽ đều chia sẻ cùng một Đối tượng Trạng thái Đường ống.
+
+00:20:44.000 --> 00:20:52.000
+Và mỗi khi PSO thay đổi, bạn phải mã hóa một lệnh ExecuteIndirect mới.
+
+00:20:52.000 --> 00:21:00.000
+Nếu bạn đang sử dụng ICB, không bắt buộc phải chia các lệnh thực thi gián tiếp bằng các thay đổi trạng thái thường xuyên.
+
+00:21:00.000 --> 00:21:09.000
+Tất cả các PSO và liên kết bộ đệm có thể được đặt từ ICB, vì vậy bạn không cần phải mã hóa chúng.
+
+00:21:09.000 --> 00:21:15.000
+Tùy thuộc vào cấu trúc của cảnh, điều này có thể làm giảm đáng kể thời gian mã hóa.
+
+00:21:15.000 --> 00:21:24.000
+Để tận dụng ICB, không cần thiết phải sửa đổi các bộ đổ bóng hiện có điền vào các đối số gián tiếp.
+
+00:21:24.000 --> 00:21:42.000
+Bạn có thể chia sẻ cùng một bộ đổ bóng với các nền tảng khác và biên dịch chúng với Bộ chuyển đổi bộ đổ bóng kim loại sau đó dịch các đối số vẽ sang ICB bằng cách thêm một hạt nhân tính toán nhỏ sau khi tạo đối số gián tiếp và trước khi kết xuất gián tiếp vượt qua.
+
+00:21:42.000 --> 00:21:48.000
+Để mã hóa ICB trong nhân tính toán của bạn, hãy viết nó bằng Ngôn ngữ đổ bóng kim loại.
+
+00:21:48.000 --> 00:21:55.000
+Là đầu vào của đổ bóng, có một con trỏ đến các đối số gián tiếp mà bạn muốn dịch.
+
+00:21:55.000 --> 00:22:02.000
+Tiếp theo, kiểm tra xem các đối số có hợp lệ hay không, và chỉ khi đó bạn mới mã hóa lệnh.
+
+00:22:02.000 --> 00:22:11.000
+Trong hàm encodeCommand, đặt trạng thái đường ống kết xuất, liên kết bộ đệm và lệnh gọi vẽ.
+
+00:22:11.000 --> 00:22:18.000
+Điều này dịch các đối số vẽ thành một lệnh kết xuất trong bộ đệm lệnh gián tiếp.
+
+00:22:18.000 --> 00:22:22.000
+Và đó là cách dịch kết xuất gián tiếp sang Metal.
+
+00:22:22.000 --> 00:22:28.000
+Bạn có thể sử dụng một loạt các lệnh vẽ gián tiếp hoặc bộ đệm lệnh Metal Indirect.
+
+00:22:28.000 --> 00:22:39.000
+Nếu bạn muốn học cách sử dụng kết xuất gián tiếp để thực hiện các kỹ thuật kết xuất nâng cao, hãy xem Mã mẫu "Kết xuất hiện đại bằng kim loại".
+
+00:22:39.000 --> 00:22:54.000
+Khi trò chơi của bạn đang tạo ra hình ảnh chính xác bằng cách liên kết tài nguyên với đường ống của nó và mã hóa đúng các lệnh vào bộ đệm lệnh, bạn có thể tận dụng việc nâng cấp để có được hiệu suất cao hơn từ thiết bị của người chơi.
+
+00:22:54.000 --> 00:23:02.000
+Nâng cấp thông qua MetalFX giúp các trò chơi tiết kiệm thời gian cho mỗi khung hình bằng cách giảm lượng công việc GPU.
+
+00:23:02.000 --> 00:23:06.000
+MetalFX là một giải pháp chìa khóa trao tay để thực hiện quy trình nâng cấp của bạn.
+
+00:23:06.000 --> 00:23:22.000
+Nó hoạt động bằng cách chia tỷ lệ hình ảnh có độ phân giải thấp hơn lên độ phân giải đầu ra mục tiêu trong thời gian ngắn hơn so với thời gian cần thiết để hiển thị trực tiếp ở độ phân giải đầu ra.
+
+00:23:22.000 --> 00:23:30.000
+MetalFX đã được giới thiệu vào năm ngoái cho Mac, và nó cung cấp khả năng nâng cấp hiệu suất cao!
+
+00:23:30.000 --> 00:23:44.000
+MetalFX hỗ trợ hai thuật toán nâng cấp, "Không gian" cho hiệu suất tốt nhất và "Tạm thời" cho chất lượng tiếp cận kết xuất gốc trên độ phân giải đầu ra.
+
+00:23:44.000 --> 00:23:55.000
+Tích hợp MetalFX trong công cụ sẽ cải thiện trải nghiệm của người chơi bằng cách hiển thị ở độ phân giải cao hơn với hiệu suất tốt hơn.
+
+00:23:55.000 --> 00:24:07.000
+Các tính năng mới trong năm nay bao gồm hỗ trợ cho iOS, nâng cấp lên đến 3X và hỗ trợ trong Metal-cpp.
+
+00:24:07.000 --> 00:24:21.000
+Nếu công cụ của bạn đã hỗ trợ giải pháp nâng cấp hiện có trên các nền tảng khác, việc tích hợp MetalFX sẽ không yêu cầu nhiều mã hóa và sửa đổi ở phía công cụ.
+
+00:24:21.000 --> 00:24:27.000
+Để hỗ trợ MetalFX, bạn cần hỗ trợ nâng cấp trong động cơ.
+
+00:24:27.000 --> 00:24:37.000
+Một yêu cầu khác là trình kết xuất kiểm soát thủ công mức độ chi tiết để lấy mẫu kết cấu trong bộ đổ bóng vật liệu.
+
+00:24:37.000 --> 00:24:42.000
+Việc nâng cấp thời gian đòi hỏi trình tự jitter và vectơ chuyển động.
+
+00:24:42.000 --> 00:24:48.000
+Bạn có thể đã có những thứ đó nếu động cơ của bạn hỗ trợ khử răng cưa tạm thời.
+
+00:24:48.000 --> 00:24:56.000
+Việc nâng cấp thời gian của MetalFX có thể tính đến khả năng hiển thị của kết xuất và bạn có hai lựa chọn.
+
+00:24:56.000 --> 00:25:02.000
+Nếu trình kết xuất của bạn hỗ trợ kết cấu phơi sáng 1-1, thì hãy sử dụng nó.
+
+00:25:02.000 --> 00:25:09.000
+Nếu không, bạn có thể bật tính năng tự động phơi sáng và xem liệu nó có cải thiện chất lượng hay không.
+
+00:25:09.000 --> 00:25:17.000
+Đừng quên đặt lại lịch sử cắt máy ảnh và chuyển động máy ảnh cực đoan.
+
+00:25:17.000 --> 00:25:29.000
+Để biết thêm chi tiết về cách tích hợp MetalFX vào các ứng dụng của bạn, hãy tham khảo Tài liệu và "Tăng cường hiệu suất với việc nâng cấp MetalFX" từ năm ngoái.
+
+00:25:29.000 --> 00:25:36.000
+Metal cung cấp một số tùy chọn mạnh mẽ để tận dụng tối đa thời gian kết xuất ứng dụng của bạn.
+
+00:25:36.000 --> 00:25:41.000
+Bạn có thể quản lý tài nguyên và ràng buộc chúng hiệu quả nhất có thể.
+
+00:25:41.000 --> 00:25:53.000
+Dựa trên cách các bộ đổ bóng của bạn truy cập chúng, hãy đảm bảo các đường chuyền chia sẻ tài nguyên chạy theo đúng thứ tự và làm cho tài nguyên cư trú và có sẵn cho GPU.
+
+00:25:53.000 --> 00:26:09.000
+Ứng dụng của bạn có thể tận dụng toàn bộ tiềm năng của kiến trúc đồ họa mạnh mẽ của Apple bằng cách định vị và áp dụng các cơ hội tối ưu hóa với Trình gỡ lỗi kim loại trong Xcode và tối ưu hóa việc gửi lệnh của bạn.
+
+00:26:09.000 --> 00:26:20.000
+Hãy để GPU tự quyết định phải làm gì bằng cách triển khai kết xuất gián tiếp, đây có thể là chìa khóa cho nhiều kỹ thuật kết xuất hiện đại.
+
+00:26:20.000 --> 00:26:28.000
+Nâng cấp trò chơi kết xuất của bạn bằng cách nâng cấp kết xuất của bạn với MetalFX, điều này có thể tiết kiệm thời gian quý báu cho ứng dụng của bạn trong vòng lặp kết xuất.
+
+00:26:28.000 --> 00:26:35.000
+Để biết thêm các mẹo và hướng dẫn kết xuất, hãy xem "Tối ưu hóa hiệu suất kim loại cho máy Mac silicon của Apple".
+
+00:26:35.000 --> 00:26:38.000
+Cảm ơn bạn đã xem!
+
+00:26:38.000 --> 23:59:59.000
+♪ ♪
+

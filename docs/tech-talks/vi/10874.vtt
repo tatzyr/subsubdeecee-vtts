@@ -1,0 +1,287 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.000
+Simon Manning: Xin chào, tôi là Simon, và tôi là một kỹ sư trong nhóm CloudKit.
+
+00:00:03.000 --> 00:00:10.000
+Hôm nay tôi sẽ trình bày cách sử dụng CloudKit để hỗ trợ chia sẻ dữ liệu giữa những người dùng của một ứng dụng.
+
+00:00:10.000 --> 00:00:15.000
+Tôi sẽ bắt đầu bằng cách giới thiệu ứng dụng mẫu Chia sẻ của chúng tôi, có sẵn trên GitHub.
+
+00:00:15.000 --> 00:00:23.000
+Sau đó, tôi sẽ hướng dẫn cách hỗ trợ tạo chia sẻ và mời những người dùng khác tham gia vào những chia sẻ đó trong một ứng dụng.
+
+00:00:23.000 --> 00:00:42.000
+Tôi sẽ thảo luận về cách ứng dụng của bạn có thể chia sẻ và chấp nhận lời mời thay mặt cho người dùng tham gia, cách tìm nạp hồ sơ được chia sẻ, cách ứng dụng của bạn có thể cung cấp trải nghiệm chia sẻ tùy chỉnh và cuối cùng là mô hình chia sẻ dựa trên vùng có sẵn trong CloudKit.
+
+00:00:42.000 --> 00:00:45.000
+Đầu tiên, ứng dụng mẫu Chia sẻ.
+
+00:00:45.000 --> 00:00:51.000
+Xin nhắc lại, CloudKit là một khuôn khổ cho phép ứng dụng của bạn truy cập vào cơ sở dữ liệu trên iCloud.
+
+00:00:51.000 --> 00:00:58.000
+Điều này được hiển thị trong API dưới dạng CKContainer thông qua đó bạn có thể truy cập nhiều CKDatabases.
+
+00:00:58.000 --> 00:01:04.000
+Mỗi vùng chứa có một cơ sở dữ liệu công cộng nơi tất cả người dùng có khả năng đọc và ghi các bản ghi.
+
+00:01:04.000 --> 00:01:12.000
+Nếu thiết bị có tài khoản iCloud đã đăng nhập, ứng dụng của bạn cũng có quyền truy cập vào cơ sở dữ liệu riêng tư chứa dữ liệu của người dùng đó.
+
+00:01:12.000 --> 00:01:23.000
+Và nếu ứng dụng của bạn hỗ trợ chia sẻ, thì dữ liệu được chia sẻ với người dùng iCloud hiện tại sẽ có sẵn cho ứng dụng của bạn trong CKDatabase được chia sẻ của họ.
+
+00:01:23.000 --> 00:01:35.000
+Để chứng minh cả việc bắt đầu chia sẻ từ người dùng sở hữu hồ sơ và chấp nhận lời mời chia sẻ với tư cách là người tham gia, tôi sẽ đề cập đến một ứng dụng mẫu có sẵn trên tài khoản Apple GitHub.
+
+00:01:35.000 --> 00:01:38.000
+Chia sẻ là một ví dụ tối thiểu về ứng dụng danh bạ.
+
+00:01:38.000 --> 00:01:50.000
+Nó hỗ trợ tạo hồ sơ liên hệ mới trong cơ sở dữ liệu riêng tư của người dùng, chia sẻ danh bạ cá nhân với những người dùng khác của ứng dụng và hiển thị tất cả các liên hệ được chia sẻ với người dùng hiện tại từ những người khác.
+
+00:01:50.000 --> 00:02:01.000
+Kho lưu trữ Chia sẻ chứa một triển khai sử dụng Swift đồng thời, cũng như triển khai dựa trên trình xử lý hoàn thành, có sẵn trên các nhánh riêng biệt.
+
+00:02:01.000 --> 00:02:07.000
+Để bắt đầu chia sẻ, trước tiên hãy tạo một bản ghi liên hệ mới và lưu nó vào cơ sở dữ liệu riêng tư của chủ sở hữu.
+
+00:02:07.000 --> 00:02:12.000
+Chức năng addContact được gọi bởi Add New Contact UI của Sharing.
+
+00:02:12.000 --> 00:02:19.000
+Nó tạo ra một CKRecord mới với một loại liên hệ bản ghi và lưu trữ tên và số điện thoại.
+
+00:02:19.000 --> 00:02:23.000
+Bản ghi sau đó được lưu vào cơ sở dữ liệu riêng tư.
+
+00:02:23.000 --> 00:02:30.000
+Chia sẻ hồ sơ liên hệ với những người dùng khác của ứng dụng Chia sẻ bắt đầu bằng cách tạo một chia sẻ.
+
+00:02:30.000 --> 00:02:35.000
+Chia sẻ trong CloudKit dựa trên một loại bản ghi chuyên biệt được gọi là CKShare.
+
+00:02:35.000 --> 00:02:43.000
+Khi người dùng của bạn muốn chia sẻ hồ sơ với những người khác, hãy thay mặt họ tạo CKShare và lưu nó vào cơ sở dữ liệu riêng tư.
+
+00:02:43.000 --> 00:02:50.000
+Bởi vì người dùng này sở hữu tất cả các bản ghi đang được chia sẻ, họ cũng là chủ sở hữu của chính bản ghi chia sẻ.
+
+00:02:50.000 --> 00:03:00.000
+Bản ghi chia sẻ này là nguồn gốc của sự thật cho dữ liệu nào đang được chia sẻ, dữ liệu đó đang được chia sẻ với ai và những quyền nào có sẵn để chia sẻ người tham gia.
+
+00:03:00.000 --> 00:03:05.000
+Quyền chia sẻ là cách chủ sở hữu của chia sẻ có thể kiểm soát quyền truy cập vào các bản ghi được chia sẻ.
+
+00:03:05.000 --> 00:03:12.000
+Thuộc tính publicPermission đại diện cho mức cấp phép cho bất kỳ người dùng nào có liên kết đến chia sẻ.
+
+00:03:12.000 --> 00:03:17.000
+Theo mặc định, người dùng chỉ có URL không có quyền truy cập.
+
+00:03:17.000 --> 00:03:24.000
+Đặt thuộc tính này thành giá trị cho phép hơn cho phép bất kỳ người dùng nào có URL của chia sẻ tham gia.
+
+00:03:24.000 --> 00:03:29.000
+Mỗi người tham gia được mời cũng có một mức độ cho phép được xác định bởi chủ sở hữu của cổ phiếu.
+
+00:03:29.000 --> 00:03:38.000
+Các đối tượng của người tham gia mô tả sự tham gia của một người dùng cụ thể vào một chia sẻ, bao gồm danh tính của người dùng và trạng thái chấp nhận lời mời của họ.
+
+00:03:38.000 --> 00:03:49.000
+Quyền được đặt trên từng đối tượng người tham gia riêng lẻ và mỗi người tham gia được thêm vào mảng người tham gia trên CKShare.
+
+00:03:49.000 --> 00:03:56.000
+Để bắt đầu chia sẻ hồ sơ từ cơ sở dữ liệu riêng tư của người dùng, trước tiên hãy xác định bản ghi gốc của chia sẻ.
+
+00:03:56.000 --> 00:04:00.000
+Bản ghi gốc và tất cả các bản ghi con của nó sẽ được bao gồm trong phần chia sẻ này.
+
+00:04:00.000 --> 00:04:10.000
+Sau đó, tạo bản ghi CKShare và lưu cả bản ghi gốc và CKShare vào cơ sở dữ liệu riêng tư của người dùng hiện tại.
+
+00:04:10.000 --> 00:04:16.000
+Trong Chia sẻ, chức năng createShare khởi tạo CKShare với bản ghi liên hệ sẽ được chia sẻ.
+
+00:04:16.000 --> 00:04:27.000
+CKShare và bản ghi gốc được lưu vào cơ sở dữ liệu riêng tư của chủ sở hữu và CKShare được trả lại giao diện người dùng để bắt đầu quá trình mời.
+
+00:04:27.000 --> 00:04:32.000
+Cả CKShare và bản ghi gốc phải được lưu cùng nhau trong cùng một thao tác.
+
+00:04:32.000 --> 00:04:38.000
+Chỉ lưu CKShare sẽ tạo ra lỗi, ngay cả khi bản ghi gốc đã tồn tại trong CloudKit.
+
+00:04:38.000 --> 00:04:43.000
+Chia sẻ bản ghi gốc cũng chia sẻ bản ghi con của nó.
+
+00:04:43.000 --> 00:04:51.000
+Bây giờ ứng dụng của bạn đang tạo chia sẻ, tôi sẽ đề cập đến cách bạn có thể định cấu hình và gửi lời mời của người dùng để tham gia chia sẻ.
+
+00:04:51.000 --> 00:04:58.000
+Ứng dụng mẫu sử dụng bộ điều khiển chế độ xem được cung cấp bởi UIKit có tên UICloudSharingController.
+
+00:04:58.000 --> 00:05:11.000
+Việc triển khai bộ điều khiển này trong ứng dụng của bạn cho phép người dùng dễ dàng mời người tham gia CKShare của họ, thiết lập quyền, xem và quản lý sự tham gia hoặc ngừng chia sẻ tất cả các bản ghi cùng nhau.
+
+00:05:11.000 --> 00:05:18.000
+Đây là cách UICloudSharingController xuất hiện trong ứng dụng mẫu Chia sẻ khi chia sẻ bản ghi liên hệ mới.
+
+00:05:18.000 --> 00:05:25.000
+Người dùng có thể chọn cách gửi lời mời chia sẻ và quyền có thể được định cấu hình trong phần Tùy chọn chia sẻ.
+
+00:05:25.000 --> 00:05:35.000
+Triển khai giao thức ủy quyền của bộ điều khiển để cung cấp thêm thông tin về việc chia sẻ, cũng như nhận thông báo về việc chia sẻ các sự kiện và lỗi.
+
+00:05:35.000 --> 00:05:45.000
+Ngoài các phương pháp được mô tả ở đây, còn có các phương pháp để định cấu hình tiêu đề mục, loại mục và hình thu nhỏ để hiển thị trên lời mời chia sẻ.
+
+00:05:45.000 --> 00:05:53.000
+Bây giờ chủ sở hữu của cổ phiếu đã gửi lời mời cho người khác, ứng dụng của bạn cần xử lý và chấp nhận chia sẻ thay mặt cho những người tham gia được mời.
+
+00:05:53.000 --> 00:05:58.000
+Bật CKSharingSupported boolean trong Info.plist của ứng dụng của bạn.
+
+00:05:58.000 --> 00:06:07.000
+Điều này cho phép hệ thống biết rằng ứng dụng của bạn hỗ trợ chia sẻ và nên xử lý URL lời mời và gọi các chức năng đại diện có liên quan.
+
+00:06:07.000 --> 00:06:15.000
+Khi lời mời chia sẻ được mở và chấp nhận, ứng dụng của bạn sẽ nhận được một đối tượng CKShare.Metadata thông qua các cuộc gọi lại phương thức đại diện.
+
+00:06:15.000 --> 00:06:28.000
+Ứng dụng của bạn sử dụng siêu dữ liệu này để thông báo cho CloudKit rằng người dùng hiện tại đang chấp nhận và tham gia vào phần chia sẻ này thông qua chức năng chấp nhận trên vùng chứa hoặc thông qua CKAcceptSharesOperation.
+
+00:06:28.000 --> 00:06:38.000
+Với vòng đời ứng dụng ủy quyền, hệ thống sẽ khởi chạy ứng dụng của bạn và gọi phương thức đại diện userDidAcceptCloudKitShareWith: shareMetadata.
+
+00:06:38.000 --> 00:06:44.000
+Khởi tạo một đối tượng CKContainer bằng cách sử dụng mã định danh được cung cấp trong đối tượng shareMetadata.
+
+00:06:44.000 --> 00:06:55.000
+Sau đó gọi chấp nhận trên CKContainer, chuyển đối tượng shareMetadata, để cho CloudKit biết người dùng hiện tại đã chấp nhận chia sẻ.
+
+00:06:55.000 --> 00:07:08.000
+Bây giờ ứng dụng của bạn đang gửi lời mời chia sẻ hồ sơ riêng tư và xử lý và chấp nhận những lời mời đó, tôi sẽ đề cập đến cách ứng dụng của bạn có thể tìm nạp và sửa đổi hồ sơ được chia sẻ mà người dùng đang tham gia.
+
+00:07:08.000 --> 00:07:15.000
+Các bản ghi được chia sẻ với người dùng iCloud hiện tại có sẵn bên trong sharedCloudDatabase của vùng chứa ứng dụng.
+
+00:07:15.000 --> 00:07:25.000
+Các API CloudKit giống nhau để tìm nạp, truy vấn và thao tác dữ liệu bên trong cơ sở dữ liệu riêng tư và công khai có thể được sử dụng với cơ sở dữ liệu được chia sẻ.
+
+00:07:25.000 --> 00:07:30.000
+Trong ứng dụng mẫu, các bản ghi được chia sẻ được tìm nạp trong chức năng fetchSharedContacts.
+
+00:07:30.000 --> 00:07:36.000
+Nó sử dụng thao tác recordZoneChanges để dần dần tìm nạp và xử lý các thay đổi.
+
+00:07:36.000 --> 00:07:46.000
+Mỗi lần thao tác này hoàn tất, nó trả về một thuộc tính moreComing boolean, đại diện cho việc có nhiều thay đổi hơn để tìm nạp hay không.
+
+00:07:46.000 --> 00:07:52.000
+Nó cũng trả về một changeToken, là một con trỏ đến một thay đổi cụ thể trong lịch sử của khu vực.
+
+00:07:52.000 --> 00:07:57.000
+Bạn có thể sử dụng changeToken này để chỉ tìm nạp các thay đổi xảy ra sau thời điểm đó.
+
+00:07:57.000 --> 00:08:05.000
+Đối với lần tìm nạp đầu tiên hoặc để tìm nạp lại tất cả các thay đổi trong lịch sử của vùng, hãy đặt changeToken thành nil.
+
+00:08:05.000 --> 00:08:08.000
+Quản lý các cổ phiếu đang hoạt động phụ thuộc vào người dùng hiện tại.
+
+00:08:08.000 --> 00:08:16.000
+Đối với chủ sở hữu của một cổ phiếu, chia sẻ có thể được dừng lại bằng cách xóa bản ghi CKShare khỏi cơ sở dữ liệu riêng tư của chủ sở hữu.
+
+00:08:16.000 --> 00:08:20.000
+Chủ sở hữu cũng có thể xóa hoàn toàn bản ghi gốc được chia sẻ.
+
+00:08:20.000 --> 00:08:29.000
+Chức năng removeParticipant trên đối tượng bản ghi CKShare cung cấp một cách để loại bỏ từng người tham gia, có thể được tìm thấy trên thuộc tính của người tham gia.
+
+00:08:29.000 --> 00:08:38.000
+Và cuối cùng, giao diện người dùng UICloudSharingController giúp chủ sở hữu có thể ngừng chia sẻ với tất cả những người tham gia.
+
+00:08:38.000 --> 00:08:48.000
+Đối với người dùng chia sẻ của người tham gia, việc tham gia có thể bị dừng lại bằng cách xóa CKRecord gốc khỏi cơ sở dữ liệu được chia sẻ của người dùng hoặc sử dụng giao diện người dùng UICloudSharingController.
+
+00:08:48.000 --> 00:09:01.000
+Lưu ý rằng việc xóa CKRecord gốc khỏi cơ sở dữ liệu được chia sẻ của người dùng chỉ dừng tham gia vào phần chia sẻ - bản ghi gốc gốc vẫn sẽ tồn tại trong cơ sở dữ liệu riêng tư của chủ sở hữu.
+
+00:09:01.000 --> 00:09:16.000
+Trong khi ứng dụng mẫu Chia sẻ sử dụng UICloudSharingController để xử lý tra cứu và mời người tham gia, bạn cũng có thể triển khai chức năng này với CloudKit API và xây dựng trải nghiệm người dùng tùy chỉnh cho cả chủ sở hữu và người tham gia chia sẻ.
+
+00:09:16.000 --> 00:09:27.000
+Đầu tiên, để tìm kiếm những người tham gia mời tham gia CKShare, hãy sử dụng chức năng CKFetchShare ParticipantsOperation hoặc shareParticipants trên CKContainer có liên quan.
+
+00:09:27.000 --> 00:09:33.000
+Số điện thoại, email và ID bản ghi người dùng được hỗ trợ làm thông số.
+
+00:09:33.000 --> 00:09:42.000
+Tiếp theo, đặt mức cấp phép cụ thể cho sự tham gia này và thêm người tham gia vào CKShare với chức năng addParticipant.
+
+00:09:42.000 --> 00:09:47.000
+Luôn lưu CKShare đã sửa đổi trở lại cơ sở dữ liệu riêng tư.
+
+00:09:47.000 --> 00:09:55.000
+Bản ghi CKShare đã lưu có thuộc tính url có thể được gửi đến những người tham gia được mời để chấp nhận và xử lý.
+
+00:09:55.000 --> 00:10:06.000
+URL lời mời có thể được sử dụng để tìm nạp CKShare.Metadata của chia sẻ và xác nhận sự tham gia thông qua chức năng chấp nhận (shareMetadata) trên vùng chứa của ứng dụng.
+
+00:10:06.000 --> 00:10:16.000
+Ứng dụng Chia sẻ thể hiện việc chia sẻ CloudKit với mô hình chia sẻ phân cấp, trong đó một bản ghi duy nhất được chia sẻ dưới dạng bản ghi gốc và bất kỳ bản ghi con nào của bản ghi đó cũng được chia sẻ.
+
+00:10:16.000 --> 00:10:24.000
+Chia sẻ vùng, một mô hình mới được giới thiệu trong iOS 15, cho phép chia sẻ toàn bộ vùng hồ sơ thay thế.
+
+00:10:24.000 --> 00:10:30.000
+Khi chia sẻ một vùng, tất cả các bản ghi trong vùng được chia sẻ, không chỉ là hệ thống phân cấp của một bản ghi duy nhất.
+
+00:10:30.000 --> 00:10:40.000
+Bởi vì chia sẻ vùng ảnh hưởng đến tất cả các bản ghi trong vùng bản ghi, kiểu chia sẻ này không thể cùng tồn tại với chia sẻ phân cấp trong cùng một vùng bản ghi.
+
+00:10:40.000 --> 00:10:47.000
+Bạn có thể có một hoặc nhiều cổ phiếu phân cấp trong một khu vực hoặc một cổ phiếu duy nhất trên toàn khu vực.
+
+00:10:47.000 --> 00:10:54.000
+Chia sẻ vùng và chia sẻ phân cấp đều có lợi ích riêng và cả hai nên được sử dụng tùy thuộc vào trường hợp sử dụng của bạn.
+
+00:10:54.000 --> 00:11:02.000
+Trong bối cảnh của ứng dụng mẫu Chia sẻ, chia sẻ vùng có thể hữu ích nếu các nhóm liên hệ được tổ chức trong các vùng ghi riêng biệt.
+
+00:11:02.000 --> 00:11:07.000
+Chia sẻ vùng có thể được sử dụng để chia sẻ các nhóm liên hệ đó với những người dùng khác.
+
+00:11:07.000 --> 00:11:14.000
+Để tìm hiểu thêm về chia sẻ vùng, hãy xem "Có gì mới trong CloudKit" từ WWDC21.
+
+00:11:14.000 --> 00:11:23.000
+Để tạo một chia sẻ toàn vùng mới, hãy khởi tạo nó với ID của vùng bản ghi tùy chỉnh sẽ được chia sẻ và lưu nó vào cơ sở dữ liệu riêng tư.
+
+00:11:23.000 --> 00:11:29.000
+Quy trình chấp nhận lời mời chia sẻ và tìm nạp hồ sơ từ cơ sở dữ liệu được chia sẻ vẫn giống như trước đây.
+
+00:11:29.000 --> 00:11:36.000
+Để xác định xem một chia sẻ có phải là một chia sẻ trên toàn vùng hay không, hãy kiểm tra thuộc tính recordName của recordID của nó.
+
+00:11:36.000 --> 00:11:46.000
+Nếu giá trị là CKRecordNameZoneWideShare, chia sẻ đang quản lý vùng bản ghi được chia sẻ; nếu không, nó đang quản lý hệ thống phân cấp bản ghi được chia sẻ.
+
+00:11:46.000 --> 00:11:55.000
+Bây giờ bạn đã biết cách hỗ trợ chia sẻ trong ứng dụng của mình, hãy bắt đầu tạo bản ghi CKShare và cho phép người dùng cộng tác với những người khác.
+
+00:11:55.000 --> 00:12:02.000
+Bắt đầu nhanh giao diện người dùng chia sẻ của bạn bằng UICloudSharingController hoặc xây dựng một triển khai tùy chỉnh để phù hợp với nhu cầu của bạn.
+
+00:12:02.000 --> 00:12:08.000
+Sử dụng tìm nạp và sửa đổi API quen thuộc để truy cập các bản ghi được chia sẻ từ cơ sở dữ liệu đám mây được chia sẻ.
+
+00:12:08.000 --> 00:12:15.000
+Và bắt đầu khám phá các trường hợp sử dụng chia sẻ mới trong ứng dụng của bạn có thể được hưởng lợi từ việc triển khai chia sẻ vùng.
+
+00:12:15.000 --> 23:59:59.000
+Cảm ơn vì đã xem!
+

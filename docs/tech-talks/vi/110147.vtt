@@ -1,0 +1,995 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:08.000
+Pierre Morf: Chào mừng bạn đến với phiên về cách điều chỉnh lịch trình công việc CPU cho các trò chơi silicon của Apple.
+
+00:00:08.000 --> 00:00:12.000
+Tôi là Pierre Morf, làm việc trong nhóm Hệ sinh thái kim loại.
+
+00:00:12.000 --> 00:00:21.000
+Tôi đã giúp một số nhà phát triển bên thứ ba tối ưu hóa khối lượng công việc GPU và CPU của họ trên nền tảng Apple.
+
+00:00:21.000 --> 00:00:31.000
+Với sự giúp đỡ của nhóm CoreOS, tôi đã tập hợp ở đây thông tin và hướng dẫn để đạt được hiệu suất và hiệu quả CPU tốt hơn trong các trò chơi.
+
+00:00:31.000 --> 00:00:39.000
+Chúng tôi đang tập trung vào các trò chơi, bởi vì chúng thường đòi hỏi nhiều về tài nguyên phần cứng.
+
+00:00:39.000 --> 00:00:47.000
+Ngoài ra, khối lượng công việc điển hình của họ yêu cầu hàng trăm, nếu không muốn nói là hàng nghìn công việc CPU phải được xử lý mọi khung hình.
+
+00:00:47.000 --> 00:00:58.000
+Để hoàn thành chúng trong 16 mili giây hoặc ít hơn, các công việc phải được điều chỉnh cho phù hợp với thông lượng CPU tối đa và chi phí gửi của chúng phải được giảm thiểu.
+
+00:00:58.000 --> 00:01:05.000
+Đầu tiên, tôi sẽ xem qua tổng quan về CPU silicon của Apple và kiến trúc độc đáo của nó.
+
+00:01:05.000 --> 00:01:13.000
+Sau đó, tôi sẽ cung cấp cho bạn hướng dẫn cơ bản về cách tổ chức công việc của bạn để tối đa hóa hiệu quả CPU.
+
+00:01:13.000 --> 00:01:21.000
+Cuối cùng, chúng ta sẽ thảo luận về các API hữu ích để tận dụng, một khi những nguyên tắc đó được thực hiện.
+
+00:01:21.000 --> 00:01:25.000
+Hãy bắt đầu với kiến trúc CPU của Apple.
+
+00:01:25.000 --> 00:01:29.000
+Apple đã thiết kế chip của riêng mình trong hơn một thập kỷ.
+
+00:01:29.000 --> 00:01:32.000
+Chúng là cốt lõi của các thiết bị Apple.
+
+00:01:32.000 --> 00:01:37.000
+Apple silicon cung cấp hiệu suất cao và hiệu quả chưa từng có.
+
+00:01:37.000 --> 00:01:40.000
+Năm ngoái, Apple đã giới thiệu chip M1.
+
+00:01:40.000 --> 00:01:44.000
+Đó là con chip silicon đầu tiên của Apple được cung cấp cho máy tính Mac.
+
+00:01:44.000 --> 00:01:47.000
+Và năm nay...
+
+00:01:47.000 --> 00:01:50.000
+...Chúng tôi đã giới thiệu M1 Pro và M1 Max.
+
+00:01:50.000 --> 00:01:59.000
+Thiết kế mới của họ là một bước nhảy vọt lớn đối với Apple silicon và giúp họ có thể giải quyết hiệu quả khối lượng công việc rất khắt khe.
+
+00:01:59.000 --> 00:02:06.000
+Chip M1 tập hợp nhiều thành phần trong một gói duy nhất.
+
+00:02:06.000 --> 00:02:12.000
+Nó chứa một CPU, một GPU, Neural Engine, và nhiều hơn nữa.
+
+00:02:12.000 --> 00:02:21.000
+Nó cũng có bộ nhớ thống nhất băng thông cao, độ trễ thấp; nó có thể truy cập được cho tất cả các thành phần của chip thông qua Apple Fabric.
+
+00:02:21.000 --> 00:02:27.000
+Điều đó có nghĩa là CPU và GPU có thể hoạt động trên cùng một dữ liệu mà không cần sao chép nó.
+
+00:02:27.000 --> 00:02:31.000
+Hãy phóng to CPU.
+
+00:02:31.000 --> 00:02:40.000
+Trên M1, CPU chứa các lõi của hai loại khác nhau: lõi hiệu suất và lõi hiệu suất.
+
+00:02:40.000 --> 00:02:45.000
+Những thứ đó khác nhau về mặt vật lý, lõi E nhỏ hơn.
+
+00:02:45.000 --> 00:02:52.000
+Các lõi hiệu quả có nghĩa là xử lý công việc với mức tiêu thụ năng lượng rất thấp.
+
+00:02:52.000 --> 00:03:02.000
+Có một điểm rút ra rất quan trọng: lõi P và E sử dụng một vi kiến trúc tương tự, đó thực sự là hoạt động bên trong của chúng.
+
+00:03:02.000 --> 00:03:09.000
+Chúng đã được thiết kế để các nhà phát triển không cần quan tâm liệu một luồng chạy trên lõi P hay E.
+
+00:03:09.000 --> 00:03:18.000
+Nếu một chương trình được tối ưu hóa để hoạt động tốt trên một loại lõi, nó được kỳ vọng sẽ hoạt động tốt trên loại lõi khác.
+
+00:03:18.000 --> 00:03:25.000
+Những lõi đó được nhóm lại với nhau thành các cụm, ít nhất là theo loại của chúng.
+
+00:03:25.000 --> 00:03:32.000
+Trên M1, mỗi cụm có bộ nhớ đệm cấp cuối cùng - L2 - được chia sẻ bởi tất cả các lõi của nó.
+
+00:03:32.000 --> 00:03:36.000
+Giao tiếp giữa các cụm đi qua Apple Fabric.
+
+00:03:36.000 --> 00:03:42.000
+Cấu trúc liên kết CPU được hiển thị ở đây dành riêng cho chip M1.
+
+00:03:42.000 --> 00:03:44.000
+Các thiết bị khác có thể có bố cục CPU khác.
+
+00:03:44.000 --> 00:03:54.000
+Ví dụ, một chiếc iPhone XS có một cụm gồm hai lõi P và một cụm bốn lõi E.
+
+00:03:54.000 --> 00:04:06.000
+Kiến trúc này cho phép hệ thống tối ưu hóa hiệu suất khi cần thiết hoặc tối ưu hóa hiệu quả thay vào đó, cải thiện tuổi thọ pin, khi hiệu suất không phải là ưu tiên hàng đầu.
+
+00:04:06.000 --> 00:04:20.000
+Mỗi cụm có thể được kích hoạt độc lập hoặc điều chỉnh tần số của nó bởi bộ lập lịch của hạt nhân - tùy thuộc vào khối lượng công việc hiện tại, áp suất nhiệt hiện tại cho cụm đó và các yếu tố khác.
+
+00:04:20.000 --> 00:04:25.000
+Cuối cùng, lưu ý rằng tính khả dụng của lõi P không được đảm bảo.
+
+00:04:25.000 --> 00:04:32.000
+Hệ thống có quyền làm cho chúng không khả dụng trong các tình huống nhiệt quan trọng.
+
+00:04:32.000 --> 00:04:38.000
+Đây là tổng quan về các lớp API khác nhau tương tác với CPU.
+
+00:04:38.000 --> 00:04:44.000
+Đầu tiên chúng ta có XNU - hạt nhân chạy macOS và iOS.
+
+00:04:44.000 --> 00:04:50.000
+Đó là nơi bộ lập lịch sống, quyết định những gì chạy trên CPU và khi nào.
+
+00:04:50.000 --> 00:04:57.000
+Trên hết, chúng tôi có hai thư viện: POSIX với các đối tượng pthreads và Mach.
+
+00:04:57.000 --> 00:05:03.000
+Cả hai đều cung cấp các nguyên thủy phân luồng cơ bản và đồng bộ hóa cho ứng dụng.
+
+00:05:03.000 --> 00:05:07.000
+Trên hết, chúng tôi có các thư viện cấp cao hơn.
+
+00:05:07.000 --> 00:05:11.000
+NSObjects liên quan đến luồng đóng gói các tay cầm POSIX.
+
+00:05:11.000 --> 00:05:21.000
+Trong ví dụ, một NSLock đóng gói một pthread_mutex_lock, một NSThread đóng gói một pthread, trong số những thứ khác.
+
+00:05:21.000 --> 00:05:24.000
+Đó cũng là nơi GCD tọa ngồi.
+
+00:05:24.000 --> 00:05:26.000
+GCD là một người quản lý công việc nâng cao.
+
+00:05:26.000 --> 00:05:28.000
+Chúng tôi sẽ đề cập đến nó sau.
+
+00:05:28.000 --> 00:05:36.000
+Trong phiên này, chúng tôi sẽ làm việc theo cách của mình bắt đầu từ mức thấp, kết thúc với các tính năng API.
+
+00:05:36.000 --> 00:05:44.000
+Hãy bắt đầu bằng cách tập trung vào những gì hoạt động tốt nhất cho CPU và cách giảm bớt khối lượng công việc được đặt trên bộ lập lịch.
+
+00:05:44.000 --> 00:05:48.000
+Đây sẽ là hướng dẫn hiệu quả cơ bản của chúng tôi.
+
+00:05:48.000 --> 00:06:01.000
+Chúng áp dụng cho bất kỳ triển khai trình quản lý công việc nào, bất khả tri về API và áp dụng cho nhiều nền tảng - bao gồm cả Apple silicon và máy Mac dựa trên Intel.
+
+00:06:01.000 --> 00:06:06.000
+Hãy tưởng tượng chúng ta đang ở trong một thế giới lý tưởng và chúng ta có công việc này.
+
+00:06:06.000 --> 00:06:14.000
+Nếu chúng ta trải nó trên bốn lõi, nó sẽ được xử lý chính xác gấp bốn lần nhanh hơn, phải không?
+
+00:06:14.000 --> 00:06:18.000
+Thật không may, điều đó không đơn giản trong một CPU thực.
+
+00:06:18.000 --> 00:06:24.000
+Có rất nhiều hoạt động kế toán đang diễn ra, mỗi hoạt động tốn một số thời gian thực hiện.
+
+00:06:24.000 --> 00:06:29.000
+Cần có ba chi phí cần ghi nhớ về hiệu quả.
+
+00:06:29.000 --> 00:06:32.000
+Nhìn vào các lõi 1, 2, và 3.
+
+00:06:32.000 --> 00:06:35.000
+Họ đã không làm bất cứ điều gì trước khi xử lý công việc của chúng tôi.
+
+00:06:35.000 --> 00:06:43.000
+Chà, khi lõi CPU không có gì để làm trong một thời gian khá dài, nó sẽ không hoạt động để tiết kiệm năng lượng.
+
+00:06:43.000 --> 00:06:48.000
+Và việc kích hoạt lại một lõi nhàn rỗi mất một chút thời gian.
+
+00:06:48.000 --> 00:06:53.000
+Đó là chi phí đầu tiên của chúng tôi, chi phí đánh thức cốt lõi.
+
+00:06:53.000 --> 00:06:55.000
+Đây là một cái khác.
+
+00:06:55.000 --> 00:06:59.000
+Công việc CPU lần đầu tiên được bắt đầu bởi bộ lập lịch hệ điều hành.
+
+00:06:59.000 --> 00:07:03.000
+Nó quyết định quy trình và luồng nào sẽ chạy tiếp theo và trên lõi nào.
+
+00:07:03.000 --> 00:07:08.000
+Lõi CPU sau đó chuyển sang ngữ cảnh thực thi đó.
+
+00:07:08.000 --> 00:07:11.000
+Chúng tôi sẽ gọi đó là chi phí lên lịch.
+
+00:07:11.000 --> 00:07:15.000
+Bây giờ, loại chi phí thứ ba và cuối cùng.
+
+00:07:15.000 --> 00:07:22.000
+Hãy xem xét luồng chạy trên Core 0 báo hiệu những luồng trên lõi 1, 2 và 3.
+
+00:07:22.000 --> 00:07:26.000
+Ví dụ, với một semaphore.
+
+00:07:26.000 --> 00:07:28.000
+Tín hiệu đó không phải là tức thời.
+
+00:07:28.000 --> 00:07:40.000
+Trong khoảng thời gian này, hạt nhân phải xác định luồng nào đang chờ trên nguyên thủy; và trong trường hợp luồng không hoạt động, nó cần lên lịch cho nó.
+
+00:07:40.000 --> 00:07:44.000
+Sự chậm trễ này được gọi là độ trễ đồng bộ hóa.
+
+00:07:44.000 --> 00:07:50.000
+Những chi phí đó xuất hiện, dưới hình thức này hay hình thức khác, trong hầu hết các kiến trúc CPU.
+
+00:07:50.000 --> 00:07:54.000
+Bản thân chúng không phải là một vấn đề, vì chúng rất, rất ngắn.
+
+00:07:54.000 --> 00:08:01.000
+Nhưng chúng có thể trở thành một thành công trong hiệu suất nếu chúng tích lũy, xuất hiện nhiều lần và thường xuyên.
+
+00:08:01.000 --> 00:08:06.000
+Những chi phí đó trông như thế nào trong cuộc sống thực?
+
+00:08:06.000 --> 00:08:10.000
+Đây là dấu vết nhạc cụ của một trò chơi đang chạy trên M1.
+
+00:08:10.000 --> 00:08:15.000
+Trò chơi đó thể hiện một mô hình có vấn đề, lặp lại hầu hết các khung hình của nó.
+
+00:08:15.000 --> 00:08:20.000
+Nó cố gắng song song hóa các công việc ở độ chi tiết cực kỳ tốt.
+
+00:08:20.000 --> 00:08:24.000
+Chúng tôi đã phóng to rất nhiều vào dòng thời gian của nó.
+
+00:08:24.000 --> 00:08:30.000
+Để cung cấp cho bạn một ý tưởng, phần đó chỉ mất 18 micro giây.
+
+00:08:30.000 --> 00:08:34.000
+Hãy tập trung vào lõi CPU đó và hai luồng đó.
+
+00:08:34.000 --> 00:08:41.000
+Hai luồng đó có thể đã chạy song song, nhưng cuối cùng chúng đã chạy nối tiếp trên cùng một lõi đó.
+
+00:08:41.000 --> 00:08:43.000
+Hãy xem tại sao.
+
+00:08:43.000 --> 00:08:47.000
+Họ đồng bộ hóa với nhau rất thường xuyên.
+
+00:08:47.000 --> 00:08:56.000
+Cái đầu tiên báo hiệu cái thứ hai bắt đầu và rất nhanh chóng chờ đợi ngang hàng của nó được hoàn thành.
+
+00:08:56.000 --> 00:09:03.000
+Cái thứ hai bắt đầu hoạt động, nhanh chóng báo hiệu cái đầu tiên và đợi rất nhanh sau đó.
+
+00:09:03.000 --> 00:09:07.000
+Mô hình này lặp đi lặp lại nhiều lần.
+
+00:09:07.000 --> 00:09:15.000
+Chúng ta có thể thấy hai vấn đề ở đây: đầu tiên, các nguyên thủy đồng bộ hóa được sử dụng ở tần suất cực cao.
+
+00:09:15.000 --> 00:09:19.000
+Điều đó làm gián đoạn công việc và gây ra chi phí.
+
+00:09:19.000 --> 00:09:22.000
+Chúng ta có thể thấy điều đó trên đầu với các phần màu đỏ.
+
+00:09:22.000 --> 00:09:27.000
+Thứ hai, công việc tích cực - các phần màu xanh lam - cực kỳ ngắn gọn.
+
+00:09:27.000 --> 00:09:32.000
+Nó chỉ kéo dài từ bốn đến 20 micro giây.
+
+00:09:32.000 --> 00:09:40.000
+Thời lượng này quá nhỏ, nó chỉ ngắn hơn thời gian cần thiết để đánh thức lõi CPU.
+
+00:09:40.000 --> 00:09:47.000
+Trong các phần màu đỏ đó, bộ lập lịch hệ điều hành chủ yếu chờ lõi CPU thức dậy.
+
+00:09:47.000 --> 00:09:52.000
+Nhưng ngay trước khi điều đó xảy ra, một luồng chặn và giải phóng lõi.
+
+00:09:52.000 --> 00:10:00.000
+Luồng thứ hai sau đó chạy trên cùng một lõi đó thay vì đợi lâu hơn một chút để một luồng khác thức dậy.
+
+00:10:00.000 --> 00:10:05.000
+Đó là cách hai chủ đề đó mất đi một cơ hội nhỏ để chạy song song.
+
+00:10:05.000 --> 00:10:10.000
+Chỉ từ quan sát này, chúng ta đã có thể xác định hai hướng dẫn.
+
+00:10:10.000 --> 00:10:13.000
+Đầu tiên, chọn chi tiết công việc phù hợp.
+
+00:10:13.000 --> 00:10:19.000
+Chúng ta có thể đạt được nó bằng cách hợp nhất những công việc nhỏ thành những công việc lớn hơn.
+
+00:10:19.000 --> 00:10:24.000
+Lên lịch cho một chủ đề mất một chút thời gian, bất kể điều gì.
+
+00:10:24.000 --> 00:10:30.000
+Nếu một công việc trở nên nhỏ bé, chi phí lên lịch sẽ chiếm một phần tương đối lớn hơn trong dòng thời gian của chuỗi.
+
+00:10:30.000 --> 00:10:34.000
+CPU sẽ không được sử dụng đúng mức.
+
+00:10:34.000 --> 00:10:39.000
+Ngược lại, các công việc lớn hơn khấu hao chi phí lên lịch bằng cách chạy lâu hơn.
+
+00:10:39.000 --> 00:10:51.000
+Chúng tôi đã thấy một ứng dụng chuyên nghiệp - gửi rất nhiều mục công việc 30 micro giây - tăng đáng kể hiệu suất của chúng khi chúng hợp nhất chúng.
+
+00:10:51.000 --> 00:10:56.000
+Thứ hai, sắp xếp đủ công việc trước khi tận dụng các chủ đề.
+
+00:10:56.000 --> 00:11:02.000
+Điều này có thể được thực hiện trong mọi khung hình, bằng cách chuẩn bị sẵn sàng hầu hết các công việc cùng một lúc.
+
+00:11:02.000 --> 00:11:12.000
+Khi bạn báo hiệu và chờ các luồng, điều đó thường có nghĩa là một số sẽ được lên lịch trên lõi CPU và một số sẽ bị chặn và di chuyển khỏi lõi.
+
+00:11:12.000 --> 00:11:16.000
+Làm điều đó nhiều lần là một cạm bẫy về hiệu suất.
+
+00:11:16.000 --> 00:11:21.000
+Đánh thức và tạm dừng các chủ đề liên tục làm tăng thêm chi phí mà chúng ta vừa nói đến.
+
+00:11:21.000 --> 00:11:30.000
+Ngược lại, làm cho các luồng xử lý nhiều công việc hơn mà không bị gián đoạn sẽ loại bỏ các điểm đồng bộ hóa.
+
+00:11:30.000 --> 00:11:40.000
+Ví dụ, khi xử lý các vòng lặp lồng nhau, tốt hơn hết là song song hóa bên ngoài ở độ chi tiết thô hơn.
+
+00:11:40.000 --> 00:11:43.000
+Điều đó khiến các vòng lặp bên trong không bị gián đoạn.
+
+00:11:43.000 --> 00:11:53.000
+Điều đó mang lại cho họ sự gắn kết tốt hơn, sử dụng bộ nhớ cache tốt hơn và nhìn chung, ít điểm đồng bộ hóa hơn.
+
+00:11:53.000 --> 00:11:58.000
+Trước khi tận dụng nhiều chủ đề hơn, hãy xác định xem nó có xứng đáng với chi phí hay không.
+
+00:11:58.000 --> 00:12:02.000
+Bây giờ chúng ta hãy xem xét một dấu vết trò chơi khác.
+
+00:12:02.000 --> 00:12:05.000
+Cái đó đang chạy trên iPhone XS.
+
+00:12:05.000 --> 00:12:09.000
+Chúng tôi sẽ tập trung vào những chủ đề trợ giúp đó.
+
+00:12:09.000 --> 00:12:13.000
+Chúng ta có thể thấy độ trễ đồng bộ hóa ở đây.
+
+00:12:13.000 --> 00:12:19.000
+Đây là thời gian hạt nhân báo hiệu những người trợ giúp khác nhau đó.
+
+00:12:19.000 --> 00:12:32.000
+Có hai vấn đề ở đây: thứ nhất, công việc thực tế lại cực kỳ nhỏ - khoảng 11 micro giây - đặc biệt là so với toàn bộ chi phí.
+
+00:12:32.000 --> 00:12:37.000
+Hợp nhất những công việc đó lại với nhau sẽ tiết kiệm năng lượng hơn.
+
+00:12:37.000 --> 00:12:45.000
+Vấn đề thứ hai: trong khoảng thời gian đó, 80 luồng khác nhau đã được lên lịch trên ba lõi.
+
+00:12:45.000 --> 00:12:50.000
+Chúng ta có thể thấy các chuyển đổi ngữ cảnh ở đây, những khoảng trống nhỏ giữa các công việc đang hoạt động.
+
+00:12:50.000 --> 00:13:01.000
+Trong ví dụ này, nó chưa phải là vấn đề - nhưng với nhiều luồng hơn, thời gian chuyển đổi ngữ cảnh có thể tích lũy và cản trở hiệu suất CPU.
+
+00:13:01.000 --> 00:13:10.000
+Làm thế nào chúng ta có thể giảm thiểu tất cả các loại chi phí khác nhau khi một trò chơi điển hình có ít nhất hàng trăm công việc trên mỗi khung hình?
+
+00:13:10.000 --> 00:13:14.000
+Cách tốt nhất để làm như vậy là sử dụng một nhóm công việc.
+
+00:13:14.000 --> 00:13:19.000
+Chủ đề công nhân tiêu thụ chúng thông qua việc ăn cắp công việc.
+
+00:13:19.000 --> 00:13:24.000
+Lên lịch cho một luồng được thực hiện bởi hạt nhân; chúng tôi thấy nó mất một thời gian.
+
+00:13:24.000 --> 00:13:28.000
+Và CPU cũng phải thực hiện một số công việc, như chuyển đổi ngữ cảnh.
+
+00:13:28.000 --> 00:13:33.000
+Mặt khác, bắt đầu một công việc mới trong không gian người dùng rẻ hơn nhiều.
+
+00:13:33.000 --> 00:13:40.000
+Nói chung, một công nhân chỉ cần giảm một bộ đếm nguyên tử và lấy một con trỏ đến một công việc.
+
+00:13:40.000 --> 00:13:49.000
+Điểm thứ hai: tránh tương tác với các luồng được xác định trước, vì sử dụng công nhân sẽ làm giảm số lượng công tắc ngữ cảnh.
+
+00:13:49.000 --> 00:13:57.000
+Và khi họ nhận được nhiều công việc hơn, bạn tận dụng một chủ đề đã hoạt động trên một lõi đã hoạt động.
+
+00:13:57.000 --> 00:14:00.000
+Cuối cùng, hãy sử dụng hồ bơi của bạn một cách khôn ngoan.
+
+00:14:00.000 --> 00:14:04.000
+Thức dậy vừa đủ công nhân cho công việc đang xếp hàng.
+
+00:14:04.000 --> 00:14:16.000
+Và quy tắc trước đây cũng được áp dụng ở đây: đảm bảo đủ công việc được sắp xếp để biện minh cho việc đánh thức một luồng công nhân và giữ cho nó bận rộn.
+
+00:14:16.000 --> 00:14:22.000
+Chúng tôi đã giảm chi phí của mình; bây giờ, chúng tôi phải tận dụng tối đa chu kỳ CPU của mình.
+
+00:14:22.000 --> 00:14:26.000
+Đây là một số mẫu cần tránh.
+
+00:14:26.000 --> 00:14:27.000
+Tránh phải chờ đợi bận rộn.
+
+00:14:27.000 --> 00:14:32.000
+Họ có khả năng khóa lõi P, thay vì làm điều gì đó hữu ích với nó.
+
+00:14:32.000 --> 00:14:39.000
+Chúng cũng ngăn bộ lập lịch quảng bá một luồng từ và E đến lõi P.
+
+00:14:39.000 --> 00:14:48.000
+Bạn cũng đang lãng phí năng lượng và tạo ra nhiệt không cần thiết, ăn mòn khoảng không nhiệt của bạn.
+
+00:14:48.000 --> 00:14:54.000
+Thứ hai, định nghĩa về hàm năng suất lỏng lẻo trên các nền tảng và thậm chí cả hệ điều hành.
+
+00:14:54.000 --> 00:15:04.000
+Trên các nền tảng của Apple, điều đó có nghĩa là, "cố gắng nhượng lại cốt lõi mà tôi đang chạy cho bất kỳ luồng nào khác trên hệ thống, bất kỳ thứ gì khác, bất kể ưu tiên của chúng là gì."
+
+00:15:04.000 --> 00:15:08.000
+Nó tăng mức độ ưu tiên luồng hiện tại về 0 một cách hiệu quả.
+
+00:15:08.000 --> 00:15:11.000
+Lợi suất cũng có thời lượng do hệ thống xác định.
+
+00:15:11.000 --> 00:15:16.000
+Nó có thể rất dài - lên đến 10 mili giây.
+
+00:15:16.000 --> 00:15:20.000
+Thứ ba, các cuộc gọi đi ngủ cũng không được khuyến khích.
+
+00:15:20.000 --> 00:15:24.000
+Chờ đợi một sự kiện cụ thể sẽ hiệu quả hơn nhiều.
+
+00:15:24.000 --> 00:15:31.000
+Ngoài ra, lưu ý trên nền tảng Apple, sleep(0) không có ý nghĩa gì và cuộc gọi đó thậm chí còn bị loại bỏ.
+
+00:15:31.000 --> 00:15:38.000
+Những mẫu đó nói chung là một dấu hiệu cho thấy lỗi lập lịch trình cơ bản đã xảy ra ngay từ đầu.
+
+00:15:38.000 --> 00:15:45.000
+Thay vào đó, hãy đợi các tín hiệu rõ ràng với một semaphore hoặc một biến có điều kiện.
+
+00:15:45.000 --> 00:15:51.000
+Hướng dẫn cuối cùng: chia tỷ lệ số lượng luồng để phù hợp với số lượng lõi CPU.
+
+00:15:51.000 --> 00:15:57.000
+Tránh tạo lại các nhóm luồng mới trong mỗi khung hoặc phần mềm trung gian bạn đang sử dụng.
+
+00:15:57.000 --> 00:16:01.000
+Đừng mở rộng số lượng chủ đề của bạn dựa trên khối lượng công việc của bạn.
+
+00:16:01.000 --> 00:16:06.000
+Nếu khối lượng công việc của bạn tăng lên đáng kể, thì chủ đề của bạn cũng sẽ được tính.
+
+00:16:06.000 --> 00:16:16.000
+Thay vào đó, hãy truy vấn thông tin CPU để định cỡ nhóm luồng của bạn một cách thích hợp và tối đa hóa các cơ hội song song cho hệ thống hiện tại.
+
+00:16:16.000 --> 00:16:20.000
+Hãy xem cách truy vấn thông tin này.
+
+00:16:20.000 --> 00:16:29.000
+Bắt đầu với macOS Monterey và iOS 15, bạn có thể truy vấn các chi tiết nâng cao về bố cục CPU với giao diện sysctl.
+
+00:16:29.000 --> 00:16:40.000
+Ngoài việc có được tổng số lượng tất cả các lõi CPU, bây giờ bạn có thể truy vấn xem máy có bao nhiêu loại lõi với nperflevels.
+
+00:16:40.000 --> 00:16:44.000
+Trên M1, chúng tôi có hai loại lõi: P và E.
+
+00:16:44.000 --> 00:16:51.000
+Sử dụng phạm vi này để truy vấn dữ liệu trên mỗi loại lõi, số 0 là hiệu suất cao nhất.
+
+00:16:51.000 --> 00:17:00.000
+Ví dụ, perflevel{N}.logicalcpu cho biết CPU hiện tại có bao nhiêu lõi P.
+
+00:17:00.000 --> 00:17:02.000
+Đây chỉ là một cái nhìn tổng quan.
+
+00:17:02.000 --> 00:17:08.000
+Bạn cũng có thể truy vấn nhiều chi tiết khác, như có bao nhiêu lõi chia sẻ cùng một L2.
+
+00:17:08.000 --> 00:17:16.000
+Để biết thêm chi tiết, hãy tham khảo trang sysctl man hoặc trang web tài liệu.
+
+00:17:16.000 --> 00:17:21.000
+Khi lập hồ sơ sử dụng CPU của bạn, hai bản nhạc cụ rất hữu ích.
+
+00:17:21.000 --> 00:17:25.000
+Chúng có sẵn trong mẫu Hiệu suất Trò chơi.
+
+00:17:25.000 --> 00:17:32.000
+Cái đầu tiên, System Load, đưa ra số lượng luồng hoạt động trên mỗi lõi CPU.
+
+00:17:32.000 --> 00:17:36.000
+Cái thứ hai là Thread State Trace.
+
+00:17:36.000 --> 00:17:44.000
+Theo mặc định, ngăn chi tiết hiển thị số lượng thay đổi trạng thái luồng và thời lượng của chúng trên mỗi quy trình.
+
+00:17:44.000 --> 00:17:49.000
+Nó có thể được thay đổi thành chế độ xem Công tắc ngữ cảnh.
+
+00:17:49.000 --> 00:17:55.000
+Điều này sẽ cung cấp cho bạn số lượng công tắc ngữ cảnh cho mỗi quy trình trong phạm vi thời gian đã chọn.
+
+00:17:55.000 --> 00:18:03.000
+Số lượng công tắc ngữ cảnh là một thước đo hữu ích để đo lường hiệu quả lên lịch của ứng dụng.
+
+00:18:03.000 --> 00:18:06.000
+Hãy kết thúc phần này.
+
+00:18:06.000 --> 00:18:14.000
+Bằng cách làm theo các hướng dẫn đó, bạn sẽ tận dụng tối đa CPU và hợp lý hóa những gì bộ lập lịch phải làm.
+
+00:18:14.000 --> 00:18:25.000
+Nén các công việc nhỏ, nhỏ thành các công việc chạy lâu hơn làm tăng lợi ích của các tính năng kiến trúc vi mô, như bộ nhớ cache, trình tìm nạp trước và công cụ dự đoán.
+
+00:18:25.000 --> 00:18:31.000
+Xử lý nhiều công việc hơn cùng một lúc có nghĩa là ít ngắt độ trễ và chuyển đổi ngữ cảnh hơn.
+
+00:18:31.000 --> 00:18:39.000
+Một nhóm luồng được chia tỷ lệ thích hợp giúp bộ lập lịch dễ dàng cân bằng lại công việc giữa lõi E và P.
+
+00:18:39.000 --> 00:18:49.000
+Một điểm mấu chốt cho hiệu quả và hiệu suất là giảm thiểu tần suất khối lượng công việc của bạn ngày càng rộng và hẹp.
+
+00:18:49.000 --> 00:18:55.000
+Bây giờ chúng ta hãy đi sâu vào những khối API nào bạn có thể tận dụng trong khi áp dụng các nguyên tắc đó.
+
+00:18:55.000 --> 00:19:08.000
+Trong phần này, chúng tôi sẽ đề cập đến các chính sách ưu tiên và lập kế hoạch, nguyên thủy đồng bộ hóa và cân nhắc bộ nhớ khi đa luồng.
+
+00:19:08.000 --> 00:19:13.000
+Nhưng trước tiên, hãy bắt đầu bằng cách xem lén GCD.
+
+00:19:13.000 --> 00:19:23.000
+Nếu bạn không có người quản lý công việc, hoặc nếu nó không đạt được hiệu suất cao mà bạn đang hướng tới, GCD là một lựa chọn tuyệt vời.
+
+00:19:23.000 --> 00:19:28.000
+Đó là một người quản lý công việc có mục đích chung sử dụng ăn cắp công việc.
+
+00:19:28.000 --> 00:19:35.000
+Nó có sẵn trên tất cả các nền tảng của Apple và Linux, và nó là mã nguồn mở.
+
+00:19:35.000 --> 00:19:38.000
+API này được tối ưu hóa cao.
+
+00:19:38.000 --> 00:19:42.000
+Đầu tiên, nó đã tuân theo tất cả các phương pháp hay nhất dành cho bạn.
+
+00:19:42.000 --> 00:19:47.000
+Thứ hai, nó được tích hợp trong nhân XNU.
+
+00:19:47.000 --> 00:20:01.000
+Điều đó có nghĩa là GCD có thể theo dõi các chi tiết bên trong cho bạn, như khả năng tản nhiệt của máy hiện tại, tỷ lệ lõi P/E, áp suất nhiệt hiện tại, v.v.
+
+00:20:01.000 --> 00:20:05.000
+Giao diện của nó dựa vào hàng đợi điều phối nối tiếp và đồng thời.
+
+00:20:05.000 --> 00:20:11.000
+Bạn có thể xếp hàng các công việc trong đó với các ưu tiên khác nhau.
+
+00:20:11.000 --> 00:20:18.000
+Trong nội bộ, mỗi hàng đợi điều phối tận dụng một lượng luồng thay đổi từ một nhóm luồng riêng tư.
+
+00:20:18.000 --> 00:20:24.000
+Con số đó phụ thuộc vào loại hàng đợi và thuộc tính công việc.
+
+00:20:24.000 --> 00:20:29.000
+Nhóm luồng nội bộ này được chia sẻ cho toàn bộ quá trình.
+
+00:20:29.000 --> 00:20:36.000
+Điều đó có nghĩa là trong một quy trình nhất định, nhiều thư viện có thể sử dụng GCD mà không cần tạo lại một nhóm mới.
+
+00:20:36.000 --> 00:20:39.000
+GCD cung cấp nhiều tính năng.
+
+00:20:39.000 --> 00:20:47.000
+Ở đây chúng tôi sẽ nhanh chóng xem xét chỉ hai chức năng từ hàng đợi điều phối đồng thời, chỉ để hiểu nó hoạt động như thế nào.
+
+00:20:47.000 --> 00:20:55.000
+Cái đầu tiên, dispatch_async, cho phép bạn xếp hàng một công việc được tạo thành từ một con trỏ hàm và một con trỏ dữ liệu.
+
+00:20:55.000 --> 00:21:04.000
+Khi bắt đầu một công việc, hàng đợi đồng thời có thể tận dụng một chuỗi bổ sung nếu công việc tiếp theo trong dòng cũng đã sẵn sàng để được xử lý.
+
+00:21:04.000 --> 00:21:09.000
+Đó là một lựa chọn tuyệt vời cho các công việc độc lập không đồng bộ điển hình.
+
+00:21:09.000 --> 00:21:13.000
+Nhưng không quá nhiều cho các vấn đề song song ồ ạt.
+
+00:21:13.000 --> 00:21:18.000
+Trong trường hợp đó, có dispatch_apply.
+
+00:21:18.000 --> 00:21:25.000
+Cái đó sẽ tận dụng nhiều luồng ngay từ đầu, mà không làm quá tải trình quản lý luồng của GCD.
+
+00:21:25.000 --> 00:21:36.000
+Chúng tôi đã thấy một số ứng dụng chuyên nghiệp tăng hiệu suất của chúng bằng cách di chuyển song song để sử dụng dispatch_apply.
+
+00:21:36.000 --> 00:21:39.000
+Đó chỉ là một cái nhìn tổng quan nhanh về GCD.
+
+00:21:39.000 --> 00:21:49.000
+Để tìm hiểu thêm về nó và những mẫu nào cần tránh, hãy tham khảo hai phiên WWDC đó.
+
+00:21:49.000 --> 00:21:53.000
+Bây giờ chúng ta hãy chuyển sang quản lý công việc tùy chỉnh.
+
+00:21:53.000 --> 00:22:00.000
+Chúng tôi sẽ đề cập đến những điểm quan trọng nhất khi thao tác trực tiếp các luồng và đồng bộ hóa chúng.
+
+00:22:00.000 --> 00:22:03.000
+Hãy bắt đầu với sự ưu tiên.
+
+00:22:03.000 --> 00:22:10.000
+Trong phần trước, chúng tôi đã xem xét cách tăng hiệu quả CPU khi gửi công việc.
+
+00:22:10.000 --> 00:22:16.000
+Nhưng cho đến nay, chúng tôi đã không đề cập rằng tất cả các công việc đều không bình đẳng.
+
+00:22:16.000 --> 00:22:21.000
+Một số rất quan trọng về thời gian, kết quả của chúng là cần thiết càng sớm càng tốt.
+
+00:22:21.000 --> 00:22:25.000
+Và một số khung hình khác sẽ chỉ được yêu cầu trong một hoặc hai khung hình tiếp theo.
+
+00:22:25.000 --> 00:22:36.000
+Vì vậy, cần phải truyền đạt cảm giác quan trọng khi xử lý công việc của bạn để cung cấp nhiều nguồn lực hơn cho những công việc quan trọng hơn.
+
+00:22:36.000 --> 00:22:40.000
+Điều đó có thể được thực hiện bằng cách ưu tiên các chủ đề của bạn.
+
+00:22:40.000 --> 00:22:48.000
+Đặt mức độ ưu tiên luồng phù hợp cũng thông báo cho hệ thống rằng trò chơi của bạn quan trọng hơn hoạt động nền.
+
+00:22:48.000 --> 00:22:57.000
+Điều này có thể đạt được bằng cách thiết lập một luồng có giá trị ưu tiên CPU thô hoặc lớp QoS.
+
+00:22:57.000 --> 00:23:02.000
+Cả hai khái niệm đều có liên quan với nhau, nhưng hơi khác nhau.
+
+00:23:02.000 --> 00:23:09.000
+Mức độ ưu tiên CPU thô là một giá trị nguyên cho biết thông lượng tính toán quan trọng như thế nào.
+
+00:23:09.000 --> 00:23:17.000
+Trên các nền tảng của Apple, trái ngược với Linux, đây là một giá trị tăng dần - càng cao, càng quan trọng.
+
+00:23:17.000 --> 00:23:27.000
+Mức độ ưu tiên CPU này cũng gợi ý - trong số các yếu tố khác - về việc liệu một luồng nên chạy trên lõi P hay E.
+
+00:23:27.000 --> 00:23:37.000
+Bây giờ, mức độ ưu tiên CPU này không ảnh hưởng đến phần còn lại của tài nguyên hệ thống vì nó không đưa ra bất kỳ ý định nào về những gì luồng đang làm.
+
+00:23:37.000 --> 00:23:45.000
+Thay vào đó, các chủ đề có thể được ưu tiên với Chất lượng Dịch vụ - viết tắt là QoS.
+
+00:23:45.000 --> 00:23:49.000
+QoS đã được thiết kế để gắn ngữ nghĩa vào các luồng.
+
+00:23:49.000 --> 00:23:59.000
+Ý định này giúp người lập lịch đưa ra quyết định thông minh về thời điểm thực hiện các nhiệm vụ và làm cho hệ điều hành phản hồi nhanh hơn.
+
+00:23:59.000 --> 00:24:06.000
+Ví dụ, một nhiệm vụ có tầm quan trọng thấp hơn có thể bị trì hoãn một chút về thời gian để tiết kiệm năng lượng.
+
+00:24:06.000 --> 00:24:13.000
+Nó cũng cho phép ưu tiên truy cập tài nguyên hệ thống như truy cập mạng, đĩa.
+
+00:24:13.000 --> 00:24:19.000
+Nó cũng cung cấp các ngưỡng để kết hợp hẹn giờ - một tính năng tiết kiệm năng lượng.
+
+00:24:19.000 --> 00:24:25.000
+Các lớp QoS cũng bao gồm mức độ ưu tiên CPU.
+
+00:24:25.000 --> 00:24:36.000
+Có năm lớp QoS, đi từ QOS_CLASS_BACKGROUND, lớp ít quan trọng nhất, đến QOS_CLASS_USER_INTERACTIVE, lớp cao nhất.
+
+00:24:36.000 --> 00:24:40.000
+Mỗi cái bao gồm một mức độ ưu tiên CPU mặc định.
+
+00:24:40.000 --> 00:24:46.000
+Tùy chọn, bạn có thể hạ cấp nó một chút trong một phạm vi giới hạn.
+
+00:24:46.000 --> 00:24:54.000
+Điều này rất hữu ích nếu bạn muốn tinh chỉnh mức độ ưu tiên CPU cho một số luồng chọn vào cùng một lớp QoS.
+
+00:24:54.000 --> 00:25:03.000
+Lưu ý phải rất cẩn thận với lớp Nền - các luồng sử dụng nó có thể không chạy trong một thời gian rất dài.
+
+00:25:03.000 --> 00:25:10.000
+Vì vậy, nhìn chung, các trò chơi sử dụng các ưu tiên CPU từ 5 đến 47.
+
+00:25:10.000 --> 00:25:16.000
+Hãy xem điều đó được thực hiện như thế nào trong thực tế.
+
+00:25:16.000 --> 00:25:23.000
+Đầu tiên, bạn cần phân bổ và khởi tạo các thuộc tính pthread với các giá trị mặc định.
+
+00:25:23.000 --> 00:25:32.000
+Sau đó, bạn đặt lớp QoS bắt buộc và sau đó chuyển các thuộc tính đó cho hàm pthread_create.
+
+00:25:32.000 --> 00:25:36.000
+Kết thúc bằng cách phá hủy cấu trúc thuộc tính.
+
+00:25:36.000 --> 00:25:40.000
+Bạn cũng có thể đặt một lớp QoS thành một chuỗi đã tồn tại.
+
+00:25:40.000 --> 00:25:45.000
+Ví dụ, hàm đó ảnh hưởng đến chuỗi gọi.
+
+00:25:45.000 --> 00:25:54.000
+Lưu ý ở đây, chúng tôi đã sử dụng độ lệch -5, hạ cấp mức độ ưu tiên CPU của lớp từ 47 xuống 42.
+
+00:25:54.000 --> 00:25:57.000
+Lưu ý rằng bạn có thể thấy hậu tố np trong tên hàm.
+
+00:25:57.000 --> 00:26:05.000
+Đó là viết tắt của "nonportable"; đó là một quy ước đặt tên được sử dụng cho các chức năng dành riêng cho các nền tảng của Apple.
+
+00:26:05.000 --> 00:26:17.000
+Cuối cùng, hãy cẩn thận rằng nếu thay vì sử dụng các chức năng đó, bạn trực tiếp đặt giá trị ưu tiên CPU thô, bạn chọn không tham gia QoS cho luồng đó.
+
+00:26:17.000 --> 00:26:25.000
+Điều đó là vĩnh viễn và bạn không thể chọn lại QoS cho chủ đề đó sau đó.
+
+00:26:25.000 --> 00:26:32.000
+iOS và macOS xử lý nhiều quy trình, đối mặt với người dùng hoặc chạy trong nền.
+
+00:26:32.000 --> 00:26:36.000
+Trong một số trường hợp, hệ thống có thể bị quá tải.
+
+00:26:36.000 --> 00:26:44.000
+Nếu điều đó xảy ra, hạt nhân cần một cách để đảm bảo tất cả các luồng có cơ hội chạy vào một thời điểm nào đó.
+
+00:26:44.000 --> 00:26:47.000
+Điều đó được thực hiện với sự phân rã ưu tiên.
+
+00:26:47.000 --> 00:26:58.000
+Trong trường hợp đặc biệt này, hạt nhân từ từ giảm mức độ ưu tiên luồng theo thời gian; tất cả các luồng sau đó có cơ hội chạy.
+
+00:26:58.000 --> 00:27:03.000
+Sự phân rã ưu tiên có thể có vấn đề trong những trường hợp rất đặc biệt.
+
+00:27:03.000 --> 00:27:09.000
+Thông thường, các trò chơi có một vài chủ đề rất quan trọng, như chủ đề chính và chủ đề kết xuất.
+
+00:27:09.000 --> 00:27:16.000
+Nếu chuỗi kết xuất bị chặn trước, bạn có thể bỏ lỡ một cửa sổ trình bày và trò chơi sẽ bị giật.
+
+00:27:16.000 --> 00:27:22.000
+Trong những trường hợp đó, bạn có thể chọn không tham gia phân rã ưu tiên với các chính sách lập lịch.
+
+00:27:22.000 --> 00:27:29.000
+Theo mặc định, các luồng được tạo bằng chính sách SCHED_OTHER.
+
+00:27:29.000 --> 00:27:31.000
+Đây là một chính sách chia sẻ thời gian.
+
+00:27:31.000 --> 00:27:36.000
+Các chủ đề sử dụng nó có thể bị phân rã ưu tiên.
+
+00:27:36.000 --> 00:27:40.000
+Nó cũng tương thích với các lớp QoS mà chúng tôi đã trình bày trước đây.
+
+00:27:40.000 --> 00:27:46.000
+Mặt khác, chúng tôi có chính sách SCHED_RR tùy chọn.
+
+00:27:46.000 --> 00:27:49.000
+RR là viết tắt của "round-robin".
+
+00:27:49.000 --> 00:27:55.000
+Các chủ đề chọn tham gia vào nó có mức độ ưu tiên cố định không bị ảnh hưởng bởi sự phân rã ưu tiên.
+
+00:27:55.000 --> 00:28:00.000
+Nó cung cấp sự nhất quán tốt hơn trong độ trễ thực thi.
+
+00:28:00.000 --> 00:28:14.000
+Lưu ý rằng nó được thiết kế dành riêng cho công việc nhất quán, định kỳ và ưu tiên cao, ví dụ: luồng kết xuất chuyên dụng hoặc luồng công nhân trên mỗi khung hình.
+
+00:28:14.000 --> 00:28:24.000
+Các luồng chọn tham gia nó phải hoạt động trên một cửa sổ thời gian rất cụ thể và không liên tục bận CPU 100 phần trăm thời gian.
+
+00:28:24.000 --> 00:28:29.000
+Sử dụng chính sách này cũng có thể dẫn đến nạn đói trong các chủ đề khác của bạn.
+
+00:28:29.000 --> 00:28:38.000
+Cuối cùng, chính sách này không tương thích với các lớp QoS - các luồng sẽ cần sử dụng mức độ ưu tiên CPU thô.
+
+00:28:38.000 --> 00:28:41.000
+Đây là bố cục được đề xuất cho các chủ đề trò chơi.
+
+00:28:41.000 --> 00:28:51.000
+Đầu tiên, xác định trong trò chơi của bạn những gì là ưu tiên cao, trung bình và thấp và những gì quan trọng đối với trải nghiệm người dùng.
+
+00:28:51.000 --> 00:28:59.000
+Việc phân chia công việc theo mức độ ưu tiên cho phép hệ thống biết phần nào trong ứng dụng của bạn là quan trọng nhất.
+
+00:28:59.000 --> 00:29:07.000
+Sử dụng các công cụ để lập hồ sơ trò chơi của bạn và chỉ chọn tham gia SCHED_RR cho các chủ đề thực sự cần nó.
+
+00:29:07.000 --> 00:29:13.000
+Ngoài ra, không bao giờ sử dụng SCHED_RR cho một công việc dài hạn, mở rộng nhiều khung hình.
+
+00:29:13.000 --> 00:29:20.000
+Dựa vào QoS trong những trường hợp đó để giúp hệ thống cân bằng hiệu suất với các quy trình khác.
+
+00:29:20.000 --> 00:29:29.000
+Một lý do khác để ủng hộ việc chọn tham gia QoS là khi một luồng tương tác với các khung của Apple như GCD hoặc NSOperationQueues.
+
+00:29:29.000 --> 00:29:36.000
+Những khuôn khổ đó cố gắng truyền bá lớp QoS từ nhà phát hành công việc vào chính công việc.
+
+00:29:36.000 --> 00:29:42.000
+Điều đó rõ ràng bị bỏ qua nếu chuỗi phát hành đã từ bỏ QoS.
+
+00:29:42.000 --> 00:29:50.000
+Hãy đề cập đến một điểm cuối cùng liên quan đến các ưu tiên: đảo ngược ưu tiên.
+
+00:29:50.000 --> 00:29:59.000
+Đảo ngược ưu tiên xảy ra khi một luồng ưu tiên cao bị đình trệ, bị chặn bởi một luồng có mức độ ưu tiên thấp.
+
+00:29:59.000 --> 00:30:02.000
+Điều này thường xảy ra với các loại trừ lẫn nhau.
+
+00:30:02.000 --> 00:30:07.000
+Hai chủ đề cố gắng truy cập cùng một tài nguyên, chiến đấu để có được cùng một khóa.
+
+00:30:07.000 --> 00:30:15.000
+Trong một số trường hợp, hệ thống có thể giải quyết sự đảo ngược này bằng cách tăng luồng ưu tiên thấp.
+
+00:30:15.000 --> 00:30:17.000
+Hãy xem nó hoạt động như thế nào.
+
+00:30:17.000 --> 00:30:22.000
+Hãy xem xét hai chủ đề - đây là dòng thời gian thực hiện của chúng.
+
+00:30:22.000 --> 00:30:29.000
+Trong ví dụ này, sợi màu xanh lam được ưu tiên thấp, sợi màu xanh lá cây được ưu tiên cao.
+
+00:30:29.000 --> 00:30:37.000
+Ở giữa, chúng ta có dòng thời gian khóa, hiển thị luồng nào trong hai luồng sẽ sở hữu khóa đó.
+
+00:30:37.000 --> 00:30:41.000
+Sợi chỉ màu xanh bắt đầu thực thi và lấy khóa.
+
+00:30:41.000 --> 00:30:44.000
+Sợi chỉ màu xanh lá cây cũng bắt đầu.
+
+00:30:44.000 --> 00:30:51.000
+Tại thời điểm này, sợi chỉ màu xanh lá cây cố gắng có được khóa đó, hiện thuộc sở hữu của sợi chỉ màu xanh lam.
+
+00:30:51.000 --> 00:30:57.000
+Sợi chỉ màu xanh lá cây chặn lại và chờ khóa đó có sẵn trở lại.
+
+00:30:57.000 --> 00:31:04.000
+Trong trường hợp này, thời gian chạy có thể cho biết luồng nào sở hữu khóa đó.
+
+00:31:04.000 --> 00:31:11.000
+Do đó, nó có thể giải quyết sự đảo ngược ưu tiên, bằng cách tăng mức độ ưu tiên thấp của luồng màu xanh lam.
+
+00:31:11.000 --> 00:31:19.000
+Nguyên thủy nào có khả năng giải quyết đảo ngược ưu tiên và nguyên thủy nào thì không?
+
+00:31:19.000 --> 00:31:30.000
+Các nguyên thủy đối xứng với một chủ sở hữu được biết đến duy nhất có thể làm điều đó, như pthread_mutex_t hoặc hiệu quả nhất, os_unfair_lock.
+
+00:31:30.000 --> 00:31:43.000
+Các nguyên thủy không đối xứng như biến điều kiện pthread hoặc dispatch_semaphore không có khả năng này, bởi vì thời gian chạy không biết luồng nào sẽ báo hiệu nó.
+
+00:31:43.000 --> 00:31:53.000
+Hãy ghi nhớ tính năng này khi chọn nguyên thủy đồng bộ hóa và ưu tiên các nguyên thủy đối xứng để truy cập loại trừ lẫn nhau.
+
+00:31:53.000 --> 00:32:00.000
+Để hoàn thành phần này, hãy thảo luận một vài khuyến nghị về trí nhớ.
+
+00:32:00.000 --> 00:32:07.000
+Khi tương tác với các khung Objective-C, một số đối tượng được tạo dưới dạng tự động phát hành.
+
+00:32:07.000 --> 00:32:16.000
+Điều đó có nghĩa là họ được thêm vào danh sách, để việc phân bổ giao dịch của họ chỉ xảy ra sau đó.
+
+00:32:16.000 --> 00:32:22.000
+Các khối hồ bơi tự động phát hành là các phạm vi giới hạn thời gian các đối tượng như vậy có thể được giữ xung quanh.
+
+00:32:22.000 --> 00:32:28.000
+Chúng giúp giảm hiệu quả diện tích bộ nhớ cao nhất của ứng dụng của bạn.
+
+00:32:28.000 --> 00:32:34.000
+Điều quan trọng là phải có ít nhất một nhóm tự động phát hành, trong mỗi điểm vào luồng.
+
+00:32:34.000 --> 00:32:44.000
+Nếu bất kỳ luồng nào thao tác các đối tượng được tự động phát hành - ví dụ, thông qua Metal - mà không có, điều đó sẽ dẫn đến rò rỉ bộ nhớ.
+
+00:32:44.000 --> 00:32:50.000
+Các khối hồ bơi tự động giải phóng có thể được lồng vào nhau, để kiểm soát tốt hơn khi bộ nhớ được tái chế.
+
+00:32:50.000 --> 00:32:57.000
+Lý tưởng nhất là chuỗi kết xuất nên tạo luồng thứ hai xung quanh quy trình kết xuất khung lặp lại.
+
+00:32:57.000 --> 00:33:08.000
+Các luồng công nhân nên có chủ đề thứ hai bắt đầu kích hoạt và đóng lại khi công nhân đỗ xe, chờ đợi thêm công việc.
+
+00:33:08.000 --> 00:33:10.000
+Hãy xem một ví dụ.
+
+00:33:10.000 --> 00:33:13.000
+Đây là một điểm vào luồng công nhân.
+
+00:33:13.000 --> 00:33:18.000
+Nó bắt đầu ngay lập tức với một khối hồ bơi tự động phát hành.
+
+00:33:18.000 --> 00:33:22.000
+Sau đó nó chờ đợi công việc có sẵn.
+
+00:33:22.000 --> 00:33:30.000
+Khi công nhân được kích hoạt, chúng tôi thêm một khối nhóm tự động phát hành mới và giữ nó xung quanh khi chúng tôi xử lý công việc.
+
+00:33:30.000 --> 00:33:36.000
+Khi sợi chỉ chuẩn bị đợi và đậu, chúng tôi ra khỏi hồ bơi lồng nhau.
+
+00:33:36.000 --> 00:33:40.000
+Để kết luận, một mẹo nhanh về trí nhớ.
+
+00:33:40.000 --> 00:33:49.000
+Để cải thiện hiệu suất, tránh để nhiều luồng ghi đồng thời dữ liệu nằm trong cùng một dòng bộ nhớ cache.
+
+00:33:49.000 --> 00:33:52.000
+Điều đó được gọi là "chia sẻ sai".
+
+00:33:52.000 --> 00:34:03.000
+Nhiều lần đọc từ cùng một cấu trúc dữ liệu là ổn, nhưng các lần ghi cạnh tranh như vậy dẫn đến việc ping-ponging dòng bộ nhớ cache giữa các bộ nhớ đệm phần cứng khác nhau.
+
+00:34:03.000 --> 00:34:08.000
+Trên Apple silicon, một dòng bộ nhớ đệm dài 128 byte.
+
+00:34:08.000 --> 00:34:16.000
+Một giải pháp cho điều này là chèn phần đệm vào cấu trúc dữ liệu của bạn để giảm xung đột bộ nhớ.
+
+00:34:16.000 --> 00:34:20.000
+Chúng tôi đã hoàn thành phần cuối cùng này.
+
+00:34:20.000 --> 00:34:21.000
+Hãy kết thúc.
+
+00:34:21.000 --> 00:34:31.000
+Lần đầu tiên chúng tôi có cái nhìn tổng quan về kiến trúc CPU của Apple và cách thiết kế đột phá của nó làm cho nó hiệu quả hơn nhiều.
+
+00:34:31.000 --> 00:34:41.000
+Sau đó, chúng tôi đã tìm hiểu cách cung cấp CPU hiệu quả và làm cho nó chạy trơn tru trong khi giảm tải đặt trên bộ lập lịch hệ điều hành.
+
+00:34:41.000 --> 00:34:53.000
+Cuối cùng chúng tôi đã xem xét các khái niệm API quan trọng, chẳng hạn như ưu tiên luồng, chính sách lập lịch, đảo ngược ưu tiên, kết thúc với các mẹo về bộ nhớ.
+
+00:34:53.000 --> 00:35:03.000
+Đừng quên thường xuyên lập hồ sơ trò chơi của bạn bằng các công cụ để theo dõi khối lượng công việc của nó, vì vậy bạn có thể phát hiện sớm các vấn đề về hiệu suất.
+
+00:35:03.000 --> 23:59:59.000
+Cảm ơn bạn đã quan tâm.
+

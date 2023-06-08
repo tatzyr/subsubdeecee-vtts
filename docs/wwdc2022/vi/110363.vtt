@@ -1,0 +1,515 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:13.000
+Ahmed: Xin chào, tên tôi là Ahmed, và tôi làm việc trên trình biên dịch Clang và Swift.
+
+00:00:13.000 --> 00:00:25.000
+Trong phiên này, chúng tôi sẽ đi sâu vào những thay đổi mà chúng tôi đã thực hiện để làm cho các hoạt động Swift và Objective-C phổ biến nhanh hơn và hiệu quả hơn, để chúng tôi có thể cải thiện kích thước ứng dụng và hiệu suất thời gian chạy của bạn.
+
+00:00:25.000 --> 00:00:30.000
+Khi bạn viết mã bằng Swift hoặc Objective-C, bạn luôn thực sự tương tác với hai thành phần chính.
+
+00:00:30.000 --> 00:00:35.000
+Đầu tiên, bạn xây dựng bằng Xcode, và sử dụng trình biên dịch Swift và Clang.
+
+00:00:35.000 --> 00:00:41.000
+Nhưng khi bạn chạy ứng dụng của mình, rất nhiều công việc nặng nhọc được thực hiện trong Thời gian chạy Swift và Objective-C.
+
+00:00:41.000 --> 00:00:45.000
+Thời gian chạy được nhúng trong hệ điều hành cho tất cả các nền tảng của chúng tôi.
+
+00:00:45.000 --> 00:00:50.000
+Những gì trình biên dịch không thể làm tại thời điểm xây dựng, thời gian chạy thực hiện tốt, trong thời gian chạy.
+
+00:00:50.000 --> 00:00:54.000
+Chúng tôi sẽ xem xét một số cải tiến mà chúng tôi đã thực hiện trong cả trình biên dịch và thời gian chạy.
+
+00:00:54.000 --> 00:01:00.000
+Bây giờ, phiên này hơi bất thường; không có API mới, thay đổi ngôn ngữ hoặc cài đặt xây dựng mới.
+
+00:01:00.000 --> 00:01:05.000
+Bạn không cần phải thay đổi mã của mình, vì vậy tất cả những cải tiến này đều minh bạch đối với bạn, nhà phát triển.
+
+00:01:05.000 --> 00:01:06.000
+Hãy đi sâu vào.
+
+00:01:06.000 --> 00:01:08.000
+Chúng ta sẽ xem xét bốn cải tiến.
+
+00:01:08.000 --> 00:01:21.000
+Chúng tôi đã thực hiện kiểm tra giao thức trong Swift hiệu quả hơn, chúng tôi cũng đã thực hiện các cuộc gọi gửi tin nhắn Objective-C nhỏ hơn, vì chúng tôi đã giữ lại và phát hành các cuộc gọi, và cuối cùng, chúng tôi đã thực hiện việc loại bỏ tự động phát hành nhanh hơn và nhỏ hơn.
+
+00:01:21.000 --> 00:01:23.000
+Chúng ta hãy xem xét kỹ hơn.
+
+00:01:23.000 --> 00:01:27.000
+Hãy bắt đầu với việc kiểm tra giao thức trong Swift.
+
+00:01:27.000 --> 00:01:30.000
+Ở đây chúng tôi có một giao thức CustomLoggable.
+
+00:01:30.000 --> 00:01:38.000
+Nó có thuộc tính tính toán chỉ đọc customLogString và chúng ta có thể sử dụng nó trong hàm nhật ký của mình, có khả năng xử lý đặc biệt cho các đối tượng CustomLoggable.
+
+00:01:38.000 --> 00:01:42.000
+Sau đó, chúng tôi sẽ xác định một loại Sự kiện với các trường tên và ngày.
+
+00:01:42.000 --> 00:01:49.000
+Và chúng tôi đang tuân thủ giao thức CustomLoggable, bằng cách xác định getter cho thuộc tính customLogString.
+
+00:01:49.000 --> 00:01:53.000
+Và điều này cho phép chúng tôi chuyển các đối tượng Sự kiện sang chức năng 'nhật ký' của mình.
+
+00:01:53.000 --> 00:01:59.000
+Khi chúng tôi thực thi mã này, hàm 'log' cần kiểm tra xem giá trị chúng tôi đã truyền có phù hợp với giao thức hay không.
+
+00:01:59.000 --> 00:02:05.000
+Và nó làm điều đó bằng cách sử dụng toán tử 'as'. Bạn cũng có thể đã thấy toán tử 'là'.
+
+00:02:05.000 --> 00:02:09.000
+Bất cứ khi nào có thể, kiểm tra này được tối ưu hóa tại thời điểm xây dựng, trong trình biên dịch.
+
+00:02:09.000 --> 00:02:13.000
+Tuy nhiên, không phải lúc nào chúng ta cũng có đủ thông tin.
+
+00:02:13.000 --> 00:02:20.000
+Vì vậy, điều này thường cần xảy ra trong thời gian chạy, với sự trợ giúp của siêu dữ liệu kiểm tra giao thức mà chúng tôi tính toán trước đó.
+
+00:02:20.000 --> 00:02:29.000
+Với siêu dữ liệu này, thời gian chạy biết liệu đối tượng cụ thể này có thực sự phù hợp với giao thức hay không và việc kiểm tra thành công.
+
+00:02:29.000 --> 00:02:36.000
+Một phần của siêu dữ liệu được xây dựng tại thời điểm biên dịch, nhưng rất nhiều chỉ có thể được xây dựng tại thời điểm khởi chạy, đặc biệt là khi sử dụng Generics.
+
+00:02:36.000 --> 00:02:40.000
+Khi bạn sử dụng nhiều giao thức, điều này có thể tăng lên đến hàng trăm mili giây.
+
+00:02:40.000 --> 00:02:45.000
+Trên các ứng dụng trong thế giới thực, chúng tôi đã thấy điều này chiếm tới một nửa thời gian khởi chạy.
+
+00:02:45.000 --> 00:02:54.000
+Với thời gian chạy Swift mới, giờ đây chúng tôi tính toán trước những thứ này trước thời hạn, như một phần của việc đóng dyld cho ứng dụng thực thi và bất kỳ dylib nào mà nó sử dụng khi khởi chạy.
+
+00:02:54.000 --> 00:03:01.000
+Trên hết, điều này được kích hoạt ngay cả đối với các ứng dụng hiện có khi chạy trên iOS 16, tvOS 16 hoặc watchOS 9.
+
+00:03:01.000 --> 00:03:07.000
+Nếu bạn muốn tìm hiểu thêm về việc đóng cửa dyld và khởi chạy, hãy xem bài nói chuyện "Thời gian khởi động ứng dụng: Quá khứ, Hiện tại và Tương lai."
+
+00:03:07.000 --> 00:03:10.000
+Đó là kiểm tra giao thức trong Swift.
+
+00:03:10.000 --> 00:03:14.000
+Hãy chuyển sang gửi tin nhắn.
+
+00:03:14.000 --> 00:03:22.000
+Với trình biên dịch và trình liên kết mới trong Xcode 14, chúng tôi đã thực hiện các cuộc gọi gửi tin nhắn nhỏ hơn tới 8 byte, giảm từ 12, trên ARM64.
+
+00:03:22.000 --> 00:03:30.000
+Như chúng ta sẽ thấy chỉ trong giây lát, việc gửi tin nhắn thực sự ở khắp mọi nơi, vì vậy điều này cộng lại và chúng ta đã thấy những cải tiến về kích thước mã lên đến 2% trên các tệp nhị phân.
+
+00:03:30.000 --> 00:03:38.000
+Điều này được bật tự động khi xây dựng với Xcode 14, ngay cả khi bạn sử dụng bản phát hành hệ điều hành cũ hơn làm mục tiêu triển khai.
+
+00:03:38.000 --> 00:03:46.000
+Nó mặc định là sự cân bằng giữa chiến thắng kích thước và hiệu suất, nhưng bạn chỉ có thể chọn tối ưu hóa kích thước, sử dụng cờ liên kết objc_stubs_small.
+
+00:03:46.000 --> 00:03:49.000
+Bây giờ hãy xem xét những gì đã thay đổi.
+
+00:03:49.000 --> 00:03:50.000
+Vậy hãy bắt đầu với một ví dụ.
+
+00:03:50.000 --> 00:03:54.000
+Ở đây chúng tôi đang cố gắng tạo ra một NSDate cho ngày bắt đầu của hội nghị.
+
+00:03:54.000 --> 00:04:01.000
+Chúng tôi bắt đầu bằng cách tạo một NSCalendar, sau đó chúng tôi điền vào NSDateComponents, tạo một ngày từ đó và cuối cùng trả lại nó.
+
+00:04:01.000 --> 00:04:05.000
+Bây giờ hãy nhìn vào tập hợp mà trình biên dịch tạo ra.
+
+00:04:05.000 --> 00:04:07.000
+Bây giờ, các chi tiết của việc lắp ráp không quá quan trọng.
+
+00:04:07.000 --> 00:04:11.000
+Những người biên dịch của chúng tôi nhìn chằm chằm vào nó cả ngày để bạn không phải làm vậy.
+
+00:04:11.000 --> 00:04:21.000
+Điều quan trọng là hầu hết mọi dòng ở đây đều cần một hướng dẫn để gọi objc_msgSend, ngay cả khi thực hiện truy cập thuộc tính như chúng tôi làm cho các thành phần ngày.
+
+00:04:21.000 --> 00:04:26.000
+Điều này là do tại thời điểm biên dịch, chúng tôi không biết nên gọi phương thức nào và chỉ có thời gian chạy objc.
+
+00:04:26.000 --> 00:04:32.000
+Vì vậy, chúng tôi gọi vào thời gian chạy bằng cách sử dụng objc_msgSend để yêu cầu nó tìm phương thức phù hợp.
+
+00:04:32.000 --> 00:04:34.000
+Hãy tập trung vào một trong những cuộc gọi này.
+
+00:04:34.000 --> 00:04:37.000
+Chúng tôi đã đề cập đến hướng dẫn gọi objc_msgSend.
+
+00:04:37.000 --> 00:04:38.000
+Nhưng còn nhiều hơn thế nữa.
+
+00:04:38.000 --> 00:04:44.000
+Để cho thời gian chạy biết nên gọi phương thức nào, chúng ta phải chuyển bộ chọn cho các cuộc gọi objc_msgSend này.
+
+00:04:44.000 --> 00:04:48.000
+Điều đó cần thêm một vài hướng dẫn để chuẩn bị bộ chọn.
+
+00:04:48.000 --> 00:04:52.000
+Khi chúng ta nhìn vào nhị phân, mỗi hướng dẫn này chiếm một chút không gian.
+
+00:04:52.000 --> 00:04:55.000
+Trên ARM64, mỗi cái là 4 byte.
+
+00:04:55.000 --> 00:05:04.000
+Vì vậy, đối với mỗi cuộc gọi objc_msgSend này, chúng tôi đang sử dụng 12 byte và chúng tôi cần điều đó cho mỗi cuộc gọi này; điều đó thực sự cộng lại.
+
+00:05:04.000 --> 00:05:08.000
+Hãy xem chúng ta có thể làm gì để cải thiện điều đó.
+
+00:05:08.000 --> 00:05:13.000
+Bây giờ, như chúng ta đã thấy trước đây, 8 trong số các byte đó được dành riêng để chuẩn bị bộ chọn.
+
+00:05:13.000 --> 00:05:17.000
+Điều thú vị là, đối với bất kỳ bộ chọn nhất định nào, nó luôn là cùng một mã.
+
+00:05:17.000 --> 00:05:21.000
+Và đây là nơi tối ưu hóa của chúng tôi xuất hiện.
+
+00:05:21.000 --> 00:05:27.000
+Vì đây luôn là cùng một mã, chúng tôi có thể chia sẻ nó và chỉ phát ra nó một lần cho mỗi bộ chọn thay vì mỗi lần chúng tôi gửi tin nhắn.
+
+00:05:27.000 --> 00:05:33.000
+Chúng ta có thể lấy nó ra và đặt nó vào một hàm trợ giúp nhỏ, và thay vào đó gọi hàm đó.
+
+00:05:33.000 --> 00:05:38.000
+Qua nhiều cuộc gọi sử dụng cùng một bộ chọn, chúng ta có thể lưu tất cả các byte hướng dẫn này.
+
+00:05:38.000 --> 00:05:42.000
+Chúng tôi gọi chức năng trợ giúp này là "selector stub."
+
+00:05:42.000 --> 00:05:47.000
+Tuy nhiên, chúng tôi vẫn cần gọi hàm objc_msgSend thực, vì vậy chúng tôi tiếp tục điều đó.
+
+00:05:47.000 --> 00:05:53.000
+Và một lần nữa, điều đó có một chiều hướng khác, khác biệt để tải địa chỉ của chính hàm và gọi nó.
+
+00:05:53.000 --> 00:05:59.000
+Các chi tiết không quan trọng, nhưng điều quan trọng là chúng ta cần thêm vài byte mã để làm điều đó.
+
+00:05:59.000 --> 00:06:03.000
+Và đây là nơi bạn có thể chọn chế độ bạn muốn, như tôi đã đề cập trước đó.
+
+00:06:03.000 --> 00:06:07.000
+Chúng ta có thể giữ hai chức năng sơ khai nhỏ này riêng biệt, giống như chúng ta đã làm ở đây.
+
+00:06:07.000 --> 00:06:11.000
+Chúng tôi có thể chia sẻ nhiều mã nhất và làm cho các chức năng này càng nhỏ càng tốt.
+
+00:06:11.000 --> 00:06:17.000
+Nhưng thật không may, điều này sẽ thực hiện hai cuộc gọi liên tiếp, điều này không lý tưởng cho hiệu suất.
+
+00:06:17.000 --> 00:06:20.000
+Vì vậy, chúng tôi có thể cải thiện hơn nữa điều này với một phiên bản thay thế.
+
+00:06:20.000 --> 00:06:25.000
+Chúng ta có thể lấy hai hàm sơ khai mà chúng ta đã tạo, kết hợp chúng thành một.
+
+00:06:25.000 --> 00:06:29.000
+Bằng cách đó, chúng tôi giữ mã gần nhau hơn và chúng tôi không cần nhiều cuộc gọi.
+
+00:06:29.000 --> 00:06:32.000
+Và cái đó ở bên phải đây.
+
+00:06:32.000 --> 00:06:33.000
+Vì vậy đây là hai lựa chọn.
+
+00:06:33.000 --> 00:06:38.000
+Bạn có thể chọn tối ưu hóa kích thước một mình và tiết kiệm kích thước tối đa có sẵn.
+
+00:06:38.000 --> 00:06:48.000
+Bạn có thể kích hoạt điều đó bằng cách sử dụng cờ liên kết -objc_stubs_small hoặc bạn có thể sử dụng việc tạo mã cung cấp lợi ích về kích thước trong khi vẫn giữ được hiệu suất tốt nhất.
+
+00:06:48.000 --> 00:06:54.000
+Và trừ khi bạn bị hạn chế kích thước nghiêm trọng, chúng tôi khuyên bạn nên sử dụng cái này và đó là lý do tại sao nó là mặc định.
+
+00:06:54.000 --> 00:06:57.000
+Và đó là tin nhắn nhỏ hơn gửi bằng cuống.
+
+00:06:57.000 --> 00:07:01.000
+Một cải tiến khác mà chúng tôi đã thực hiện là làm cho việc giữ lại/phát hành rẻ hơn.
+
+00:07:01.000 --> 00:07:08.000
+Với các trình biên dịch mới trong Xcode 14, các cuộc gọi giữ/phát hành hiện nhỏ hơn tới 4 byte, giảm từ 8 trên ARM64.
+
+00:07:08.000 --> 00:07:13.000
+Như chúng ta sẽ thấy trong giây lát, giống như gửi tin nhắn, giữ lại/phát hành cũng ở khắp mọi nơi.
+
+00:07:13.000 --> 00:07:18.000
+Vì vậy, điều này cộng lại và chúng tôi đã thấy nhiều cải tiến kích thước mã hơn tới 2% trên các tệp nhị phân.
+
+00:07:18.000 --> 00:07:28.000
+Bây giờ, không giống như cuống gửi tin nhắn, điều này cần hỗ trợ thời gian chạy, vì vậy bạn sẽ tự động nhận được điều này khi bạn di chuyển đến mục tiêu triển khai của iOS 16, tvOS 16 hoặc watchOS 9.
+
+00:07:28.000 --> 00:07:31.000
+Bây giờ hãy xem xét những gì đã thay đổi.
+
+00:07:31.000 --> 00:07:32.000
+Hãy quay lại ví dụ của chúng ta.
+
+00:07:32.000 --> 00:07:42.000
+Chúng tôi đã nói về các cuộc gọi msgSend, nhưng với việc đếm tham chiếu tự động, hoặc ARC, chúng tôi cũng kết thúc với rất nhiều cuộc gọi giữ lại/phát hành được chèn bởi trình biên dịch.
+
+00:07:42.000 --> 00:07:49.000
+Ở cấp độ rất cao, bất cứ khi nào chúng ta tạo một bản sao của một con trỏ đến một đối tượng, chúng ta cần tăng số lượng lưu giữ của nó để giữ cho nó tồn tại.
+
+00:07:49.000 --> 00:07:53.000
+Và ở đây, điều này xảy ra với các biến cal, dateComponent và theDate của chúng tôi.
+
+00:07:53.000 --> 00:07:57.000
+Chúng tôi làm điều đó bằng cách gọi vào thời gian chạy, sử dụng objc_retain.
+
+00:07:57.000 --> 00:08:03.000
+Khi các biến nằm ngoài phạm vi, chúng ta cần giảm số lượng giữ lại bằng cách sử dụng objc_release.
+
+00:08:03.000 --> 00:08:10.000
+Tất nhiên, một phần lợi ích của ARC là tất cả phép thuật trình biên dịch loại bỏ rất nhiều cuộc gọi này, để giữ chúng ở mức tối thiểu.
+
+00:08:10.000 --> 00:08:13.000
+Và chúng ta sẽ đi sâu vào một trong những trò ảo thuật này một lát sau.
+
+00:08:13.000 --> 00:08:17.000
+Nhưng ngay cả với tất cả những điều kỳ diệu, chúng ta vẫn thường cần những cuộc gọi này.
+
+00:08:17.000 --> 00:08:24.000
+Trong ví dụ này, cuối cùng chúng tôi cần phát hành các bản sao cục bộ của lịch và các thành phần ngày.
+
+00:08:24.000 --> 00:08:32.000
+Dưới mui xe, các hàm objc_retain/release này chỉ là các hàm C đơn giản; lấy một đối số duy nhất, đối tượng sẽ được giải phóng.
+
+00:08:32.000 --> 00:08:38.000
+Vì vậy, với ARC, trình biên dịch chèn các lệnh gọi vào các hàm C này, truyền các con trỏ đối tượng thích hợp.
+
+00:08:38.000 --> 00:08:46.000
+Do đó, các cuộc gọi này phải tôn trọng quy ước gọi C, được xác định bởi Giao diện nhị phân ứng dụng nền tảng của chúng tôi hoặc ABI.
+
+00:08:46.000 --> 00:08:53.000
+Cụ thể, điều đó có nghĩa là chúng ta cần nhiều mã hơn để thực hiện các cuộc gọi này, để vượt qua con trỏ trong thanh ghi phù hợp.
+
+00:08:53.000 --> 00:08:57.000
+Vì vậy, chúng tôi kết thúc với một vài hướng dẫn 'di chuyển' bổ sung chỉ cho điều đó.
+
+00:08:57.000 --> 00:09:00.000
+Và đó là nơi tối ưu hóa mới của chúng tôi xuất hiện.
+
+00:09:00.000 --> 00:09:11.000
+Bằng cách chuyên giữ lại/phát hành với quy ước gọi tùy chỉnh, chúng ta có thể sử dụng đúng biến thể một cách cơ hội tùy thuộc vào vị trí của con trỏ đối tượng, để chúng ta không cần phải di chuyển nó.
+
+00:09:11.000 --> 00:09:17.000
+Cụ thể, điều này có nghĩa là, chúng tôi loại bỏ một loạt mã dư thừa cho tất cả các cuộc gọi này.
+
+00:09:17.000 --> 00:09:23.000
+Và một lần nữa, mặc dù điều này có vẻ không nhiều đối với những hướng dẫn nhỏ bé này, nhưng trên toàn bộ ứng dụng, nó thực sự cộng lại.
+
+00:09:23.000 --> 00:09:26.000
+Đó là cách chúng tôi làm cho các hoạt động giữ lại/phát hành rẻ hơn.
+
+00:09:26.000 --> 00:09:29.000
+Cuối cùng, hãy nói về việc loại bỏ tự động phát hành.
+
+00:09:29.000 --> 00:09:32.000
+Bây giờ cái này thậm chí còn thú vị hơn.
+
+00:09:32.000 --> 00:09:36.000
+Với những thay đổi về thời gian chạy objc, chúng tôi đã loại bỏ tự động phát hành nhanh hơn.
+
+00:09:36.000 --> 00:09:41.000
+Điều đó xảy ra tự động cho các ứng dụng hiện có khi bạn chạy chúng trên các bản phát hành hệ điều hành mới.
+
+00:09:41.000 --> 00:09:47.000
+Trên hết, với những thay đổi trình biên dịch bổ sung, chúng tôi cũng làm cho mã nhỏ hơn.
+
+00:09:47.000 --> 00:09:55.000
+Và bạn sẽ tự động nhận được lợi ích kích thước này khi bạn chuyển sang mục tiêu triển khai iOS 16, tvOS 16 hoặc watchOS 9.
+
+00:09:55.000 --> 00:09:59.000
+Bây giờ tất cả đều tuyệt vời, nhưng loại bỏ tự động phát hành ngay từ đầu là gì?
+
+00:09:59.000 --> 00:10:02.000
+Hãy quay lại ví dụ của chúng ta.
+
+00:10:02.000 --> 00:10:07.000
+Tôi đã đề cập trước đó rằng ARC đã cung cấp cho chúng tôi rất nhiều phép thuật biên dịch để tối ưu hóa việc giữ lại và phát hành.
+
+00:10:07.000 --> 00:10:11.000
+Vì vậy, hãy tập trung vào một trường hợp ở đây: các giá trị trả về tự động phát hành.
+
+00:10:11.000 --> 00:10:15.000
+Trong ví dụ này, chúng tôi đã tạo một đối tượng tạm thời và chúng tôi sẽ trả lại nó cho người gọi của mình.
+
+00:10:15.000 --> 00:10:17.000
+Vậy hãy xem nó hoạt động như thế nào.
+
+00:10:17.000 --> 00:10:24.000
+Vì vậy, chúng tôi có theDate tạm thời của mình, chúng tôi trả lại nó, cuộc gọi hoàn tất và người gọi lưu nó vào biến riêng của nó.
+
+00:10:24.000 --> 00:10:28.000
+Vậy hãy xem nó hoạt động như thế nào với ARC.
+
+00:10:28.000 --> 00:10:32.000
+ARC chèn một phần giữ vào người gọi và một bản phát hành trong hàm được gọi.
+
+00:10:32.000 --> 00:10:39.000
+Ở đây, khi chúng tôi trả về đối tượng tạm thời của mình, chúng tôi cần giải phóng nó trước trong hàm, bởi vì nó nằm ngoài phạm vi.
+
+00:10:39.000 --> 00:10:43.000
+Nhưng chúng ta chưa thể làm điều đó, bởi vì nó chưa có bất kỳ tài liệu tham khảo nào khác.
+
+00:10:43.000 --> 00:10:48.000
+Nếu chúng tôi phát hành nó, nó sẽ bị phá hủy trước khi chúng tôi quay trở lại, và điều đó không tốt.
+
+00:10:48.000 --> 00:10:51.000
+Vì vậy, một quy ước đặc biệt được sử dụng để có thể trả lại tạm thời.
+
+00:10:51.000 --> 00:10:56.000
+Chúng tôi tự động phát hành nó trước khi trả lại để người gọi có thể giữ lại nó.
+
+00:10:56.000 --> 00:11:02.000
+Bạn có thể đã thấy các bể bơi tự động phát hành và tự động phát hành trước đây: đó chỉ đơn giản là một cách để trì hoãn phát hành cho đến một số điểm sau đó.
+
+00:11:02.000 --> 00:11:12.000
+Thời gian chạy không thực sự đảm bảo khi nào việc phát hành xảy ra, nhưng miễn là nó không ở ngay đây, ngay bây giờ, nó thuận tiện, bởi vì nó cho phép chúng tôi trả lại đối tượng tạm thời này.
+
+00:11:12.000 --> 00:11:13.000
+Bây giờ, cái này không miễn phí.
+
+00:11:13.000 --> 00:11:16.000
+Có một số chi phí để thực hiện tự động phát hành.
+
+00:11:16.000 --> 00:11:19.000
+Đây là nơi loại bỏ tự động phát hành xuất hiện.
+
+00:11:19.000 --> 00:11:24.000
+Vì vậy, để hiểu cách thức hoạt động của nó, chúng ta hãy xem xét việc lắp ráp và truy xuất lại sự trở lại này.
+
+00:11:24.000 --> 00:11:30.000
+Khi chúng tôi gọi tự động phát hành, điều đó sẽ đi vào thời gian chạy objc và đó là nơi niềm vui bắt đầu.
+
+00:11:30.000 --> 00:11:35.000
+Thời gian chạy cố gắng nhận ra những gì đang xảy ra: rằng chúng tôi đang trả về một giá trị tự động phát hành.
+
+00:11:35.000 --> 00:11:40.000
+Để giúp nó, trình biên dịch phát ra một điểm đánh dấu đặc biệt mà chúng tôi không bao giờ sử dụng nếu không.
+
+00:11:40.000 --> 00:11:45.000
+Nó ở đó để cho thời gian chạy biết rằng điều này đủ điều kiện để loại bỏ tự động phát hành.
+
+00:11:45.000 --> 00:11:48.000
+Và nó được theo sau bởi việc giữ lại, mà chúng tôi sẽ thực hiện sau.
+
+00:11:48.000 --> 00:11:59.000
+Nhưng ngay bây giờ, chúng tôi vẫn đang trong quá trình tự động phát hành và khi chúng tôi thực hiện, thời gian chạy sẽ tải hướng dẫn đánh dấu đặc biệt dưới dạng dữ liệu và so sánh nó để xem liệu đó có phải là giá trị điểm đánh dấu đặc biệt mà nó mong đợi hay không.
+
+00:11:59.000 --> 00:12:05.000
+Nếu có, điều đó có nghĩa là trình biên dịch đã thông báo cho thời gian chạy rằng chúng tôi sẽ trả về tạm thời sẽ được giữ lại ngay lập tức.
+
+00:12:05.000 --> 00:12:09.000
+Và điều này cho phép chúng tôi bỏ qua, hoặc loại bỏ, các cuộc gọi tự động phát hành và giữ lại phù hợp.
+
+00:12:09.000 --> 00:12:12.000
+Và đó là loại bỏ tự động phát hành.
+
+00:12:12.000 --> 00:12:20.000
+Tuy nhiên, điều này cũng không miễn phí: tải mã dưới dạng dữ liệu không phải là thứ siêu phổ biến, vì vậy nó không tối ưu trên CPU.
+
+00:12:20.000 --> 00:12:21.000
+Chúng ta có thể làm tốt hơn.
+
+00:12:21.000 --> 00:12:26.000
+Vì vậy, hãy truy xuất lại chuỗi trả về một lần nữa, lần này sử dụng cách mới.
+
+00:12:26.000 --> 00:12:28.000
+Chúng tôi đã bắt đầu ở chế độ tự động phát hành.
+
+00:12:28.000 --> 00:12:30.000
+Điều đó vẫn đi vào thời gian chạy Objective-C.
+
+00:12:30.000 --> 00:12:35.000
+Tại thời điểm này, chúng tôi thực sự đã có thông tin có giá trị: địa chỉ trả lại.
+
+00:12:35.000 --> 00:12:41.000
+Nó cho chúng ta biết chúng ta cần quay lại đâu sau khi chức năng này hoàn tất việc thực thi.
+
+00:12:41.000 --> 00:12:42.000
+Vì vậy chúng ta có thể theo dõi điều đó.
+
+00:12:42.000 --> 00:12:45.000
+Rất may, lấy địa chỉ trả hàng rất rẻ.
+
+00:12:45.000 --> 00:12:48.000
+Nó chỉ là một con trỏ, và chúng ta có thể cất nó ở bên cạnh.
+
+00:12:48.000 --> 00:12:51.000
+Sau đó chúng tôi rời khỏi cuộc gọi tự động phát hành thời gian chạy.
+
+00:12:51.000 --> 00:12:56.000
+Chúng tôi quay lại với người gọi và chúng tôi nhập lại thời gian chạy khi thực hiện việc giữ lại.
+
+00:12:56.000 --> 00:12:59.000
+Và đây là nơi điều kỳ diệu mới xảy ra.
+
+00:12:59.000 --> 00:13:04.000
+Tại thời điểm đó, chúng ta có thể xem chúng ta đang ở đâu và nhận được một con trỏ đến địa chỉ trả lại hiện tại của chúng ta.
+
+00:13:04.000 --> 00:13:12.000
+Trong thời gian chạy, chúng ta có thể so sánh con trỏ này mà chúng ta vừa nhận được trong khi thực hiện giữ lại với con trỏ chúng ta đã lưu trước đó khi chúng ta đang phát hành tự động.
+
+00:13:12.000 --> 00:13:14.000
+Và vì chúng tôi chỉ đang so sánh hai con trỏ, cái này siêu rẻ.
+
+00:13:14.000 --> 00:13:17.000
+Chúng ta không cần phải truy cập bộ nhớ đắt tiền.
+
+00:13:17.000 --> 00:13:25.000
+Nếu so sánh thành công, chúng tôi biết rằng chúng tôi có thể loại bỏ cặp tự động phát hành/giữ lại và chúng tôi có thể cải thiện một số hiệu suất.
+
+00:13:25.000 --> 00:13:32.000
+Và trên hết, bây giờ chúng ta không cần so sánh hướng dẫn đánh dấu đặc biệt này dưới dạng dữ liệu nữa, chúng ta không cần nó, vì vậy chúng ta có thể xóa nó.
+
+00:13:32.000 --> 00:13:34.000
+Và điều đó cũng cho phép chúng tôi lưu một số kích thước mã.
+
+00:13:34.000 --> 00:13:38.000
+Đó là cách chúng tôi làm cho việc loại bỏ tự động phát hành nhanh hơn và nhỏ hơn.
+
+00:13:38.000 --> 00:13:42.000
+Chúng tôi đã trải qua một số cải tiến về thời gian chạy Swift và Objective-C.
+
+00:13:42.000 --> 00:13:43.000
+Hãy kết thúc.
+
+00:13:43.000 --> 00:13:50.000
+Khi ứng dụng của bạn được chạy trên hệ điều hành mới, nhờ những cải tiến trong thời gian chạy, việc kiểm tra giao thức Swift hiệu quả hơn.
+
+00:13:50.000 --> 00:13:55.000
+Mỗi khi chúng tôi cố gắng loại bỏ tự động phát hành, điều đó cũng nhanh hơn.
+
+00:13:55.000 --> 00:14:02.000
+Nhờ các trình biên dịch và trình liên kết mới trong Xcode 14 và cuống gửi tin nhắn, bạn có thể tiết kiệm tới 2% kích thước mã bằng cách xây dựng lại ứng dụng của mình.
+
+00:14:02.000 --> 00:14:12.000
+Và cuối cùng, khi bạn cập nhật mục tiêu triển khai của mình lên iOS 16, tvOS 16 hoặc watchOS 9, bạn có thể tiết kiệm thêm 2% nữa bằng cách thực hiện các cuộc gọi giữ/phát hành nhỏ hơn.
+
+00:14:12.000 --> 00:14:16.000
+Thậm chí nhiều hơn, nhờ vào trình tự loại bỏ tự động phát hành nhỏ hơn.
+
+00:14:16.000 --> 23:59:59.000
+Tôi hy vọng bạn thích đi sâu vào thời gian chạy Swift và Objective-C này, và cảm ơn vì đã xem.
+

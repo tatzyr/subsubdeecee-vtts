@@ -1,0 +1,181 @@
+10142
+
+♪ Nhạc hip-hop nhạc cụ êm dịu ♪
+
+♪
+
+Chào mừng đến với "Hiệu quả đang chờ đợi: Nhiệm vụ nền trong SwiftUI."
+
+Tôi là John Gallagher, một kỹ sư trong nhóm watchOS Frameworks.
+
+Trong buổi nói chuyện này, chúng ta sẽ tìm hiểu về một SwiftUI API mới để xử lý các tác vụ nền bằng Swift Concurrency và một cách nhất quán trên tất cả các nền tảng của Apple.
+
+Chúng ta sẽ bắt đầu bằng cách mô tả một ứng dụng mẫu có tên Stormy, một ứng dụng để chụp ảnh bầu trời vào những ngày giông bão sử dụng các tác vụ nền.
+
+Sau đó, chúng ta sẽ đi sâu vào cách ứng dụng sử dụng các tác vụ nền và cách các tác vụ nền hoạt động dưới mui xe.
+
+Tiếp theo, chúng ta sẽ học cách xử lý các tác vụ nền đó bằng cách sử dụng API mới trong SwiftUI.
+
+Và cuối cùng, chúng ta sẽ xem xét cách API sử dụng Swift Concurrency để xử lý các tác vụ nền dễ dàng hơn bao giờ hết.
+
+API mới được chia sẻ trên watchOS, iOS, tvOS, Mac Catalyst và Widgets, bao gồm các ứng dụng iOS chạy trên Mac, có nghĩa là các khái niệm và mẫu bạn học được xử lý các tác vụ nền cho một nền tảng có thể áp dụng cho công việc bạn làm trên các nền tảng khác.
+
+Sử dụng Swift Concurrency, API mới làm giảm nhu cầu về các trình xử lý hoàn thành và gọi lại lồng nhau sâu cũng như phần lớn trạng thái có thể thay đổi thường là tác dụng phụ.
+
+Việc hủy bỏ nhiệm vụ gốc của Swift Concurrency giúp các ứng dụng hoàn thành nhiệm vụ một cách duyên dáng một cách kịp thời để tránh bị hệ thống thoát khỏi nền.
+
+Đối với những người thích ngẩng cao đầu trên mây, chúng tôi sẽ xây dựng một ứng dụng có tên Stormy để nhắc nhở người dùng chụp ảnh bầu trời khi trời bão tố bên ngoài.
+
+Ứng dụng sẽ hiển thị thông báo vào buổi trưa vào những ngày giông bão yêu cầu người dùng chụp ảnh bầu trời.
+
+Khi người dùng nhấn vào thông báo, họ sẽ chụp ảnh bầu trời để tải lên hồ sơ của họ để ngưỡng mộ trong tương lai.
+
+Chúng tôi sẽ tải lên bức ảnh này ở chế độ nền.
+
+Ứng dụng sẽ gửi một thông báo khác khi quá trình tải lên kết thúc.
+
+Hãy đi sâu vào cách các nhiệm vụ nền tảng có thể cho phép chúng ta làm điều này.
+
+Trong sơ đồ này, chúng tôi sẽ kiểm tra ở cấp độ cao cách thông báo sẽ chỉ được gửi vào những ngày giông bão bằng cách sử dụng các nhiệm vụ nền.
+
+Chúng tôi sẽ đại diện cho thời gian chạy ứng dụng tiền cảnh với thanh ở bên trái, thời gian chạy ứng dụng nền với thanh ở giữa và hệ thống được đại diện ở bên phải.
+
+Khi ứng dụng của chúng tôi lần đầu tiên được người dùng khởi chạy lên tiền cảnh, chúng tôi có thể tận dụng cơ hội đầu tiên để lên lịch cho nhiệm vụ làm mới ứng dụng nền vào buổi trưa.
+
+Sau đó, khi người dùng rời khỏi ứng dụng của chúng tôi và ứng dụng bị đình chỉ, hệ thống sẽ biết đánh thức ứng dụng của chúng tôi một lần nữa trong nền tại thời điểm chúng tôi đã lên lịch.
+
+Chúng tôi đã lên lịch cho nhiệm vụ của mình vào buổi trưa, vì vậy đó là khi hệ thống sẽ đánh thức ứng dụng trong nền và gửi một nhiệm vụ làm mới ứng dụng nền.
+
+Với thời gian chạy nền này, chúng ta cần tìm hiểu xem bên ngoài có bão hay không và nếu có, hãy gửi thông báo cho người dùng.
+
+Để bắt đầu, chúng tôi sẽ thực hiện yêu cầu mạng cho một dịch vụ thời tiết để kiểm tra thời tiết hiện tại.
+
+Với URLSession được lên lịch cho nền, ứng dụng có thể tạm dừng và chờ yêu cầu mạng hoàn tất.
+
+Khi yêu cầu mạng nền cho dữ liệu thời tiết hoàn tất, ứng dụng của chúng tôi sẽ được cung cấp lại thời gian chạy nền với một tác vụ nền URLSession mới.
+
+Với kết quả của yêu cầu dữ liệu thời tiết trong tay, ứng dụng của chúng tôi biết liệu bên ngoài có bão hay không và có thể chọn có gửi thông báo nhắc nhở người dùng chụp ảnh bầu trời hay không.
+
+Bây giờ công việc của chúng tôi cho nhiệm vụ URLSession đó đã hoàn tất, hệ thống có thể một lần nữa tạm ngưng ứng dụng.
+
+Hãy đi sâu vào chi tiết của một nhiệm vụ nền duy nhất và xem nó hoạt động như thế nào.
+
+Để làm điều đó, chúng ta sẽ xem xét kỹ hơn vòng đời của một tác vụ nền làm mới ứng dụng duy nhất.
+
+Hãy phóng to ở đây một chút.
+
+Đầu tiên, hệ thống sẽ đánh thức ứng dụng của chúng tôi và gửi cho nó một tác vụ nền làm mới ứng dụng.
+
+Sau đó, vẫn còn trong nền, chúng tôi thực hiện một yêu cầu mạng để kiểm tra xem bên ngoài có bão hay không.
+
+Lý tưởng nhất, yêu cầu mạng của chúng tôi hoàn thành trong thời gian chạy nền được phân bổ mà ứng dụng của chúng tôi có để làm mới ứng dụng.
+
+Khi chúng tôi nhận được phản hồi của mạng, chúng tôi muốn đăng thông báo ngay lập tức.
+
+Với thông báo được đăng, chúng tôi đã hoàn thành mọi thứ cần làm trong quá trình làm mới ứng dụng và hệ thống có thể tạm dừng ứng dụng một lần nữa.
+
+Nhưng còn khi yêu cầu mạng của chúng tôi về dữ liệu thời tiết không hoàn thành kịp thời thì sao?
+
+Nếu một ứng dụng sắp hết thời gian chạy nền cho tác vụ hiện tại, hệ thống sẽ báo hiệu cho ứng dụng rằng thời gian sắp hết, cho chúng tôi cơ hội xử lý tình huống này một cách duyên dáng.
+
+Nếu các ứng dụng không báo hiệu rằng họ đã hoàn thành công việc nền của mình trước khi thời gian chạy hết hạn, ứng dụng có thể bị hệ thống thoát và điều chỉnh cho các yêu cầu tác vụ nền trong tương lai.
+
+Trong trường hợp này, chúng tôi nên đảm bảo rằng yêu cầu mạng của chúng tôi là yêu cầu mạng nền, điều này sẽ cho phép chúng tôi hoàn thành nhiệm vụ làm mới ứng dụng của mình ngay lập tức và được đánh thức lại để có thêm thời gian chạy nền khi yêu cầu mạng hoàn tất.
+
+Với URLSession nền của chúng tôi được lên lịch, hệ thống có thể tạm dừng ứng dụng một lần nữa.
+
+Bây giờ, hãy đi sâu vào cách BackgroundTask API trong SwiftUI có thể giúp chúng ta xây dựng Stormy.
+
+Để bắt đầu, chúng ta sẽ cần một ứng dụng cơ bản.
+
+Sau đó, chúng tôi sẽ viết một chức năng để lên lịch làm mới ứng dụng nền cho buổi trưa ngày mai.
+
+Đầu tiên, chúng tôi tạo một ngày đại diện cho buổi trưa ngày mai.
+
+Sau đó, chúng tôi tạo một yêu cầu làm mới ứng dụng nền với ngày bắt đầu sớm nhất vào buổi trưa ngày mai và gửi nó đến bộ lập lịch.
+
+Đây là những gì yêu cầu hệ thống đánh thức ứng dụng của chúng tôi vào buổi trưa ngày mai.
+
+Chúng tôi sẽ muốn gọi chức năng này khi người dùng lần đầu tiên mở ứng dụng và yêu cầu thông báo bão hàng ngày vào buổi trưa.
+
+Chúng ta có thể đăng ký một trình xử lý tương ứng với tác vụ nền mà chúng ta đã lên lịch bằng cách sử dụng công cụ sửa đổi cảnh tác vụ nền mới.
+
+Khi ứng dụng nhận được một tác vụ nền, bất kỳ khối nào được đăng ký với công cụ sửa đổi này khớp với tác vụ nền nhận được sẽ được chạy.
+
+Trong trường hợp này, chúng tôi đã sử dụng loại tác vụ appRefresh có thể được lên lịch trước để cung cấp cho ứng dụng của chúng tôi một lượng thời gian chạy giới hạn trong nền vào một ngày mong muốn.
+
+Sử dụng cùng một mã định danh cho yêu cầu và trình xử lý trong công cụ sửa đổi tác vụ nền cho phép hệ thống xác định trình xử lý nào sẽ gọi khi ứng dụng của bạn nhận được tác vụ tương ứng.
+
+Để chúng tôi chắc chắn rằng chúng tôi đã lên lịch lại cho ngày mai, chúng tôi sẽ bắt đầu nhiệm vụ nền của mình bằng cách gọi chức năng scheduleAppRefresh mà chúng tôi vừa viết để lên lịch lại thời gian chạy nền cho ngày mai vào buổi trưa.
+
+Bây giờ thời gian chạy nền của chúng tôi vào buổi trưa đang định kỳ, chúng tôi thực hiện yêu cầu mạng của mình để kiểm tra xem bên ngoài có bão hay không và chờ kết quả bằng cách sử dụng từ khóa await Swift.
+
+Sau đó, nếu yêu cầu mạng của chúng tôi đã trở lại và bên ngoài thực sự có bão, chúng tôi sẽ chờ gửi thông báo cho người dùng nhắc họ tải lên một bức ảnh của bầu trời.
+
+Khi nội dung đóng cửa của chúng tôi trở lại, nhiệm vụ nền cơ bản được hệ thống giao cho ứng dụng của chúng tôi được đánh dấu ngầm là hoàn thành và hệ thống có thể tạm dừng ứng dụng của chúng tôi một lần nữa.
+
+Ở đây, việc sử dụng Swift Concurrency đã cho phép thực hiện các hoạt động có khả năng chạy lâu dài trong nhiệm vụ nền của chúng tôi mà không cần gọi lại rõ ràng khi công việc hoàn thành.
+
+Nhiều API trên Nền tảng Apple, chẳng hạn như thêm thông báo, đã hỗ trợ Swift Concurrency cho các hoạt động không đồng bộ.
+
+Tại đây, chức năng không đồng bộ notifyForPhoto có thể được triển khai một cách đơn giản bằng cách sử dụng phương thức addNotification không đồng bộ được tìm thấy trên UserNotificationCenter.
+
+Hãy đi sâu vào cách Swift Concurrency và async/await thực hiện một số công việc nặng nhọc cho chúng tôi và giúp xử lý các tác vụ nền dễ dàng hơn bao giờ hết.
+
+Hãy viết hàm isStormy không đồng bộ mà chúng ta đã tham chiếu.
+
+Chức năng không đồng bộ này sẽ cần thực hiện một yêu cầu mạng kiểm tra thời tiết bên ngoài.
+
+Để bắt đầu, chúng tôi sẽ nhận được URLSession được chia sẻ và khởi tạo yêu cầu dữ liệu thời tiết.
+
+URLSession đã áp dụng Swift Concurrency và có một phương pháp tải xuống dữ liệu từ mạng có thể được chờ đợi từ các ngữ cảnh không đồng bộ.
+
+Với phản hồi mạng trong tay, chúng ta có thể đọc dữ liệu thời tiết và trả lại kết quả của mình.
+
+Nhưng còn khi ứng dụng của chúng tôi không thể hoàn thành yêu cầu mạng trước khi thời gian chạy của chúng tôi hết hạn thì sao?
+
+Nhớ lại rằng trong trường hợp này, chúng tôi muốn đảm bảo rằng chúng tôi đã thiết lập URLSession của mình làm phiên nền và để đảm bảo rằng nó sẽ gửi các sự kiện khởi chạy đến ứng dụng của chúng tôi bằng cách sử dụng tác vụ nền URLSession.
+
+Quay lại mã của chúng tôi.
+
+Chúng tôi đã sử dụng URLSession được chia sẻ.
+
+Thay vào đó, chúng ta nên tạo một URLSession từ cấu hình nền với thuộc tính sessionSendsLaunchEvents được đặt thành true.
+
+Điều này cho hệ thống biết rằng một số yêu cầu mạng sẽ chạy ngay cả khi ứng dụng bị tạm ngưng và sau đó đánh thức ứng dụng cho tác vụ nền URLSession khi yêu cầu đó hoàn tất.
+
+Lưu ý rằng điều này đặc biệt quan trọng trên watchOS vì tất cả các yêu cầu mạng được thực hiện bởi các ứng dụng chạy trong nền trên watchOS phải được yêu cầu thông qua URLSessions nền.
+
+Tuy nhiên, chúng tôi vẫn chưa hoàn thành.
+
+Nhớ lại rằng khi thời gian chạy tác vụ nền của chúng tôi hết hạn, hệ thống sẽ hủy tác vụ không đồng bộ đang chạy đóng được cung cấp cho công cụ sửa đổi tác vụ nền.
+
+Điều này có nghĩa là yêu cầu mạng được thực hiện ở đây cũng sẽ bị hủy khi thời gian chạy nền của chúng tôi hết hạn.
+
+Để phản hồi và xử lý việc hủy bỏ đó, chúng ta có thể sử dụng chức năng withTaskCancellationHandler được tích hợp sẵn trong Swift Concurrency.
+
+Thay vì chờ kết quả trực tiếp, chúng tôi đặt bản tải xuống của mình vào cuộc gọi withTaskCancellationHandler và cũng đang chờ đợi điều này.
+
+Khối đầu tiên được chuyển đến withTaskCancellationHandler là quy trình không đồng bộ mà chúng tôi muốn chạy và chờ đợi.
+
+Thứ hai onCancel trailing closure là mã sẽ chạy khi tác vụ bị hủy.
+
+Ở đây, khi yêu cầu mạng ngay lập tức bị hủy do thời gian chạy của chúng tôi hết hạn, chúng tôi sẽ quảng bá yêu cầu mạng sang tác vụ tải xuống nền, trên đó chúng tôi có thể gọi sơ yếu lý lịch, kích hoạt tải xuống nền sẽ tồn tại ngay cả khi ứng dụng của chúng tôi bị tạm ngưng.
+
+Mã này không thực hiện yêu cầu mạng cơ bản hai lần vì chúng tôi đang sử dụng cùng một URLSession để sao lưu cả hai và URLSession sẽ sao chép bất kỳ yêu cầu nào đang trong quá trình dưới mui xe.
+
+Cuối cùng, chúng tôi cần đảm bảo rằng ứng dụng của chúng tôi được thiết lập để xử lý việc khởi chạy từ URLSession nền.
+
+Chúng ta có thể sử dụng lại công cụ sửa đổi tác vụ nền, nhưng lần này với loại tác vụ URLSession.
+
+Bằng cách sử dụng cùng một mã định danh cho cấu hình URLSession nền mà chúng tôi đã thực hiện trước đó, chúng tôi có thể đảm bảo khối này chỉ được gọi khi URLSession cụ thể đó tạo ra một tác vụ nền.
+
+Chúng tôi đã đi sâu vào API SwiftUI thống nhất mới để xử lý các tác vụ nền và khám phá ra cách Swift Concurrency giúp chúng tôi quản lý việc hoàn thành và hết hạn nhiệm vụ dễ dàng hơn bao giờ hết.
+
+Để biết thêm thông tin về Swift Concurrency, hãy xem bài nói chuyện "Gặp gỡ không đồng bộ/chờ đợi trong Swift" từ WWDC 2021.
+
+Và để tìm hiểu thêm về đồng thời trong SwiftUI, chúng tôi khuyên bạn nên "Khám phá đồng thời trong SwiftUI", cũng từ WWDC 2021.
+
+Cảm ơn vì đã xem "Hiệu quả đang chờ đợi: Nhiệm vụ nền trong SwiftUI."
+
+♪

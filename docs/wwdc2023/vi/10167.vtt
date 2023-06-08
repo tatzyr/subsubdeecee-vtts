@@ -1,0 +1,1211 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:13.000
+Becca: Xin chào, tôi là Becca từ nhóm Swift.
+
+00:00:13.000 --> 00:00:20.000
+Hôm nay chúng ta sẽ nói về macro Swift, một tính năng mới thú vị cho phép bạn tùy chỉnh ngôn ngữ Swift theo nhu cầu của mình.
+
+00:00:20.000 --> 00:00:24.000
+Chúng ta sẽ bắt đầu bằng cách nói về macro dùng để làm gì.
+
+00:00:24.000 --> 00:00:29.000
+Sau đó, chúng ta sẽ nói về một số nguyên tắc mà chúng ta đã ghi nhớ khi thiết kế macro Swift.
+
+00:00:29.000 --> 00:00:37.000
+Và sau đó chúng tôi sẽ đề cập đến cách các macro Swift hoạt động và những cách cụ thể mà chúng có thể tương tác với mã khác trong dự án của bạn.
+
+00:00:37.000 --> 00:00:46.000
+Sau đó, chúng ta sẽ nói về cách triển khai macro và kết thúc bằng cách thảo luận về cách đảm bảo macro của bạn hoạt động chính xác.
+
+00:00:46.000 --> 00:00:50.000
+Vì vậy, hãy bắt đầu bằng cách nói về lý do tại sao Swift hỗ trợ macro.
+
+00:00:50.000 --> 00:00:54.000
+Swift thích cho phép người dùng viết mã biểu cảm và API.
+
+00:00:54.000 --> 00:01:02.000
+Đó là lý do tại sao nó cung cấp các tính năng như sự phù hợp có nguồn gốc và trình tạo kết quả, giúp người dùng tránh viết bản mẫu lặp đi lặp lại.
+
+00:01:02.000 --> 00:01:06.000
+Các tính năng này về cơ bản đều hoạt động theo cùng một cách.
+
+00:01:06.000 --> 00:01:17.000
+Ví dụ, khi bạn tuân thủ Codable mà không cung cấp triển khai cho các thành viên của nó, Swift sẽ tự động mở rộng sự phù hợp thành một tập hợp các thành viên mà nó chèn vào chương trình.
+
+00:01:17.000 --> 00:01:20.000
+Tôi đã chỉ ra sự mở rộng cho sự phù hợp trong hộp màu xám.
+
+00:01:20.000 --> 00:01:32.000
+Tạo mã này cho bạn cho phép bạn sử dụng Codable mà không cần phải biết chính xác nó hoạt động như thế nào và làm cho nó để bạn không phải quyết định xem việc thêm hỗ trợ Codable có đáng để viết một màn hình mã hay không.
+
+00:01:32.000 --> 00:01:34.000
+Swift có nhiều tính năng hoạt động theo cách này.
+
+00:01:34.000 --> 00:01:41.000
+Bạn viết một số cú pháp đơn giản và trình biên dịch sẽ tự động mở rộng nó thành một đoạn mã phức tạp hơn.
+
+00:01:41.000 --> 00:01:44.000
+Nhưng điều gì sẽ xảy ra nếu các tính năng hiện có không thể làm những gì bạn muốn?
+
+00:01:44.000 --> 00:01:49.000
+Chà, bạn có thể thêm một tính năng vào trình biên dịch Swift, vì nó là mã nguồn mở.
+
+00:01:49.000 --> 00:01:59.000
+Nhưng điều đó thực sự liên quan đến cá nhân tôi, tham gia một cuộc họp video và thảo luận về tính năng của bạn với các nhà lãnh đạo dự án Swift khác, vì vậy nó không chính xác là một quá trình có quy mô.
+
+00:01:59.000 --> 00:02:02.000
+Đó là lý do tại sao chúng tôi giới thiệu macro.
+
+00:02:02.000 --> 00:02:11.000
+Chúng cho phép bạn thêm các tính năng ngôn ngữ của riêng mình vào Swift, loại bỏ sự tẻ nhạt và mẫu, theo cách bạn có thể phân phối trong gói Swift mà không cần sửa đổi trình biên dịch.
+
+00:02:11.000 --> 00:02:14.000
+Một số bạn chưa sử dụng macro bằng các ngôn ngữ khác.
+
+00:02:14.000 --> 00:02:17.000
+Nhưng nếu bạn có, bạn có thể có cảm xúc lẫn lộn về chúng.
+
+00:02:17.000 --> 00:02:27.000
+Điều đó một phần là do rất nhiều nhà phát triển Swift đã quen thuộc với Objective-C hoặc các ngôn ngữ khác sử dụng bộ tiền xử lý C và họ biết về những hạn chế và cạm bẫy của macro C.
+
+00:02:27.000 --> 00:02:32.000
+Nhưng các macro Swift rất khác nhau theo những cách để tránh được nhiều vấn đề đó.
+
+00:02:32.000 --> 00:02:34.000
+Chúng tôi đã thiết kế chúng với bốn mục tiêu trong tâm trí.
+
+00:02:34.000 --> 00:02:38.000
+Mục tiêu đầu tiên là nó phải khá rõ ràng khi bạn đang sử dụng macro.
+
+00:02:38.000 --> 00:02:44.000
+Có hai loại macro: Macro độc lập thay thế cho thứ khác trong mã của bạn.
+
+00:02:44.000 --> 00:02:47.000
+Họ luôn bắt đầu bằng dấu pound (#).
+
+00:02:47.000 --> 00:02:51.000
+Và các macro đính kèm được sử dụng làm thuộc tính trên các khai báo trong mã của bạn.
+
+00:02:51.000 --> 00:02:54.000
+Họ luôn bắt đầu với một dấu hiệu at (@).
+
+00:02:54.000 --> 00:02:58.000
+Swift đã sử dụng dấu pound (#) và at (@) để chỉ ra hành vi biên dịch đặc biệt.
+
+00:02:58.000 --> 00:03:01.000
+Macro chỉ làm cho điều đó có thể mở rộng được.
+
+00:03:01.000 --> 00:03:06.000
+Và nếu bạn không thấy #'s hoặc @'s, bạn có thể tự tin rằng không có bất kỳ macro nào liên quan.
+
+00:03:06.000 --> 00:03:14.000
+Mục tiêu thứ hai là cả mã được chuyển vào macro và mã được gửi lại từ nó phải được hoàn thành và kiểm tra lỗi.
+
+00:03:14.000 --> 00:03:20.000
+Bạn không thể chuyển "1 +" cho một macro vì các đối số phải là các biểu thức hoàn chỉnh.
+
+00:03:20.000 --> 00:03:28.000
+Bạn cũng không thể chuyển một đối số với loại sai vì các đối số vĩ mô và kết quả được kiểm tra kiểu, giống như các đối số hàm.
+
+00:03:28.000 --> 00:03:37.000
+Và việc triển khai macro có thể xác thực đầu vào của nó và phát ra cảnh báo hoặc lỗi trình biên dịch nếu có sự cố, vì vậy sẽ dễ dàng hơn để chắc chắn rằng bạn đang sử dụng macro một cách chính xác.
+
+00:03:37.000 --> 00:03:44.000
+Mục tiêu thứ ba là các mở rộng vĩ mô nên được kết hợp vào chương trình theo những cách bổ sung, có thể dự đoán được.
+
+00:03:44.000 --> 00:03:47.000
+Một macro chỉ có thể thêm vào mã hiển thị trong chương trình của bạn.
+
+00:03:47.000 --> 00:03:49.000
+Nó không thể loại bỏ nó hoặc thay đổi nó.
+
+00:03:49.000 --> 00:03:58.000
+Vì vậy, ngay cả khi bạn không biết "someUnknownMacro" làm gì, bạn vẫn có thể chắc chắn rằng nó không xóa lệnh gọi "finishDoingThingy" hoặc chuyển nó sang một hàm mới.
+
+00:03:58.000 --> 00:04:01.000
+Điều đó làm cho việc đọc mã sử dụng macro dễ dàng hơn rất nhiều.
+
+00:04:01.000 --> 00:04:06.000
+Và mục tiêu cuối cùng là macro không nên là phép thuật không thể xuyên thủng.
+
+00:04:06.000 --> 00:04:12.000
+Macro chỉ cần thêm nhiều mã hơn vào chương trình của bạn và đó là thứ bạn có thể thấy ngay trong Xcode.
+
+00:04:12.000 --> 00:04:16.000
+Bạn có thể nhấp chuột phải vào trang web sử dụng của macro và yêu cầu xem nó mở rộng thành gì.
+
+00:04:16.000 --> 00:04:20.000
+Bạn có thể đặt các điểm dừng trong bản mở rộng hoặc bước vào nó bằng trình gỡ lỗi.
+
+00:04:20.000 --> 00:04:28.000
+Khi mã bên trong bản mở rộng vĩ mô không được biên dịch, bạn sẽ thấy cả lỗi trong bản mở rộng và bản mở rộng đó nằm ở đâu trong mã nguồn của bạn.
+
+00:04:28.000 --> 00:04:32.000
+Và tất cả các công cụ này hoạt động ngay cả khi macro được cung cấp bởi một thư viện nguồn đóng.
+
+00:04:32.000 --> 00:04:40.000
+Các tác giả vĩ mô thậm chí có thể viết các bài kiểm tra đơn vị cho các macro của họ để đảm bảo chúng hoạt động như mong đợi; điều mà chúng tôi rất khuyến khích họ làm.
+
+00:04:40.000 --> 00:04:45.000
+Chúng tôi nghĩ rằng những mục tiêu này giúp các macro Swift dễ dàng cho các nhà phát triển hiểu và duy trì.
+
+00:04:45.000 --> 00:04:51.000
+Vì vậy, bây giờ chúng ta đã hiểu những gì các macro Swift đang cố gắng đạt được, hãy nói về cách họ làm điều đó.
+
+00:04:51.000 --> 00:04:55.000
+Trước khi chúng ta bị lạc trong các chi tiết, chúng ta hãy lấy khái niệm cơ bản xuống.
+
+00:04:55.000 --> 00:05:08.000
+Khi Swift thấy bạn gọi một macro trong mã của mình, như macro "stringify" từ mẫu gói macro Xcode, nó sẽ trích xuất việc sử dụng từ mã và gửi nó đến một trình cắm trình biên dịch đặc biệt có chứa việc triển khai cho macro đó.
+
+00:05:08.000 --> 00:05:16.000
+Trình cắm chạy như một quy trình riêng biệt trong một hộp cát an toàn và nó chứa mã Swift tùy chỉnh được viết bởi tác giả của macro.
+
+00:05:16.000 --> 00:05:23.000
+Nó xử lý việc sử dụng macro và trả về một "mở rộng", một đoạn mã mới được tạo bởi macro.
+
+00:05:23.000 --> 00:05:29.000
+Trình biên dịch Swift sau đó thêm bản mở rộng đó vào chương trình của bạn và biên dịch mã của bạn và bản mở rộng cùng nhau.
+
+00:05:29.000 --> 00:05:36.000
+Vì vậy, khi bạn chạy chương trình, nó hoạt động giống như thể bạn đã tự viết bản mở rộng thay vì gọi macro.
+
+00:05:36.000 --> 00:05:39.000
+Bây giờ, có một điểm quan trọng mà tôi đã che đậy ở đây.
+
+00:05:39.000 --> 00:05:43.000
+Làm thế nào Swift biết rằng macro "stringify" tồn tại?
+
+00:05:43.000 --> 00:05:47.000
+Và câu trả lời là, nó xuất phát từ một tuyên bố vĩ mô.
+
+00:05:47.000 --> 00:05:50.000
+Một khai báo vĩ mô cung cấp API cho một vĩ mô.
+
+00:05:50.000 --> 00:05:56.000
+Bạn có thể viết khai báo ngay trong mô-đun của riêng bạn hoặc bạn có thể nhập nó từ thư viện hoặc khuôn khổ.
+
+00:05:56.000 --> 00:06:07.000
+Nó chỉ định tên và chữ ký của macro, số lượng tham số cần thiết, nhãn và loại của chúng và loại kết quả nếu macro có, giống như khai báo hàm.
+
+00:06:07.000 --> 00:06:11.000
+Và nó cũng có một hoặc nhiều thuộc tính xác định vai trò của macro.
+
+00:06:11.000 --> 00:06:16.000
+Không thể viết một macro mà không suy nghĩ về vai trò của nó là gì.
+
+00:06:16.000 --> 00:06:23.000
+Vì vậy, hãy nói về vai trò là gì và cách bạn có thể sử dụng các vai trò khác nhau để viết các loại macro khác nhau.
+
+00:06:23.000 --> 00:06:25.000
+Vai trò là một tập hợp các quy tắc cho một vĩ mô.
+
+00:06:25.000 --> 00:06:34.000
+Nó chi phối vị trí và cách bạn áp dụng macro, loại mã nào nó mở rộng thành và nơi mở rộng đó được chèn vào mã của bạn.
+
+00:06:34.000 --> 00:06:43.000
+Cuối cùng, đó là các vai trò vĩ mô chịu trách nhiệm đạt được mục tiêu của chúng tôi là chèn các bản mở rộng theo những cách bổ sung, có thể dự đoán được.
+
+00:06:43.000 --> 00:06:48.000
+Có hai vai trò tạo ra các macro độc lập: Biểu thức và khai báo.
+
+00:06:48.000 --> 00:06:56.000
+Và có năm vai trò tạo ra các macro đính kèm: Ngang hàng, người truy cập, thuộc tính thành viên, thành viên và sự phù hợp.
+
+00:06:56.000 --> 00:06:59.000
+Hãy xem xét những vai trò này và khi nào bạn có thể sử dụng chúng.
+
+00:06:59.000 --> 00:07:02.000
+Chúng ta sẽ bắt đầu với vai trò "biểu hiện độc lập".
+
+00:07:02.000 --> 00:07:10.000
+Nếu thuật ngữ "biểu thức" không rung chuông, một biểu thức là cái mà chúng ta gọi là một đơn vị mã thực thi và tạo ra kết quả.
+
+00:07:10.000 --> 00:07:15.000
+Trong câu lệnh "let" này, số học sau dấu bằng là một biểu thức.
+
+00:07:15.000 --> 00:07:20.000
+Nhưng các biểu thức có cấu trúc đệ quy - chúng thường được tạo thành từ các biểu thức nhỏ hơn.
+
+00:07:20.000 --> 00:07:23.000
+Vì vậy, chỉ riêng "x + chiều rộng" cũng là một biểu thức.
+
+00:07:23.000 --> 00:07:26.000
+Và từ "chiều rộng" cũng vậy.
+
+00:07:26.000 --> 00:07:32.000
+Một macro "biểu thức độc lập" sau đó là một vĩ mô mở rộng thành một biểu thức.
+
+00:07:32.000 --> 00:07:34.000
+Bạn sẽ sử dụng một cái như thế nào?
+
+00:07:34.000 --> 00:07:36.000
+Hãy tưởng tượng bạn cần buộc mở gói một tùy chọn.
+
+00:07:36.000 --> 00:07:50.000
+Swift cung cấp một nhà điều hành force-unwrap, nhưng một số nhóm cảm thấy rằng hơi quá dễ dàng để ném vào force-unwrap mà không nghĩ về sự an toàn của nó, vì vậy hướng dẫn phong cách của họ yêu cầu các nhà phát triển viết một cái gì đó phức tạp hơn chỉ ra lý do tại sao giá trị không bao giờ nên bằng không.
+
+00:07:50.000 --> 00:07:58.000
+Nhưng hầu hết các lựa chọn thay thế này, chẳng hạn như sử dụng "bảo vệ" và sau đó gọi "preconditionFailure" trong nhánh "khác", là một chút quá nhiều nghi lễ.
+
+00:07:58.000 --> 00:08:03.000
+Hãy thiết kế một macro đạt được sự cân bằng tốt hơn giữa các thái cực này.
+
+00:08:03.000 --> 00:08:08.000
+Chúng tôi muốn macro này tính toán và trả về một giá trị, vì vậy chúng tôi biến nó thành macro "tự do (biểu thức)".
+
+00:08:08.000 --> 00:08:15.000
+Chúng tôi đặt cho nó tên "unwrap" và một loại chung trong đó giá trị được truyền vào là tùy chọn, nhưng giá trị trả về không phải là tùy chọn.
+
+00:08:15.000 --> 00:08:20.000
+Và chúng tôi cũng chuyển một chuỗi là một phần của tin nhắn được in nếu việc mở gói không thành công.
+
+00:08:20.000 --> 00:08:28.000
+Vì vậy, chúng tôi kết thúc với một macro mà chúng tôi gọi giống như một hàm, nhưng nó mở rộng thành một biểu thức có chứa "guard let" được bọc trong một đóng.
+
+00:08:28.000 --> 00:08:34.000
+Thông báo lỗi thậm chí còn bao gồm tên biến, điều không thể thực hiện được với một hàm bình thường.
+
+00:08:34.000 --> 00:08:39.000
+Bây giờ chúng ta đã thấy vai trò biểu đạt độc lập, hãy xem xét vai trò tuyên bố độc lập.
+
+00:08:39.000 --> 00:08:44.000
+Nó mở rộng thành một hoặc nhiều khai báo, như hàm, biến hoặc loại.
+
+00:08:44.000 --> 00:08:46.000
+Bạn có thể dùng nó để làm gì?
+
+00:08:46.000 --> 00:08:51.000
+Hãy tưởng tượng bạn đang viết một số loại phân tích thống kê cần một loại mảng 2D.
+
+00:08:51.000 --> 00:08:58.000
+Bạn muốn tất cả các hàng trong mảng có cùng số lượng cột, vì vậy bạn không muốn một mảng của mảng.
+
+00:08:58.000 --> 00:09:09.000
+Thay vào đó, bạn muốn lưu trữ các phần tử trong một mảng phẳng, một chiều và sau đó tính chỉ mục một chiều từ các chỉ số hai chiều do nhà phát triển truyền vào.
+
+00:09:09.000 --> 00:09:12.000
+Để làm điều đó, bạn có thể viết một kiểu như thế này.
+
+00:09:12.000 --> 00:09:20.000
+Hàm "makeIndex" lấy hai số nguyên cần thiết cho chỉ mục 2D, và sau đó thực hiện một số học nhỏ để biến chúng thành chỉ mục 1D.
+
+00:09:20.000 --> 00:09:25.000
+Nhưng sau đó bạn thấy rằng, trong một phần khác của chương trình, bạn cần một mảng ba chiều.
+
+00:09:25.000 --> 00:09:28.000
+Nó gần giống hệt như mảng 2D.
+
+00:09:28.000 --> 00:09:32.000
+Chỉ có một vài chỉ số nữa, và việc tính toán phức tạp hơn một chút.
+
+00:09:32.000 --> 00:09:47.000
+Và sau đó bạn cần một mảng 4D và sau đó là một mảng 5D, và chẳng mấy chốc bạn sẽ bơi trong các loại mảng gần như giống hệt nhau, nhưng không đủ gần để sử dụng generic, hoặc các phần mở rộng giao thức, hoặc các lớp con, hoặc bất kỳ tính năng nào khác mà Swift cung cấp cho loại điều này.
+
+00:09:47.000 --> 00:09:53.000
+May mắn thay, mỗi cấu trúc này là một khai báo, vì vậy chúng ta có thể sử dụng macro khai báo để tạo chúng.
+
+00:09:53.000 --> 00:10:02.000
+Vì vậy, hãy khai báo một macro khai báo độc lập với tên "makeArrayND", vì nó sẽ tạo ra một loại mảng N chiều.
+
+00:10:02.000 --> 00:10:14.000
+Chúng tôi sẽ chuyển số lượng kích thước làm tham số Int và chúng tôi sẽ không khai báo loại kết quả vì macro này sẽ thêm khai báo vào chương trình của chúng tôi, không tính toán kết quả được sử dụng bởi mã khác.
+
+00:10:14.000 --> 00:10:28.000
+Bây giờ chúng ta có thể gọi macro bốn lần với hai, ba, bốn và năm chiều, và mỗi cuộc gọi đó sẽ mở rộng thành toàn bộ loại mảng đa chiều với số lượng đối số phù hợp và tính toán phù hợp cho kích thước đó.
+
+00:10:28.000 --> 00:10:31.000
+Cho đến nay, chúng tôi chỉ xem xét các macro độc lập.
+
+00:10:31.000 --> 00:10:34.000
+Bây giờ hãy chuyển sang vai trò cho các macro đính kèm.
+
+00:10:34.000 --> 00:10:40.000
+Các macro đính kèm, như tên cho thấy, được đính kèm với một tuyên bố cụ thể.
+
+00:10:40.000 --> 00:10:43.000
+Điều đó có nghĩa là họ có nhiều thông tin hơn để làm việc.
+
+00:10:43.000 --> 00:10:50.000
+Các macro độc lập chỉ được cung cấp các đối số mà chúng được truyền, nhưng các macro đính kèm cũng có thể truy cập vào tuyên bố mà chúng được đính kèm.
+
+00:10:50.000 --> 00:10:56.000
+Họ thường kiểm tra tờ khai đó và lấy ra tên, loại và các thông tin khác từ bên trong chúng.
+
+00:10:56.000 --> 00:10:58.000
+Chúng ta sẽ bắt đầu với vai trò ngang hàng đính kèm.
+
+00:10:58.000 --> 00:11:10.000
+Một macro ngang hàng có thể được đính kèm với bất kỳ khai báo nào, không chỉ các biến, hàm và loại, mà ngay cả những thứ như khai báo nhập và khai báo toán tử, và có thể chèn các khai báo mới cùng với nó.
+
+00:11:10.000 --> 00:11:20.000
+Vì vậy, nếu bạn sử dụng nó trên một phương thức hoặc thuộc tính, cuối cùng bạn sẽ tạo các thành viên của loại, nhưng nếu bạn sử dụng nó trên hàm hoặc loại cấp cao nhất, cuối cùng bạn sẽ tạo các khai báo cấp cao nhất mới.
+
+00:11:20.000 --> 00:11:22.000
+Điều đó khiến họ cực kỳ linh hoạt.
+
+00:11:22.000 --> 00:11:24.000
+Đây là một cách bạn có thể sử dụng chúng.
+
+00:11:24.000 --> 00:11:35.000
+Giả sử bạn đang viết một thư viện sử dụng Swift concurrency, nhưng bạn biết rằng một số khách hàng của bạn vẫn đang sử dụng các kỹ thuật đồng thời cũ hơn, vì vậy bạn muốn cung cấp cho họ các phiên bản API của bạn sử dụng trình xử lý hoàn thành.
+
+00:11:35.000 --> 00:11:37.000
+Không khó để viết những phương pháp này.
+
+00:11:37.000 --> 00:11:46.000
+Bạn chỉ cần xóa từ khóa "không đồng bộ", thêm tham số trình xử lý hoàn thành, di chuyển loại kết quả vào danh sách tham số và gọi phiên bản không đồng bộ trong một tác vụ tách rời.
+
+00:11:46.000 --> 00:11:50.000
+Nhưng bạn đang làm điều này rất nhiều, và bạn không muốn phải viết nó bằng tay.
+
+00:11:50.000 --> 00:11:53.000
+Đó là một công việc tuyệt vời cho một macro ngang hàng đính kèm.
+
+00:11:53.000 --> 00:12:03.000
+Chúng tôi sẽ khai báo một cái được gọi là "AddCompletionHandler" và cung cấp cho nó một tham số cho nhãn đối số của trình xử lý hoàn thành, sau đó đính kèm macro đó vào phiên bản không đồng bộ của phương thức.
+
+00:12:03.000 --> 00:12:13.000
+Macro sẽ tạo ra một chữ ký dựa trên trình xử lý hoàn thành tương đương với bản gốc, viết nội dung phương thức và thậm chí đính kèm nhận xét tài liệu với văn bản bổ sung cho trình xử lý hoàn thành.
+
+00:12:13.000 --> 00:12:15.000
+Khá tuyệt.
+
+00:12:15.000 --> 00:12:18.000
+Tiếp theo, hãy xem xét vai trò truy cập đính kèm.
+
+00:12:18.000 --> 00:12:26.000
+Chúng có thể được đính kèm với các biến và chỉ số con, và chúng có thể cài đặt các trình truy cập vào chúng, như "get", "set", "willSet" hoặc "didSet".
+
+00:12:26.000 --> 00:12:28.000
+Vậy điều đó có thể hữu ích như thế nào?
+
+00:12:28.000 --> 00:12:34.000
+Giả sử bạn có một loạt các loại về cơ bản bao quanh từ điển và cho phép bạn truy cập nội dung của chúng bằng các thuộc tính.
+
+00:12:34.000 --> 00:12:47.000
+Vì vậy, ví dụ, cấu trúc "Người" này cho phép bạn truy cập các trường "tên", "chiều cao" và "ngày_sinh", nhưng nếu có thông tin khác trong từ điển ngoài ba trường đó, nó sẽ được chương trình của bạn bảo quản và bỏ qua.
+
+00:12:47.000 --> 00:12:59.000
+Ba thuộc tính này cần getters và setters được tính toán, nhưng việc viết chúng bằng tay rất tẻ nhạt và chúng tôi không thể sử dụng trình bao bọc thuộc tính vì trình bao bọc thuộc tính không thể truy cập các thuộc tính được lưu trữ khác theo loại mà chúng được sử dụng.
+
+00:12:59.000 --> 00:13:03.000
+Vì vậy, hãy viết một macro truy cập đính kèm có thể giúp với điều này.
+
+00:13:03.000 --> 00:13:05.000
+Chúng tôi sẽ gọi nó là "DictionaryStorage."
+
+00:13:05.000 --> 00:13:16.000
+Chúng tôi sẽ cung cấp cho nó một tham số "khóa" vì từ điển đánh vần "birth_date" với dấu gạch dưới, nhưng bạn cũng có thể chỉ cần bỏ khóa ra và nó sẽ mặc định là nil, điều này sẽ làm cho macro sử dụng tên của thuộc tính làm khóa.
+
+00:13:16.000 --> 00:13:26.000
+Vì vậy, bây giờ, thay vì viết khối truy cập lớn đó, bạn chỉ có thể đặt “@DictionaryStorage” trước mỗi thuộc tính và macro sẽ tạo ra các trình truy cập cho bạn.
+
+00:13:26.000 --> 00:13:32.000
+Đó là một cải tiến tốt, nhưng vẫn còn một số bản mẫu ở đây: Các thuộc tính "DictionaryStorage" giống hệt nhau.
+
+00:13:32.000 --> 00:13:35.000
+Chúng ít được soạn sẵn hơn, nhưng chúng vẫn là nồi hơi.
+
+00:13:35.000 --> 00:13:42.000
+Một số thuộc tính tích hợp cho phép bạn giải quyết loại tình huống này bằng cách áp dụng chúng cho toàn bộ loại hoặc tiện ích mở rộng.
+
+00:13:42.000 --> 00:13:46.000
+Vai trò "thuộc tính thành viên đính kèm" cũng có thể khiến macro của bạn hoạt động như vậy.
+
+00:13:46.000 --> 00:13:53.000
+Macro được gắn vào một loại hoặc tiện ích mở rộng và nó có thể thêm các thuộc tính cho các thành viên của bất kỳ thứ gì nó được đính kèm.
+
+00:13:53.000 --> 00:13:55.000
+Hãy xem nó được thực hiện như thế nào.
+
+00:13:55.000 --> 00:13:58.000
+Chúng ta sẽ làm điều gì đó hơi khác một chút ở đây.
+
+00:13:58.000 --> 00:14:07.000
+Thay vì khai báo một macro mới, chúng tôi sẽ thêm một thuộc tính vai trò khác vào macro "DictionaryStorage", cùng với vai trò "truy cập đính kèm" mà nó đã có.
+
+00:14:07.000 --> 00:14:10.000
+Đây là một kỹ thuật thực sự hữu ích để tạo macro.
+
+00:14:10.000 --> 00:14:19.000
+Bạn được phép soạn bất kỳ sự kết hợp vai trò nào ngoại trừ hai vai trò độc lập vì có những nơi Swift không biết nên sử dụng vai trò nào.
+
+00:14:19.000 --> 00:14:27.000
+Swift sẽ mở rộng tất cả các vai trò có ý nghĩa ở bất cứ nơi nào bạn áp dụng chúng, nhưng ít nhất một trong các vai trò phải hoạt động ở đó.
+
+00:14:27.000 --> 00:14:32.000
+Vì vậy, nếu bạn đính kèm "DictionaryStorage" vào một loại, Swift sẽ mở rộng vai trò "thuộc tính thành viên".
+
+00:14:32.000 --> 00:14:36.000
+Nếu bạn đính kèm nó vào một thuộc tính, Swift sẽ mở rộng vai trò "người truy cập".
+
+00:14:36.000 --> 00:14:44.000
+Nhưng nếu bạn đính kèm nó vào một hàm, bạn sẽ gặp lỗi biên dịch vì "DictionaryStorage" không có bất kỳ vai trò nào có thể gắn vào một hàm.
+
+00:14:44.000 --> 00:14:51.000
+Với vai trò thứ hai này được thêm vào "DictionaryStorage", thay vì đính kèm nó riêng biệt vào mọi thuộc tính, bạn chỉ có thể đính kèm nó vào toàn bộ loại.
+
+00:14:51.000 --> 00:15:01.000
+Macro sẽ có logic để bỏ qua một số thành viên nhất định, như trình khởi tạo, thuộc tính "dictionary" và các thuộc tính như "birth_date" đã có thuộc tính "DictionaryStorage".
+
+00:15:01.000 --> 00:15:10.000
+Nhưng nó sẽ thêm thuộc tính "DictionaryStorage" vào bất kỳ thuộc tính được lưu trữ nào khác, và sau đó các thuộc tính đó sẽ mở rộng thành các trình truy cập mà chúng ta đã thấy.
+
+00:15:10.000 --> 00:15:16.000
+Đó là một cải tiến tốt, nhưng vẫn còn nhiều bản mẫu mà chúng ta có thể loại bỏ: Trình khởi tạo và tài sản được lưu trữ.
+
+00:15:16.000 --> 00:15:26.000
+Chúng được yêu cầu bởi giao thức "DictionaryRepresentable" và thuộc tính được sử dụng bởi các trình truy cập, nhưng chúng hoàn toàn giống nhau trong bất kỳ loại nào sử dụng DictionaryStorage.
+
+00:15:26.000 --> 00:15:30.000
+Hãy làm cho macro DictionaryStorage tự động thêm chúng, để chúng ta không phải viết chúng bằng tay.
+
+00:15:30.000 --> 00:15:33.000
+Chúng ta có thể làm điều đó bằng cách sử dụng vai trò "thành viên đính kèm".
+
+00:15:33.000 --> 00:15:42.000
+Giống như các macro thuộc tính thành viên, bạn có thể áp dụng các macro này cho các loại và tiện ích mở rộng, nhưng thay vì thêm các thuộc tính cho các thành viên hiện tại, họ thêm các thành viên hoàn toàn mới.
+
+00:15:42.000 --> 00:15:46.000
+Vì vậy, bạn có thể thêm các phương thức, thuộc tính, trình khởi tạo, v.v.
+
+00:15:46.000 --> 00:15:51.000
+Bạn thậm chí có thể thêm các thuộc tính được lưu trữ vào các lớp và cấu trúc, hoặc các trường hợp vào liệt kê.
+
+00:15:51.000 --> 00:15:57.000
+Một lần nữa, chúng tôi sẽ thêm một vai trò "thành viên đính kèm" mới vào macro DictionaryStorage, soạn nó với hai vai trò còn lại.
+
+00:15:57.000 --> 00:16:03.000
+Vai trò mới này sẽ thêm một trình khởi tạo và một thuộc tính được gọi là "tác điển".
+
+00:16:03.000 --> 00:16:10.000
+Bạn có thể tự hỏi, khi hai macro khác nhau được áp dụng cho cùng một mã, cái nào được mở rộng trước?
+
+00:16:10.000 --> 00:16:13.000
+Sau đó câu trả lời là, nó không thực sự quan trọng.
+
+00:16:13.000 --> 00:16:18.000
+Mỗi người sẽ thấy phiên bản gốc của tuyên bố mà không có bản mở rộng do những người khác cung cấp.
+
+00:16:18.000 --> 00:16:21.000
+Vì vậy bạn không cần phải lo lắng về việc đặt hàng.
+
+00:16:21.000 --> 00:16:25.000
+Bạn sẽ thấy điều tương tự bất kể khi nào trình biên dịch mở rộng macro của bạn.
+
+00:16:25.000 --> 00:16:30.000
+Với vai trò thành viên đính kèm được thêm vào, chúng tôi thậm chí không phải viết hai thành viên đó nữa.
+
+00:16:30.000 --> 00:16:35.000
+Chỉ cần sử dụng DictionaryStorage trên loại sẽ tự động thêm chúng cho chúng tôi.
+
+00:16:35.000 --> 00:16:44.000
+Và sau đó vai trò khác sẽ thêm các thuộc tính DictionaryStorage trên các thuộc tính và các thuộc tính đó sẽ mở rộng thành các trình truy cập, v.v.
+
+00:16:44.000 --> 00:16:51.000
+Nhưng vẫn còn một chút cuối cùng của bản mẫu để loại bỏ: Sự phù hợp với giao thức DictionaryRepresentable.
+
+00:16:51.000 --> 00:16:55.000
+Vai trò "sự phù hợp đính kèm" là hoàn hảo cho việc này.
+
+00:16:55.000 --> 00:16:59.000
+Nó có thể thêm sự phù hợp với một loại hoặc phần mở rộng.
+
+00:16:59.000 --> 00:17:05.000
+Chúng tôi sẽ thêm một vai trò "sự phù hợp đính kèm" cuối cùng vào macro "DictionaryStorage", sáng tác nó với ba vai trò còn lại.
+
+00:17:05.000 --> 00:17:08.000
+Vai trò mới này sẽ bổ sung sự phù hợp cho "Đại diện từ điển".
+
+00:17:08.000 --> 00:17:12.000
+Vì vậy, bây giờ chúng ta không cần phải viết sự phù hợp theo cách thủ công.
+
+00:17:12.000 --> 00:17:22.000
+Thuộc tính DictionaryStorage mà chúng tôi đã thêm cho các trình truy cập và các thành viên được tạo giờ đây cũng sẽ tự động thêm sự phù hợp, cùng với tất cả những thứ khác mà nó đã làm.
+
+00:17:22.000 --> 00:17:40.000
+Đã lâu rồi kể từ khi chúng tôi nhìn thấy điểm khởi đầu của mình, vì vậy chỉ để nhắc nhở bạn, chúng tôi đã lấy một loại lớn, ngang bướng chứa đầy mã lặp đi lặp lại và chuyển hầu hết mã đó vào một số vai trò của một macro siêu mạnh để những gì còn lại chỉ xác định ngắn gọn những gì đặc biệt về loại cụ thể này.
+
+00:17:40.000 --> 00:17:44.000
+Hãy tưởng tượng nếu bạn có 10 hoặc 20 loại có thể sử dụng DictionaryStorage.
+
+00:17:44.000 --> 00:17:47.000
+Làm việc với tất cả chúng sẽ dễ dàng hơn bao nhiêu?
+
+00:17:47.000 --> 00:17:56.000
+Bây giờ chúng tôi đã dành rất nhiều thời gian để nói về các tuyên bố và vai trò, nhưng cho đến nay, mã mà họ mở rộng dường như đã xuất hiện một cách kỳ diệu.
+
+00:17:56.000 --> 00:18:00.000
+Hãy lấp đầy khoảng trống đó ngay bây giờ và nói về cách bạn triển khai macro của mình.
+
+00:18:00.000 --> 00:18:07.000
+Khi tôi cho bạn xem các khai báo vĩ mô cho đến nay, tôi đã bỏ qua một điều rất quan trọng: việc triển khai.
+
+00:18:07.000 --> 00:18:11.000
+Đó là sau một dấu bằng nhau, và nó luôn là một vĩ mô khác.
+
+00:18:11.000 --> 00:18:19.000
+Đôi khi đó là một macro khác mà bạn đã viết, chỉ với các tham số được sắp xếp lại hoặc với các tham số bổ sung được chỉ định dưới dạng chữ cái.
+
+00:18:19.000 --> 00:18:22.000
+Nhưng thông thường, bạn sẽ sử dụng một macro bên ngoài.
+
+00:18:22.000 --> 00:18:26.000
+Macro bên ngoài là macro được thực hiện bởi trình cắm trình biên dịch.
+
+00:18:26.000 --> 00:18:29.000
+Bạn có thể nhớ rằng tôi đã nói về các trình cắm trình biên dịch trước đó.
+
+00:18:29.000 --> 00:18:37.000
+Tôi đã nói rằng khi trình biên dịch thấy một macro đang được sử dụng, nó sẽ bắt đầu một trình cắm trong một quy trình riêng biệt và yêu cầu nó mở rộng macro.
+
+00:18:37.000 --> 00:18:41.000
+"#externalMacro" là những gì định nghĩa mối quan hệ đó.
+
+00:18:41.000 --> 00:18:47.000
+Nó chỉ định trình cắm mà trình biên dịch sẽ khởi chạy và tên của một loại bên trong trình cắm đó.
+
+00:18:47.000 --> 00:18:55.000
+Vì vậy, khi Swift mở rộng macro này, nó sẽ khởi chạy một trình cắm có tên "MyLibMacros" và yêu cầu một loại gọi là "StringifyMacro" mở rộng nó.
+
+00:18:55.000 --> 00:19:04.000
+Vì vậy, khai báo vĩ mô đi vào thư viện bình thường của bạn cùng với các API khác của bạn, nhưng việc triển khai vĩ mô đi vào một mô-đun trình cắm trình biên dịch riêng biệt.
+
+00:19:04.000 --> 00:19:10.000
+Và "#externalMacro" tạo ra liên kết giữa khai báo và loại triển khai nó.
+
+00:19:10.000 --> 00:19:13.000
+Việc triển khai vĩ mô trông như thế nào?
+
+00:19:13.000 --> 00:19:17.000
+Chà, chúng ta hãy xem DictionaryStorage có thể được triển khai như thế nào.
+
+00:19:17.000 --> 00:19:25.000
+Nếu bạn nhớ lại, macro "DictionaryStorage" của chúng tôi có vai trò "thành viên đính kèm" đã thêm thuộc tính được lưu trữ và trình khởi tạo vào loại.
+
+00:19:25.000 --> 00:19:27.000
+Đây là một cách thực hiện đơn giản của vai trò đó.
+
+00:19:27.000 --> 00:19:32.000
+Chúng ta sẽ xem xét từng bước một và tìm hiểu cách thức hoạt động của nó.
+
+00:19:32.000 --> 00:19:37.000
+Ngay trên cùng, chúng tôi bắt đầu bằng cách nhập một thư viện có tên SwiftSyntax.
+
+00:19:37.000 --> 00:19:45.000
+SwiftSyntax là một gói được duy trì bởi dự án Swift giúp bạn phân tích cú pháp, kiểm tra, thao tác và tạo mã nguồn Swift.
+
+00:19:45.000 --> 00:19:52.000
+Những người đóng góp Swift luôn cập nhật SwiftSyntax khi ngôn ngữ phát triển, vì vậy nó hỗ trợ mọi tính năng mà trình biên dịch Swift thực hiện.
+
+00:19:52.000 --> 00:19:56.000
+SwiftSyntax đại diện cho mã nguồn như một cấu trúc cây đặc biệt.
+
+00:19:56.000 --> 00:20:03.000
+Ví dụ, cấu trúc "Người" trong mẫu mã này được biểu diễn dưới dạng một thể hiện của một loại được gọi là "StructDeclSyntax."
+
+00:20:03.000 --> 00:20:11.000
+Nhưng trường hợp đó có các thuộc tính và mỗi thuộc tính đó đại diện cho một số phần của khai báo cấu trúc.
+
+00:20:11.000 --> 00:20:14.000
+Danh sách các thuộc tính nằm trong thuộc tính "thuộc tính".
+
+00:20:14.000 --> 00:20:17.000
+Từ khóa thực tế "cấu trúc" nằm trong thuộc tính "structKeyword".
+
+00:20:17.000 --> 00:20:20.000
+Tên của cấu trúc nằm trong thuộc tính "định danh".
+
+00:20:20.000 --> 00:20:26.000
+Và phần thân với niềng răng xoăn và các thành viên của cấu trúc nằm trong thuộc tính "memberBlock".
+
+00:20:26.000 --> 00:20:30.000
+Ngoài ra còn có các thuộc tính như "modifiers" đại diện cho những thứ mà một số khai báo cấu trúc có.
+
+00:20:30.000 --> 00:20:33.000
+Nhưng cái này thì không. Đây là số không.
+
+00:20:33.000 --> 00:20:37.000
+Một số nút cú pháp trong các thuộc tính này được gọi là "mã thông báo".
+
+00:20:37.000 --> 00:20:50.000
+Chúng đại diện cho một đoạn văn bản cụ thể trong tệp nguồn, như tên hoặc từ khóa hoặc một chút dấu câu và chúng chỉ chứa văn bản đó và bất kỳ câu đố nào xung quanh, như dấu cách và nhận xét.
+
+00:20:50.000 --> 00:20:56.000
+Nếu bạn đi sâu vào cây cú pháp, bạn sẽ tìm thấy một nút mã thông báo bao phủ mọi byte của tệp nguồn.
+
+00:20:56.000 --> 00:21:06.000
+Nhưng một số nút đó, như nút "AttributeListSyntax" trong thuộc tính "thuộc tính" và nút "MemberDeclBlockSyntax" trong thuộc tính "memberBlock", không phải là mã thông báo.
+
+00:21:06.000 --> 00:21:09.000
+Chúng có các nút con trong thuộc tính riêng của chúng.
+
+00:21:09.000 --> 00:21:20.000
+Ví dụ: nếu chúng ta nhìn vào bên trong thuộc tính "memberBlock", chúng ta sẽ tìm thấy mã thông báo cho dấu ngoặc nhọn mở, nút "MemberDeclListSyntax" cho danh sách thành viên và mã thông báo cho dấu ngoặc nhọn đóng.
+
+00:21:20.000 --> 00:21:28.000
+Và nếu bạn tiếp tục khám phá nội dung của nút "MemberDeclListSyntax" đó, cuối cùng bạn sẽ tìm thấy một nút cho mỗi thuộc tính, v.v.
+
+00:21:28.000 --> 00:21:36.000
+Làm việc với SwiftSyntax là một chủ đề lớn của riêng nó, vì vậy thay vì làm video này dài gấp đôi, tôi sẽ giới thiệu cho bạn hai tài nguyên khác.
+
+00:21:36.000 --> 00:21:46.000
+Một là phiên "Viết Macro Swift" đồng hành, bao gồm các mẹo thiết thực để tìm ra cách một đoạn mã nguồn cụ thể được biểu diễn dưới dạng cây cú pháp.
+
+00:21:46.000 --> 00:21:50.000
+Cái còn lại là tài liệu của gói SwiftSyntax.
+
+00:21:50.000 --> 00:21:59.000
+Bạn có thể tìm thấy nó trực tuyến hoặc nếu bạn sử dụng lệnh Xây dựng Tài liệu của Xcode trong gói macro của mình, tài liệu SwiftSyntax sẽ xuất hiện trong cửa sổ Tài liệu dành cho Nhà phát triển.
+
+00:21:59.000 --> 00:22:04.000
+Ngoài thư viện SwiftSyntax chính, chúng tôi cũng nhập hai mô-đun khác.
+
+00:22:04.000 --> 00:22:10.000
+Một là "SwiftSyntaxMacros", cung cấp các giao thức và loại cần thiết để viết macro.
+
+00:22:10.000 --> 00:22:13.000
+Cái còn lại được gọi là "SwiftSyntaxBuilder".
+
+00:22:13.000 --> 00:22:19.000
+Thư viện này cung cấp các API tiện lợi để xây dựng cây cú pháp để đại diện cho mã mới được tạo.
+
+00:22:19.000 --> 00:22:25.000
+Bạn có thể viết một macro mà không cần sử dụng nó, nhưng nó cực kỳ tiện dụng và chúng tôi thực sự khuyên bạn nên tận dụng nó.
+
+00:22:25.000 --> 00:22:32.000
+Bây giờ chúng tôi đã nhập các thư viện này, chúng tôi sẽ bắt đầu thực sự viết loại "DictionaryStorageMacro" mà trình cắm của chúng tôi được cho là cung cấp.
+
+00:22:32.000 --> 00:22:36.000
+Lưu ý rằng nó phù hợp với một giao thức được gọi là "MemberMacro."
+
+00:22:36.000 --> 00:22:44.000
+Mỗi vai trò có một giao thức tương ứng và việc triển khai phải phù hợp với giao thức cho từng vai trò mà macro cung cấp.
+
+00:22:44.000 --> 00:22:52.000
+Macro "DictionaryStorage" có bốn trong số các vai trò này, vì vậy loại "DictionaryStorageMacro" sẽ cần phải phù hợp với bốn giao thức tương ứng.
+
+00:22:52.000 --> 00:22:57.000
+Nhưng để giữ mọi thứ đơn giản, chúng tôi chỉ lo lắng về sự phù hợp của "MemberMacro" ngay bây giờ.
+
+00:22:57.000 --> 00:23:04.000
+Chuyển sang phần thân của loại này, chúng ta thấy một phương pháp được gọi là "mở rộng, cung cấp thành viên của, trong."
+
+00:23:04.000 --> 00:23:12.000
+Phương pháp này được yêu cầu bởi giao thức MemberMacro và đó là những gì trình biên dịch Swift gọi để mở rộng vai trò thành viên khi macro được sử dụng.
+
+00:23:12.000 --> 00:23:16.000
+Chúng tôi chưa sử dụng các lập luận, nhưng chúng tôi sẽ nói về chúng sau.
+
+00:23:16.000 --> 00:23:19.000
+Hiện tại, hãy lưu ý rằng đó là một phương pháp tĩnh.
+
+00:23:19.000 --> 00:23:25.000
+Tất cả các phương thức mở rộng đều tĩnh, vì vậy Swift không thực sự tạo ra một phiên bản của loại DictionaryStorageMacro.
+
+00:23:25.000 --> 00:23:28.000
+Nó chỉ sử dụng nó như một vùng chứa cho các phương thức.
+
+00:23:28.000 --> 00:23:33.000
+Mỗi phương thức mở rộng trả về các nút SwiftSyntax được chèn vào mã nguồn.
+
+00:23:33.000 --> 00:23:43.000
+Một macro thành viên mở rộng thành một danh sách các khai báo để thêm dưới dạng thành viên vào loại, vì vậy phương thức mở rộng cho một macro thành viên trả về một mảng các nút "DeclSyntax".
+
+00:23:43.000 --> 00:23:47.000
+Nếu chúng ta nhìn vào bên trong cơ thể, chúng ta sẽ thấy mảng đó đang được tạo ra.
+
+00:23:47.000 --> 00:23:51.000
+Nó có trình khởi tạo và thuộc tính được lưu trữ mà chúng tôi muốn macro này thêm vào.
+
+00:23:51.000 --> 00:23:57.000
+Bây giờ, phần "từ điển var" ở đây trông giống như một chuỗi thông thường, nhưng thực tế thì không.
+
+00:23:57.000 --> 00:24:07.000
+Chuỗi ký tự này đang được viết trong đó một DeclSyntax được mong đợi, vì vậy Swift thực sự coi nó như một đoạn mã nguồn và yêu cầu trình phân tích cú pháp Swift biến nó thành một nút DeclSyntax.
+
+00:24:07.000 --> 00:24:11.000
+Đây là một trong những tiện ích mà thư viện SwiftSyntaxBuilder cung cấp.
+
+00:24:11.000 --> 00:24:14.000
+Đó là một điều tốt khi chúng tôi đã nhập nó sớm hơn.
+
+00:24:14.000 --> 00:24:22.000
+Vì vậy, với điều đó và với sự phù hợp với các giao thức cho ba vai trò còn lại, chúng tôi sẽ có một triển khai hoạt động của macro DictionaryStorage của chúng tôi.
+
+00:24:22.000 --> 00:24:28.000
+Nhưng mặc dù macro này bây giờ sẽ hoạt động khi bạn sử dụng nó một cách chính xác, điều gì sẽ xảy ra nếu bạn sử dụng nó sai?
+
+00:24:28.000 --> 00:24:33.000
+Ví dụ, điều gì sẽ xảy ra nếu bạn cố gắng áp dụng nó vào một enum thay vì cho một cấu trúc?
+
+00:24:33.000 --> 00:24:38.000
+Chà, vai trò "thành viên đính kèm" sẽ cố gắng thêm một thuộc tính "tác điển" được lưu trữ.
+
+00:24:38.000 --> 00:24:45.000
+Nhưng một enum không thể có các thuộc tính được lưu trữ, vì vậy Swift sẽ tạo ra lỗi: "Enums không được chứa các thuộc tính được lưu trữ."
+
+00:24:45.000 --> 00:24:51.000
+Thật tuyệt khi Swift sẽ ngăn mã này biên dịch, nhưng thông báo lỗi hơi khó hiểu, phải không?
+
+00:24:51.000 --> 00:24:57.000
+Không thực sự rõ ràng tại sao macro DictionaryStorage lại cố gắng tạo một thuộc tính được lưu trữ hoặc những gì bạn nên làm khác đi.
+
+00:24:57.000 --> 00:25:04.000
+Tôi đã nói trước đó rằng một trong những mục tiêu của Swift là cho phép các macro phát hiện lỗi trong đầu vào của chúng và phát ra các lỗi tùy chỉnh.
+
+00:25:04.000 --> 00:25:13.000
+Vì vậy, hãy sửa đổi việc triển khai macro của chúng tôi để tạo ra thông báo lỗi rõ ràng hơn nhiều cho việc này: “@DictionaryStorage chỉ có thể được áp dụng cho một cấu trúc."
+
+00:25:13.000 --> 00:25:16.000
+Điều đó sẽ cung cấp cho các nhà phát triển ý tưởng tốt hơn về những gì họ đã làm sai.
+
+00:25:16.000 --> 00:25:22.000
+Chìa khóa để làm điều này sẽ là các tham số cho phương pháp mở rộng, mà chúng tôi đã bỏ qua cho đến nay.
+
+00:25:22.000 --> 00:25:28.000
+Các đối số chính xác hơi khác nhau đối với các vai trò khác nhau, nhưng đối với vĩ mô thành viên, có ba.
+
+00:25:28.000 --> 00:25:32.000
+Đầu tiên được gọi là "thuộc tính", và loại của nó là AttributeSyntax.
+
+00:25:32.000 --> 00:25:37.000
+Đây là thuộc tính DictionaryStorage thực tế mà nhà phát triển đã viết để sử dụng macro.
+
+00:25:37.000 --> 00:25:42.000
+Đối số thứ hai được gọi là "tuyên bố" và là một loại phù hợp với "DeclGroupSyntax."
+
+00:25:42.000 --> 00:25:51.000
+DeclGroupSyntax là một giao thức mà các nút cho cấu trúc, enums, lớp, diễn viên, giao thức và phần mở rộng đều tuân thủ.
+
+00:25:51.000 --> 00:25:56.000
+Vì vậy, tham số này cung cấp cho chúng tôi tuyên bố mà nhà phát triển đã đính kèm thuộc tính vào.
+
+00:25:56.000 --> 00:26:02.000
+Và tham số cuối cùng được gọi là "bối cảnh" và thuộc loại phù hợp với "MacroExpansionContext".
+
+00:26:02.000 --> 00:26:07.000
+Đối tượng ngữ cảnh được sử dụng khi việc triển khai vĩ mô muốn giao tiếp với trình biên dịch.
+
+00:26:07.000 --> 00:26:12.000
+Nó có thể làm một vài việc khác nhau, bao gồm phát ra lỗi và cảnh báo.
+
+00:26:12.000 --> 00:26:15.000
+Chúng tôi sẽ sử dụng cả ba tham số này để phát ra lỗi của chúng tôi.
+
+00:26:15.000 --> 00:26:17.000
+Hãy xem nó được thực hiện như thế nào.
+
+00:26:17.000 --> 00:26:19.000
+Đầu tiên, chúng ta cần phát hiện ra vấn đề.
+
+00:26:19.000 --> 00:26:23.000
+Chúng tôi sẽ làm điều đó bằng cách kiểm tra loại tham số "tuyên bố".
+
+00:26:23.000 --> 00:26:34.000
+Mỗi loại khai báo có một loại khác nhau, vì vậy nếu đó là một cấu trúc, loại của nó sẽ là "StructDeclSyntax", nếu nó là một enum, nó sẽ là "EnumDeclSyntax", v.v.
+
+00:26:34.000 --> 00:26:41.000
+Vì vậy, chúng tôi sẽ viết một guard-else gọi phương thức "is" của tham số "declaration" và chuyển "StructDeclSyntax".
+
+00:26:41.000 --> 00:26:45.000
+Nếu khai báo không phải là một cấu trúc, chúng ta sẽ kết thúc trong khối "khác".
+
+00:26:45.000 --> 00:26:54.000
+Hiện tại, chúng tôi sẽ trả về một mảng trống, vì vậy macro không thêm bất kỳ mã nào vào dự án, nhưng những gì chúng tôi thực sự muốn làm là phát ra lỗi.
+
+00:26:54.000 --> 00:27:01.000
+Bây giờ, cách dễ dàng để làm điều đó là chỉ ném một lỗi Swift thông thường, nhưng điều đó không cho phép bạn kiểm soát nhiều đầu ra.
+
+00:27:01.000 --> 00:27:06.000
+Vì vậy, thay vào đó, tôi sẽ chỉ cho bạn cách phức tạp hơn cho phép bạn tạo ra các lỗi phức tạp hơn.
+
+00:27:06.000 --> 00:27:11.000
+Bước đầu tiên là tạo ra một ví dụ của một loại được gọi là "Chẩn đoán".
+
+00:27:11.000 --> 00:27:13.000
+Đây là một chút biệt ngữ trình biên dịch.
+
+00:27:13.000 --> 00:27:24.000
+Giống như một bác sĩ đang xem X-quang chân bị gãy của bạn chẩn đoán gãy xương, trình biên dịch hoặc macro nhìn vào cây cú pháp của mã bị hỏng của bạn sẽ chẩn đoán lỗi hoặc cảnh báo.
+
+00:27:24.000 --> 00:27:28.000
+Vì vậy, chúng tôi gọi trường hợp đại diện cho lỗi là "Chẩn đoán".
+
+00:27:28.000 --> 00:27:32.000
+Chẩn đoán chứa ít nhất hai mẩu thông tin.
+
+00:27:32.000 --> 00:27:38.000
+Đầu tiên là nút cú pháp mà lỗi xảy ra, vì vậy trình biên dịch biết dòng nào cần đánh dấu là không chính xác.
+
+00:27:38.000 --> 00:27:47.000
+Ở đây, chúng tôi muốn trỏ đến thuộc tính DictionaryStorage mà người dùng đã viết, rất vui, được cung cấp bởi tham số "thuộc tính" mà phương thức đã được truyền.
+
+00:27:47.000 --> 00:27:51.000
+Thứ hai là thông báo thực tế mà bạn muốn trình biên dịch tạo ra.
+
+00:27:51.000 --> 00:27:55.000
+Bạn cung cấp điều này bằng cách tạo một loại tùy chỉnh và sau đó chuyển một phiên bản của nó.
+
+00:27:55.000 --> 00:27:58.000
+Hãy xem nhanh nó.
+
+00:27:58.000 --> 00:28:04.000
+Loại "MyLibDiagnostic" xác định tất cả các chẩn đoán mà mô-đun này có thể tạo ra.
+
+00:28:04.000 --> 00:28:11.000
+Chúng tôi đã chọn sử dụng một enum và cung cấp một trường hợp cho mỗi chẩn đoán, nhưng bạn có thể sử dụng một loại khác nếu bạn muốn.
+
+00:28:11.000 --> 00:28:14.000
+Loại này hoạt động giống như một lỗi Swift có thể ném được.
+
+00:28:14.000 --> 00:28:21.000
+Nó phù hợp với giao thức "DiagnosticMessage", và nó có một loạt các thuộc tính cung cấp thông tin về chẩn đoán.
+
+00:28:21.000 --> 00:28:24.000
+Một trong những điều quan trọng nhất là tài sản "mệu trọng".
+
+00:28:24.000 --> 00:28:30.000
+Nó xác định liệu chẩn đoán là lỗi hay cảnh báo.
+
+00:28:30.000 --> 00:28:37.000
+Sau đó là thuộc tính "tin nhắn", tạo ra thông báo lỗi thực tế và thuộc tính "diagnosticID".
+
+00:28:37.000 --> 00:28:42.000
+Bạn nên sử dụng tên mô-đun của trình cắm cho miền và một số loại chuỗi duy nhất cho ID.
+
+00:28:42.000 --> 00:28:46.000
+Tôi đã chọn sử dụng các giá trị thô chuỗi cho enum này, nhưng đó chỉ là một sự tiện lợi.
+
+00:28:46.000 --> 00:28:51.000
+Vì vậy, với thông điệp trong tay, bạn có thể tạo chẩn đoán.
+
+00:28:51.000 --> 00:28:56.000
+Sau đó, bạn nói với bối cảnh để chẩn đoán nó, và bạn đã hoàn tất.
+
+00:28:56.000 --> 00:29:00.000
+Đó là một chẩn đoán khá cơ bản, nhưng nếu bạn muốn, bạn có thể thích thú hơn rất nhiều với chúng.
+
+00:29:00.000 --> 00:29:06.000
+Ví dụ, bạn có thể thêm Fix-Its vào chẩn đoán được áp dụng tự động bởi nút Xcode Fix.
+
+00:29:06.000 --> 00:29:10.000
+Bạn cũng có thể thêm điểm nổi bật và đính kèm ghi chú trỏ đến các vị trí khác trong mã.
+
+00:29:10.000 --> 00:29:14.000
+Vì vậy, bạn thực sự có thể cung cấp trải nghiệm lỗi hạng nhất cho các nhà phát triển của mình.
+
+00:29:14.000 --> 00:29:20.000
+Nhưng một khi bạn đã đảm bảo rằng macro của mình đang được áp dụng chính xác, bạn vẫn cần phải thực sự tạo bản mở rộng.
+
+00:29:20.000 --> 00:29:24.000
+SwiftSyntax cung cấp cho bạn một số công cụ khác nhau để làm điều đó.
+
+00:29:24.000 --> 00:29:32.000
+Các nút cú pháp là bất biến, nhưng chúng có rất nhiều API tạo các nút mới hoặc trả về các phiên bản sửa đổi của các nút hiện có.
+
+00:29:32.000 --> 00:29:39.000
+Thư viện SwiftSyntaxBuilder thêm các trình tạo cú pháp kiểu SwiftUI trong đó một số nút con được chỉ định bằng cách đóng cuối.
+
+00:29:39.000 --> 00:29:48.000
+Ví dụ, macro mảng đa chiều có thể sử dụng trình tạo cú pháp để tạo bất kỳ số lượng tham số nào phù hợp với loại mà nó đang tạo.
+
+00:29:48.000 --> 00:29:56.000
+Và tính năng chuỗi theo nghĩa đen mà chúng tôi đã sử dụng để tạo thuộc tính DictionaryStorage và trình khởi tạo cũng hỗ trợ nội suy.
+
+00:29:56.000 --> 00:30:04.000
+Tất cả các tính năng này đều hữu ích trong các tình huống khác nhau và bạn có thể sẽ thấy mình kết hợp một số trong các macro đặc biệt phức tạp.
+
+00:30:04.000 --> 00:30:12.000
+Nhưng tính năng chuỗi theo nghĩa đen đặc biệt tốt trong việc tạo ra cây cú pháp cho một lượng lớn mã và có một chút để tìm hiểu về các tính năng nội suy của nó.
+
+00:30:12.000 --> 00:30:16.000
+Vì vậy, hãy xem cách bạn có thể sử dụng chúng để tạo ra một số mã.
+
+00:30:16.000 --> 00:30:19.000
+Trước đó, chúng tôi đã nói về macro "unwrap".
+
+00:30:19.000 --> 00:30:25.000
+Nó lấy một giá trị tùy chọn và một chuỗi tin nhắn và mở rộng thành một "bảo vệ" được bọc trong một đóng.
+
+00:30:25.000 --> 00:30:32.000
+Hình dạng chung của mã này sẽ luôn giống nhau, nhưng rất nhiều nội dung được tùy chỉnh cho trang web sử dụng cụ thể.
+
+00:30:32.000 --> 00:30:38.000
+Hãy tập trung vào câu lệnh "guard let" và xem cách chúng ta có thể viết một hàm để tạo ra câu lệnh đó.
+
+00:30:38.000 --> 00:30:47.000
+Để bắt đầu, chúng tôi sẽ chỉ lấy mẫu mã chính xác mà chúng tôi vừa thấy và đặt nó vào một phương thức trợ giúp được gọi là "makeGuardStatement" trả về một nút Cú pháp Câu lệnh.
+
+00:30:47.000 --> 00:30:53.000
+Sau đó, chúng tôi sẽ từ từ thêm phép nội suy để thay thế tất cả những thứ cần phải khác nhau tùy thuộc vào nơi nó được sử dụng.
+
+00:30:53.000 --> 00:30:57.000
+Điều đầu tiên chúng ta sẽ làm là thêm chuỗi tin nhắn phù hợp.
+
+00:30:57.000 --> 00:31:04.000
+Chuỗi tin nhắn là một biểu thức tùy ý, vì vậy chúng tôi sẽ chuyển nó dưới dạng nút ExprSyntax và sau đó nội suy nó vào.
+
+00:31:04.000 --> 00:31:10.000
+Một phép nội suy thông thường như thế này có thể thêm một nút cú pháp vào mã, nhưng nó không thể thêm một Chuỗi đơn giản.
+
+00:31:10.000 --> 00:31:15.000
+Đó là một tính năng an toàn giúp bạn không vô tình chèn mã không hợp lệ.
+
+00:31:15.000 --> 00:31:21.000
+Điều kiện guard-let tương tự nhau, ngoại trừ việc nó chỉ là một tên biến, vì vậy nó là một mã thông báo, không phải là một biểu thức.
+
+00:31:21.000 --> 00:31:28.000
+Không có vấn đề gì, chúng tôi thêm một tham số TokenSyntax và nội suy nó vào, giống như chúng tôi nội suy biểu thức.
+
+00:31:28.000 --> 00:31:33.000
+Có một trường hợp phức tạp hơn khi bạn thêm biểu thức không được gói vào thông báo lỗi.
+
+00:31:33.000 --> 00:31:38.000
+Một trong những tính năng của macro của chúng tôi là khi nó không thành công, nó sẽ in ra mã bạn đang cố gắng mở gói.
+
+00:31:38.000 --> 00:31:44.000
+Điều đó có nghĩa là chúng ta cần tạo một chuỗi theo nghĩa đen có chứa phiên bản chuỗi của nút cú pháp.
+
+00:31:44.000 --> 00:31:50.000
+Hãy bắt đầu bằng cách kéo tiền tố ra khỏi cú pháp câu lệnh theo nghĩa đen và vào một biến chỉ là một chuỗi đơn giản.
+
+00:31:50.000 --> 00:31:56.000
+Chúng tôi sẽ nội suy chuỗi đó, nhưng chúng tôi sẽ sử dụng một phép nội suy đặc biệt bắt đầu bằng "nghĩa đen:".
+
+00:31:56.000 --> 00:32:01.000
+Khi bạn làm điều này, SwiftSyntax sẽ thêm nội dung của chuỗi dưới dạng chuỗi theo nghĩa đen.
+
+00:32:01.000 --> 00:32:10.000
+Điều này cũng hoạt động để tạo các ký tự từ các loại thông tin khác được tính toán bởi macro, số, Booleans, mảng, từ điển và thậm chí cả tùy chọn.
+
+00:32:10.000 --> 00:32:15.000
+Bây giờ chúng ta đang xây dựng chuỗi trong một biến, chúng ta có thể thay đổi nó để có mã phù hợp trong tin nhắn.
+
+00:32:15.000 --> 00:32:22.000
+Chỉ cần thêm một tham số cho biểu thức ban đầu và nội suy thuộc tính "mô tả" của nó vào chuỗi.
+
+00:32:22.000 --> 00:32:24.000
+Bạn không cần phải làm bất cứ điều gì đặc biệt để thoát khỏi nó.
+
+00:32:24.000 --> 00:32:33.000
+Phép nội suy "nghĩa đen:" sẽ tự động phát hiện xem chuỗi có chứa các ký tự đặc biệt hay không và thêm lối thoát hoặc chuyển sang ký tự thô để đảm bảo mã hợp lệ.
+
+00:32:33.000 --> 00:32:38.000
+Vì vậy, phép nội suy "theo nghĩa đen:" giúp việc làm điều đúng đắn trở nên cực kỳ dễ dàng.
+
+00:32:38.000 --> 00:32:41.000
+Điều cuối cùng cần giải quyết là tệp và số dòng.
+
+00:32:41.000 --> 00:32:47.000
+Những điều này hơi phức tạp vì trình biên dịch không cho macro biết vị trí nguồn mà nó đang mở rộng vào.
+
+00:32:47.000 --> 00:32:56.000
+Tuy nhiên, ngữ cảnh mở rộng vĩ mô có một API mà bạn có thể sử dụng để tạo các nút cú pháp đặc biệt mà trình biên dịch sẽ biến thành các ký tự với thông tin vị trí nguồn.
+
+00:32:56.000 --> 00:32:58.000
+Vậy hãy xem điều đó được thực hiện như thế nào.
+
+00:32:58.000 --> 00:33:04.000
+Chúng tôi sẽ thêm một đối số khác cho bối cảnh mở rộng vĩ mô, và sau đó chúng tôi sẽ sử dụng phương thức "vị trí của" của nó.
+
+00:33:04.000 --> 00:33:09.000
+Điều này trả về một đối tượng có thể tạo ra các nút cú pháp cho vị trí của bất kỳ nút nào bạn cung cấp.
+
+00:33:09.000 --> 00:33:24.000
+Nó sẽ trả về nil nếu nút là nút mà macro của bạn đã tạo, thay vì nút mà trình biên dịch đã chuyển cho bạn, nhưng chúng tôi biết rằng "originalWrapped" là một trong những đối số mà người dùng đã viết, vì vậy vị trí của nó sẽ không bao giờ là nil và chúng tôi có thể buộc mở gói kết quả một cách an toàn.
+
+00:33:24.000 --> 00:33:31.000
+Bây giờ tất cả những gì bạn phải làm là nội suy các nút cú pháp cho tệp và số dòng, và bạn đã hoàn tất.
+
+00:33:31.000 --> 00:33:34.000
+Chúng tôi hiện đang tạo ra tuyên bố "bảo vệ" đúng đắn.
+
+00:33:34.000 --> 00:33:38.000
+Cho đến nay, chúng tôi đã thảo luận về cách làm cho macro hoạt động.
+
+00:33:38.000 --> 00:33:41.000
+Nhưng hãy tiếp tục và nói về cách làm cho chúng hoạt động tốt.
+
+00:33:41.000 --> 00:33:45.000
+Và chúng ta sẽ bắt đầu bằng cách nói về va chạm tên.
+
+00:33:45.000 --> 00:33:52.000
+Khi chúng tôi xem xét macro "unwrap" trước đây, chúng tôi đã xem xét một ví dụ trong đó chúng tôi đã mở một tên biến đơn giản.
+
+00:33:52.000 --> 00:33:57.000
+Nhưng nếu chúng ta cố gắng mở một biểu thức phức tạp hơn, macro phải mở rộng khác đi.
+
+00:33:57.000 --> 00:34:05.000
+Nó tạo ra mã ghi lại kết quả của biểu thức thành một biến được gọi là "wrappedValue", và sau đó mở gói đó.
+
+00:34:05.000 --> 00:34:11.000
+Nhưng điều gì sẽ xảy ra nếu bạn cố gắng sử dụng một biến được gọi là "wrappedValue" trong tin nhắn?
+
+00:34:11.000 --> 00:34:20.000
+Khi trình biên dịch tìm kiếm "wrappedValue", cuối cùng nó sẽ tìm thấy cái gần hơn, vì vậy nó sẽ sử dụng cái đó thay vì cái mà bạn thực sự muốn nói.
+
+00:34:20.000 --> 00:34:30.000
+Bạn có thể cố gắng khắc phục điều này bằng cách chọn một cái tên mà bạn nghĩ rằng người dùng của bạn có thể sẽ không sử dụng một cách tình cờ, nhưng sẽ không tốt hơn nếu làm điều này trở nên bất khả thi?
+
+00:34:30.000 --> 00:34:35.000
+Đó là những gì phương thức "makeUniqueName" trên Macro Expansion Context làm.
+
+00:34:35.000 --> 00:34:46.000
+Nó trả về một tên biến được đảm bảo không được sử dụng trong mã người dùng hoặc trong bất kỳ bản mở rộng vĩ mô nào khác, vì vậy bạn có thể chắc chắn rằng chuỗi tin nhắn sẽ không vô tình đề cập đến nó.
+
+00:34:46.000 --> 00:34:51.000
+Một số bạn có thể tự hỏi, tại sao Swift không tự động ngăn điều đó xảy ra?
+
+00:34:51.000 --> 00:35:02.000
+Một số ngôn ngữ có cái gọi là hệ thống vĩ mô "vệ sinh", trong đó các tên bên trong vĩ mô khác biệt với các tên bên ngoài, vì vậy chúng không thể xung đột với nhau.
+
+00:35:02.000 --> 00:35:08.000
+Swift không phải như vậy bởi vì chúng tôi đã phát hiện ra rằng rất nhiều macro cần sử dụng tên từ bên ngoài.
+
+00:35:08.000 --> 00:35:13.000
+Hãy nghĩ về macro DictionaryStorage, sử dụng thuộc tính "từ điển" trên loại.
+
+00:35:13.000 --> 00:35:21.000
+Nếu "từ điển" bên trong một vĩ mô có nghĩa là một cái gì đó khác với "từ điển" bên ngoài, thì sẽ khá khó để làm cho nó hoạt động.
+
+00:35:21.000 --> 00:35:27.000
+Và đôi khi, bạn thậm chí muốn giới thiệu một cái tên hoàn toàn mới mà mã không phải vĩ mô có thể truy cập.
+
+00:35:27.000 --> 00:35:34.000
+Macro ngang hàng, macro thành viên và macro khai báo về cơ bản tồn tại hoàn toàn để làm điều này.
+
+00:35:34.000 --> 00:35:39.000
+Nhưng khi họ làm vậy, họ cần khai báo những cái tên mà họ đang thêm, để trình biên dịch biết về chúng.
+
+00:35:39.000 --> 00:35:43.000
+Và họ làm điều đó bên trong thuộc tính vai trò của họ.
+
+00:35:43.000 --> 00:35:48.000
+Bạn có thể không nhận thấy nó trước đây, nhưng chúng tôi thực sự đã thấy những tuyên bố này từ lâu.
+
+00:35:48.000 --> 00:35:56.000
+Vai trò "thành viên" trên macro DictionaryStorage có tham số "tên:" chỉ định tên "từ điển" và "init".
+
+00:35:56.000 --> 00:36:02.000
+Và trên thực tế, hầu hết các macro mà chúng tôi đã xem xét trong phiên này đều có ít nhất một vai trò với đối số "tên".
+
+00:36:02.000 --> 00:36:13.000
+Có năm công cụ chỉ định tên bạn có thể sử dụng: "Quá tải" có nghĩa là macro thêm các khai báo có cùng tên cơ sở chính xác với bất kỳ macro nào được đính kèm.
+
+00:36:13.000 --> 00:36:19.000
+"Tiền tố" có nghĩa là macro thêm các khai báo có cùng tên cơ sở, ngoại trừ với tiền tố được chỉ định được thêm vào.
+
+00:36:19.000 --> 00:36:24.000
+"Suffixed" là cùng một thứ, ngoại trừ với hậu tố thay vì tiền tố.
+
+00:36:24.000 --> 00:36:30.000
+"Được đặt tên" có nghĩa là macro thêm các khai báo với một tên cơ sở cụ thể, cố định.
+
+00:36:30.000 --> 00:36:37.000
+Và "tùy ý" có nghĩa là macro thêm các khai báo với một số tên khác không thể được mô tả bằng bất kỳ quy tắc nào trong số này.
+
+00:36:37.000 --> 00:36:39.000
+Nó thực sự phổ biến để sử dụng "tùy tiện".
+
+00:36:39.000 --> 00:36:47.000
+Ví dụ, macro mảng đa chiều của chúng tôi khai báo một loại có tên được tính toán từ một trong các tham số của nó, vì vậy nó cần chỉ định "tùy ý".
+
+00:36:47.000 --> 00:36:51.000
+Nhưng khi bạn có thể sử dụng một trong những chỉ định khác, vui lòng làm như vậy.
+
+00:36:51.000 --> 00:36:56.000
+Nó sẽ làm cho cả trình biên dịch và các công cụ khác như hoàn thành mã nhanh hơn.
+
+00:36:56.000 --> 00:37:01.000
+Bây giờ, tại thời điểm này trong phiên, tôi đoán tất cả các bạn đang muốn viết macro đầu tiên của mình.
+
+00:37:01.000 --> 00:37:07.000
+Và bạn có thể có một ý tưởng tuyệt vời về cách bắt đầu: Chỉ cần viết một macro chèn ngày và giờ khi nó được mở rộng.
+
+00:37:07.000 --> 00:37:09.000
+Ý tưởng tuyệt vời, phải không?
+
+00:37:09.000 --> 00:37:11.000
+Sai rồi.
+
+00:37:11.000 --> 00:37:14.000
+Hóa ra, bạn không được viết macro này.
+
+00:37:14.000 --> 00:37:16.000
+Hãy để tôi giải thích tại sao.
+
+00:37:16.000 --> 00:37:21.000
+Macro chỉ cần sử dụng thông tin mà trình biên dịch cung cấp cho họ.
+
+00:37:21.000 --> 00:37:31.000
+Trình biên dịch giả định rằng việc triển khai vĩ mô là các chức năng thuần túy và nếu dữ liệu mà nó cung cấp không thay đổi, thì việc mở rộng cũng không thể thay đổi.
+
+00:37:31.000 --> 00:37:35.000
+Nếu bạn phá vỡ điều đó, bạn có thể thấy hành vi không nhất quán.
+
+00:37:35.000 --> 00:37:41.000
+Bây giờ, hệ thống vĩ mô được thiết kế để ngăn chặn một số loại hành vi có thể vi phạm quy tắc này.
+
+00:37:41.000 --> 00:37:49.000
+Các trình cắm trình biên dịch chạy trong hộp cát ngăn việc triển khai macro đọc tệp trên đĩa hoặc truy cập mạng.
+
+00:37:49.000 --> 00:37:52.000
+Nhưng hộp cát không chặn mọi hành động xấu.
+
+00:37:52.000 --> 00:38:02.000
+Bạn có thể sử dụng API để lấy thông tin như ngày tháng hoặc số ngẫu nhiên, hoặc bạn có thể lưu thông tin từ một bản mở rộng trong một biến toàn cầu và sử dụng nó trong một bản mở rộng khác.
+
+00:38:02.000 --> 00:38:06.000
+Nhưng nếu bạn làm những điều này, vĩ mô của bạn có thể hoạt động sai.
+
+00:38:06.000 --> 00:38:08.000
+Vì vậy đừng.
+
+00:38:08.000 --> 00:38:13.000
+Cuối cùng, nhưng hoàn toàn không kém phần quan trọng, hãy nói về việc kiểm tra.
+
+00:38:13.000 --> 00:38:22.000
+Trình cắm macro của bạn chỉ là một mô-đun Swift thông thường, có nghĩa là bạn có thể, và chắc chắn nên viết các bài kiểm tra đơn vị bình thường cho nó.
+
+00:38:22.000 --> 00:38:27.000
+Phát triển theo hướng thử nghiệm là một cách tiếp cận cực kỳ hiệu quả để phát triển các macro Swift.
+
+00:38:27.000 --> 00:38:35.000
+Trình trợ giúp "assertMacroExpansion" từ SwiftSyntaxMacrosTestSupport sẽ kiểm tra xem macro có tạo ra bản mở rộng phù hợp hay không.
+
+00:38:35.000 --> 00:38:40.000
+Chỉ cần cho nó một ví dụ về macro và mã mà nó sẽ mở rộng thành, và nó sẽ đảm bảo chúng khớp.
+
+00:38:40.000 --> 00:38:44.000
+Vì vậy, chúng tôi đã học được rất nhiều về macro Swift ngày hôm nay.
+
+00:38:44.000 --> 00:38:52.000
+Macro cho phép bạn giảm bản mẫu bằng cách thiết kế các tính năng ngôn ngữ mới "mở rộng" một trang web sử dụng nhỏ thành một đoạn mã phức tạp hơn.
+
+00:38:52.000 --> 00:39:01.000
+Bạn khai báo một macro cùng với các API khác, thường là trong thư viện, nhưng bạn thực sự triển khai nó trong một trình cắm riêng biệt chạy mã Swift trong một hộp cát an toàn.
+
+00:39:01.000 --> 00:39:07.000
+Vai trò của macro thể hiện nơi bạn có thể sử dụng nó và cách mở rộng của nó được tích hợp vào phần còn lại của chương trình.
+
+00:39:07.000 --> 00:39:14.000
+Và bạn có thể, và chắc chắn nên, viết các bài kiểm tra đơn vị cho các macro của mình để đảm bảo chúng hoạt động như mong đợi.
+
+00:39:14.000 --> 00:39:19.000
+Nếu bạn chưa xem nó, phiên "Viết Macro Swift" sẽ là điểm dừng chân tiếp theo của bạn.
+
+00:39:19.000 --> 00:39:31.000
+Nó sẽ chỉ cho bạn cách làm việc với các công cụ phát triển vĩ mô và mẫu gói vĩ mô của Xcode, cách kiểm tra cây SwiftSyntax và lấy thông tin ra khỏi chúng và cách xây dựng quy trình phát triển vĩ mô xung quanh các bài kiểm tra đơn vị của bạn.
+
+00:39:31.000 --> 00:39:35.000
+Vì vậy, cảm ơn vì đã xem, và mã hóa vui vẻ.
+
+00:39:35.000 --> 23:59:59.000
+♪ ♪
+
