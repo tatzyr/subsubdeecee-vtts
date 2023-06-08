@@ -1,0 +1,572 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:18.000
+Denis: Xin chào, tên tôi là Denis Vieriu, và tôi là một kỹ sư phần mềm trong nhóm GPU, Đồ họa và Phần mềm Hiển thị tại Apple.
+
+00:00:18.000 --> 00:00:25.000
+Hôm nay tôi sẽ giới thiệu cho bạn tất cả các tính năng và cải tiến mới được giới thiệu cho việc học máy năm nay trong Metal.
+
+00:00:25.000 --> 00:00:28.000
+Trước tiên tôi sẽ tóm tắt lại các phần phụ trợ học máy hiện có.
+
+00:00:28.000 --> 00:00:34.000
+Các API học máy Metal được hiển thị thông qua khung Metal Performance Shaders.
+
+00:00:34.000 --> 00:00:43.000
+MPS là một tập hợp các nguyên thủy GPU hiệu suất cao cho các lĩnh vực khác nhau, như xử lý hình ảnh, đại số tuyến tính và học máy.
+
+00:00:43.000 --> 00:00:53.000
+MPSGraph là một biểu đồ tính toán mục đích chung, nằm trên khung MPS và mở rộng hỗ trợ cho các tenxơ đa chiều.
+
+00:00:53.000 --> 00:00:59.000
+Các khung suy luận học máy, như CoreML, được xây dựng trên phần phụ trợ MPSGraph.
+
+00:00:59.000 --> 00:01:05.000
+MPSGraph cũng hỗ trợ các khuôn khổ đào tạo, như TensorFlow và PyTorch.
+
+00:01:05.000 --> 00:01:14.000
+Để tìm hiểu thêm về MPSGraph và ML Frameworks, vui lòng tham khảo các cuộc nói chuyện Metal WWDC trước đây được liệt kê ở đây.
+
+00:01:14.000 --> 00:01:29.000
+Phiên này tập trung vào các bản cập nhật và cải tiến được thêm vào phần phụ trợ PyTorch và TensorFlow Metal, khả năng tăng tốc GPU mới cho JAX và các tính năng được thêm vào MPSGraph cho ML Inference.
+
+00:01:29.000 --> 00:01:36.000
+Tăng tốc PyTorch và TensorFlow Metal cho phép bạn sử dụng các hạt nhân hiệu quả cao từ MPS để có được hiệu suất tốt nhất trên máy Mac của mình.
+
+00:01:36.000 --> 00:01:42.000
+Tăng tốc PyTorch Metal đã có sẵn từ phiên bản 1.12 thông qua phần phụ trợ MPS.
+
+00:01:42.000 --> 00:01:52.000
+Điều này đã được giới thiệu vào hệ sinh thái PyTorch vào năm ngoái, và kể từ đó, nhiều cải tiến đã được thực hiện để tối ưu hóa việc sử dụng bộ nhớ và tenxơ xem.
+
+00:01:52.000 --> 00:02:00.000
+Năm nay, PyTorch 2.0 MPS Backend đã có một bước tiến lớn và đã đủ điều kiện cho Giai đoạn Beta.
+
+00:02:00.000 --> 00:02:03.000
+Nhưng đây không phải là tất cả những cải tiến.
+
+00:02:03.000 --> 00:02:12.000
+Các bản dựng PyTorch mới nhất chứa rất nhiều bản cập nhật mới, chẳng hạn như hồ sơ hoạt động MPS, hạt nhân tùy chỉnh và hỗ trợ độ chính xác hỗn hợp tự động.
+
+00:02:12.000 --> 00:02:20.000
+Trước khi bao gồm tất cả các tính năng xây dựng hàng đêm, tôi sẽ bắt đầu với những gì mới trong PyTorch 2.0.
+
+00:02:20.000 --> 00:02:32.000
+Có hỗ trợ cho 60 toán tử Torch được sử dụng nhiều nhất, bao gồm các hoạt động như lấy mẫu lưới, giải quyết tam giác, topk và nhiều hơn nữa.
+
+00:02:32.000 --> 00:02:35.000
+Phạm vi kiểm tra đã được cải thiện rất nhiều.
+
+00:02:35.000 --> 00:02:43.000
+Điều này bao gồm các bài kiểm tra cho hầu hết các toán tử Torch, kiểm tra độ dốc và kiểm tra dựa trên ModuleInfo.
+
+00:02:43.000 --> 00:02:51.000
+Kể từ khi phát hành, phạm vi phủ sóng mạng đã mở rộng khi nhiều mô hình phổ biến áp dụng MPS làm phụ trợ chính thức của họ trên macOS.
+
+00:02:51.000 --> 00:03:01.000
+Điều này bao gồm các mô hình nền tảng, chẳng hạn như WhisperAI, các mô hình phát hiện đối tượng như YOLO, mô hình khuếch tán ổn định và nhiều mô hình khác.
+
+00:03:01.000 --> 00:03:06.000
+Hãy kiểm tra một trong những mô hình này đang hoạt động bằng cách sử dụng PyTorch 2.0 mới nhất.
+
+00:03:06.000 --> 00:03:13.000
+Đối với ví dụ này, tôi đang sử dụng YoloV5, một mạng phát hiện đối tượng chạy trên M2 Max.
+
+00:03:13.000 --> 00:03:24.000
+Ở phía bên trái, tôi có mạng đang chạy và tạo hình ảnh trực tiếp bằng cách sử dụng phụ trợ PyTorch MPS, trong khi ở bên phải, tôi có cùng một mô hình, nhưng chạy trên CPU.
+
+00:03:24.000 --> 00:03:31.000
+Phía bên trái, sử dụng phụ trợ MPS, đang chạy với tốc độ khung hình cao hơn đáng kể.
+
+00:03:31.000 --> 00:03:47.000
+Và hơn nữa, các nhà phát triển không chỉ áp dụng phụ trợ PyTorch MPS trong các mạng bên ngoài của họ, mà còn đóng góp mã cho nhiều nhà khai thác mới, bao gồm biểu đồ, group_norm, signbit, v.v.
+
+00:03:47.000 --> 00:03:55.000
+Tiếp theo, tôi sẽ đề cập đến các tính năng mới có sẵn trong các bản dựng PyTorch mới nhất, bắt đầu với hỗ trợ hồ sơ cho các hoạt động MPS.
+
+00:03:55.000 --> 00:04:09.000
+Các bản dựng hàng đêm của PyTorch có hỗ trợ hồ sơ sử dụng biển chỉ dẫn hệ điều hành để hiển thị thời gian chạy chính xác để thực thi hoạt động, sao chép giữa CPU và GPU và dự phòng cho CPU do các nhà khai thác không được hỗ trợ gây ra.
+
+00:04:09.000 --> 00:04:17.000
+Bạn sẽ có thể trực quan hóa dữ liệu hồ sơ trong một công cụ rất quen thuộc, Metal System Trace, là một phần của Instruments.
+
+00:04:17.000 --> 00:04:27.000
+Để tìm hiểu thêm về việc lập hồ sơ các ứng dụng ML sử dụng Metal System Trace, tôi khuyên bạn nên xem phiên từ năm ngoái, "Tăng tốc học máy với Metal."
+
+00:04:27.000 --> 00:04:31.000
+Sử dụng hồ sơ là một quá trình rất đơn giản.
+
+00:04:31.000 --> 00:04:40.000
+Gọi phương thức bắt đầu trên gói hồ sơ MPS để cho phép truy tìm và ở cuối tập lệnh của bạn, hãy sử dụng phương thức dừng để kết thúc hồ sơ.
+
+00:04:40.000 --> 00:04:45.000
+Bây giờ tôi sẽ xem qua trình lập hồ sơ để gỡ lỗi một ví dụ.
+
+00:04:45.000 --> 00:04:56.000
+Mạng mẫu này sử dụng mô hình tuần tự bao gồm các phép biến đổi tuyến tính và các chức năng kích hoạt Softshrink với tổng cộng bảy lớp trong mô hình.
+
+00:04:56.000 --> 00:05:00.000
+Hiệu suất hiện tại của mô hình này không thỏa mãn.
+
+00:05:00.000 --> 00:05:05.000
+Trong trường hợp này, trình lập hồ sơ có thể được sử dụng để tìm nút cổ chai.
+
+00:05:05.000 --> 00:05:10.000
+Trong Metal System Trace, trước tiên, hãy đảm bảo bật os_signpost.
+
+00:05:10.000 --> 00:05:14.000
+Điều này sẽ cho phép bạn nắm bắt thông tin nhà điều hành PyTorch.
+
+00:05:14.000 --> 00:05:21.000
+Tiếp theo, hãy kiểm tra xem thiết bị và tệp thực thi phù hợp đã được đặt chưa, trong trường hợp này là tệp nhị phân Python.
+
+00:05:21.000 --> 00:05:24.000
+Sau đó nhấp vào nút ghi âm.
+
+00:05:24.000 --> 00:05:28.000
+Các nhạc cụ hiện đang ghi lại việc thực thi PyTorch.
+
+00:05:28.000 --> 00:05:32.000
+Tôi sẽ để nó chạy trong vài giây để đảm bảo rằng tôi thu thập đủ dữ liệu.
+
+00:05:32.000 --> 00:05:36.000
+Sau đó tôi nhấp vào Dừng lại.
+
+00:05:36.000 --> 00:05:42.000
+Trong tab os_signpost, tiết lộ dòng thời gian PyTorch Intervals.
+
+00:05:42.000 --> 00:05:53.000
+Dòng thời gian này hiển thị thời gian thực thi của một toán tử, cùng với Siêu dữ liệu PyTorch, chẳng hạn như số nhận dạng chuỗi, loại dữ liệu và độ dài bản sao.
+
+00:05:53.000 --> 00:05:58.000
+Phóng to dòng thời gian cho thấy các toán tử PyTorch được sử dụng bởi ví dụ này.
+
+00:05:58.000 --> 00:06:05.000
+Mẫu từ dấu vết này có thể dễ dàng được xác định cho mô hình Tuần tự tùy chỉnh được tạo thành từ bảy lớp.
+
+00:06:05.000 --> 00:06:11.000
+Từ dấu vết, rõ ràng nút cổ chai nằm trong dự phòng Softshrink cho CPU.
+
+00:06:11.000 --> 00:06:13.000
+Quá trình này rất kém hiệu quả.
+
+00:06:13.000 --> 00:06:22.000
+Mô hình phát sinh chi phí từ việc thực thi CPU của toán tử Softshrink và các bản sao bổ sung, trong khi GPU bị bỏ đói.
+
+00:06:22.000 --> 00:06:29.000
+Hầu hết các khoảng trống trong dòng thời gian GPU đến từ chức năng kích hoạt Softshrink quay trở lại CPU.
+
+00:06:29.000 --> 00:06:34.000
+Để khắc phục điều này, tôi sẽ viết một hạt nhân tùy chỉnh để cải thiện hiệu suất.
+
+00:06:34.000 --> 00:06:37.000
+Có bốn bước để viết một thao tác tùy chỉnh.
+
+00:06:37.000 --> 00:06:42.000
+Đầu tiên, thực hiện thao tác trong Objective-C và Metal.
+
+00:06:42.000 --> 00:06:48.000
+Tiếp theo, tạo các ràng buộc Python cho mã Objective-C của bạn và biên dịch tiện ích mở rộng của bạn.
+
+00:06:48.000 --> 00:06:55.000
+Cuối cùng, khi tiện ích mở rộng của bạn được xây dựng, hãy nhập thao tác vào tập lệnh đào tạo của bạn và bắt đầu sử dụng nó.
+
+00:06:55.000 --> 00:07:00.000
+Tôi sẽ bắt đầu với việc triển khai hoạt động.
+
+00:07:00.000 --> 00:07:03.000
+Bắt đầu bằng cách nhập tiêu đề mở rộng Torch.
+
+00:07:03.000 --> 00:07:09.000
+Điều này bao gồm tất cả các bit PyTorch cần thiết để viết các phần mở rộng C++.
+
+00:07:09.000 --> 00:07:20.000
+Sau đó xác định hàm tính toán và sử dụng get_command_buffer MPS backend API để có được tham chiếu đến MPSStream Command Buffer.
+
+00:07:20.000 --> 00:07:26.000
+Tương tự, sử dụng get_dispatch_queue API để lấy tham chiếu đến hàng đợi nối tiếp.
+
+00:07:26.000 --> 00:07:33.000
+Tiếp theo, tạo một bộ mã hóa bằng cách sử dụng bộ đệm lệnh và xác định hạt nhân GPU tùy chỉnh.
+
+00:07:33.000 --> 00:07:41.000
+Bạn mã hóa hạt nhân bên trong hàng đợi điều phối để đảm bảo rằng các bài gửi từ nhiều luồng được tuần tự hóa.
+
+00:07:41.000 --> 00:07:50.000
+Sau khi tất cả công việc được mã hóa, hãy sử dụng API đồng bộ hóa để đợi cho đến khi bộ đệm lệnh hiện tại chạy xong, vì vậy bạn có thể quan sát các bài gửi được tuần tự hóa.
+
+00:07:50.000 --> 00:07:55.000
+Hoặc nếu bạn không cần tuần tự hóa, hãy sử dụng API cam kết.
+
+00:07:55.000 --> 00:07:58.000
+Tiếp theo, liên kết các chức năng tùy chỉnh của bạn.
+
+00:07:58.000 --> 00:08:04.000
+Bạn có thể sử dụng PYBIND11 để liên kết các hàm Objective-C vào Python một cách rất đơn giản.
+
+00:08:04.000 --> 00:08:10.000
+Đối với phần mở rộng này, mã ràng buộc cần thiết chỉ kéo dài hai dòng.
+
+00:08:10.000 --> 00:08:14.000
+Sau khi ràng buộc, hãy biên dịch tiện ích mở rộng của bạn.
+
+00:08:14.000 --> 00:08:18.000
+Đầu tiên nhập torch.utils.cpp_extension.
+
+00:08:18.000 --> 00:08:23.000
+Điều này cung cấp một chức năng tải mà bạn có thể sử dụng để biên dịch tiện ích mở rộng của mình.
+
+00:08:23.000 --> 00:08:31.000
+Tiếp theo, chuyển tên tiện ích mở rộng của bạn để xây dựng, sau đó là danh sách các đường dẫn tương đối hoặc tuyệt đối đến các tệp mã nguồn.
+
+00:08:31.000 --> 00:08:37.000
+Tùy chọn, bạn có thể liệt kê các cờ trình biên dịch bổ sung để chuyển tiếp đến bản dựng.
+
+00:08:37.000 --> 00:08:46.000
+Chức năng tải sẽ biên dịch các tệp nguồn vào một thư viện được chia sẻ, sau đó sẽ được tải vào quy trình Python hiện tại dưới dạng mô-đun.
+
+00:08:46.000 --> 00:08:52.000
+Cuối cùng, nhập toán tử vào tập lệnh của bạn để bắt đầu sử dụng nó.
+
+00:08:52.000 --> 00:09:01.000
+Bắt đầu bằng cách nhập thư viện đã biên dịch và thay đổi mô hình tuần tự trước đó để sử dụng hạt nhân Softshrink tùy chỉnh.
+
+00:09:01.000 --> 00:09:06.000
+Hãy chạy lại cùng một mô hình và kiểm tra kết quả.
+
+00:09:06.000 --> 00:09:12.000
+Với toán tử tùy chỉnh mới được thêm vào, mô hình chạy hiệu quả hơn nhiều.
+
+00:09:12.000 --> 00:09:20.000
+Tất cả các bản sao và tenxơ trung gian được tạo ra bởi dự phòng cho CPU đã biến mất và mô hình Tuần tự chạy nhanh hơn nhiều.
+
+00:09:20.000 --> 00:09:26.000
+Bây giờ hãy khám phá thêm nhiều cách mạng của bạn có thể được cải thiện hơn nữa.
+
+00:09:26.000 --> 00:09:35.000
+Phần phụ trợ PyTorch MPS hiện hỗ trợ độ chính xác hỗn hợp tự động, cho phép bạn đào tạo nhanh hơn bằng cách sử dụng ít bộ nhớ hơn và không làm giảm chất lượng.
+
+00:09:35.000 --> 00:09:40.000
+Để hiểu độ chính xác hỗn hợp, trước tiên tôi sẽ xem xét các loại dữ liệu được hỗ trợ.
+
+00:09:40.000 --> 00:09:50.000
+Đào tạo độ chính xác hỗn hợp là một chế độ cho phép đào tạo các mô hình học sâu với sự kết hợp của dấu phẩy động chính xác duy nhất và một nửa dấu phẩy động chính xác.
+
+00:09:50.000 --> 00:09:57.000
+Bắt đầu với macOS Sonoma, MPSGraph bổ sung hỗ trợ cho một kiểu dữ liệu mới, bfloat16.
+
+00:09:57.000 --> 00:10:02.000
+Bfloat16 là một định dạng dấu phẩy động 16 bit cho việc học sâu.
+
+00:10:02.000 --> 00:10:08.000
+Nó bao gồm 1 bit ký hiệu, 8 bit số mũ và 7 bit mantissa.
+
+00:10:08.000 --> 00:10:16.000
+Điều này khác với định dạng dấu phẩy động IEEE 16-bit tiêu chuẩn, không được thiết kế dành cho các ứng dụng học sâu.
+
+00:10:16.000 --> 00:10:23.000
+Độ chính xác hỗn hợp tự động sẽ được kích hoạt cho cả float16 và bfloat16.
+
+00:10:23.000 --> 00:10:38.000
+Độ chính xác hỗn hợp tự động chọn độ chính xác phù hợp cho mỗi lớp bằng cách đo hiệu suất của mạng với độ chính xác mặc định, sau đó nó chạy lại, với các cài đặt độ chính xác hỗn hợp để tối ưu hóa hiệu suất mà không ảnh hưởng đến độ chính xác.
+
+00:10:38.000 --> 00:10:45.000
+Một số lớp của mạng nơ-ron có thể được thực thi với độ chính xác thấp hơn, chẳng hạn như các lớp tích chập hoặc tuyến tính.
+
+00:10:45.000 --> 00:10:52.000
+Các lớp khác như giảm thường sẽ yêu cầu mức độ chính xác cao hơn.
+
+00:10:52.000 --> 00:10:57.000
+Thêm hỗ trợ Độ chính xác hỗn hợp tự động vào mạng của bạn là một quá trình rất dễ dàng.
+
+00:10:57.000 --> 00:10:59.000
+Đầu tiên, thêm autocast.
+
+00:10:59.000 --> 00:11:04.000
+Cả float16 và bfloat16 đều được hỗ trợ.
+
+00:11:04.000 --> 00:11:12.000
+Autocast đóng vai trò như một trình quản lý ngữ cảnh cho phép một vùng của tập lệnh chạy với độ chính xác hỗn hợp.
+
+00:11:12.000 --> 00:11:21.000
+Trong khu vực này, các hoạt động MPS chạy theo kiểu dữ liệu được chọn bởi autocast để cải thiện hiệu suất trong khi vẫn duy trì độ chính xác.
+
+00:11:21.000 --> 00:11:24.000
+Phần phụ trợ MPS cũng đã được tối ưu hóa đáng kể.
+
+00:11:24.000 --> 00:11:32.000
+Với PyTorch 2.0 và macOS Sonoma, phần phụ trợ MPS nhanh hơn gấp năm lần so với bản phát hành trước của chúng tôi.
+
+00:11:32.000 --> 00:11:36.000
+Đó là nó cho PyTorch. Bây giờ hãy chuyển sang TensorFlow.
+
+00:11:36.000 --> 00:11:41.000
+Phần phụ trợ TensorFlow Metal đã trưởng thành thành phiên bản phát hành 1.0 ổn định.
+
+00:11:41.000 --> 00:11:47.000
+Trong bản phát hành này, một đường chuyền tối ưu hóa ánh xạ lại grappler đã được thêm vào plugin.
+
+00:11:47.000 --> 00:11:55.000
+Plugin Metal cũng nhận được hỗ trợ chính xác hỗn hợp và quá trình cài đặt giờ đây đơn giản hơn trước.
+
+00:11:55.000 --> 00:12:04.000
+Hiệu suất của phụ trợ TensorFlow Metal đã được cải thiện thông qua việc bổ sung tính năng hợp nhất tự động của các mẫu tính toán được công nhận.
+
+00:12:04.000 --> 00:12:12.000
+Các tính toán này bao gồm các tích chập hợp nhất và nhân ma trận, các hoạt động tối ưu hóa và các ô RNN.
+
+00:12:12.000 --> 00:12:20.000
+Việc tối ưu hóa này xảy ra tự động thông qua đường chuyền vật lộn khi biểu đồ tính toán được tạo.
+
+00:12:20.000 --> 00:12:25.000
+Ở đây tôi có một ví dụ về tính toán phổ biến của phép toán tích chập hai chiều.
+
+00:12:25.000 --> 00:12:32.000
+Tích chập thường được theo sau bởi một hàm cộng, một mô hình phổ biến trong các mạng nơ-ron tích chập.
+
+00:12:32.000 --> 00:12:39.000
+Bằng cách xác định mô hình này, người vật lộn vượt qua có thể ánh xạ lại tính toán.
+
+00:12:39.000 --> 00:12:45.000
+Điều này cho phép bạn sử dụng một hạt nhân được tối ưu hóa hơn để đạt được cùng một đầu ra, dẫn đến hiệu suất tốt hơn.
+
+00:12:45.000 --> 00:12:50.000
+Giống như trong PyTorch, TensorFlow cũng nhận được sự hỗ trợ chính xác hỗn hợp.
+
+00:12:50.000 --> 00:12:53.000
+TensorFlow cho phép thiết lập độ chính xác hỗn hợp trên toàn cầu.
+
+00:12:53.000 --> 00:13:06.000
+Điều này cho phép tất cả các lớp mạng được tạo tự động với chính sách loại dữ liệu được yêu cầu, vì vậy việc cho phép thay đổi này trong quy trình làm việc tiêu chuẩn của bạn yêu cầu thay đổi tối thiểu đối với mã hiện có.
+
+00:13:06.000 --> 00:13:14.000
+Chính sách toàn cầu có thể được thiết lập để sử dụng Float16 hoặc BFloat16.
+
+00:13:14.000 --> 00:13:21.000
+Ngoài những cải tiến về hiệu suất, trải nghiệm người dùng trong việc kích hoạt khả năng tăng tốc Metal đã được sắp xếp hợp lý.
+
+00:13:21.000 --> 00:13:32.000
+Kể từ bây giờ, chỉ cần đi theo con đường thông thường là cài đặt bánh xe TensorFlow và plugin TensorFlow-Metal thông qua trình quản lý gói sẽ cho phép tăng tốc Metal.
+
+00:13:32.000 --> 00:13:41.000
+Đối với những người muốn duy trì sự phát triển của TensorFlow, hỗ trợ tăng tốc Metal hiện cũng có sẵn trên các bản phát hành hàng đêm của TensorFlow.
+
+00:13:41.000 --> 00:13:46.000
+Bây giờ hãy nói về khả năng tăng tốc GPU mới cho JAX.
+
+00:13:46.000 --> 00:13:53.000
+Năm nay, khả năng tăng tốc GPU JAX sẽ được hỗ trợ thông qua phần phụ trợ Metal, tương tự như PyTorch và TensorFlow.
+
+00:13:53.000 --> 00:14:00.000
+JAX là một thư viện Python cho nghiên cứu máy tính số và học máy hiệu suất cao.
+
+00:14:00.000 --> 00:14:09.000
+Nó dựa trên khuôn khổ NumPy phổ biến để làm việc với các mảng lớn, với ba phần mở rộng chính cho nghiên cứu học máy.
+
+00:14:09.000 --> 00:14:14.000
+Đầu tiên, nó hỗ trợ phân biệt tự động bằng cách sử dụng chức năng grad.
+
+00:14:14.000 --> 00:14:21.000
+Nó có thể phân biệt thông qua một tập hợp con lớn các tính năng của Python và thậm chí nó có thể nhận các dẫn xuất bậc cao.
+
+00:14:21.000 --> 00:14:25.000
+JAX cũng hỗ trợ vector hóa nhanh chóng và hiệu quả.
+
+00:14:25.000 --> 00:14:33.000
+Với một hàm apply_matrix, bạn có thể lặp lại một thứ nguyên hàng loạt trong Python, nhưng nó có thể chạy ở hiệu suất dưới mức tối ưu.
+
+00:14:33.000 --> 00:14:38.000
+Trong trường hợp này, vmap có thể được sử dụng để tự động thêm hỗ trợ hàng loạt.
+
+00:14:38.000 --> 00:14:45.000
+Và hơn nữa, JAX cho phép bạn biên dịch hàm của mình thành các hạt nhân được tối ưu hóa bằng cách sử dụng API được gọi là jit.
+
+00:14:45.000 --> 00:14:53.000
+Trong trường hợp tương tự, jit được sử dụng để chuyển đổi hàm trên vmap để làm cho nó chạy nhanh hơn.
+
+00:14:53.000 --> 00:15:03.000
+Trên MacBook Pro với M2 Max, khả năng tăng tốc JAX Metal cung cấp tốc độ đáng kinh ngạc, với tốc độ trung bình nhanh hơn mười lần so với CPU trên các mạng này.
+
+00:15:03.000 --> 00:15:12.000
+Để biết thêm chi tiết về thiết lập môi trường và cài đặt JAX, vui lòng tham khảo trang web Tài nguyên Nhà phát triển Kim loại.
+
+00:15:12.000 --> 00:15:15.000
+Hãy chuyển sang bánh răng và chuyển sang suy luận ML.
+
+00:15:15.000 --> 00:15:22.000
+Tôi sẽ bắt đầu bằng cách giới thiệu một định dạng tuần tự hóa mới cho MPSGraph mà bạn sử dụng để tối ưu hóa thời gian tải của mình.
+
+00:15:22.000 --> 00:15:28.000
+Định dạng tuần tự hóa mới này có thể được tạo ra từ các mạng tuần tự hóa hiện có của bạn từ các khuôn khổ khác.
+
+00:15:28.000 --> 00:15:36.000
+Cuối cùng, tôi sẽ chỉ cho bạn cách tối ưu hóa dấu chân bộ nhớ của mạng của bạn bằng cách tận dụng lượng tử hóa số nguyên 8 bit.
+
+00:15:36.000 --> 00:15:38.000
+Hãy bắt đầu.
+
+00:15:38.000 --> 00:15:44.000
+MPSGraph có thể được tạo bằng cách sử dụng các API cấp cao với sự linh hoạt hoàn toàn, từng lớp một.
+
+00:15:44.000 --> 00:15:51.000
+Vui lòng tham khảo video về việc xây dựng các mô hình ML tùy chỉnh với Biểu đồ đổ bóng hiệu suất kim loại để biết chi tiết.
+
+00:15:51.000 --> 00:15:59.000
+Sau khi xác định và biên dịch biểu đồ tùy chỉnh của bạn, nó sẽ thực thi thông qua MPSGraphExecutable để nhận kết quả.
+
+00:15:59.000 --> 00:16:02.000
+Thông thường, quá trình này hoạt động rất tốt.
+
+00:16:02.000 --> 00:16:10.000
+Tuy nhiên, trong các biểu đồ phức tạp với nhiều lớp, việc biên dịch ban đầu này có thể dẫn đến thời gian khởi chạy ứng dụng cao.
+
+00:16:10.000 --> 00:16:17.000
+MPSGraph có một định dạng tuần tự hóa mới được gọi là MPSGraphPackage, để giải quyết chính xác vấn đề này.
+
+00:16:17.000 --> 00:16:23.000
+Định dạng tuần tự hóa mới này cho phép bạn tạo MPSGraphExecutable trước thời hạn.
+
+00:16:23.000 --> 00:16:30.000
+Sau khi tạo, MPSGraphExecutable được tối ưu hóa có thể được tải trực tiếp từ tệp MPSGraphPackage.
+
+00:16:30.000 --> 00:16:34.000
+Tạo một MPSGraphPackage rất đơn giản.
+
+00:16:34.000 --> 00:16:42.000
+Tất cả những gì bạn cần làm là tạo một bộ mô tả tuần tự hóa và chuyển nó đến hàm tuần tự hóa của MPSGraphExecutable mà bạn muốn tuần tự hóa.
+
+00:16:42.000 --> 00:16:46.000
+Bạn cũng sẽ cần phải đi qua một con đường để lưu trữ nó.
+
+00:16:46.000 --> 00:16:51.000
+Sau khi tạo gói, đây là cách bạn tải biểu đồ vào ứng dụng của mình.
+
+00:16:51.000 --> 00:16:55.000
+Bạn cần một bộ mô tả biên dịch và đường dẫn đến gói được lưu trữ của bạn.
+
+00:16:55.000 --> 00:16:59.000
+Sau đó sử dụng chúng để khởi tạo MPSGraphExecutable.
+
+00:16:59.000 --> 00:17:07.000
+Nếu bạn đã sử dụng MPSGraph, bạn có thể dễ dàng áp dụng định dạng tuần tự hóa mới bằng cách sử dụng các API mà chúng tôi đã trình bày.
+
+00:17:07.000 --> 00:17:14.000
+Nhưng nếu bạn đến từ các khuôn khổ khác, bây giờ bạn có thể dễ dàng chuyển sang MPSGraphPackage bằng MPSGraphTool mới.
+
+00:17:14.000 --> 00:17:22.000
+Đối với người dùng CoreML, bạn có thể chuyển các Chương trình ML của mình cho MPSGraphTool, công cụ này sẽ tạo MPSGraphPackage cho bạn.
+
+00:17:22.000 --> 00:17:26.000
+Điều tương tự cũng xảy ra với ONNX, nơi bạn có thể sử dụng tệp ONNX của mình làm đầu vào.
+
+00:17:26.000 --> 00:17:35.000
+Công cụ mới này cho phép bạn nhanh chóng đưa các mô hình hiện có của mình vào ứng dụng MPSGraph mà không cần mã hóa mô hình suy luận theo cách thủ công.
+
+00:17:35.000 --> 00:17:38.000
+Đây là cách bạn sử dụng công cụ dòng lệnh.
+
+00:17:38.000 --> 00:17:44.000
+Bạn cung cấp cho MPSGraphTool một cờ để khai báo loại mô hình đầu vào, trong trường hợp này là Gói CoreML.
+
+00:17:44.000 --> 00:17:50.000
+Bạn cũng cung cấp cho nó đường dẫn đến đích đầu ra của bạn và tên của mô hình đầu ra của bạn.
+
+00:17:50.000 --> 00:17:55.000
+Ngoài ra, bạn xác định nền tảng mục tiêu và phiên bản hệ điều hành tối thiểu.
+
+00:17:55.000 --> 00:18:02.000
+Sau khi chuyển đổi, MPSGraphPackages được tạo ra có thể được tải vào ứng dụng của bạn và được thực thi trực tiếp.
+
+00:18:02.000 --> 00:18:10.000
+Tiếp theo, hãy thảo luận về cách bạn có thể cải thiện hiệu quả tính toán của mình bằng cách sử dụng lượng tử hóa số nguyên 8 bit.
+
+00:18:10.000 --> 00:18:16.000
+Người ta thường sử dụng các định dạng dấu phẩy động để đào tạo và suy luận, chẳng hạn như định dạng dấu phẩy động 16 bit.
+
+00:18:16.000 --> 00:18:23.000
+Tuy nhiên, khi suy luận, các mô hình này có thể mất nhiều thời gian hơn để dự đoán kết quả.
+
+00:18:23.000 --> 00:18:29.000
+Thay vào đó, tốt hơn trong nhiều trường hợp nên sử dụng số nguyên giảm hoặc số nguyên 8 bit.
+
+00:18:29.000 --> 00:18:36.000
+Điều này sẽ giúp bạn lưu băng tần bộ nhớ và giảm dấu chân bộ nhớ của mô hình của bạn.
+
+00:18:36.000 --> 00:18:42.000
+Đối với các định dạng số nguyên 8-bit, có hai loại lượng tử hóa: đối xứng và không đối xứng.
+
+00:18:42.000 --> 00:18:46.000
+MPSGraph hiện hỗ trợ API cho cả hai.
+
+00:18:46.000 --> 00:18:55.000
+So với lượng tử hóa đối xứng, lượng tử không đối xứng cho phép bạn chỉ định độ lệch lượng tử hóa, được ký hiệu bằng zeroPoint ở đây.
+
+00:18:55.000 --> 00:19:05.000
+Bây giờ chúng ta hãy đi sâu vào việc sử dụng các tính toán lượng tử hóa thông qua một ví dụ, bắt đầu với kích hoạt và trọng số ở định dạng Int8 làm đầu vào.
+
+00:19:05.000 --> 00:19:12.000
+Các đầu vào này được khử lượng tử thành định dạng dấu phẩy động bằng cách sử dụng op dequantizeTensor trong MPSGraph.
+
+00:19:12.000 --> 00:19:17.000
+Bây giờ các đầu vào dấu phẩy động có thể được đưa vào một thao tác tích chập.
+
+00:19:17.000 --> 00:19:23.000
+Tenxơ dấu phẩy động kết quả sau đó có thể được lượng tử hóa trở lại Int8 bằng cách sử dụng op quantizeTensor.
+
+00:19:23.000 --> 00:19:33.000
+MPSGraph sẽ tự động hợp nhất tất cả các hạt nhân này vào một thao tác duy nhất, do đó tiết kiệm băng thông bộ nhớ và có khả năng cải thiện hiệu suất.
+
+00:19:33.000 --> 00:19:39.000
+Và đây là cách bạn có thể sử dụng hỗ trợ lượng tử hóa trong MPSGraph.
+
+00:19:39.000 --> 00:19:45.000
+Ngoài các tính năng mới trước đó, MPSGraph hỗ trợ nhiều toán tử học máy hơn nữa.
+
+00:19:45.000 --> 00:19:50.000
+Bắt đầu từ năm nay, các loại phức tạp được hỗ trợ cho hầu hết các hoạt động biểu đồ.
+
+00:19:50.000 --> 00:19:56.000
+Bạn có thể sử dụng các số phức với các định dạng dấu phẩy động chính xác hoặc một nửa chính xác.
+
+00:19:56.000 --> 00:20:02.000
+Dựa trên loại dữ liệu phức tạp, MPSGraph bổ sung các toán tử để tính toán Fast Fourier Transformations.
+
+00:20:02.000 --> 00:20:09.000
+Bạn có thể áp dụng phức tạp cho phức tạp, phức tạp với thực tế và thực tế cho các phép biến đổi phức tạp lên đến bốn chiều.
+
+00:20:09.000 --> 00:20:15.000
+Những thứ này rất phổ biến trong các ứng dụng xử lý âm thanh, video và hình ảnh.
+
+00:20:15.000 --> 00:20:30.000
+Hơn nữa, sử dụng MPSGraph, giờ đây bạn có thể thực hiện tích chập ba chiều, lấy mẫu lưới, Sắp xếp và ArgSort, và các thao tác tích lũy, bao gồm tổng, sản phẩm, cực tiểu và cực đại.
+
+00:20:30.000 --> 00:20:35.000
+Và điều này kết thúc cuộc thảo luận về các tính năng mới trong MPSGraph.
+
+00:20:35.000 --> 00:20:38.000
+Hãy xem lại những gì đã được trình bày hôm nay trong phiên này.
+
+00:20:38.000 --> 00:20:45.000
+Tôi đã xem qua những cải tiến trong việc tăng tốc các khung ML phổ biến như PyTorch và TensorFlow thông qua Metal.
+
+00:20:45.000 --> 00:20:51.000
+Bây giờ bạn cũng có thể tận dụng khung JAX tăng tốc Metal mới.
+
+00:20:51.000 --> 00:20:59.000
+Chúng tôi cũng đã thảo luận về cách tích hợp liền mạch các mô hình hiện có của bạn từ các khuôn khổ khác sang MPSGraph bằng cách sử dụng các công cụ tuần tự hóa mới.
+
+00:20:59.000 --> 00:21:01.000
+Và điều này kết thúc cuộc nói chuyện của chúng tôi.
+
+00:21:01.000 --> 00:21:05.000
+Chúng tôi nóng lòng muốn xem nội dung tuyệt vời mà bạn sẽ tạo ra bằng cách sử dụng tất cả các tính năng này.
+
+00:21:05.000 --> 00:21:07.000
+Cảm ơn vì đã xem.
+
+00:21:07.000 --> 23:59:59.000
+♪ ♪
+

@@ -1,0 +1,437 @@
+10170
+
+♪ ♪
+
+Evan: Xin chào, tên tôi là Evan.
+
+Hôm nay, chúng ta đang vượt ra ngoài những điều cơ bản của đồng thời có cấu trúc, khám phá cách các nhiệm vụ có cấu trúc có thể đơn giản hóa việc thực hiện các hành vi hữu ích.
+
+Trước khi chúng tôi bắt đầu, nếu bạn là người mới hoặc muốn xem lại đồng thời có cấu trúc, vui lòng xem các phiên "Khám phá đồng thời có cấu trúc trong Swift" và "Đồng thời nhanh: Hậu trường" từ WWDC 2021.
+
+Hôm nay, chúng ta sẽ xem xét hệ thống phân cấp nhiệm vụ và cách nó mở khóa việc hủy bỏ nhiệm vụ tự động, tuyên truyền ưu tiên và các hành vi giá trị địa phương nhiệm vụ hữu ích.
+
+Sau đó, chúng tôi sẽ đề cập đến một số mẫu với các nhóm nhiệm vụ để giúp quản lý việc sử dụng tài nguyên.
+
+Cuối cùng, chúng ta sẽ xem xét cách tất cả những thứ này kết hợp với nhau để tạo điều kiện thuận lợi cho việc lập hồ sơ và truy tìm các nhiệm vụ trong môi trường máy chủ.
+
+Đồng thời có cấu trúc cho phép bạn lý luận về mã đồng thời bằng cách sử dụng các điểm được xác định rõ trong đó việc thực thi phân nhánh và chạy đồng thời và nơi kết quả từ việc thực thi đó tham gia lại, tương tự như cách các khối "nếu" và vòng lặp "cho" xác định cách luồng điều khiển hoạt động trong mã đồng bộ.
+
+Thực thi đồng thời được kích hoạt khi bạn sử dụng "async let", một nhóm tác vụ hoặc tạo một nhiệm vụ hoặc nhiệm vụ tách rời.
+
+Kết quả tham gia lại việc thực hiện hiện tại tại một điểm đình chỉ, được biểu thị bằng một "chờ đợi".
+
+Không phải tất cả các nhiệm vụ đều có cấu trúc.
+
+Các nhiệm vụ có cấu trúc được tạo bằng cách sử dụng "async let" và các nhóm nhiệm vụ, trong khi các nhiệm vụ phi cấu trúc được tạo bằng Task và Task.detached.
+
+Các nhiệm vụ có cấu trúc sống đến cuối phạm vi nơi chúng được khai báo, giống như các biến cục bộ và sẽ tự động bị hủy khi chúng nằm ngoài phạm vi, làm rõ nhiệm vụ sẽ tồn tại bao lâu.
+
+Bất cứ khi nào có thể, hãy thích các Nhiệm vụ có cấu trúc hơn.
+
+Lợi ích của tính đồng thời có cấu trúc được thảo luận sau không phải lúc nào cũng áp dụng cho các nhiệm vụ phi cấu trúc.
+
+Trước khi chúng ta đi sâu vào mã, hãy đưa ra một ví dụ cụ thể.
+
+Giả sử chúng ta có một nhà bếp với nhiều đầu bếp chuẩn bị súp.
+
+Chuẩn bị súp bao gồm nhiều bước.
+
+Các đầu bếp phải cắt nguyên liệu, ướp gà, đun sôi nước dùng, và cuối cùng, nấu súp trước khi nó sẵn sàng phục vụ.
+
+Một số nhiệm vụ có thể được thực hiện song song, trong khi những nhiệm vụ khác phải được thực hiện theo một thứ tự cụ thể.
+
+Hãy xem cách chúng ta có thể diễn đạt điều này bằng mã.
+
+Hiện tại, chúng tôi sẽ tập trung vào chức năng makeSoup.
+
+Bạn có thể thấy mình đang tạo các Nhiệm vụ phi cấu trúc để thêm tính đồng thời vào các chức năng của mình và chờ đợi các giá trị của chúng khi cần thiết.
+
+Mặc dù điều này thể hiện tác vụ nào có thể chạy đồng thời và tác vụ nào không thể, nhưng đây không phải là cách được khuyến nghị để sử dụng đồng thời trong Swift.
+
+Đây là chức năng tương tự được thể hiện bằng cách sử dụng đồng thời có cấu trúc.
+
+Vì chúng ta có một số nhiệm vụ con đã biết để tạo, chúng ta có thể sử dụng cú pháp "async let" tiện lợi.
+
+Những nhiệm vụ này tạo thành một mối quan hệ có cấu trúc với nhiệm vụ cha mẹ của chúng.
+
+Chúng ta sẽ nói về lý do tại sao điều này lại quan trọng trong thời gian ngắn.
+
+makeSoup gọi một số hàm không đồng bộ.
+
+Một trong số đó là "chopIngredients", lấy một danh sách các thành phần và sử dụng một nhóm nhiệm vụ để cắt tất cả chúng đồng thời.
+
+Bây giờ chúng ta đã quen thuộc với makeSoup, chúng ta hãy xem xét hệ thống phân cấp nhiệm vụ.
+
+Các nhiệm vụ con được biểu thị bằng các hộp màu, trong khi các mũi tên trỏ từ nhiệm vụ mẹ sang nhiệm vụ con.
+
+makeSoup có ba nhiệm vụ con là cắt nguyên liệu, ướp thịt gà và luộc nước dùng.
+
+chopIngredients sử dụng một nhóm nhiệm vụ để tạo ra một nhiệm vụ con cho mỗi thành phần.
+
+Nếu chúng ta có ba thành phần, nó cũng sẽ tạo ra ba đứa trẻ.
+
+Hệ thống phân cấp cha-con này tạo thành một cây, cây nhiệm vụ.
+
+Bây giờ chúng tôi đã giới thiệu cây nhiệm vụ, hãy bắt đầu xác định điều đó có lợi cho mã của chúng tôi như thế nào.
+
+Việc hủy nhiệm vụ được sử dụng để báo hiệu rằng ứng dụng không còn cần kết quả của một nhiệm vụ và nhiệm vụ sẽ dừng lại và trả về một phần kết quả hoặc ném lỗi.
+
+Trong ví dụ súp của chúng tôi, chúng tôi có thể muốn ngừng gọi món súp nếu khách hàng đó rời đi, quyết định họ muốn gọi món khác hoặc đã đến giờ đóng cửa.
+
+Điều gì khiến nhiệm vụ bị hủy bỏ?
+
+Các nhiệm vụ có cấu trúc bị hủy bỏ ngầm khi chúng nằm ngoài phạm vi, mặc dù bạn có thể gọi "cancelAll" trên các nhóm nhiệm vụ để hủy tất cả các con đang hoạt động và bất kỳ nhiệm vụ con nào trong tương lai.
+
+Các tác vụ phi cấu trúc bị hủy bỏ một cách rõ ràng với chức năng "hủy bỏ".
+
+Hủy bỏ nhiệm vụ phụ huynh dẫn đến việc hủy bỏ tất cả các nhiệm vụ con.
+
+Việc hủy bỏ là hợp tác, vì vậy các nhiệm vụ trẻ em không bị dừng lại ngay lập tức.
+
+Nó chỉ đơn giản là đặt cờ "isCancelled" cho nhiệm vụ đó.
+
+Trên thực tế, hành động hủy bỏ được thực hiện trong mã của bạn.
+
+Hủy bỏ là một cuộc đua.
+
+Nếu nhiệm vụ bị hủy trước khi kiểm tra của chúng tôi, "makeSoup" sẽ ném một "SoupCancellationError".
+
+Nếu nhiệm vụ bị hủy bỏ sau khi người bảo vệ thực hiện, chương trình sẽ tiếp tục chuẩn bị súp.
+
+Nếu chúng ta định ném lỗi hủy thay vì trả về một phần kết quả, chúng ta có thể gọi "Task.checkCancellation", sẽ ném "CancellationError" nếu tác vụ bị hủy.
+
+Điều quan trọng là phải kiểm tra trạng thái hủy nhiệm vụ trước khi bắt đầu bất kỳ công việc tốn kém nào để xác minh rằng kết quả vẫn cần thiết.
+
+Kiểm tra hủy bỏ là đồng bộ, vì vậy bất kỳ chức năng nào, không đồng bộ hoặc đồng bộ, phản ứng với việc hủy bỏ nên kiểm tra trạng thái hủy nhiệm vụ trước khi tiếp tục.
+
+Bỏ phiếu hủy bỏ với "isCancelled" hoặc "checkCancellation" rất hữu ích khi tác vụ đang chạy, nhưng đôi khi bạn có thể cần phản hồi hủy bỏ trong khi tác vụ bị đình chỉ và không có mã nào đang chạy, chẳng hạn như khi triển khai AsyncSequence.
+
+Đây là nơi "withTaskCancellationHandler" hữu ích.
+
+Hãy giới thiệu một chức năng dịch chuyển.
+
+Người đầu bếp nên nấu súp khi các đơn đặt hàng đến cho đến khi kết thúc ca làm việc của họ, được báo hiệu bằng việc hủy nhiệm vụ.
+
+Trong một kịch bản hủy, vòng lặp không đồng bộ sẽ nhận được một đơn đặt hàng mới trước khi nó bị hủy.
+
+Chức năng "makeSoup" xử lý việc hủy bỏ như chúng tôi đã định nghĩa trước đó và gây ra lỗi.
+
+Trong một kịch bản khác, việc hủy bỏ có thể diễn ra trong khi nhiệm vụ bị đình chỉ, chờ đơn hàng tiếp theo.
+
+Trường hợp này thú vị hơn vì nhiệm vụ không chạy, vì vậy chúng tôi không thể thăm dò ý kiến rõ ràng cho sự kiện hủy bỏ.
+
+Thay vào đó, chúng ta phải sử dụng trình xử lý hủy để phát hiện sự kiện hủy và thoát ra khỏi vòng lặp không đồng bộ.
+
+Các đơn đặt hàng được sản xuất từ AsyncSequence.
+
+AsyncSequences được điều khiển bởi một AsyncIterator, xác định một hàm "tiếp theo" không đồng bộ.
+
+Giống như với các trình lặp đồng bộ, hàm "tiếp theo" trả về phần tử tiếp theo trong chuỗi hoặc nil để chỉ ra rằng chúng ta đang ở cuối chuỗi.
+
+Nhiều AsyncSequences được triển khai với một máy trạng thái, mà chúng tôi sử dụng để dừng chuỗi đang chạy.
+
+Trong ví dụ của chúng tôi ở đây, khi "isRunning" là đúng, chuỗi sẽ tiếp tục phát ra các lệnh.
+
+Khi nhiệm vụ bị hủy, chúng ta cần chỉ ra rằng trình tự đã hoàn thành và sẽ tắt.
+
+Chúng tôi làm điều này bằng cách gọi đồng bộ hàm "hủy" trên máy trạng thái trình tự của chúng tôi.
+
+Lưu ý rằng vì trình xử lý hủy chạy ngay lập tức, máy trạng thái được chia sẻ trạng thái có thể thay đổi giữa trình xử lý hủy và phần thân chính, có thể chạy đồng thời.
+
+Chúng ta sẽ cần bảo vệ cỗ máy trạng thái của mình.
+
+Mặc dù các diễn viên rất tuyệt vời để bảo vệ trạng thái đóng gói, chúng tôi muốn sửa đổi và đọc các thuộc tính riêng lẻ trên máy trạng thái của mình, vì vậy các diễn viên không phải là công cụ phù hợp cho việc này.
+
+Hơn nữa, chúng tôi không thể đảm bảo thứ tự mà các hoạt động chạy trên một diễn viên, vì vậy chúng tôi không thể đảm bảo rằng việc hủy bỏ của chúng tôi sẽ diễn ra trước.
+
+Chúng ta sẽ cần thứ khác.
+
+Tôi đã quyết định sử dụng nguyên tử từ gói Swift Atomics, nhưng chúng ta có thể sử dụng hàng đợi hoặc khóa điều phối.
+
+Các cơ chế này cho phép chúng tôi đồng bộ hóa trạng thái được chia sẻ, tránh các điều kiện cuộc đua, đồng thời cho phép chúng tôi hủy máy trạng thái đang chạy mà không đưa ra một nhiệm vụ phi cấu trúc trong trình xử lý hủy.
+
+Cây nhiệm vụ tự động truyền bá thông tin hủy nhiệm vụ.
+
+Thay vì phải lo lắng về mã thông báo hủy và đồng bộ hóa, chúng tôi để thời gian chạy Swift xử lý nó cho chúng tôi một cách an toàn.
+
+Hãy nhớ rằng, việc hủy bỏ không ngăn một tác vụ chạy, nó chỉ báo hiệu cho tác vụ rằng nó đã bị hủy và nên ngừng chạy càng sớm càng tốt.
+
+Tùy thuộc vào mã của bạn để kiểm tra việc hủy bỏ.
+
+Tiếp theo, hãy xem xét cách cây nhiệm vụ có cấu trúc giúp truyền bá mức độ ưu tiên và tránh đảo ngược mức độ ưu tiên.
+
+Đầu tiên, ưu tiên là gì, và tại sao chúng ta lại quan tâm?
+
+Ưu tiên là cách bạn thông báo cho hệ thống mức độ khẩn cấp của một nhiệm vụ nhất định.
+
+Một số tác vụ nhất định, như phản hồi khi nhấn nút, cần chạy ngay lập tức nếu không ứng dụng sẽ xuất hiện bị đóng băng.
+
+Trong khi đó, các tác vụ khác, như tìm nạp trước nội dung từ máy chủ, có thể chạy trong nền mà không ai nhận ra.
+
+Thứ hai, đảo ngược ưu tiên là gì?
+
+Sự đảo ngược ưu tiên xảy ra khi một nhiệm vụ ưu tiên cao đang chờ kết quả của một nhiệm vụ ưu tiên thấp hơn.
+
+Theo mặc định, các tác vụ con kế thừa mức độ ưu tiên của chúng từ cha mẹ, vì vậy giả sử rằng makeSoup đang chạy trong một tác vụ ở mức độ ưu tiên trung bình, tất cả các tác vụ con cũng sẽ chạy ở mức độ ưu tiên trung bình.
+
+Giả sử một vị khách VIP đến nhà hàng của chúng tôi để tìm súp.
+
+Chúng tôi ưu tiên súp của họ cao hơn để đảm bảo chúng tôi nhận được đánh giá tốt.
+
+Khi họ chờ đợi món súp của mình, mức độ ưu tiên của tất cả các nhiệm vụ con được leo thang, đảm bảo rằng không có nhiệm vụ ưu tiên cao nào đang chờ đợi một nhiệm vụ có mức độ ưu tiên thấp hơn, tránh sự đảo ngược ưu tiên.
+
+Chờ đợi kết quả từ một nhiệm vụ có mức độ ưu tiên cao hơn sẽ leo thang mức độ ưu tiên của tất cả các nhiệm vụ con trong cây nhiệm vụ.
+
+Lưu ý rằng việc chờ đợi kết quả tiếp theo của một nhóm nhiệm vụ sẽ leo thang tất cả các nhiệm vụ con trong nhóm, vì chúng tôi không biết nhiệm vụ nào có nhiều khả năng hoàn thành tiếp theo nhất.
+
+Thời gian chạy đồng thời sử dụng hàng đợi ưu tiên để lên lịch các tác vụ, vì vậy các tác vụ ưu tiên cao hơn được chọn để chạy trước các tác vụ ưu tiên thấp hơn.
+
+Nhiệm vụ giữ mức độ ưu tiên leo thang trong phần còn lại của cuộc đời nó.
+
+Không thể hoàn tác việc leo thang ưu tiên.
+
+Chúng tôi đã làm hài lòng khách VIP của mình một cách hiệu quả với việc giao súp nhanh chóng và nhận được đánh giá tốt, vì vậy nhà bếp của chúng tôi hiện đang bắt đầu trở nên phổ biến.
+
+Chúng tôi muốn đảm bảo rằng chúng tôi đang sử dụng tài nguyên của mình một cách hiệu quả và nhận thấy rằng chúng tôi đang tạo ra rất nhiều nhiệm vụ cắt nhỏ.
+
+Hãy điều tra một số mô hình hữu ích để quản lý đồng thời với các nhóm nhiệm vụ.
+
+Chúng tôi chỉ có không gian cho rất nhiều thớt.
+
+Nếu chúng ta cắt quá nhiều nguyên liệu cùng một lúc, chúng ta sẽ hết chỗ cho các nhiệm vụ khác, vì vậy chúng ta muốn giới hạn số lượng nguyên liệu được cắt nhỏ cùng một lúc.
+
+Quay trở lại mã của chúng tôi, chúng tôi muốn điều tra vòng lặp tạo ra các tác vụ cắt.
+
+Chúng tôi thay thế vòng lặp ban đầu trên mỗi thành phần bằng một vòng lặp bắt đầu với số lượng nhiệm vụ cắt tối đa.
+
+Tiếp theo, chúng tôi muốn vòng lặp thu thập kết quả để bắt đầu một nhiệm vụ mới mỗi khi một nhiệm vụ trước đó kết thúc.
+
+Vòng lặp mới đợi cho đến khi một trong những tác vụ đang chạy kết thúc và, trong khi vẫn còn các thành phần để cắt, thêm một nhiệm vụ mới để cắt thành phần tiếp theo.
+
+Hãy chắt lọc ý tưởng này để xem mô hình rõ ràng hơn.
+
+Vòng lặp ban đầu tạo ra số lượng nhiệm vụ đồng thời tối đa, đảm bảo rằng chúng tôi không tạo ra quá nhiều.
+
+Khi số lượng nhiệm vụ tối đa đang chạy, chúng tôi đợi một nhiệm vụ hoàn thành.
+
+Sau khi nó kết thúc và chúng tôi không đạt đến điều kiện dừng, chúng tôi tạo ra một nhiệm vụ mới để tiếp tục tiến bộ.
+
+Điều này giới hạn số lượng nhiệm vụ đồng thời trong nhóm vì chúng tôi sẽ không bắt đầu công việc mới cho đến khi các nhiệm vụ trước đó kết thúc.
+
+Trước đó, chúng tôi đã nói về các đầu bếp làm việc theo ca và sử dụng việc hủy bỏ để cho biết khi nào ca làm việc của họ kết thúc.
+
+Đây là mã Dịch vụ Nhà bếp xử lý ca làm việc.
+
+Mỗi đầu bếp bắt đầu ca làm việc của họ trong một nhiệm vụ riêng biệt.
+
+Khi các đầu bếp đang làm việc, chúng tôi bắt đầu hẹn giờ.
+
+Khi bộ đếm thời gian kết thúc, chúng tôi hủy tất cả các ca đang diễn ra.
+
+Lưu ý rằng không có nhiệm vụ nào trả về một giá trị.
+
+Mới trong Swift 5.9 là withDiscardingTaskGroup API.
+
+Loại bỏ các nhóm nhiệm vụ không giữ kết quả của các nhiệm vụ con đã hoàn thành.
+
+Các tài nguyên được sử dụng bởi các nhiệm vụ được giải phóng ngay lập tức sau khi nhiệm vụ kết thúc.
+
+Chúng ta có thể thay đổi phương thức chạy để sử dụng nhóm tác vụ loại bỏ.
+
+Loại bỏ các nhóm nhiệm vụ tự động dọn dẹp con cái của họ, vì vậy không cần phải hủy bỏ nhóm một cách rõ ràng và dọn dẹp.
+
+Nhóm nhiệm vụ loại bỏ cũng có anh chị em tự động hủy bỏ.
+
+Nếu bất kỳ tác vụ con nào gây ra lỗi, tất cả các tác vụ còn lại sẽ tự động bị hủy.
+
+Điều này lý tưởng cho trường hợp sử dụng của chúng tôi ở đây.
+
+Chúng ta có thể ném một "TimeToCloseError" khi ca làm việc kết thúc, và nó sẽ tự động kết thúc ca làm việc cho tất cả các đầu bếp.
+
+Nhóm tác vụ loại bỏ mới sẽ tự động giải phóng tài nguyên khi một nhiệm vụ kết thúc, không giống như các nhóm tác vụ thông thường nơi bạn phải thu thập kết quả.
+
+Điều này giúp giảm mức tiêu thụ bộ nhớ khi bạn có nhiều tác vụ không cần trả lại bất cứ thứ gì, chẳng hạn như khi bạn đang xử lý một luồng yêu cầu.
+
+Trong một số tình huống, bạn sẽ muốn trả về một giá trị từ nhóm nhiệm vụ của mình, nhưng cũng muốn giới hạn số lượng nhiệm vụ đồng thời.
+
+Chúng tôi đã đề cập đến một mô hình chung để sử dụng hoàn thành một nhiệm vụ để bắt đầu một nhiệm vụ khác, tránh bùng nổ nhiệm vụ.
+
+Chúng tôi đang nấu súp hiệu quả hơn bao giờ hết, nhưng chúng tôi vẫn cần mở rộng quy mô hơn.
+
+Đã đến lúc chuyển sản xuất sang máy chủ.
+
+Cùng với đó là những thách thức trong việc truy tìm các đơn đặt hàng khi chúng được xử lý.
+
+Các giá trị nhiệm vụ cục bộ ở đây để giúp đỡ.
+
+Giá trị cục bộ nhiệm vụ là một phần dữ liệu được liên kết với một nhiệm vụ nhất định, hay chính xác hơn là một hệ thống phân cấp nhiệm vụ.
+
+Nó giống như một biến toàn cục, nhưng giá trị bị ràng buộc với giá trị cục bộ nhiệm vụ chỉ có sẵn từ hệ thống phân cấp nhiệm vụ hiện tại.
+
+Các giá trị cục bộ tác vụ được khai báo dưới dạng thuộc tính tĩnh với trình bao bọc thuộc tính "TaskLocal".
+
+Đó là một cách thực hành tốt để làm cho nhiệm vụ cục bộ trở thành tùy chọn.
+
+Bất kỳ nhiệm vụ nào không có bộ giá trị sẽ cần trả về giá trị mặc định, dễ dàng được biểu thị bằng nil tùy chọn.
+
+Một nhiệm vụ cục bộ không ràng buộc chứa giá trị mặc định của nó.
+
+Trong trường hợp của chúng tôi, chúng tôi có một Chuỗi tùy chọn, vì vậy nó bằng không và không có đầu bếp nào liên quan đến nhiệm vụ hiện tại.
+
+Các giá trị nhiệm vụ cục bộ không thể được gán một cách rõ ràng, nhưng phải được ràng buộc cho một phạm vi cụ thể.
+
+Ràng buộc kéo dài trong suốt thời gian của phạm vi và trở lại giá trị ban đầu ở cuối phạm vi.
+
+Quay trở lại cây nhiệm vụ, mỗi nhiệm vụ có một vị trí liên quan cho các giá trị cục bộ nhiệm vụ.
+
+Chúng tôi ràng buộc tên "Sakura" với biến "nấu ăn"-nhiệm vụ cục bộ trước khi nấu súp.
+
+Chỉ makeSoup lưu trữ giá trị ràng buộc.
+
+Những đứa trẻ không có bất kỳ giá trị nào được lưu trong bộ nhớ cục bộ tác vụ của chúng.
+
+Tìm kiếm giá trị bị ràng buộc với một biến cục bộ tác vụ liên quan đến việc đi bộ đệ quy cho mỗi cha mẹ cho đến khi chúng tôi tìm thấy một nhiệm vụ với giá trị đó.
+
+Nếu chúng ta tìm thấy một nhiệm vụ có giá trị bị ràng buộc, nhiệm vụ cục bộ sẽ giả định giá trị đó.
+
+Nếu chúng ta đạt đến gốc, được biểu thị bằng nhiệm vụ không có cha mẹ, nhiệm vụ cục bộ không bị ràng buộc và chúng ta nhận được giá trị mặc định ban đầu.
+
+Thời gian chạy Swift được tối ưu hóa để chạy các truy vấn này nhanh hơn.
+
+Thay vì đi bộ trên cây, chúng tôi có một tham chiếu trực tiếp đến nhiệm vụ với chìa khóa mà chúng tôi đang tìm kiếm.
+
+Bản chất đệ quy của cây nhiệm vụ phù hợp với các giá trị theo dõi mà không làm mất giá trị trước đây.
+
+Giả sử chúng ta muốn theo dõi bước hiện tại trong quá trình nấu súp.
+
+Chúng ta có thể liên kết biến "bước" với "súp" trong "'makeSoup", sau đó liên kết lại với "chop" trong "chopIngredients".
+
+Giá trị bị ràng buộc trong chopIngredients sẽ che giấu giá trị cũ cho đến khi chúng ta quay trở lại từ chopIngredients, nơi chúng ta quan sát giá trị ban đầu.
+
+Thông qua sức mạnh của phép thuật chỉnh sửa video, chúng tôi đã chuyển dịch vụ của mình lên đám mây để theo kịp nhu cầu về súp.
+
+Chúng tôi vẫn có chức năng nấu súp giống nhau, nhưng thay vào đó nó nằm trên máy chủ.
+
+Chúng tôi sẽ cần quan sát các đơn đặt hàng khi chúng đi qua hệ thống để đảm bảo chúng được hoàn thành kịp thời và theo dõi các lỗi bất ngờ.
+
+Môi trường máy chủ xử lý nhiều yêu cầu đồng thời, vì vậy chúng tôi sẽ muốn bao gồm thông tin cho phép chúng tôi theo dõi một đơn đặt hàng nhất định.
+
+Đăng nhập bằng tay lặp đi lặp lại và dài dòng, dẫn đến các lỗi và lỗi chính tả tinh tế.
+
+Ồ không, tôi đã vô tình đăng nhập toàn bộ đơn hàng thay vì chỉ ID đơn hàng.
+
+Hãy cùng tìm hiểu cách chúng ta có thể sử dụng các giá trị nhiệm vụ cục bộ để làm cho việc ghi nhật ký của chúng ta đáng tin cậy hơn.
+
+Trên các thiết bị Apple, bạn sẽ muốn tiếp tục sử dụng API OSLog trực tiếp, nhưng khi các phần của ứng dụng của bạn chuyển sang đám mây, bạn sẽ cần các giải pháp khác.
+
+SwiftLog là một gói API ghi nhật ký với nhiều triển khai sao lưu, cho phép bạn thả vào một kết thúc ghi nhật ký phù hợp với nhu cầu của bạn mà không cần thay đổi máy chủ của bạn.
+
+MetadataProvider là một API mới trong SwiftLog 1.5.
+
+Việc triển khai nhà cung cấp siêu dữ liệu giúp dễ dàng trừu tượng hóa logic ghi nhật ký của mình để đảm bảo rằng bạn đang phát ra thông tin nhất quán về các giá trị có liên quan.
+
+Nhà cung cấp siêu dữ liệu sử dụng cấu trúc giống như từ điển, ánh xạ tên đến giá trị đang được ghi lại.
+
+Chúng tôi muốn tự động ghi lại biến cục bộ tác vụ orderID, vì vậy chúng tôi kiểm tra xem nó đã được xác định chưa và nếu có, hãy thêm nó vào từ điển.
+
+Nhiều thư viện có thể xác định nhà cung cấp siêu dữ liệu của riêng họ để tìm kiếm thông tin cụ thể của thư viện, vì vậy MetadataProvider xác định một hàm "multiplex", lấy nhiều nhà cung cấp siêu dữ liệu và kết hợp chúng thành một đối tượng duy nhất.
+
+Khi chúng tôi có nhà cung cấp siêu dữ liệu, chúng tôi khởi tạo hệ thống ghi nhật ký với nhà cung cấp đó và chúng tôi đã sẵn sàng để bắt đầu ghi nhật ký.
+
+Nhật ký tự động bao gồm thông tin được chỉ định trong nhà cung cấp siêu dữ liệu, vì vậy chúng tôi không cần phải lo lắng về việc đưa nó vào thông báo nhật ký.
+
+Nhật ký hiển thị khi đơn hàng 0 vào nhà bếp và nơi các đầu bếp của chúng tôi nhận đơn hàng đó.
+
+Các giá trị trong nhà cung cấp siêu dữ liệu được liệt kê rõ ràng trong nhật ký, giúp bạn dễ dàng theo dõi đơn hàng thông qua quy trình làm súp.
+
+Các giá trị cục bộ nhiệm vụ cho phép bạn đính kèm thông tin vào hệ thống phân cấp nhiệm vụ.
+
+Tất cả các nhiệm vụ, ngoại trừ các nhiệm vụ tách rời, kế thừa các giá trị cục bộ nhiệm vụ từ nhiệm vụ hiện tại.
+
+Chúng được ràng buộc trong một phạm vi nhất định với một cây nhiệm vụ cụ thể, cung cấp cho bạn các khối xây dựng cấp thấp để truyền bá thông tin ngữ cảnh bổ sung thông qua hệ thống phân cấp nhiệm vụ.
+
+Bây giờ chúng tôi sẽ sử dụng hệ thống phân cấp nhiệm vụ và các công cụ mà nó cung cấp cho chúng tôi để theo dõi và lập hồ sơ một hệ thống phân tán đồng thời.
+
+Khi làm việc với đồng thời trên nền tảng Apple, Instruments là bạn của bạn.
+
+Công cụ Swift Concurrency cung cấp cho bạn cái nhìn sâu sắc về mối quan hệ giữa các nhiệm vụ có cấu trúc của bạn.
+
+Để biết thêm thông tin, hãy xem phiên, "Trực quan hóa và tối ưu hóa đồng thời Swift."
+
+Các công cụ cũng đã giới thiệu một công cụ lưu lượng HTTP trong phiên "Phân tích lưu lượng HTTP trong các công cụ".
+
+Trình phân tích lưu lượng HTTP chỉ hiển thị dấu vết cho các sự kiện xảy ra cục bộ.
+
+Hồ sơ hiển thị một hộp màu xám trong khi chờ phản hồi từ máy chủ, vì vậy chúng tôi sẽ cần thêm thông tin để hiểu cách cải thiện hiệu suất của máy chủ của chúng tôi.
+
+Giới thiệu gói Truy tìm Phân tán Swift mới.
+
+Cây nhiệm vụ rất tuyệt vời để quản lý các nhiệm vụ con trong một hệ thống phân cấp nhiệm vụ duy nhất.
+
+Truy tìm phân tán cho phép bạn tận dụng lợi ích của cây nhiệm vụ trên nhiều hệ thống để hiểu rõ hơn về các đặc điểm hiệu suất và mối quan hệ nhiệm vụ.
+
+Gói Truy tìm Phân tán Swift có triển khai giao thức OpenTelemetry, vì vậy các giải pháp truy tìm hiện có, như Zipkin và Jaeger, sẽ hoạt động ngay lập tức.
+
+Mục tiêu của chúng tôi với Swift Distributed Tracing là điền vào "đang chờ phản hồi" không rõ ràng trong Xcode Instruments với thông tin chi tiết về những gì đang xảy ra trong máy chủ.
+
+Chúng ta sẽ cần thiết bị mã máy chủ của mình để tìm ra nơi chúng ta cần tập trung.
+
+Truy tìm phân tán hơi khác so với quy trình truy tìm cục bộ.
+
+Thay vì nhận được dấu vết cho mỗi chức năng, chúng tôi thiết bị mã của mình với các nhịp bằng cách sử dụng API "withSpan".
+
+Spans cho phép chúng tôi gán tên cho các vùng mã được báo cáo trong hệ thống truy tìm.
+
+Nhịp không cần phải bao gồm toàn bộ chức năng.
+
+Họ có thể cung cấp cái nhìn sâu sắc hơn về các phần cụ thể của một hàm nhất định.
+
+withSpan chú thích các tác vụ của chúng tôi bằng các ID theo dõi bổ sung và siêu dữ liệu khác, cho phép hệ thống truy tìm hợp nhất các cây tác vụ thành một dấu vết duy nhất.
+
+Hệ thống truy tìm có đủ thông tin để cung cấp cho bạn cái nhìn sâu sắc về hệ thống phân cấp nhiệm vụ, cùng với thông tin về các đặc điểm hiệu suất thời gian chạy của một nhiệm vụ.
+
+Tên span được trình bày trong giao diện người dùng truy tìm.
+
+Bạn sẽ muốn giữ chúng ngắn gọn và mô tả để bạn có thể dễ dàng tìm thấy thông tin về một khoảng thời gian cụ thể mà không bị lộn xộn.
+
+Chúng tôi có thể đính kèm siêu dữ liệu bổ sung với việc sử dụng các thuộc tính span, vì vậy chúng tôi không cần phải làm lộn xộn tên span với ID đơn hàng.
+
+Ở đây chúng tôi đã thay thế tên span bằng chỉ thị "#function" để tự động điền tên span bằng tên hàm và sử dụng thuộc tính span để đính kèm ID thứ tự hiện tại vào thông tin span được báo cáo cho trình theo dõi.
+
+Các hệ thống truy tìm thường trình bày các thuộc tính trong khi kiểm tra một khoảng nhất định.
+
+Hầu hết các nhịp đều đi kèm với mã trạng thái HTTP, kích thước yêu cầu và phản hồi, thời gian bắt đầu và kết thúc và siêu dữ liệu khác giúp bạn dễ dàng theo dõi thông tin đi qua hệ thống của mình hơn.
+
+Như đã lưu ý trên trang chiếu trước, bạn có thể xác định các thuộc tính của riêng mình.
+
+Để biết thêm ví dụ về cách bạn có thể tận dụng nhịp, vui lòng xem kho lưu trữ swift-distributed-tracing-extras.
+
+Nếu một nhiệm vụ thất bại và gây ra lỗi, thông tin đó cũng được trình bày trong khoảng thời gian và được báo cáo trong hệ thống truy tìm.
+
+Vì spans chứa cả thông tin thời gian và mối quan hệ của các nhiệm vụ trong cây, đó là một cách hữu ích để theo dõi các lỗi do các cuộc đua thời gian gây ra và xác định cách chúng tác động đến các nhiệm vụ khác.
+
+Chúng tôi đã nói về hệ thống truy tìm và cách nó có thể tái tạo lại cây tác vụ bằng cách sử dụng ID theo dõi và cách bạn có thể đính kèm các thuộc tính của riêng mình vào một khoảng thời gian, nhưng chúng tôi vẫn chưa bắt đầu làm việc này thành một hệ thống phân tán.
+
+Vẻ đẹp của hệ thống truy tìm là không còn gì cần phải làm nữa.
+
+Nếu chúng ta tính đến một dịch vụ chặt ra khỏi dịch vụ nhà bếp của mình, nếu không thì giữ nguyên mã, hệ thống truy tìm sẽ tự động thu thập dấu vết và liên kết chúng trên các máy khác nhau trong hệ thống phân tán.
+
+Chế độ xem theo dõi sẽ chỉ ra rằng các nhịp đang chạy trên một máy khác, nhưng nếu không sẽ giống nhau.
+
+Truy tìm phân tán mạnh nhất khi tất cả các phần của hệ thống nắm lấy dấu vết, bao gồm máy khách HTTP, máy chủ và các hệ thống RPC khác.
+
+Swift Distributed Tracing tận dụng các giá trị cục bộ nhiệm vụ, được xây dựng trên cây tác vụ, để tự động truyền bá tất cả thông tin cần thiết để tạo ra các dấu vết nút chéo đáng tin cậy.
+
+Các tác vụ có cấu trúc mở khóa bí mật của các hệ thống đồng thời của bạn, cung cấp cho bạn các công cụ để tự động hủy các hoạt động, tự động truyền bá thông tin ưu tiên và tạo điều kiện truy tìm khối lượng công việc phân tán phức tạp.
+
+Tất cả những công việc này vì bản chất có cấu trúc của sự đồng thời trong Swift.
+
+Tôi hy vọng phiên này làm bạn phấn khích về tính đồng thời có cấu trúc và bạn sẽ tiếp cận với các nhiệm vụ có cấu trúc trước khi sử dụng các lựa chọn thay thế phi cấu trúc.
+
+Cảm ơn bạn đã xem!
+
+Tôi nóng lòng muốn xem bạn sẽ đưa ra những mẫu hữu ích nào khác bằng cách sử dụng đồng thời có cấu trúc.
+
+Mm, súp!
+
+♪ ♪

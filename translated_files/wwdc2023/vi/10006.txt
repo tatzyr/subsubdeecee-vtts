@@ -1,0 +1,343 @@
+10006
+
+♪ ♪
+
+Jonathan: Xin chào, tôi là Jonathan, và tôi là một kỹ sư trong nhóm Công nghệ Internet.
+
+Hôm nay chúng ta sẽ khám phá cách xây dựng việc truyền tệp mạnh mẽ và có thể tiếp tục bằng URLSession.
+
+Việc truyền tệp lớn có thể là một thách thức lớn bởi vì ngay cả một sự gián đoạn nhỏ cũng có thể vứt bỏ tất cả tiến trình của người dùng và buộc họ phải bắt đầu lại từ đầu.
+
+Thêm vào đó, việc chuyển khoản càng lớn, càng mất nhiều thời gian và càng mất nhiều thời gian, càng có nhiều cơ hội để có sự cố xảy ra.
+
+Trong thời gian đó, người dùng của bạn có thể điều hướng ra khỏi ứng dụng của bạn, rời khỏi phạm vi Wi-Fi hoặc gặp phải một trong rất nhiều sự cố mạng ngoài tầm kiểm soát của họ.
+
+Trong phiên này, chúng tôi sẽ khám phá cách giải quyết những thách thức này và cung cấp trải nghiệm kết nối mạng mạnh mẽ cho người dùng của bạn.
+
+Điểm dừng đầu tiên của chúng tôi là các giao thức HTTP có thể tiếp tục, cho phép người dùng của bạn giữ tiến trình của họ khi kết nối bị gián đoạn.
+
+Điều này ngăn chặn lãng phí thời gian và băng thông, làm cho các giao thức này trở thành một công cụ mạnh mẽ khi truyền một lượng lớn dữ liệu.
+
+Tôi sẽ trình bày cách tiếp tục cả tải xuống và tải lên trong URLSession, bao gồm các API hoàn toàn mới cho các tác vụ tải lên có thể tiếp tục.
+
+Hiểu được cơ chế đằng sau các API này có thể thực sự hữu ích cho việc gỡ lỗi ứng dụng của bạn hoặc thậm chí xây dựng hỗ trợ máy chủ của riêng bạn.
+
+Đó là lý do tại sao chúng tôi cũng sẽ tự đề cập đến các giao thức có thể tiếp tục, vì vậy bạn biết chính xác cách ứng dụng và máy chủ của mình đạt được điều này qua HTTP.
+
+Tiếp theo, nói về máy chủ, bạn sẽ học cách mang lại hỗ trợ tải lên có thể tiếp tục cho bất kỳ máy chủ nào sử dụng SwiftNIO.
+
+Và cuối cùng, chúng ta sẽ xem xét cách URLSessions nền có thể xử lý sự gián đoạn của người dùng và mạng một cách duyên dáng, đồng thời sử dụng hiệu quả tài nguyên hệ thống.
+
+Hãy cùng tìm hiểu thêm về việc tải xuống và tải lên nối lại trong URLSession.
+
+Vì vậy, tôi đang tải xuống Xcode mới nhất và quá trình tải xuống 7 gigabyte gần như đã hoàn tất.
+
+Ngay cuối cùng, Wi-Fi của tôi bị tắt.
+
+Nhưng chờ đã, quá trình tải xuống bị tạm dừng và khi Wi-Fi trực tuyến trở lại, tôi có thể tiếp tục tải xuống từ nơi nó đã dừng lại.
+
+Tôi vừa tiết kiệm được rất nhiều thời gian và một vài hợp đồng biểu diễn băng thông.
+
+Tải xuống có thể tiếp tục thật tuyệt vời.
+
+Nhưng chúng hoạt động như thế nào?
+
+Đầu tiên, khách hàng gửi yêu cầu GET để truy xuất bản tải xuống từ máy chủ.
+
+Trong phản hồi, máy chủ quảng cáo hỗ trợ tải xuống có thể tiếp tục bằng cách sử dụng tiêu đề Chấp nhận Phạm vi.
+
+Chấp nhận phạm vi: byte có nghĩa là máy chủ hỗ trợ các yêu cầu phạm vi cho các byte cụ thể của tài nguyên này.
+
+Phản hồi của máy chủ cũng chứa cái được gọi là ETag, xác định duy nhất tài nguyên tại thời điểm này.
+
+Nếu nội dung trên máy chủ thay đổi, ETag cũng vậy.
+
+Vậy điều gì sẽ xảy ra nếu quá trình tải xuống này bị gián đoạn?
+
+Khách hàng đã lưu trữ một phần dữ liệu tải xuống, vì vậy nó chỉ cần phần cuối cùng.
+
+Để thực hiện điều này, nó có thể gửi một yêu cầu phạm vi để truy xuất các byte bị thiếu của bản tải xuống.
+
+Yêu cầu chỉ ra byte nào sử dụng trường Phạm vi.
+
+Nhưng khách hàng cũng cần đảm bảo tài nguyên không thay đổi, nếu không nó sẽ thêm dữ liệu từ tài nguyên mới vào tài nguyên cũ hơn được lưu trữ.
+
+Để ngăn chặn điều này, trường If-Range chứa ETag nhận được từ phản hồi trước đó, yêu cầu máy chủ chỉ gửi dữ liệu một phần nếu ETag giống nhau.
+
+Nếu ETag giống nhau, thì máy chủ sẽ phản hồi với 206 Nội dung một phần.
+
+Trường Phạm vi Nội dung ở đây biểu thị phạm vi byte có trong phản hồi này, hoàn tất quá trình tải xuống.
+
+Kể từ khi bắt đầu, URLSession đã cung cấp API để tạm dừng và tiếp tục các tác vụ tải xuống bằng cách sử dụng các yêu cầu Phạm vi.
+
+Bây giờ, bạn cũng có thể tạm dừng và tiếp tục tải lên.
+
+Điều này không chỉ cho phép bạn tạm dừng thủ công một tác vụ đang diễn ra mà còn có thể thực hiện xử lý lỗi để khôi phục các sự cố kết nối không mong muốn và tiếp tục chuyển ngay tại nơi nó đã dừng lại.
+
+Trước tiên hãy xem lại cách thức hoạt động của nó để tải xuống.
+
+Hãy tưởng tượng bạn đang tạo một giao diện người dùng cho phép người dùng tạm dừng và tiếp tục tải xuống theo cách thủ công.
+
+Giống như ví dụ Safari, ứng dụng của bạn sở hữu giao diện người dùng này, nhưng dưới mui xe, bạn có thể sử dụng URLSession để xử lý tất cả các chi tiết, như theo dõi dữ liệu tải xuống một phần, ETag và tiêu đề yêu cầu.
+
+Để bắt đầu tải xuống, bạn tạo một tác vụ tải xuống như bình thường và bắt đầu nó bằng cách gọi sơ yếu lý lịch.
+
+Để tạm dừng tải xuống, chẳng hạn như khi người dùng nhấn vào nút tạm dừng, bạn có thể gọi cancelByProducingResumeData.
+
+Để tiếp tục tải xuống này sau, URLSession sẽ cần thông tin về việc tải xuống một phần, như ETag, kích thước hiện tại và vị trí trên đĩa.
+
+Điều này, và siêu dữ liệu khác, được lưu trữ thuận tiện trong đối tượng dữ liệu sơ yếu lý lịch được trả về từ chức năng này.
+
+Một lần nữa, điều quan trọng cần lưu ý là dữ liệu sơ yếu lý lịch này không phải là dữ liệu tải xuống một phần.
+
+Nếu dữ liệu sơ yếu lý lịch bằng không, điều này có nghĩa là một hoặc nhiều yêu cầu về tải xuống có thể tiếp tục không được đáp ứng, chúng tôi sẽ sớm đề cập đến.
+
+Mặt khác, nếu dữ liệu sơ yếu lý lịch không bằng không, bạn nên lưu trữ nó để sử dụng sau.
+
+Đó là bởi vì để tiếp tục tải xuống, giống như khi người dùng nhấn vào nút tiếp tục, bạn chuyển dữ liệu được lưu trữ này sang phương thức downloadTask withResumeData.
+
+Nó đơn giản như vậy!
+
+Mẫu này rất tuyệt vời để tạm dừng tải xuống theo cách thủ công, nhưng URLSession cũng cung cấp các cách để khôi phục sau những gián đoạn kết nối không lường trước được.
+
+Nếu tác vụ tải xuống của bạn không thành công do sự cố mạng, bạn có thể kiểm tra dữ liệu tiếp tục trong chính lỗi đó.
+
+Nếu quá trình tải xuống có thể được tiếp tục, từ điển userInfo của lỗi sẽ chứa dữ liệu sơ yếu lý lịch đó.
+
+Bạn có thể truy cập dữ liệu này một cách thuận tiện bằng cách sử dụng thuộc tính downloadTaskResumeData của URLError.
+
+Có một vài yêu cầu đối với việc tải xuống có thể tiếp tục trong URLSession.
+
+Tải xuống vốn đã tìm nạp dữ liệu và phải an toàn để lặp lại, vì vậy URLSession yêu cầu tác vụ tải xuống phải có yêu cầu HTTP GET.
+
+Các kế hoạch hoặc phương pháp khác không được hỗ trợ.
+
+Tiếp theo, máy chủ phải hỗ trợ các yêu cầu phạm vi byte và quảng cáo điều này bằng cách sử dụng tiêu đề Chấp nhận Phạm vi.
+
+Máy chủ phải cung cấp một ETag, hoặc trường Sửa đổi lần cuối, cho tài nguyên trong phản hồi, nhưng ETag được ưu tiên hơn.
+
+Và cuối cùng, tệp tải xuống tạm thời không được xóa bởi hệ thống để đáp ứng với áp lực dung lượng đĩa.
+
+Với những yêu cầu này, bạn có thể tạm dừng và tiếp tục tải xuống theo cách thủ công, hoặc thậm chí khôi phục sau khi ngắt kết nối.
+
+Nếu không có giao thức nối lại, ngay cả một sự gián đoạn nhỏ cũng buộc bạn phải khởi động lại quá trình chuyển ngay từ đầu.
+
+Đây là một vấn đề thậm chí còn lớn hơn đối với việc tải lên.
+
+Tốc độ tải lên thường chậm hơn nhiều so với tốc độ tải xuống, vì vậy khởi động lại có nghĩa là thậm chí còn mất nhiều thời gian và tài nguyên hơn.
+
+iOS 17 giới thiệu hỗ trợ hoàn toàn mới cho các tác vụ tải lên có thể tiếp tục.
+
+Tôi cực kỳ hào hứng với những thứ này.
+
+Bây giờ, các tác vụ tải lên sẽ tự động tiếp tục nếu máy chủ hỗ trợ bản nháp giao thức mới nhất.
+
+Trước tiên hãy khám phá API mới, sau đó đi sâu vào chi tiết của giao thức tải lên có thể tiếp tục.
+
+Cũng giống như tải xuống các tác vụ, chỉ cần tạo một tác vụ tải lên và bắt đầu nó bằng cách gọi sơ yếu lý lịch.
+
+Để tạm dừng, tải lên các tác vụ hiện hỗ trợ phương thức cancelByProducingResumeData giống như các tác vụ tải xuống.
+
+Nhiệm vụ tự động phát hiện nếu máy chủ hỗ trợ giao thức tải lên có thể tiếp tục mới nhất.
+
+Nếu máy chủ hỗ trợ nó, thì bạn có thể lưu trữ dữ liệu sơ yếu lý lịch để sử dụng sau này.
+
+Và cuối cùng, để tiếp tục tải lên bị tạm dừng của bạn, hãy sử dụng phương thức uploadTask withResumeData mới.
+
+Bạn sẽ nhận thấy mẫu được hiển thị ở đây giống hệt với các tác vụ tải xuống.
+
+Điều đó có nghĩa là nếu bạn đã tạo ra trải nghiệm tuyệt vời để tạm dừng và tiếp tục tải xuống trong ứng dụng của mình, bạn cũng có thể dễ dàng triển khai tải lên có thể tiếp tục cho người dùng của mình.
+
+Nếu chỉ có sự gián đoạn mạng tạm thời, nhưng máy chủ vẫn có thể truy cập được, URLSession sẽ tự động cố gắng tiếp tục tải lên của bạn.
+
+Không cần thêm mã.
+
+Nhưng trong trường hợp có các vấn đề kết nối khác, rộng hơn, chẳng hạn như nếu mạng hoặc máy chủ của bạn ngừng hoạt động hoàn toàn, bạn có thể kiểm tra lỗi để tiếp tục dữ liệu, giống như các tác vụ tải xuống.
+
+Tôi vô cùng vui khi thấy các video tải lên có thể tiếp tục trong URLSession và tôi hy vọng bạn cũng yêu thích chúng.
+
+Nhưng để bạn tận dụng tính năng này, máy chủ của bạn cũng phải hỗ trợ giao thức tải lên có thể tiếp tục mới nhất.
+
+Giao thức này hiện đang được phát triển và có những nỗ lực trong toàn ngành để chuẩn hóa nó trong IETF.
+
+Trong giao thức, khách hàng có thể tự động khám phá hỗ trợ máy chủ.
+
+Điều này có nghĩa là URLSession có thể cố gắng làm cho TẤT CẢ các lượt tải lên có thể tiếp tục ngay trong yêu cầu đầu tiên.
+
+Nếu máy chủ không hỗ trợ tải lên có thể tiếp tục, yêu cầu chỉ đơn giản là tiếp tục như tải lên thông thường.
+
+Hãy xem nó hoạt động như thế nào trên dây.
+
+Đầu tiên khách hàng gửi yêu cầu đến điểm cuối tải lên.
+
+Trường Upload-Incomplete chỉ ra rằng khách hàng này hỗ trợ tải lên có thể tiếp tục.
+
+Dấu chấm hỏi số 0 là cái được gọi là trường boolean có cấu trúc và nó đại diện cho giá trị sai.
+
+Điều này có nghĩa là tất cả dữ liệu tải lên được bao gồm trong nội dung của yêu cầu này.
+
+Nếu máy chủ hỗ trợ tải lên có thể tiếp tục, nó sẽ phát hiện tiêu đề của khách hàng và quảng cáo hỗ trợ của chính mình bằng cách sử dụng phản hồi thông tin 104.
+
+Phản hồi 104 chứa một trường vị trí với URL sơ yếu lý lịch.
+
+URL sơ yếu lý lịch này được sử dụng để xác định duy nhất việc tải lên, vì vậy khách hàng biết nơi tiếp tục tải lên nếu kết nối bị gián đoạn.
+
+Máy chủ liên kết dữ liệu tải lên mà nó nhận được với URL sơ yếu lý lịch duy nhất này.
+
+Nếu quá trình tải lên kết thúc mà không bị gián đoạn, thì thật tuyệt.
+
+Máy chủ gửi 201 và nó đã hoàn tất.
+
+Tuy nhiên, nếu quá trình tải lên bị gián đoạn, máy khách và máy chủ sẽ thực hiện các quy trình tải lên có thể tiếp tục.
+
+Máy chủ đã lưu trữ tải lên một phần cho URL sơ yếu lý lịch, nhưng khách hàng cần một cách để xác định lượng dữ liệu mà máy chủ thực sự nhận được.
+
+Để làm điều này, khách hàng gửi yêu cầu HEAD đến URL sơ yếu lý lịch, yêu cầu máy chủ bù đắp tải lên.
+
+Độ lệch này là số byte thực mà máy chủ đã nhận được.
+
+Máy chủ sau đó phản hồi với phần bù tải lên cho tải lên cụ thể của khách hàng.
+
+Và cuối cùng, khách hàng cần xác nhận độ lệch của máy chủ và gửi dữ liệu còn lại.
+
+Để làm điều này, khách hàng gửi yêu cầu PATCH đến URL sơ yếu lý lịch với độ lệch tải lên phù hợp.
+
+Nội dung của yêu cầu này chứa dữ liệu tải lên bắt đầu từ phần bù đã cho.
+
+Cùng với đó, khách hàng cuối cùng đã gửi tất cả dữ liệu đến máy chủ, hoàn tất việc tải lên.
+
+Ứng dụng của bạn nhận được tất cả những thứ này miễn phí bằng cách sử dụng các tác vụ tải lên trong URLSession.
+
+Bây giờ, chúng ta hãy thực hiện một chuyến đi nhanh đến phía máy chủ và khám phá cách bạn có thể xây dựng máy chủ tải lên có thể tiếp tục của riêng mình với SwiftNIO.
+
+Đối với những người bạn đã sử dụng SwiftNIO trên máy chủ của mình, phần này là dành cho bạn.
+
+Tải lên có thể tiếp tục có thể được thực hiện trong bất kỳ máy chủ nào, nhưng nếu máy chủ của bạn đã sử dụng SwiftNIO, có một gói mới giúp việc thêm hỗ trợ thực sự dễ dàng.
+
+Hãy xem qua một ví dụ nhanh.
+
+Nếu bạn không quen, SwiftNIO là một khung ứng dụng mạng không đồng bộ hoạt động trong ứng dụng và máy chủ của bạn.
+
+Trong mã mẫu này, chúng tôi đang thiết lập một máy chủ HTTP/2.
+
+Chúng tôi đã thêm hai trình xử lý vào máy chủ của mình.
+
+Bộ giải mã dịch các khung HTTP/2 thành các yêu cầu mà trình xử lý ví dụ của chúng tôi có thể hiểu được.
+
+Theo hướng khác, nó lấy phản hồi từ trình xử lý ví dụ và mã hóa chúng vào các khung HTTP/2.
+
+ExampleChannelHandler thực hiện định tuyến và logic cơ bản cho máy chủ của chúng tôi.
+
+Lúc đầu, chúng tôi chỉ hỗ trợ tải lên thường xuyên.
+
+Hãy cùng tìm hiểu xem việc chuyển đổi máy chủ của chúng tôi để hỗ trợ tải lên có thể tiếp tục dễ dàng như thế nào.
+
+Đầu tiên, chúng tôi tải xuống dự án NIOResumableUpload, thêm nó dưới dạng phụ thuộc và nhập nó vào mã của chúng tôi.
+
+Sau đó, chúng tôi xác định một ngữ cảnh tải lên có thể tiếp tục.
+
+Điều này cho trình xử lý biết điểm cuối tải lên nào để sử dụng khi tạo URL sơ yếu lý lịch.
+
+Và cuối cùng, chúng tôi bọc trình xử lý hiện tại của mình trong HTTPResumableUploadHandler.
+
+Điều này thực hiện các quy trình tải lên có thể tiếp tục trên logic hiện tại của chúng tôi.
+
+Đối với mỗi lần tải lên, nó tạo ra một URL sơ yếu lý lịch ngẫu nhiên và an toàn và liên kết điều này với dữ liệu tải lên.
+
+Nếu kết nối bị gián đoạn, trình xử lý sẽ giữ bất kỳ dữ liệu một phần nào và phản hồi tất cả các quy trình tải lên có thể tiếp tục cho chúng tôi.
+
+Ồ!
+
+Chỉ với một vài dòng mã, chúng tôi đã tăng cường máy chủ của mình để hỗ trợ tải lên có thể tiếp tục.
+
+Đối với những người bạn đã sử dụng Swift trên Máy chủ, hãy thử cái này!
+
+Và đối với tất cả mọi người bất kể, hãy chắc chắn kiểm tra mã mẫu mã nguồn mở từ liên kết trong phần mô tả.
+
+Mã mẫu cũng sử dụng các loại HTTP mới, cho phép bạn sử dụng các loại tương tự trên ứng dụng của mình và Swift của bạn trên các dự án Máy chủ.
+
+Các loại dữ liệu này được phát hành dưới dạng gói mã nguồn mở phối hợp với SwiftNIO, vì vậy hãy xem blog Swift để tìm hiểu thêm và cung cấp phản hồi của bạn.
+
+Bạn có thể nhận thấy giao thức tải lên có thể tiếp tục sử dụng các phản hồi thông tin bằng cách sử dụng mã trạng thái 104.
+
+Các loại HTTP mới giúp dễ dàng hỗ trợ các phản hồi này ở phía máy chủ.
+
+Trong ứng dụng của bạn, URLSession tự động xử lý phản hồi 104 để tải lên có thể tiếp tục.
+
+Nhưng trên hết, URLSession hiện cung cấp một phương thức đại diện didReceiveInformationalResponse.
+
+Điều này cho phép ứng dụng của bạn xử lý các phản hồi trung gian khác như 102 Xử lý hoặc 103 Gợi ý sớm.
+
+Các giao thức có thể tiếp tục là một cách tuyệt vời để giảm bớt sự gián đoạn mạng và tiết kiệm băng thông.
+
+Phiên URL nền cũng có thể hữu ích khi xử lý việc truyền tệp lớn.
+
+Hãy tưởng tượng người dùng của bạn muốn tải lên một video 4K khổng lồ từ chuyến đi trượt tuyết mới nhất của họ.
+
+Nếu kết nối của họ bị gián đoạn, bạn muốn đảm bảo tiếp tục tải lên nếu có thể.
+
+Bạn có thể tự xử lý tất cả các lỗi.
+
+Hoặc, bạn có thể để phiên nền làm điều đó cho bạn.
+
+Trên thực tế, phiên nền sẽ tự động xử lý việc nối lại cho cả tác vụ tải xuống và tải lên, nếu máy chủ hỗ trợ nó.
+
+Nếu một nhiệm vụ bị gián đoạn, hệ thống sẽ cố gắng tiếp tục nhiệm vụ trong khoảng thời gian tăng dần.
+
+Nếu nhiệm vụ không thể được tiếp tục, hệ thống sẽ tự động thử lại nhiệm vụ ngay từ đầu.
+
+Có thể người dùng của bạn mất vùng phủ sóng di động trên núi trượt tuyết hoặc một cơn bão tuyết đã làm mất Wi-Fi của họ.
+
+Phiên nền luôn chờ kết nối, vì vậy các tác vụ sẽ được lên lịch vào một thời điểm nào đó sau khi thiết bị kết nối lại với internet.
+
+Trong khi người dùng của bạn đang tải lên video của họ, họ có thể rời khỏi ứng dụng của bạn hoặc cất thiết bị của họ đi.
+
+Có lẽ họ đã sẵn sàng để cắt nhỏ thêm một ít bột, và họ vẫn mong đợi việc tải lên của họ sẽ tiếp tục.
+
+Điều này đặc biệt yêu cầu một phiên nền.
+
+Các tác vụ nền được hệ thống lên lịch, vì vậy chúng chạy bên ngoài quy trình ứng dụng của bạn.
+
+Điều này có nghĩa là ngay cả khi ứng dụng của bạn bị hệ thống đình chỉ hoặc chấm dứt, các tác vụ mạng của bạn vẫn tiếp tục một cách đáng tin cậy.
+
+Sử dụng phiên nền để truyền tệp lớn có thể mất nhiều thời gian và cần tồn tại khi người dùng rời khỏi ứng dụng của bạn.
+
+Cuối cùng, người dùng của bạn xứng đáng có trải nghiệm tốt nhất khi họ ở trong ứng dụng của bạn và điều đó có thể có nghĩa là lên lịch cho các tác vụ ít khẩn cấp hơn sẽ xảy ra sau này.
+
+Bằng cách sử dụng phiên nền, bạn có một số cách để lên lịch hoạt động mạng hiệu quả và tiết kiệm tài nguyên cho người dùng của mình.
+
+Đối với các tác vụ không cần xảy ra ngay lập tức, hãy cân nhắc đặt thuộc tính isDiscretionary thành true trên cấu hình nền của bạn.
+
+Điều này cho phép hệ thống lên lịch các tác vụ của bạn một cách thông minh, có tính đến các yếu tố như "Người dùng có sử dụng Wi-Fi không", "thiết bị của họ có được kết nối với nguồn điện" và "mạng có bị hạn chế không" không?
+
+Đây có thể là một lựa chọn tuyệt vời khi tải xuống tài sản để sử dụng sau này hoặc tải lên bản sao lưu hoặc phân tích hàng đêm.
+
+Để ngăn chặn việc sử dụng quá nhiều băng thông ở Chế độ dữ liệu thấp, hãy cân nhắc đặt thuộc tính allowsConstrainedNetworkAccess thành sai.
+
+Kiểm tra phiên Tiến bộ trong Mạng để biết thêm mẹo hỗ trợ Chế độ Dữ liệu Thấp trong ứng dụng của bạn.
+
+Bạn cũng có thể lên lịch cho nhiệm vụ nền để bắt đầu sau đó, khi một người ít có khả năng sử dụng tài nguyên hệ thống hơn.
+
+Đêm khuya thường là thời điểm tuyệt vời để lên lịch các nhiệm vụ như sao lưu lớn.
+
+Để hỗ trợ thêm cho việc lên lịch hệ thống, chúng ta có thể đặt các thuộc tính countOfBytesClientExpectsToSend và Receive.
+
+Bằng cách sử dụng các thuộc tính này, bạn đang trao quyền cho hệ thống để phân bổ tài nguyên tốt nhất và chuyển những lợi ích đó cho người dùng của bạn.
+
+Phiên nền là một công cụ tuyệt vời để chuyển tệp lớn mà không cần phải xảy ra ngay lập tức hoặc việc chuyển sẽ tiếp tục khi ứng dụng của bạn bị đình chỉ.
+
+Đối với các nhiệm vụ nhỏ hơn hoặc các nhiệm vụ cần xảy ra càng sớm càng tốt, bạn có thể sử dụng URLSession tiêu chuẩn.
+
+Làm cho mạng đáng tin cậy cho người dùng của bạn bằng cách mang lại sức mạnh của việc nối lại cho ứng dụng của bạn.
+
+Kiểm tra SwiftNIO và HTTP Types, và hãy làm việc cùng nhau để tạo ra trải nghiệm HTTP tốt nhất trong Swift.
+
+Và cuối cùng, hãy thử sử dụng phiên nền để truyền tệp lớn hoặc tùy ý.
+
+Bạn sẽ tìm thấy rất nhiều cách để tiết kiệm tài nguyên khi người dùng của bạn cần nó nhất.
+
+Cảm ơn vì đã xem, và hãy chắc chắn xem các phiên kết nối tuyệt vời khác bên dưới.
+
+Và đó là một kết thúc tốt đẹp!
+
+♪ ♪

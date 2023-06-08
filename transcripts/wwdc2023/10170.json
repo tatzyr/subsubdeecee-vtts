@@ -1,0 +1,1626 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1"
+  },
+  {
+    "text": "Evan: Hi, my name is Evan. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=10"
+  },
+  {
+    "text": "Today, we are going beyond the basics of structured concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=12"
+  },
+  {
+    "text": "exploring how structured tasks can simplify realizing useful behaviors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=15"
+  },
+  {
+    "text": "Before we get started, if you're new or want to review structured concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=20"
+  },
+  {
+    "text": "feel free to watch the \"Explore structured concurrency in Swift\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=24"
+  },
+  {
+    "text": "and \"Swift concurrency: Behind the scenes\" sessions from WWDC 2021.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=27"
+  },
+  {
+    "text": "Today, we will review the task hierarchy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=33"
+  },
+  {
+    "text": "and how it unlocks automatic task cancellation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=36"
+  },
+  {
+    "text": "priority propagation, and useful task-local value behaviors.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=39"
+  },
+  {
+    "text": "Then we will cover some patterns with task groups ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=44"
+  },
+  {
+    "text": "to help manage resource usage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=46"
+  },
+  {
+    "text": "Finally, we'll look at how all of these come together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=48"
+  },
+  {
+    "text": "to facilitate profiling and tracing tasks in a server environment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=51"
+  },
+  {
+    "text": "Structured concurrency enables you to reason about concurrent code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=56"
+  },
+  {
+    "text": "using well-defined points where execution branches off and runs concurrently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=60"
+  },
+  {
+    "text": "and where results from that execution rejoin, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=64"
+  },
+  {
+    "text": "similar to how \"if\"-blocks and \"for\"-loops define how control-flow behaves ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=67"
+  },
+  {
+    "text": "in synchronous code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=71"
+  },
+  {
+    "text": "Concurrent execution is triggered when you use an \"async let\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=73"
+  },
+  {
+    "text": "a task group, or create a task or detached task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=76"
+  },
+  {
+    "text": "Results rejoin the current execution at a suspension point, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=80"
+  },
+  {
+    "text": "indicated by an \"await\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=83"
+  },
+  {
+    "text": "Not all tasks are structured.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=86"
+  },
+  {
+    "text": "Structured tasks are created using \"async let\" and task groups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=88"
+  },
+  {
+    "text": "while unstructured tasks are created using Task and Task.detached. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=92"
+  },
+  {
+    "text": "Structured tasks live to the end of the scope where they are declared, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=97"
+  },
+  {
+    "text": "like local variables, and are automatically cancelled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=100"
+  },
+  {
+    "text": "when they go out of scope, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=103"
+  },
+  {
+    "text": "making it clear how long the task will live.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=104"
+  },
+  {
+    "text": "Whenever possible, prefer structured Tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=108"
+  },
+  {
+    "text": "The benefits of structured concurrency discussed later ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=111"
+  },
+  {
+    "text": "do not always apply to unstructured tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=113"
+  },
+  {
+    "text": "Before we dive into the code, let's come up with a concrete example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=117"
+  },
+  {
+    "text": "Suppose we have a kitchen with multiple chefs preparing soup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=122"
+  },
+  {
+    "text": "Soup preparation consists of multiple steps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=125"
+  },
+  {
+    "text": "The chefs have to cut ingredients, marinate chicken, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=128"
+  },
+  {
+    "text": "bring the broth to a boil, and finally, cook the soup before it is ready to serve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=131"
+  },
+  {
+    "text": "Some tasks can be performed in parallel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=136"
+  },
+  {
+    "text": "while others must be done in a specific order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=138"
+  },
+  {
+    "text": "Let's see how we can express this in code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=141"
+  },
+  {
+    "text": "For now, we'll focus on the makeSoup function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=144"
+  },
+  {
+    "text": "You may find yourself creating unstructured Tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=148"
+  },
+  {
+    "text": "to add concurrency to your functions, and awaiting their values when necessary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=151"
+  },
+  {
+    "text": "While this expresses which tasks can run concurrently and which cannot, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=155"
+  },
+  {
+    "text": "this is not the recommended way to use concurrency in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=159"
+  },
+  {
+    "text": "Here is the same function expressed using structured concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=163"
+  },
+  {
+    "text": "Since we have a known number of child tasks to create, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=167"
+  },
+  {
+    "text": "we can use the convenient \"async let\" syntax. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=170"
+  },
+  {
+    "text": "These tasks form a structured relationship with their parent task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=174"
+  },
+  {
+    "text": "We will talk about why this is important shortly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=178"
+  },
+  {
+    "text": "makeSoup calls a number of asynchronous functions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=181"
+  },
+  {
+    "text": "One of them is \"chopIngredients\", which takes a list of ingredients ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=184"
+  },
+  {
+    "text": "and uses a task group to chop all of them concurrently.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=187"
+  },
+  {
+    "text": "Now that we are familiar with makeSoup, let's take a look at the task hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=191"
+  },
+  {
+    "text": "Child tasks are indicated by the colored boxes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=196"
+  },
+  {
+    "text": "while the arrows point from parent task to child task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=199"
+  },
+  {
+    "text": "makeSoup has three child tasks for chopping ingredients, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=202"
+  },
+  {
+    "text": "marinating chicken, and boiling broth.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=206"
+  },
+  {
+    "text": "chopIngredients uses a task group to create a child task for each ingredient. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=209"
+  },
+  {
+    "text": "If we have three ingredients, it too will create three children.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=214"
+  },
+  {
+    "text": "This parent-child hierarchy forms a tree, the task tree.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=218"
+  },
+  {
+    "text": "Now that we've introduced the task tree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=223"
+  },
+  {
+    "text": "let's start identifying how that benefits our code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=225"
+  },
+  {
+    "text": "Task cancellation is used to signal that the app no longer needs the result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=228"
+  },
+  {
+    "text": "of a task and the task should stop and either return a partial result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=232"
+  },
+  {
+    "text": "or throw an error.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=236"
+  },
+  {
+    "text": "In our soup example, we may want to stop making a soup order if that customer left, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=238"
+  },
+  {
+    "text": "decided they wanted to order something else, or it's closing time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=242"
+  },
+  {
+    "text": "What causes task a cancellation? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=248"
+  },
+  {
+    "text": "Structured tasks are cancelled implicitly when they go out of scope, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=250"
+  },
+  {
+    "text": "though you can call \"cancelAll\" on task groups ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=254"
+  },
+  {
+    "text": "to cancel all active children and any future child tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=256"
+  },
+  {
+    "text": "Unstructured tasks are cancelled explicitly with the \"cancel\" function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=261"
+  },
+  {
+    "text": "Cancelling the parent task results in the cancellation of all child tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=266"
+  },
+  {
+    "text": "Cancellation is cooperative, so child tasks aren't immediately stopped.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=272"
+  },
+  {
+    "text": "It simply sets the \"isCancelled\" flag on that task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=276"
+  },
+  {
+    "text": "Actually acting on the cancellation is done in your code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=280"
+  },
+  {
+    "text": "Cancellation is a race.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=283"
+  },
+  {
+    "text": "If the task is cancelled before our check, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=285"
+  },
+  {
+    "text": "\"makeSoup\" throws a \"SoupCancellationError\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=288"
+  },
+  {
+    "text": "If the task is cancelled after the guard executes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=291"
+  },
+  {
+    "text": "the program will carry on preparing the soup.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=294"
+  },
+  {
+    "text": "If we are going to throw a cancellation error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=298"
+  },
+  {
+    "text": "instead of returning a partial result, we can call \"Task.checkCancellation\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=300"
+  },
+  {
+    "text": "which throws a \"CancellationError\" if the task was cancelled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=304"
+  },
+  {
+    "text": "It's important to check the task cancellation status ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=308"
+  },
+  {
+    "text": "before starting any expensive work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=311"
+  },
+  {
+    "text": "to verify that the result is still necessary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=313"
+  },
+  {
+    "text": "Cancellation checking is synchronous, so any function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=315"
+  },
+  {
+    "text": "asynchronous or synchronous, that should react to cancellation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=319"
+  },
+  {
+    "text": "should check the task cancellation status before continuing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=322"
+  },
+  {
+    "text": "Polling for cancellation with \"isCancelled\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=327"
+  },
+  {
+    "text": "or \"checkCancellation\" is useful when the task is running, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=330"
+  },
+  {
+    "text": "but there are times when you may need to respond to cancellation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=333"
+  },
+  {
+    "text": "while the task is suspended and no code is running, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=336"
+  },
+  {
+    "text": "like when implementing an AsyncSequence. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=339"
+  },
+  {
+    "text": "This is where \"withTaskCancellationHandler\" is useful.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=342"
+  },
+  {
+    "text": "Let's introduce a shift function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=347"
+  },
+  {
+    "text": "The cook should make soups as orders come in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=350"
+  },
+  {
+    "text": "until the end of their shift, signaled by a task cancellation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=352"
+  },
+  {
+    "text": "In one cancellation scenario, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=358"
+  },
+  {
+    "text": "the asynchronous for-loop gets a new order before it is cancelled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=360"
+  },
+  {
+    "text": "The \"makeSoup\" function handles the cancellation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=364"
+  },
+  {
+    "text": "as we defined earlier, and throws an error.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=366"
+  },
+  {
+    "text": "In another scenario, the cancellation may take place ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=369"
+  },
+  {
+    "text": "while the task is suspended, waiting on the next order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=372"
+  },
+  {
+    "text": "This case is more interesting because the task isn't running, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=376"
+  },
+  {
+    "text": "so we can't explicitly poll for the cancellation event.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=379"
+  },
+  {
+    "text": "Instead, we have to use the cancellation handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=383"
+  },
+  {
+    "text": "to detect the cancellation event and break out of the asynchronous for-loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=386"
+  },
+  {
+    "text": "The orders are produced from an AsyncSequence.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=391"
+  },
+  {
+    "text": "AsyncSequences are driven by an AsyncIterator, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=395"
+  },
+  {
+    "text": "which defines an asynchronous \"next\" function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=398"
+  },
+  {
+    "text": "Like with synchronous iterators, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=402"
+  },
+  {
+    "text": "the \"next\" function returns the next element in the sequence, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=404"
+  },
+  {
+    "text": "or nil to indicate that we are at the end of the sequence. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=408"
+  },
+  {
+    "text": "Many AsyncSequences are implemented with a state machine, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=412"
+  },
+  {
+    "text": "which we use to stop the running sequence.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=416"
+  },
+  {
+    "text": "In our example here, when \"isRunning\" is true, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=419"
+  },
+  {
+    "text": "the sequence should continue emitting orders. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=422"
+  },
+  {
+    "text": "Once the task is cancelled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=425"
+  },
+  {
+    "text": "we need to indicate that the sequence is done and should shut down.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=426"
+  },
+  {
+    "text": "We do this by synchronously calling the \"cancel\" function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=430"
+  },
+  {
+    "text": "on our sequence state machine.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=433"
+  },
+  {
+    "text": "Note that because the cancellation handler runs immediately, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=436"
+  },
+  {
+    "text": "the state machine is shared mutable state between the cancellation handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=440"
+  },
+  {
+    "text": "and main body, which can run concurrently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=444"
+  },
+  {
+    "text": "We'll need to protect our state machine.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=448"
+  },
+  {
+    "text": "While actors are great for protecting encapsulated state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=450"
+  },
+  {
+    "text": "we want to modify and read individual properties on our state machine, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=454"
+  },
+  {
+    "text": "so actors aren't quite the right tool for this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=458"
+  },
+  {
+    "text": "Furthermore, we can't guarantee the order that operations run on an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=461"
+  },
+  {
+    "text": "so we can't ensure that our cancellation will run first. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=466"
+  },
+  {
+    "text": "We'll need something else. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=469"
+  },
+  {
+    "text": "I've decided to use atomics from the Swift Atomics package, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=471"
+  },
+  {
+    "text": "but we could use a dispatch queue or locks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=475"
+  },
+  {
+    "text": "These mechanisms allow us to synchronize the shared state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=478"
+  },
+  {
+    "text": "avoiding race conditions, while allowing us to cancel the running state machine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=481"
+  },
+  {
+    "text": "without introducing an unstructured task in the cancellation handler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=485"
+  },
+  {
+    "text": "The task tree automatically propagates task cancellation information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=490"
+  },
+  {
+    "text": "Instead of having to worry about a cancellation token and synchronization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=494"
+  },
+  {
+    "text": "we let the Swift runtime handle it for us safely.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=498"
+  },
+  {
+    "text": "Remember, cancellation does not stop a task from running, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=501"
+  },
+  {
+    "text": "it only signals to the task that it has been cancelled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=505"
+  },
+  {
+    "text": "and should stop running as soon a possible.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=508"
+  },
+  {
+    "text": "It is up to your code to check for cancellation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=511"
+  },
+  {
+    "text": "Next, let's consider how the structured task tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=515"
+  },
+  {
+    "text": "helps propagate priority and avoid priority inversions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=518"
+  },
+  {
+    "text": "First, what is priority, and why do we care? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=522"
+  },
+  {
+    "text": "Priority is your way to communicate to the system how urgent a given task is. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=526"
+  },
+  {
+    "text": "Certain tasks, like responding to a button press, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=531"
+  },
+  {
+    "text": "need to run immediately or the app will appear frozen.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=533"
+  },
+  {
+    "text": "Meanwhile, other tasks, like prefetching content from a server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=537"
+  },
+  {
+    "text": "can run in the background without anyone noticing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=541"
+  },
+  {
+    "text": "Second, what is a priority inversion? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=544"
+  },
+  {
+    "text": "A priority inversion happens when a high-priority task is waiting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=548"
+  },
+  {
+    "text": "on the result of a lower-priority task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=551"
+  },
+  {
+    "text": "By default, child tasks inherit their priority from their parent, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=555"
+  },
+  {
+    "text": "so assuming that makeSoup is running in a task at medium priority, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=559"
+  },
+  {
+    "text": "all child tasks will also run at medium priority.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=563"
+  },
+  {
+    "text": "Let's say a VIP guest who comes to our restaurant looking for soup.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=568"
+  },
+  {
+    "text": "We give their soup a higher priority to ensure we get a good review.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=573"
+  },
+  {
+    "text": "When they await their soup, the priority of all child tasks is escalated, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=577"
+  },
+  {
+    "text": "ensuring that no high-priority task is waiting on a lower-priority task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=582"
+  },
+  {
+    "text": "avoiding the priority inversion.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=586"
+  },
+  {
+    "text": "Awaiting a result from a task with a higher priority ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=590"
+  },
+  {
+    "text": "escalates the priority of all child tasks in the task tree.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=593"
+  },
+  {
+    "text": "Note that awaiting the next result of a task group ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=597"
+  },
+  {
+    "text": "escalates all child tasks in the group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=600"
+  },
+  {
+    "text": "since we don't know which one is most likely to complete next.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=603"
+  },
+  {
+    "text": "The concurrency runtime uses priority queues to schedule tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=607"
+  },
+  {
+    "text": "so higher-priority tasks are selected to run before lower-priority tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=611"
+  },
+  {
+    "text": "The task keeps the escalated priority for the remainder of its lifetime.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=616"
+  },
+  {
+    "text": "It's not possible to undo a priority escalation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=620"
+  },
+  {
+    "text": "We effectively satisfied our VIP guest with a speedy soup delivery ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=623"
+  },
+  {
+    "text": "and got a good review, so our kitchen is starting to get popular now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=627"
+  },
+  {
+    "text": "We want to ensure we're using our resources effectively ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=631"
+  },
+  {
+    "text": "and noticed that we're creating a lot of chopping tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=634"
+  },
+  {
+    "text": "Let's investigate some useful patterns for managing concurrency with task groups.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=637"
+  },
+  {
+    "text": "We only have space for so many cutting boards.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=643"
+  },
+  {
+    "text": "If we chop too many ingredients simultaneously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=645"
+  },
+  {
+    "text": "we'll run out of space for other tasks, so we want to limit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=648"
+  },
+  {
+    "text": "the number of ingredients getting chopped at the same time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=652"
+  },
+  {
+    "text": "Going back to our code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=656"
+  },
+  {
+    "text": "we want to investigate the loop creating the chopping tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=658"
+  },
+  {
+    "text": "We replace the original loop over each ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=663"
+  },
+  {
+    "text": "with a loop that starts up to the maximum number of chopping tasks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=665"
+  },
+  {
+    "text": "Next, we want the loop collecting results to start a new task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=670"
+  },
+  {
+    "text": "each time an earlier task finishes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=674"
+  },
+  {
+    "text": "The new loop waits until one of the running tasks finish ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=678"
+  },
+  {
+    "text": "and, while there are still ingredients to chop, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=681"
+  },
+  {
+    "text": "adds a new task to chop the next ingredient.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=683"
+  },
+  {
+    "text": "Let's distill this idea down to see the pattern more clearly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=688"
+  },
+  {
+    "text": "The initial loop creates up to the maximum number of concurrent tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=692"
+  },
+  {
+    "text": "ensuring that we don't create too many.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=695"
+  },
+  {
+    "text": "Once the maximum number of tasks is running, we wait for one to finish.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=697"
+  },
+  {
+    "text": "After it finishes and we haven't hit a stopping condition, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=702"
+  },
+  {
+    "text": "we create a new task to keep making progress.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=705"
+  },
+  {
+    "text": "This limits the number of concurrent tasks in the group ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=709"
+  },
+  {
+    "text": "since we won't start new work until earlier tasks finish.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=711"
+  },
+  {
+    "text": "Earlier, we talked about chefs working in shifts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=717"
+  },
+  {
+    "text": "and using cancellation to indicate when their shift was over.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=720"
+  },
+  {
+    "text": "This is the Kitchen Service code handling the shift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=724"
+  },
+  {
+    "text": "Each cook starts their shift in a separate task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=727"
+  },
+  {
+    "text": "Once the cooks are working, we start a timer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=731"
+  },
+  {
+    "text": "When the timer finishes, we cancel all ongoing shifts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=734"
+  },
+  {
+    "text": "Notice that none of the tasks return a value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=738"
+  },
+  {
+    "text": "New in Swift 5.9 is the withDiscardingTaskGroup API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=743"
+  },
+  {
+    "text": "Discarding task groups don't hold onto the results of completed child tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=747"
+  },
+  {
+    "text": "Resources used by tasks are freed immediately after the task finishes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=752"
+  },
+  {
+    "text": "We can change the run method to make use of a discarding task group.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=757"
+  },
+  {
+    "text": "Discarding task groups automatically clean up their children, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=762"
+  },
+  {
+    "text": "so there is no need to explicitly cancel the group and clean up.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=765"
+  },
+  {
+    "text": "The discarding task group also has automatic sibling cancellation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=768"
+  },
+  {
+    "text": "If any of the child tasks throw an error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=772"
+  },
+  {
+    "text": "all remaining tasks are automatically cancelled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=776"
+  },
+  {
+    "text": "This is ideal for our use case here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=779"
+  },
+  {
+    "text": "We can throw a \"TimeToCloseError\" when the shift is over, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=782"
+  },
+  {
+    "text": "and it will automatically end the shift for all chefs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=785"
+  },
+  {
+    "text": "The new discard task group automatically releases resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=790"
+  },
+  {
+    "text": "when a task finishes, unlike the normal task groups ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=794"
+  },
+  {
+    "text": "where you have to collect the result. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=796"
+  },
+  {
+    "text": "This helps reduce memory consumption ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=798"
+  },
+  {
+    "text": "when you have many tasks that don't need to return anything, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=800"
+  },
+  {
+    "text": "like when you're processing a stream of requests.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=803"
+  },
+  {
+    "text": "In some situations, you'll want to return a value from your task group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=806"
+  },
+  {
+    "text": "but also want to limit the number of concurrent tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=810"
+  },
+  {
+    "text": "We covered a general pattern for using the completion of one task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=813"
+  },
+  {
+    "text": "to start another, avoiding a task explosion. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=817"
+  },
+  {
+    "text": "We're making soup more efficiently than ever, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=822"
+  },
+  {
+    "text": "but we still need to scale up more.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=824"
+  },
+  {
+    "text": "It's time to move production to the server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=827"
+  },
+  {
+    "text": "With that comes challenges of tracing orders as they are processed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=829"
+  },
+  {
+    "text": "Task-local values are here to help.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=833"
+  },
+  {
+    "text": "A task-local value is a piece of data associated with a given task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=836"
+  },
+  {
+    "text": "or more precisely, a task hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=840"
+  },
+  {
+    "text": "It's like a global variable, but the value bound ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=843"
+  },
+  {
+    "text": "to the task-local value is only available from the current task hierarchy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=846"
+  },
+  {
+    "text": "Task-local values are declared as static properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=850"
+  },
+  {
+    "text": "with the \"TaskLocal\" property wrapper.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=853"
+  },
+  {
+    "text": "It's a good practice to make the task local optional.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=856"
+  },
+  {
+    "text": "Any task that doesn't have the value set will need to return a default value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=859"
+  },
+  {
+    "text": "which is easily represented by a nil optional. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=864"
+  },
+  {
+    "text": "An unbound task local contains its default value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=868"
+  },
+  {
+    "text": "In our case, we have an optional String, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=872"
+  },
+  {
+    "text": "so it's nil and there is no cook associated with the current task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=874"
+  },
+  {
+    "text": "Task-local values can't be assigned to explicitly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=879"
+  },
+  {
+    "text": "but must be bound for a specific scope. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=882"
+  },
+  {
+    "text": "The binding lasts for the duration of the scope, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=886"
+  },
+  {
+    "text": "and reverts back to the original value at the end of the scope.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=889"
+  },
+  {
+    "text": "Going back to the task tree, each task has an associated place for task-local values.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=894"
+  },
+  {
+    "text": "We bound the name \"Sakura\" to the \"cook\"task-local variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=899"
+  },
+  {
+    "text": "before making soup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=903"
+  },
+  {
+    "text": "Only makeSoup stores the bound value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=905"
+  },
+  {
+    "text": "The children do not have any values saved in their task-local storage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=908"
+  },
+  {
+    "text": "Looking for the value bound to a task-local variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=913"
+  },
+  {
+    "text": "involves recursively walking each parent until we find a task with that value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=916"
+  },
+  {
+    "text": "If we find a task with the value bound, the task local will assume that value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=921"
+  },
+  {
+    "text": "If we reach the root, indicated by the task not having a parent, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=926"
+  },
+  {
+    "text": "the task local was not bound and we get the original default value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=929"
+  },
+  {
+    "text": "The Swift runtime is optimized to run these queries faster.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=934"
+  },
+  {
+    "text": "Instead of walking the tree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=938"
+  },
+  {
+    "text": "we have a direct reference to the task with the key we're looking for.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=939"
+  },
+  {
+    "text": "The recursive nature of the task tree lends itself nicely ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=944"
+  },
+  {
+    "text": "to shadowing values without losing the former value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=947"
+  },
+  {
+    "text": "Suppose we want to track the current step in the soup-making process.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=951"
+  },
+  {
+    "text": "We can bind the \"step\" variable to \"soup\" in \"'makeSoup\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=956"
+  },
+  {
+    "text": "then rebind it to \"chop\" in \"chopIngredients\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=959"
+  },
+  {
+    "text": "The value bound in chopIngredients will shadow the former value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=963"
+  },
+  {
+    "text": "until we return from chopIngredients, where we observe the original value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=966"
+  },
+  {
+    "text": "Through the powers of video editing magic, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=972"
+  },
+  {
+    "text": "we've moved our service to the cloud to keep up with the demands for soup.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=975"
+  },
+  {
+    "text": "We still have the same soup-making functionality, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=978"
+  },
+  {
+    "text": "but it's on a server instead.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=981"
+  },
+  {
+    "text": "We'll need to observe orders as they pass through the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=983"
+  },
+  {
+    "text": "to ensure they're being completed in a timely manner ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=986"
+  },
+  {
+    "text": "and to monitor for unexpected failures.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=989"
+  },
+  {
+    "text": "The server environment handles many requests concurrently, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=992"
+  },
+  {
+    "text": "so we'll want to include information that will allow us to trace a given order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=995"
+  },
+  {
+    "text": "Logging by hand is repetitive and verbose, which leads to subtle bugs and typos.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1001"
+  },
+  {
+    "text": "Oh no, I've accidentally logged the entire order instead of just the order ID.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1006"
+  },
+  {
+    "text": "Let's find out how we can use task-local values to make our logging more reliable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1011"
+  },
+  {
+    "text": "On Apple devices, you'll want to continue using the OSLog APIs directly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1017"
+  },
+  {
+    "text": "but as parts of your application move to the cloud, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1023"
+  },
+  {
+    "text": "you'll need other solutions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1026"
+  },
+  {
+    "text": "SwiftLog is a logging API package with multiple backing implementations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1028"
+  },
+  {
+    "text": "allowing you to drop in a logging back end ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1033"
+  },
+  {
+    "text": "that suites your needs without making changes to your server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1035"
+  },
+  {
+    "text": "MetadataProvider is a new API in SwiftLog 1.5.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1039"
+  },
+  {
+    "text": "Implementing a metadata provider makes it easy to abstract your logging logic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1044"
+  },
+  {
+    "text": "to ensure that you're emitting consistent information about relevant values.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1048"
+  },
+  {
+    "text": "The metadata provider uses a dictionary-like structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1054"
+  },
+  {
+    "text": "mapping a name to the value being logged. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1057"
+  },
+  {
+    "text": "We want to automatically log the orderID task-local variable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1060"
+  },
+  {
+    "text": "so we check to see if it was defined, and if it is, add it to the dictionary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1065"
+  },
+  {
+    "text": "Multiple libraries may define their own metadata provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1071"
+  },
+  {
+    "text": "to look for library-specific information, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1074"
+  },
+  {
+    "text": "so the MetadataProvider defines a \"multiplex\" function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1076"
+  },
+  {
+    "text": "which takes multiple metadata providers and combines them into a single object.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1080"
+  },
+  {
+    "text": "Once we have a metadata provider, we initialize the logging system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1085"
+  },
+  {
+    "text": "with that provider, and we're ready to start logging.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1089"
+  },
+  {
+    "text": "The logs automatically include information specified in the metadata provider, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1094"
+  },
+  {
+    "text": "so we don't need to worry about including it in the log message.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1098"
+  },
+  {
+    "text": "The logs show as order 0 enters the kitchen, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1102"
+  },
+  {
+    "text": "and where our chefs picks up that order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1105"
+  },
+  {
+    "text": "Values in the metadata provider are listed clearly in the log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1108"
+  },
+  {
+    "text": "making it easier for you to track an order through the soup-making process.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1111"
+  },
+  {
+    "text": "Task-local values allow you to attach information to a task hierarchy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1117"
+  },
+  {
+    "text": "All tasks, except detached tasks, inherit task-local values from the current task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1121"
+  },
+  {
+    "text": "They are bound in a given scope to a specific task tree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1128"
+  },
+  {
+    "text": "providing you with low-level building blocks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1131"
+  },
+  {
+    "text": "to propagate additional context information through the task hierarchy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1133"
+  },
+  {
+    "text": "Now we'll use the task hierarchy and tools it provides us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1139"
+  },
+  {
+    "text": "to trace and profile a concurrent distributed system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1142"
+  },
+  {
+    "text": "When working with concurrency on Apple platforms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1147"
+  },
+  {
+    "text": "Instruments is your friend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1149"
+  },
+  {
+    "text": "The Swift Concurrency instrument gives you insight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1151"
+  },
+  {
+    "text": "into the relationships between your structured tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1153"
+  },
+  {
+    "text": "For more information, check out the session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1157"
+  },
+  {
+    "text": "\"Visualize and optimize Swift concurrency.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1159"
+  },
+  {
+    "text": "Instruments also introduced an HTTP traffic instrument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1163"
+  },
+  {
+    "text": "in the \"Analyze HTTP Traffic in instruments\" session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1167"
+  },
+  {
+    "text": "The HTTP traffic analyzer only shows traces for events happening locally.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1171"
+  },
+  {
+    "text": "The profile shows a grey box while waiting for a response from the server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1176"
+  },
+  {
+    "text": "so we'll need more information to understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1180"
+  },
+  {
+    "text": "how to improve the performance of our server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1183"
+  },
+  {
+    "text": "Introducing the new Swift Distributed Tracing package.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1186"
+  },
+  {
+    "text": "The task tree is great for managing child tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1190"
+  },
+  {
+    "text": "in a single task hierarchy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1192"
+  },
+  {
+    "text": "Distributed tracing allows you to leverage the benefits of the task tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1194"
+  },
+  {
+    "text": "across multiple systems to gain insight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1198"
+  },
+  {
+    "text": "into performance characteristics and task relationships. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1201"
+  },
+  {
+    "text": "The Swift Distributed Tracing package has an implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1204"
+  },
+  {
+    "text": "of the OpenTelemetry protocol, so existing tracing solutions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1207"
+  },
+  {
+    "text": "like Zipkin and Jaeger, will work out of the box.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1211"
+  },
+  {
+    "text": "Our goal with Swift Distributed Tracing is to fill in the opaque ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1216"
+  },
+  {
+    "text": "\"waiting for response\" in Xcode Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1219"
+  },
+  {
+    "text": "with detailed information about what is happening in the server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1221"
+  },
+  {
+    "text": "We'll need to instrument our server code to figure out where we need to focus.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1226"
+  },
+  {
+    "text": "Distributed tracing is a little different from tracing processes locally.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1231"
+  },
+  {
+    "text": "Instead of getting a trace per-function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1235"
+  },
+  {
+    "text": "we instrument our code with spans using the \"withSpan\" API.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1237"
+  },
+  {
+    "text": "Spans allow us to assign names to regions of code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1243"
+  },
+  {
+    "text": "that are reported in the tracing system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1246"
+  },
+  {
+    "text": "Spans don't need to cover an entire function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1249"
+  },
+  {
+    "text": "They can provide more insight on specific pieces of a given function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1251"
+  },
+  {
+    "text": "withSpan annotates our tasks with additional trace IDs and other metadata, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1256"
+  },
+  {
+    "text": "allowing the tracing system to merge the task trees into a single trace. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1261"
+  },
+  {
+    "text": "The tracing system has enough information to provide you with insight ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1266"
+  },
+  {
+    "text": "into the task hierarchy, along with information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1270"
+  },
+  {
+    "text": "about the runtime performance characteristics of a task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1273"
+  },
+  {
+    "text": "The span name is presented in the tracing UI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1277"
+  },
+  {
+    "text": "You'll want to keep them short and descriptive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1280"
+  },
+  {
+    "text": "so that you can easily find information about a specific span without clutter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1282"
+  },
+  {
+    "text": "We can attach additional metadata with the use of span attributes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1287"
+  },
+  {
+    "text": "so we don't need to clutter the span name with the order ID.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1292"
+  },
+  {
+    "text": "Here we've replaced the span name with the \"#function\" directive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1296"
+  },
+  {
+    "text": "to automatically fill the span name with the function name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1300"
+  },
+  {
+    "text": "and used the span attribute to attach the current order ID ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1303"
+  },
+  {
+    "text": "to the span information reported to the tracer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1307"
+  },
+  {
+    "text": "Tracing systems usually present the attributes while inspecting a given span.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1311"
+  },
+  {
+    "text": "Most spans come with HTTP status codes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1316"
+  },
+  {
+    "text": "request and response sizes, start and end times, and other metadata ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1319"
+  },
+  {
+    "text": "making it easier for you to track information passing through your system.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1323"
+  },
+  {
+    "text": "As noted on the previous slide, you can define your own attributes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1327"
+  },
+  {
+    "text": "For more examples of how you can leverage spans, please check out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1331"
+  },
+  {
+    "text": "the swift-distributed-tracing-extras repository.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1334"
+  },
+  {
+    "text": "If a task fails and throws an error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1338"
+  },
+  {
+    "text": "that information is also presented in the span and reported in the tracing system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1341"
+  },
+  {
+    "text": "Since spans contain both timing information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1346"
+  },
+  {
+    "text": "and the relationships of tasks in the tree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1349"
+  },
+  {
+    "text": "it's a helpful way to track down errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1351"
+  },
+  {
+    "text": "caused by timing races and identify how they impact other tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1353"
+  },
+  {
+    "text": "We've talked about the tracing system and how it can reconstruct task trees ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1359"
+  },
+  {
+    "text": "using the trace IDs and how you can attach your own attributes to a span, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1363"
+  },
+  {
+    "text": "but we haven't started working this into a distributed system yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1368"
+  },
+  {
+    "text": "The beauty of the tracing system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1372"
+  },
+  {
+    "text": "is that there is nothing more that needs to be done.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1374"
+  },
+  {
+    "text": "If we factor a chopping service out of our kitchen service, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1376"
+  },
+  {
+    "text": "otherwise keeping the same code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1380"
+  },
+  {
+    "text": "the tracing system will automatically pick up the traces ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1382"
+  },
+  {
+    "text": "and relate them across different machines in the distributed system.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1385"
+  },
+  {
+    "text": "The trace view will indicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1389"
+  },
+  {
+    "text": "that the spans are running on a different machine, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1390"
+  },
+  {
+    "text": "but will otherwise be the same. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1392"
+  },
+  {
+    "text": "Distributed tracing is most powerful when all parts of the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1395"
+  },
+  {
+    "text": "embrace traces, including the HTTP clients, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1399"
+  },
+  {
+    "text": "servers, and other RPC systems.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1403"
+  },
+  {
+    "text": "Swift Distributed Tracing leverages task-local values, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1406"
+  },
+  {
+    "text": "built on the task trees, to automatically propagate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1410"
+  },
+  {
+    "text": "all of the information necessary to produce reliable cross-node traces. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1413"
+  },
+  {
+    "text": "Structured tasks unlock the secrets of your concurrent systems, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1417"
+  },
+  {
+    "text": "providing you with tools to automatically cancel operations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1421"
+  },
+  {
+    "text": "automatically propagate priority information, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1425"
+  },
+  {
+    "text": "and facilitate tracing complex distributed workloads.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1428"
+  },
+  {
+    "text": "All of these work because ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1432"
+  },
+  {
+    "text": "of the structured nature of concurrency in Swift.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1433"
+  },
+  {
+    "text": "I hope this session excited you about structured concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1437"
+  },
+  {
+    "text": "and that you'll reach for structured tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1440"
+  },
+  {
+    "text": "before using unstructured alternatives.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1442"
+  },
+  {
+    "text": "Thank you for watching! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1445"
+  },
+  {
+    "text": "I can't wait to see what other useful patterns you'll come up with ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1446"
+  },
+  {
+    "text": "using structured concurrency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1449"
+  },
+  {
+    "text": "Mm, soup! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1451"
+  },
+  {
+    "text": "♪ ♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10170/?time=1455"
+  }
+]

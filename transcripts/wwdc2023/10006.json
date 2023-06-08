@@ -1,0 +1,1298 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=0"
+  },
+  {
+    "text": "Jonathan: Hi, I'm Jonathan, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=10"
+  },
+  {
+    "text": "and I'm an engineer on the Internet Technologies team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=12"
+  },
+  {
+    "text": "Today we'll explore how to build robust and resumable file transfers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=15"
+  },
+  {
+    "text": "using URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=20"
+  },
+  {
+    "text": "Large file transfers can be a huge challenge ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=23"
+  },
+  {
+    "text": "because even a tiny interruption can throw away all your user's progress ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=26"
+  },
+  {
+    "text": "and force them to start from the very beginning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=30"
+  },
+  {
+    "text": "Plus, the larger the transfer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=33"
+  },
+  {
+    "text": "the longer it takes, and the longer it takes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=36"
+  },
+  {
+    "text": "the more opportunity there is for something to go wrong.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=39"
+  },
+  {
+    "text": "In that time, your user might navigate away from your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=44"
+  },
+  {
+    "text": "leave the range of Wi-Fi, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=48"
+  },
+  {
+    "text": "or experience one of so many network problems outside of their control. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=50"
+  },
+  {
+    "text": "In this session, we'll explore how to solve these challenges ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=56"
+  },
+  {
+    "text": "and provide a robust networking experience for your users. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=59"
+  },
+  {
+    "text": "Our first stop is resumable HTTP protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=64"
+  },
+  {
+    "text": "which allow your user to keep their progress ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=68"
+  },
+  {
+    "text": "when a connection is interrupted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=70"
+  },
+  {
+    "text": "This prevents wasted time and bandwidth, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=73"
+  },
+  {
+    "text": "making these protocols a powerful tool when transferring large amounts of data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=76"
+  },
+  {
+    "text": "I'll demonstrate how to resume both downloads and uploads in URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=82"
+  },
+  {
+    "text": "including brand new APIs for resumable upload tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=87"
+  },
+  {
+    "text": "Understanding the mechanism behind these APIs can be really helpful ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=91"
+  },
+  {
+    "text": "for debugging your app, or even building your own server support. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=96"
+  },
+  {
+    "text": "That's why we'll also cover the resumable protocols themselves, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=100"
+  },
+  {
+    "text": "so you know exactly how your app and server achieve this over HTTP.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=104"
+  },
+  {
+    "text": "Next up, speaking of servers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=110"
+  },
+  {
+    "text": "you'll learn how to bring resumable upload support to any server that uses SwiftNIO.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=113"
+  },
+  {
+    "text": "And lastly, we'll review how background URLSessions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=119"
+  },
+  {
+    "text": "can gracefully handle user and network interruptions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=123"
+  },
+  {
+    "text": "while making efficient use of system resources.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=127"
+  },
+  {
+    "text": "Let's learn more about download and upload resumption in URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=131"
+  },
+  {
+    "text": "So I'm downloading the latest Xcode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=136"
+  },
+  {
+    "text": "and the 7 gigabyte download is almost finished. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=139"
+  },
+  {
+    "text": "Right at the end, my Wi-Fi goes out.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=143"
+  },
+  {
+    "text": "But wait, the download is paused, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=146"
+  },
+  {
+    "text": "and when the Wi-Fi comes back online, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=149"
+  },
+  {
+    "text": "I can resume my download from where it left off.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=152"
+  },
+  {
+    "text": "I just saved lots of time and several gigs of bandwidth. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=157"
+  },
+  {
+    "text": "Resumable downloads are amazing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=162"
+  },
+  {
+    "text": "But how do they work? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=164"
+  },
+  {
+    "text": "First, the client sends a GET request to retrieve the download from the server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=167"
+  },
+  {
+    "text": "In the response, the server advertises its support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=173"
+  },
+  {
+    "text": "for resumable downloads using the Accept-Ranges header. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=176"
+  },
+  {
+    "text": "Accept-Ranges: bytes means the server supports range requests ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=181"
+  },
+  {
+    "text": "for specific bytes of this resource. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=185"
+  },
+  {
+    "text": "The server response also contains what's called an ETag, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=189"
+  },
+  {
+    "text": "which uniquely identifies the resource at this moment in time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=192"
+  },
+  {
+    "text": "If the content on the server changes, the ETag does, too.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=197"
+  },
+  {
+    "text": "So what happens if this download is interrupted? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=202"
+  },
+  {
+    "text": "The client has stored the partial download data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=206"
+  },
+  {
+    "text": "so it only needs the last part. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=209"
+  },
+  {
+    "text": "To accomplish this, it can send a range request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=212"
+  },
+  {
+    "text": "to retrieve the missing bytes of the download. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=216"
+  },
+  {
+    "text": "The request indicates which bytes using the Range field. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=219"
+  },
+  {
+    "text": "But the client also needs to make sure the resource hasn't changed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=224"
+  },
+  {
+    "text": "or else it would be appending data from the new resource ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=229"
+  },
+  {
+    "text": "onto the older resource that's stored. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=232"
+  },
+  {
+    "text": "To prevent this, the If-Range field contains the ETag received ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=235"
+  },
+  {
+    "text": "from the previous response, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=240"
+  },
+  {
+    "text": "telling the server to only send the partial data if the ETag is the same.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=242"
+  },
+  {
+    "text": "If the ETag is the same, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=249"
+  },
+  {
+    "text": "then the server responds with 206 Partial Content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=251"
+  },
+  {
+    "text": "The Content-Range field here denotes the range of bytes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=255"
+  },
+  {
+    "text": "included in this response, completing the download.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=259"
+  },
+  {
+    "text": "Since the beginning, URLSession has offered API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=264"
+  },
+  {
+    "text": "to pause and resume download tasks using Range requests. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=267"
+  },
+  {
+    "text": "Now, you can pause and resume uploads, too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=272"
+  },
+  {
+    "text": "Not only does this allow you to manually pause an ongoing task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=275"
+  },
+  {
+    "text": "but you can also perform error handling to recover from unexpected connection issues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=280"
+  },
+  {
+    "text": "and resume your transfer right where it left off. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=285"
+  },
+  {
+    "text": "Let's review how this works for downloads first. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=289"
+  },
+  {
+    "text": "Imagine you're creating a UI that allow users to manually pause ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=293"
+  },
+  {
+    "text": "and resume their downloads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=297"
+  },
+  {
+    "text": "Like the Safari example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=300"
+  },
+  {
+    "text": "your app owns this UI, but under the hood, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=302"
+  },
+  {
+    "text": "you can use URLSession to handle all the details, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=305"
+  },
+  {
+    "text": "like keeping track of the partial download data, ETag, and request headers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=308"
+  },
+  {
+    "text": "To begin a download, you create a download task like usual, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=314"
+  },
+  {
+    "text": "and start it by calling resume. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=318"
+  },
+  {
+    "text": "To pause the download, such as when a user taps a pause button, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=321"
+  },
+  {
+    "text": "you can call cancelByProducingResumeData. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=325"
+  },
+  {
+    "text": "In order to resume this download later, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=330"
+  },
+  {
+    "text": "URLSession will need information about the partial download, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=332"
+  },
+  {
+    "text": "like its ETag, current size, and location on disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=336"
+  },
+  {
+    "text": "This, and other metadata, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=341"
+  },
+  {
+    "text": "are conveniently stored in the resume data object returned from this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=343"
+  },
+  {
+    "text": "Again, it's important to note that this resume data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=349"
+  },
+  {
+    "text": "is not the partial download data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=352"
+  },
+  {
+    "text": "If the resume data is nil, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=355"
+  },
+  {
+    "text": "this means that one or more requirements for resumable downloads are not met, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=357"
+  },
+  {
+    "text": "which we'll cover soon. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=363"
+  },
+  {
+    "text": "On the other hand, if the resume data is not nil, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=365"
+  },
+  {
+    "text": "you should store it for later use. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=368"
+  },
+  {
+    "text": "That's because to resume the download, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=371"
+  },
+  {
+    "text": "like when a user taps a resume button, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=374"
+  },
+  {
+    "text": "you pass this stored data to the downloadTask withResumeData method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=377"
+  },
+  {
+    "text": "It's as simple as that! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=382"
+  },
+  {
+    "text": "This pattern is great for manually pausing a download, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=384"
+  },
+  {
+    "text": "but URLSession also offers ways to recover from unpredicted connection interruptions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=388"
+  },
+  {
+    "text": "If your download task fails due to a network problem, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=394"
+  },
+  {
+    "text": "you can check for resume data in the error itself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=398"
+  },
+  {
+    "text": "If the download can be resumed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=402"
+  },
+  {
+    "text": "the error's userInfo dictionary will contain that resume data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=404"
+  },
+  {
+    "text": "You can conveniently access this data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=409"
+  },
+  {
+    "text": "using the downloadTaskResumeData property of URLError. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=411"
+  },
+  {
+    "text": "There are a few requirements for resumable downloads in URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=416"
+  },
+  {
+    "text": "Downloads inherently fetch data, and should be safe to repeat, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=422"
+  },
+  {
+    "text": "so URLSession requires the download task to have an HTTP GET request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=426"
+  },
+  {
+    "text": "Other schemes or methods are not supported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=432"
+  },
+  {
+    "text": "Next, the server must support byte-range requests ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=435"
+  },
+  {
+    "text": "and advertise this using the Accept-Ranges header. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=439"
+  },
+  {
+    "text": "The server must provide an ETag, or Last-Modified field, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=443"
+  },
+  {
+    "text": "for the resource in the response, but ETag is preferred. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=447"
+  },
+  {
+    "text": "And lastly, the temporary download file must not have been deleted by the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=452"
+  },
+  {
+    "text": "in response to disk space pressure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=457"
+  },
+  {
+    "text": "With these requirements in place, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=461"
+  },
+  {
+    "text": "you can manually pause and resume a download, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=463"
+  },
+  {
+    "text": "or even recover from connection interruption. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=466"
+  },
+  {
+    "text": "Without a resumption protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=470"
+  },
+  {
+    "text": "even a small interruption forces you to restart your transfer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=472"
+  },
+  {
+    "text": "from the very beginning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=476"
+  },
+  {
+    "text": "This is an even bigger problem for uploads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=478"
+  },
+  {
+    "text": "Upload speeds are often much slower than download speeds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=482"
+  },
+  {
+    "text": "so restarting means even more lost time and resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=485"
+  },
+  {
+    "text": "iOS 17 introduces brand new support for resumable upload tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=489"
+  },
+  {
+    "text": "I'm super excited for these. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=494"
+  },
+  {
+    "text": "Now, upload tasks are automatically resumable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=496"
+  },
+  {
+    "text": "if the server supports the latest protocol draft. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=500"
+  },
+  {
+    "text": "Let's explore the new API first, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=503"
+  },
+  {
+    "text": "then dive-in to the details of the resumable upload protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=506"
+  },
+  {
+    "text": "Just like download tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=510"
+  },
+  {
+    "text": "simply create an upload task and start it by calling resume. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=511"
+  },
+  {
+    "text": "To pause, upload tasks now support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=516"
+  },
+  {
+    "text": "the same cancelByProducingResumeData method as download tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=519"
+  },
+  {
+    "text": "The task automatically detects if the server supports ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=525"
+  },
+  {
+    "text": "the latest resumable upload protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=528"
+  },
+  {
+    "text": "If the server does support it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=531"
+  },
+  {
+    "text": "then you can store the resume data for later use.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=533"
+  },
+  {
+    "text": "And finally, to resume your paused upload, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=538"
+  },
+  {
+    "text": "use the new uploadTask withResumeData method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=541"
+  },
+  {
+    "text": "You'll notice the pattern shown here is identical to download tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=545"
+  },
+  {
+    "text": "That means if you've already created a great experience ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=550"
+  },
+  {
+    "text": "for pausing and resuming downloads in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=553"
+  },
+  {
+    "text": "you can easily implement resumable uploads for your users, too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=556"
+  },
+  {
+    "text": "If there's just a momentary network interruption, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=561"
+  },
+  {
+    "text": "but the server is still reachable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=564"
+  },
+  {
+    "text": "URLSession will automatically try to resume your upload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=566"
+  },
+  {
+    "text": "No extra code is needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=570"
+  },
+  {
+    "text": "But in case of other, broader connection issues, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=573"
+  },
+  {
+    "text": "like if your network or server goes down entirely, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=576"
+  },
+  {
+    "text": "you can check the error for resume data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=579"
+  },
+  {
+    "text": "just like download tasks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=581"
+  },
+  {
+    "text": "I'm extremely happy to see resumable uploads in URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=584"
+  },
+  {
+    "text": "and I hope you love them, too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=588"
+  },
+  {
+    "text": "But in order for you to take advantage of this feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=590"
+  },
+  {
+    "text": "your server must also support the latest resumable upload protocol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=593"
+  },
+  {
+    "text": "This protocol is currently being developed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=599"
+  },
+  {
+    "text": "and there are efforts across the industry to standardize it in the IETF. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=601"
+  },
+  {
+    "text": "In the protocol, the client is able to automatically discover server support. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=607"
+  },
+  {
+    "text": "This means URLSession can attempt to make ALL uploads resumable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=612"
+  },
+  {
+    "text": "on the very first request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=616"
+  },
+  {
+    "text": "If the server does not support resumable uploads, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=619"
+  },
+  {
+    "text": "the request simply continues as a regular upload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=623"
+  },
+  {
+    "text": "Let's see how it works on the wire.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=627"
+  },
+  {
+    "text": "The client first sends a request to an upload endpoint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=630"
+  },
+  {
+    "text": "The Upload-Incomplete field indicates that this client ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=634"
+  },
+  {
+    "text": "supports resumable uploads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=638"
+  },
+  {
+    "text": "The question mark zero is what's known as a structured field boolean, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=640"
+  },
+  {
+    "text": "and it represents the value false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=645"
+  },
+  {
+    "text": "This means that all of the upload data is included in the body of this request.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=648"
+  },
+  {
+    "text": "If the server supports resumable uploads, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=655"
+  },
+  {
+    "text": "it detects the client's header and advertises its own support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=657"
+  },
+  {
+    "text": "using a 104 informational response. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=661"
+  },
+  {
+    "text": "The 104 response contains a location field with a resume URL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=665"
+  },
+  {
+    "text": "This resume URL is used to uniquely identify the upload, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=671"
+  },
+  {
+    "text": "so the client knows where to resume the upload if the connection is interrupted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=675"
+  },
+  {
+    "text": "The server associates the upload data it receives with this unique resume URL.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=680"
+  },
+  {
+    "text": "If the upload finishes without interruption, then great. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=688"
+  },
+  {
+    "text": "The server sends a 201 and it's done. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=691"
+  },
+  {
+    "text": "However, if the upload is interrupted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=695"
+  },
+  {
+    "text": "the client and server perform the resumable upload procedures.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=698"
+  },
+  {
+    "text": "The server has stored the partial upload for the resume URL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=704"
+  },
+  {
+    "text": "but the client needs a way to determine how much data the server actually got. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=708"
+  },
+  {
+    "text": "To do this, the client sends a HEAD request to the resume URL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=713"
+  },
+  {
+    "text": "asking the server for the upload offset. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=718"
+  },
+  {
+    "text": "This offset is the true number of bytes the server has received.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=721"
+  },
+  {
+    "text": "The server then responds with the upload offset for the client's specific upload.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=727"
+  },
+  {
+    "text": "And lastly, the client needs to acknowledge ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=733"
+  },
+  {
+    "text": "the server's offset and send the remaining data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=736"
+  },
+  {
+    "text": "To do this, the client sends a PATCH request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=740"
+  },
+  {
+    "text": "to the resume URL with a matching upload offset. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=743"
+  },
+  {
+    "text": "The body of this request contains the upload data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=748"
+  },
+  {
+    "text": "starting from the given offset.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=751"
+  },
+  {
+    "text": "With that, the client has finally sent all the data to the server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=755"
+  },
+  {
+    "text": "completing the upload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=760"
+  },
+  {
+    "text": "Your app gets all this for free using upload tasks in URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=762"
+  },
+  {
+    "text": "Now, let's take a quick trip to the server side ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=766"
+  },
+  {
+    "text": "and explore how you can build your very own resumable upload server with SwiftNIO.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=770"
+  },
+  {
+    "text": "For those of you already using SwiftNIO on your server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=776"
+  },
+  {
+    "text": "this section is for you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=779"
+  },
+  {
+    "text": "Resumable uploads can be implemented in any server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=782"
+  },
+  {
+    "text": "but if your server already uses SwiftNIO, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=785"
+  },
+  {
+    "text": "there's a new package that makes it really easy to add support. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=788"
+  },
+  {
+    "text": "Let's go over a quick example. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=792"
+  },
+  {
+    "text": "If you're not familiar, SwiftNIO is an asynchronous network application framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=795"
+  },
+  {
+    "text": "that works in your app and server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=801"
+  },
+  {
+    "text": "In this sample code, we're setting up an HTTP/2, server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=804"
+  },
+  {
+    "text": "We've added two handlers to our server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=809"
+  },
+  {
+    "text": "The codec translates HTTP/2 frames into requests ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=813"
+  },
+  {
+    "text": "our example handler can understand. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=817"
+  },
+  {
+    "text": "In the other direction, it takes responses from the example handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=820"
+  },
+  {
+    "text": "and codes them into HTTP/2 frames. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=824"
+  },
+  {
+    "text": "The ExampleChannelHandler performs the basic routing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=828"
+  },
+  {
+    "text": "and logic for our server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=831"
+  },
+  {
+    "text": "At first, we only support regular uploads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=834"
+  },
+  {
+    "text": "Let's find out how easy it is to transform our server to support resumable uploads.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=838"
+  },
+  {
+    "text": "First, we download the NIOResumableUpload project, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=846"
+  },
+  {
+    "text": "add it as a dependency, and import it in our code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=850"
+  },
+  {
+    "text": "Then, we define a resumable upload context. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=854"
+  },
+  {
+    "text": "This tells the handler which upload endpoint to use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=859"
+  },
+  {
+    "text": "when generating resume URLs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=862"
+  },
+  {
+    "text": "And lastly, we wrap our current handler in the HTTPResumableUploadHandler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=865"
+  },
+  {
+    "text": "This performs the resumable upload procedures on top of our current logic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=872"
+  },
+  {
+    "text": "For each upload, it generates a random and secure resume URL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=878"
+  },
+  {
+    "text": "and associates this with the upload data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=883"
+  },
+  {
+    "text": "If a connection is interrupted, the handler holds on to any partial data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=886"
+  },
+  {
+    "text": "and responds to all the resumable upload procedures for us. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=891"
+  },
+  {
+    "text": "Wow! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=895"
+  },
+  {
+    "text": "With just a few lines of code, we've supercharged our server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=897"
+  },
+  {
+    "text": "to support resumable uploads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=900"
+  },
+  {
+    "text": "For those of you using Swift on Server already, try this out! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=903"
+  },
+  {
+    "text": "And for everybody regardless, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=908"
+  },
+  {
+    "text": "be sure to check out the open-source sample code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=909"
+  },
+  {
+    "text": "from the link in the description. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=912"
+  },
+  {
+    "text": "The sample code also uses new HTTP types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=913"
+  },
+  {
+    "text": "which allow you to use the same types across your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=917"
+  },
+  {
+    "text": "and your Swift on Server projects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=920"
+  },
+  {
+    "text": "These data types were released as an open-source package ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=923"
+  },
+  {
+    "text": "in collaboration with SwiftNIO, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=926"
+  },
+  {
+    "text": "so check out the Swift blog to learn more and provide your feedback.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=929"
+  },
+  {
+    "text": "You might have noticed the resumable upload protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=934"
+  },
+  {
+    "text": "makes use of informational responses using the 104 status code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=937"
+  },
+  {
+    "text": "The new HTTP Types make it easy to support these responses on the server side. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=942"
+  },
+  {
+    "text": "In your app, URLSession handles the 104 response automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=948"
+  },
+  {
+    "text": "for resumable uploads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=953"
+  },
+  {
+    "text": "But on top of that, URLSession now provides a delegate method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=955"
+  },
+  {
+    "text": "didReceiveInformationalResponse. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=959"
+  },
+  {
+    "text": "This allows your app to handle other intermediate responses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=962"
+  },
+  {
+    "text": "such as 102 Processing or 103 Early Hints.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=965"
+  },
+  {
+    "text": "Resumable protocols are a great way to alleviate network interruptions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=970"
+  },
+  {
+    "text": "and save bandwidth. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=974"
+  },
+  {
+    "text": "Background URLSession can also be useful when handling large file transfers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=977"
+  },
+  {
+    "text": "Imagine your user wants to upload a huge 4K video from their latest ski trip. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=983"
+  },
+  {
+    "text": "If their connection gets interrupted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=989"
+  },
+  {
+    "text": "you want to make sure to resume the upload if possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=991"
+  },
+  {
+    "text": "You could do all the error handling yourself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=995"
+  },
+  {
+    "text": "Or, you can let background session do it for you.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=997"
+  },
+  {
+    "text": "In fact, background session will handle resumption automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1002"
+  },
+  {
+    "text": "for both download and upload tasks, if the server supports it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1006"
+  },
+  {
+    "text": "If a task is interrupted, the system will try to resume the task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1011"
+  },
+  {
+    "text": "at increasing time intervals.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1015"
+  },
+  {
+    "text": "If the task cannot be resumed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1019"
+  },
+  {
+    "text": "the system will automatically retry the task from the beginning.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1021"
+  },
+  {
+    "text": "Maybe your user loses cell coverage on the ski mountain, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1027"
+  },
+  {
+    "text": "or a snowstorm took out their Wi-Fi. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1030"
+  },
+  {
+    "text": "Background session always waits for connectivity, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1033"
+  },
+  {
+    "text": "so tasks will be scheduled at some point ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1036"
+  },
+  {
+    "text": "after the device connects to the internet again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1038"
+  },
+  {
+    "text": "While your user is uploading their video, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1043"
+  },
+  {
+    "text": "they might leave your app or put their device away. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1046"
+  },
+  {
+    "text": "Maybe they're getting ready to shred more some powder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1049"
+  },
+  {
+    "text": "and they still expect their upload to continue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1052"
+  },
+  {
+    "text": "This specifically calls for a background session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1056"
+  },
+  {
+    "text": "Background tasks are scheduled by the system, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1060"
+  },
+  {
+    "text": "so they run outside your app's process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1062"
+  },
+  {
+    "text": "This means even if your app is suspended or terminated by the system, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1066"
+  },
+  {
+    "text": "your network tasks continue reliably. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1070"
+  },
+  {
+    "text": "Use a background session for large file transfers that might take a long time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1073"
+  },
+  {
+    "text": "and need to persist when a user leaves your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1077"
+  },
+  {
+    "text": "Lastly, your user deserves the best experience when they're in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1082"
+  },
+  {
+    "text": "and that might mean scheduling less urgent tasks to happen at a later time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1086"
+  },
+  {
+    "text": "By using a background session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1091"
+  },
+  {
+    "text": "you have several ways to efficiently schedule network activity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1093"
+  },
+  {
+    "text": "and save resources for your user.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1097"
+  },
+  {
+    "text": "For tasks that don't need to happen immediately, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1100"
+  },
+  {
+    "text": "consider setting the isDiscretionary property to true ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1102"
+  },
+  {
+    "text": "on your background configuration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1106"
+  },
+  {
+    "text": "This allows the system to intelligently schedule your tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1109"
+  },
+  {
+    "text": "taking into account factors like \"Is the user on Wi-Fi\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1113"
+  },
+  {
+    "text": "\"is their device connected to power\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1116"
+  },
+  {
+    "text": "and \"is the network constrained\"? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1118"
+  },
+  {
+    "text": "This can be a great option when downloading assets for later use, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1121"
+  },
+  {
+    "text": "or uploading a nightly backup, or analytics.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1125"
+  },
+  {
+    "text": "To prevent using too much bandwidth on Low Data Mode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1129"
+  },
+  {
+    "text": "consider setting the allowsConstrainedNetworkAccess ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1133"
+  },
+  {
+    "text": "property to false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1136"
+  },
+  {
+    "text": "Check out the Advances in Networking session ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1138"
+  },
+  {
+    "text": "for more tips on supporting Low Data Mode in your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1141"
+  },
+  {
+    "text": "You can also schedule the background task itself to begin at a later time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1146"
+  },
+  {
+    "text": "when a person is less likely to be using system resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1150"
+  },
+  {
+    "text": "Late at night is often a great time for scheduling tasks like large backups.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1155"
+  },
+  {
+    "text": "To further assist the system scheduling, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1162"
+  },
+  {
+    "text": "we can set the countOfBytesClientExpectsToSend ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1164"
+  },
+  {
+    "text": "and Receive properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1167"
+  },
+  {
+    "text": "By utilizing these properties, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1170"
+  },
+  {
+    "text": "you're empowering the system to best allocate resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1172"
+  },
+  {
+    "text": "and passing those benefits on to your users. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1176"
+  },
+  {
+    "text": "Background session is a great tool for large file transfers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1179"
+  },
+  {
+    "text": "that don't need to happen immediately ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1183"
+  },
+  {
+    "text": "or transfers that should continue when your app is suspended. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1185"
+  },
+  {
+    "text": "For smaller tasks, or tasks that need to happen as soon as possible, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1189"
+  },
+  {
+    "text": "you can use a standard URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1193"
+  },
+  {
+    "text": "Make networking reliable for your users ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1196"
+  },
+  {
+    "text": "by bringing the power of resumption to your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1199"
+  },
+  {
+    "text": "Check out SwiftNIO and HTTP Types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1202"
+  },
+  {
+    "text": "and let's work together to create the best HTTP experience in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1205"
+  },
+  {
+    "text": "And lastly, try using background session for large or discretionary file transfers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1211"
+  },
+  {
+    "text": "You'll find lots of ways to save resources for when your user needs it most. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1218"
+  },
+  {
+    "text": "Thanks for watching, and be sure to check out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1223"
+  },
+  {
+    "text": "these other great networking sessions below. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1225"
+  },
+  {
+    "text": "And that's a wrap! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1229"
+  },
+  {
+    "text": "♪ ♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10006/?time=1231"
+  }
+]

@@ -1,0 +1,457 @@
+10047
+
+♪ ♪
+
+Pulkit: Xin chào, tôi là Pulkit, và tôi là một kỹ sư trong nhóm Core ML.
+
+Tôi rất vui được chia sẻ một số cập nhật đã được thực hiện cho Core ML Tools.
+
+Những cập nhật này giúp bạn tối ưu hóa kích thước và hiệu suất của các mô hình học máy của mình.
+
+Với khả năng của các mô hình được cải thiện đáng kể, ngày càng có nhiều tính năng được thúc đẩy bởi máy học.
+
+Kết quả là, số lượng mô hình được triển khai trong một ứng dụng đang tăng lên.
+
+Cùng với đó, mỗi mô hình trong ứng dụng cũng ngày càng lớn hơn, gây áp lực tăng lên kích thước của ứng dụng.
+
+Vì vậy, điều quan trọng là phải kiểm tra kích thước mô hình.
+
+Có một số lợi ích của việc giảm kích thước mô hình.
+
+Bạn có thể vận chuyển nhiều mô hình hơn trong cùng một ngân sách bộ nhớ nếu mỗi mô hình nhỏ hơn.
+
+Nó cũng có thể cho phép bạn vận chuyển các mô hình lớn hơn, có khả năng hơn.
+
+Nó cũng có thể giúp làm cho mô hình chạy nhanh hơn.
+
+Điều này là do một mô hình nhỏ hơn có nghĩa là ít dữ liệu hơn để di chuyển giữa bộ nhớ và bộ xử lý.
+
+Vì vậy, có vẻ như giảm kích thước của mô hình là một ý tưởng tuyệt vời.
+
+Điều gì làm cho một mô hình lớn?
+
+Hãy để tôi xem qua một ví dụ để giúp bạn hiểu.
+
+ResNet50 là một mô hình phân loại hình ảnh phổ biến.
+
+Lớp đầu tiên của nó là một lớp tích chập với khoảng 9.000 tham số.
+
+Và nó có tổng cộng 53 lớp tích chập với các kích thước khác nhau.
+
+Cuối cùng, nó có một lớp tuyến tính với khoảng 2,1 triệu tham số.
+
+Tất cả điều này cộng thêm tới 25 triệu tham số Nếu tôi lưu mô hình bằng độ chính xác Float16, nó sử dụng 2 byte cho mỗi trọng lượng và tôi nhận được một mô hình có kích thước 50 megabyte.
+
+Một mô hình 50 megabyte là lớn, nhưng khi bạn sử dụng một số mô hình mới hơn như Stable Diffusion, bạn sẽ kết thúc với các mô hình thậm chí còn lớn hơn.
+
+Bây giờ, hãy nói về một số con đường để có được một mô hình nhỏ hơn.
+
+Một cách là thiết kế một kiến trúc mô hình hiệu quả hơn có thể đạt được hiệu suất tốt với trọng lượng ngày càng ít hơn.
+
+Một cách khác là nén trọng lượng của mô hình hiện tại của bạn.
+
+Con đường nén mô hình này là những gì tôi sẽ tập trung vào.
+
+Tôi sẽ bắt đầu bằng cách mô tả ba kỹ thuật hữu ích để nén mô hình.
+
+Tiếp theo, tôi sẽ trình bày hai quy trình làm việc tích hợp các kỹ thuật nén mô hình này.
+
+Sau đó tôi sẽ minh họa cách các Công cụ Core ML mới nhất giúp bạn áp dụng các kỹ thuật và quy trình làm việc này cho các mô hình của mình.
+
+Và cuối cùng, Srijan sẽ thảo luận về tác động của việc nén mô hình đối với hiệu suất thời gian chạy.
+
+Hãy bắt đầu với các kỹ thuật nén.
+
+Có một vài cách để nén trọng lượng mô hình.
+
+Cách đầu tiên là đóng gói chúng hiệu quả hơn bằng cách sử dụng biểu diễn ma trận thưa thớt.
+
+Điều này có thể đạt được bằng cách sử dụng một kỹ thuật gọi là cắt tỉa.
+
+Một cách khác là giảm độ chính xác được sử dụng để lưu trữ trọng lượng.
+
+Điều này có thể đạt được bằng cách lượng tử hóa hoặc bằng cách hóa nhạt.
+
+Cả hai chiến lược này đều mất dữ liệu và các mô hình nén thường kém chính xác hơn một chút so với các đối tác không nén của chúng.
+
+Bây giờ chúng ta hãy xem xét sâu hơn từng kỹ thuật này.
+
+Cắt tỉa trọng lượng giúp bạn đóng gói trọng lượng mô hình của mình một cách hiệu quả với một biểu diễn thưa thớt.
+
+Sparsifying hoặc cắt tỉa một ma trận trọng lượng có nghĩa là đặt một số giá trị trọng lượng thành 0.
+
+Tôi bắt đầu với một ma trận trọng lượng.
+
+Để cắt tỉa nó, tôi có thể đặt trọng lượng cường độ nhỏ nhất thành 0.
+
+Bây giờ, tôi chỉ cần lưu trữ các giá trị khác không.
+
+Cuối cùng tôi tiết kiệm được khoảng 2 byte dung lượng lưu trữ cho mỗi số không được giới thiệu.
+
+Tất nhiên, tôi cũng sẽ cần lưu trữ các vị trí của các số không, để tái tạo lại ma trận dày đặc sau này.
+
+Kích thước mô hình giảm tuyến tính với mức độ thưa thớt được giới thiệu.
+
+Mô hình thưa thớt 50% có nghĩa là 50% trọng lượng của nó bằng không và đối với mô hình ResNet50, nó có kích thước khoảng 28 megabyte, bằng khoảng một nửa kích thước Float16.
+
+Kỹ thuật nén trọng lượng thứ hai là lượng tử hóa, sử dụng độ chính xác 8 bit để lưu trữ trọng lượng.
+
+Để thực hiện lượng tử hóa, bạn lấy các giá trị trọng lượng và tỷ lệ, dịch chuyển và làm tròn chúng sao cho chúng nằm trong phạm vi INT8.
+
+Trong ví dụ này, tỷ lệ là 2,35, ánh xạ giá trị nhỏ nhất đến -127 và độ lệch là 0.
+
+Tùy thuộc vào mô hình, độ lệch khác 0 cũng có thể được sử dụng, điều này đôi khi giúp giảm lỗi lượng tử hóa.
+
+Thang đo và độ lệch sau đó có thể được sử dụng để khử lượng tử hóa trọng lượng để đưa chúng trở lại phạm vi ban đầu.
+
+Để giảm độ chính xác trọng lượng xuống dưới 8 bit, bạn có thể sử dụng một kỹ thuật gọi là phân cụm trọng lượng hoặc phân cụm.
+
+Trong kỹ thuật này, các trọng số có giá trị tương tự được nhóm lại với nhau và được biểu diễn bằng cách sử dụng giá trị của tâm cụm mà chúng thuộc về.
+
+Những tâm này được lưu trữ trong một bảng tra cứu.
+
+Và ma trận trọng lượng ban đầu được chuyển đổi thành một bảng chỉ mục, trong đó mỗi phần tử trỏ đến trung tâm cụm tương ứng.
+
+Trong ví dụ này, vì tôi có bốn cụm, tôi có thể biểu diễn từng trọng lượng bằng cách sử dụng 2 bit, đạt được độ nén gấp 8 lần trên Float16.
+
+Số lượng trung tâm cụm duy nhất có thể được sử dụng để biểu diễn trọng lượng bằng 2 với lũy thừa của n, trong đó n là độ chính xác được sử dụng để phân loại.
+
+Vì vậy, phân loại 4-bit có nghĩa là bạn có thể có 16 cụm.
+
+Trong khi lượng tử hóa làm giảm một nửa kích thước mô hình của bạn, palettization có thể giúp bạn làm cho nó nhỏ hơn tới 8 lần.
+
+Tóm lại, có ba kỹ thuật khác nhau để nén trọng lượng.
+
+Mỗi người trong số họ sử dụng một cách khác nhau để thể hiện trọng lượng.
+
+Chúng cung cấp các mức độ nén khác nhau, có thể được kiểm soát bởi các thông số tương ứng của chúng, như lượng thưa thớt để cắt tỉa và số bit để lặp lại.
+
+Bây giờ, tôi sẽ minh họa cách bạn có thể tích hợp các kỹ thuật này vào quy trình phát triển mô hình của mình.
+
+Trước tiên hãy bắt đầu với quy trình làm việc để chuyển đổi mô hình Core ML.
+
+Bạn có thể bắt đầu bằng cách đào tạo một mô hình với khung đào tạo python yêu thích của mình và sau đó sử dụng Công cụ Core ML để chuyển đổi mô hình đó thành Core ML.
+
+Quy trình làm việc này có thể được mở rộng thêm một bước nữa để trở thành quy trình nén sau đào tạo.
+
+Để làm điều đó, bạn thêm một bước nén hoạt động trên các trọng lượng mô hình đã được đào tạo và chuyển đổi để giảm kích thước tổng thể.
+
+Lưu ý rằng quy trình làm việc này có thể bắt đầu bất cứ lúc nào.
+
+Ví dụ, bạn có thể bắt đầu với một mô hình được đào tạo trước mà không cần dữ liệu đào tạo hoặc một mô hình Core ML đã được chuyển đổi.
+
+Khi áp dụng quy trình làm việc này, bạn sẽ có một tùy chọn để chọn lượng nén được áp dụng.
+
+Bạn càng áp dụng nhiều nén, mô hình kết quả của bạn sẽ càng nhỏ, nhưng như người ta có thể mong đợi, có một số sự đánh đổi.
+
+Cụ thể, bạn sẽ bắt đầu với một mô hình không nén đạt được độ chính xác nhất định.
+
+Khi bạn áp dụng một số nén, kích thước mô hình của bạn sẽ giảm, nhưng nó cũng có thể ảnh hưởng đến độ chính xác của bạn.
+
+Khi bạn áp dụng nén nhiều hơn, tác động này có thể trở nên nổi bật hơn và việc mất độ chính xác có thể trở nên không thể chấp nhận được.
+
+Xu hướng này và sự đánh đổi có thể chấp nhận được sẽ khác nhau đối với từng trường hợp sử dụng và nó phụ thuộc vào mô hình và tập dữ liệu.
+
+Để thấy sự đánh đổi này trong thực tế, hãy xem xét một mô hình phân đoạn các đối tượng trong một hình ảnh.
+
+Đối với hình ảnh của tôi, mô hình trả về xác suất của mỗi điểm ảnh thuộc về ghế sofa.
+
+Mô hình Float16 cơ bản phân đoạn đối tượng rất tốt.
+
+Đối với mô hình cắt tỉa 10%, đầu ra rất giống với mô hình cơ bản.
+
+Các hiện vật bắt đầu xuất hiện ở mức độ thưa thớt 30% và tăng lên với mức độ cao hơn.
+
+Khi tôi cắt tỉa tới 40%, mô hình bị phá vỡ hoàn toàn và bản đồ xác suất trở nên không thể nhận ra.
+
+Tương tự, lượng tử hóa 8 bit và định vị hóa 6 bit bảo toàn đầu ra của mô hình cơ sở.
+
+Ở độ nhợt nhạt 4 bit, bạn bắt đầu thấy một số hiện vật và ở độ nhợt sáng 2 bit, mô hình không phân đoạn hoàn toàn đối tượng.
+
+Để khắc phục sự suy giảm hiệu suất mô hình này ở tốc độ nén cao hơn, bạn có thể sử dụng một quy trình làm việc khác.
+
+Quy trình làm việc này được gọi là nén thời gian đào tạo.
+
+Ở đây, bạn tinh chỉnh mô hình của mình trên một số dữ liệu trong khi nén các trọng số.
+
+Nén được giới thiệu dần dần và theo cách khác biệt để cho phép trọng lượng điều chỉnh lại các ràng buộc mới áp đặt lên chúng.
+
+Khi mô hình của bạn đạt được độ chính xác thỏa đáng, bạn có thể chuyển đổi nó và nhận mô hình Core ML nén.
+
+Lưu ý rằng bạn có thể kết hợp nén thời gian đào tạo trong quy trình đào tạo mô hình hiện tại của mình hoặc bắt đầu với mô hình được đào tạo trước.
+
+Nén thời gian đào tạo cải thiện sự cân bằng giữa độ chính xác của mô hình và lượng nén, cho phép bạn duy trì cùng một hiệu suất mô hình với tốc độ nén cao hơn.
+
+Hãy xem lại cùng một mô hình phân đoạn hình ảnh.
+
+Để cắt tỉa thời gian đào tạo, sản lượng mô hình không thay đổi lên đến 40% thưa thớt.
+
+Đây là nơi độ chính xác sau đào tạo bị phá vỡ.
+
+Trên thực tế, bây giờ ngay cả ở mức thưa thớt 50% và 75%, mô hình đạt được bản đồ xác suất tương tự như mô hình cơ sở.
+
+Ở độ thưa thớt 90%, bạn bắt đầu quan sát thấy sự suy giảm đáng kể về độ chính xác của mô hình.
+
+Tương tự, lượng tử hóa thời gian đào tạo và palettization cũng duy trì đầu ra của mô hình cơ sở, thậm chí lên đến 2 bit nén trong trường hợp này.
+
+Tóm lại, bạn có thể áp dụng nén trọng lượng trong quá trình chuyển đổi mô hình hoặc trong quá trình đào tạo mô hình.
+
+Cái sau cung cấp sự đánh đổi chính xác tốt hơn với chi phí thời gian đào tạo dài hơn.
+
+Bởi vì quy trình làm việc thứ hai áp dụng nén trong quá trình đào tạo, chúng tôi cũng cần sử dụng các hoạt động khả vi để thực hiện các thuật toán nén.
+
+Bây giờ chúng ta hãy khám phá cách các quy trình nén này có thể được thực thi với Công cụ Core ML.
+
+Các API nén mô hình sau đào tạo đã có sẵn trong Core ML Tools 6 để cắt tỉa, làm nhợt hóa và lượng tử hóa theo mô-đun con nén utils.
+
+Tuy nhiên, không có API để nén thời gian đào tạo.
+
+Với Core ML Tools 7, các API mới đã được thêm vào để cung cấp khả năng nén thời gian đào tạo.
+
+Và chúng tôi đã hợp nhất các API cũ hơn và các API mới trong một mô-đun duy nhất được gọi là coremltools.optimize.
+
+Các API nén sau đào tạo đã được di chuyển trong coremltools.optimize.coreml và các API thời gian đào tạo mới có sẵn trong coremltools.optimize.torch.
+
+Cái sau hoạt động với các mô hình PyTorch.
+
+Trước tiên chúng ta hãy xem xét kỹ hơn các API sau đào tạo.
+
+Trong quy trình nén sau đào tạo, đầu vào là mô hình Core ML.
+
+Nó có thể được cập nhật bằng ba phương pháp có sẵn trong mô-đun optimize.coreml, áp dụng từng kỹ thuật trong ba kỹ thuật nén mà tôi đã mô tả.
+
+Để sử dụng các phương pháp này, bạn bắt đầu bằng cách tạo một đối tượng OptimizationConfig, mô tả cách bạn muốn nén mô hình.
+
+Ở đây, tôi đang cắt tỉa độ lớn với 75% độ thưa thớt mục tiêu.
+
+Khi cấu hình được xác định, bạn có thể sử dụng phương pháp prune_weights để cắt tỉa mô hình.
+
+Đó là một quy trình đơn giản, một bước để có được một mô hình nén.
+
+Bạn có thể sử dụng các API tương tự để định vị và định lượng các trọng số bằng cách sử dụng các cấu hình cụ thể cho các kỹ thuật đó.
+
+Hãy xem xét quy trình nén thời gian đào tạo ngay bây giờ.
+
+Trong trường hợp này, như tôi đã mô tả trước đó, bạn cần một mô hình và dữ liệu có thể đào tạo được.
+
+Cụ thể hơn, để nén mô hình bằng Công cụ Core ML, bạn bắt đầu với mô hình PyTorch, có thể với trọng lượng được đào tạo trước.
+
+Sau đó sử dụng một trong những API có sẵn trong mô-đun optimize.torch để cập nhật nó và nhận một mô hình PyTorch mới với các lớp nén được chèn vào đó.
+
+Và sau đó tinh chỉnh nó, sử dụng dữ liệu và mã đào tạo PyTorch gốc.
+
+Đây là bước mà trọng lượng sẽ được điều chỉnh để cho phép nén.
+
+Và bạn có thể thực hiện bước này trên MacBook của mình cục bộ, sử dụng phụ trợ MPS PyTorch.
+
+Khi mô hình được đào tạo để lấy lại độ chính xác, hãy chuyển đổi nó để có được mô hình Core ML.
+
+Hãy cùng khám phá điều này sâu hơn thông qua một ví dụ mã.
+
+Tôi đang bắt đầu với mã PyTorch cần thiết để tinh chỉnh mô hình mà tôi muốn nén.
+
+Bạn có thể dễ dàng tận dụng Công cụ Core ML để thêm thời gian cắt tỉa đào tạo bằng cách chỉ thêm một vài dòng mã.
+
+Đầu tiên bạn tạo một đối tượng MagnitudePrunerConfig mô tả cách bạn muốn cắt tỉa mô hình.
+
+Ở đây, tôi đang đặt mục tiêu thưa thớt là 75%.
+
+Bạn cũng có thể viết cấu hình trong tệp yaml và tải nó bằng phương thức from_yaml.
+
+Sau đó, bạn tạo một đối tượng pruner với mô hình bạn muốn nén và cấu hình bạn vừa tạo.
+
+Tiếp theo, bạn gọi chuẩn bị để chèn các lớp cắt tỉa vào mô hình.
+
+Trong khi tinh chỉnh mô hình, bạn gọi API bước để cập nhật trạng thái bên trong của pruner.
+
+Khi kết thúc khóa đào tạo, bạn gọi hoàn thiện để gấp mặt nạ cắt tỉa vào tạ.
+
+Mô hình này sau đó có thể được chuyển đổi sang Core ML bằng cách sử dụng các API chuyển đổi.
+
+Quy trình làm việc tương tự cũng có thể được sử dụng để lượng tử hóa và phân loại.
+
+Bây giờ, Srijan sẽ hướng dẫn bạn một bản demo cho thấy cách bạn có thể sử dụng Core ML Tools APIs để làm mờ mô hình phát hiện đối tượng.
+
+Srijan: Cảm ơn bạn, Pulkit.
+
+Tên tôi là Srijan, và tôi sẽ hướng dẫn bạn bản demo của API tối ưu hóa Công cụ Core ML.
+
+Tôi sẽ sử dụng mô hình SSD với xương sống ResNet18 để phát hiện mọi người trong hình ảnh.
+
+Trước tiên hãy nhập một số mô hình cơ bản và các tiện ích đào tạo.
+
+Tôi sẽ bắt đầu với việc lấy một phiên bản của mẫu SSD ResNet18 mà tôi vừa nói đến.
+
+Để đơn giản hóa mọi thứ, tôi sẽ chỉ gọi tiện ích get_ssd_model được viết sẵn cho điều đó.
+
+Bây giờ mô hình đã được tải, hãy đào tạo nó trong một vài kỷ nguyên.
+
+Vì nó là một mô hình phát hiện đối tượng, mục tiêu của việc đào tạo sẽ là giảm sự mất mát SSD của nhiệm vụ phát hiện.
+
+Để đồng nhất, tiện ích train_epoch đóng gói mã cần thiết để đào tạo mô hình cho một kỷ nguyên, như gọi chuyển tiếp qua các lô khác nhau, tính toán tổn thất và thực hiện giảm độ dốc.
+
+Trong quá trình đào tạo, sự mất mát SSD dường như đang giảm xuống.
+
+Bây giờ tôi sẽ chuyển đổi mô hình thành mô hình Core ML.
+
+Để làm điều đó, trước tiên tôi sẽ theo dõi mô hình và sau đó gọi coremltools.convert API.
+
+Hãy gọi một tiện ích đã nhập để kiểm tra kích thước của mô hình.
+
+Kích thước của mô hình là 23,6 megabyte.
+
+Bây giờ, tôi sẽ chạy dự đoán trên mô hình Core ML.
+
+Tôi đã chọn một hình ảnh của mình từ chuyến đi London của mình cũng như một hình ảnh khác để kiểm tra các phát hiện.
+
+Ngưỡng tin cậy để mô hình phát hiện một đối tượng được đặt thành 30% vì vậy nó sẽ chỉ vẽ các hộp mà nó tự tin ít nhất 30% về đối tượng có mặt.
+
+Phát hiện đó có vẻ đúng.
+
+Bây giờ tôi tò mò muốn xem liệu tôi có thể giảm kích thước của mô hình này không.
+
+Tôi sẽ thử tái tạo sau đào tạo trước.
+
+Đối với điều đó, tôi sẽ nhập một số lớp cấu hình và phương thức từ coremltools.optimize.coreml.
+
+Bây giờ tôi sẽ làm mờ trọng lượng của mô hình với 6 bit.
+
+Đối với điều đó, tôi sẽ tạo một đối tượng OpPalettizerConfig, chỉ định chế độ là kmeans và nbit là 6.
+
+Điều này sẽ chỉ định các tham số ở cấp độ op và tôi có thể làm mờ từng op khác nhau.
+
+Tuy nhiên, ngay bây giờ, tôi sẽ áp dụng cùng một chế độ 6-bit cho tất cả các hoạt động.
+
+Tôi sẽ làm điều đó bằng cách xác định OptimizationConfig và chuyển op_config này làm tham số toàn cầu cho nó.
+
+Cấu hình tối ưu hóa sau đó được chuyển đến phương thức palettize_weights cùng với mô hình được chuyển đổi để có được mô hình palettized.
+
+Hãy xem kích thước đã giảm xuống bây giờ là bao nhiêu.
+
+Kích thước của mô hình đã giảm xuống còn khoảng 9 megabyte, nhưng nó có ảnh hưởng đến hiệu suất trên các hình ảnh thử nghiệm không?
+
+Hãy cùng tìm hiểu.
+
+Chà, việc phát hiện vẫn hoạt động tốt.
+
+Tôi thực sự hào hứng khi đẩy vận may của mình để thử nhợt hóa sau đào tạo 2-bit ngay bây giờ.
+
+Làm điều đó đơn giản như chỉ cần thay đổi nbit từ 6 thành 2 trong OpPalettizerConfig và chạy lại API palettize_weights.
+
+Hãy sử dụng các tiện ích để xem kích thước và hiệu suất của mô hình Core ML này.
+
+Đúng như dự đoán, kích thước của mô hình đã giảm xuống còn khoảng 3 megabyte.
+
+Tuy nhiên, hiệu suất không tối ưu vì mô hình không thể phát hiện mọi người trong cả hai hình ảnh.
+
+Không có hộp nào hiển thị trong dự đoán, vì không có hộp nào được dự đoán bởi mô hình có xác suất tin cậy trên ngưỡng 30%.
+
+Hãy thử chế tạo thời gian đào tạo 2 bit để xem liệu điều đó có hoạt động tốt hơn không.
+
+Tôi sẽ bắt đầu bằng cách nhập DKMPalettizerConfig và DKMPalettizer từ coremltools.optimize.torch để làm điều đó.
+
+DKM là một thuật toán để tìm hiểu các cụm trọng lượng bằng cách thực hiện thao tác kmeans khả vi dựa trên sự chú ý trên chúng.
+
+Bây giờ là lúc để xác định cấu hình palettization.
+
+Chỉ cần chỉ định đơn giản n_bit là 2 trong cấu hình_to toàn cầu và tất cả các mô-đun được hỗ trợ sẽ được phân loại 2-bit.
+
+Và ở đây, tôi sẽ tạo một đối tượng palettizer từ mô hình và cấu hình.
+
+Gọi API chuẩn bị ngay bây giờ sẽ chèn các mô-đun thân thiện với palettization vào mô hình.
+
+Đã đến lúc tinh chỉnh mô hình cho một vài kỷ nguyên.
+
+Bây giờ mô hình đã được tinh chỉnh, tôi sẽ gọi API hoàn thiện sẽ khôi phục các trọng số được đánh màu dưới dạng trọng số của mô hình, do đó hoàn thành quy trình.
+
+Bước tiếp theo là kiểm tra kích thước của mô hình.
+
+Đối với điều đó, tôi sẽ chuyển đổi mô hình ngọn đuốc thành mô hình Core ML.
+
+Hãy bắt đầu bằng cách truy tìm mô hình bằng cách sử dụng torch.jit.trace.
+
+Bây giờ tôi sẽ gọi API chuyển đổi và lần này, tôi sẽ sử dụng một cờ bổ sung có tên PassPipeline và đặt giá trị của nó thành DEFAULT_PALETTIZATION.
+
+Điều này sẽ chỉ ra cho bộ chuyển đổi sử dụng biểu diễn palettized cho các trọng số được chuyển đổi.
+
+Hãy xem kích thước của mô hình và hiệu suất của nó trên các hình ảnh thử nghiệm.
+
+Tôi có thể thấy rằng mô hình tôi thời gian đào tạo được phân loại cũng khoảng 3 megabyte, giảm xuống mức nén gấp 8 lần, nhưng không giống như mô hình phân dạng sau đào tạo, mô hình này đang thực hiện phát hiện chính xác trên hình ảnh thử nghiệm.
+
+Vì đây là bản demo, tôi vừa kiểm tra hiệu suất mô hình trên hai hình ảnh mẫu.
+
+Trong một kịch bản trong thế giới thực, tôi sẽ sử dụng một số liệu như độ chính xác trung bình trung bình và đánh giá trên tập dữ liệu xác thực.
+
+Hãy tóm tắt lại.
+
+Tôi bắt đầu với một mô hình được đào tạo và chuyển đổi nó để có được một mô hình 23,6 megabyte với trọng lượng Float16.
+
+Sau đó, tôi đã sử dụng API palettize_weights để nhanh chóng có được một mô hình nhỏ hơn với trọng số 6-bit, điều này đã hoạt động tốt trên dữ liệu của tôi.
+
+Tuy nhiên, khi tôi đẩy nó xa hơn đến 2 bit, nó cho thấy hiệu suất giảm rõ ràng.
+
+Đăng bài này, tôi đã cập nhật mô hình ngọn đuốc với API optimize.torch và sử dụng thuật toán kmeans khả vi để tinh chỉnh cho một vài kỷ nguyên.
+
+Với điều đó, tôi đã có thể có được độ chính xác tốt với tùy chọn nén 2-bit.
+
+Mặc dù bản demo sử dụng kết hợp mô hình và thuật toán tối ưu hóa cụ thể, quy trình làm việc này sẽ khái quát hóa cho trường hợp sử dụng của bạn và sẽ giúp bạn tìm ra sự cân bằng giữa lượng nén bạn mong muốn và thời gian và dữ liệu cần thiết để đào tạo lại mô hình.
+
+Điều này đưa chúng ta đến chủ đề cuối cùng của chúng ta, hiệu suất.
+
+Tôi muốn đề cập ngắn gọn đến những cải tiến đã được thực hiện đối với thời gian chạy Core ML để thực thi các mô hình như vậy hiệu quả hơn khi được triển khai trong ứng dụng của bạn.
+
+Hãy xem xét một vài điểm khác biệt chính giữa thời gian chạy trong iOS 16 và iOS 17.
+
+Trong khi ở iOS 16, có sự hỗ trợ cho các mô hình nén chỉ có trọng lượng, trong iOS 17, các mô hình lượng tử hóa kích hoạt 8-bit cũng có thể được thực thi.
+
+Trong iOS 16, một mô hình nén trọng lượng chạy với tốc độ tương tự như mô hình tương ứng với trọng lượng float, trong khi trong iOS 17, thời gian chạy Core ML đã được cập nhật và bây giờ các mô hình nén chạy nhanh hơn trong một số tình huống nhất định.
+
+Các cải tiến thời gian chạy tương tự cũng có sẵn trong các phiên bản macOS, tvOS và watchOS mới hơn.
+
+Nhưng những cải tiến này đạt được như thế nào?
+
+Trong các mô hình, nơi chỉ có trọng số được nén, vì các kích hoạt có độ chính xác dấu phẩy động, trước khi một thao tác như tích chập hoặc nhân ma trận có thể xảy ra, các giá trị trọng số cần được giải nén để phù hợp với độ chính xác của đầu vào khác.
+
+Bước giải nén này diễn ra trước thời hạn trong thời gian chạy iOS 16.
+
+Do đó, trong trường hợp này, mô hình được chuyển đổi thành mô hình chính xác nổi hoàn toàn trong bộ nhớ trước khi thực thi.
+
+Do đó, không có thay đổi nào được quan sát thấy trong độ trễ suy luận.
+
+Tuy nhiên, trong iOS 17, trong một số tình huống nhất định, trọng số được giải nén kịp thời, ngay trước khi thao tác được thực hiện.
+
+Điều này có lợi thế là tải các trọng lượng bit nhỏ hơn từ bộ nhớ với chi phí giải nén trong mọi cuộc gọi suy luận.
+
+Đối với một số đơn vị tính toán nhất định, chẳng hạn như Neural Engine và một số loại mô hình nhất định bị ràng buộc với bộ nhớ, điều này có thể dẫn đến lợi ích suy luận.
+
+Để minh họa những lợi ích thời gian chạy này, tôi đã chọn và lập hồ sơ một vài mô hình và vẽ biểu đồ số lượng tương đối mà suy luận của chúng được tăng tốc so với biến thể Float16 của chúng.
+
+Đúng như dự đoán, số lượng tăng tốc phụ thuộc vào mô hình và phần cứng.
+
+Đây là phạm vi tăng tốc cho các mẫu xe cổ điển 4-bit trên iPhone 14 Pro Max.
+
+Những cải tiến thay đổi từ 5% đến 30%.
+
+Đối với các mô hình thưa thớt cũng vậy, có những cải tiến khác nhau dựa trên loại mô hình, với một số mô hình chạy nhanh hơn 75% so với các biến thể Float16 của chúng.
+
+Câu hỏi bây giờ được đặt ra: chiến lược để có được hiệu suất độ trễ tốt nhất là gì?
+
+Đó sẽ là bắt đầu với một mô hình float và sử dụng optimize.coreml APIs để khám phá các biểu diễn khác nhau của mô hình.
+
+Điều này sẽ nhanh chóng, vì nó không yêu cầu đào tạo lại mô hình.
+
+Sau đó, lập hồ sơ nó trên thiết bị mà bạn quan tâm.
+
+Đối với điều này, các báo cáo hiệu suất Core ML trong Xcode sẽ cung cấp cho bạn rất nhiều khả năng hiển thị về suy luận, bao gồm cả nơi các hoạt động chạy.
+
+Sau đó, danh sách rút gọn dựa trên cấu hình nào mang lại cho bạn lợi nhuận tốt nhất.
+
+Sau đó, bạn có thể tập trung vào việc đánh giá độ chính xác và cố gắng cải thiện, điều này có thể yêu cầu áp dụng một số nén thời gian đào tạo với ngọn đuốc và Công cụ Core ML trước khi hoàn thiện mô hình của bạn.
+
+Tóm lại, điều quan trọng là phải giảm kích thước của các mô hình và bây giờ bạn có thể làm điều đó dễ dàng hơn bao giờ hết với các API Công cụ Core ML mới và đạt được tốc độ suy luận và dấu chân bộ nhớ thấp hơn.
+
+Để kiểm tra thêm các tùy chọn và dữ liệu điểm chuẩn, hãy truy cập tài liệu của chúng tôi.
+
+Tôi cũng khuyên bạn nên điều chỉnh video "Cải thiện tích hợp Core ML với dự đoán không đồng bộ" nói về những cải tiến được thực hiện đối với khung Core ML mà tôi không đề cập trong các trang trình bày hôm nay.
+
+Cảm ơn bạn, và chúc bạn nén vui vẻ.
