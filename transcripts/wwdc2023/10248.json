@@ -1,0 +1,3030 @@
+[
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=0"
+  },
+  {
+    "text": "Joachim Kurz: Welcome to \"Analyze Hangs with Instruments.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=10"
+  },
+  {
+    "text": "My name is Joachim, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=13"
+  },
+  {
+    "text": "and I am an engineer working on the Instruments team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=14"
+  },
+  {
+    "text": "Today, we want to take a closer look at Hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=17"
+  },
+  {
+    "text": "First, I'll give you an overview of what a hang is, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=20"
+  },
+  {
+    "text": "and to do so, we'll need to talk about human perception. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=23"
+  },
+  {
+    "text": "Then, I'll briefly talk about the event handling ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=26"
+  },
+  {
+    "text": "and rendering loop, as it forms the basis to understand how a hang is caused. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=29"
+  },
+  {
+    "text": "Armed with this theoretical knowledge, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=34"
+  },
+  {
+    "text": "we'll jump into Instruments and look at three different hang examples: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=36"
+  },
+  {
+    "text": "a busy main thread hang, an asynchronous hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=40"
+  },
+  {
+    "text": "and a blocked main thread hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=43"
+  },
+  {
+    "text": "For each of these, I'll show you how to recognize them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=46"
+  },
+  {
+    "text": "what to look for when analyzing them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=49"
+  },
+  {
+    "text": "and how to know when to add other instruments to your document ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=51"
+  },
+  {
+    "text": "to learn more.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=53"
+  },
+  {
+    "text": "Before we start: for part of this session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=55"
+  },
+  {
+    "text": "it's helpful to be somewhat familiar with Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=58"
+  },
+  {
+    "text": "If you have ever profiled an application with Instruments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=61"
+  },
+  {
+    "text": "you should be good to go. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=63"
+  },
+  {
+    "text": "Otherwise, check out our 2019 session, \"Getting Started with Instruments.” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=65"
+  },
+  {
+    "text": "When dealing with hangs: there are usually three steps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=71"
+  },
+  {
+    "text": "You find a hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=74"
+  },
+  {
+    "text": "you then analyze a hang to understand how it happens, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=76"
+  },
+  {
+    "text": "and then you fix it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=79"
+  },
+  {
+    "text": "(and verify it is actually fixed).",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=80"
+  },
+  {
+    "text": "Today we will assume you've already found a hang ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=84"
+  },
+  {
+    "text": "and focus on the analyzing part, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=87"
+  },
+  {
+    "text": "as well as discussing some fixes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=89"
+  },
+  {
+    "text": "If you want to know more about finding hangs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=92"
+  },
+  {
+    "text": "take a look at our session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=94"
+  },
+  {
+    "text": "\"Track down hangs with Xcode and on-device detection\" from WWDC22. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=95"
+  },
+  {
+    "text": "It covers all our tools for finding hangs, including: Instruments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=100"
+  },
+  {
+    "text": "On-device Hang Detection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=104"
+  },
+  {
+    "text": "which you can enable in the iOS Developer settings, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=106"
+  },
+  {
+    "text": "and Xcode Organizer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=108"
+  },
+  {
+    "text": "Today, we'll use Instruments to analyze a hang we've already found. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=112"
+  },
+  {
+    "text": "To better understand hangs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=116"
+  },
+  {
+    "text": "let's talk about human perception and turn on the light.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=118"
+  },
+  {
+    "text": "We need a light bulb and a cable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=123"
+  },
+  {
+    "text": "Ah, much better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=126"
+  },
+  {
+    "text": "Like a lamp should, it turned on when I plugged in the cable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=128"
+  },
+  {
+    "text": "And when I pull it out again, it shuts off. Instantly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=132"
+  },
+  {
+    "text": "But what if there was a delay? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=137"
+  },
+  {
+    "text": "I plug it in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=139"
+  },
+  {
+    "text": "And here it took a moment to turn on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=142"
+  },
+  {
+    "text": "Even weirder, the same thing happens when I pull the cable out again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=144"
+  },
+  {
+    "text": "The delay between the cable being plugged in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=149"
+  },
+  {
+    "text": "and the light turning on was only 500 milliseconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=151"
+  },
+  {
+    "text": "But it already makes you wonder what's going on inside this box. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=155"
+  },
+  {
+    "text": "It doesn't feel quite right that the lamp doesn't turn on and off directly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=159"
+  },
+  {
+    "text": "However, in some other circumstances, a 500 millisecond delay might be OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=163"
+  },
+  {
+    "text": "What kind of delay is acceptable depends on the circumstances. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=168"
+  },
+  {
+    "text": "Let's say you overhear a conversation like this: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=172"
+  },
+  {
+    "text": "\"How do turtles communicate?\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=175"
+  },
+  {
+    "text": "\"Shell-phones.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=178"
+  },
+  {
+    "text": "Here, we had a delay of one second between question and answer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=180"
+  },
+  {
+    "text": "And that felt totally natural. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=186"
+  },
+  {
+    "text": "But this doesn’t: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=188"
+  },
+  {
+    "text": "Why is that? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=192"
+  },
+  {
+    "text": "The conversation between the turtle and the unicorn ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=195"
+  },
+  {
+    "text": "is a request-response style interaction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=197"
+  },
+  {
+    "text": "but plugging in a lamp is directly manipulating a real object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=200"
+  },
+  {
+    "text": "Real objects react instantly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=204"
+  },
+  {
+    "text": "If we simulate a real thing, it also needs to react instantly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=206"
+  },
+  {
+    "text": "If it doesn't, it breaks the illusion.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=210"
+  },
+  {
+    "text": "You had no issue with me claiming that I've got an actual lamp here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=214"
+  },
+  {
+    "text": "when there was no delay between the cable being plugged in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=217"
+  },
+  {
+    "text": "and the light turning on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=220"
+  },
+  {
+    "text": "But when there's a significant delay, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=222"
+  },
+  {
+    "text": "your brain suddenly says, \"Wait a moment, that's not how this stuff works.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=226"
+  },
+  {
+    "text": "But how fast is instant? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=231"
+  },
+  {
+    "text": "What delay is small enough for us not to notice? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=234"
+  },
+  {
+    "text": "Here's our baseline with no delay.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=238"
+  },
+  {
+    "text": "How about 100 ms? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=243"
+  },
+  {
+    "text": "To me, it felt like I noticed a tiny delay on turning it on, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=248"
+  },
+  {
+    "text": "but not when turning it off, and only when I look closely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=251"
+  },
+  {
+    "text": "Your experience might be different. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=255"
+  },
+  {
+    "text": "100 ms is somewhat of a threshold. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=258"
+  },
+  {
+    "text": "Significantly smaller delays aren't really perceivable anymore.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=261"
+  },
+  {
+    "text": "Let's try 250 ms.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=265"
+  },
+  {
+    "text": "250 ms doesn't feel instant anymore.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=271"
+  },
+  {
+    "text": "It's not slow, but the delay is definitely noticeable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=274"
+  },
+  {
+    "text": "These kind of perception thresholds also inform our hang reporting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=280"
+  },
+  {
+    "text": "A delay below roughly 100 ms for a discrete interaction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=284"
+  },
+  {
+    "text": "like tapping a button, will usually feel instant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=288"
+  },
+  {
+    "text": "There are some special cases where you might want to go even below that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=291"
+  },
+  {
+    "text": "but it's a good goal to aim for. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=295"
+  },
+  {
+    "text": "Above that, it depends on the circumstances. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=297"
+  },
+  {
+    "text": "Until 250 ms, you might get away with it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=301"
+  },
+  {
+    "text": "Longer than that and it becomes noticeable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=305"
+  },
+  {
+    "text": "at least subconsciously.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=307"
+  },
+  {
+    "text": "It's a continuous scale, but above 250 ms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=309"
+  },
+  {
+    "text": "it certainly doesn't feel instant anymore. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=312"
+  },
+  {
+    "text": "So most of our tools start reporting hangs by default starting at 250 ms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=315"
+  },
+  {
+    "text": "but we call these \"micro hangs\" as they are easy to ignore. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=321"
+  },
+  {
+    "text": "Depending on the context, those might be OK, but often they are not. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=325"
+  },
+  {
+    "text": "Everything above 500 ms we consider a proper hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=330"
+  },
+  {
+    "text": "Based on this, we can roughly use these thresholds: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=334"
+  },
+  {
+    "text": "If you want something to feel instant, aim for 100 ms or less in delay. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=338"
+  },
+  {
+    "text": "If you have a request-response style interaction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=343"
+  },
+  {
+    "text": "500 ms without any additional feedback might be OK.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=345"
+  },
+  {
+    "text": "But actually, we often have both in an interaction. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=350"
+  },
+  {
+    "text": "Let's look at an example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=353"
+  },
+  {
+    "text": "I just finished writing this email to all the colleagues who helped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=356"
+  },
+  {
+    "text": "in preparing this session and I'm ready to send it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=358"
+  },
+  {
+    "text": "I move my mouse over to the Send button and click it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=362"
+  },
+  {
+    "text": "and a moment later, the email window animates out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=365"
+  },
+  {
+    "text": "to indicate it is being sent. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=368"
+  },
+  {
+    "text": "What happened here is that you actually saw two things happening. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=371"
+  },
+  {
+    "text": "First, the button highlighted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=375"
+  },
+  {
+    "text": "then there was small delay of 500 ms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=377"
+  },
+  {
+    "text": "then the email window animated out. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=381"
+  },
+  {
+    "text": "But this delay felt fine because we already knew our request was received ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=384"
+  },
+  {
+    "text": "due to the button highlighting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=388"
+  },
+  {
+    "text": "We treat the button as a \"real\" thing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=389"
+  },
+  {
+    "text": "and we expect it to update in \"real\" time, instantly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=392"
+  },
+  {
+    "text": "So for the actual UI elements in our interface, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=397"
+  },
+  {
+    "text": "we usually want to aim for this “instant” update.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=400"
+  },
+  {
+    "text": "To enable our UI elements to react “instantly” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=404"
+  },
+  {
+    "text": "it is vital to keep the main thread free from non-UI work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=407"
+  },
+  {
+    "text": "To see why that is, let's take a closer look at ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=410"
+  },
+  {
+    "text": "the event handling and rendering loop ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=413"
+  },
+  {
+    "text": "to see how events are processed on Apple platforms ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=415"
+  },
+  {
+    "text": "and how user input leads to a screen update.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=417"
+  },
+  {
+    "text": "At some point, someone will interact with the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=422"
+  },
+  {
+    "text": "We have no control over when that happens. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=425"
+  },
+  {
+    "text": "First, there's usually some hardware involved, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=428"
+  },
+  {
+    "text": "like a mouse or a touchscreen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=431"
+  },
+  {
+    "text": "It detects the interaction, creates an event, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=434"
+  },
+  {
+    "text": "and sends it to the operating system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=436"
+  },
+  {
+    "text": "The operating system figures out which process needs to handle the event ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=438"
+  },
+  {
+    "text": "and forwards it to that process, for example, your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=442"
+  },
+  {
+    "text": "In the app, it's the responsibility of the app's main thread to handle events. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=446"
+  },
+  {
+    "text": "This is where most of your UI code runs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=451"
+  },
+  {
+    "text": "It makes a decision how to update the UI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=454"
+  },
+  {
+    "text": "Then this UI update gets sent to the render server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=456"
+  },
+  {
+    "text": "which is a separate process responsible for compositing the individual UI layers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=459"
+  },
+  {
+    "text": "and rendering the next frame. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=463"
+  },
+  {
+    "text": "Lastly, the display driver picks up the bitmap prepared by the render server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=465"
+  },
+  {
+    "text": "and updates the pixels on screen accordingly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=470"
+  },
+  {
+    "text": "If you want to know more about how this works, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=473"
+  },
+  {
+    "text": "we cover this in the documentation under \"Improving app responsiveness.” ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=474"
+  },
+  {
+    "text": "For us, this rough overview is enough to understand what's going on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=478"
+  },
+  {
+    "text": "Now, when another event comes in during this time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=483"
+  },
+  {
+    "text": "it can usually be processed in parallel. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=486"
+  },
+  {
+    "text": "But, if we look at how a single event travels through the pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=490"
+  },
+  {
+    "text": "we still need to look at all the steps in sequence. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=494"
+  },
+  {
+    "text": "The event processing steps before we get to the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=497"
+  },
+  {
+    "text": "and the render and update display steps AFTER ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=500"
+  },
+  {
+    "text": "are usually fairly predictable in their duration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=503"
+  },
+  {
+    "text": "When we encounter a significant delay in interaction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=506"
+  },
+  {
+    "text": "it is almost always because the portion on the main thread took too long ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=508"
+  },
+  {
+    "text": "or because something else is still executing on the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=512"
+  },
+  {
+    "text": "when the event comes in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=515"
+  },
+  {
+    "text": "so we need to wait for it to finish before the event can be handled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=517"
+  },
+  {
+    "text": "Given that every update to a UI element needs some time on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=520"
+  },
+  {
+    "text": "and we want these updates to happen within 100 ms to feel real, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=524"
+  },
+  {
+    "text": "ideally, no work on the main thread should take longer than 100 ms. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=528"
+  },
+  {
+    "text": "If you can be faster, even better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=533"
+  },
+  {
+    "text": "Note that long-running work on the main thread can also cause hitches, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=536"
+  },
+  {
+    "text": "and lower thresholds apply to avoid hitches.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=541"
+  },
+  {
+    "text": "You can find more details about hitches ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=544"
+  },
+  {
+    "text": "in our Tech Talk \"Explore UI animation hitches and the render loop\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=545"
+  },
+  {
+    "text": "and our documentation about \"Improving app responsiveness\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=549"
+  },
+  {
+    "text": "Today, we focus on hangs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=552"
+  },
+  {
+    "text": "One of my colleagues just found a hang in one of our apps, Backyard Birds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=555"
+  },
+  {
+    "text": "while working on a new feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=559"
+  },
+  {
+    "text": "Let's profile the app with Instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=561"
+  },
+  {
+    "text": "I have the Xcode project with the app here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=571"
+  },
+  {
+    "text": "All I need to do to profile the app in Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=574"
+  },
+  {
+    "text": "is click on the Product menu and then Profile ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=576"
+  },
+  {
+    "text": "and then Xcode will build the app and install it on the device, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=580"
+  },
+  {
+    "text": "but not launch it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=583"
+  },
+  {
+    "text": "Xcode will also open Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=587"
+  },
+  {
+    "text": "and configure to target the same app and device that were configured in Xcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=590"
+  },
+  {
+    "text": "In Instruments' template chooser, I will choose the Time Profiler template, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=595"
+  },
+  {
+    "text": "which is often a good starting point if you don't yet know ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=599"
+  },
+  {
+    "text": "what you are looking for and want to get a better understanding of ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=601"
+  },
+  {
+    "text": "what your app is doing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=604"
+  },
+  {
+    "text": "This creates a new Instruments document from the Time Profiler template. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=607"
+  },
+  {
+    "text": "Among others, this new document contains the Time Profiler instrument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=611"
+  },
+  {
+    "text": "and the Hangs instrument, both of which will be useful for our analysis. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=615"
+  },
+  {
+    "text": "I click the Record button in the top left of the toolbar to start the recording. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=620"
+  },
+  {
+    "text": "Instruments launches the configured application and starts capturing data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=624"
+  },
+  {
+    "text": "So here I have the Backyard Birds app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=630"
+  },
+  {
+    "text": "I tap on the first garden to go to the detail view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=632"
+  },
+  {
+    "text": "When I tap the \"Choose Background\" button in a moment, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=636"
+  },
+  {
+    "text": "a bottom sheet should come up, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=639"
+  },
+  {
+    "text": "showing me a selection of background pictures to choose from. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=641"
+  },
+  {
+    "text": "Let me do that now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=644"
+  },
+  {
+    "text": "The button is pressed but seems stuck. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=648"
+  },
+  {
+    "text": "It took quite a while for the sheet to appear. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=650"
+  },
+  {
+    "text": "A severe hang.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=653"
+  },
+  {
+    "text": "Instruments has been recording all this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=657"
+  },
+  {
+    "text": "I'm going to stop the recording by clicking on the Stop button ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=659"
+  },
+  {
+    "text": "in the toolbar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=662"
+  },
+  {
+    "text": "Instruments has also detected the hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=664"
+  },
+  {
+    "text": "It measures the hang duration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=666"
+  },
+  {
+    "text": "and labels the corresponding intervals according to the severity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=668"
+  },
+  {
+    "text": "In this case, Instruments shows us a “Severe Hang” has happened. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=671"
+  },
+  {
+    "text": "This fits what we are experiencing while using the app as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=675"
+  },
+  {
+    "text": "Instruments detected an unresponsive main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=680"
+  },
+  {
+    "text": "and marks the corresponding interval as a potential hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=682"
+  },
+  {
+    "text": "In our case, a hang did indeed occur. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=686"
+  },
+  {
+    "text": "There are two main cases for an unresponsive main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=689"
+  },
+  {
+    "text": "The most simple case is that the main thread is simply ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=692"
+  },
+  {
+    "text": "still busy doing other work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=694"
+  },
+  {
+    "text": "In this case, the main thread will show a bunch of CPU activity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=697"
+  },
+  {
+    "text": "The other case is that the main thread is blocked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=701"
+  },
+  {
+    "text": "This is usually because the main thread is waiting for some other work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=704"
+  },
+  {
+    "text": "to be done elsewhere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=707"
+  },
+  {
+    "text": "When the thread is blocked ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=709"
+  },
+  {
+    "text": "there will be little to no CPU activity on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=710"
+  },
+  {
+    "text": "Which case you have determines which steps you should take next ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=714"
+  },
+  {
+    "text": "to determine what's going on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=716"
+  },
+  {
+    "text": "Back in Instruments, we'll need to find the Main Thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=719"
+  },
+  {
+    "text": "The last track in the document shows the track for our target process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=722"
+  },
+  {
+    "text": "It has a small disclosure indicator on the left ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=727"
+  },
+  {
+    "text": "to indicate that there are subtracks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=730"
+  },
+  {
+    "text": "I click it to reveal a separate track for each thread in the process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=732"
+  },
+  {
+    "text": "Then, I'll select the Main Thread track here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=737"
+  },
+  {
+    "text": "This also updates the detail area to show the Profile view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=740"
+  },
+  {
+    "text": "which shows us a call tree of all functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=744"
+  },
+  {
+    "text": "which executed on the main thread during the whole recording time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=746"
+  },
+  {
+    "text": "But we are only interested in what happened during the hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=751"
+  },
+  {
+    "text": "so I secondary-click on the Hang-interval in the timeline to display a context menu. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=754"
+  },
+  {
+    "text": "I could choose Set Inspection Range here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=760"
+  },
+  {
+    "text": "but I'm going to hold down the option key as well ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=763"
+  },
+  {
+    "text": "to get Set Inspection Range and Zoom instead.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=766"
+  },
+  {
+    "text": "This zooms in to the interval's range ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=771"
+  },
+  {
+    "text": "and filters the data displayed in the detail view to the selected time range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=773"
+  },
+  {
+    "text": "While the CPU usage isn't 100% during the whole hang interval, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=777"
+  },
+  {
+    "text": "it is still fairly high, with 60% to 90% CPU usage most of the time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=782"
+  },
+  {
+    "text": "This is clearly a case of a busy main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=788"
+  },
+  {
+    "text": "Let's find out what all this CPU work is.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=791"
+  },
+  {
+    "text": "We could take a closer look at all the different nodes in the call tree now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=795"
+  },
+  {
+    "text": "But there's a great summary on the right side: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=798"
+  },
+  {
+    "text": "the heaviest stack trace view.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=801"
+  },
+  {
+    "text": "When I click on a frame in the heaviest stack trace view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=804"
+  },
+  {
+    "text": "the call tree view updates to reveal this node. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=807"
+  },
+  {
+    "text": "This also shows us that this method call is already pretty deep in the call tree.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=811"
+  },
+  {
+    "text": "The heaviest stack trace by default hides subsequent function calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=818"
+  },
+  {
+    "text": "that don't originate from your source code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=822"
+  },
+  {
+    "text": "to make it easier to see where your source code is involved. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=823"
+  },
+  {
+    "text": "We can apply a similar filter to the call tree view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=828"
+  },
+  {
+    "text": "by clicking on the Call Tree button in the bottom bar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=830"
+  },
+  {
+    "text": "and enabling the Hide System Libraries checkbox. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=833"
+  },
+  {
+    "text": "This will filter out all functions from the system libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=838"
+  },
+  {
+    "text": "and makes it easier to focus on our code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=840"
+  },
+  {
+    "text": "The call tree view shows us that almost all our backtraces contain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=844"
+  },
+  {
+    "text": "the \"BackgroundThumbnailView.body.getter\" call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=847"
+  },
+  {
+    "text": "It looks as if we should make our body getter faster, right? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=852"
+  },
+  {
+    "text": "Not quite! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=856"
+  },
+  {
+    "text": "So we know we have a busy main thread case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=858"
+  },
+  {
+    "text": "meaning the CPU is doing a lot of work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=860"
+  },
+  {
+    "text": "We also have found a method where a lot of CPU time is spent. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=862"
+  },
+  {
+    "text": "But there are two different cases now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=866"
+  },
+  {
+    "text": "We might be spending a lot of CPU time in this method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=868"
+  },
+  {
+    "text": "because the method itself runs for a long time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=871"
+  },
+  {
+    "text": "But it could also be that it is just called a lot of times, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=874"
+  },
+  {
+    "text": "which is why it shows up here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=878"
+  },
+  {
+    "text": "How we should reduce the work on the main thread depends on which case we have.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=880"
+  },
+  {
+    "text": "A typical call stack is structured like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=886"
+  },
+  {
+    "text": "There's a call from the main function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=889"
+  },
+  {
+    "text": "which calls out to some UI frameworks and a bunch of other stuff, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=891"
+  },
+  {
+    "text": "and then, at some point, your code is called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=895"
+  },
+  {
+    "text": "If this function is only called once ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=898"
+  },
+  {
+    "text": "and that one call takes a long time, like our Turtle function here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=900"
+  },
+  {
+    "text": "then we want to look at what it calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=905"
+  },
+  {
+    "text": "Maybe it does a lot of work. Then we can maybe do less of it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=908"
+  },
+  {
+    "text": "But it could also be that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=914"
+  },
+  {
+    "text": "the method we are investigating is called a lot of times, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=915"
+  },
+  {
+    "text": "like Unicorn here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=919"
+  },
+  {
+    "text": "And then, of course, the work it does is done over and over again as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=921"
+  },
+  {
+    "text": "This is usually because there is some caller ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=926"
+  },
+  {
+    "text": "that calls the function, Unicorn, a lot of times-- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=928"
+  },
+  {
+    "text": "for example, from a loop. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=932"
+  },
+  {
+    "text": "Rather than optimizing what the focused function, Unicorn here, does, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=936"
+  },
+  {
+    "text": "it might be more beneficial to investigate how we can call it less often.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=940"
+  },
+  {
+    "text": "That means the direction we need to look at next ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=947"
+  },
+  {
+    "text": "depends on the case we have.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=950"
+  },
+  {
+    "text": "For a long-running function, like our Turtle case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=951"
+  },
+  {
+    "text": "we want to look at its implementation and its callees.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=954"
+  },
+  {
+    "text": "We need to look further down. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=957"
+  },
+  {
+    "text": "However, if a function is called a lot of times, like Unicorn, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=959"
+  },
+  {
+    "text": "it is more beneficial to look at what is calling it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=963"
+  },
+  {
+    "text": "and determine whether we can do so less often. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=966"
+  },
+  {
+    "text": "We need to look further up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=970"
+  },
+  {
+    "text": "But Time Profiler cannot tell us which case we have. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=972"
+  },
+  {
+    "text": "Let's assume the calls to Unicorn and Turtle happened right after another. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=976"
+  },
+  {
+    "text": "Time Profiler gathers data by checking what's running on the CPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=980"
+  },
+  {
+    "text": "in regular intervals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=984"
+  },
+  {
+    "text": "And for each sample, it checks which function is currently running on the CPU. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=986"
+  },
+  {
+    "text": "For this example, we would get both Turtle and Unicorn four times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=991"
+  },
+  {
+    "text": "But it could also be that this is a very fast Turtle, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=997"
+  },
+  {
+    "text": "and Unicorn takes much longer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1000"
+  },
+  {
+    "text": "or other combinations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1003"
+  },
+  {
+    "text": "All of these scenarios would create the same data in Time Profiler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1005"
+  },
+  {
+    "text": "To measure the execution time of a specific function, use os_signposts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1010"
+  },
+  {
+    "text": "We talked about how to do so in our 2019 session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1015"
+  },
+  {
+    "text": "\"Getting Started with Instruments\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1018"
+  },
+  {
+    "text": "There are also specialized instruments for various technologies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1021"
+  },
+  {
+    "text": "that can tell you precisely what's going on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1024"
+  },
+  {
+    "text": "One of which is the SwiftUI View body instrument.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1026"
+  },
+  {
+    "text": "To add the SwiftUI body instrument, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1030"
+  },
+  {
+    "text": "I click the plus button in the top right of the toolbar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1032"
+  },
+  {
+    "text": "This shows the Instruments library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1035"
+  },
+  {
+    "text": "This is the list of all the instruments, the Instruments application has to offer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1037"
+  },
+  {
+    "text": "There are a lot. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1041"
+  },
+  {
+    "text": "You can even write your own custom instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1042"
+  },
+  {
+    "text": "I'll enter \"SwiftUI\" in the filter field, and two instruments show up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1045"
+  },
+  {
+    "text": "I'll pick the \"View body\" instrument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1050"
+  },
+  {
+    "text": "and drag it into the document window to add it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1052"
+  },
+  {
+    "text": "Now, because this instrument wasn't in the document when we last recorded, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1056"
+  },
+  {
+    "text": "it has no data to display. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1060"
+  },
+  {
+    "text": "But no problem. We'll just record again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1063"
+  },
+  {
+    "text": "To save some time, I've done that already.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1067"
+  },
+  {
+    "text": "After I recorded with the SwiftUI View Body instrument in the document, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1070"
+  },
+  {
+    "text": "the View Body track also shows some data now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1074"
+  },
+  {
+    "text": "There are a lot of intervals in the SwiftUI view bodies track. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1078"
+  },
+  {
+    "text": "It's a little cramped, so I press Ctrl+Plus to increase its height. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1081"
+  },
+  {
+    "text": "The SwiftUI View Body track groups the intervals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1086"
+  },
+  {
+    "text": "by the library they are implemented in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1089"
+  },
+  {
+    "text": "Each interval is one view body execution. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1091"
+  },
+  {
+    "text": "Let's zoom into our hang again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1094"
+  },
+  {
+    "text": "In the second lane, there are a lot of orange intervals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1100"
+  },
+  {
+    "text": "all labeled \"BackgroundThumbnailView\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1103"
+  },
+  {
+    "text": "This tells us precisely how many body executions there were ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1107"
+  },
+  {
+    "text": "and how long each one took. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1110"
+  },
+  {
+    "text": "The orange color indicates that the runtime of that specific body execution ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1112"
+  },
+  {
+    "text": "took a little longer than what we are aiming for with SwiftUI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1116"
+  },
+  {
+    "text": "But the bigger problem seems to be how many intervals there are. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1119"
+  },
+  {
+    "text": "In the detail view, there's a summary of all the body intervals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1122"
+  },
+  {
+    "text": "By clicking on the disclosure indicator next to Backyard Birds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1127"
+  },
+  {
+    "text": "I can reveal the individual view types in Backyard Birds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1130"
+  },
+  {
+    "text": "This shows me that BackgroundThumbnailView's body ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1134"
+  },
+  {
+    "text": "was executed 70 times with an average duration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1137"
+  },
+  {
+    "text": "of about 50 milliseconds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1141"
+  },
+  {
+    "text": "leading to a total duration of over three seconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1143"
+  },
+  {
+    "text": "This explains almost all of our hang duration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1147"
+  },
+  {
+    "text": "But 70 times seems excessive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1150"
+  },
+  {
+    "text": "when we only need to show six images up front. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1152"
+  },
+  {
+    "text": "This is a case where the body should be called less often, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1156"
+  },
+  {
+    "text": "so we need to look at the callers of our body getter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1159"
+  },
+  {
+    "text": "to find out why it's called this often and look at how to reduce it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1162"
+  },
+  {
+    "text": "To easily navigate to the relevant code, I select the main thread track again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1166"
+  },
+  {
+    "text": "secondary-click on the BackgroundThumbnailView.body.getter node ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1171"
+  },
+  {
+    "text": "in the call tree to show a context menu, and select \"Reveal in Xcode\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1174"
+  },
+  {
+    "text": "This opens our body implementation right in Xcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1180"
+  },
+  {
+    "text": "Let's find out how this view is used by secondary-clicking the type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1184"
+  },
+  {
+    "text": "and choosing \"Find\", \"Find Selected Symbol in Workspace\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1188"
+  },
+  {
+    "text": "The first result in the Find navigator is already what we're looking for.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1195"
+  },
+  {
+    "text": "Here, our \"BackgroundThumbnailView\" is used inside a ForEach inside a GridRow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1204"
+  },
+  {
+    "text": "inside another ForEach inside a Grid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1210"
+  },
+  {
+    "text": "Grid eagerly computes its whole content when it's created, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1214"
+  },
+  {
+    "text": "so it will compute all background thumbnails ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1218"
+  },
+  {
+    "text": "even though we only need the first few. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1220"
+  },
+  {
+    "text": "But there's an alternative: LazyVGrid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1223"
+  },
+  {
+    "text": "It only computes as many views as necessary to fill one screen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1227"
+  },
+  {
+    "text": "Lots of views in SwiftUI have lazy variants, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1232"
+  },
+  {
+    "text": "which only compute as many views as necessary, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1235"
+  },
+  {
+    "text": "and this can often be an easy way to do less work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1238"
+  },
+  {
+    "text": "However, the eager variants use much less memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1242"
+  },
+  {
+    "text": "when they need to render the same contents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1244"
+  },
+  {
+    "text": "Use the regular eager variants by default and switch to lazy variants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1247"
+  },
+  {
+    "text": "when you find a performance issue related to doing too much work upfront.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1251"
+  },
+  {
+    "text": "Our WWDC session from WWDC 2020 about \"Stacks, Grids, and Outlines in SwiftUI\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1256"
+  },
+  {
+    "text": "introduces these lazy variants and describes them in more detail.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1263"
+  },
+  {
+    "text": "Let's profile this updated code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1267"
+  },
+  {
+    "text": "I start recording ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1270"
+  },
+  {
+    "text": "and reproduce our hang by tapping the Choose Background button again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1272"
+  },
+  {
+    "text": "Now, this is much better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1278"
+  },
+  {
+    "text": "There was still a small delay, but not nearly as bad as before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1280"
+  },
+  {
+    "text": "Instruments confirms this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1283"
+  },
+  {
+    "text": "The hang we recorded now took less than 400 milliseconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1285"
+  },
+  {
+    "text": "It's a micro hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1289"
+  },
+  {
+    "text": "The \"View Body\" track also shows us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1293"
+  },
+  {
+    "text": "that we now only got eight BackgroundThumbnail body executions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1296"
+  },
+  {
+    "text": "which fits our expectation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1300"
+  },
+  {
+    "text": "Maybe this is good enough. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1302"
+  },
+  {
+    "text": "The microhang is not very noticeable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1304"
+  },
+  {
+    "text": "Let's make sure it also works well on other device types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1306"
+  },
+  {
+    "text": "by profiling Backyard Birds on an iPad.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1309"
+  },
+  {
+    "text": "Here, I'm running Backyard Birds on an iPad. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1317"
+  },
+  {
+    "text": "I'm already in the detail view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1320"
+  },
+  {
+    "text": "I tap the \"Choose Background\" button ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1323"
+  },
+  {
+    "text": "and it takes a long time for the sheet to appear. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1326"
+  },
+  {
+    "text": "Once it appears, we can see why. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1329"
+  },
+  {
+    "text": "There are a lot more thumbnails now because our screen is bigger ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1332"
+  },
+  {
+    "text": "and has more space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1335"
+  },
+  {
+    "text": "Instruments also recorded this hang.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1337"
+  },
+  {
+    "text": "Focusing the inspection range on our hang interval, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1342"
+  },
+  {
+    "text": "we see more BackgroundThumbnailView bodies again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1345"
+  },
+  {
+    "text": "It makes sense. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1350"
+  },
+  {
+    "text": "Now we need to render about 40 of them for a full screen ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1351"
+  },
+  {
+    "text": "as many more fit on screen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1354"
+  },
+  {
+    "text": "So the same code performed mostly OK on an iPhone ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1357"
+  },
+  {
+    "text": "but was slow on an iPad, simply because the screen was bigger. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1360"
+  },
+  {
+    "text": "This is one of the reasons why you should also fix micro hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1365"
+  },
+  {
+    "text": "What you might see as a micro hang during testing at your desk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1368"
+  },
+  {
+    "text": "might be a major hang for some of your users under different conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1371"
+  },
+  {
+    "text": "We now only render as many views as we need to fill the screen, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1375"
+  },
+  {
+    "text": "so we exhausted our optimization potential in terms of calling this less often. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1378"
+  },
+  {
+    "text": "Let's find out what we can do to make each individual execution faster.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1383"
+  },
+  {
+    "text": "I'll set the inspection range to a single BackgroundThumbnailView interval ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1388"
+  },
+  {
+    "text": "and switch back to the \"Main Thread\" track. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1393"
+  },
+  {
+    "text": "Instruments shows our view body getter in the heaviest backtrace view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1396"
+  },
+  {
+    "text": "and shows that it calls a \"BackyardBackground.thumbnail\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1400"
+  },
+  {
+    "text": "property getter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1403"
+  },
+  {
+    "text": "This is the model object which provides the thumbnail image ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1406"
+  },
+  {
+    "text": "to display in our view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1409"
+  },
+  {
+    "text": "This thumbnail getter calls \"UIImage imageByPreparingThumbnailOfSize:\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1411"
+  },
+  {
+    "text": "So we seem to be computing a thumbnail on the fly here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1418"
+  },
+  {
+    "text": "That can take some time. In this case, about 150 milliseconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1421"
+  },
+  {
+    "text": "This is work we should rather be doing in the background ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1426"
+  },
+  {
+    "text": "and not keep the main thread busy with.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1429"
+  },
+  {
+    "text": "To better understand what change we can make, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1431"
+  },
+  {
+    "text": "I want to look at the context how the thumbnail getter is called.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1434"
+  },
+  {
+    "text": "I secondary click on the \"BackgroundThumbnailView.body.getter\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1438"
+  },
+  {
+    "text": "frame in the heaviest stack trace view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1441"
+  },
+  {
+    "text": "and choose \"Open in Source Viewer\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1444"
+  },
+  {
+    "text": "This replaces the call tree view with a source viewer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1447"
+  },
+  {
+    "text": "that shows the implementation of our body getter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1449"
+  },
+  {
+    "text": "and annotates the lines of the implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1452"
+  },
+  {
+    "text": "with the Time Profiler samples to show where our code spent how much time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1456"
+  },
+  {
+    "text": "Our body implementation is really simple here; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1461"
+  },
+  {
+    "text": "it just makes a new Image view with the thumbnail returned by the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1464"
+  },
+  {
+    "text": "But this thumbnail call takes a long time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1468"
+  },
+  {
+    "text": "I have an idea how to write it differently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1472"
+  },
+  {
+    "text": "To jump to Xcode, I click on the menu button in the top right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1474"
+  },
+  {
+    "text": "and choose \"Open file in Xcode\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1478"
+  },
+  {
+    "text": "As before, this shows our source code in Xcode, ready to make changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1482"
+  },
+  {
+    "text": "What I want to do now is to load the thumbnail in the background, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1486"
+  },
+  {
+    "text": "and while the loading is happening, display a progress indicator. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1490"
+  },
+  {
+    "text": "First, we need a state variable to hold the loaded thumbnail.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1493"
+  },
+  {
+    "text": "Then, in the body, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1500"
+  },
+  {
+    "text": "if we have the loaded image already, we are going to use it in the Image view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1503"
+  },
+  {
+    "text": "Otherwise, we show a progress view.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1509"
+  },
+  {
+    "text": "Now all that's left is loading the actual thumbnail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1514"
+  },
+  {
+    "text": "We want to start loading it once our view appears. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1518"
+  },
+  {
+    "text": "That's what the \".task\" modifier is for.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1521"
+  },
+  {
+    "text": "On appear, SwiftUI will start a task for us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1527"
+  },
+  {
+    "text": "that will call the \"thumbnail\" getter and assign the result to our \"image\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1530"
+  },
+  {
+    "text": "which will update our view. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1534"
+  },
+  {
+    "text": "Let's try it out! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1536"
+  },
+  {
+    "text": "So here, with Instruments recording, I tap the \"Choose Background\" button ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1538"
+  },
+  {
+    "text": "and the sheet comes right up! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1542"
+  },
+  {
+    "text": "Great! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1544"
+  },
+  {
+    "text": "We saw our progress indicators, and a few seconds later, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1545"
+  },
+  {
+    "text": "our thumbnails were displayed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1548"
+  },
+  {
+    "text": "This worked. Nice! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1549"
+  },
+  {
+    "text": "But wait, Instruments is still showing a hang of almost two seconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1553"
+  },
+  {
+    "text": "What happened here is that the hang happens slightly later now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1558"
+  },
+  {
+    "text": "Let me show you where it happens in the Backyard Birds app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1561"
+  },
+  {
+    "text": "I'm in the detail view already. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1565"
+  },
+  {
+    "text": "In a moment, I'll tap the \"Choose Background\" button again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1566"
+  },
+  {
+    "text": "and then I'll attempt to dismiss the sheet directly afterwards ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1569"
+  },
+  {
+    "text": "by tapping the done button. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1572"
+  },
+  {
+    "text": "OK, \"Choose Background\" and \"Done\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1574"
+  },
+  {
+    "text": "I tapped multiple times, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1579"
+  },
+  {
+    "text": "but while the loading was happening, my taps were ignored. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1580"
+  },
+  {
+    "text": "This is the hang that Instruments told us about. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1584"
+  },
+  {
+    "text": "It happens after the sheet is displayed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1587"
+  },
+  {
+    "text": "This is a slightly different type of hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1590"
+  },
+  {
+    "text": "We already talked about the difference between the main thread being busy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1593"
+  },
+  {
+    "text": "or being blocked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1597"
+  },
+  {
+    "text": "There is another way to look at hangs; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1598"
+  },
+  {
+    "text": "what they are caused by and when they occur. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1600"
+  },
+  {
+    "text": "We call these synchronous and asynchronous hangs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1604"
+  },
+  {
+    "text": "Here, we have the main thread doing some work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1610"
+  },
+  {
+    "text": "If, when an event comes in, it takes a long time to process that event, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1612"
+  },
+  {
+    "text": "then that's a hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1617"
+  },
+  {
+    "text": "Let's say we get that under control ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1619"
+  },
+  {
+    "text": "and make sure our events are handled quickly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1623"
+  },
+  {
+    "text": "But maybe we just delayed some work to be done later on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1626"
+  },
+  {
+    "text": "or some other main thread work happens, and then an event comes in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1630"
+  },
+  {
+    "text": "Then that event has to wait for the previous work to be done ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1634"
+  },
+  {
+    "text": "before it can be handled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1637"
+  },
+  {
+    "text": "Then this still causes a hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1639"
+  },
+  {
+    "text": "even though the code for each individual event handling finishes quickly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1641"
+  },
+  {
+    "text": "The way hang detection works on our platforms is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1646"
+  },
+  {
+    "text": "it looks at all work items on the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1649"
+  },
+  {
+    "text": "and checks whether they are too long. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1651"
+  },
+  {
+    "text": "If so, it marks them as a potential hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1654"
+  },
+  {
+    "text": "And it does that irrespective of whether there was user input ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1658"
+  },
+  {
+    "text": "because user input could come in at any time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1663"
+  },
+  {
+    "text": "and then we would have an actual hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1666"
+  },
+  {
+    "text": "This means hang detection also detects these asynchronous or delayed cases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1669"
+  },
+  {
+    "text": "but it only measures the potential delay, not the actually experienced delay.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1674"
+  },
+  {
+    "text": "We call asynchronous hangs asynchronous because they are often caused ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1680"
+  },
+  {
+    "text": "by \"dispatch_async\"ing work on the main queue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1683"
+  },
+  {
+    "text": "or by a Swift Concurrency task that runs asynchronously on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1687"
+  },
+  {
+    "text": "But they could be caused by anything that causes work on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1692"
+  },
+  {
+    "text": "The first hang we saw was a synchronous hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1696"
+  },
+  {
+    "text": "We tapped a button, that button tap causes long-running work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1698"
+  },
+  {
+    "text": "so the result is displayed late.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1702"
+  },
+  {
+    "text": "This most recent hang is an asynchronous or delayed hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1706"
+  },
+  {
+    "text": "Tapping the Done button doesn't actually cause any expensive work by itself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1710"
+  },
+  {
+    "text": "But there was still work on the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1715"
+  },
+  {
+    "text": "preventing the tap from being handled. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1717"
+  },
+  {
+    "text": "So while someone using the app might not even notice ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1720"
+  },
+  {
+    "text": "if they don't interact with the app during this time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1722"
+  },
+  {
+    "text": "we should still fix these cases, in case they do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1724"
+  },
+  {
+    "text": "Let's do that now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1729"
+  },
+  {
+    "text": "So here I'm back in Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1730"
+  },
+  {
+    "text": "and I've already set the selection range to our async hang and zoomed in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1732"
+  },
+  {
+    "text": "In the summary view of the view body track, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1736"
+  },
+  {
+    "text": "Instruments shows us that there were now 75 calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1738"
+  },
+  {
+    "text": "to our BackgroundThumbnailView's body getter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1741"
+  },
+  {
+    "text": "This is because most thumbnail body getters are executed twice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1744"
+  },
+  {
+    "text": "SwiftUI creates 40 views with progress indicators to fill the grid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1749"
+  },
+  {
+    "text": "But then only 35 actually end up being displayed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1754"
+  },
+  {
+    "text": "and for those 35, we start loading the image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1757"
+  },
+  {
+    "text": "and once the image is loaded, the view updates and the body is called again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1759"
+  },
+  {
+    "text": "giving us a total of 75 body getter executions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1763"
+  },
+  {
+    "text": "Even all 75 body getters in total took much less than one millisecond. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1768"
+  },
+  {
+    "text": "So our body getters are fast now. That part worked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1774"
+  },
+  {
+    "text": "But we still have a hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1777"
+  },
+  {
+    "text": "I'm going to select the \"Main Thread\" track again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1779"
+  },
+  {
+    "text": "and in the heaviest stacktrace view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1782"
+  },
+  {
+    "text": "Instruments shows us that it's still the thumbnail getter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1784"
+  },
+  {
+    "text": "that takes a long time on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1786"
+  },
+  {
+    "text": "This time, it's called by a closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1789"
+  },
+  {
+    "text": "inside our \"BackgroundThumbnailView.body.getter\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1792"
+  },
+  {
+    "text": "not the body getter directly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1795"
+  },
+  {
+    "text": "I double-click it, which is a shortcut to open the source viewer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1797"
+  },
+  {
+    "text": "Now this is exactly the code we expected to execute in the background ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1802"
+  },
+  {
+    "text": "due to being in the task modifier closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1806"
+  },
+  {
+    "text": "This code should run at this time, but it should not run on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1808"
+  },
+  {
+    "text": "For issues like this, where Swift Concurrency tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1814"
+  },
+  {
+    "text": "don't execute the way you expect them to, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1817"
+  },
+  {
+    "text": "we have another useful instrument: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1819"
+  },
+  {
+    "text": "the Swift Concurrency Tasks instrument.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1821"
+  },
+  {
+    "text": "I've already recorded the same behavior with ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1823"
+  },
+  {
+    "text": "the Swift Concurrency task instrument added. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1825"
+  },
+  {
+    "text": "The Swift Tasks instrument adds a summary track to the document ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1828"
+  },
+  {
+    "text": "but what's more interesting for our case ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1832"
+  },
+  {
+    "text": "is the data it contributes to each thread track. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1834"
+  },
+  {
+    "text": "Here, in the main thread track, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1838"
+  },
+  {
+    "text": "there's a new graph from the Swift Tasks instrument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1840"
+  },
+  {
+    "text": "A single track can show multiple graphs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1844"
+  },
+  {
+    "text": "By clicking on the little downward arrow in the thread track header, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1847"
+  },
+  {
+    "text": "I can configure which graphs to show. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1851"
+  },
+  {
+    "text": "I can either choose another graph, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1853"
+  },
+  {
+    "text": "like the Time Profiler's CPU Usage graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1856"
+  },
+  {
+    "text": "or hold down the Command key while clicking to select multiple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1859"
+  },
+  {
+    "text": "So now Instruments is showing both the CPU Usage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1863"
+  },
+  {
+    "text": "and the Swift Tasks graph for this thread together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1866"
+  },
+  {
+    "text": "I'm gonna zoom in to our hang interval again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1870"
+  },
+  {
+    "text": "The \"Swift Tasks\" lane now clearly displays that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1874"
+  },
+  {
+    "text": "there are a bunch of task executions on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1878"
+  },
+  {
+    "text": "Setting the inspection range to one of them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1882"
+  },
+  {
+    "text": "and checking the heaviest stack trace in the Profile view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1885"
+  },
+  {
+    "text": "confirms that this task is wrapping our thumbnail computation work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1888"
+  },
+  {
+    "text": "So this work is correctly wrapped in a task like we wanted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1894"
+  },
+  {
+    "text": "But the task is executing on the main thread, which is unexpected.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1897"
+  },
+  {
+    "text": "Let me explain what's going on here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1902"
+  },
+  {
+    "text": "First, the body getter inherits the @MainActor annotation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1904"
+  },
+  {
+    "text": "from SwiftUI's View protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1908"
+  },
+  {
+    "text": "Because \"body\" is annotated as \"@MainActor\" in the \"View\" protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1910"
+  },
+  {
+    "text": "when we implement it, the body getter is also implicitly annotated as @MainActor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1915"
+  },
+  {
+    "text": "Second, the \".task\" modifier's closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1920"
+  },
+  {
+    "text": "is annotated to inherit the actor isolation of the surrounding context. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1923"
+  },
+  {
+    "text": "So because the body getter is isolated to the MainActor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1928"
+  },
+  {
+    "text": "the task closure will be as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1931"
+  },
+  {
+    "text": "So all the code running in this closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1934"
+  },
+  {
+    "text": "will be running on the main actor by default, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1936"
+  },
+  {
+    "text": "and because the \"thumbnail\" getter is synchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1939"
+  },
+  {
+    "text": "it now synchronously runs on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1942"
+  },
+  {
+    "text": "Swift Concurrency Tasks, by default, inherit the actor isolation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1948"
+  },
+  {
+    "text": "of the surrounding context. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1952"
+  },
+  {
+    "text": "The same behavior is true for SwiftUI's .task modifier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1954"
+  },
+  {
+    "text": "There are two ways to get off of the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1958"
+  },
+  {
+    "text": "asynchronously calling an function that's not bound to the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1961"
+  },
+  {
+    "text": "allows the task to go off of the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1965"
+  },
+  {
+    "text": "There may be cases where this is not feasible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1969"
+  },
+  {
+    "text": "Then, you can explicitly detach the task from the surrounding actor context ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1972"
+  },
+  {
+    "text": "by using \"Task.detached\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1976"
+  },
+  {
+    "text": "but it is a heavy handed approach ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1979"
+  },
+  {
+    "text": "and creating a separate task is more expensive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1981"
+  },
+  {
+    "text": "than simply suspending an existing one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1983"
+  },
+  {
+    "text": "SwiftUI will also automatically cancel the task created via the task modifier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1987"
+  },
+  {
+    "text": "when the corresponding view disappears, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1992"
+  },
+  {
+    "text": "but this cancellation will not propagate to a new unstructured task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1994"
+  },
+  {
+    "text": "like Task.detached. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=1998"
+  },
+  {
+    "text": "To learn more, check out \"Visualize and optimize Swift concurrency\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2000"
+  },
+  {
+    "text": "from WWDC22 and our documentation on improving app responsiveness.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2004"
+  },
+  {
+    "text": "Because in our case we are already in an asynchronous context, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2010"
+  },
+  {
+    "text": "and it's easy to make the thumbnail function nonisolated and asynchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2013"
+  },
+  {
+    "text": "we are going to pick option one.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2017"
+  },
+  {
+    "text": "Here, we have our thumbnail loading code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2020"
+  },
+  {
+    "text": "The issue is that this task will execute on the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2023"
+  },
+  {
+    "text": "due to inheriting the main actor isolation of the body getter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2027"
+  },
+  {
+    "text": "and as the thumbnail getter is synchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2030"
+  },
+  {
+    "text": "it will also stay on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2033"
+  },
+  {
+    "text": "The fix is simple. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2036"
+  },
+  {
+    "text": "We jump to the definition of the thumbnail getter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2037"
+  },
+  {
+    "text": "we make the getter async, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2041"
+  },
+  {
+    "text": "then we go back to our view struct...",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2045"
+  },
+  {
+    "text": "And because our getter is now async, we need to add await in front of it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2050"
+  },
+  {
+    "text": "This should allow the \"thumbnail\" getter to execute on ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2056"
+  },
+  {
+    "text": "Swift Concurrency's concurrent thread pool instead of the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2059"
+  },
+  {
+    "text": "Let's try it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2062"
+  },
+  {
+    "text": "I'm in the detail view again, and tap \"Choose Background\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2064"
+  },
+  {
+    "text": "Wow. That was fast! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2068"
+  },
+  {
+    "text": "Not only was there no hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2070"
+  },
+  {
+    "text": "but it also seemed like the overall loading was faster. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2072"
+  },
+  {
+    "text": "I barely saw the progress views. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2074"
+  },
+  {
+    "text": "Instruments confirms there was no hang now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2077"
+  },
+  {
+    "text": "There is some high CPU usage right here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2080"
+  },
+  {
+    "text": "Let me zoom into that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2083"
+  },
+  {
+    "text": "This is where the thumbnail loading now happens. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2086"
+  },
+  {
+    "text": "Checking the main thread, we can confirm that all task intervals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2089"
+  },
+  {
+    "text": "on the main thread are now very short. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2092"
+  },
+  {
+    "text": "Scrolling down to the other thread tracks reveals that our Swift tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2096"
+  },
+  {
+    "text": "are now executing on other threads in parallel instead of sequentially ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2099"
+  },
+  {
+    "text": "which makes much better use of our multi-core CPUs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2104"
+  },
+  {
+    "text": "This allows us to compute all the thumbnails in a few hundred milliseconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2108"
+  },
+  {
+    "text": "instead of almost 1.5 seconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2113"
+  },
+  {
+    "text": "And during all this time, the main thread remains responsive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2115"
+  },
+  {
+    "text": "so we've fixed this one for good now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2118"
+  },
+  {
+    "text": "We've now investigated, and fixed, an unresponsive main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2121"
+  },
+  {
+    "text": "that was caused by the main thread being busy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2125"
+  },
+  {
+    "text": "which we could identify by the main thread using a lot of CPU during the hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2127"
+  },
+  {
+    "text": "We've also experienced how a hang can be synchronous ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2131"
+  },
+  {
+    "text": "when it happens directly as part of the user interaction ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2134"
+  },
+  {
+    "text": "or asynchronous, where work that was scheduled on the main thread earlier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2137"
+  },
+  {
+    "text": "causes an incoming event to be processed late ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2141"
+  },
+  {
+    "text": "and how Instruments can detect both cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2144"
+  },
+  {
+    "text": "And we've fixed a hang by both doing less work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2147"
+  },
+  {
+    "text": "and by doing other work we can't do less of in the background ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2150"
+  },
+  {
+    "text": "and only coming back to the main thread to update the UI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2153"
+  },
+  {
+    "text": "But there's one case we haven't yet looked at, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2157"
+  },
+  {
+    "text": "a blocked main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2160"
+  },
+  {
+    "text": "in which case the main thread will use very little CPU. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2161"
+  },
+  {
+    "text": "The other dimensions apply to a blocked main thread the same way, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2165"
+  },
+  {
+    "text": "but other Instruments are necessary to analyze such a case.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2168"
+  },
+  {
+    "text": "Let's look at an example now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2172"
+  },
+  {
+    "text": "Here I have a trace file from another hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2175"
+  },
+  {
+    "text": "I already zoomed into the hang. It's a long one; several seconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2178"
+  },
+  {
+    "text": "In the \"Main Thread\" track, the CPU Usage graph shows us that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2183"
+  },
+  {
+    "text": "there is some initial CPU usage, but then, nothing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2187"
+  },
+  {
+    "text": "This is a clear case of a blocked main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2192"
+  },
+  {
+    "text": "We talked about how Time Profiler gathers its data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2195"
+  },
+  {
+    "text": "by sampling what's running on the CPU.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2197"
+  },
+  {
+    "text": "When we zoom in, the CPU Usage graph even shows the individual samples. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2201"
+  },
+  {
+    "text": "So each of these markers here is a sample that Time Profiler took. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2208"
+  },
+  {
+    "text": "There are a few more samples to the right, but then nothing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2213"
+  },
+  {
+    "text": "But when I select a time range without samples, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2219"
+  },
+  {
+    "text": "Time Profiler cannot tell us what's going on, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2222"
+  },
+  {
+    "text": "as it didn't record any data during this time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2224"
+  },
+  {
+    "text": "So we need a different tool: the Thread States instrument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2227"
+  },
+  {
+    "text": "Like the other instruments before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2232"
+  },
+  {
+    "text": "you can add it from the Instruments library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2233"
+  },
+  {
+    "text": "I've already recorded the same hang again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2236"
+  },
+  {
+    "text": "this time with the \"Thread State Trace\" instrument added.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2239"
+  },
+  {
+    "text": "There's a new track for this instrument now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2242"
+  },
+  {
+    "text": "But like the \"Swift Concurrency\" instrument, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2244"
+  },
+  {
+    "text": "the data that's interesting to us is actually in the \"thread\" tracks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2247"
+  },
+  {
+    "text": "So there is this really long \"blocked\" interval here in the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2251"
+  },
+  {
+    "text": "over six seconds, which explains most of our hang duration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2255"
+  },
+  {
+    "text": "When I click in the middle of it, Instruments' time cursor moves there, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2259"
+  },
+  {
+    "text": "which also updates the Narrative view in the detail area ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2263"
+  },
+  {
+    "text": "to show the entry for this blocked state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2267"
+  },
+  {
+    "text": "The Narrative view tells us the story of the thread; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2269"
+  },
+  {
+    "text": "what it was doing, when, and why.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2272"
+  },
+  {
+    "text": "For the selected time, it tells us that the thread was blocked for 6.64 seconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2277"
+  },
+  {
+    "text": "and it was blocked because it was calling mach_msg2_trap, a syscall. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2283"
+  },
+  {
+    "text": "On the right, there's a backtrace view again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2288"
+  },
+  {
+    "text": "But this backtrace is not a heaviest backtrace-- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2291"
+  },
+  {
+    "text": "it's not some aggregation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2293"
+  },
+  {
+    "text": "It is the precise backtrace of the mach_msg2_trap syscall ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2295"
+  },
+  {
+    "text": "that caused the thread to be blocked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2299"
+  },
+  {
+    "text": "The function call is displayed as the leaf node at the bottom ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2302"
+  },
+  {
+    "text": "and its call stack is displayed above. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2305"
+  },
+  {
+    "text": "The call stack tells us that the syscall happened as a result of ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2308"
+  },
+  {
+    "text": "allocating an MLModel, which in turn happened due to ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2311"
+  },
+  {
+    "text": "allocating an object of type \"ColorizingService\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2314"
+  },
+  {
+    "text": "which was called as part of a singleton property called \"shared\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2318"
+  },
+  {
+    "text": "on that colorizing service, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2322"
+  },
+  {
+    "text": "which, in turn, was called by a closure in a body getter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2324"
+  },
+  {
+    "text": "If we double-click that closure, we jump to the Source Viewer again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2328"
+  },
+  {
+    "text": "and can find the code where this was called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2332"
+  },
+  {
+    "text": "This line looks harmless, right? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2335"
+  },
+  {
+    "text": "Let's take a closer look.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2337"
+  },
+  {
+    "text": "We are accessing the shared property of ColorizingService ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2341"
+  },
+  {
+    "text": "and storing it in a local variable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2344"
+  },
+  {
+    "text": "Except it's not harmless because the shared property creates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2347"
+  },
+  {
+    "text": "the shared ColorizingService instance the first time it's accessed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2350"
+  },
+  {
+    "text": "and that, in turn, kicks off the whole model loading machinery, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2354"
+  },
+  {
+    "text": "which blocks the thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2357"
+  },
+  {
+    "text": "So you might be tempted to say, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2359"
+  },
+  {
+    "text": "\"Let's just move this inside the async part after 'await'.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2361"
+  },
+  {
+    "text": "However, counterintuitively, this does not solve the problem. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2366"
+  },
+  {
+    "text": "The \"await\" keyword only applies to asynchronous function calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2370"
+  },
+  {
+    "text": "in the subsequent code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2373"
+  },
+  {
+    "text": "In our example the \"colorize\" function is \"async\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2375"
+  },
+  {
+    "text": "But the \"shared\" property is not. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2380"
+  },
+  {
+    "text": "Because it's a static let property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2383"
+  },
+  {
+    "text": "it will be initialized lazily the first time it is accessed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2385"
+  },
+  {
+    "text": "and that happens synchronously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2388"
+  },
+  {
+    "text": "The await keyword doesn't change that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2391"
+  },
+  {
+    "text": "so the synchronous call would still happen on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2393"
+  },
+  {
+    "text": "We can just fix this the same way as we did in our previous example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2397"
+  },
+  {
+    "text": "by making the shared property \"async\" as well ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2400"
+  },
+  {
+    "text": "to get off of the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2403"
+  },
+  {
+    "text": "This is generally OK when you are waiting for work on your thread's behalf elsewhere ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2406"
+  },
+  {
+    "text": "where forward progress is made. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2410"
+  },
+  {
+    "text": "However, another common reason for blocked threads are locks or semaphores. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2413"
+  },
+  {
+    "text": "For best practices to keep in mind ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2418"
+  },
+  {
+    "text": "and what to avoid when using locks and semaphores with Swift concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2420"
+  },
+  {
+    "text": "watch our session \"Swift concurrency: Behind the scenes\" from WWDC 21.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2424"
+  },
+  {
+    "text": "Before we wrap up, I want to talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2430"
+  },
+  {
+    "text": "one other case related to blocked main threads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2432"
+  },
+  {
+    "text": "Here is the trace we looked at a moment ago. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2435"
+  },
+  {
+    "text": "On the right is the hang we just investigated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2438"
+  },
+  {
+    "text": "with the blocked main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2440"
+  },
+  {
+    "text": "But to the left of it, there are some other cases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2442"
+  },
+  {
+    "text": "where the main thread is blocked for multiple seconds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2445"
+  },
+  {
+    "text": "but Instruments doesn't flag this as a potential hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2448"
+  },
+  {
+    "text": "Here, the main thread is just asleep because there was no user input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2451"
+  },
+  {
+    "text": "From the operating system's perspective, it is blocked, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2455"
+  },
+  {
+    "text": "but it's just saving resources by not running when there is nothing to do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2459"
+  },
+  {
+    "text": "As soon as input comes in, it will wake up and handle it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2464"
+  },
+  {
+    "text": "So to determine whether a blocked thread is a responsiveness issue or not, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2468"
+  },
+  {
+    "text": "look to the Hangs instrument, not the thread states instrument.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2472"
+  },
+  {
+    "text": "So a blocked main thread does not imply an unresponsive main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2477"
+  },
+  {
+    "text": "Similarly, High CPU Usage also doesn't imply ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2480"
+  },
+  {
+    "text": "that the main thread is unresponsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2484"
+  },
+  {
+    "text": "But if the main thread is unresponsive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2486"
+  },
+  {
+    "text": "that means it was either blocked or the main thread was busy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2489"
+  },
+  {
+    "text": "Our hang detection takes all these details into account ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2493"
+  },
+  {
+    "text": "and will only label intervals where the main thread was actually unresponsive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2496"
+  },
+  {
+    "text": "and show them as potential hangs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2499"
+  },
+  {
+    "text": "If you remember only one thing from this session, let it be this: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2502"
+  },
+  {
+    "text": "whatever work you are doing on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2506"
+  },
+  {
+    "text": "it should be done in less than 100 milliseconds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2508"
+  },
+  {
+    "text": "to free the main thread for event handling again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2510"
+  },
+  {
+    "text": "The shorter, the better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2513"
+  },
+  {
+    "text": "To analyze hangs in detail, Instruments is your best friend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2516"
+  },
+  {
+    "text": "Remember the distinction between a busy and a blocked main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2520"
+  },
+  {
+    "text": "and remember that hangs can also be caused by asynchronous work on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2523"
+  },
+  {
+    "text": "To fix hangs, you want to do less work or move work to the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2529"
+  },
+  {
+    "text": "Sometimes, even both. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2534"
+  },
+  {
+    "text": "And doing less work often just means using the right API for the job. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2537"
+  },
+  {
+    "text": "In general, measure first ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2542"
+  },
+  {
+    "text": "and check whether there is actually a hang before optimizing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2544"
+  },
+  {
+    "text": "There are certainly some best practices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2547"
+  },
+  {
+    "text": "but concurrent and asynchronous code is also much harder to debug. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2549"
+  },
+  {
+    "text": "You'll often be surprised by all the things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2553"
+  },
+  {
+    "text": "that are actually very fast ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2555"
+  },
+  {
+    "text": "and what actually ends up being slow.",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2557"
+  },
+  {
+    "text": "Have fun finding, analyzing, and fixing all your hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2560"
+  },
+  {
+    "text": "Thank you for watching. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2563"
+  },
+  {
+    "text": "♪ ♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2023/10248/?time=2565"
+  }
+]

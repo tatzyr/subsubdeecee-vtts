@@ -1,0 +1,203 @@
+10241
+
+♪ ♪
+
+Adam: Xin chào. Tên tôi là Adam, và tôi là một kỹ sư trong nhóm SharePlay.
+
+Hôm nay chúng ta sẽ nói về một tính năng mới thú vị mà nhiều bạn đã yêu cầu.
+
+Như bạn có thể đoán qua tiêu đề phiên, chúng ta sẽ nói về việc chia sẻ tệp qua SharePlay.
+
+Đầu tiên chúng ta sẽ nói về ý nghĩa của việc chuyển tệp đính kèm.
+
+Chúng tôi sẽ đề cập đến các tệp hoặc bất kỳ lượng lớn dữ liệu nào mà bạn muốn chia sẻ, dưới dạng "các tệp đính kèm".
+
+Sau đó chúng ta sẽ nói về API mới trong GroupActivities, GroupSessionJournal.
+
+Sau đó, chúng ta sẽ nói về những người tham gia muộn, và cuối cùng, chúng ta sẽ đi qua và xem việc áp dụng GroupSessionJournal dễ dàng như thế nào trong ứng dụng DrawTogether của chúng ta.
+
+Hãy bắt đầu với ý nghĩa của việc chuyển tệp đính kèm.
+
+Hãy nói chuyện qua ứng dụng vẽ của chúng tôi.
+
+Chúng tôi có nó để chúng tôi có thể đồng bộ hóa các bản vẽ giữa hai thiết bị với GroupSessionMessenger.
+
+Nhưng điều gì sẽ xảy ra nếu chúng ta thả một hình ảnh vào khung vẽ?
+
+Chà, vì giới hạn kích thước trên GroupSessionMessenger, trước đây bạn không thể sử dụng SharePlay cho việc này.
+
+Nhưng bây giờ, chúng tôi đã làm nó để cùng một cơ sở hạ tầng của Apple cung cấp cho bạn tin nhắn siêu nhanh giữa các thiết bị giờ đây cũng có thể chuyển các tệp đính kèm.
+
+Vì vậy, bây giờ khi bạn thả một bức ảnh dễ thương về chú chó của mình vào khung vẽ, nó sẽ chuyển qua cơ sở hạ tầng đám mây của chúng tôi nhanh hơn bao giờ hết.
+
+Điều này sử dụng nhiều lớp công nghệ của Apple để giảm thiểu dữ liệu cần được truyền và giảm thiểu thời gian chờ đợi nhàn rỗi, tất cả để làm cho trải nghiệm nhanh nhất có thể và tất cả những điều đó xảy ra ở một lớp hệ thống.
+
+Nhưng đó không phải là nó.
+
+SharePlay được xây dựng với sự riêng tư của người dùng nên tất cả những điều này được thực hiện trong khi đảm bảo rằng dữ liệu bạn đang chuyển được mã hóa đầu cuối giữa các thiết bị.
+
+Apple không biết về nội dung của dữ liệu được truyền đi.
+
+Và đây không chỉ dành cho những bức ảnh chú chó dễ thương của Mochi, nó có thể dành cho bất cứ thứ gì bạn muốn!
+
+Có một tệp như PDF không? Cứ làm đi! Làm thế nào về việc ghi âm giọng nói hoặc chú thích?
+
+Bất kỳ nội dung người dùng nào đang được cộng tác hiện có thể được cung cấp nhanh hơn bao giờ hết bởi API mới này.
+
+Vậy, bây giờ API trông như thế nào?
+
+Chà, chúng ta hãy đi sâu vào!
+
+Đối tượng chính của chúng tôi để làm quen với bản thân là "Tạp chí GroupSession".
+
+Đối tượng này là mới đối với iOS 17.
+
+Giống như bạn đã quen với "GroupSessionMessenger", nó được khởi tạo với "GroupSession" của bạn.
+
+Nhưng điều quan trọng là phải hiểu mục đích của đối tượng này.
+
+Đó là một đối tượng luôn nhất quán cho tất cả mọi người trong GroupSession.
+
+Điều này có nghĩa là các hành động bạn thực hiện trên tạp chí ảnh hưởng đến tất cả mọi người và các thuộc tính trên tạp chí được đồng bộ hóa tương tự cho mọi người.
+
+Hãy xem qua một số ví dụ.
+
+Khi bạn có Nhật ký của mình, bạn có thể quan sát các đột biến tệp đính kèm thông qua "phần đính kèm" AsyncSequence.
+
+Và bạn có thể tải lên bất kỳ tệp đính kèm tùy chỉnh nào của mình bằng chức năng "thêm" của chúng tôi.
+
+Tất cả những gì bạn phải làm là làm cho loại của bạn phù hợp với giao thức Có thể chuyển nhượng!
+
+Vì vậy, bây giờ, khi một thiết bị gọi "thêm", không chỉ "phần đính kèm" AsyncSequence của họ sẽ cung cấp tệp đính kèm mới mà mọi người trên GroupSession sẽ thấy sự kiện tương tự xảy ra và có thể tải tệp đính kèm mà bạn đang tải lên!
+
+Tương tự như vậy, nếu bạn xóa tệp đính kèm bằng cách gọi hàm "xóa", thì "phần đính kèm" AsyncSequence của mọi người sẽ được cập nhật cho sự kiện.
+
+Và đó là khá nhiều nó.
+
+Bạn có thể thấy bạn có thể tải lên và nhận tệp đính kèm qua API mới này dễ dàng như thế nào.
+
+Trước khi chúng tôi đi sâu vào việc triển khai điều này trong ứng dụng DrawTogether của mình, hãy nói về một số cân nhắc lớn khi sử dụng API mới này.
+
+Và đó là các tệp đính kèm không được phép có kích thước vô hạn, chúng thực sự bị giới hạn ở 100MB.
+
+Điều này được thực hiện để đảm bảo rằng chúng tôi suy nghĩ cẩn thận về trải nghiệm người dùng.
+
+Những trải nghiệm này cần phải nhanh và các thiết bị chỉ có thể tải lên và tải xuống dữ liệu quá nhanh.
+
+Do đó, bạn nên luôn cố gắng và giảm thiểu kích thước của các tệp đính kèm được gửi.
+
+Điều đó có thể có nghĩa là nếu bạn là một ứng dụng vẽ, bạn hạn chế các bức ảnh được phép trên khung vẽ của mình nhỏ hơn hoặc bằng 100MB.
+
+Bất kỳ dữ liệu nào được định hướng xung quanh nội dung do người dùng tạo đều hoàn hảo ở đây, nhưng các tệp đính kèm lớn hơn không do người dùng tạo, như phim, vẫn nên được phục vụ từ máy chủ của riêng bạn chứ không phải thông qua thiết bị của người dùng.
+
+Sau đó là vòng đời.
+
+Bất cứ thứ gì được đưa lên Tạp chí sẽ ở lại miễn là có ai đó trong GroupSession.
+
+Điều này có nghĩa là ngay cả khi người thêm tệp đính kèm vào Tạp chí ngắt kết nối khỏi GroupSession, tệp đính kèm sẽ vẫn tồn tại.
+
+Nhưng nếu mọi người rời khỏi GroupSession, tệp đính kèm sẽ bị xóa cùng với họ.
+
+Nếu bạn đã quen với việc tích hợp với GroupSessionMessenger, bạn có thể nhớ chủ đề này: Những người tham gia muộn.
+
+Thông thường khi một người mới tham gia GroupSession, đơn đăng ký của bạn sẽ phải truyền lại trạng thái thế giới của bạn cho người đó để họ bắt kịp với phần còn lại của nhóm.
+
+Điều này được quản lý bởi ứng dụng của bạn áp dụng GroupSessionMessenger và liên quan đến việc mỗi thiết bị gửi tin nhắn đến người cần bắt kịp, điều này có thể khá tốn kém.
+
+Hãy lấy ví dụ sau.
+
+Nói rằng chúng ta có hai người trong một GroupSession.
+
+Có Adam và Brian. Trong khi đó Clara vẫn chưa tham gia.
+
+Vì vậy, trước khi Clara tham gia, Adam và Brian đang vẽ rất vui.
+
+Adam tiếp tục và vẽ một cục xương chó và Brian cũng cập nhật nó về phía mình.
+
+Bây giờ, Clara tiếp tục và tham gia, nhưng bức tranh của cô ấy trống rỗng khi cô ấy tham gia!
+
+Thiết bị của cô ấy cần lấy thông tin mà Adam và Brian đang làm để cô ấy bắt kịp họ.
+
+Tại thời điểm này, cả Adam và Brian sẽ phải gửi cho Clara những gì họ hiểu về tình trạng thế giới của họ và thiết bị của Clara sẽ hội tụ để cô ấy ở cùng một thời điểm.
+
+Bây giờ nếu bạn thêm tệp đính kèm thay cho những bản vẽ đó, những tin nhắn được gửi từ Adam và Brian có thể trở nên khá lớn.
+
+Như bạn có thể tưởng tượng, điều này trở thành một vấn đề.
+
+Bạn sẽ yêu cầu mỗi người tải lên lại 100MB chỉ để cung cấp hình ảnh cho một thiết bị.
+
+Chà, bây giờ những người tham gia muộn được xử lý cho bạn trên Tạp chí GroupSession.
+
+Những người tham gia muộn sẽ nhận được các tệp đính kèm được tải lên trên Tạp chí của họ mà không có bất kỳ tải lên lại nào xảy ra từ những người khác, điều này giúp trải nghiệm nhanh hơn và ít rộng rãi hơn về băng thông.
+
+Bây giờ đó là rất nhiều thông tin, vì vậy hãy nhảy vào phần thú vị và xem điều kỳ diệu trong công việc và hướng dẫn cách chúng tôi sẽ áp dụng GroupSessionJournal trong ứng dụng DrawTogether của chúng tôi.
+
+Đây là ứng dụng DrawTogether của chúng tôi mà chúng tôi sẽ sửa đổi.
+
+Như bạn có thể thấy, chúng tôi có một số nút ở đây ở dưới cùng cho phép chúng tôi bắt đầu phiên SharePlay và nút thùng rác để đặt lại phiên.
+
+Tôi nghĩ sẽ khá tuyệt nếu chúng ta có một nút ở đây ở dưới cùng cho phép chúng ta chọn một bức ảnh mà chúng ta muốn đặt trên khung vẽ.
+
+SwiftUI giúp việc này dễ dàng bắt đầu, vì vậy hãy nhảy thẳng vào!
+
+Có bốn thành phần chính mà chúng ta cần sửa đổi.
+
+Đầu tiên, có mô hình "Canvas" của chúng tôi.
+
+Đây là đối tượng mô hình chính của chúng tôi cho toàn bộ ứng dụng.
+
+Nó theo dõi tất cả các nét của chúng tôi cho cả những người tham gia địa phương và từ xa và là giao diện của chúng tôi với GroupActivities.
+
+Sau đó, chúng tôi đã có ba quan điểm của mình.
+
+Có "ContentView" có tất cả các chế độ xem phụ cho hai chế độ xem khác của chúng tôi, chế độ xem "ControlBar", duy trì các nút ở dưới cùng mà chúng tôi đã thấy trước đó và "CanvasView", vẽ tất cả các đối tượng từ mô hình của chúng tôi cho các nét vẽ và sắp tới là hình ảnh nữa.
+
+Hãy bắt đầu với mô hình của chúng ta.
+
+Chúng ta cần cái này để theo dõi hai thứ.
+
+Đầu tiên, tất cả các hình ảnh chúng tôi nhận được từ tạp chí, mà chúng tôi sẽ theo dõi với một cấu trúc mới, "CanvasImage."
+
+Thứ hai, hình ảnh được chọn cục bộ, nếu chúng ta đang cố gắng đặt một và tất cả các hình ảnh.
+
+Bây giờ hãy làm cho Canvas tạo một "GroupSessionJournal" và xử lý tất cả các tệp đính kèm từ nó mà chúng tôi sẽ thực hiện trong chức năng configureGroupSession của mình.
+
+Và chúng tôi sẽ tạo một chức năng để thêm hình ảnh được chọn cục bộ vào tạp chí mà chúng tôi có thể gọi từ quan điểm của mình.
+
+Bây giờ chúng ta đã có tất cả các phần không phải giao diện người dùng, hãy tiếp tục và sửa đổi một số chế độ xem.
+
+Chúng ta sẽ bắt đầu với nút để chọn một bức ảnh.
+
+Nếu bạn nhớ từ trước đó, chúng tôi muốn thêm nút này vào ControlBar.
+
+Hãy tiếp tục và nhập PhotosUI và thêm một nút mới bằng chế độ xem "PhotosPicker" và đặt nó thẳng vào Mô hình với "SelectedImageData".
+
+Chúng tôi đã tiếp tục và tạo ra một chế độ xem đơn giản được gọi là PhotoPlacementView trực quan hóa bức ảnh đã được chọn và cho phép chúng tôi di chuyển nó đến nơi chúng tôi muốn trên khung vẽ.
+
+Hãy tiếp tục và thêm chế độ xem đó vào Chế độ xem Nội dung ngay bây giờ.
+
+Hãy xem sự tiến bộ của chúng ta.
+
+Chúng ta có thể bắt đầu một phiên và sau đó chúng ta nhận được nút Ảnh của mình.
+
+Hãy chọn một bức ảnh, và bam! Chúng ta có một hình ảnh mà chúng ta có thể kéo xung quanh.
+
+Bây giờ phần cuối cùng là chúng tôi sửa đổi chế độ xem "Canvas" để trực quan hóa tất cả các hình ảnh từ mô hình.
+
+Bây giờ nếu chúng ta thử nó, chúng ta có thể thấy rằng hình ảnh xuất hiện ở cả hai mặt ngay khi chúng ta chọn vị trí cuối cùng của hình ảnh.
+
+Phew.
+
+Bây giờ chúng ta đã hoàn thành và tôi nghĩ chúng ta đã có một trải nghiệm khá thú vị.
+
+Cảm ơn tất cả các bạn đã điều chỉnh.
+
+Bây giờ bạn đã xem phiên này, hãy tiếp tục và xem loại trải nghiệm tuyệt vời nào bạn có thể xây dựng với GroupActivities.
+
+Nếu bạn chưa áp dụng GroupActivities, hãy xem "Thêm SharePlay vào ứng dụng của bạn" làm phần giới thiệu về ý nghĩa của SharePlay đối với các ứng dụng.
+
+Và nếu bạn muốn xem chúng tôi đã bắt đầu như thế nào với ứng dụng DrawTogether này hoặc xem một số ví dụ về cách áp dụng GroupActivities, hãy xem "Xây dựng trải nghiệm tùy chỉnh với GroupActivities".
+
+Cảm ơn một lần nữa, và chúng tôi rất nóng lòng được xem bạn xây dựng những gì!
+
+♪ ♪

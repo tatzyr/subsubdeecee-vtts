@@ -1,0 +1,267 @@
+10180
+
+♪ ♪
+
+Siraj: Xin chào mọi người.
+
+Tên tôi là Siraj, và tôi là một Kỹ sư ở CoreLocation.
+
+Cảm ơn vì đã tham gia "Khám phá các bản cập nhật vị trí được sắp xếp hợp lý", nơi tôi sẽ nói về API CoreLocation mới của chúng tôi để nhận các vị trí.
+
+Hãy bắt đầu nào.
+
+Cập nhật vị trí ngay bây giờ cũng đơn giản như viết một dòng mã này.
+
+Thật tuyệt làm sao! Phải không?
+
+Đây là API gốc Swift mới của chúng tôi, với sự hỗ trợ vượt trội cho đồng thời nhanh chóng hiện đại để cập nhật vị trí.
+
+Vậy thì chúng ta hãy đi sâu.
+
+Chúng tôi sẽ bắt đầu cuộc nói chuyện bằng cách mô tả chi tiết cấu trúc của API CLLocationUpdate mới của chúng tôi, Tiếp theo là cách cập nhật vị trí bằng API này.
+
+Sau đó, tôi sẽ xem xét những gì cần phải làm để cập nhật vị trí trong nền.
+
+Tiếp theo là cách cập nhật có thể tạm dừng và tiếp tục tự động.
+
+Cuối cùng, chúng tôi sẽ kết thúc bằng cách mô tả vòng đời của ứng dụng của bạn khi nó được cập nhật thông qua API này.
+
+Hãy cùng khám phá cấu trúc của CLocationUpdate API.
+
+Chúng tôi đang giới thiệu một lớp CLLocationUpdate mới, có hàm tĩnh liveUpdates, trả về AsyncSequence được gọi là Updates.
+
+Có thể được lặp lại trực tiếp bằng cách sử dụng for/try/await, để mang lại một phần tử thuộc loại CLLocationUpdate, chứa vị trí thuộc loại CLLocation và cờ boolean isStationary để quản lý tự động, tạm dừng và tiếp tục.
+
+liveUpdates cũng tiêu thụ một đối số tùy chọn của loại enum LiveConfiguration.
+
+Bây giờ, hãy thực hiện một số hướng dẫn mã và xem cách chúng ta có thể cập nhật bằng API mới này.
+
+Hãy xây dựng một ứng dụng cơ bản để bắt đầu cập nhật vị trí từ Foreground.
+
+Đầu tiên nhập CoreLocation.
+
+Sau đó, chúng tôi sẽ gọi hàm nhà máy tĩnh liveUpdates được cung cấp bởi lớp CLLocationUpdate để nhận Updates AsyncSequence.
+
+Cái nào có thể được lặp lại trực tiếp bằng cách sử dụng for/try/await để có được CLLocationUpdate trong phần đóng.
+
+Và sau đó lấy vị trí bằng cách truy cập tài sản vị trí của nó.
+
+Được rồi, vì vậy tại thời điểm này các bản cập nhật của chúng tôi đã bắt đầu.
+
+Nếu chúng ta phải dừng nó lại thì sao?
+
+Dừng lại đơn giản như phá vỡ vòng lặp for.
+
+Nhớ là Văn phòng làm không?
+
+Hãy thoát ra khỏi vòng lặp for khi isStationary này được báo cáo là đúng, tự động dừng các bản cập nhật.
+
+Các tin nhắn bắt đầu và dừng rõ ràng không còn cần thiết nữa.
+
+Hãy kiểm tra AsyncSequence được trả về bởi CLLocationUpdate API.
+
+Tất cả những điều mạnh mẽ mà chúng ta có thể làm qua AsyncSequence như tìm kiếm, chọn và loại trừ các yếu tố cũng có thể được thực hiện trên chuỗi cập nhật này.
+
+Trong ví dụ này, tôi sẽ hướng dẫn bạn cách chúng ta có thể sử dụng bộ lọc đầu tiên trực tiếp trên AsyncSequence.
+
+Các bản cập nhật dưới mui xe được bắt đầu và vị trí của từng phần tử được kiểm tra tốc độ.
+
+Ngay sau khi tìm thấy bản cập nhật có tốc độ hơn 200, phần tử đầu tiên đó sẽ được trả về, hoàn tất thao tác.
+
+Các bản cập nhật sẽ tự động dừng lại khi kết quả khớp đầu tiên được tìm thấy.
+
+Nhưng bạn có để ý tốc độ ở đây không?
+
+Đây là 200 mét mỗi giây, vì vậy khoảng 447 dặm một giờ.
+
+Điều đó quá nhanh, phải không?
+
+Vì vậy, chúng ta cần phải cẩn thận khi sử dụng các bộ lọc này vì việc thực thi sẽ bị kẹt cho đến khi tìm thấy kết quả phù hợp và thậm chí còn cẩn thận hơn nếu bạn thử sử dụng bộ lọc các vị trí dựa trên độ chính xác ngang.
+
+Được rồi, vì vậy đây là mã mẫu của chúng tôi từ trang chiếu trước để nhận các bản cập nhật mà chúng tôi không chỉ định bất kỳ cấu hình nào cho liveUpdates.
+
+Vì vậy, chúng được cấu hình tự động với cấu hình mặc định.
+
+Nhưng liveUpdates API có thể có một cấu hình rõ ràng.
+
+Cấu hình này là một loại enum mới mà chúng tôi đang giới thiệu như một phần của API này.
+
+Hãy xem các thành viên của loại liệt kê này là gì và công dụng của họ.
+
+LiveConfiguration enum là một tập hợp các cấu hình nướng sẵn mà một ứng dụng có thể chọn để bắt đầu cập nhật.
+
+Nó có mặc định, Điều hướng ô tô, Điều hướng khác, thể dục và trên không là thành viên của nó.
+
+Nếu ứng dụng của bạn đã sử dụng một CLActivityType cụ thể với API cập nhật vị trí hiện có, thì bạn có thể chọn một thành viên LiveConfiguration tương ứng để có cùng trải nghiệm vị trí trong khi áp dụng API mới.
+
+Nhưng nếu bạn không cần một loại hoạt động cụ thể, thì bạn có thể bắt đầu cập nhật với cấu hình mặc định hoặc không chỉ định bất kỳ cấu hình nào cả.
+
+Vậy "cập nhật" AsyncSequence này mang lại điều gì?
+
+Khi bạn lặp lại nó, nó sẽ cung cấp cho bạn một đối tượng, thuộc loại CLLocationUpdate.
+
+Nó chứa một vị trí tùy chọn thuộc loại CLLocation.
+
+Nếu không có vị trí nào khả dụng, chúng tôi sẽ cung cấp bản cập nhật với vị trí được đánh dấu là số không.
+
+Nó cũng chứa một thuộc tính boolean isStationary thông qua đó chúng tôi quản lý tự động tạm dừng / tiếp tục cập nhật vị trí.
+
+Được rồi, vì vậy chúng tôi chỉ đề cập đến cách nhận thông tin cập nhật từ phía trước.
+
+Bây giờ hãy nói về cách nhận cập nhật khi ứng dụng của bạn đang chạy ở chế độ nền.
+
+LiveActivity là cách tốt nhất để cho phép cập nhật vị trí nền.
+
+Miễn là LiveActivity của bạn vẫn hoạt động, ứng dụng của bạn có thể nhận được các bản cập nhật mà không cần bất kỳ thiết lập bổ sung nào khác.
+
+Nhưng đừng lo lắng nếu ứng dụng của bạn chưa có LiveActivity.
+
+Đây sẽ không phải là trình chặn để áp dụng API mới.
+
+Thay vào đó bạn có thể sử dụng CLBackgroundActivitySession.
+
+Hãy cùng khám phá cách nó hoạt động.
+
+Nhiều người trong số các bạn có thể đã quen thuộc với chỉ báo vị trí nền màu xanh này, được hiển thị khi một ứng dụng được ủy quyền là Trong khi sử dụng nhận được các bản cập nhật trong nền.
+
+CLBackgroundActivitySession sử dụng cùng một chỉ báo để cung cấp khả năng vị trí nền cho ứng dụng của bạn.
+
+Nó làm như vậy bằng cách duy trì khả năng hiển thị cho người dùng về các dịch vụ định vị đang được sử dụng trong nền.
+
+Và vì khả năng hiển thị được duy trì, nó giữ cho ứng dụng sử dụng hiệu quả cho phép nó truy cập các vị trí ngay cả từ nền.
+
+CLBackgroundActivitySession hỗ trợ toàn bộ ủy quyền của ứng dụng.
+
+Vì vậy, nó sẽ cho phép ứng dụng của bạn không chỉ nhận được các bản cập nhật khi ở chế độ nền mà còn theo dõi các sự kiện bằng CLMonitor.
+
+BackgroundActivitySession không phụ thuộc vào các bản cập nhật đang được bắt đầu.
+
+Chỉ cần tạo phiên sẽ hiển thị chỉ báo khi ứng dụng của bạn ở chế độ nền, cho phép nó nhận được các bản cập nhật và sự kiện khi cần thiết.
+
+Để sử dụng CLBackgroundActivitySession, bạn cần khởi tạo nó và giữ nó.
+
+Hãy thận trọng về phần giữ, vì việc phân bổ đối tượng sẽ tự động vô hiệu hóa phiên có khả năng chấm dứt quyền truy cập ứng dụng của bạn vào vị trí nền.
+
+Ứng dụng của bạn vẫn cần có vị trí trong mảng UIBackgroundModes, để BackgroundActivitySession hoạt động hiệu quả.
+
+Nếu bạn không có một phiên nổi bật, thì bạn phải bắt đầu phiên mới từ phía trước, nhưng bạn chỉ có thể tham gia lại một phiên hiện có từ nền.
+
+Hãy thực hiện một mã nhanh đi qua và xem cách sử dụng backgroundActivitySession.
+
+Đây là cùng một slide mã "cách nhận cập nhật" của chúng tôi từ phần trước.
+
+Trước khi bắt đầu cập nhật, bạn nên khởi tạo đối tượng CLBackgroundActivitySession để bắt đầu một phiên mới.
+
+Lưu ý, chúng tôi đang gán phiên cho self.backgroundActivity, là một thuộc tính chứ không phải cho một biến cục bộ.
+
+Và điều này rất quan trọng bởi vì nếu chúng tôi sử dụng một biến cục bộ, thì khi nó nằm ngoài phạm vi, đối tượng mà nó nắm giữ sẽ được phân bổ, làm mất hiệu lực phiên và có khả năng chấm dứt quyền truy cập vào vị trí của ứng dụng của bạn.
+
+Sau đó, khi chúng tôi muốn kết thúc phiên của mình, chúng tôi có thể làm điều đó bằng cách gửi tin nhắn vô hiệu hoặc bằng cách để đối tượng bị phá hủy.
+
+Vì vậy, đó là cách ứng dụng của bạn có thể nhận được các bản cập nhật trong nền, thông qua LiveActivity hoặc thông qua CLBackgroundActivitySession.
+
+Bây giờ hãy xem API mới này đóng góp như thế nào vào thời lượng pin bằng cách tự động tạm dừng và tiếp tục cập nhật.
+
+Giả sử ứng dụng đang nhận được các bản cập nhật trong khi người dùng đang di chuyển.
+
+Nhưng nhiều lần trong một ngày, thiết bị sẽ trở nên đứng yên.
+
+Ví dụ, khi người dùng đến văn phòng của họ, họ có thể để thiết bị của họ trên bàn làm việc.
+
+Trong tình huống như vậy, chúng tôi sẽ cung cấp cho ứng dụng của bạn cùng một vị trí lặp đi lặp lại.
+
+Thay vào đó, chúng ta có thể tiết kiệm năng lượng ở đây bằng cách tạm dừng các bản cập nhật.
+
+Điều này cũng tải ứng dụng của bạn, bằng cách không cung cấp cho nó các vị trí dư thừa để xử lý.
+
+Vì vậy, một khi thiết bị ở trạng thái đứng yên trong một khoảng thời gian đủ, CLLocationUpdate API sẽ nhận ra điều này và kích hoạt Tự động Tạm dừng.
+
+Khi tạm dừng được kích hoạt, chúng tôi sẽ gửi bản cập nhật với vị trí không phải không và cờ isStationary được đánh dấu là Đúng.
+
+Đây là cách bạn biết rằng người dùng đã ngừng di chuyển, thay vì vị trí của họ không khả dụng.
+
+Sau đó, khi thiết bị trở nên không cố định, các bản cập nhật sẽ tự động tiếp tục mà không có bất kỳ sự tương tác nào của người dùng.
+
+Với bản cập nhật tiếp tục này, chúng tôi sẽ gửi isStationary được đánh dấu là Sai, tiếp tục cung cấp các bản cập nhật cho ứng dụng của bạn.
+
+Vì vậy, tự động tạm dừng và tiếp tục cập nhật trong khi ứng dụng của bạn ở chế độ nền có ảnh hưởng đến vòng đời của nó.
+
+Hãy trải qua các giai đoạn vòng đời khác nhau mà ứng dụng của bạn sẽ trải qua trong khi chạy ở chế độ nền và hành động nào cần được thực hiện để duy trì tính liên tục của các bản cập nhật nền.
+
+Ứng dụng của bạn trong khi chạy ở phía trước và nhận các bản cập nhật có thể chuyển từ chạy phía trước sang chạy nền và ngược lại.
+
+Nhưng bây giờ với API mới này, đôi khi ứng dụng của bạn có thể chuyển từ trạng thái chạy nền sang trạng thái tạm ngưng.
+
+Điều này có thể sẽ xảy ra khi không có bản cập nhật nào để cung cấp.
+
+Ví dụ, do tạm dừng tự động, do thiết bị cố định hoặc do Dịch vụ định vị không thể tính toán bản sửa lỗi vị trí.
+
+Nhưng đừng lo lắng!
+
+CLLocationUpdate sẽ không để ứng dụng của bạn ở trạng thái tạm ngưng.
+
+Thay vào đó, ngay khi có bản cập nhật, vì tiếp tục tự động bắt đầu hoặc có thể vị trí hiện có sẵn, chúng tôi sẽ hủy tạm ngưng ứng dụng của bạn, chuyển nó trở lại trạng thái chạy nền.
+
+Khi ứng dụng của bạn được nối lại từ trạng thái bị đình chỉ, không cần thực hiện hành động nào để tiếp tục cập nhật trong nền.
+
+Đình chỉ không phải là trạng thái duy nhất.
+
+Có thể ứng dụng của bạn có thể chuyển sang trạng thái kết thúc.
+
+Và quá trình chuyển đổi này có thể xảy ra theo nhiều cách.
+
+Hãy xem qua chúng.
+
+Đầu tiên, trực tiếp từ nền đang chạy do sự cố ứng dụng, hoặc người dùng đóng hoặc chấm dứt hệ thống khi tài nguyên bị hạn chế.
+
+Thứ hai, ứng dụng của bạn có thể chuyển sang trạng thái Chấm dứt ngay cả từ trạng thái bị đình chỉ, do người dùng đóng cửa hoặc hạn chế tài nguyên.
+
+Nhưng chúng tôi có một tin tốt cho bạn.
+
+API của chúng tôi có thể khôi phục ứng dụng của bạn trong hầu hết các trường hợp, ngay cả khi nó bị chấm dứt và hoàn toàn không chạy.
+
+Chúng tôi sẽ khôi phục ứng dụng của bạn ngay khi có cập nhật vị trí bằng cách khởi chạy nó ở chế độ nền và điều này sẽ chuyển ứng dụng của bạn từ kết thúc sang nền đang chạy Nhưng sau khi nhận được khởi chạy, bạn phải thực hiện một số bước để đảm bảo phiên vị trí nền của bạn có thể tiếp tục.
+
+Bạn cần khởi động lại các bản cập nhật bằng cách gọi liveUpdates và nếu ứng dụng của bạn trước đây đã sử dụng phiên hoạt động nền thì bạn cũng cần tạo lại CLBackgroundActivitySession.
+
+Hãy nhớ rằng tôi đã đề cập, bạn chỉ có thể tham gia lại một CLBackgroundActivitySession hiện có từ nền, nhưng không thể bắt đầu một cái mới?
+
+Đây là một số lời giải thích thêm về điều đó.
+
+Đối tượng phiên hoạt động nền mà bạn vừa tạo lại?
+
+Nó không phải là sự khởi đầu của một phiên mới.
+
+Bạn vừa tạo một đối tượng phiên mới.
+
+Bây giờ, vì ứng dụng của bạn đã bắt đầu một phiên trước khi nó bị chấm dứt, trò giải trí này cho phép ứng dụng của bạn tham gia lại phiên hiện có đó từ nền, cho phép ứng dụng của bạn tiếp tục cập nhật vị trí nền.
+
+Được rồi, vì vậy chúng tôi vừa thảo luận về cách bạn nên tạo lại cập nhật trực tiếp và phiên hoạt động nền sau khi nhận được khởi chạy ứng dụng nền.
+
+Liên quan đến giải trí, có rất ít điều mà bạn nên cẩn thận.
+
+Ứng dụng của bạn sẽ thực hiện bất kỳ hoạt động giải trí nào ngay lập tức khi nhận được khởi chạy ứng dụng nền.
+
+Đặt việc giải trí của các đối tượng này ở đâu đó sẽ được thực thi khi ứng dụng của bạn nhận được khởi chạy nền.
+
+Đối với ứng dụng mẫu của chúng tôi, chúng tôi đã đặt giải trí trong UIApplicationDelegate's - didFinishLaunchingWithOptions, được gọi sau khi quá trình khởi chạy ứng dụng kết thúc.
+
+Được rồi!
+
+Vì vậy, đây là API cập nhật vị trí mới của chúng tôi với việc áp dụng đơn giản và cải thiện hiệu suất pin.
+
+Nó sẽ có sẵn bắt đầu từ năm nay trên tất cả các nền tảng.
+
+Tôi thực sự khuyến khích tất cả các bạn thử CLLocationUpdate trong các ứng dụng của mình và cung cấp phản hồi có giá trị của bạn cho chúng tôi thông qua Trợ lý phản hồi.
+
+Chúng tôi cũng có một ứng dụng mẫu giới thiệu cách sử dụng API mới này, bạn có thể tải xuống từ phần Tài nguyên.
+
+Tài liệu Nhà phát triển Apple cho CLLocationUpdate cũng có sẵn để biết thêm chi tiết về API.
+
+Tôi cũng khuyên bạn nên xem phiên "Gặp gỡ Giám sát Vị trí Cốt lõi" của chúng tôi, bao gồm API Giám sát Vị trí Cốt lõi mà chúng tôi sẽ thêm vào trong năm nay.
+
+Đó là tất cả từ phía tôi về "Khám phá các bản cập nhật vị trí được sắp xếp hợp lý."
+
+Cảm ơn vì đã xem!
+
+♪ ♪

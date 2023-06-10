@@ -1,0 +1,656 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.000
+♪ Hip-hop nhạc cụ êm dịu ♪
+
+00:00:04.000 --> 00:00:10.000
+♪
+
+00:00:10.000 --> 00:00:14.000
+Này, tôi là Pau Sastre Miguel, một kỹ sư phần mềm tại Apple.
+
+00:00:14.000 --> 00:00:21.000
+Hôm nay tôi sẽ nói về cách tạo ra những trải nghiệm nhập vai với Metal trên xrOS.
+
+00:00:21.000 --> 00:00:29.000
+Năm nay, với sự ra mắt của xrOS, bạn sẽ có thể tạo ra những trải nghiệm nhập vai với các công nghệ quen thuộc trong hệ sinh thái Apple.
+
+00:00:29.000 --> 00:00:35.000
+Với RealityKit, bạn sẽ có thể tạo ra những trải nghiệm kết hợp nội dung ảo của mình với thế giới thực.
+
+00:00:35.000 --> 00:00:47.000
+Mặt khác, nếu ứng dụng của bạn sẽ đưa người dùng vào trải nghiệm nhập vai hoàn toàn, xrOS cũng cho phép bạn thay thế hoàn toàn nội dung trong thế giới thực bằng nội dung ảo của riêng bạn.
+
+00:00:47.000 --> 00:00:52.000
+Khi tạo ra những trải nghiệm hoàn toàn nhập vai, bạn có một vài lựa chọn khi nói đến phương pháp kết xuất của mình.
+
+00:00:52.000 --> 00:00:58.000
+Bạn vẫn có thể sử dụng RealityKit, hoặc nếu bạn thích, bạn có thể chọn Metal và ARKit APIs.
+
+00:00:58.000 --> 00:01:12.000
+RecRoom là một ví dụ tuyệt vời về một ứng dụng cung cấp trải nghiệm nhập vai hoàn toàn bằng cách sử dụng CompositorServices để tạo phiên kết xuất, API kim loại để hiển thị khung và ARKit để theo dõi thế giới và tay.
+
+00:01:12.000 --> 00:01:18.000
+Họ đã có thể mang lại sự hỗ trợ cho tất cả các công nghệ này nhờ trình chỉnh sửa Unity.
+
+00:01:18.000 --> 00:01:25.000
+Nếu bạn muốn viết công cụ của riêng mình, CompositorServices API cung cấp cho bạn quyền truy cập vào kết xuất Metal trên xrOS.
+
+00:01:25.000 --> 00:01:32.000
+Bạn có thể kết hợp nó với ARKit, bổ sung tính năng theo dõi thế giới và theo dõi tay, để tạo ra trải nghiệm hoàn toàn nhập vai.
+
+00:01:32.000 --> 00:01:37.000
+CompositorServices là chìa khóa để cấu hình công cụ của bạn hoạt động trên xrOS.
+
+00:01:37.000 --> 00:01:42.000
+Tôi sẽ chỉ cho bạn cách thiết lập vòng lặp kết xuất và sau đó là cách kết xuất một khung.
+
+00:01:42.000 --> 00:01:47.000
+Cuối cùng, tôi sẽ chỉ cho bạn cách sử dụng ARKit để làm cho trải nghiệm của bạn tương tác.
+
+00:01:47.000 --> 00:01:52.000
+Bắt đầu với kiến trúc của một ứng dụng xrOS.
+
+00:01:52.000 --> 00:01:59.000
+Bạn sẽ tận dụng tối đa phiên hôm nay nếu bạn có kinh nghiệm trước đây với Metal APIs và kỹ thuật kết xuất Metal.
+
+00:01:59.000 --> 00:02:07.000
+Nếu bạn chưa từng sử dụng Metal trước đây, hãy xem các mẫu mã và tài liệu trong developer.apple.com/Metal.
+
+00:02:07.000 --> 00:02:15.000
+Khi bạn tạo ra những trải nghiệm nhập vai trên xrOS với Metal, bạn sẽ bắt đầu với SwiftUI để tạo ứng dụng và phiên kết xuất.
+
+00:02:15.000 --> 00:02:25.000
+Sau khi tạo phiên kết xuất, bạn có thể chuyển sang ngôn ngữ mà bạn có thể quen thuộc hơn, như C hoặc C++, để xác định các phần bên trong của công cụ.
+
+00:02:25.000 --> 00:02:29.000
+Bạn bắt đầu bằng cách tạo một loại phù hợp với giao thức ứng dụng SwiftUI.
+
+00:02:29.000 --> 00:02:34.000
+Để phù hợp với giao thức này, bạn sẽ xác định danh sách các cảnh trong ứng dụng của mình.
+
+00:02:34.000 --> 00:02:37.000
+Trên xrOS, có ba loại cảnh chính.
+
+00:02:37.000 --> 00:02:42.000
+Loại cửa sổ cung cấp trải nghiệm tương tự như nền tảng 2D như macOS.
+
+00:02:42.000 --> 00:02:48.000
+Loại âm lượng hiển thị nội dung trong giới hạn của nó và nó cùng tồn tại trong Không gian chia sẻ với các ứng dụng khác.
+
+00:02:48.000 --> 00:02:53.000
+Và ImmersiveSpace cho phép bạn hiển thị nội dung ở bất cứ đâu.
+
+00:02:53.000 --> 00:03:00.000
+Bất cứ khi nào bạn hiển thị trải nghiệm nhập vai hoàn toàn với Metal, bạn sẽ chọn loại ImmersiveSpace.
+
+00:03:00.000 --> 00:03:05.000
+ImmersiveSpace là một loại Cảnh SwiftUI mới có sẵn trên xrOS.
+
+00:03:05.000 --> 00:03:10.000
+Nó đóng vai trò là vật chứa cho những trải nghiệm nhập vai hoàn toàn.
+
+00:03:10.000 --> 00:03:16.000
+Để tìm hiểu cách sử dụng ImmersiveSpace, hãy xem phiên "Vượt ra ngoài cửa sổ với SwiftUI."
+
+00:03:16.000 --> 00:03:26.000
+Khi bạn tạo một cảnh ImmersiveSpace, ứng dụng của bạn cung cấp nội dung bằng cách sử dụng một loại phù hợp với giao thức ImmersiveSpaceContent.
+
+00:03:26.000 --> 00:03:32.000
+Thông thường, khi tạo nội dung cho Cảnh ImmersiveSpace, các ứng dụng sẽ sử dụng RealityKit.
+
+00:03:32.000 --> 00:03:35.000
+Nó sử dụng CoreAnimation và MaterialX dưới mui xe.
+
+00:03:35.000 --> 00:03:42.000
+Nhưng nếu thay vào đó, bạn muốn sử dụng sức mạnh của Metal để hiển thị nội dung ứng dụng của mình, bạn có một lựa chọn khác.
+
+00:03:42.000 --> 00:03:50.000
+CompositorServices API sử dụng Metal và ARKit để cung cấp khả năng kết xuất nhập vai cho ứng dụng của bạn.
+
+00:03:50.000 --> 00:04:00.000
+CompositorServices API mới, được giới thiệu trong xrOS, cung cấp giao diện kết xuất Metal để có thể hiển thị nội dung của ImmersiveSpace.
+
+00:04:00.000 --> 00:04:05.000
+Với CompositorServices, các ứng dụng có thể kết xuất trực tiếp vào máy chủ tổng hợp.
+
+00:04:05.000 --> 00:04:14.000
+Nó có chi phí IPC thấp để giảm thiểu độ trễ và nó được xây dựng từ đầu để hỗ trợ cả API C và Swift.
+
+00:04:14.000 --> 00:04:20.000
+Khi sử dụng CompositorServices, ImmersiveSpaceContent được gọi là CompositorLayer.
+
+00:04:20.000 --> 00:04:25.000
+Để tạo một CompositorLayer bạn sẽ cần cung cấp hai tham số.
+
+00:04:25.000 --> 00:04:29.000
+Cái đầu tiên là giao thức CompositorLayerConfiguration.
+
+00:04:29.000 --> 00:04:34.000
+Giao thức này xác định hành vi và khả năng của phiên kết xuất của bạn.
+
+00:04:34.000 --> 00:04:37.000
+Thứ hai là LayerRenderer.
+
+00:04:37.000 --> 00:04:40.000
+Đây là giao diện cho phiên kết xuất lớp.
+
+00:04:40.000 --> 00:04:45.000
+Ứng dụng của bạn sẽ sử dụng đối tượng này để lên lịch và hiển thị các khung mới.
+
+00:04:45.000 --> 00:04:51.000
+Khi viết một trải nghiệm nhập vai với Metal, hãy bắt đầu bằng cách xác định loại ứng dụng.
+
+00:04:51.000 --> 00:04:54.000
+Là loại cảnh, hãy sử dụng ImmersiveSpace.
+
+00:04:54.000 --> 00:04:58.000
+Đối với loại nội dung, hãy sử dụng CompositorLayer.
+
+00:04:58.000 --> 00:05:06.000
+Khi CompositorLayer đã sẵn sàng để hiển thị nội dung, hệ thống sẽ gọi ứng dụng với phiên bản của phiên kết xuất.
+
+00:05:06.000 --> 00:05:11.000
+Đây là một nơi tốt để tạo phiên bản công cụ tùy chỉnh của bạn.
+
+00:05:11.000 --> 00:05:20.000
+Bây giờ bạn đã có phiên bản công cụ, bạn có thể tạo chuỗi kết xuất và chạy vòng lặp kết xuất bằng cách gọi bắt đầu.
+
+00:05:20.000 --> 00:05:31.000
+Một điều cần lưu ý khi xác định danh sách cảnh trong ứng dụng của bạn, là theo mặc định SwiftUI tạo cảnh cửa sổ, ngay cả khi cảnh đầu tiên trong ứng dụng của bạn là ImmersiveSpace.
+
+00:05:31.000 --> 00:05:35.000
+Để thay đổi hành vi mặc định đó, bạn có thể sửa đổi danh sách thông tin của ứng dụng của mình.
+
+00:05:35.000 --> 00:05:44.000
+Bạn có thể thêm khóa UIApplicationPreferred DefaultSceneSessionRole vào bản kê khai cảnh ứng dụng của mình để thay đổi loại cảnh mặc định của ứng dụng.
+
+00:05:44.000 --> 00:05:52.000
+Nếu bạn đang sử dụng một không gian với Compositor SpaceContent, bạn sẽ sử dụng CPSceneSessionRole ImmersiveSpaceApplication.
+
+00:05:52.000 --> 00:06:01.000
+Sau khi thiết lập ứng dụng và trước khi vào vòng lặp kết xuất, bạn sẽ cho CompositorServices biết cách định cấu hình LayerRenderer.
+
+00:06:01.000 --> 00:06:08.000
+Để cung cấp cấu hình cho CompositorLayer, bạn sẽ tạo một loại mới phù hợp với giao thức CompositorLayerConfiguration.
+
+00:06:08.000 --> 00:06:15.000
+Giao thức này cho phép bạn sửa đổi thiết lập và một số hành vi của phiên kết xuất.
+
+00:06:15.000 --> 00:06:18.000
+CompositorLayerConfiguration cung cấp cho bạn hai tham số.
+
+00:06:18.000 --> 00:06:21.000
+Cái đầu tiên là khả năng của lớp.
+
+00:06:21.000 --> 00:06:25.000
+Nó cho phép bạn truy vấn những tính năng nào có sẵn trên thiết bị.
+
+00:06:25.000 --> 00:06:29.000
+Sử dụng các khả năng để tạo ra một cấu hình hợp lệ.
+
+00:06:29.000 --> 00:06:32.000
+Và tham số thứ hai là Cấu hình LayerRenderer.
+
+00:06:32.000 --> 00:06:36.000
+Loại này xác định cấu hình của phiên kết xuất của bạn.
+
+00:06:36.000 --> 00:06:46.000
+Với cấu hình, bạn có thể xác định cách công cụ của bạn ánh xạ nội dung của nó vào lớp, cho phép kết xuất theo hướng và xác định quản lý màu sắc của đường ống của bạn.
+
+00:06:46.000 --> 00:06:51.000
+Bây giờ, tôi sẽ nói về việc mỗi thuộc tính này sẽ ảnh hưởng đến động cơ của bạn như thế nào.
+
+00:06:51.000 --> 00:06:54.000
+Cái đầu tiên là kết xuất theo hướng.
+
+00:06:54.000 --> 00:07:02.000
+Mục tiêu chính của tính năng này là cho phép bạn hiển thị nội dung ở mật độ điểm ảnh trên mỗi độ cao hơn mà không cần sử dụng kích thước kết cấu lớn hơn.
+
+00:07:02.000 --> 00:07:08.000
+Trong một đường ống hiển thị thông thường, các điểm ảnh được phân bố tuyến tính theo kết cấu.
+
+00:07:08.000 --> 00:07:16.000
+xrOS tối ưu hóa quy trình làm việc này bằng cách tạo bản đồ xác định những khu vực nào trong màn hình có thể sử dụng tốc độ lấy mẫu thấp hơn.
+
+00:07:16.000 --> 00:07:22.000
+Điều này giúp giảm công suất cần thiết để hiển thị khung hình của bạn trong khi vẫn duy trì độ trung thực trực quan của màn hình.
+
+00:07:22.000 --> 00:07:28.000
+Sử dụng foveation bất cứ khi nào có thể là điều quan trọng, vì nó sẽ mang lại trải nghiệm hình ảnh tốt hơn.
+
+00:07:28.000 --> 00:07:35.000
+Một cách tuyệt vời để hình dung cách foveation ảnh hưởng đến đường ống kết xuất của bạn là sử dụng Trình gỡ lỗi kim loại của Xcode.
+
+00:07:35.000 --> 00:07:43.000
+Với Metal Debugger, bạn có thể kiểm tra kết cấu mục tiêu và bản đồ tốc độ rasterization đang được sử dụng trong đường ống kết xuất.
+
+00:07:43.000 --> 00:07:49.000
+Ảnh chụp này hiển thị nội dung của kết cấu mà không cần chia tỷ lệ cho bản đồ tốc độ rasterization.
+
+00:07:49.000 --> 00:07:55.000
+Bạn có thể nhận thấy các tỷ lệ mẫu khác nhau bằng cách tập trung vào các vùng của kết cấu được nén nhiều hơn.
+
+00:07:55.000 --> 00:08:04.000
+Với các tùy chọn trình xem tệp đính kèm trong Trình gỡ lỗi kim loại, bạn có thể chia tỷ lệ hình ảnh để hình dung kết quả cuối cùng mà màn hình sẽ hiển thị.
+
+00:08:04.000 --> 00:08:11.000
+Compositor cung cấp bản đồ foveation bằng cách sử dụng MTLRasterizationRateMap cho mỗi khung hình.
+
+00:08:11.000 --> 00:08:15.000
+Luôn luôn kiểm tra xem foveation có được hỗ trợ hay không là một cách tốt.
+
+00:08:15.000 --> 00:08:17.000
+Điều này sẽ thay đổi tùy thuộc vào nền tảng.
+
+00:08:17.000 --> 00:08:22.000
+Ví dụ, trong trình mô phỏng xrOS, foveation không khả dụng.
+
+00:08:22.000 --> 00:08:28.000
+Để kích hoạt foveation, bạn có thể đặt isFoveationEnabled trên cấu hình.
+
+00:08:28.000 --> 00:08:31.000
+Thuộc tính thứ hai là bố cục LayerRenderer.
+
+00:08:31.000 --> 00:08:36.000
+Thuộc tính này là một trong những cấu hình quan trọng nhất cho động cơ của bạn.
+
+00:08:36.000 --> 00:08:43.000
+Nó xác định cách mỗi màn hình từ tai nghe được ánh xạ vào nội dung được hiển thị của ứng dụng của bạn.
+
+00:08:43.000 --> 00:08:48.000
+Mỗi mắt đầu tiên ánh xạ vào một kết cấu Kim loại do Compositor cung cấp.
+
+00:08:48.000 --> 00:08:53.000
+Sau đó, Compositor cung cấp chỉ mục của lát cắt nào để sử dụng trong kết cấu đó.
+
+00:08:53.000 --> 00:08:59.000
+Và cuối cùng, Compositor cung cấp khung nhìn để sử dụng trong lát kết cấu đó.
+
+00:08:59.000 --> 00:09:04.000
+Bố cục LayerRenderer cho phép bạn chọn các ánh xạ khác nhau giữa lát kết cấu và khung nhìn.
+
+00:09:04.000 --> 00:09:10.000
+Với nhiều lớp, Compositor sẽ sử dụng một kết cấu với hai lát cắt và hai khung nhìn.
+
+00:09:10.000 --> 00:09:16.000
+Với chuyên dụng, Compositor sẽ sử dụng hai kết cấu với một lát cắt và mỗi khung nhìn.
+
+00:09:16.000 --> 00:09:24.000
+Và cuối cùng với việc chia sẻ, Compositor sẽ sử dụng một kết cấu, một lát cắt và hai khung nhìn khác nhau cho lát cắt đó.
+
+00:09:24.000 --> 00:09:29.000
+Việc chọn bố cục để sử dụng sẽ phụ thuộc vào cách bạn thiết lập đường ống kết xuất của mình.
+
+00:09:29.000 --> 00:09:38.000
+Ví dụ, với phân lớp và chia sẻ, bạn sẽ có thể thực hiện kết xuất của mình trong một lần duy nhất, vì vậy bạn có thể tối ưu hóa quy trình kết xuất của mình.
+
+00:09:38.000 --> 00:09:44.000
+Với bố cục được chia sẻ, có thể dễ dàng chuyển các cơ sở mã hiện có trong đó kết xuất theo hướng không phải là một tùy chọn.
+
+00:09:44.000 --> 00:09:53.000
+Bố cục phân lớp là bố cục tối ưu vì nó cho phép bạn kết xuất cảnh của mình trong một lần duy nhất trong khi vẫn duy trì kết xuất theo hướng.
+
+00:09:53.000 --> 00:09:57.000
+Thuộc tính cấu hình cuối cùng cần thảo luận là quản lý màu sắc.
+
+00:09:57.000 --> 00:10:03.000
+Compositor hy vọng nội dung sẽ được hiển thị với không gian màu P3 hiển thị tuyến tính mở rộng.
+
+00:10:03.000 --> 00:10:06.000
+xrOS hỗ trợ khoảng không EDR là 2.0.
+
+00:10:06.000 --> 00:10:09.000
+Đó là gấp hai lần phạm vi SDR.
+
+00:10:09.000 --> 00:10:21.000
+Theo mặc định, Compositor không sử dụng định dạng pixel có thể hiển thị HDR, nhưng nếu ứng dụng của bạn hỗ trợ HDR, bạn có thể chỉ định rgba16Float trong cấu hình lớp.
+
+00:10:21.000 --> 00:10:29.000
+Nếu bạn muốn biết thêm về cách kết xuất HDR với EDR, hãy xem phiên "Khám phá kết xuất HDR với EDR."
+
+00:10:29.000 --> 00:10:37.000
+Để tạo một cấu hình tùy chỉnh trong ứng dụng của bạn, hãy bắt đầu bằng cách xác định một loại mới phù hợp với giao thức CompositorLayerConfiguration.
+
+00:10:37.000 --> 00:10:42.000
+Để phù hợp với giao thức này, hãy thêm phương thức makeConfiguration.
+
+00:10:42.000 --> 00:10:47.000
+Phương pháp này cung cấp khả năng lớp và cấu hình bạn có thể sửa đổi.
+
+00:10:47.000 --> 00:10:52.000
+Để kích hoạt ba thuộc tính mà tôi đã đề cập trước đây, trước tiên hãy kiểm tra xem foveation có được hỗ trợ hay không.
+
+00:10:52.000 --> 00:10:57.000
+Sau đó kiểm tra xem bố cục nào được hỗ trợ trong thiết bị này.
+
+00:10:57.000 --> 00:11:01.000
+Với thông tin này, bạn có thể thiết lập một bố cục hợp lệ trong cấu hình.
+
+00:11:01.000 --> 00:11:08.000
+Trong một số thiết bị như trình giả lập, nơi Compositor chỉ hiển thị một chế độ xem, phân lớp sẽ không khả dụng.
+
+00:11:08.000 --> 00:11:12.000
+Đối với foveation, hãy đặt nó thành true nếu thiết bị hỗ trợ nó.
+
+00:11:12.000 --> 00:11:19.000
+Và cuối cùng, đặt colorFormat thành rgba16Float để có thể hiển thị nội dung HDR.
+
+00:11:19.000 --> 00:11:26.000
+Quay trở lại mã đã tạo ra lớp Compositor, bây giờ bạn có thể thêm loại cấu hình bạn vừa tạo.
+
+00:11:26.000 --> 00:11:31.000
+Bây giờ phiên kết xuất đã được định cấu hình, bạn có thể thiết lập vòng lặp kết xuất.
+
+00:11:31.000 --> 00:11:35.000
+Bạn sẽ bắt đầu bằng cách sử dụng đối tượng LayerRenderer từ CompositorLayer.
+
+00:11:35.000 --> 00:11:42.000
+Đầu tiên, bạn sẽ tải tài nguyên và khởi tạo bất kỳ đối tượng nào mà công cụ của bạn sẽ cần để hiển thị khung.
+
+00:11:42.000 --> 00:11:44.000
+Sau đó kiểm tra trạng thái của lớp.
+
+00:11:44.000 --> 00:11:48.000
+Nếu lớp bị tạm dừng, hãy đợi cho đến khi lớp đang chạy.
+
+00:11:48.000 --> 00:11:51.000
+Khi lớp được bỏ chặn khỏi thời gian chờ đợi, hãy kiểm tra lại trạng thái lớp.
+
+00:11:51.000 --> 00:11:55.000
+Nếu lớp đang chạy, bạn sẽ có thể hiển thị một khung.
+
+00:11:55.000 --> 00:12:00.000
+Và một khi khung đó được hiển thị, hãy kiểm tra lại trạng thái lớp trước khi hiển thị khung tiếp theo.
+
+00:12:00.000 --> 00:12:06.000
+Nếu trạng thái lớp bị vô hiệu, hãy giải phóng tài nguyên bạn đã tạo cho vòng lặp kết xuất.
+
+00:12:06.000 --> 00:12:10.000
+Bây giờ, đã đến lúc xác định hàm chính của render_loop.
+
+00:12:10.000 --> 00:12:15.000
+Cho đến bây giờ tôi đã sử dụng Swift vì ImmersiveSpace API chỉ có sẵn trong Swift.
+
+00:12:15.000 --> 00:12:20.000
+Nhưng từ đây tôi sẽ chuyển sang C để viết vòng lặp kết xuất.
+
+00:12:20.000 --> 00:12:27.000
+Như tôi đã đề cập, bước đầu tiên trong vòng lặp kết xuất là phân bổ và khởi tạo tất cả các đối tượng bạn sẽ cần để kết xuất khung.
+
+00:12:27.000 --> 00:12:31.000
+Bạn sẽ làm điều này bằng cách gọi chức năng thiết lập trong công cụ tùy chỉnh của bạn.
+
+00:12:31.000 --> 00:12:35.000
+Tiếp theo, là phần chính của vòng lặp.
+
+00:12:35.000 --> 00:12:38.000
+Bước đầu tiên là kiểm tra trạng thái layerRenderer.
+
+00:12:38.000 --> 00:12:43.000
+Nếu trạng thái bị tạm dừng, luồng sẽ ngủ cho đến khi layerRenderer chạy.
+
+00:12:43.000 --> 00:12:48.000
+Nếu trạng thái lớp đang chạy, công cụ sẽ hiển thị một khung.
+
+00:12:48.000 --> 00:12:53.000
+Và cuối cùng, nếu lớp bị vô hiệu hóa, vòng lặp kết xuất sẽ kết thúc.
+
+00:12:53.000 --> 00:12:58.000
+Bước cuối cùng của hàm render_loop sẽ là xóa mọi tài nguyên đã sử dụng.
+
+00:12:58.000 --> 00:13:03.000
+Bây giờ ứng dụng đang trải qua vòng lặp kết xuất, tôi sẽ giải thích cách kết xuất một khung.
+
+00:13:03.000 --> 00:13:08.000
+Kết xuất nội dung trong xrOS luôn từ quan điểm của thiết bị.
+
+00:13:08.000 --> 00:13:12.000
+Bạn có thể sử dụng ARKit để có được định hướng và dịch thiết bị.
+
+00:13:12.000 --> 00:13:23.000
+ARKit đã có sẵn trên iOS và bây giờ xrOS đang giới thiệu một API hoàn toàn mới, có các tính năng bổ sung có thể giúp bạn tạo ra trải nghiệm nhập vai.
+
+00:13:23.000 --> 00:13:31.000
+Với ARKit, bạn có thể thêm tính năng theo dõi thế giới, theo dõi tay và các khả năng cảm biến thế giới khác vào ứng dụng của mình.
+
+00:13:31.000 --> 00:13:41.000
+ARKit API mới cũng được xây dựng từ đầu để hỗ trợ các API C và Swift, điều này sẽ cho phép tích hợp dễ dàng hơn với các công cụ kết xuất hiện có.
+
+00:13:41.000 --> 00:13:47.000
+Để tìm hiểu thêm về ARKit trên xrOS, hãy xem "Gặp gỡ ARKit để tính toán không gian."
+
+00:13:47.000 --> 00:13:52.000
+Trong vòng lặp kết xuất, đã đến lúc kết xuất một khung.
+
+00:13:52.000 --> 00:13:56.000
+Khi kết xuất một khung, Compositor xác định hai phần chính.
+
+00:13:56.000 --> 00:13:58.000
+Cái đầu tiên là bản cập nhật.
+
+00:13:58.000 --> 00:14:02.000
+Đây là nơi bạn sẽ làm bất kỳ công việc nào không quan trọng về độ trễ đầu vào.
+
+00:14:02.000 --> 00:14:10.000
+Đây có thể là những thứ như cập nhật hình ảnh động trong cảnh của bạn, cập nhật nhân vật của bạn hoặc thu thập đầu vào trong hệ thống của bạn như tư thế bộ xương tay.
+
+00:14:10.000 --> 00:14:13.000
+Phần thứ hai của khung là phần gửi.
+
+00:14:13.000 --> 00:14:16.000
+Đây là nơi bạn sẽ thực hiện bất kỳ công việc quan trọng nào về độ trễ.
+
+00:14:16.000 --> 00:14:21.000
+Bạn cũng sẽ hiển thị bất kỳ nội dung nào phụ thuộc vào vị trí tai nghe ở đây.
+
+00:14:21.000 --> 00:14:27.000
+Để xác định thời gian cho mỗi phần đó, Compositor cung cấp một đối tượng thời gian.
+
+00:14:27.000 --> 00:14:32.000
+Sơ đồ này xác định thời gian ảnh hưởng như thế nào đến các phần khung khác nhau.
+
+00:14:32.000 --> 00:14:37.000
+Các bản nhạc CPU và GPU đại diện cho công việc đang được thực hiện bởi ứng dụng của bạn.
+
+00:14:37.000 --> 00:14:43.000
+Và bản nhạc Compositor đại diện cho công việc được thực hiện bởi máy chủ Compositor để hiển thị khung của bạn.
+
+00:14:43.000 --> 00:14:48.000
+Loại thời gian từ Dịch vụ Compositor xác định ba giá trị thời gian chính.
+
+00:14:48.000 --> 00:14:50.000
+Đầu tiên là thời gian đầu vào tối ưu.
+
+00:14:50.000 --> 00:14:57.000
+Đó là thời điểm tốt nhất để truy vấn đầu vào quan trọng về độ trễ và bắt đầu hiển thị khung của bạn.
+
+00:14:57.000 --> 00:14:59.000
+Thứ hai là thời hạn kết xuất.
+
+00:14:59.000 --> 00:15:05.000
+Đó là thời điểm mà CPU và GPU của bạn hoạt động để hiển thị khung hình nên được hoàn thành.
+
+00:15:05.000 --> 00:15:07.000
+Và thứ ba là thời gian thuyết trình.
+
+00:15:07.000 --> 00:15:11.000
+Đó là lúc khung hình của bạn sẽ được trưng bày.
+
+00:15:11.000 --> 00:15:18.000
+Trong hai phần của khung hình của bạn, phần cập nhật sẽ diễn ra trước thời gian nhập tối ưu.
+
+00:15:18.000 --> 00:15:23.000
+Sau khi cập nhật, bạn sẽ đợi thời gian nhập tối ưu trước khi bắt đầu gửi khung.
+
+00:15:23.000 --> 00:15:29.000
+Sau đó, bạn sẽ thực hiện gửi khung, điều này sẽ gửi công việc kết xuất đến GPU.
+
+00:15:29.000 --> 00:15:42.000
+Điều quan trọng cần lưu ý là công việc CPU và GPU cần phải hoàn thành trước thời hạn kết xuất, nếu không máy chủ Compositor sẽ không thể sử dụng khung này và sẽ sử dụng khung trước đó thay thế.
+
+00:15:42.000 --> 00:15:49.000
+Cuối cùng, vào thời hạn kết xuất, máy chủ Compositor sẽ kết hợp khung này với các lớp khác trong hệ thống.
+
+00:15:49.000 --> 00:15:56.000
+Quay lại mã vòng lặp kết xuất, đã đến lúc xác định hàm render_new_frame.
+
+00:15:56.000 --> 00:16:02.000
+Trong chức năng render_new_frame của công cụ của bạn, trước tiên bạn sẽ truy vấn một khung từ layerRenderer.
+
+00:16:02.000 --> 00:16:06.000
+Với đối tượng khung, bạn sẽ có thể dự đoán thông tin thời gian.
+
+00:16:06.000 --> 00:16:11.000
+Sử dụng thông tin thời gian đó để mở rộng phạm vi cập nhật và gửi các khoảng thời gian.
+
+00:16:11.000 --> 00:16:13.000
+Tiếp theo, thực hiện phần cập nhật.
+
+00:16:13.000 --> 00:16:18.000
+Xác định phần này bằng cách gọi cập nhật bắt đầu và kết thúc trên khung.
+
+00:16:18.000 --> 00:16:23.000
+Bên trong, bạn sẽ thu thập các đầu vào của thiết bị và cập nhật nội dung của khung.
+
+00:16:23.000 --> 00:16:29.000
+Sau khi cập nhật xong, hãy đợi thời gian nhập tối ưu trước khi bắt đầu gửi.
+
+00:16:29.000 --> 00:16:34.000
+Sau khi chờ đợi, xác định phần gửi bằng cách gọi bắt đầu và kết thúc gửi.
+
+00:16:34.000 --> 00:16:38.000
+Bên trong phần này, trước tiên hãy truy vấn đối tượng có thể vẽ được.
+
+00:16:38.000 --> 00:16:47.000
+Tương tự như CAMetalLayer, đối tượng có thể vẽ được chứa kết cấu đích và thông tin mà bạn sẽ cần để thiết lập đường ống kết xuất.
+
+00:16:47.000 --> 00:16:54.000
+Bây giờ bạn đã có thể vẽ được, bạn có thể nhận được thông tin thời gian cuối cùng mà Compositor sẽ sử dụng để hiển thị khung này.
+
+00:16:54.000 --> 00:16:57.000
+Với thời gian cuối cùng, bạn có thể truy vấn ar_pose.
+
+00:16:57.000 --> 00:17:04.000
+Điều quan trọng là phải đặt tư thế trong bản vẽ được vì nó sẽ được Compositor sử dụng để thực hiện chiếu lại trên khung.
+
+00:17:04.000 --> 00:17:10.000
+Ở đây tôi đang tạo dáng bằng cách gọi hàm get_ar_pose trong đối tượng động cơ của tôi.
+
+00:17:10.000 --> 00:17:15.000
+Nhưng bạn sẽ cần triển khai nội dung của chức năng này bằng cách sử dụng API theo dõi thế giới ARKit.
+
+00:17:15.000 --> 00:17:21.000
+Bước cuối cùng của chức năng sẽ là mã hóa tất cả các công việc GPU và gửi khung.
+
+00:17:21.000 --> 00:17:26.000
+Bên trong khung đệ trình, sử dụng khả năng vẽ để hiển thị nội dung của khung như bình thường.
+
+00:17:26.000 --> 00:17:32.000
+Bây giờ vòng lặp kết xuất là các khung kết xuất, đã đến lúc làm cho trải nghiệm nhập vai của bạn tương tác.
+
+00:17:32.000 --> 00:17:42.000
+Video này cho thấy cách RecRoom sử dụng Unity đã tận dụng ARKit và Compositor APIs để thêm tính tương tác vào ứng dụng của họ.
+
+00:17:42.000 --> 00:17:46.000
+Có hai nguồn đầu vào chính thúc đẩy sự tương tác này.
+
+00:17:46.000 --> 00:17:51.000
+HandTracking của ARKit đang cung cấp bộ xương bàn tay để hiển thị các bàn tay ảo.
+
+00:17:51.000 --> 00:17:55.000
+Và các sự kiện chèn ép từ LayerRenderer đang thúc đẩy các tương tác của người dùng.
+
+00:17:55.000 --> 00:18:03.000
+Để làm cho trải nghiệm tương tác, trước tiên bạn sẽ thu thập đầu vào của người dùng và sau đó áp dụng nó vào nội dung cảnh của bạn.
+
+00:18:03.000 --> 00:18:07.000
+Tất cả công việc này sẽ xảy ra trong phần cập nhật của khung.
+
+00:18:07.000 --> 00:18:13.000
+Có hai nguồn đầu vào chính, LayerRenderer và nhà cung cấp ARKit HandTracking.
+
+00:18:13.000 --> 00:18:18.000
+Với LayerRenderer, bạn sẽ nhận được các bản cập nhật mỗi khi ứng dụng nhận được sự kiện pinch.
+
+00:18:18.000 --> 00:18:23.000
+Những cập nhật này được hiển thị dưới dạng các sự kiện không gian.
+
+00:18:23.000 --> 00:18:26.000
+Những sự kiện này chứa ba thuộc tính chính.
+
+00:18:26.000 --> 00:18:32.000
+Giai đoạn sẽ cho bạn biết nếu sự kiện đang hoạt động, nếu nó kết thúc, hoặc nếu nó bị hủy bỏ.
+
+00:18:32.000 --> 00:18:38.000
+Tia lựa chọn sẽ cho phép bạn xác định nội dung của cảnh được chú ý khi sự kiện bắt đầu.
+
+00:18:38.000 --> 00:18:41.000
+Và thuộc tính sự kiện cuối cùng là tư thế thao túng.
+
+00:18:41.000 --> 00:18:47.000
+Đây là tư thế của nhúm và được cập nhật mọi khung hình trong suốt thời gian diễn ra sự kiện.
+
+00:18:47.000 --> 00:18:54.000
+Từ HandTracking API, bạn sẽ có thể lấy bộ xương cho cả tay trái và tay phải.
+
+00:18:54.000 --> 00:18:57.000
+Bây giờ, đã đến lúc thêm hỗ trợ đầu vào vào mã.
+
+00:18:57.000 --> 00:19:04.000
+Trước khi thu thập đầu vào, bạn sẽ quyết định xem ứng dụng của bạn đang hiển thị các kim ảo hay nó sử dụng các kim truyền qua.
+
+00:19:04.000 --> 00:19:12.000
+Thêm công cụ sửa đổi cảnh LimbVisibility phía trên vào ImmersiveSpace để làm cho các bàn tay truyền qua hiển thị hoặc ẩn.
+
+00:19:12.000 --> 00:19:18.000
+Để truy cập các sự kiện không gian, hãy quay lại nơi bạn đã xác định trình xử lý kết xuất CompositorLayer.
+
+00:19:18.000 --> 00:19:25.000
+Tại đây, đăng ký một khối trong layerRenderer để nhận thông tin cập nhật mỗi khi có sự kiện không gian mới.
+
+00:19:25.000 --> 00:19:32.000
+Nếu bạn đang viết mã động cơ của mình bằng C, bạn sẽ ánh xạ sự kiện không gian SwiftUI sang loại C.
+
+00:19:32.000 --> 00:19:37.000
+Bên trong mã C, bây giờ bạn có thể nhận được bộ sưu tập sự kiện C.
+
+00:19:37.000 --> 00:19:44.000
+Một điều cần lưu ý khi xử lý các bản cập nhật sự kiện không gian là các bản cập nhật được phân phối trong chuỗi chính.
+
+00:19:44.000 --> 00:19:51.000
+Điều này có nghĩa là bạn sẽ sử dụng một số cơ chế đồng bộ hóa khi đọc và ghi các sự kiện trong công cụ của mình.
+
+00:19:51.000 --> 00:19:57.000
+Bây giờ các sự kiện được lưu trữ trong công cụ, đã đến lúc triển khai chức năng thu thập đầu vào.
+
+00:19:57.000 --> 00:20:02.000
+Bước đầu tiên là tạo một đối tượng để lưu trữ trạng thái đầu vào hiện tại cho khung này.
+
+00:20:02.000 --> 00:20:07.000
+Trạng thái đầu vào này sẽ lưu trữ các sự kiện mà bạn nhận được từ LayerRenderer.
+
+00:20:07.000 --> 00:20:11.000
+Đảm bảo rằng bạn đang truy cập bộ nhớ trong của mình một cách an toàn.
+
+00:20:11.000 --> 00:20:19.000
+Đối với bộ xương bàn tay, bạn có thể sử dụng API của nhà cung cấp dịch vụ theo dõi tay từ ARKit để có được các neo tay mới nhất.
+
+00:20:19.000 --> 00:20:27.000
+Và bây giờ ứng dụng của bạn có hỗ trợ đầu vào, bạn có tất cả các công cụ theo ý của mình để tạo ra những trải nghiệm nhập vai hoàn toàn trên xrOS.
+
+00:20:27.000 --> 00:20:31.000
+Tóm lại, với SwiftUI, bạn sẽ xác định ứng dụng.
+
+00:20:31.000 --> 00:20:36.000
+Với CompositorServices và Metal, bạn sẽ thiết lập vòng lặp kết xuất và hiển thị nội dung 3D.
+
+00:20:36.000 --> 00:20:41.000
+Và cuối cùng, với ARKit, bạn sẽ có thể làm cho trải nghiệm của mình tương tác.
+
+00:20:41.000 --> 00:20:43.000
+Cảm ơn bạn đã xem!
+
+00:20:43.000 --> 23:59:59.000
+♪
+
