@@ -1,0 +1,845 @@
+10253
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Becca Royal-Gordon: Xin chào, tôi là Becca từ nhóm Swift Compiler.
+
+Hôm nay tôi sẽ nói về cách bạn có thể triển khai DSL trong Swift.
+
+Nếu bạn chưa bao giờ nghe thuật ngữ đó, DSL là một ngôn ngữ dành riêng cho miền và ngay cả khi tên đó là mới đối với bạn, bạn có thể đã sử dụng một ngôn ngữ trước đây.
+
+Tôi sẽ bắt đầu bằng cách giải thích DSL thực sự là gì và chúng trông như thế nào trong Swift.
+
+Sau đó tôi sẽ giải thích cách các nhà xây dựng kết quả hoạt động.
+
+Chúng là một trong những tính năng chính được sử dụng để triển khai Swift DSLs.
+
+Sau đó, tôi sẽ hướng dẫn bạn thiết kế một DSL đơn giản cho một phần của ứng dụng mẫu của chúng tôi, Fruta.
+
+Và cuối cùng, tôi sẽ chỉ cho bạn cách viết cách triển khai trong mã mẫu Fruta.
+
+Nhưng hãy bắt đầu bằng cách giải thích từ viết tắt đó tốt hơn một chút.
+
+DSL là một loại ngôn ngữ lập trình thu nhỏ được thiết kế cho các chương trình hoạt động trong một khu vực cụ thể được gọi là "tên miền".
+
+Bởi vì ngôn ngữ được thiết kế với một loại công việc cụ thể, nó có thể có các tính năng đặc biệt giúp loại công việc đó dễ thực hiện hơn.
+
+Vì vậy, khi bạn viết mã cho DSL thay vì ngôn ngữ có mục đích chung, bạn chỉ phải viết những thứ cụ thể cho vấn đề chính xác của mình.
+
+Nhiều DSL là khai báo.
+
+Đó là, bạn không thực sự viết hướng dẫn chính xác để giải quyết vấn đề; nó giống như bạn đang mô tả vấn đề bằng ngôn ngữ, và sau đó nó sẽ giải quyết nó cho bạn.
+
+Cách truyền thống bạn sẽ làm điều này được gọi là " DSL độc lập".
+
+Bạn sẽ thiết kế toàn bộ ngôn ngữ từ đầu và viết một trình thông dịch hoặc trình biên dịch cho nó.
+
+DSL nhúng là một giải pháp thay thế hiện đại hơn.
+
+Trong DSL nhúng, bạn sử dụng các tính năng tích hợp của ngôn ngữ máy chủ như Swift để thêm hành vi ngầm của DSL vào một số phần trong mã của bạn, sửa đổi hiệu quả ngôn ngữ máy chủ thành một ngôn ngữ phù hợp với miền của bạn.
+
+Điều này rõ ràng dễ dàng hơn nhiều so với việc thiết kế toàn bộ ngôn ngữ và viết trình biên dịch cho nó bởi vì bạn đang bắt đầu từ một ngôn ngữ hiện có đã quyết định những điều cơ bản của cú pháp và đã có trình biên dịch.
+
+Nó cũng giúp việc kết hợp mã DSL với mã không phải DSL dễ dàng hơn.
+
+Thường thì bạn muốn sử dụng DSL để giải quyết một vấn đề chỉ là một phần của một ứng dụng lớn hơn nhiều.
+
+Nếu bạn đang viết một DSL độc lập, bạn phải thiết kế một cách để gọi từ ngôn ngữ này sang ngôn ngữ khác.
+
+Với DSL được nhúng, các phần được viết trong DSL trông giống như mã thông thường đối với phần còn lại của ứng dụng, vì vậy bạn có thời gian tương tác dễ dàng hơn nhiều.
+
+DSL nhúng cũng có thể sử dụng các công cụ được thiết kế cho ngôn ngữ máy chủ.
+
+Bạn đã có trình gỡ lỗi và trình chỉnh sửa cho Swift và chúng hoạt động tốt cho Swift DSL; nếu bạn muốn chúng cho DSL độc lập, bạn phải tự viết.
+
+Và bởi vì bạn đang bắt đầu từ ngôn ngữ chủ, những khách hàng đã biết ngôn ngữ đó có ít thứ để học hơn rất nhiều.
+
+Họ đã biết cách khai báo một biến hoặc liệu có một khoảng trắng trong "khác nếu"; tất cả những gì họ cần học là cách bạn tùy chỉnh ngôn ngữ.
+
+Swift được thiết kế để hỗ trợ DSL nhúng.
+
+Và trên thực tế, nếu bạn đã sử dụng SwiftUI, bạn đã sử dụng nó rồi.
+
+SwiftUI view DSL giả định bạn muốn mô tả bố cục các chế độ xem trên màn hình của thiết bị.
+
+Vì vậy, khi bạn đang viết bằng SwiftUI DSL, mã tùy chỉnh của bạn chỉ cần tạo các chế độ xem và DSL chịu trách nhiệm xây dựng một cây từ chúng để SwiftUI xử lý.
+
+Để hiểu giá trị của DSL, hãy nghĩ về SwiftUI có thể như thế nào nếu bạn viết các chế độ xem bằng Swift thông thường thay thế.
+
+Bạn sẽ phải tạo các chế độ xem, sửa đổi chúng, thêm chúng vào các chế độ xem khác và trả lại một chế độ xem ở cuối.
+
+Bạn sẽ tạo các biến tạm thời ở khắp mọi nơi để giữ các chế độ xem riêng lẻ và kết quả sẽ không thực sự truyền đạt cách các chế độ xem được lồng vào nhau giống như cách DSL làm.
+
+Bạn sẽ viết nhiều mã hơn nhưng nó sẽ truyền đạt ít ý nghĩa hơn.
+
+Ngược lại, SwiftUI DSL làm cho tất cả những chi tiết tẻ nhạt đó trở nên ngầm hiểu.
+
+Công việc của bạn là mô tả các quan điểm; công việc của DSL là thu thập các quan điểm bạn đang mô tả và tìm ra cách thể hiện chúng.
+
+Nhưng DSL cần thêm nỗ lực để triển khai và chúng cần thêm nỗ lực để sử dụng.
+
+Vậy khi nào bạn muốn tạo một cái?
+
+Chà, không có quy tắc cứng và nhanh, nhưng đây là một số dấu hiệu cho thấy bạn có thể muốn sử dụng một quy tắc.
+
+Tìm kiếm những nơi mà cơ chế sử dụng vanilla Swift che khuất ý nghĩa của mã.
+
+Nơi bạn dành một nửa thời gian sắp xếp lại dấu phẩy và dấu ngoặc vuông và dấu ngoặc đơn mỗi khi bạn thay đổi thứ gì đó hoặc phải nối thêm mọi thứ vào các mảng tạm thời để phù hợp với luồng điều khiển.
+
+Tìm kiếm các tình huống mà cách tiếp cận tốt nhất là mô tả một cái gì đó cho một phần khác trong mã của bạn thay vì trực tiếp viết hướng dẫn về những việc cần làm với nó.
+
+Giống như, trong khung web phía máy chủ, có thể có một khu vực đăng ký trình xử lý cho các URL mà nó hỗ trợ.
+
+Thay vì gọi đi gọi thêm phương thức xử lý, bạn có thể thiết kế DSL để khách hàng khai báo từng URL và trình xử lý của nó, và sau đó khung của bạn có thể tự động đăng ký chúng.
+
+Tìm kiếm các phần mã của bạn sẽ được duy trì bởi những người có công việc chính không phải là lập trình.
+
+Giống như, hãy tưởng tượng bạn đang viết một trò chơi phiêu lưu văn bản; chỉ một vài nhà phát triển sẽ làm việc trên hầu hết các mã, nhưng bản đồ các phòng sẽ được cập nhật bởi các nhà thiết kế trò chơi và hộp thoại NPC sẽ được thêm bởi các nhà văn.
+
+Có lẽ DSL sẽ giúp công việc của họ dễ dàng hơn.
+
+Và tìm kiếm các tình huống mà bạn sẽ nhận được rất nhiều dặm từ DSL.
+
+Thư viện là một ví dụ điển hình vì chúng được sử dụng bởi nhiều khách hàng khác nhau.
+
+Nhưng một DSL tốt cũng có thể xử lý một cái gì đó trong dự án của bạn mà bạn xác định rất nhiều, hoặc thậm chí chỉ là một cái gì đó bạn phải đọc hoặc cập nhật thường xuyên và bạn muốn làm điều đó dễ dàng nhất có thể.
+
+Dù bạn thấy lý do gì để tạo ra DSL, bạn cần cân bằng nó với thực tế là nó sẽ không chỉ mất một số nỗ lực để bạn thiết kế và thực hiện, nó cũng sẽ mất một số nỗ lực để khách hàng của mình học hỏi.
+
+Nếu các phương thức và ký tự mảng gần như tốt như DSL, chúng thường là câu trả lời đúng, bởi vì các lập trình viên Swift sẽ biết chính xác cách sử dụng chúng.
+
+Nhưng đôi khi, giống như trong SwiftUI, DSL là câu trả lời đúng.
+
+Vậy làm thế nào để bạn làm một cái?
+
+Chà, hãy chia nhỏ cách các tính năng Swift được sử dụng cùng nhau để xây dựng SwiftUI DSL.
+
+Ngoài cú pháp nói chung là rõ ràng của Swift, SwiftUI DSL tận dụng bốn điều.
+
+Giấy gói tài sản.
+
+Những điều này cho phép khách hàng khai báo các biến gắn liền với hành vi DSL.
+
+Các lập luận đóng cửa theo dõi.
+
+Những điều này cho phép DSL cung cấp các chức năng hoặc trình khởi tạo đọc gần giống như cú pháp tùy chỉnh đã được thêm vào ngôn ngữ.
+
+Những người xây dựng kết quả.
+
+Chúng thu thập các giá trị được tính toán trong mã DSL của bạn thành một giá trị trả về để bạn có thể xử lý chúng.
+
+Và cuối cùng, các phương pháp kiểu sửa đổi.
+
+Về cơ bản, đây chỉ là các phương thức trả về phiên bản được bọc hoặc sửa đổi của giá trị mà chúng được gọi; vì các nhà xây dựng kết quả thu thập các giá trị được tính toán bởi mã của bạn, mẫu này hoạt động rất tốt với chúng.
+
+Bây giờ, các trình bao bọc tài sản đã được đề cập trong nửa cuối của phiên này từ năm 2019, vì vậy tôi sẽ không nói nhiều về chúng hôm nay.
+
+Nhưng ba chủ đề khác, và đặc biệt là những người xây dựng kết quả, sẽ là chủ đề chính của phiên này.
+
+Đóng cửa theo dõi và các phương pháp kiểu sửa đổi là những thứ mà rất nhiều lập trình viên Swift quen thuộc, nhưng trình tạo kết quả là một tính năng hậu trường hơn.
+
+Vì vậy, hãy nói về cách chúng hoạt động để chúng ta có thể bắt đầu xây dựng DSL với chúng.
+
+Trình tạo kết quả được sử dụng để thu thập các giá trị được tạo trong DSL của bạn và ghép chúng lại với nhau thành bất kỳ cấu trúc dữ liệu nào mà ngôn ngữ của bạn muốn chúng tham gia.
+
+Chúng hơi giống với trình bao bọc thuộc tính ở chỗ bạn khai báo một loại đặc biệt và sau đó bạn có thể sử dụng loại đó làm thuộc tính.
+
+Cụ thể, bạn có thể áp dụng trình tạo kết quả cho hầu hết các phần thân hàm có giá trị trả về, như hàm hoặc phương thức, getter của thuộc tính được tính toán hoặc đóng.
+
+Khi bạn áp dụng trình tạo kết quả cho phần thân hàm, Swift sẽ chèn các lệnh gọi khác nhau vào các phương thức tĩnh trên trình tạo kết quả.
+
+Những điều này cuối cùng nắm bắt được kết quả của những tuyên bố mà nếu không sẽ bị loại bỏ.
+
+Vì vậy, khi Swift thường bỏ qua giá trị trả về, thay vào đó nó sẽ được chuyển đến trình tạo kết quả.
+
+Những cuộc gọi này cuối cùng tính toán một giá trị được trả về từ phần thân hàm.
+
+Vì vậy, khi bạn gọi hàm, nó sẽ thực thi tất cả các câu lệnh trong hàm đó một cách bình thường, tập hợp các giá trị do chúng tạo ra và kết hợp chúng thành một giá trị duy nhất trở thành kết quả của việc đóng.
+
+Trình tạo kết quả là một tính năng thời gian biên dịch, vì vậy chúng hoạt động trên bất kỳ hệ điều hành nào mà ứng dụng của bạn sẽ chạy.
+
+Phiên bản cuối cùng của tính năng, từ mã nguồn mở Swift Evolution proposal 289, đã được bao gồm trong Swift 5.4, vì vậy nó đã được vận chuyển trong Xcode 12.5 vào tháng Tư.
+
+Nhưng các nguyên mẫu của tính năng đã có sẵn trước đó, vì vậy bạn có thể thấy một số hướng dẫn hoặc thư viện cũ hơn sử dụng nguyên mẫu.
+
+Những thứ đó sẽ nói "trình tạo chức năng" thay vì "trình tạo kết quả" và chúng có thể không hoàn toàn phù hợp với tính năng cuối cùng.
+
+Vì vậy, tôi đã chỉ ra các tính năng được sử dụng trong SwiftUI DSL trước đây, nhưng bây giờ hãy nói về cách chúng hoạt động.
+
+Tôi sẽ đơn giản hóa một vài chi tiết - như xóa các phần không liên quan của một số loại SwiftUI và hiển thị một số tên biến giả như v0 cho các biến do trình biên dịch tạo ra - nhưng điều này sẽ giúp bạn hiểu những điều cơ bản.
+
+Điều đầu tiên cần nhận ra là, ở cấp cao nhất, thứ VStack này với một khối trông giống như cú pháp mới thực sự là một đối số kết thúc theo sau.
+
+Nếu chúng ta tra cứu VStack là gì, chúng ta thấy rằng đó là một cấu trúc trong SwiftUI.
+
+Vì vậy, đối số đóng cuối được chuyển đến trình khởi tạo này trên cấu trúc đó.
+
+Bây giờ, khi chúng ta nhìn vào tham số mà việc đóng cửa được chuyển đến, chúng ta nhận thấy rằng nó có thuộc tính ViewBuilder trên đó.
+
+Thuộc tính đó nói với trình biên dịch rằng nó nên áp dụng trình tạo kết quả có tên ViewBuilder để đóng.
+
+Nhưng ViewBuilder là gì?
+
+Chà, chúng tôi tìm kiếm một loại theo tên đó, và chúng tôi tìm thấy loại này, một lần nữa trong SwiftUI.
+
+Lưu ý cách nó có thuộc tính @resultBuilder trên đó để cho trình biên dịch biết rằng đó là trình tạo kết quả.
+
+Bây giờ Swift đã định vị loại trình tạo kết quả, nó bắt đầu áp dụng nó vào phần đóng.
+
+Điều đầu tiên nó làm là tạo các biến cho tất cả các câu lệnh tạo ra kết quả.
+
+Khi nó được tạo ra các biến này, nó sẽ ghi một cuộc gọi đến phương thức buildBlock trong ViewBuilder và chuyển tất cả các biến đó cho nó.
+
+Công việc của buildBlock là xử lý hoặc kết hợp tất cả các tham số của nó thành một giá trị duy nhất mà nó trả về.
+
+Sau đó, trình biên dịch viết một câu lệnh trả về trả về kết quả của buildBlock từ việc đóng cửa.
+
+Vì vậy, về cơ bản, trình biên dịch đã lấy mã của bạn và thêm mã màu vàng để ViewBuilder có thể tập hợp tất cả các giá trị bạn đã tạo thành một giá trị duy nhất mà VStack sẽ sử dụng làm nội dung của nó.
+
+Bây giờ, tôi muốn chỉ ra cách các phương pháp kiểu sửa đổi phù hợp với điều này.
+
+Một phương thức kiểu sửa đổi trả về một bản sao đã sửa đổi của bản thân hoặc một bản sao của bản thân được bao bọc trong một loại khác để thêm hành vi mới.
+
+Và nó thực hiện điều này trong cùng một tuyên bố đã tạo ra bản thân ngay từ đầu.
+
+Vì vậy, cuối cùng nó sẽ thay đổi giá trị trước khi người xây dựng kết quả nhìn thấy nó.
+
+Và bạn có thể gọi các phương thức kiểu sửa đổi khác trên kết quả của phương thức đó, vì vậy bạn có thể áp dụng một số thay đổi và soạn chúng lại với nhau, tất cả trước khi trình tạo kết quả nhìn thấy giá trị.
+
+Hai điều đó - khả năng soạn các công cụ sửa đổi và thực tế là chúng sửa đổi giá trị trước khi trình tạo kết quả nhìn thấy nó - là lý do tại sao Swift DSL thường sử dụng công cụ sửa đổi.
+
+Cả hai chỉ làm việc tốt với nhau.
+
+Bây giờ, một điều chúng tôi lo lắng khi thiết kế trình tạo kết quả là, nếu họ cho phép bạn thay đổi hành vi của Swift quá triệt để, khách hàng sẽ không thể tin tưởng rằng mọi thứ trong DSL hoạt động như mã Swift bình thường.
+
+Vì vậy, khi chúng tôi thiết kế trình tạo kết quả, chúng tôi đã cố gắng cân bằng giữa việc có đủ năng lượng để tạo DSL hữu ích và đảm bảo rằng các tính năng của Swift vẫn hoạt động như khách hàng mong đợi.
+
+Các nhà xây dựng kết quả không diễn giải lại triệt để mã mà khách hàng viết.
+
+Các câu lệnh vẫn kết thúc bằng dòng mới, các cuộc gọi vẫn sử dụng dấu ngoặc đơn, dấu ngoặc nhọn vẫn phải khớp; tất cả những điều cơ bản về cú pháp Swift hoạt động chính xác theo cách mà khách hàng của bạn mong đợi.
+
+Họ cũng không giới thiệu những cái tên mới không hiển thị từ mã thông thường được viết ở cùng một nơi.
+
+Có một số tính năng ngôn ngữ không có nhiều ý nghĩa khi bạn đang sử dụng trình tạo kết quả - chủ yếu là những thứ như bắt hoặc phá vỡ luồng điều khiển ngắt theo những cách không thực sự phù hợp với ý tưởng nắm bắt và sử dụng kết quả câu lệnh.
+
+Những tính năng đó bị vô hiệu hóa khi bạn đang sử dụng trình tạo kết quả.
+
+Và có một số tính năng - như if, switch và for-in statements - bị vô hiệu hóa trừ khi trình tạo kết quả của bạn cung cấp các phương pháp bổ sung được sử dụng để triển khai chúng.
+
+Nhưng nếu Swift cho phép bạn sử dụng một từ khóa, nó sẽ hoạt động theo cách bình thường.
+
+Bạn sẽ không kết thúc với, giống như, các câu lệnh if-else chạy cả khối đúng và sai, hoặc các vòng lặp bỏ qua một số phần tử.
+
+Những người xây dựng kết quả chỉ nắm bắt được kết quả tuyên bố mà nếu không sẽ bị vứt bỏ, không có gì hơn.
+
+Vì vậy, khách hàng có thể tin tưởng vào họ, bạn biết đấy, có ý nghĩa.
+
+OK. Vì vậy, bây giờ chúng tôi đã có ý tưởng về các nhà xây dựng kết quả là gì và cách chúng hoạt động, chúng tôi có thể bắt đầu thiết kế một DSL sẽ sử dụng chúng.
+
+Nếu bạn chưa bao giờ làm việc trên một ngôn ngữ trước đây, bạn có thể thấy suy nghĩ đó đáng sợ, nhưng thiết kế Swift DSL thực sự rất giống với việc thiết kế Swift API.
+
+Giống như Swift API, Swift DSL không bắt đầu lại từ đầu; nó sử dụng cú pháp và khả năng của Swift để thể hiện ý tưởng và hành vi liên quan đến vấn đề bạn đang cố gắng giải quyết.
+
+DSL chỉ đang sử dụng các khả năng bổ sung mà API thường không sử dụng.
+
+Giống như Swift API, Swift DSL có thể được thiết kế theo nhiều cách khác nhau để giải quyết vấn đề, vì vậy công việc của bạn là nghĩ ra các lựa chọn thay thế và chọn lựa chọn mà bạn nghĩ là tốt nhất; DSL chỉ có không gian giải pháp tiềm năng lớn hơn nhiều.
+
+Và giống như Swift API, nguyên tắc chung tốt nhất của Swift DSL thường là chọn thiết kế dẫn đến các trang web sử dụng rõ ràng nhất.
+
+DSL chỉ giả định rằng khách hàng sẽ đầu tư một chút thời gian trước khi học ngôn ngữ, vì vậy nó ít ưu tiên hơn cho những người chưa bao giờ nhìn thấy nó trước đây.
+
+Vì vậy, nếu bạn đã thiết kế API trước đây, bạn đã có một điểm khởi đầu tốt để thiết kế DSL.
+
+Và đối với vấn đề đó, một số đề xuất và kỹ thuật tôi sẽ sử dụng để DSL chuyển rất tốt sang thiết kế API.
+
+Trong buổi nói chuyện này, chúng tôi sẽ thiết kế DSL cho ứng dụng Fruta.
+
+Bạn sẽ tìm thấy một triển khai hoạt động của điều này trong mã mẫu Fruta.
+
+Fruta bao gồm 15 công thức sinh tố trong mã nguồn của nó và trước DSL, chúng tôi chỉ cần tạo từng sinh tố bằng cách gọi trình khởi tạo thành viên và gán nó cho một hằng số tĩnh.
+
+Và sau đó chúng tôi lưu trữ một mảng tất cả các sinh tố vào một hằng số tĩnh khác và tùy thuộc vào việc chế độ xem cụ thể có muốn bao gồm các công thức nấu ăn yêu cầu mua trong ứng dụng hay không, chúng tôi sẽ trả lại toàn bộ danh sách hoặc lọc ra những công thức đã trả phí.
+
+Bây giờ, cái này hoàn toàn có thể vận chuyển được và bạn có thể gắn bó với nó nếu bạn muốn.
+
+Nhưng các công thức sinh tố được cập nhật khá thường xuyên và, không giống như phần còn lại của ứng dụng, chúng được cập nhật bởi các nhà thiết kế, nhân viên tiếp thị và quản lý, vì vậy chúng tôi có thể muốn DSL để làm cho điều đó bớt phức tạp hơn một chút.
+
+Và nhìn vào cách chúng ta đang làm bây giờ, tôi không thể không nhận thấy một vài nhược điểm.
+
+Nhu cầu lọc các sinh tố trả phí ra khỏi danh sách đã bóp méo mã này.
+
+allSmoothies và hasFreeRecipe chỉ được sử dụng trong chức năng này; nếu không thì chúng không cần phải tồn tại.
+
+Tuy nhiên, nếu bạn cố gắng tưởng tượng việc thực hiện điều này mà không có chúng, bạn có thể thấy lý do tại sao chúng tôi không làm điều đó.
+
+Cơ chế tạo mảng và thêm các phần tử vào nó bắt đầu che khuất danh sách sinh tố thực tế, đó là loại điểm của hàm này.
+
+Tương tự, thực tế là danh sách sinh tố tách biệt với định nghĩa sinh tố là một chút ngớ ngẩn.
+
+Một vài trong số các hằng số này được sử dụng bởi các bản xem trước, nhưng hầu hết chúng chỉ xuất hiện trong danh sách này.
+
+Và bởi vì bạn định nghĩa một ly sinh tố ở một nơi và thêm nó vào danh sách ở một nơi khác, nó tạo ra cơ hội cho những sai lầm.
+
+Điều gì sẽ xảy ra nếu bạn khai báo một hằng số sinh tố mới nhưng quên thêm nó vào danh sách?
+
+Hoặc nếu bạn thêm sinh tố hai lần thì sao?
+
+Nếu chúng ta nhìn lại các định nghĩa về sinh tố riêng lẻ, tôi cũng thấy hai điều khác làm phiền tôi.
+
+Một là danh sách thành phần cực kỳ dài dòng.
+
+Giống như, mỗi mục nhập lặp lại một số phiên bản của từ "đo lường" ba lần.
+
+Trong dòng này, thông tin thực tế mà chúng tôi quan tâm là 1,5 cốc cam.
+
+Phần còn lại của dòng không nói bất cứ điều gì hữu ích; nó chỉ là sự lộn xộn về thị giác.
+
+Chắc chắn sẽ có một số cú pháp hỗ trợ xung quanh thông tin quan trọng, nhưng khi có nhiều như vậy, bản mẫu xung quanh nó chỉ áp đảo thông tin mà chúng tôi đang cố gắng truyền đạt.
+
+Một điều khác mà tôi nhận thấy là số dòng tuyệt đối dành cho mỗi ly sinh tố so với lượng thông tin thực sự có mặt.
+
+Tôi nghĩ thủ phạm ở đây là sự khác biệt về độ dài của các lập luận.
+
+Một số lập luận này rất ngắn và có thể khớp với nhau trên một dòng duy nhất.
+
+Những người khác dài hơn và thực sự cần một dòng của riêng họ.
+
+Bây giờ, bạn có thể kết hợp các đối số ngắn vào một dòng duy nhất và sau đó sử dụng các dòng riêng biệt cho các dòng dài, nhưng hầu hết các hướng dẫn phong cách đều cau mày về điều đó.
+
+Chúng tôi muốn có một cú pháp mà việc tạo kiểu chúng khác nhau là điều tự nhiên.
+
+Đặt những thứ này hoàn toàn và chúng tôi có một loạt các mục tiêu mà chúng tôi muốn DSL của mình hoàn thành để giúp duy trì danh sách sinh tố dễ dàng hơn.
+
+Bây giờ, điều tiếp theo cần làm là xem xét nhiều cách khác nhau mà chúng ta có thể thiết kế DSL để đạt được những mục tiêu này.
+
+Có rất nhiều thiết kế khác nhau sẽ giải quyết từng điểm này.
+
+Tôi sẽ nhanh chóng giải thích những gì tôi đã quyết định làm cho ba mục tiêu đầu tiên, và sau đó chúng ta có thể khám phá mục tiêu cuối cùng chi tiết hơn.
+
+Tôi quyết định chúng tôi sẽ xác định danh sách sinh tố theo tất cả các phương pháp.
+
+Sinh tố sẽ được xác định trực tiếp trong cơ thể mà không sử dụng các biến tĩnh, vì vậy chúng ta không phải lo lắng về việc ai đó xác định sinh tố và quên liệt kê nó.
+
+Chúng tôi sẽ sử dụng trình tạo kết quả được gọi là "SmoothieArrayBuilder" để kích hoạt DSL của chúng tôi và thu thập sinh tố thành một mảng; theo cách đó chúng tôi không cần sử dụng một mảng theo nghĩa đen hoặc thu thập mọi thứ thành một biến tạm thời.
+
+Và chúng tôi sẽ cho phép đưa sinh tố vào nếu các tuyên bố vì vậy chúng tôi không cần phải lọc danh sách như chúng tôi đã làm trước đây.
+
+Điều này thật tuyệt vì những khách hàng đã biết Swift sẽ biết câu lệnh if được sử dụng như thế nào và những khách hàng không có thể sẽ hiểu "nếu bao gồm Trả tiền" với ít rắc rối.
+
+Tôi quyết định chỉ định số lượng thành phần bằng cách sử dụng các phương pháp kiểu sửa đổi.
+
+Thành phần sẽ có một phương thức được gọi là "được đo (với: )" lấy một đơn vị và trả về một thành phần được đo với một trong những đơn vị đó.
+
+Nếu bạn muốn một lượng khác của đơn vị đó, công cụ sửa đổi được chia tỷ lệ (theo: ) trên một thành phần đo được sẽ trả về nó với số lượng nhân với số bạn vượt qua.
+
+Vì vậy, một cốc cam trở thành 1,5 cốc cam, và một cốc bơ trở thành 0,2 cốc bơ.
+
+Bây giờ, tại sao được chia tỷ lệ (bởi: ) là một công cụ sửa đổi riêng biệt?
+
+Một trong những màn hình ở Fruta có một điều khiển có thể được sử dụng để chia tỷ lệ số lượng thành phần trong công thức sinh tố.
+
+Trước đây chúng tôi đã chuyển hệ số nhân xuống mỗi hàng thành phần, nhân số lượng của nó.
+
+Nhưng tôi nhận ra rằng tôi thực sự có thể sử dụng công cụ sửa đổi chia tỷ lệ (bằng:) để thay vào đó chia tỷ lệ các thành phần trước khi chúng được chuyển đến các hàng, điều này cho phép tôi đơn giản hóa chế độ xem hàng.
+
+Vì vậy, bằng cách điều chỉnh thiết kế DSL sinh tố của tôi một chút, tôi đã có thể sử dụng lại một phần của nó trong một phần khác của dự án.
+
+Vì vậy, với những thay đổi để đạt được ba mục tiêu đầu tiên của chúng tôi, chúng tôi bắt đầu thấy DSL mới của mình hình thành.
+
+Bây giờ chúng ta hãy tập trung vào mục tiêu cuối cùng đó: thiết kế lại các mục sinh tố riêng lẻ để chúng nhỏ gọn hơn và hy vọng như vậy cũng có dấu câu ít khó hiểu hơn mà khách hàng của chúng tôi có thể vấp phải.
+
+Chúng ta hãy xem xét một vài cách khác nhau mà chúng ta có thể sắp xếp thông tin này để giúp việc đó.
+
+Một điều chúng ta có thể làm là sử dụng các phương pháp kiểu sửa đổi để thêm mô tả và thành phần.
+
+Điều này sẽ hiệu quả, nhưng nó hơi dài dòng và sẽ dễ dàng để ai đó quên mô tả hoặc chỉ định nó hai lần hoặc một cái gì đó.
+
+Một điều khác mà chúng ta có thể làm là cung cấp cho mỗi trường một loại điểm đánh dấu và đặt chúng vào một kết quả đóng trình tạo.
+
+Nhưng điều này đặt ID và tiêu đề trên các dòng riêng của họ, điều mà chúng tôi đang cố gắng tránh.
+
+Vì vậy, có lẽ chúng ta có thể di chuyển ID và tiêu đề trở lại danh sách tham số và sử dụng các loại điểm đánh dấu cho hai trường còn lại.
+
+Nhưng tôi cảm thấy đây vẫn có thể là một buổi lễ nhiều hơn một chút so với những gì chúng ta thực sự cần.
+
+Tôi nhận ra điều đó khi tôi nhìn vào giao diện người dùng cho các công thức nấu ăn.
+
+Chúng luôn được trình bày theo một thứ tự cụ thể: tiêu đề ở trên cùng, mô tả ở giữa, danh sách các thành phần ở dưới cùng.
+
+Và chúng tôi không bận tâm đến việc dán nhãn tiêu đề hoặc mô tả.
+
+Chúng tôi để hệ thống phân cấp trực quan của họ - thực tế là tiêu đề được trình bày nổi bật hơn mô tả - nói chuyện.
+
+Vì vậy, tôi đã lấy được một số cảm hứng từ điều đó và quyết định rằng sinh tố DSL của chúng tôi cũng nên làm như vậy.
+
+Nó đặt tiêu đề ở trên cùng, mô tả ở giữa và danh sách các thành phần ở dưới cùng.
+
+Và nó cho phép thực tế là mô tả ở bên dưới và thụt lề nhiều hơn tiêu đề - vì vậy nó ít nổi bật hơn về mặt thị giác - truyền đạt ý nghĩa của chuỗi mô tả nên không cần phải gắn nhãn cho nó.
+
+Tôi nghĩ kết quả có thể hiểu được ngay lập tức mà không có những biến chứng không cần thiết.
+
+Và khi chúng tôi đưa nó vào bối cảnh của DSL nói chung, tôi nghĩ chúng tôi có một sự phù hợp khá thoải mái.
+
+Nhưng bạn có thể không đồng ý, và không sao cả.
+
+DSL là ngôn ngữ lập trình, và sở thích cá nhân và sự đánh đổi chủ quan là một phần quan trọng trong việc thiết kế bất kỳ ngôn ngữ lập trình nào.
+
+Điều đó không có nghĩa là bạn không nên nghiêm khắc.
+
+Bạn nên bắt đầu với một ý tưởng rõ ràng về những gì bạn muốn từ ngôn ngữ.
+
+Bạn nên xem xét liệu có một giải pháp hiện có - như câu lệnh if - có thể giải quyết vấn đề của bạn hay không bởi vì nếu bạn có thể áp dụng một giải pháp quen thuộc, mọi người sẽ không phải học một giải pháp mới.
+
+Bạn nên suy nghĩ về cách mỗi phần của ngôn ngữ tương tác với phần còn lại của nó.
+
+Trong Swift DSL, điều đó cũng có nghĩa là suy nghĩ về cách DSL của bạn tương tác với mã Swift thông thường xung quanh nó, giống như khi tôi chọn công cụ sửa đổi theo tỷ lệ vì tôi có thể sử dụng nó ở một nơi khác.
+
+Bạn nên tìm kiếm các giải pháp sẽ mắc lỗi có thể phát hiện được tại thời điểm biên dịch hoặc hoàn toàn không thể viết.
+
+Nếu bạn nhớ lại, đó là lý do tại sao chúng tôi không biến mô tả thành công cụ sửa đổi; bạn có thể đã vô tình bỏ qua nó.
+
+Với tất cả những điều đó trong tâm trí, bạn nên đưa ra một số khả năng khác nhau.
+
+Hãy tưởng tượng mỗi cái sẽ được sử dụng như thế nào, viết những mô hình nhỏ; bạn biết đấy, hãy cân chúng với nhau.
+
+Nhưng cuối cùng, bạn thường sẽ không tìm thấy một cái rõ ràng là đúng nơi những cái khác rõ ràng là sai.
+
+Tất cả những gì bạn có thể làm là chọn thứ gì đó mà bạn cảm thấy sẽ tốt nhất cho khách hàng ngôn ngữ của bạn.
+
+Nếu bạn không chắc cái nào là tốt nhất, có lẽ bạn nên chọn cái nào dễ đọc nhất.
+
+Và nếu bạn vẫn không chắc chắn sau đó...
+
+Chà, cá nhân tôi thích đưa ra những lựa chọn táo bạo hơn.
+
+Tôi thà thử một cái gì đó và đi bộ trở lại nếu nó không hoạt động hơn là không bao giờ thử nó và bị bỏ lại tự hỏi.
+
+Bây giờ chúng tôi đã quyết định DSL của chúng tôi sẽ trông như thế nào, hãy tiếp tục và thêm nó vào Fruta.
+
+Tôi đã thay thế các định nghĩa sinh tố trước đó bằng tất cả các phương pháp cuối cùng sử dụng DSL của chúng tôi, nhưng tôi chưa thực sự triển khai DSL.
+
+Vì vậy, không có gì đáng ngạc nhiên, chúng tôi có rất nhiều lỗi.
+
+Nhưng không sao đâu.
+
+Khi chúng ta giải quyết vấn đề này, tôi sẽ để những lỗi này hướng dẫn tôi đến những vấn đề tôi cần giải quyết, và cuối cùng chúng ta sẽ có thứ gì đó được xây dựng mà không có bất kỳ lỗi nào.
+
+Vì vậy, hãy bắt đầu ở đầu hàm với lỗi đầu tiên này: "Thuộc tính không xác định 'SmoothieArrayBuilder'."
+
+Trình tạo kết quả chưa thực sự tồn tại, vì vậy tất nhiên điều đó sẽ không hiệu quả.
+
+Hãy đi sửa cái đó.
+
+Tôi sẽ bắt đầu bằng cách tạo một loại gọi là "SmoothieArrayBuilder" được đánh dấu bằng thuộc tính trình tạo kết quả.
+
+Bây giờ, Swift sẽ không bao giờ thực sự tạo ra một thể hiện thuộc loại này; nó chỉ là một vùng chứa cho một loạt các phương thức tĩnh.
+
+Vì vậy, tôi đã biến nó thành một liệt kê và tôi sẽ không xác định bất kỳ trường hợp nào.
+
+Không thể tạo một phiên bản của một enum không có trường hợp nào, vì vậy điều này giúp mọi người không sử dụng nó không chính xác.
+
+Nếu tôi chỉ xây dựng cái này, tôi sẽ gặp lỗi nói rằng trình tạo kết quả cần một phương thức buildBlock(_:).
+
+Nó có một bản sửa lỗi sẽ chèn một cái, vì vậy tôi sẽ chấp nhận bản sửa lỗi đó và sau đó chúng tôi sẽ tìm ra cách triển khai nó.
+
+Bây giờ, nếu bạn nhớ lại từ trước đó, cách buildBlock(_:) hoạt động là nếu bạn có mã như thế này với một loạt các câu lệnh riêng lẻ, mỗi câu lệnh đó được gán cho một biến, tất cả các biến đều được chuyển đến buildBlock(_:) và giá trị được trả về bởi buildBlock(_:) được trả về bởi việc đóng
+
+Vì vậy, có lý do là phương pháp buildBlock(_:) của chúng tôi cần chấp nhận một loạt sinh tố làm thông số và trả về một mảng sinh tố.
+
+Nếu chúng ta thực hiện điều đó bằng cách sử dụng một tham số đa dạng để bất kỳ số lượng sinh tố nào cũng có thể được chuyển sang phương pháp...
+
+...Và xây dựng...
+
+...Ừm, những gì chúng ta nhận được tốt hơn một chút.
+
+Vẫn còn rất nhiều lỗi, nhưng người nói rằng trình tạo mảng sinh tố là một thuộc tính không hợp lệ đã biến mất và thuộc tính thậm chí đã thay đổi màu sắc để chỉ ra rằng đó là một loại đã biết.
+
+Vì vậy, hãy chuyển sang các lỗi tiếp theo, những lỗi dành cho trình khởi tạo sinh tố.
+
+Một người nói rằng chúng ta đang chuyển một đóng cuối cho một tham số chuỗi.
+
+Người kia nói rằng chúng tôi đang thiếu lập luận Thành phần đo lường.
+
+Vì vậy, rõ ràng chúng tôi đang sử dụng trình khởi tạo cũ, mong đợi mô tả và thành phần làm thông số.
+
+Chúng ta sẽ cần làm một cái mới.
+
+Vì vậy, hãy triển khai trình khởi tạo đó với ID, tiêu đề và đóng cuối trả về mô tả và thành phần.
+
+Tôi sẽ nói với bạn ngay bây giờ, chúng ta sẽ phải quay lại trình khởi tạo này sau.
+
+Nếu tôi xây dựng ngay bây giờ, nó sẽ xóa sạch tất cả các lỗi từ trình khởi tạo sinh tố, vì vậy bạn có thể nghĩ rằng điều này đang hoạt động hoàn hảo.
+
+Nhưng điều đó thực sự hơi gây hiểu lầm.
+
+Bạn thấy đấy, có một lỗi khác ở đây trên câu lệnh if gây ra bởi trình tạo mảng sinh tố không được hoàn thành.
+
+Và bởi vì lỗi đó ở đó, Swift vẫn chưa kiểm tra bên trong các lần đóng cửa.
+
+Giống như, nếu tôi đi vào phần đóng này và tôi chỉ viết một số tên biến ngẫu nhiên mà tôi biết không tồn tại, và sau đó xây dựng nó, Swift sẽ không gắn cờ lỗi.
+
+Điều đang xảy ra là Swift thấy rằng trình tạo kết quả đã không áp dụng chính xác, vì vậy nó không thực sự tin tưởng rằng bất kỳ lỗi nào mà nó tìm thấy trong các lần đóng này sẽ thực sự chính xác.
+
+Vì vậy, nó chỉ chưa tìm kiếm lỗi ở đó.
+
+Sau đó, khi chúng tôi hoàn thành trình tạo mảng sinh tố, chúng tôi sẽ đột nhiên bắt đầu thấy những lỗi đó và chúng tôi có thể sửa chúng vào thời điểm đó.
+
+Nhưng hiện tại việc tiếp tục làm việc trên trình tạo mảng sinh tố sẽ dễ dàng hơn, vì vậy hãy đặt những đóng cửa đó sang một bên và chuyển sang lỗi tiếp theo.
+
+Nếu chúng ta nhìn vào lỗi này, Swift nói với chúng ta rằng chúng ta không thể sử dụng câu lệnh if với trình tạo mảng sinh tố, nhưng có một phương pháp chúng ta có thể thêm vào để hỗ trợ nó.
+
+Nếu các câu lệnh là một trong số ít các tính năng Swift như thế này; chúng sẽ bị vô hiệu hóa trừ khi trình tạo kết quả của bạn thực hiện các phương pháp bổ sung để hỗ trợ chúng.
+
+Vì vậy, để bắt đầu triển khai điều này, hãy nhấn vào bản sửa lỗi ở đây và xem nó bổ sung những gì.
+
+Vì vậy, rõ ràng chúng ta cần triển khai một phương pháp gọi là buildOptional(_:), phương pháp này lấy một mảng sinh tố tùy chọn và trả về một mảng sinh tố.
+
+Vậy phương pháp này được sử dụng như thế nào?
+
+Chà, lấy ví dụ đơn giản hóa này về phương thức tất cả, có câu lệnh if không có phương thức nào khác.
+
+Giống như ví dụ trước đây của chúng tôi mà không có câu lệnh if, điều này sẽ nắm bắt kết quả của mỗi câu lệnh thành một biến, chuyển các biến đó sang buildBlock(_:) và trả về kết quả của buildBlock(_:) từ việc đóng.
+
+Câu hỏi duy nhất là, nó sẽ nắm bắt kết quả của câu lệnh if như thế nào?
+
+Chà, điều đầu tiên nó sẽ làm là nắm bắt tất cả các câu lệnh trong nội dung của câu lệnh if thành các biến, và sau đó kết hợp các biến đó lại với nhau bằng cách sử dụng buildBlock(_:), giống như nó làm ở cấp cao nhất.
+
+Nhưng đây là nơi buildOptional(_:) xuất hiện.
+
+Thay vì trả về kết quả của cuộc gọi buildBlock(_:) bên trong đó, Swift sẽ chuyển nó đến buildOptional(_:), và giá trị được trả về bởi buildOptional(_:) trở thành giá trị của toàn bộ câu lệnh if.
+
+Nhưng điều này khiến biến không được khởi tạo nếu điều kiện if là sai.
+
+Đó là lý do tại sao tham số của buildOptional là một mảng sinh tố tùy chọn.
+
+Swift sẽ thêm một nhánh khác đặt giá trị của kết quả câu lệnh if thành giá trị trả về từ buildOptional(nil).
+
+Đối với SmoothieArrayBuilder, kết quả của điều này là chúng tôi muốn buildOptional(_:) trả về mảng đã được truyền đến nó từ buildBlock(_:) hoặc trả về một mảng trống nếu tham số là nil.
+
+Nếu chúng ta xây dựng nó ngay bây giờ, chúng ta sẽ...
+
+...Một lỗi trông thực sự kỳ lạ.
+
+Không thể chuyển mảng sinh tố loại như những lập luận khác thường?
+
+Cái gì?
+
+Chà, hãy quay lại mã đã tạo của chúng ta.
+
+Câu lệnh if cuối cùng tạo ra một loạt sinh tố.
+
+Nhưng thực ra, buildBlock(_:) không muốn các mảng sinh tố; nó muốn sinh tố đơn lẻ.
+
+Chúng ta sẽ cần thay đổi điều đó.
+
+Vì vậy, có lẽ chúng ta có thể làm cho buildBlock(_:) lấy các mảng sinh tố làm đối số của nó, và sau đó sử dụng flatMap(_:) để nối nhiều mảng sinh tố đó lại với nhau thành một mảng sinh tố duy nhất.
+
+Tuyệt vời! Xây dựng cái đó, và...
+
+...Không.
+
+Bây giờ tuyên bố if của chúng tôi hoạt động, nhưng tất cả các dòng sinh tố đều bị hỏng.
+
+Chúng tôi cần những thứ đó.
+
+Không thể chuyển đổi giá trị của loại sinh tố thành mảng sinh tố.
+
+Chuyện gì đã xảy ra vậy?
+
+Chà, chúng tôi đã thay đổi buildBlock(_:) để nó khớp với mảng sinh tố được trả về bởi buildOptional(_:).
+
+Nhưng chúng tôi quên rằng nó cũng cần phải khớp với từng loại sinh tố được trả về bởi các tuyên bố bình thường.
+
+Rất tiếc.
+
+Về cơ bản, nếu bạn định cho phép bất kỳ luồng điều khiển phức tạp nào, kiểu trả về của buildBlock cần phải là thứ có thể được truyền dưới dạng tham số để buildBlock(_:).
+
+Có hai cách bạn có thể hoàn thành việc này.
+
+Một cách là đảm bảo rằng buildBlock(_:) và các phương thức xây dựng kết quả khác trả về các loại tương thích với các câu lệnh được phép trong trình tạo kết quả.
+
+Ví dụ, đây là cách ViewBuilder của SwiftUI hoạt động.
+
+Trong SwiftUI DSL, mọi thứ đều phù hợp với giao thức Xem, bao gồm các loại được trả về bởi buildBlock(_:) và các phương thức xây dựng chế độ xem khác.
+
+Nhưng điều đó không phù hợp lắm với DSL sinh tố của chúng tôi vì không giống như chế độ xem SwiftUI, bạn không lồng sinh tố bên trong các loại sinh tố khác.
+
+Một điều khác bạn có thể làm là yêu cầu trình tạo kết quả chuyển đổi các giá trị của các câu lệnh thông thường thành cùng một loại được trả về bởi buildBlock(_:).
+
+Điều đó phù hợp hơn với DSL này.
+
+Chúng ta có thể làm điều đó bằng cách thêm một phương thức gọi là buildExpression(_:).
+
+Khi chúng ta thêm một phương thức buildExpression(_:), Swift chuyển từng biểu thức trần cho phương thức đó trước khi nó bắt nó thành một biến.
+
+Điều đó sẽ cho chúng ta cơ hội chuyển đổi chúng thành các mảng.
+
+Nhưng các giá trị đến từ các phương thức xây dựng kết quả khác, như các phương thức được tạo bởi buildOptional(_:) và buildBlock(_:), không được bao bọc trong các cuộc gọi này, vì vậy chúng sẽ không áp dụng chuyển đổi này cho chúng - điều này tốt vì chúng đã trả về mảng.
+
+Vì vậy, những gì chúng ta sẽ làm là triển khai một phương thức buildExpression(_:).
+
+Việc hoàn thành mã của Xcode biết tất cả về các phương pháp xây dựng kết quả, vì vậy chúng tôi có thể yêu cầu nó viết chữ ký cho một phương pháp.
+
+Sau đó, chúng tôi thay đổi loại tham số thành Smoothie và chỉ trả về tham số biểu thức được bọc trong một mảng theo nghĩa đen.
+
+Vì vậy, bây giờ các loại sinh tố đơn lẻ của chúng tôi sẽ được biến thành các mảng sinh tố mà buildBlock(_:) cần.
+
+Xây dựng cái đó, và...
+
+...Tuyệt vời!
+
+Câu lệnh if của chúng tôi hoạt động và các trình khởi tạo sinh tố cũng vậy.
+
+Tuy nhiên, nếu chúng ta nhìn vào bản đồ nhỏ, chúng ta sẽ thấy rằng có một câu lệnh if thứ hai ở đây không hoạt động.
+
+Đó là bởi vì cái này có một mệnh đề khác.
+
+buildOptional(_:) thực sự chỉ hoạt động cho các câu lệnh đơn giản if.
+
+Nếu bạn có một câu lệnh else, hoặc một else-if, hoặc một công tắc, bạn cần triển khai một cặp phương thức, được gọi là buildEither(first:) và buildEither(second:).
+
+Hãy tạo ra những thứ này bằng cách sử dụng fix-it và sau đó nói về cách chúng hoạt động.
+
+Vì vậy, hãy xem ví dụ đơn giản hóa này với câu lệnh if-else.
+
+Hầu hết các biến đổi giống như biến đổi cho buildOptional(_:).
+
+Giống như buildOptional(_:), toàn bộ câu lệnh if-else cuối cùng sẽ lấp đầy một biến duy nhất.
+
+Và cũng giống như buildOptional(_:), mỗi khối trong câu lệnh if sẽ có các câu lệnh bên trong nó được ghi lại thành các biến và sau đó buildBlock sẽ được sử dụng để kết hợp chúng lại với nhau thành một giá trị.
+
+Điều khác biệt so với câu lệnh if đơn giản là thay vì sử dụng buildOptional(_:) để tạo ra giá trị cuối cùng, chúng tôi sử dụng một trong các phương thức buildEither.
+
+Nếu có hai nhánh, như if và nhánh khác, thì nhánh đầu tiên sử dụng buildEither(first:) và nhánh thứ hai sử dụng buildEither(second:).
+
+Điều đó cho phép các nhà xây dựng kết quả quan tâm đến nhánh bạn đã thực hiện để phân biệt giữa chúng.
+
+Bây giờ, nếu bạn đang tự hỏi chúng tôi sẽ làm gì nếu có ba trường hợp trở lên, câu trả lời cho điều đó thực sự khá tuyệt.
+
+Chúng tôi xây dựng một cây nhị phân cân bằng với mỗi nhánh là một trong những chiếc lá, và sau đó chúng tôi coi các nút không phải lá là các cuộc gọi mà chúng tôi cần thực hiện, với cạnh cho chúng tôi biết nên sử dụng buildEither (đầu tiên:) hay buildEither (thứ hai:).
+
+Chúng tôi lưu ý chuỗi cuộc gọi nào mà mỗi nhánh nên sử dụng, sau đó chúng tôi tạo mã gán cho biến với chuỗi cuộc gọi đó.
+
+Vì vậy, mặc dù chúng tôi chỉ có hai phương pháp, trình tạo kết quả vẫn có thể phân biệt giữa ba nhánh.
+
+Không quá tệ.
+
+Dù sao, bây giờ chúng ta đã biết các phương pháp buildEither hoạt động như thế nào, chúng ta có thể tiếp tục và viết chúng.
+
+Và vì SmoothieArrayBuilder không thực sự quan tâm bạn đã chọn nhánh nào, chúng ta không cần phải làm gì nhiều; chỉ cần trả về đối số mảng.
+
+Vì vậy, bây giờ chúng tôi xây dựng thứ này, và...
+
+Nó vẫn không hoàn toàn hoạt động.
+
+Nhưng chúng ta đã gần kề!
+
+Bạn có thể nhớ loại lỗi này từ khi chúng tôi gặp sự cố mảng sinh tố, chỉ bây giờ, nó không phàn nàn về loại Smoothie, nó là loại '()'.
+
+Đó là một bộ trống, loại mà bạn có thể nghĩ là Void.
+
+Nếu chúng ta nghĩ về mã được tạo, nó có ý nghĩa tại sao đây là một vấn đề.
+
+Chúng tôi đang gọi buildExpression(_:), nhưng biểu thức đang được thông qua là gọi logger.log, trả về Void, không phải Smoothie.
+
+Vì vậy, chúng tôi sẽ viết một quá tải của buildExpression(_:) nhận tham số Void và trả về một mảng trống.
+
+Sau đó, chúng tôi xây dựng lại, và bây giờ cuộc gọi nhật ký hoạt động chính xác!
+
+Chúng tôi có thêm hàng triệu lỗi, nhưng đây thực sự là tin tốt.
+
+Hãy xem, lỗi đầu tiên trong số những lỗi này là từ biến giả mà tôi đã thêm vào lúc đầu để cho bạn thấy rằng Swift không tìm thấy lỗi trong các lần đóng cửa.
+
+Bây giờ nó là, có nghĩa là chúng tôi đã hoàn thành trình tạo mảng sinh tố!
+
+Vì vậy, vâng, lỗi!
+
+Hãy xóa biến giả đó và xem những gì còn lại.
+
+Nếu chúng ta nhìn kỹ, chúng ta sẽ thấy rằng có ít việc phải làm ở đây hơn vẻ ngoài của nó.
+
+Tất cả các dòng mô tả đều có cùng một cảnh báo và tất cả các dòng thành phần đều có hai lỗi giống nhau.
+
+Vì vậy, mặc dù chúng tôi có, giống như, một trăm lỗi và một tá cảnh báo, đây thực sự chỉ là cùng một vài vấn đề xảy ra lặp đi lặp lại.
+
+Chúng ta hãy xem xét kỹ hơn các lỗi trên một trong những dòng thành phần này.
+
+Trình biên dịch có hai phàn nàn: nó không thể tìm ra loại cốc nào và nó không nghĩ rằng Thành phần có một thành viên được gọi là "đo lường".
+
+Chà, điều đó có ý nghĩa; chúng tôi chưa triển khai các công cụ sửa đổi được đo (với:) hoặc chia tỷ lệ (theo:), vì vậy nó không thể tìm thấy bất cứ thứ gì được gọi là "đo".
+
+Và nó không biết cốc là gì vì nó không biết rằng đo được (với:) được cho là lấy một đơn vị thể tích.
+
+Vì vậy, hãy ghé qua MeasuredIngredient.swift và triển khai hai công cụ sửa đổi này.
+
+Đo (với:) tiếp tục một Thành phần và trả về một thành phần đo được với một trong những đơn vị mà người gọi đã vượt qua.
+
+Và được chia tỷ lệ (bởi:) tiếp tục một thành phần đo được và trả về một thành phần đo mới với phép đo nhân với thang đo mà người gọi đã vượt qua.
+
+Quay lại Smoothie.swift và xây dựng...
+
+...Và, OK.
+
+Chúng tôi đang thấy nhiều cảnh báo hơn và chỉ một vài lỗi.
+
+Và nếu chúng ta nhìn kỹ, chúng ta chỉ thấy một loại cảnh báo - nói với chúng ta rằng mỗi biểu thức trong phần đóng đang bị bỏ qua - và một loại lỗi - cho chúng ta biết rằng các lần đóng không có câu lệnh trả về.
+
+Để hiểu tại sao, hãy nói về những lần đóng cửa này và cách các nhà xây dựng kết quả tương tác với chúng.
+
+Trong ví dụ này, SmoothieArrayBuilder sẽ ảnh hưởng đến các câu lệnh bên ngoài theo cách chúng ta đã thấy trước đây.
+
+Chúng được chuyển đến buildExpression(_:), được lưu vào các biến và các biến được chuyển đến buildBlock.
+
+Nhưng còn những lần đóng cửa này thì sao?
+
+Người xây dựng kết quả sẽ làm gì với họ?
+
+Chà, nó có...
+
+...Hoàn toàn không có gì vì các đóng thực sự là các hàm riêng biệt được lồng bên trong hàm mà chúng tôi đã áp dụng trình tạo kết quả cho.
+
+Trình tạo kết quả chỉ áp dụng cho một chức năng; chúng không ảnh hưởng đến các chức năng hoặc đóng được lồng bên trong nó.
+
+Nếu bạn muốn chúng bị ảnh hưởng bởi trình tạo kết quả, thì bạn phải áp dụng nó cho chúng theo một cách khác.
+
+Có ba cách để áp dụng trình tạo kết quả cho một cơ thể chức năng.
+
+Đầu tiên là viết thuộc tính trực tiếp trên hàm hoặc thuộc tính, giống như chúng tôi đã làm cho SmoothieArrayBuilder.
+
+Cách thứ hai để áp dụng trình tạo kết quả là viết nó vào một yêu cầu hàm hoặc thuộc tính trong một giao thức; sau đó nó sẽ được tự động áp dụng cho các triển khai trên tất cả các loại phù hợp.
+
+Đó là cách thuộc tính nội dung trong Chế độ xem SwiftUI hoạt động: thuộc tính ViewBuilder được áp dụng cho yêu cầu nội dung trong Chế độ xem, vì vậy nó cũng tự động được áp dụng cho bất kỳ thuộc tính nội dung nào của Chế độ xem.
+
+Cách thứ ba để áp dụng trình tạo kết quả là viết nó trước tham số đóng.
+
+Nếu bạn làm điều đó, Swift sau đó sẽ suy ra rằng bất kỳ đóng cửa nào được chuyển đến tham số đó sẽ có trình tạo kết quả được áp dụng cho nó.
+
+Nếu Swift đã suy ra một trình tạo kết quả từ một giao thức hoặc tham số và bạn không thực sự muốn nó được áp dụng, bạn có thể vô hiệu hóa nó bằng cách trả về một giá trị một cách rõ ràng bằng cách sử dụng câu lệnh trả về.
+
+Nhưng trong trường hợp này, vì chúng tôi đang sử dụng đóng, chúng tôi muốn tùy chọn cuối cùng trong ba tùy chọn đó: suy ra trình tạo kết quả từ tham số đóng.
+
+Chúng tôi làm điều đó bằng cách viết một thuộc tính trước nhãn đối số.
+
+Bây giờ, chúng ta có thể viết SmoothieArrayBuilder ở đây, nhưng đó có lẽ không phải là cách tốt nhất để làm điều này.
+
+SmoothieArrayBuilder sản xuất một loạt sinh tố, nhưng chúng tôi không muốn đóng cửa này sản xuất sinh tố; chúng tôi muốn nó tạo ra một chuỗi và một loạt các thành phần.
+
+Và chúng tôi cũng không cần nếu các tuyên bố hoặc các cuộc gọi trả về Void trong lần đóng cửa này.
+
+Vì vậy, thực sự, chúng tôi đang áp dụng một bộ quy tắc ngôn ngữ riêng biệt cho việc đóng cửa này và thay vì trộn bộ quy tắc thứ hai đó vào SmoothieArrayBuilder, sẽ hợp lý hơn khi tạo ra một trình tạo kết quả mới thực hiện các quy tắc mới này.
+
+Hãy gọi nó là SmoothieBuilder và tạo một loại mới cho nó, và bắt đầu viết một phương thức buildBlock(_:).
+
+Bây giờ, cái này hơi đặc biệt một chút.
+
+Chúng tôi muốn chấp nhận bất kỳ số lượng thành phần đo lường nào, nhưng chúng tôi cũng muốn lấy một sợi dây ở phía trước.
+
+Vậy chúng ta sẽ làm điều đó như thế nào?
+
+Chà, nếu bạn nghĩ về cách SmoothieBuilder - mà, hãy nhớ, là một trình tạo kết quả đơn giản chỉ với một phương thức buildBlock - sẽ được mở rộng ra, mỗi dòng đó sẽ được truyền như một tham số khác nhau.
+
+Vì vậy, có vẻ như bạn chỉ có thể viết một tham số chuỗi ở đầu buildBlock, và sau đó câu lệnh đầu tiên sẽ phải tạo ra một chuỗi thay vì MeasuredIngredient.
+
+Vậy hãy thử làm điều đó.
+
+Thêm một tham số chuỗi ở phía trước và yêu cầu nó trả về một bộ chuỗi và một mảng các thành phần.
+
+Và nếu chúng ta xây dựng...
+
+Này, nhìn kìa! Không có lỗi!
+
+DSL của chúng tôi hoạt động!
+
+Giờ đây, các trình tạo kết quả hỗ trợ thêm một vài tính năng, như vòng lặp for-in và xử lý kết quả trả về cuối cùng.
+
+Nếu bạn muốn sử dụng những thứ đó, chúng được mô tả trong cuốn sách Ngôn ngữ Lập trình Swift.
+
+Nhưng trước khi chúng ta kết thúc, tôi muốn kêu gọi sự chú ý đến một trong những phần quan trọng nhất của thiết kế ngôn ngữ: thông báo lỗi tốt.
+
+Một trong những điều bạn học được khi thiết kế một ngôn ngữ là có nhiều cách để viết mã không hợp lệ hơn là mã hợp lệ, vì vậy bạn nên dành thời gian suy nghĩ về các lỗi bạn sẽ phát ra đối với mã không hợp lệ.
+
+Hành vi của bạn khi mã sai cũng quan trọng như khi mã đúng.
+
+Bây giờ, đối với Swift DSL, bạn sẽ nhận được xử lý lỗi của Swift miễn phí.
+
+Nhưng các thông báo lỗi mà khách hàng sẽ nhận được được thiết kế cho mã Swift chung.
+
+Chúng không được diễn đạt theo các quy tắc ngôn ngữ của bạn, vì vậy chúng có thể không truyền đạt vấn đề rõ ràng cho khách hàng của bạn.
+
+Ví dụ, hãy tưởng tượng ai đó đã quên đưa mô tả vào một trong những ly sinh tố này.
+
+Swift sẽ phát ra một thông báo lỗi, nhưng nó hơi không rõ ràng.
+
+Nó phàn nàn rằng thành phần đầu tiên không thể được chuyển đổi thành một chuỗi.
+
+Vậy làm thế nào để mã này kết thúc tạo ra lỗi này?
+
+Chà, trình biên dịch Swift không thực sự hiểu ngữ nghĩa của Smoothie DSL của chúng tôi, nó chỉ hiểu ngữ nghĩa của mã Swift được tạo để sử dụng trình tạo kết quả.
+
+Vì vậy, khi nó cố gắng chẩn đoán lỗi này, nó không coi giá trị này là mô tả của Smoothie hoặc thành phần đầu tiên.
+
+Nó coi đó là lập luận đầu tiên để xây dựng Block.
+
+V0, đối số đầu tiên để buildBlock (_:), là một Thành phần Đo lường, nhưng nó đang được chuyển đến một tham số chuỗi.
+
+Vì vậy, Swift nghĩ về lỗi này là, "Bạn đang cố gắng chuyển Thành phần đo lường cho tham số chuỗi, nhưng tôi không thể chuyển đổi Thành phần đo lường thành chuỗi."
+
+Thông báo lỗi không sai về mặt kỹ thuật nhưng nó cũng không thực sự hữu ích.
+
+Các kỹ sư trình biên dịch có một mẹo cho việc này: chúng tôi làm cho trình biên dịch hỗ trợ điều không hợp lệ nhưng tạo ra lỗi khi bạn làm điều đó.
+
+Ví dụ, có một vị trí trong ngữ pháp hàm của Swift, nơi bạn có thể viết ném, ném lại hoặc không có gì.
+
+Nếu bạn viết một số từ không được hỗ trợ khác, trình biên dịch đoán rằng nó được cho là một phần của một câu lệnh khác và cung cấp cho bạn lỗi yêu cầu bạn thêm dấu chấm phẩy hoặc sử dụng một dòng mới.
+
+Nhưng, nếu bạn viết "thử" cụ thể, bạn sẽ gặp một lỗi khác.
+
+Trình biên dịch đề nghị thay thế nó bằng ném và sau đó phân tích phần còn lại của tệp như thể bạn đã viết ném ở đó thay thế.
+
+Đây là một trường hợp đặc biệt mà chúng tôi đã thêm vào trình phân tích cú pháp Swift.
+
+Chúng tôi nhận thấy rằng các nhà phát triển đôi khi gõ các từ khóa xử lý lỗi khác ở đây khi chúng có ý định viết ném, vì vậy chúng tôi đã tạo một phần mở rộng nhỏ, không có tài liệu cho ngữ pháp chính thức của ngôn ngữ.
+
+Chúng tôi phân tích cú pháp các từ khóa sai đó ở đây và sau đó chẩn đoán một lỗi khác với bình thường, được điều chỉnh cho lỗi cụ thể đó.
+
+Tôi chỉ ra điều này bởi vì bạn có thể làm điều gì đó tương tự trong trình tạo kết quả để cải thiện hành vi lỗi của nó.
+
+Cụ thể, nếu bạn làm quá tải phương thức xây dựng kết quả khớp với mã xấu và sau đó bạn đánh dấu quá tải đó là không khả dụng, bạn có thể chỉ định thông báo lỗi để sử dụng khi chẩn đoán nó.
+
+Và vì vậy thay vì gặp lỗi chung có thể không truyền đạt vấn đề tốt lắm, khách hàng sẽ nhận được một thông báo lỗi cụ thể hơn phù hợp với lỗi đó.
+
+Những gì chúng tôi sẽ làm là sao chép buildBlock(_:), xóa tham số mô tả để chúng tôi khớp các khối chỉ có một danh sách thành phần trong đó và thay thế phần thân bằng fatalError() để chúng tôi không phải giả mạo giá trị trả về.
+
+Phương pháp này sẽ không bao giờ được gọi thành công, vì vậy cơ thể chỉ cần là một cái gì đó hợp lệ.
+
+Sau đó, chúng tôi sẽ đánh dấu tình trạng quá tải này là không khả dụng và gửi cho nó một thông báo mô tả vấn đề rõ ràng hơn.
+
+Chú thích không có sẵn này có nghĩa là phương thức này không thể thực sự được sử dụng.
+
+Nếu bạn viết một cuộc gọi đến nó, đó là một lỗi.
+
+Vì vậy, bây giờ, nếu tôi bật trở lại đầu trang và xây dựng lại, tôi thấy rằng tôi nhận được một mô tả rõ ràng hơn rất nhiều về những gì không ổn.
+
+Thay vì nói rằng thành phần đầu tiên nên là một chuỗi, nó nói rằng chuỗi mô tả bị thiếu.
+
+Vì vậy, khách hàng không bắt đầu nghĩ rằng thành phần sai hoặc phải tự hỏi chuỗi dùng để làm gì; lỗi cho họ biết điều đó ngay từ đầu.
+
+Đó là một trải nghiệm tốt hơn nhiều.
+
+Và điều quan trọng nhất cần nhớ khi triển khai DSL là tất cả là cải thiện trải nghiệm của khách hàng.
+
+DSL có thể làm cho một số mã rất phức tạp, lặp đi lặp lại sạch hơn nhiều bằng cách cho phép khách hàng xác định mọi thứ mà không phải lo lắng về cơ chế lắp ráp định nghĩa.
+
+Trình tạo kết quả là một công cụ mạnh mẽ cho phép DSL của bạn thu thập các giá trị đang được xác định.
+
+Và các phương pháp kiểu sửa đổi cung cấp cho bạn một cách có thể kết hợp để thay đổi các giá trị đó trước khi trình tạo kết quả nắm bắt chúng.
+
+Nhưng hãy nhớ rằng nếu bạn viết DSL, khách hàng sẽ phải học cách sử dụng nó.
+
+Chỉ cung cấp DSL khi nó xứng đáng với thời gian và công sức của họ.
+
+Vì vậy, cảm ơn bạn đã dành thời gian và tận hưởng việc xây dựng một số ngôn ngữ nhỏ.
+
+♪

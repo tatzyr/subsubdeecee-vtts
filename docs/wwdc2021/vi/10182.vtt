@@ -1,0 +1,506 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:10.000
+♪ ♪
+
+00:00:10.000 --> 00:00:11.000
+Xin chào.
+
+00:00:11.000 --> 00:00:18.000
+Tôi là Johannes Fortmann từ nhóm Nhà cung cấp tệp đám mây và tôi ở đây để chỉ cho bạn các nhà cung cấp tệp trên macOS.
+
+00:00:18.000 --> 00:00:23.000
+Nếu bạn là nhà cung cấp lưu trữ đám mây đồng bộ hóa các tệp của người dùng với macOS, bạn đã nói đúng.
+
+00:00:23.000 --> 00:00:31.000
+Sau phần giới thiệu, chúng ta sẽ nói về một số luồng người dùng liên quan đến việc đồng bộ hóa các tệp.
+
+00:00:31.000 --> 00:00:40.000
+Sau đó, chúng tôi sẽ chạy qua một trong các luồng trong Xcode và thảo luận về thứ tự mà bạn sẽ thực hiện hỗ trợ cho từng luồng.
+
+00:00:40.000 --> 00:00:48.000
+Chúng tôi sẽ có một cái nhìn tổng quan nhanh về các điểm tích hợp tùy chọn bổ sung và các bước tiếp theo của bạn.
+
+00:00:48.000 --> 00:00:54.000
+Trước hết, hãy nói về những gì các nhà cung cấp tệp có thể làm cho bạn.
+
+00:00:54.000 --> 00:01:01.000
+Khung Nhà cung cấp tệp cho phép bạn tích hợp bộ nhớ đám mây của mình vào hệ thống tệp trên macOS.
+
+00:01:01.000 --> 00:01:08.000
+Nó sử dụng các tính năng APFS mới để cho phép tải xuống theo yêu cầu các tệp và thư mục của người dùng.
+
+00:01:08.000 --> 00:01:11.000
+API hoàn toàn nằm trong không gian người dùng.
+
+00:01:11.000 --> 00:01:24.000
+Chúng tôi đang phản đối các phần mở rộng hạt nhân trên macOS, vì vậy đây là một giải pháp thay thế tốt cho bạn nếu bạn đang dựa vào FUSE hoặc KAUTH để chặn các cuộc gọi hệ thống hoặc tải xuống các tệp theo yêu cầu.
+
+00:01:24.000 --> 00:01:31.000
+Tất cả những gì bạn phải làm là xử lý tải lên, tải xuống và cho chúng tôi biết những gì đã thay đổi từ xa.
+
+00:01:31.000 --> 00:01:36.000
+Hệ thống sẽ cho bạn biết những gì đã thay đổi cục bộ và xử lý tất cả phần còn lại.
+
+00:01:36.000 --> 00:01:43.000
+Tất cả các chức năng này được tích hợp tốt với hệ thống và đặc biệt là trong Finder.
+
+00:01:43.000 --> 00:01:45.000
+Nhà cung cấp của bạn sẽ hiển thị trong thanh bên.
+
+00:01:45.000 --> 00:01:53.000
+Trạng thái tệp sẽ được hiển thị và theo dõi trong Finder, và có một số điểm tích hợp có thể tùy chỉnh với giao diện người dùng.
+
+00:01:53.000 --> 00:01:59.000
+Bạn triển khai một tiện ích mở rộng ứng dụng tích hợp với hệ thống.
+
+00:01:59.000 --> 00:02:03.000
+Vòng đời của nó được thúc đẩy bởi hành động của người dùng.
+
+00:02:03.000 --> 00:02:12.000
+Ban đầu, bạn tạo một miền đại diện cho cây tệp mà người dùng có thể truy cập trong bộ nhớ đám mây của bạn.
+
+00:02:12.000 --> 00:02:21.000
+Hệ thống sẽ hiển thị miền đó trong thanh bên Finder và tạo một thư mục gốc cho miền trong hệ thống tệp.
+
+00:02:21.000 --> 00:02:29.000
+Tại thời điểm này, không có dữ liệu thực tế nào trên thiết bị, nhưng người dùng đã có thể bắt đầu tương tác với root.
+
+00:02:29.000 --> 00:02:31.000
+Cái này hoạt động như thế nào?
+
+00:02:31.000 --> 00:02:34.000
+Gốc là cái mà chúng ta gọi là thư mục không dữ liệu.
+
+00:02:34.000 --> 00:02:42.000
+Đó là một loại đối tượng mới trong APFS và có các API để nhận ra chúng và tương tác với chúng.
+
+00:02:42.000 --> 00:02:49.000
+Nhưng quan trọng hơn, các đối tượng không có dữ liệu hoàn toàn minh bạch đối với các quy trình xảy ra trên chúng mà không được chuẩn bị.
+
+00:02:49.000 --> 00:02:57.000
+Đọc kích hoạt tải xuống và các tệp mất thuộc tính không dữ liệu của chúng trước khi các lần đọc được phép tiếp tục.
+
+00:02:57.000 --> 00:03:08.000
+Trong bài thuyết trình này, chúng ta sẽ xem cách khung Nhà cung cấp tệp cho phép bạn triển khai các cuộc gọi lại được gọi khi các quy trình đọc các tệp không có dữ liệu.
+
+00:03:08.000 --> 00:03:12.000
+Hãy cùng xem xét một số luồng người dùng để đồng bộ hóa và chạy.
+
+00:03:12.000 --> 00:03:19.000
+Chúng ta sẽ xem xét bốn luồng chính bao gồm cả đồng bộ hóa xuống và đồng bộ hóa lên.
+
+00:03:19.000 --> 00:03:27.000
+Trong mỗi luồng, bạn sẽ thấy rằng hệ thống gọi tiện ích mở rộng của bạn bất cứ khi nào nó cần dữ liệu mới.
+
+00:03:27.000 --> 00:03:36.000
+Chúng tôi sẽ cho bạn thấy rằng bạn có thể nói chuyện với máy chủ đám mây của mình để lấy dữ liệu đó và cuối cùng, gọi cho người xử lý hoàn thành để trả lời.
+
+00:03:36.000 --> 00:03:44.000
+Đầu tiên, chúng ta sẽ xem xét điều gì sẽ xảy ra khi một tệp không có dữ liệu được đọc.
+
+00:03:44.000 --> 00:03:55.000
+Khi hạt nhân phát hiện quyền truy cập đọc vào tệp không dữ liệu, cuộc gọi hệ thống đó sẽ bị tạm dừng trong khi tiện ích mở rộng của bạn được gọi để tìm nạp nội dung của tệp.
+
+00:03:55.000 --> 00:03:59.000
+Phương thức fetchContents của tiện ích mở rộng của bạn được gọi.
+
+00:03:59.000 --> 00:04:02.000
+Thông thường, bạn sẽ triển khai nó để thực hiện tải xuống.
+
+00:04:02.000 --> 00:04:06.000
+Khi quá trình tải xuống hoàn tất, nó sẽ gọi trình xử lý hoàn thành.
+
+00:04:06.000 --> 00:04:15.000
+Nội dung của tệp được chuyển đến hệ thống điền vào tệp không có dữ liệu trước đây mà không làm mất hiệu lực mô tả tệp đang mở.
+
+00:04:15.000 --> 00:04:19.000
+Hệ thống sau đó tạm dừng truy cập đọc.
+
+00:04:19.000 --> 00:04:26.000
+Bây giờ tệp không còn không còn dữ liệu nữa, các lần đọc tiếp theo sẽ không phải liên quan đến phần mở rộng của bạn.
+
+00:04:26.000 --> 00:04:29.000
+Liệt kê một thư mục hoạt động rất giống nhau.
+
+00:04:29.000 --> 00:04:33.000
+Hạt nhân phát hiện một cuộc gọi readdir và tạm dừng nó.
+
+00:04:33.000 --> 00:04:38.000
+Nó gọi tiện ích mở rộng của bạn để liệt kê các mục trong thư mục đó.
+
+00:04:38.000 --> 00:04:42.000
+Bạn lấy siêu dữ liệu cho các mục này từ máy chủ của mình.
+
+00:04:42.000 --> 00:04:45.000
+Và bạn trả lời với một số mặt hàng.
+
+00:04:45.000 --> 00:04:48.000
+Việc liệt kê được phân trang.
+
+00:04:48.000 --> 00:04:56.000
+Bạn có thể trả lại ít hơn bộ mặt hàng đầy đủ và hệ thống sẽ nhận liệt kê từ nơi nó đã dừng lại.
+
+00:04:56.000 --> 00:05:03.000
+Khi tất cả các trang đã được liệt kê, hệ thống sẽ cho phép cuộc gọi ban đầu được thực hiện.
+
+00:05:03.000 --> 00:05:16.000
+Giống như trong trường hợp tệp, một khi thư mục đã được liệt kê, các cuộc gọi readdir tiếp theo sẽ sử dụng nội dung từ đĩa và không phải liên quan đến tiện ích mở rộng của bạn.
+
+00:05:16.000 --> 00:05:20.000
+Nhưng nếu những nội dung đó thay đổi từ xa thì sao?
+
+00:05:20.000 --> 00:05:24.000
+Chà, bạn sẽ phải thông báo cho hệ thống về sự thay đổi từ xa.
+
+00:05:24.000 --> 00:05:27.000
+Hãy xem nó hoạt động như thế nào.
+
+00:05:27.000 --> 00:05:34.000
+Nếu có thay đổi từ xa, máy chủ của bạn có thể gửi thông báo đẩy đến Mac.
+
+00:05:34.000 --> 00:05:45.000
+Để phản hồi thông báo đẩy đó, bạn báo hiệu cho hệ thống rằng có những thay đổi cần được liệt kê từ một trình liệt kê đặc biệt, .workingSet.
+
+00:05:45.000 --> 00:05:51.000
+Hệ thống sẽ quay lại và liệt kê các mục đã thay đổi trong .workingSet.
+
+00:05:51.000 --> 00:05:58.000
+Một mã thông báo tiếp tục được gọi là syncAnchor được sử dụng để chỉ liệt kê những thay đổi mới.
+
+00:05:58.000 --> 00:06:01.000
+Mã thông báo này được xác định bởi tiện ích mở rộng của bạn.
+
+00:06:01.000 --> 00:06:05.000
+Hệ thống theo dõi syncAnchor mà nó được liệt kê lần cuối.
+
+00:06:05.000 --> 00:06:09.000
+Nó sẽ gọi trình liệt kê của bạn với phương thức enumerateChanges(từ syncAnchor:).
+
+00:06:09.000 --> 00:06:19.000
+Đáp lại, bạn trả lại các mặt hàng đã thay đổi và sau khi hoàn tất, hãy cung cấp cho chúng tôi một syncAnchor mới mà chúng tôi có thể sử dụng lần sau.
+
+00:06:19.000 --> 00:06:23.000
+Hệ thống sẽ đi và cập nhật không đồng bộ các tệp có thể nhìn thấy của người dùng.
+
+00:06:23.000 --> 00:06:31.000
+Chúng tôi sử dụng tính năng so sánh và hoán đổi APFS để đảm bảo rằng các thay đổi cục bộ không bị mất trong quá trình này.
+
+00:06:31.000 --> 00:06:41.000
+Hơn nữa, hệ thống tích hợp với sự phối hợp tệp và các cơ chế khóa tư vấn khác để phối hợp với các ứng dụng.
+
+00:06:41.000 --> 00:06:50.000
+Với ba cơ chế này, chúng tôi có thể đồng bộ hóa các tệp từ đám mây và giữ chúng đồng bộ trong trường hợp thay đổi từ xa.
+
+00:06:50.000 --> 00:06:54.000
+Luồng cuối cùng liên quan đến việc đồng bộ hóa các thay đổi cục bộ với đám mây.
+
+00:06:54.000 --> 00:07:06.000
+Hệ thống phát hiện khi các mục cục bộ đã thay đổi và gọi phương thức modifyItem trên tiện ích mở rộng của bạn, chuyển vào tập hợp chính xác các trường đã thay đổi.
+
+00:07:06.000 --> 00:07:11.000
+Nó tổng hợp các sự kiện cấp thấp thành các sự kiện có ý nghĩa để đồng bộ hóa.
+
+00:07:11.000 --> 00:07:20.000
+Ví dụ, hạt nhân phát hiện các bản lưu an toàn và ánh xạ lại số nhận dạng mục của bạn sang ID tệp mới một cách minh bạch.
+
+00:07:20.000 --> 00:07:29.000
+Hệ thống cũng sẽ nén các tệp gói cho bạn nếu bạn yêu cầu và trình bày cho bạn những thay đổi nhất quán về cấp gói.
+
+00:07:29.000 --> 00:07:35.000
+Để đáp lại cuộc gọi modifyItem, bạn sẽ cập nhật trạng thái của phía máy chủ mục.
+
+00:07:35.000 --> 00:07:47.000
+Nếu nội dung của tệp đã thay đổi, hệ thống sẽ cung cấp cho bạn một bản sao của tệp đã thay đổi để bạn có thể tải lên một phiên bản nhất quán ngay cả trong trường hợp có thêm thay đổi.
+
+00:07:47.000 --> 00:07:51.000
+Khi hoàn tất, bạn gọi một trình xử lý hoàn thành.
+
+00:07:51.000 --> 00:07:59.000
+Trình xử lý hoàn thành được sử dụng để cập nhật mã định danh phiên bản của mặt hàng và xác nhận việc gửi thay đổi cho tiện ích mở rộng của bạn.
+
+00:07:59.000 --> 00:08:04.000
+Trình xử lý hoàn thành cũng lấy trạng thái cuối cùng của mục làm tham số.
+
+00:08:04.000 --> 00:08:11.000
+Cập nhật một mục trên đám mây có thể thay đổi trạng thái của nó, ví dụ, nếu nó xung đột với một thay đổi từ xa.
+
+00:08:11.000 --> 00:08:21.000
+Kể từ khi bạn vượt qua trạng thái cuối cùng trở lại, hệ thống có thể cập nhật trạng thái cục bộ của vật phẩm để phù hợp với sự thật trên đám mây.
+
+00:08:21.000 --> 00:08:24.000
+Có một dòng chảy thứ năm: trục xuất.
+
+00:08:24.000 --> 00:08:34.000
+Hệ thống sẽ tự động loại bỏ các tệp cục bộ và không liên quan đến phần mở rộng nhà cung cấp tệp của bạn khi có nhu cầu khẩn cấp về dung lượng đĩa.
+
+00:08:34.000 --> 00:08:41.000
+Điều đó có thể xảy ra, ví dụ, khi người dùng đang quay video hoặc tải xuống bản cập nhật phần mềm.
+
+00:08:41.000 --> 00:08:51.000
+Hệ thống sẽ loại bỏ tập hợp tối thiểu các tệp ít được sử dụng gần đây nhất cần thiết để giải phóng dung lượng đĩa cần thiết để ghi các tệp mới đó.
+
+00:08:51.000 --> 00:08:54.000
+Hãy xem lại quá trình chuyển đổi.
+
+00:08:54.000 --> 00:09:02.000
+Trục xuất biến tệp cục bộ thành tệp không dữ liệu và tải xuống biến tệp không dữ liệu thành tệp cục bộ.
+
+00:09:02.000 --> 00:09:09.000
+Các tệp có thể khởi động không có dữ liệu nếu chúng được tạo từ xa hay không nếu chúng được tạo cục bộ.
+
+00:09:09.000 --> 00:09:12.000
+Nhưng không phải tất cả các tệp đều có thể bị đuổi.
+
+00:09:12.000 --> 00:09:19.000
+Hệ thống sẽ chỉ loại bỏ một tệp mà bạn báo cáo là đã tải lên để nó có thể được tải xuống lại.
+
+00:09:19.000 --> 00:09:25.000
+Vì vậy, thực sự có hai loại tệp cục bộ: tệp đã tải lên và tệp chưa tải lên.
+
+00:09:25.000 --> 00:09:33.000
+Sau khi chỉnh sửa cục bộ, phiên bản mới của tệp cần được tải lên, vì vậy chúng tôi đã trở lại trạng thái không thể thực hiện được.
+
+00:09:33.000 --> 00:09:44.000
+Trong bài thuyết trình này cho đến nay, chúng tôi đã thấy cách phần mở rộng nhà cung cấp tệp của bạn được hệ thống gọi để tải xuống tệp khi truy cập và tải lên tệp sau khi chỉnh sửa cục bộ.
+
+00:09:44.000 --> 00:09:54.000
+Mặc dù bạn không tham gia vào việc trục xuất được kích hoạt áp suất đĩa, nhưng có các phương pháp để kích hoạt hoặc ngăn chặn việc trục xuất khỏi tiện ích mở rộng của bạn.
+
+00:09:54.000 --> 00:09:56.000
+Đây là rất nhiều lý thuyết.
+
+00:09:56.000 --> 00:10:00.000
+Chúng ta hãy xem xét một trong những dòng chảy trong thực tế.
+
+00:10:00.000 --> 00:10:08.000
+Chúng tôi đã viết một ứng dụng chạy một máy chủ tệp cục bộ nhỏ và nhúng một phần mở rộng nhà cung cấp tệp hoạt động trên máy chủ đó.
+
+00:10:08.000 --> 00:10:10.000
+Nó được gọi là FruitBasket.
+
+00:10:10.000 --> 00:10:16.000
+Tôi đã đăng nhập vào máy chủ đó, vì vậy có một mục nhập cho thư mục gốc ở đây trong thanh bên.
+
+00:10:16.000 --> 00:10:23.000
+Tôi cũng đã chọn thư mục gốc khiến hệ thống tạo các mục nhập không có dữ liệu cho các mục trong thư mục đó.
+
+00:10:23.000 --> 00:10:31.000
+Bạn có thể biết rằng các mục không có dữ liệu từ biểu tượng tải xuống đám mây bên cạnh tên tệp.
+
+00:10:31.000 --> 00:10:35.000
+Chúng ta sẽ sử dụng 'cat' trên dòng lệnh để đọc một tệp.
+
+00:10:35.000 --> 00:10:40.000
+Vì tệp không có dữ liệu, điều này sẽ gây ra việc tìm nạp nội dung trong tiện ích mở rộng của chúng tôi.
+
+00:10:40.000 --> 00:10:52.000
+Tôi đã đính kèm với tiện ích mở rộng trong Xcode và đặt điểm dừng để chặn việc tìm nạp nội dung này.
+
+00:10:52.000 --> 00:10:56.000
+'Con mèo' đang chạy, và điểm dừng của chúng tôi đã đạt được.
+
+00:10:56.000 --> 00:11:02.000
+Vì chúng tôi đang chặn việc hoàn thành tìm nạp nội dung, việc đọc trong cửa sổ Terminal của chúng tôi cũng bị chặn.
+
+00:11:02.000 --> 00:11:09.000
+Lưu ý cách trong cửa sổ Finder, biểu tượng đám mây đã được thay thế bằng một chỉ báo tiến độ.
+
+00:11:09.000 --> 00:11:13.000
+Hệ thống có một cái nhìn nhất quán về trạng thái tải xuống.
+
+00:11:13.000 --> 00:11:21.000
+Tất nhiên, vì chúng tôi thực sự bị chặn trong trình gỡ lỗi thay vì bận tải xuống, tiến trình không cập nhật.
+
+00:11:21.000 --> 00:11:23.000
+Hãy tiếp tục.
+
+00:11:23.000 --> 00:11:30.000
+Tôi đã đặt điểm dừng thứ hai ngay trước khi chúng tôi gọi người xử lý hoàn thành.
+
+00:11:30.000 --> 00:11:36.000
+Tại thời điểm này, nhà cung cấp của chúng tôi đã tải nội dung của tệp xuống một URL cục bộ trên đĩa.
+
+00:11:36.000 --> 00:11:44.000
+Khi chúng tôi gọi trình xử lý hoàn thành, hệ thống sẽ hoán đổi nội dung của tệp hiển thị của người dùng với những gì chúng tôi đã tải xuống.
+
+00:11:44.000 --> 00:11:47.000
+Hãy bỏ chặn hệ thống bằng cách tiếp tục trong Xcode.
+
+00:11:47.000 --> 00:11:58.000
+Trạng thái trong Finder cập nhật để hiển thị tệp là cục bộ và đọc rằng quá trình mèo đã bị chặn thành công.
+
+00:11:58.000 --> 00:12:05.000
+Tôi vẫn đã đặt các điểm dừng, nhưng bây giờ tệp là cục bộ, tôi có thể chạy lại 'cat' mà không cần nhấn vào điểm dừng.
+
+00:12:05.000 --> 00:12:15.000
+Những lần đọc đó đang đi ngược lại một tệp cục bộ thông thường và không liên quan đến phần mở rộng của chúng tôi.
+
+00:12:15.000 --> 00:12:21.000
+Tất nhiên, đây chỉ là một phần nhỏ của bộ tính năng của nhà cung cấp tệp mẫu của chúng tôi.
+
+00:12:21.000 --> 00:12:26.000
+Chúng tôi đã đề cập đến bộ tính năng đầy đủ của API và chúng tôi đang xuất bản mã nguồn như một phần của phiên này.
+
+00:12:26.000 --> 00:12:31.000
+Hãy nói về cách bạn có thể tiếp cận việc thực hiện các luồng mà chúng ta đã nói đến.
+
+00:12:31.000 --> 00:12:35.000
+Trước hết, chúng tôi sẽ muốn nói với hệ thống rằng chúng tôi đã sẵn sàng đồng bộ hóa.
+
+00:12:35.000 --> 00:12:39.000
+Điều này sẽ làm cho một mục nhập hiển thị trong thanh bên trong Finder.
+
+00:12:39.000 --> 00:12:46.000
+Chúng tôi gọi các tên miền mục nhập này và chúng thường tương ứng với phiên đăng nhập trên máy chủ đám mây của bạn.
+
+00:12:46.000 --> 00:12:54.000
+Mỗi miền có một mã định danh duy nhất và để làm cho nó hiển thị, bạn tạo một phiên bản mới và thêm nó thông qua đối tượng người quản lý.
+
+00:12:54.000 --> 00:12:56.000
+Bạn cũng có thể xóa một miền.
+
+00:12:56.000 --> 00:13:05.000
+Bạn thường làm điều này khi người dùng đăng xuất, nhưng nó cũng sẽ hữu ích trong quá trình phát triển và thử nghiệm ban đầu của bạn.
+
+00:13:05.000 --> 00:13:14.000
+Với miền hiển thị trong Finder, hệ thống sẽ yêu cầu liệt kê các mục ngay khi bạn điều hướng đến mục nhập.
+
+00:13:14.000 --> 00:13:16.000
+Vậy hãy thực hiện điều đó tiếp theo.
+
+00:13:16.000 --> 00:13:20.000
+Bước đầu tiên của chúng tôi ở đây là triển khai một lớp mục.
+
+00:13:20.000 --> 00:13:26.000
+Các trường hợp của nó đại diện cho các mục riêng lẻ mà chúng tôi sẽ liệt kê.
+
+00:13:26.000 --> 00:13:33.000
+Sau đó, chúng tôi triển khai một trình liệt kê gọi hệ thống với các mục của chúng tôi khi hệ thống yêu cầu nó.
+
+00:13:33.000 --> 00:13:39.000
+Tại thời điểm này, chúng ta có thể xem các thư mục bằng cách điều hướng đến mục nhập thanh bên của chúng ta.
+
+00:13:39.000 --> 00:13:43.000
+Tất nhiên, tất cả các tệp trong các thư mục đó sẽ không có dữ liệu.
+
+00:13:43.000 --> 00:13:47.000
+Hãy thay đổi điều đó bằng cách triển khai tìm nạp nội dung.
+
+00:13:47.000 --> 00:13:52.000
+Phương thức fetchContents được hệ thống gọi khi chúng tôi mở một trong các tệp không dữ liệu.
+
+00:13:52.000 --> 00:14:00.000
+Công việc của chúng tôi là tải nội dung tệp xuống một vị trí trên đĩa, sau đó gọi trình xử lý hoàn thành với URL của vị trí đó.
+
+00:14:00.000 --> 00:14:07.000
+Hệ thống sẽ sử dụng nội dung để điền vào tệp không dữ liệu và sau đó dọn dẹp chúng cho chúng tôi.
+
+00:14:07.000 --> 00:14:13.000
+Để cho phép cấu trúc thư mục của chúng tôi được đồng bộ hóa, chúng tôi sẽ triển khai một loại trình liệt kê khác.
+
+00:14:13.000 --> 00:14:15.000
+Cái này đồng bộ hóa các thay đổi từ xa.
+
+00:14:15.000 --> 00:14:20.000
+Hệ thống gọi phương thức currentSyncAnchor trước để có được một neo đồng bộ hóa.
+
+00:14:20.000 --> 00:14:25.000
+Bạn trả về một đối tượng dữ liệu mô tả con trỏ thay đổi cho cơ sở dữ liệu của bạn.
+
+00:14:25.000 --> 00:14:32.000
+Bất cứ khi nào bạn báo hiệu rằng có điều gì đó đã thay đổi, hệ thống sẽ yêu cầu thay đổi kể từ lần neo cuối cùng bạn cung cấp.
+
+00:14:32.000 --> 00:14:37.000
+Sau đó bạn có thể trả lại các thay đổi và cuối cùng là một mỏ neo mới.
+
+00:14:37.000 --> 00:14:41.000
+Bước cuối cùng là cho phép đồng bộ hóa các thay đổi.
+
+00:14:41.000 --> 00:14:51.000
+Nếu hệ thống phát hiện các thay đổi đối với các tệp cục bộ, nó sẽ gọi một trong ba phương thức để tạo, sửa đổi hoặc xóa một mục hiện có.
+
+00:14:51.000 --> 00:14:54.000
+Chúng ta sẽ xem xét nhanh phương pháp tạo.
+
+00:14:54.000 --> 00:15:00.000
+Hệ thống đưa cho bạn mặt hàng mới mà nó yêu cầu bạn tạo.
+
+00:15:00.000 --> 00:15:06.000
+Đây là một mục hệ thống, mặc dù nó tuân theo giao thức giống như các mục của riêng bạn.
+
+00:15:06.000 --> 00:15:11.000
+Hệ thống cũng sẽ đưa cho bạn một tập hợp các trường quan tâm đến mặt hàng.
+
+00:15:11.000 --> 00:15:20.000
+Ví dụ, mục có thể có hoặc không có các thuộc tính mở rộng được đính kèm với nó và có các trường để mô tả điều đó.
+
+00:15:20.000 --> 00:15:26.000
+Nếu trường nội dung được đặt, hệ thống sẽ chuyển cho bạn một URL tệp với nội dung.
+
+00:15:26.000 --> 00:15:31.000
+Các mục mô tả thư mục hoặc liên kết tượng trưng sẽ không có nội dung.
+
+00:15:31.000 --> 00:15:44.000
+Công việc của bạn là tải dữ liệu của mục cục bộ mới lên máy chủ và sau đó gọi trình xử lý hoàn thành với mục từ xa kết quả.
+
+00:15:44.000 --> 00:15:46.000
+Và thế là xong.
+
+00:15:46.000 --> 00:15:59.000
+Tại thời điểm này, bạn có một nhà cung cấp tệp chức năng trên macOS cung cấp các tệp theo yêu cầu, truyền bá các thay đổi cục bộ lên đám mây và các thay đổi từ xa sang Mac.
+
+00:15:59.000 --> 00:16:07.000
+Có rất nhiều API tùy chọn bổ sung trong khuôn khổ Nhà cung cấp tệp, cho phép tích hợp tốt hơn với hệ thống.
+
+00:16:07.000 --> 00:16:10.000
+Hãy cùng xem nào.
+
+00:16:10.000 --> 00:16:16.000
+Trang trí biểu tượng có thể được sử dụng để trang trí trực quan các mặt hàng trong Finder.
+
+00:16:16.000 --> 00:16:22.000
+Bạn có thể gắn huy hiệu biểu tượng tệp, dập nổi một thư mục hoặc cho biết trạng thái chia sẻ.
+
+00:16:22.000 --> 00:16:29.000
+Bạn cung cấp tác phẩm nghệ thuật tùy chỉnh cho các đồ trang trí thông qua UTType được khai báo trong ứng dụng của bạn.
+
+00:16:29.000 --> 00:16:38.000
+Các hành động trình đơn theo ngữ cảnh cho phép người dùng thực hiện các hành động tùy chỉnh trên các tệp của bạn thông qua trình đơn theo ngữ cảnh.
+
+00:16:38.000 --> 00:16:42.000
+Có các biến thể UI và không phải UI.
+
+00:16:42.000 --> 00:16:52.000
+Bạn có thể xác định những hành động này áp dụng cho tệp nào với NSPredicates được khai báo trong Info.plist của tiện ích mở rộng của bạn.
+
+00:16:52.000 --> 00:17:00.000
+Cảnh báo trước chuyến bay cho phép bạn cảnh báo người dùng trước khi họ thực hiện một hành động có thể gây ra hậu quả ngoài ý muốn.
+
+00:17:00.000 --> 00:17:08.000
+Giao diện người dùng cảnh báo và các tiêu chí để kích hoạt cảnh báo cũng được định cấu hình trong Info.plist.
+
+00:17:08.000 --> 00:17:10.000
+Vậy các bước tiếp theo của bạn là gì?
+
+00:17:10.000 --> 00:17:14.000
+Chà, trước hết, bạn có thể tải xuống mã mẫu của phiên.
+
+00:17:14.000 --> 00:17:19.000
+Nó rất toàn diện, và nó sẽ cung cấp cho bạn rất nhiều gợi ý.
+
+00:17:19.000 --> 00:17:23.000
+Thêm mục tiêu vào ứng dụng hiện tại của bạn cho tiện ích mở rộng mới.
+
+00:17:23.000 --> 00:17:27.000
+Có một mẫu Xcode sẽ giúp bạn bắt đầu.
+
+00:17:27.000 --> 00:17:37.000
+Từ đó, tất cả những gì bạn phải làm là triển khai các cuống phương pháp theo thứ tự mà chúng ta đã thảo luận và bạn sẽ bắt đầu và chạy ngay lập tức.
+
+00:17:37.000 --> 00:17:39.000
+Cảm ơn bạn đã xem phiên này.
+
+00:17:39.000 --> 23:59:59.000
+Chúng tôi mong muốn được thấy các phần mở rộng nhà cung cấp tệp của bạn trên macOS.
+

@@ -1,0 +1,266 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:11.000
+Xin chào, tôi là Rusty.
+
+00:00:11.000 --> 00:00:19.000
+Tôi là một kỹ sư trong nhóm CloudKit và tôi rất vui mừng được giới thiệu một công cụ dành cho nhà phát triển CloudKit mới, cũng như một ngôn ngữ lược đồ CloudKit hoàn toàn mới.
+
+00:00:19.000 --> 00:00:26.000
+Trong phiên này, tôi sẽ nói về lý do tại sao thử nghiệm tích hợp có thể là thách thức đối với một ứng dụng tích hợp với đám mây.
+
+00:00:26.000 --> 00:00:30.000
+Sau đó, tôi sẽ trình diễn cktool, công cụ phát triển dòng lệnh mới của chúng tôi cho CloudKit.
+
+00:00:30.000 --> 00:00:35.000
+Bạn sẽ tìm ra cách cktool có thể được sử dụng bên trong Xcode để tự động hóa thiết lập thử nghiệm.
+
+00:00:35.000 --> 00:00:38.000
+Bạn sẽ tìm hiểu về ngôn ngữ lược đồ khai báo mới của CloudKit.
+
+00:00:38.000 --> 00:00:40.000
+Và sau đó, tôi sẽ kết thúc mọi thứ bằng các bước tiếp theo.
+
+00:00:40.000 --> 00:00:43.000
+Hãy bắt đầu nào.
+
+00:00:43.000 --> 00:00:50.000
+Khi bạn viết các ứng dụng phụ thuộc vào các dịch vụ đám mây, có các hợp đồng rõ ràng giữa ứng dụng của bạn và các dịch vụ mà bạn phụ thuộc.
+
+00:00:50.000 --> 00:00:58.000
+Các bài kiểm tra tích hợp có thể giúp bạn xác thực cách bạn tương tác với các dịch vụ này, nhưng việc tự động hóa đúng cách thiết lập các bài kiểm tra tích hợp này có thể là một thách thức vì một vài lý do.
+
+00:00:58.000 --> 00:01:03.000
+Đầu tiên, không phải lúc nào cũng dễ dàng cập nhật máy chủ với mô hình dữ liệu mà ứng dụng của bạn đang sử dụng.
+
+00:01:03.000 --> 00:01:11.000
+Khi bạn lặp lại lược đồ của mình trong quá trình phát triển ứng dụng, điều quan trọng là lược đồ trên máy chủ phải khớp chính xác với lược đồ mà ứng dụng của bạn đang sử dụng khi các bài kiểm tra của bạn chạy.
+
+00:01:11.000 --> 00:01:21.000
+Ngoài ra, có thể khó đảm bảo rằng các bài kiểm tra của bạn đang chạy dựa trên một bộ dữ liệu mẫu nhất quán trên đám mây mỗi khi các bài kiểm tra chạy, đặc biệt nếu các bài kiểm tra của bạn sửa đổi dữ liệu đó như một phần của bài kiểm tra.
+
+00:01:21.000 --> 00:01:24.000
+Nhóm CloudKit vừa làm cho tất cả những điều này dễ dàng hơn cho bạn.
+
+00:01:24.000 --> 00:01:41.000
+Với ngôn ngữ lược đồ CloudKit mới mà chúng tôi vừa giới thiệu, bạn có thể khai báo lược đồ CloudKit của mình trong một tệp ngay bên cạnh mã ứng dụng của mình và sau đó kiểm tra nó vào kiểm soát phiên bản để bạn có thể theo dõi các thay đổi cùng với tất cả các thay đổi khác trong dự án của mình và luôn đảm bảo rằng mô hình dữ liệu ứng
+
+00:01:41.000 --> 00:01:53.000
+Và với công cụ phát triển dòng lệnh cktool mới, bạn có thể dễ dàng tự động hóa quá trình gửi khai báo lược đồ này đến máy chủ CloudKit, đồng thời tạo một bộ dữ liệu mẫu nhất quán trên máy chủ ngay trước khi bạn chạy thử nghiệm.
+
+00:01:53.000 --> 00:01:56.000
+Hãy để tôi nhảy ngay vào và bắt đầu sử dụng cktool.
+
+00:01:56.000 --> 00:01:59.000
+Đầu tiên, cktool được cài đặt với Xcode 13.
+
+00:01:59.000 --> 00:02:04.000
+Khi bạn cài đặt Xcode 13, bạn có thể bắt đầu sử dụng cktool từ Terminal ngay lập tức.
+
+00:02:04.000 --> 00:02:07.000
+Cktool được gọi với xcrun.
+
+00:02:07.000 --> 00:02:08.000
+Nó cung cấp một số lệnh.
+
+00:02:08.000 --> 00:02:21.000
+Ví dụ, nó có thể tạo các bản ghi trên máy chủ CloudKit, truy vấn các bản ghi đã tồn tại trên máy chủ, nhập và xuất các tệp ngôn ngữ lược đồ mới, quản lý ủy quyền cho chính công cụ và hơn thế nữa.
+
+00:02:21.000 --> 00:02:26.000
+Trước khi sử dụng cktool, có một vài điều cần hiểu về ủy quyền với CloudKit.
+
+00:02:26.000 --> 00:02:32.000
+Vì cktool giao tiếp trực tiếp với máy chủ CloudKit, trước tiên cần phải ủy quyền công cụ.
+
+00:02:32.000 --> 00:02:41.000
+Bạn có thể chọn chỉ ủy quyền cho cktool thực hiện các chức năng quản lý vùng chứa như nhập lược đồ hoặc bạn có thể ủy quyền bổ sung cho công cụ truy cập dữ liệu trong vùng chứa của mình.
+
+00:02:41.000 --> 00:02:44.000
+CloudKit đã giới thiệu hai khái niệm mới cho mục đích này.
+
+00:02:44.000 --> 00:02:49.000
+Đầu tiên được gọi là "mã thông báo quản lý", được sử dụng bởi cktool để quản lý vùng chứa CloudKit của bạn.
+
+00:02:49.000 --> 00:02:57.000
+Mã thông báo quản lý được gắn với một tài khoản nhà phát triển duy nhất và có thể được sử dụng giữa các nhóm nhà phát triển nếu nhà phát triển đó là thành viên của nhiều nhóm.
+
+00:02:57.000 --> 00:03:02.000
+Mã thông báo quản lý chỉ dành cho các trường hợp sử dụng cấu hình, như nhập và xuất lược đồ.
+
+00:03:02.000 --> 00:03:05.000
+Mã thông báo này không cung cấp bất kỳ quyền truy cập nào vào dữ liệu trong vùng chứa.
+
+00:03:05.000 --> 00:03:15.000
+Vì vậy, chúng tôi cũng đã giới thiệu mã thông báo người dùng, có thể được sử dụng để ủy quyền cho công cụ ghi dữ liệu vào cơ sở dữ liệu riêng tư của người dùng về vùng chứa ứng dụng hoặc vào cơ sở dữ liệu công khai của vùng chứa ứng dụng.
+
+00:03:15.000 --> 00:03:19.000
+Tôi có thể nhận được mã thông báo quản lý và mã thông báo người dùng từ Bảng điều khiển CloudKit.
+
+00:03:19.000 --> 00:03:26.000
+Để biết thêm thông tin về Bảng điều khiển CloudKit, bạn có thể xem "Gặp gỡ Bảng điều khiển CloudKit", một phiên WWDC21 khác.
+
+00:03:26.000 --> 00:03:36.000
+Bây giờ tôi đã nhận được cả mã thông báo quản lý cho tài khoản nhà phát triển của mình và cả mã thông báo người dùng, tôi có thể thêm chúng vào công cụ, công cụ này sẽ lưu trữ chúng một cách an toàn trong Chuỗi khóa macOS của mình và tôi đã sẵn sàng tiếp tục.
+
+00:03:36.000 --> 00:03:38.000
+Bây giờ tôi có thể bắt đầu làm một số điều thú vị.
+
+00:03:38.000 --> 00:03:42.000
+Ví dụ, tôi sẽ yêu cầu danh sách tư cách thành viên nhóm phát triển Apple của mình.
+
+00:03:42.000 --> 00:03:45.000
+Và tôi lấy lại danh sách các đội mà tôi là thành viên. Tuyệt vời.
+
+00:03:45.000 --> 00:03:52.000
+Bây giờ giả sử rằng tôi có một lược đồ cơ sở dữ liệu được xác định trong vùng chứa của mình và tôi muốn cam kết nó vào kho lưu trữ mã nguồn của mình trước khi thực hiện thay đổi.
+
+00:03:52.000 --> 00:03:54.000
+Với cktool, điều đó thật dễ dàng để thực hiện.
+
+00:03:54.000 --> 00:04:08.000
+Sử dụng lệnh export-schema này, tôi có thể kéo lược đồ phát triển của mình xuống một tệp có tên "schema.ckdb." Tệp này được định dạng bằng ngôn ngữ lược đồ CloudKit mới mà tôi đã đề cập trước đó và chúng ta sẽ khám phá tệp này một cách chi tiết chỉ trong một phút.
+
+00:04:08.000 --> 00:04:11.000
+Với cktool, tôi cũng có thể thêm dữ liệu vào vùng chứa của mình.
+
+00:04:11.000 --> 00:04:21.000
+Ở đây, nếu tôi có các giá trị mẫu được biểu thị dưới dạng JSON, như đối với bản ghi Sách mẫu này ở đây, tôi có thể sử dụng JSON đó làm đầu vào cho công cụ, giống như thế này, để tạo bản ghi trong cơ sở dữ liệu công khai của mình.
+
+00:04:21.000 --> 00:04:35.000
+Được rồi, bây giờ bạn đã có ý thức cơ bản về cách công cụ hoạt động, tôi sẽ tạo một tập lệnh ba bước đơn giản để xóa tất cả dữ liệu khỏi môi trường phát triển của vùng chứa CloudKit của ứng dụng của tôi, sau đó gửi khai báo lược đồ của tôi đến máy chủ và cuối cùng, tải một số dữ liệu thử nghiệm.
+
+00:04:35.000 --> 00:04:47.000
+Bằng cách đó, tôi có thể chạy tập lệnh này như một phần của hành động thử nghiệm trước trong Xcode và đảm bảo rằng vùng chứa CloudKit của tôi luôn ở trạng thái nhất quán, với lược đồ chính xác mà ứng dụng của tôi đang sử dụng trước mỗi lần tôi chạy các bài kiểm tra của mình.
+
+00:04:47.000 --> 00:04:55.000
+Vì vậy, ở đây trong Xcode, tôi sẽ chỉnh sửa sơ đồ cho ứng dụng dự án của mình và chọn Pre-actions trong giai đoạn Thử nghiệm.
+
+00:04:55.000 --> 00:04:58.000
+Bây giờ, tôi có thể thêm một Hành động Kịch bản Chạy Mới.
+
+00:04:58.000 --> 00:05:05.000
+Tôi sẽ cung cấp cài đặt xây dựng cho mục tiêu ứng dụng của mình, để tập lệnh có đường dẫn đến tệp lược đồ trong dự án của tôi.
+
+00:05:05.000 --> 00:05:20.000
+Ngay tại đây, tôi sẽ dán một lệnh cktool để đặt lại vùng chứa của mình, và sau đó, một lệnh để nhập lược đồ từ tệp trong dự án ứng dụng của tôi và cuối cùng, một lệnh để tạo bản ghi ví dụ trong cơ sở dữ liệu công khai của vùng chứa của tôi.
+
+00:05:20.000 --> 00:05:27.000
+Lưu ý rằng vì các lệnh này là đồng bộ, chúng sẽ thực thi hết lệnh này đến lệnh khác và bất kỳ lỗi nào cũng sẽ ngừng thực thi, đề phòng trường hợp có điều gì đó không diễn ra như mong đợi.
+
+00:05:27.000 --> 00:05:32.000
+Trong trường hợp đó, tôi có thể cẩn thận giải quyết mọi vấn đề trước khi kiểm tra trước khi thực sự chạy các bài kiểm tra của mình.
+
+00:05:32.000 --> 00:05:34.000
+Thế là xong.
+
+00:05:34.000 --> 00:05:39.000
+Bây giờ, khi tôi chạy các bài kiểm tra Xcode của mình, cktool sẽ chuẩn bị vùng chứa CloudKit của tôi ngay trước khi chúng chạy.
+
+00:05:39.000 --> 00:05:40.000
+Hoàn hảo.
+
+00:05:40.000 --> 00:05:44.000
+Vậy, nếu tôi cần thay đổi mô hình dữ liệu cho ứng dụng của mình thì sao?
+
+00:05:44.000 --> 00:05:46.000
+Hãy nói nhiều hơn về ngôn ngữ lược đồ CloudKit.
+
+00:05:46.000 --> 00:05:51.000
+Trên thực tế, hãy kiểm tra tệp schema.ckdb mà tôi đã tải xuống trước đó.
+
+00:05:51.000 --> 00:05:58.000
+Bên trong tệp là ngôn ngữ lược đồ CloudKit mới, đây là một cách mạnh mẽ để mô tả các loại bản ghi trong lược đồ của tôi.
+
+00:05:58.000 --> 00:06:02.000
+Thật dễ dàng để đọc và viết, và bao gồm ngay tại đây trong dự án của tôi với mã ứng dụng của tôi.
+
+00:06:02.000 --> 00:06:06.000
+Ở đây bên trong phần lược đồ, có các loại bản ghi.
+
+00:06:06.000 --> 00:06:10.000
+Những thứ này phản ánh chính xác các loại bản ghi như được hiển thị cho vùng chứa của tôi trong Bảng điều khiển CloudKit.
+
+00:06:10.000 --> 00:06:15.000
+Mỗi loại bản ghi có nhiều trường, và mỗi trường có một tên và loại dữ liệu.
+
+00:06:15.000 --> 00:06:21.000
+Tên trường ba điểm dưới là các trường hệ thống, được tạo bởi CloudKit cho mọi loại bản ghi.
+
+00:06:21.000 --> 00:06:27.000
+Bên dưới các trường hệ thống này là các trường tùy chỉnh của tôi, đại diện cho dữ liệu ứng dụng tùy chỉnh của tôi cho loại bản ghi này trong CloudKit.
+
+00:06:27.000 --> 00:06:35.000
+Tôi có thể tạo một chỉ mục cho một trường, như chỉ mục Có thể truy vấn, Có thể tìm kiếm hoặc Có thể sắp xếp, giống như tôi có thể làm trong Bảng điều khiển CloudKit.
+
+00:06:35.000 --> 00:06:43.000
+Tôi làm điều này trong ngôn ngữ lược đồ CloudKit bằng cách khai báo chỉ mục ngay sau kiểu dữ liệu cho trường, như đối với trường tùy chỉnh "tiêu đề" này trong loại bản ghi Sách của tôi ở đây.
+
+00:06:43.000 --> 00:06:47.000
+Bên dưới các định nghĩa trường là cài đặt vai trò bảo mật cho loại bản ghi.
+
+00:06:47.000 --> 00:06:54.000
+Đây là nơi các quyền có thể được cấp cho từng vai trò bảo mật được đặt tên, giống như cho mỗi vai trò trong ba vai trò bảo mật hệ thống tích hợp này ở đây.
+
+00:06:54.000 --> 00:07:02.000
+"_Người sáng tạo" chỉ bao gồm người dùng đã tạo bản ghi, "_thế giới" bao gồm tất cả người dùng và "_icloud" bao gồm bất kỳ người dùng được xác thực nào.
+
+00:07:02.000 --> 00:07:09.000
+Lưu ý rằng trong ngôn ngữ lược đồ CloudKit, bạn có thể bao gồm cả nhận xét một dòng và nhiều dòng để làm cho các tệp lược đồ trở nên dễ đọc hơn cho bạn và nhóm của bạn.
+
+00:07:09.000 --> 00:07:14.000
+Nhận xét sẽ bị máy chủ CloudKit bỏ qua khi tệp được xử lý, vì vậy hãy thoải mái đặt nhận xét ở bất cứ đâu bạn muốn.
+
+00:07:14.000 --> 00:07:24.000
+Giờ đây, ngôn ngữ lược đồ CloudKit cung cấp cho các nhà phát triển một cách nhanh chóng, linh hoạt để khai báo và sửa đổi lược đồ, điều quan trọng là phải nhớ một vài khái niệm cốt lõi xung quanh quá trình phát triển lược đồ CloudKit.
+
+00:07:24.000 --> 00:07:29.000
+Đầu tiên, bạn có toàn quyền kiểm soát các loại bản ghi trong môi trường phát triển của vùng chứa của mình.
+
+00:07:29.000 --> 00:07:37.000
+Bạn có thể thêm và xóa các loại bản ghi đang phát triển, đồng thời thêm và xóa các trường tùy chỉnh bên trong các loại bản ghi đó mà không có giới hạn.
+
+00:07:37.000 --> 00:07:44.000
+Tất nhiên, các loại bản ghi mới luôn có thể được thúc đẩy vào sản xuất và các trường mới cũng có thể được thêm vào các loại bản ghi hiện có trong sản xuất.
+
+00:07:44.000 --> 00:07:55.000
+Nhưng một khi các loại bản ghi đã được quảng bá lên môi trường sản xuất của vùng chứa của bạn, chúng không thể bị xóa hoặc đổi tên và các trường tùy chỉnh bên trong các loại bản ghi đã được quảng bá để sản xuất cũng không thể bị xóa hoặc đổi tên.
+
+00:07:55.000 --> 00:08:03.000
+Lý do cho điều này là để đảm bảo rằng máy chủ CloudKit luôn hiểu các loại bản ghi và trường mà các phiên bản cũ hơn của ứng dụng của bạn có thể vẫn đang sử dụng.
+
+00:08:03.000 --> 00:08:12.000
+Điều này có nghĩa là trong khi bạn có thể thực hiện các thay đổi phá hoại đối với khai báo lược đồ của mình trong môi trường phát triển của vùng chứa, bạn sẽ không thể thúc đẩy những thay đổi phá hoại này đối với sản xuất.
+
+00:08:12.000 --> 00:08:18.000
+Lưu ý rằng có thể thêm và xóa các chỉ mục trong sản xuất và cài đặt vai trò bảo mật cũng có thể được sửa đổi.
+
+00:08:18.000 --> 00:08:28.000
+Tất cả các khái niệm quảng bá lược đồ này không phải là mới đối với CloudKit, nhưng sự linh hoạt mà bạn nhận được từ khai báo lược đồ dựa trên tệp mới này có nghĩa là điều quan trọng là phải xem xét và hiểu chúng.
+
+00:08:28.000 --> 00:08:36.000
+Bây giờ bạn đã hiểu được cktool có thể làm gì và ngôn ngữ lược đồ CloudKit hoạt động như thế nào, tôi khuyến khích bạn thử cả hai trong các dự án của riêng mình.
+
+00:08:36.000 --> 00:08:42.000
+Cho phép cktool bằng mã thông báo quản lý và mã thông báo người dùng từ Bảng điều khiển CloudKit và khám phá các lệnh của nó.
+
+00:08:42.000 --> 00:08:51.000
+Xuất lược đồ CloudKit hiện tại của bạn thành tệp ngôn ngữ lược đồ CloudKit và thêm nó vào dự án của bạn, đảm bảo kiểm tra nó vào kiểm soát phiên bản với phần còn lại của dự án của bạn.
+
+00:08:51.000 --> 00:08:58.000
+Soạn một số bước thiết lập cho các bài kiểm tra tích hợp của bạn bằng cách sử dụng cktool và thêm tập lệnh làm hành động trước kiểm tra vào sơ đồ Xcode của bạn.
+
+00:08:58.000 --> 00:09:04.000
+Khả năng quản lý một số yếu tố nhất định của vùng chứa CloudKit của bạn từ dòng lệnh có thể thực sự mạnh mẽ.
+
+00:09:04.000 --> 00:09:20.000
+Duy trì khai báo lược đồ CloudKit của bạn trong một tệp, ngay bên cạnh tất cả các mã ứng dụng khác của bạn, có thể giúp bạn giữ nó nhất quán với mô hình dữ liệu của mình trong suốt vòng đời phát triển và liên kết tất cả những điều này lại với nhau để tự động hóa thiết lập đám mây cho các bài kiểm tra tích hợp của bạn thậm chí còn tốt
+
+00:09:20.000 --> 00:09:23.000
+Chúng tôi rất vui khi tìm hiểu xem bạn làm gì với những công cụ mới này.
+
+00:09:23.000 --> 00:09:27.000
+Cảm ơn vì đã dành thời gian tìm hiểu thêm về CloudKit và bạn đã quan tâm đến WWDC21.
+
+00:09:27.000 --> 23:59:59.000
+[Âm nhạc].
+

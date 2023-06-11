@@ -1,0 +1,385 @@
+10258
+
+Xin chào, tên tôi là Anubhav, và tôi là một kỹ sư trong Nhóm Hiệu suất Hệ điều hành.
+
+Hôm nay, tôi rất vui được chia sẻ cách bạn có thể hiểu và loại bỏ những điều bị treo khỏi ứng dụng của mình.
+
+Chúng ta sẽ chia bài nói chuyện này thành bốn phần, bắt đầu bằng sự hiểu biết, "gợi là gì?"
+
+Sau đó chúng ta sẽ nói về các nguyên nhân phổ biến gây ra hangs và những điều cần chú ý khi phát triển.
+
+Sau đó, chúng tôi sẽ thảo luận về các công cụ bạn có thể sử dụng để theo dõi và chẩn đoán treo.
+
+Cuối cùng, chúng ta sẽ tìm hiểu các chiến lược phổ biến để loại bỏ treo và cách chọn chiến lược nào phù hợp nhất với ứng dụng của bạn.
+
+Hãy nhảy ngay vào.
+
+Hãy cùng xem ứng dụng công thức mới của tôi, Desserted, một ứng dụng chỉ cho bạn cách làm đồ uống và món tráng miệng yêu thích của tôi.
+
+Món sinh tố Mango Tango này trông rất tuyệt.
+
+Tôi sẽ nhấn vào nó để xem nó được tạo ra như thế nào.
+
+Hừm.
+
+Có vẻ như không có gì đang xảy ra.
+
+Ồ. Điều đó mất nhiều thời gian hơn dự kiến.
+
+Ứng dụng chỉ bị kẹt và sẽ không chấp nhận bất kỳ lần chạm nào của tôi trong vài giây.
+
+Trải nghiệm này có thể được mô tả là "chìng", "chậm" hoặc "mắc kẹt".
+
+Đây không phải là những từ mà tôi, hoặc bất kỳ ai khác, muốn sử dụng để mô tả ứng dụng của họ.
+
+Tại Apple, chúng tôi gọi giai đoạn không phản hồi này là "treo".
+
+Để hiểu một sự cố và những gì đang xảy ra trong Desserted, trước tiên chúng ta phải hiểu runloop chính của ứng dụng là gì.
+
+Vòng lặp chạy chính là một vòng lặp mà luồng chính của ứng dụng của bạn nhập vào để chạy các trình xử lý sự kiện để đáp ứng với các sự kiện đến, chủ yếu là các tương tác của người dùng.
+
+Khi người dùng tương tác với một ứng dụng, runloop sẽ nhận được sự kiện, xử lý nó và sau đó cập nhật giao diện người dùng, nếu được yêu cầu.
+
+Tất cả điều này xảy ra trong một lượt của runloop và trên luồng chính.
+
+Quá trình này lặp lại cho mỗi đầu vào của người dùng.
+
+Đây là cách chủ đề chính sẽ trông như thế nào với một vòng lặp chạy.
+
+Nếu quá trình xử lý sự kiện mất nhiều thời gian, sẽ có sự chậm trễ giữa đầu vào của người dùng và bất kỳ bản cập nhật giao diện người dùng nào.
+
+Để làm cho vấn đề tồi tệ hơn, các sự kiện được đệm và không thể được xử lý bởi chủ đề chính trong quá trình treo.
+
+Nếu tôi tương tác với một ứng dụng trong khi treo, sự kiện đó sẽ không được xử lý cho đến khi việc treo hiện tại kết thúc lần đầu tiên... ...cạnh hợp treo, cái này chồng lên nhau.
+
+Nói chung, độ trễ hơn một giây sẽ luôn trông giống như một sự treo cổ, mặc dù độ trễ ngắn hơn có thể được coi là một.
+
+Ví dụ, độ trễ nửa giây trong khi cuộn gây chói tai, nhưng độ trễ tương tự ít được chú ý hơn nhiều khi vào chế độ xem.
+
+Bằng cách loại bỏ treo, các ứng dụng của bạn sẽ linh hoạt, nhanh chóng và phản hồi nhanh.
+
+Bây giờ chúng ta đã biết treo cổ là, chúng ta hãy xem xét những gì thường gây ra chúng.
+
+Treo xảy ra khi có quá nhiều công việc đang được thực hiện trên chủ đề chính.
+
+Để xác định chính xác công việc đó là gì, chúng ta phải xem luồng chính đang làm gì trong khi xử lý sự kiện.
+
+Lần này có thể được chia thành hai trường hợp.
+
+Bản thân luồng chính đang bận thực hiện công việc - đây có thể là một nhiệm vụ dài hoặc nhiều nhiệm vụ ngắn - hoặc luồng chính bị chặn bởi một luồng hoặc tài nguyên hệ thống khác.
+
+Hãy bắt đầu bằng cách xem xét các nguyên nhân phổ biến khiến chủ đề chính bị bận.
+
+Chủ động làm việc là làm nhiều hơn những gì cần thiết để cập nhật giao diện người dùng, giữ cho luồng chính bận rộn lâu hơn.
+
+Trong Desserted, Recipe View chỉ hiển thị các ô hình ảnh cho bốn trong số nhiều hình ảnh thành phần.
+
+Nếu chủ đề chính tải tất cả các hình ảnh thành phần cùng một lúc, nó sẽ dành thời gian đọc, chuẩn bị và tổng hợp từng hình ảnh.
+
+Hầu hết các công việc đang diễn ra thậm chí sẽ không ảnh hưởng đến những gì người dùng nhìn thấy.
+
+Chế độ xem chỉ hiển thị bốn hình ảnh và chỉ bốn hình ảnh đó cần được tạo ngay lập tức.
+
+Một nguyên nhân khác gây ra việc treo là thực hiện công việc không liên quan trên chủ đề chính.
+
+Lưu ý rằng các dịch vụ luồng chính chặn từ hàng đợi điều phối chính, nhưng nó cũng có thể dịch vụ các khối từ các hàng đợi khác thông qua đồng bộ hóa điều phối.
+
+Bất cứ khi nào một công văn hàng đợi đồng bộ hóa với một hàng đợi khác, tất cả các khối đang chờ xử lý trên hàng đợi khác phải thực thi trước hàng đợi mới được xếp hàng.
+
+Hãy xem xét một ứng dụng có hàng đợi điều phối nối tiếp ưu tiên thấp, có thể là hàng đợi bảo trì.
+
+Nếu công văn luồng chính đồng bộ hóa một khối vào maintenanceQueue, nó sẽ phải đợi tất cả các khối đang chờ xử lý trên hàng đợi đó thực thi trước khi khối được xếp hàng chạy.
+
+Chỉ một phần nhỏ thời gian được dành cho công việc dành cho chủ đề chính.
+
+Tương tự, nếu một khối được gửi đến hàng đợi chính từ một hàng đợi khác, khối đó phải thực thi trên luồng chính.
+
+Điều này được giữ ngay cả khi khối được xếp hàng thông qua một công văn không đồng bộ.
+
+Một nguyên nhân nữa cho việc treo là sử dụng API dưới mức tối ưu.
+
+Có nhiều cách để hoàn thành một nhiệm vụ.
+
+Hãy chắc chắn đọc tài liệu API để bạn có thể sử dụng tài liệu tốt nhất cho nhiệm vụ hiện tại.
+
+Desserted thêm các góc tròn vào tất cả hình ảnh trong chế độ xem công thức, mặc dù làm như vậy cũng làm tăng độ trễ khi vào chế độ xem này.
+
+Để thêm các góc tròn, Desserted sử dụng ngữ cảnh đồ họa dựa trên bitmap để chuyển đổi hình ảnh thành bitmap, áp dụng đường dẫn UIBezier trên bitmap đó, sau đó chuyển đổi bitmap đó trở lại thành hình ảnh.
+
+Tập hợp các hoạt động này chuyên sâu về CPU, sử dụng nhiều bộ nhớ và có thể mất nhiều thời gian.
+
+Điều này là do phần cứng sai đang được sử dụng cho công việc.
+
+Thay vì sử dụng CPU, tôi nên tận dụng GPU.
+
+Bằng cách sử dụng các phương pháp CoreAnimation trên một lớp, việc thêm các góc tròn rất dễ dàng và tức thì.
+
+Đây chỉ là một ví dụ về việc sử dụng API sai cho công việc hiện tại.
+
+Bây giờ chúng ta đã xem xét một số lý do phổ biến khiến luồng chính của ứng dụng có thể bận, hãy điều tra lý do tại sao nó có thể bị chặn.
+
+Các API đồng bộ chặn thực thi từ thời điểm chúng được gọi đến khi chúng quay trở lại.
+
+Những thứ này không nên được sử dụng trên luồng chính nếu API thực hiện nhiều công việc hoặc có khả năng chặn trong một khoảng thời gian dài.
+
+Ngoài sự chậm trễ, những điều này cũng thêm một điểm thất bại bổ sung.
+
+Một trường hợp như vậy là nếu luồng chính của một ứng dụng thực hiện các yêu cầu đồng bộ đến mạng.
+
+Đối với những người có 5G, có thể không có bất kỳ sự chậm trễ nào.
+
+Đối với những người có tốc độ mạng chậm hơn, việc này có thể mất nhiều thời gian hơn.
+
+Và đối với những người có tín hiệu rất xấu, điều này có thể treo vô thời hạn.
+
+Không có gì đảm bảo về việc điều này có thể mất bao lâu, đó là lý do tại sao nên tránh các hoạt động đồng bộ như vậy trên luồng chính.
+
+Một cách khác để chặn luồng chính là trên tài nguyên hệ thống, vì chúng thường bị hạn chế.
+
+Tệp I/O là một trong những tài nguyên hệ thống được sử dụng và tranh luận phổ biến nhất.
+
+Độ trễ phụ thuộc vào phần cứng, và các lần đọc và ghi khác xảy ra cùng một lúc, những thứ có thể nằm ngoài tầm kiểm soát của ứng dụng.
+
+Vì vậy, các ứng dụng cần phải làm những gì có thể để bảo vệ chống lại sự treo cổ bằng cách tránh I/O trên chủ đề chính.
+
+Các kho dữ liệu, không hỗ trợ đồng thời, đặc biệt có vấn đề.
+
+Nếu chủ đề chính cố gắng đọc từ một trong khi ghi đã xảy ra, việc đọc đó sẽ bị đẩy ra cho đến khi tất cả các nhà văn hoàn thành, điều này có thể không bị giới hạn.
+
+Một nguyên nhân khác gây ra sự treo cổ là sự đồng bộ hóa.
+
+Theo định nghĩa, các nguyên thủy đồng bộ hóa có thể chặn việc thực thi, vì vậy điều quan trọng là phải hạn chế và thận trọng khi đồng bộ hóa từ luồng chính.
+
+Luồng mà nó đồng bộ hóa có thể mất nhiều thời gian để giải phóng một khóa ngầm hoặc rõ ràng.
+
+Đây là một số nguyên thủy phổ biến cần chú ý, bao gồm chỉ thị @synchronized, đồng bộ hóa công văn, khóa os không công bằng và khóa posix.
+
+Cụ thể, hãy lưu ý về việc sử dụng semaphore, vì chúng không ưu tiên lan truyền và có thể kéo dài thời gian treo do ưu tiên.
+
+Một phản mẫu phổ biến là khi cố gắng làm cho API không đồng bộ hoạt động đồng bộ bằng cách chờ trên semaphore.
+
+Điều này nên luôn luôn tránh trên chủ đề chính.
+
+Một cách nữa để chặn luồng chính là thực hiện công việc, IPC hoặc sử dụng tài nguyên hệ thống để tìm nạp giá trị của thứ gì đó không thay đổi thường xuyên.
+
+Trong Desserted, có một biểu tượng cho một tính năng xã hội, chỉ được hiển thị nếu tôi đã thêm một liên hệ với tư cách là một người bạn.
+
+Truy vấn tất cả các liên hệ trên mỗi lần nhấn vào chế độ xem này là một cách để kiểm tra, mặc dù nó thêm chi phí và sự chậm trễ không cần thiết, vì các khối luồng chính trên các khung, đang thực hiện các hoạt động tốn kém dưới mui xe.
+
+Hơn nữa, giá trị tôi đang tìm nạp không thay đổi thường xuyên, vì vậy việc truy vấn điều này thường xuyên là không cần thiết và làm tăng thêm gánh nặng cho tài nguyên hệ thống.
+
+Trạng thái của tài nguyên hệ thống, chẳng hạn như CPU, bộ nhớ và bộ nhớ đóng một vai trò lớn khi bị treo xảy ra.
+
+Các điều kiện phần cứng và thiết bị khác nhau trong lĩnh vực này có nghĩa là các kịch bản trong thế giới thực sẽ khác biệt đáng kể so với các kịch bản gặp phải khi thử nghiệm trên bàn làm việc.
+
+Điều quan trọng là bạn làm những gì bạn có thể để bảo vệ chống lại những trường hợp này bằng cách có các bài kiểm tra mạnh mẽ và sử dụng phần cứng được hỗ trợ lâu đời nhất làm điểm chuẩn.
+
+Nguyên nhân cấp cao gây ra treo cổ là quá nhiều công việc đang được thực hiện trên hoặc thay mặt cho chủ đề chính.
+
+Để đảm bảo hiệu suất, điều quan trọng là chủ đề chính của ứng dụng của bạn tập trung vào những gì cần thiết để cập nhật giao diện người dùng.
+
+Bây giờ bạn đã biết nguyên nhân phổ biến gây treo cổ, hãy nói về một số công cụ hữu ích mà bạn có thể sử dụng để theo dõi và phân loại treo trong ứng dụng của mình, cả trong quá trình phát triển và sản xuất.
+
+Để phân loại treo, bạn sẽ muốn biết ứng dụng của mình đang làm gì trong thời gian đó.
+
+Công cụ lập hồ sơ thời gian cho phép bạn làm điều đó bằng cách hiển thị các cuộc gọi của ứng dụng theo thời gian, cho biết chính xác những gì đang thực hiện.
+
+Công cụ theo dõi hệ thống bổ sung thêm ngữ cảnh với dữ liệu về các cuộc gọi hệ thống, lỗi VM, I/O, cũng như các tương tác giữa các quy trình và trong quá trình.
+
+Để biết thêm thông tin, hãy xem bài nói chuyện "Hệ thống theo dõi chuyên sâu" từ năm 2016.
+
+Bây giờ, tôi sẽ sử dụng trình lập hồ sơ thời gian và công cụ theo dõi hệ thống để tìm ra nguyên nhân khiến Desserted bị treo.
+
+Sau khi lấy dấu vết của hang, đây là cách nó trông giống như được mở trong Instruments.
+
+Trong đầu ra theo dõi hệ thống, đường màu đỏ biểu thị các cuộc gọi hệ thống, biểu đồ màu tím biểu thị lỗi bộ nhớ ảo và thanh màu xanh lam nằm ngang cho biết luồng chính đang bận làm việc.
+
+Bước tiếp theo là xem công việc này là gì.
+
+Trình lập hồ sơ thời gian cho phép bạn làm điều đó.
+
+Nó trình bày một cây cuộc gọi bằng cách tổng hợp các cuộc gọi luồng chính trong suốt thời gian treo 4,7 giây.
+
+Phần được đánh dấu của cây minh họa rằng 4,6 giây của lần treo này là do phương thức loadAllMessages trong Chế độ xem công thức.
+
+Mẫu này trông quen thuộc.
+
+Món tráng miệng có thể đang tải nhiều hình ảnh hơn mức cần thiết.
+
+Khi ứng dụng của bạn đã được vận chuyển, bạn có thể sử dụng MetricKit để thu thập cây cuộc gọi cho các hàng treo trên thực địa.
+
+Điều này cho phép bạn ưu tiên các bản sửa lỗi dựa trên những vấn đề mà khách hàng thường gặp phải nhất.
+
+Để tìm hiểu cách sử dụng MetricKit để treo, hãy xem bài nói chuyện "Có gì mới trong MetricKit" từ năm 2020.
+
+Tôi đã vận chuyển món tráng miệng và có một số báo cáo treo từ MetricKit.
+
+Hãy nhìn vào một trong số chúng để xem liệu nó có giống với hang mà chúng ta vừa phân loại hay không.
+
+MetricKit trả về một cây cuộc gọi bằng cách tổng hợp các cuộc gọi được thực hiện trong quá trình treo.
+
+Định dạng cây này tương tự như những gì trình lập hồ sơ thời gian trình bày.
+
+Phần được đánh dấu cho thấy phần treo này khác với phần chúng tôi vừa điều tra bằng Dụng cụ.
+
+Cái này là do một tính năng xã hội mới mà tôi đã thêm vào, chặn trên hàng đợi điều phối truy vấn danh bạ.
+
+Nếu không có MetricKit, tôi có thể không tìm thấy vấn đề này và nó vẫn sẽ tồn tại trong lĩnh vực này.
+
+Khi sửa lỗi treo, điều quan trọng là phải cơ sở và định lượng hiệu suất của ứng dụng của bạn.
+
+Trình tổ chức Xcode thực hiện điều này bằng cách hiển thị các chỉ số hiệu suất, bao gồm biểu đồ hiển thị tỷ lệ treo trên mỗi phiên bản ứng dụng.
+
+Điều này đặc biệt hữu ích khi phân loại hồi quy.
+
+Kiểm tra hai cuộc nói chuyện này để biết thêm thông tin về Xcode Organizer.
+
+Bây giờ, hãy xem qua một số chiến lược phổ biến mà bạn có thể sử dụng để sửa lỗi treo trong ứng dụng của mình.
+
+Mỗi chiến lược này có thể giải quyết nhiều nguyên nhân gây ra treo cổ.
+
+Để biết cách khắc phục nào là tốt nhất cho ứng dụng của bạn, bạn sẽ cần xem xét các ảnh hưởng và sự đánh đổi của chúng.
+
+Để loại bỏ và bảo vệ chống lại sự treo cổ, hãy giảm số lượng công việc được thực hiện trên chủ đề chính.
+
+Điều này có thể được thực hiện theo hai cách.
+
+Đầu tiên là tối ưu hóa công việc đã được thực hiện trên luồng chính để giảm thời gian thực hiện.
+
+Thứ hai là di chuyển công việc ra khỏi luồng chính theo cách không chặn để giữ cho nó đáp ứng.
+
+Hãy bắt đầu bằng cách xem xét các cách để giảm việc thực thi luồng chính, bắt đầu với bộ nhớ đệm.
+
+Bộ nhớ đệm là một cách tuyệt vời để nhanh chóng truy cập các tài sản được sử dụng thường xuyên hoặc các giá trị được truy vấn trước đó.
+
+Chúng thường là một kho lưu trữ trong bộ nhớ, nhưng có thể được lưu vào đĩa, nếu cần qua nhiều lần gọi ứng dụng.
+
+Các tài sản được định dạng có thể cần thiết sau này, như gạch hình ảnh thành phần trong Desserted, là những ứng cử viên tuyệt vời cho bộ nhớ đệm, vì việc tạo các tài sản này mỗi khi chúng cần rất tốn kém.
+
+Bằng cách lưu trữ những thứ này trong NSCache, chi phí tạo tài sản được thay thế bằng đọc bộ nhớ nhanh.
+
+Điều này sẽ loại bỏ sự treo cổ mà chúng ta đã xem xét trong Dụng cụ.
+
+Điều quan trọng là phải có một cơ chế vô hiệu hóa bộ nhớ cache chính xác để đạt được sự cân bằng giữa việc có dữ liệu cũ và liên tục cập nhật bộ nhớ cache.
+
+Công việc này nên diễn ra không đồng bộ trên hàng đợi điều phối thứ cấp để giữ cho luồng chính phản hồi nhanh với các sự kiện.
+
+Người quan sát thông báo là một cách khác để giảm công việc trên luồng chính.
+
+Chúng cho phép ứng dụng của bạn phản ứng với những thay đổi về giá trị hoặc trạng thái mà không cần phải tính toán tốn kém, theo yêu cầu.
+
+Bất kỳ lớp học nào cũng có thể đăng thông báo, ngay cả của riêng bạn.
+
+Để tìm thông báo từ một lớp cụ thể, hãy kiểm tra tài liệu API của nó.
+
+Để tìm tất cả các thông báo hệ thống có thể quan sát được, hãy xem trang tài liệu dành cho nhà phát triển Apple cho NSNotification.Name.
+
+Một ứng cử viên tuyệt vời cho điều này là tính năng xã hội trong Desserted.
+
+Bằng cách đăng ký một người quan sát cho thông báo abDatabaseChangedExternally, luồng chính không còn phải chờ truy vấn danh bạ nữa.
+
+Khi một thông báo đến, người quan sát sẽ được gọi.
+
+Trong trường hợp này, nó sẽ cập nhật một giá trị được lưu trong bộ nhớ cache.
+
+Để giữ cho luồng chính đáp ứng, các bản cập nhật này phải không đồng bộ, điều này đạt được bằng cách dispatch_asyncing trình xử lý đến một hàng đợi khác.
+
+Bây giờ, tôi cung cấp tính năng tương tự như trước đây, nhưng không có sự treo mà chúng tôi đã thấy trong nhật ký MetricKit.
+
+Một cách khác để loại bỏ treo là di chuyển công việc ra khỏi chủ đề chính.
+
+Đầu tiên, chúng ta cần xác định công việc này nên là gì.
+
+Nói chung, các nhiệm vụ quan trọng cung cấp thông tin quan trọng cho giao diện người dùng nên vẫn còn trên chủ đề chính.
+
+Hơn nữa, tất cả các chế độ xem và bộ điều khiển chế độ xem phải được tạo, sửa đổi và phá hủy trên chuỗi chính.
+
+Tuy nhiên, tính toán cần thiết để cập nhật phần tử giao diện người dùng có thể được giảm tải xuống một luồng khác, với trình xử lý hoàn thành để thực hiện cập nhật thực tế trên luồng chính.
+
+Mẫu này rất hữu ích khi việc tính toán được biết là mất nhiều thời gian.
+
+Các nhiệm vụ ít quan trọng, bảo trì hoặc không quan trọng về thời gian khác nên được thực hiện không đồng bộ trên một luồng khác.
+
+Những thứ này sau đó sẽ chạy ở mức độ ưu tiên lập lịch thấp hơn và có thể mất nhiều thời gian hơn để hoàn thành so với công việc trên chủ đề chính.
+
+Đây là cố ý và phản ánh ý tưởng rằng chủ đề chính chỉ nên thực hiện công việc quan trọng.
+
+Cách đơn giản nhất để thực hiện các hoạt động không đồng bộ từ luồng chính là sử dụng các đối tác không đồng bộ của các API đồng bộ.
+
+Hãy lấy mạng lưới làm ví dụ.
+
+Bằng cách sử dụng các đối tác NSURL không đồng bộ cho các API mạng đồng bộ, các ứng dụng sẽ đáp ứng.
+
+Các API không đồng bộ thường được biểu thị bằng từ "đồng bộ" hoặc sự hiện diện của trình xử lý hoàn thành trong tên phương thức.
+
+Grand Central Dispatch là một cơ chế đa luồng mạnh mẽ, bạn có thể tận dụng trong trường hợp không có các biến thể API không đồng bộ hoặc mã bạn muốn di chuyển ra khỏi luồng chính là của riêng bạn.
+
+Grand Central Dispatch cung cấp các cơ chế đơn giản để di chuyển bất kỳ khối công việc nào sang một luồng khác, cả đồng bộ hoặc không đồng bộ.
+
+Điều này làm cho GCD cực kỳ hiệu quả trong việc loại bỏ hầu hết các nguyên nhân chung gây treo cổ.
+
+Để thực hiện một khối công việc không đồng bộ trên một luồng khác, hãy gửi khối đó không đồng bộ đến một hàng đợi điều phối khác.
+
+Trình xử lý hoàn thành có thể được thêm vào trong khối không đồng bộ bằng cách gửi trở lại hàng đợi chính.
+
+Grand Central Dispatch cũng cho phép bạn tính toán trước khi làm ấm.
+
+Bằng cách gửi một tác vụ không đồng bộ vào hàng đợi, có thể là prefetchQueue, tác vụ sẽ bắt đầu thực hiện trong khi luồng chính vẫn tự do thực hiện các công việc khác.
+
+Khi chuỗi chính cần những kết quả này, nó có thể gửi đồng bộ hóa lên prefetchQueue để chờ nhiệm vụ hoàn thành.
+
+Chúng tôi vừa chạm vào bề mặt của những gì GCD có thể làm.
+
+Để tìm hiểu thêm, hãy xem bài nói chuyện "Hiện đại hóa Grand Central Dispatch" từ năm 2017.
+
+Hãy hiểu một số sự đánh đổi với các giải pháp mà chúng ta vừa nói đến.
+
+Bộ nhớ đệm sử dụng bộ nhớ, vì vậy bạn nên nhận thức được kích thước của chúng để tránh sự phát triển bộ nhớ lớn.
+
+Điều quan trọng là phải đảm bảo có một cơ chế vô hiệu hóa chính xác để các giá trị không bị cũ.
+
+Thông báo có thể nói chuyện phiếm.
+
+Khi quan sát một cái, điều quan trọng là phải xem xét tần suất mà thông báo đó phát ra.
+
+Thêm một bộ lọc trước khi xử lý hoặc kết hợp nhiều thông báo sẽ làm giảm sự gián đoạn CPU.
+
+Khi sử dụng các API không đồng bộ, điều quan trọng là phải biết liệu hoạt động được đề cập có nên được đồng bộ hóa hay không, đặc biệt bằng cách kiểm tra trước xem nó có quan trọng đối với việc cập nhật giao diện người dùng hay không, vì hệ điều hành không ưu tiên công việc không đồng bộ.
+
+Khi sử dụng Grand Central Dispatch để thực hiện các tác vụ không đồng bộ, bạn đang thay đổi thứ tự các tác vụ trong mã của bạn thực hiện.
+
+Điều quan trọng là phải ghi nhớ những nhiệm vụ nào phải được đặt hàng cho người khác để đảm bảo ứng dụng của bạn không bị hỏng.
+
+Sử dụng dispatch_sync với hàng đợi nối tiếp là một cách tuyệt vời để đồng bộ hóa các hoạt động khi cần thiết.
+
+So với tác động nghiêm trọng đối với trải nghiệm người dùng, những sự đánh đổi này luôn đáng giá.
+
+Một số suy nghĩ cần ghi nhớ trong khi loại bỏ treo là sử dụng Khung và API của Apple.
+
+Những thứ này đã tương thích với một loạt các thiết bị, có hiệu suất và được cập nhật liên tục để hiệu quả và hiệu quả hơn.
+
+Thực hiện các cải tiến lặp đi lặp lại trong mã của bạn.
+
+Bằng cách này, bạn sẽ thực hiện các bản sửa lỗi được nhắm mục tiêu và có thể thấy ảnh hưởng của các thay đổi riêng lẻ.
+
+Hãy là một người hàng xóm tốt khi sử dụng tài nguyên hệ thống.
+
+Sử dụng nhiều tài nguyên hơn mức cần thiết không chỉ làm giảm hiệu suất của ứng dụng của riêng bạn mà còn có thể gây ra các sự chậm lại khác trong hệ thống.
+
+Cùng nhau, chúng tôi đã trải nghiệm việc treo cổ chói tai có thể như thế nào và tầm quan trọng của việc bảo vệ chống lại sự treo cổ trong ứng dụng của bạn.
+
+Trong tương lai, hãy đặt đường cơ sở hiệu suất của ứng dụng của bạn thông qua trình tổ chức Xcode.
+
+Trong quá trình phát triển và đánh giá mã, hãy chú ý đến các mẫu chống có thể gây treo cổ.
+
+Chúng tôi đã thảo luận về bảy trong số những cái phổ biến nhất.
+
+Chẩn đoán các vấn đề xuất hiện với trình lập hồ sơ thời gian và các công cụ theo dõi hệ thống, sử dụng MetricKit để ưu tiên các vấn đề mà khách hàng thường gặp phải nhất.
+
+Loại bỏ bất kỳ sự treo nào bạn tìm thấy bằng cách sử dụng bộ nhớ cache, quan sát thông báo, tìm kiếm các lựa chọn thay thế không đồng bộ hoặc tận dụng Grand Central Dispatch.
+
+Bằng cách làm theo các bước này, các ứng dụng của bạn sẽ có hiệu suất tốt hơn để cung cấp trải nghiệm người dùng tốt nhất có thể.
+
+Cảm ơn vì đã quanh quẩn.
+
+[Âm nhạc].

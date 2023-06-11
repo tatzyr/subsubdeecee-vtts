@@ -1,0 +1,587 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:15.000
+Xin chào. Tên tôi là Rini Patel, và tôi đến từ nhóm kỹ sư phần mềm GPU.
+
+00:00:15.000 --> 00:00:20.000
+Trong phiên này, tôi sẽ giới thiệu quy trình biên dịch đổ bóng mới trong Metal.
+
+00:00:20.000 --> 00:00:28.000
+Ngôn ngữ đổ bóng kim loại là một ngôn ngữ dựa trên C++ và mô hình biên dịch của nó gần giống với mô hình biên dịch CPU.
+
+00:00:28.000 --> 00:00:38.000
+Khi khối lượng công việc GPU ngày càng phức tạp, Metal đã phát triển tương tự để giải quyết tính linh hoạt và hiệu suất cần thiết để hỗ trợ các trường hợp sử dụng hiện đại.
+
+00:00:38.000 --> 00:00:57.000
+Một số thách thức phổ biến mà bạn có thể đã phải đối mặt khi tạo bộ đổ bóng của mình có thể là chia sẻ mã tiện ích trên các đường ống, sửa đổi hành vi của bộ đổ bóng trong thời gian chạy mà không cần biên dịch lại hoặc khả năng sử dụng lại các tệp nhị phân GPU đã biên dịch giữa các lần khởi chạy ứng dụng.
+
+00:00:57.000 --> 00:01:02.000
+Vì vậy, hãy xem qua một mã đổ bóng đơn giản và thảo luận về các kịch bản.
+
+00:01:02.000 --> 00:01:10.000
+Ở đây, chúng ta có một trình đổ bóng phân đoạn đơn giản trả về kết quả của foo() hoặc bar(), tùy thuộc vào kết quả của điều kiện.
+
+00:01:10.000 --> 00:01:19.000
+Bây giờ, nếu các chức năng đó được gọi bởi nhiều đường ống, chúng ta có thể muốn biên dịch chúng chỉ một lần và thay vào đó liên kết chúng với mỗi đường ống.
+
+00:01:19.000 --> 00:01:31.000
+Chúng tôi có thể cần liên kết một triển khai khác của các chức năng này trong thời gian chạy hoặc chúng tôi có thể cần một bộ đổ bóng phân đoạn có thể mở rộng để xử lý một câu lệnh trường hợp mới cho baz().
+
+00:01:31.000 --> 00:01:38.000
+Chúng tôi cũng có thể muốn có thể gọi một hàm do người dùng cung cấp bat() thay vì baz() từ hàm phân đoạn của chúng tôi.
+
+00:01:38.000 --> 00:01:49.000
+Như bạn có thể thấy, có nhiều yêu cầu khác nhau mà một đường ống tác giả đổ bóng có thể có và Metal cung cấp các API khác nhau để hỗ trợ các triển khai khác nhau.
+
+00:01:49.000 --> 00:01:54.000
+Mỗi cách tiếp cận sẽ có một sự đánh đổi khác nhau giữa thời gian biên dịch và hiệu suất đổ bóng.
+
+00:01:54.000 --> 00:02:03.000
+Và hôm nay, tôi muốn nói về quy trình biên dịch mới sẽ giúp bạn tìm thấy sự cân bằng hoàn hảo giữa hiệu suất và tính linh hoạt.
+
+00:02:03.000 --> 00:02:11.000
+Chúng ta sẽ bắt đầu với sự hỗ trợ mới cho các thư viện động cho các đường ống kết xuất, cũng như các con trỏ chức năng cho các đường ống kết xuất.
+
+00:02:11.000 --> 00:02:16.000
+Chúng ta sẽ nói một chút về những bổ sung cho binaryArchive API.
+
+00:02:16.000 --> 00:02:19.000
+Sau đó, chúng ta sẽ thấy các chức năng được liên kết riêng tư.
+
+00:02:19.000 --> 00:02:26.000
+Và cuối cùng, chúng tôi sẽ giới thiệu một tính năng hoàn toàn mới để ghép các chức năng có thể nhìn thấy trong Metal.
+
+00:02:26.000 --> 00:02:30.000
+Vì vậy, hãy bắt đầu với sự hỗ trợ thư viện động trong Metal.
+
+00:02:30.000 --> 00:02:34.000
+Thư viện động là một công cụ phổ biến trong kỹ thuật phần mềm.
+
+00:02:34.000 --> 00:02:43.000
+Chúng là các tệp đối tượng được chia sẻ cho phép bạn phân chia mã tiện ích thành một đơn vị biên dịch độc lập.
+
+00:02:43.000 --> 00:02:51.000
+Chúng giúp giảm lượng mã đổ bóng được biên dịch và sử dụng lại nó giữa nhiều đường ống.
+
+00:02:51.000 --> 00:02:59.000
+Ngoài ra, chúng cho phép bạn tự động liên kết, tải và chia sẻ mã nhị phân GPU.
+
+00:02:59.000 --> 00:03:14.000
+Năm ngoái, chúng tôi đã giới thiệu các ngôn ngữ động cho các đường ống tính toán và để được giới thiệu thêm về các thư viện động trong Metal, tôi khuyến khích bạn xem bài thuyết trình năm trước của chúng tôi, "Xây dựng GPU Binaries với Metal."
+
+00:03:14.000 --> 00:03:19.000
+Năm nay, chúng tôi sẽ mang đến các thư viện năng động để kết xuất và lát gạch các đường ống.
+
+00:03:19.000 --> 00:03:26.000
+Với sự hỗ trợ bổ sung này, giờ đây bạn có thể chia sẻ các thư viện tiện ích trên tất cả các khối lượng công việc tính toán và hiển thị của mình.
+
+00:03:26.000 --> 00:03:32.000
+Và bây giờ chúng ta đã biết thư viện động là gì, đã đến lúc nói về một số trường hợp sử dụng.
+
+00:03:32.000 --> 00:03:38.000
+Các hàm trợ giúp thường được sử dụng trên các bộ đổ bóng chung, đỉnh, đoạn và đổ bóng gạch.
+
+00:03:38.000 --> 00:03:47.000
+Với việc bổ sung các thư viện động để hiển thị đường ống, giờ đây bạn có thể quản lý một lượng lớn mã tiện ích và chia sẻ nó trên tất cả khối lượng công việc của mình.
+
+00:03:47.000 --> 00:04:01.000
+Bạn có thể biên dịch trước các thư viện có thể được sử dụng trong thời gian chạy mà không gặp phải tình trạng biên dịch chậm lại và thậm chí hoán đổi các chức năng của thời gian chạy, đơn giản bằng cách thay đổi các thư viện được tải trong khi tạo đường ống.
+
+00:04:01.000 --> 00:04:10.000
+Họ cũng giúp người dùng của bạn tạo mã đổ bóng mà bạn có thể tải như một phần của đường ống của mình mà không cần cung cấp nguồn.
+
+00:04:10.000 --> 00:04:13.000
+Vì vậy, chúng tôi đã nói về thời điểm sử dụng các thư viện động.
+
+00:04:13.000 --> 00:04:16.000
+Bây giờ chúng ta hãy xem cách xây dựng và làm việc với họ.
+
+00:04:16.000 --> 00:04:25.000
+Trong trình đổ bóng phân đoạn ví dụ của chúng tôi, chúng tôi gọi các hàm foo() và bar(), nhưng chúng tôi không cung cấp triển khai cho cả hai tại thời điểm biên dịch.
+
+00:04:25.000 --> 00:04:32.000
+Thay vào đó, việc triển khai cho các chức năng này tồn tại trong thư viện Metal mà sau này chúng tôi liên kết khi tạo đường ống kết xuất của mình.
+
+00:04:32.000 --> 00:04:38.000
+Và cũng có thể cung cấp các thư viện riêng biệt cho từng chức năng mà bạn có thể sử dụng.
+
+00:04:38.000 --> 00:04:44.000
+Bây giờ chúng ta hãy thảo luận về các công cụ và tính linh hoạt mà bạn có bằng cách xây dựng các thư viện động trong Metal.
+
+00:04:44.000 --> 00:04:59.000
+Trước tiên, bạn cần biên dịch nguồn đổ bóng Metal của mình thành AIR và bạn có thể làm điều đó bằng cách sử dụng chuỗi công cụ Metal của Xcode như một phần của quy trình xây dựng hoặc bằng cách biên dịch từ nguồn bằng cách sử dụng newLibraryWithSource API trong thời gian chạy.
+
+00:04:59.000 --> 00:05:08.000
+Với bộ đổ bóng kim loại được biên dịch của bạn trong AIR, giờ đây bạn có thể tạo một thư viện động đơn giản bằng cách sử dụng API Thư viện Động mới.
+
+00:05:08.000 --> 00:05:13.000
+Thư viện này đã sẵn sàng để sử dụng ở định dạng nhị phân GPU của nó.
+
+00:05:13.000 --> 00:05:16.000
+Nhưng nếu bạn muốn sử dụng lại nó trong các lần chạy sau thì sao?
+
+00:05:16.000 --> 00:05:25.000
+Để làm điều đó, bạn có thể tuần tự hóa thư viện động của mình vào đĩa và điều này có thể được thực hiện bằng cách sử dụng API serializeToURL.
+
+00:05:25.000 --> 00:05:32.000
+Và sau đó, bạn có thể sử dụng lại nó bằng cách gọi newDynamicLibraryWithURL API.
+
+00:05:32.000 --> 00:05:37.000
+Bây giờ chúng ta hãy xem qua một ví dụ gọi các hàm từ thư viện động và bộ đổ bóng phân đoạn.
+
+00:05:37.000 --> 00:05:46.000
+Trong ví dụ này, chúng tôi khai báo các hàm foo() và bar() bằng cách sử dụng từ khóa extern, nhưng chúng tôi không cung cấp định nghĩa cho chúng.
+
+00:05:46.000 --> 00:05:50.000
+Để sử dụng chúng, chúng tôi chỉ cần gọi các hàm này từ trình đổ bóng phân đoạn của chúng tôi.
+
+00:05:50.000 --> 00:05:56.000
+Và bạn có thể cung cấp một triển khai cho các chức năng bên ngoài khi xây dựng thư viện Metal của bạn.
+
+00:05:56.000 --> 00:06:04.000
+Bây giờ, hãy nhớ rằng cũng có thể thay thế các triển khai đó bằng một cái gì đó khác biệt trong thời gian chạy.
+
+00:06:04.000 --> 00:06:11.000
+Và để làm điều này, bạn chỉ cần thêm các thư viện động của mình vào mảng thư viện được tải sẵn thích hợp.
+
+00:06:11.000 --> 00:06:17.000
+Trong trường hợp của chúng tôi, đó là mảnh vỡ, nhưng một thuộc tính tương tự có sẵn cho từng giai đoạn và đường ống.
+
+00:06:17.000 --> 00:06:23.000
+Và các ký hiệu sẽ được giải quyết theo cùng thứ tự mà các thư viện được thêm vào mảng này.
+
+00:06:23.000 --> 00:06:27.000
+Quy trình làm việc này rất phù hợp để thử nghiệm các triển khai mới.
+
+00:06:27.000 --> 00:06:31.000
+Và đó là nó cho các thư viện năng động.
+
+00:06:31.000 --> 00:06:41.000
+Nếu bạn đang tìm cách sử dụng các thư viện động Metal, hỗ trợ có sẵn cho các đường ống tính toán trên gia đình Apple GPU 7 trở lên trong macOS Monterey.
+
+00:06:41.000 --> 00:06:50.000
+Nó cũng có sẵn cho các GPU khác, cũng như hầu hết các thiết bị Mac family 2, mặc dù bạn sẽ cần gọi thiết bị Metal hỗ trợ các thư viện động.
+
+00:06:50.000 --> 00:06:56.000
+Trên iOS 15, tính năng này có sẵn trên tất cả các thiết bị Apple 6 trở lên.
+
+00:06:56.000 --> 00:07:03.000
+Hỗ trợ đường ống kết xuất và gạch có sẵn trên tất cả các thiết bị hỗ trợ bộ tính năng Apple 6.
+
+00:07:03.000 --> 00:07:09.000
+Tiếp theo, hãy nói về những cải tiến đối với con trỏ chức năng sắp ra mắt trong năm nay.
+
+00:07:09.000 --> 00:07:21.000
+Con trỏ hàm là một cấu trúc đơn giản để tham chiếu đến một mã mà chúng tôi có thể gọi để làm cho mã của bạn có thể mở rộng bằng cách cho phép bạn gọi các hàm mà chúng tôi chưa từng thấy trước đây.
+
+00:07:21.000 --> 00:07:32.000
+Năm ngoái, chúng tôi đã giới thiệu các con trỏ hàm đường ống tính toán và vì điều đó, tôi khuyên bạn nên xem bài thuyết trình năm trước của chúng tôi, "Tìm hiểu các con trỏ hàm kim loại."
+
+00:07:32.000 --> 00:07:38.000
+Năm nay, chúng tôi đang mở rộng hỗ trợ con trỏ chức năng cho các đường ống kết xuất và gạch trên Apple Silicon.
+
+00:07:38.000 --> 00:07:45.000
+Tương tự như các thư viện động, con trỏ chức năng cho phép tạo các đường ống có thể tùy chỉnh.
+
+00:07:45.000 --> 00:07:53.000
+Với các con trỏ chức năng, một đường ống GPU có thể gọi mã chưa từng thấy trong quá trình biên dịch đường ống.
+
+00:07:53.000 --> 00:08:06.000
+Với các bảng con trỏ hàm, hành vi thực thi mã có thể thay đổi động, khi bạn liên kết bảng hàm khác nhau hoặc khi đường ống GPU lập chỉ mục vào bảng con trỏ hàm.
+
+00:08:06.000 --> 00:08:13.000
+Bạn cũng có thể quyết định cách cân bằng hiệu suất biên dịch với hiệu suất thời gian chạy bằng cách sử dụng con trỏ hàm.
+
+00:08:13.000 --> 00:08:21.000
+Ví dụ, để biên dịch nhanh nhất, bạn có thể biên dịch trước các con trỏ hàm thành tệp nhị phân GPU và nhanh chóng xử lý trong đường ống.
+
+00:08:21.000 --> 00:08:33.000
+Mặt khác, để có hiệu suất thời gian chạy tốt nhất, bạn có thể có các biểu diễn AIR tham chiếu đường ống của mình về các chức năng, cho phép trình biên dịch thực hiện tối ưu hóa tối đa.
+
+00:08:33.000 --> 00:08:37.000
+Bây giờ hãy xem cách bạn có thể đặt con trỏ hàm trong mã của mình.
+
+00:08:37.000 --> 00:08:40.000
+Có ba khối xây dựng cơ bản.
+
+00:08:40.000 --> 00:08:51.000
+Chúng tôi bắt đầu bằng cách khởi tạo hàm, sau đó định cấu hình một đường ống với các hàm này và cuối cùng, tạo các bảng hàm.
+
+00:08:51.000 --> 00:08:57.000
+Một khi điều này được thực hiện, việc sử dụng một vòng lặp kết xuất mới không liên quan đến nhiều mã.
+
+00:08:57.000 --> 00:09:01.000
+Vì vậy, hãy đi sâu vào chi tiết của từng bước.
+
+00:09:01.000 --> 00:09:10.000
+Để bắt đầu sử dụng con trỏ hàm, trước tiên chúng tôi khai báo bộ mô tả hàm và khởi tạo để biên dịch phiên bản nhị phân GPU của hàm.
+
+00:09:10.000 --> 00:09:19.000
+Điều này sẽ đẩy nhanh thời gian tạo đường ống và nó đơn giản như khai báo một bộ mô tả và đặt tùy chọn biên dịch thành nhị phân.
+
+00:09:19.000 --> 00:09:28.000
+Khi hàm Metal foo được tạo từ thư viện bằng cách sử dụng bộ mô tả này, hàm sẽ được biên dịch bởi trình biên dịch phụ trợ GPU.
+
+00:09:28.000 --> 00:09:33.000
+Tiếp theo, chúng ta cần cấu hình bộ mô tả đường ống kết xuất.
+
+00:09:33.000 --> 00:09:42.000
+Đầu tiên, chúng tôi thêm các hàm thông qua bộ mô tả đường ống vào giai đoạn mà chúng sẽ được sử dụng, có thể là đỉnh, đoạn hoặc giai đoạn gạch.
+
+00:09:42.000 --> 00:09:46.000
+Chúng ta có thể chọn thêm các hàm ở dạng AIR hoặc dạng nhị phân.
+
+00:09:46.000 --> 00:09:55.000
+Khi thêm các hàm AIR, trình biên dịch sẽ liên kết tĩnh các hàm hiển thị, cho phép trình biên dịch phụ trợ tối ưu hóa mã.
+
+00:09:55.000 --> 00:10:04.000
+Mặt khác, việc thêm các hàm nhị phân sẽ thông báo cho trình điều khiển các hàm được biên dịch bên ngoài nào có thể gọi được từ một đường ống nhất định.
+
+00:10:04.000 --> 00:10:24.000
+Một điều bổ sung cần lưu ý ở đây là khi bạn tạo một đường ống sử dụng các hàm nhị phân và nếu mã mà bạn đang gọi có chuỗi cuộc gọi phức tạp, như được minh họa ở đây, điều quan trọng là phải chỉ định độ sâu ngăn xếp cuộc gọi tối đa cần thiết, vì trình biên dịch không thể thực hiện phân tích tĩnh để xác định độ sâu.
+
+00:10:24.000 --> 00:10:32.000
+Trình biên dịch sẽ mặc định là độ sâu tối đa sẽ được chạy và bạn có thể bị tràn ngăn xếp nếu độ sâu không được chỉ định chính xác.
+
+00:10:32.000 --> 00:10:39.000
+Ngược lại, việc chỉ định độ sâu một cách chính xác dẫn đến một khái niệm tài nguyên tốt hơn và hiệu suất tối ưu.
+
+00:10:39.000 --> 00:10:46.000
+Vì vậy, một khi bộ mô tả được thiết lập đầy đủ, bạn có thể tạo đường ống của mình sẵn sàng sử dụng con trỏ chức năng.
+
+00:10:46.000 --> 00:10:55.000
+Sau khi tạo đường ống của bạn, các bước tiếp theo là tạo các bảng hàm hiển thị và điền chúng với các hàm xử lý trong API.
+
+00:10:55.000 --> 00:11:01.000
+Đầu tiên, chúng tôi tạo một bảng hàm hiển thị bằng cách sử dụng bộ mô tả và chỉ định một giai đoạn kết xuất.
+
+00:11:01.000 --> 00:11:04.000
+Sau đó, chúng tôi tạo các tay cầm chức năng để tham chiếu các chức năng đó.
+
+00:11:04.000 --> 00:11:11.000
+Cả hai tay cầm chức năng và bảng đều dành riêng cho một đường ống nhất định và giai đoạn đã chọn.
+
+00:11:11.000 --> 00:11:16.000
+Sau đó, bạn có thể chèn các tay cầm vào bảng chức năng bằng cách sử dụng setFunction API.
+
+00:11:16.000 --> 00:11:22.000
+Bây giờ hãy xem bạn sử dụng bảng hàm này như thế nào sau khi chúng tôi đã hoàn thành tất cả các thiết lập.
+
+00:11:22.000 --> 00:11:29.000
+Đầu tiên, như một phần của lệnh và mã hóa, chúng tôi liên kết bảng hàm hiển thị với một chỉ mục bộ đệm.
+
+00:11:29.000 --> 00:11:39.000
+Trong chính trình đổ bóng, visible_function_table được truyền dưới dạng liên kết bộ đệm và sau đó chúng ta có thể gọi các hàm của mình thông qua bảng này.
+
+00:11:39.000 --> 00:11:42.000
+Và đó là một trường hợp đơn giản của việc sử dụng con trỏ hàm.
+
+00:11:42.000 --> 00:11:52.000
+Khi sử dụng con trỏ hàm, không có gì lạ khi tạo một đường ống chỉ để sau này phát hiện ra rằng bạn cần truy cập một hoặc nhiều chức năng bổ sung.
+
+00:11:52.000 --> 00:12:03.000
+Bây giờ, nếu bạn có thể đạt được điều đó bằng cách tạo đường ống thứ hai từ một bộ mô tả giống hệt nhau, điều này sẽ thêm các chức năng bổ sung, nhưng điều đó sẽ kích hoạt biên dịch đường ống.
+
+00:12:03.000 --> 00:12:09.000
+Để đẩy nhanh quá trình này, Metal cho phép bạn chỉ định xem bạn có kế hoạch mở rộng đường ống ban đầu hay không.
+
+00:12:09.000 --> 00:12:19.000
+Bằng cách này, một đường ống mới có thể được tạo nhanh hơn từ một đường ống hiện có và nó có thể sử dụng tất cả các bảng con trỏ hàm ban đầu được tạo cho đường ống ban đầu.
+
+00:12:19.000 --> 00:12:31.000
+Để làm điều đó từ mã, khi tạo đường ống ban đầu, hãy đặt tùy chọn supportAddingBinaryFunctions thành CÓ, cho tất cả các giai đoạn mà bạn muốn mở rộng.
+
+00:12:31.000 --> 00:12:43.000
+Sau đó, khi bạn cần tạo một đường ống mở rộng, hãy tạo RenderPipelineFunctionDescriptor và bao gồm hàm nhị phân mới bat() trong danh sách hàm có độ dài đoạn.
+
+00:12:43.000 --> 00:12:56.000
+Cuối cùng, gọi RenderPipelineState mới với các hàm nhị phân bổ sung trên renderPipeline1 để tạo renderPipeline2, sẽ giống hệt nhau, nhưng bao gồm bat con trỏ hàm bổ sung.
+
+00:12:56.000 --> 00:12:58.000
+Và đó là khá nhiều nó.
+
+00:12:58.000 --> 00:13:03.000
+Bây giờ chúng ta đã thấy cách sử dụng con trỏ hàm, đây là nơi bạn có thể sử dụng chúng.
+
+00:13:03.000 --> 00:13:11.000
+Con trỏ chức năng trong đường ống tính toán được hỗ trợ trên gia đình Apple GPU 6 trở lên, trong macOS Big Sur và iOS 14.
+
+00:13:11.000 --> 00:13:15.000
+Chúng cũng được hỗ trợ trên các thiết bị Mac family 2.
+
+00:13:15.000 --> 00:13:27.000
+Và năm nay, chúng tôi đang mở rộng hỗ trợ con trỏ chức năng cho các đường ống kết xuất và gạch trên dòng Apple GPU 6 trở lên, trong Mac OS Monterey và iOS 15.
+
+00:13:27.000 --> 00:13:33.000
+Chủ đề tiếp theo tôi muốn nói đến là quản lý chi phí biên dịch hàm nhị phân.
+
+00:13:33.000 --> 00:13:41.000
+Việc biên dịch các bộ đổ bóng có thể cực kỳ tốn thời gian và bạn có thể muốn kiểm soát chi phí mà nó mang lại cho một ứng dụng.
+
+00:13:41.000 --> 00:13:46.000
+Để giúp điều đó, chúng tôi đã thêm binaryArchives vào Metal vào năm ngoái.
+
+00:13:46.000 --> 00:14:00.000
+BinaryArchives có thể thu thập và lưu trữ các phiên bản nhị phân được biên dịch của đường ống đến đĩa, tiết kiệm thời gian biên dịch và các lần chạy tiếp theo và giảm chi phí bộ nhớ liên quan đến việc biên dịch.
+
+00:14:00.000 --> 00:14:10.000
+Năm nay, chúng tôi đang bổ sung khả năng lưu trữ chức năng hiển thị và giao nhau vào binaryArchives, cho phép bạn giảm đáng kể chi phí.
+
+00:14:10.000 --> 00:14:15.000
+Vì vậy, hãy xem cách bạn lưu trữ và tải từ binaryArchives.
+
+00:14:15.000 --> 00:14:26.000
+Để thêm một hàm vào BinaryArchive, chỉ cần gọi addFunctionWithDescriptor và chuyển bộ mô tả hàm và thư viện nguồn làm đối số.
+
+00:14:26.000 --> 00:14:39.000
+Để tải con trỏ hàm nhị phân từ BinaryArchive, hãy đặt BinaryArchive trên mảng binaryArchives của bộ mô tả hàm, sau đó gọi phương thức thư viện Metal newFunctionWithDescriptor.
+
+00:14:39.000 --> 00:14:48.000
+Nếu bất kỳ kho lưu trữ nào trong mảng có con trỏ hàm được biên dịch, nó sẽ được trả về ngay lập tức mà không cần phải biên dịch lại.
+
+00:14:48.000 --> 00:14:55.000
+Dưới đây là một số quy tắc minh họa cách newFunctionWithDescriptor sẽ hoạt động với binaryArchives.
+
+00:14:55.000 --> 00:15:00.000
+Đầu tiên chúng tôi tìm kiếm phiên bản nhị phân của hàm trong danh sách BinaryArchive.
+
+00:15:00.000 --> 00:15:13.000
+Nếu hàm được tìm thấy, nó sẽ được trả về và nếu không tìm thấy, chúng tôi sẽ kiểm tra tùy chọn CompileToBinary và trả về phiên bản AIR của hàm, nếu không yêu cầu biên dịch nhị phân.
+
+00:15:13.000 --> 00:15:29.000
+Mặt khác, nếu trình biên dịch nhị phân được yêu cầu, thì tùy thuộc vào tùy chọn đường ống, FailOnBinaryArchiveMiss sẽ biên dịch hàm nhị phân trong thời gian chạy hoặc trả về nil.
+
+00:15:29.000 --> 00:15:37.000
+Khi bạn tích hợp MTLBinaryArchive vào ứng dụng của mình, bạn có thể sử dụng cùng một kho lưu trữ để lưu trữ tất cả mã được biên dịch GPU của mình.
+
+00:15:37.000 --> 00:15:44.000
+Các đường ống kết xuất, gạch và tính toán của bạn, cũng như các con trỏ hàm nhị phân của bạn.
+
+00:15:44.000 --> 00:15:52.000
+Và sau khi kho lưu trữ của bạn đã được điền trước với các đối tượng trạng thái đường ống và các hàm nhị phân, bạn có thể tuần tự hóa nó vào đĩa.
+
+00:15:52.000 --> 00:16:01.000
+Thu thập và lưu trữ các tệp nhị phân GPU của bạn theo cách này sẽ giúp tăng tốc độ biên dịch đổ bóng cho các lần chạy ứng dụng tiếp theo.
+
+00:16:01.000 --> 00:16:09.000
+Khi sử dụng một đường ống với các con trỏ chức năng, bạn có thể muốn lưu trữ chính đối tượng trạng thái đường ống.
+
+00:16:09.000 --> 00:16:15.000
+Nhưng tại sao bạn nên lưu trữ khi bạn có một đường ống đi kèm với các kết hợp con trỏ chức năng khác nhau?
+
+00:16:15.000 --> 00:16:23.000
+Ví dụ, ở đây, có ba bộ mô tả đường ống giống hệt nhau, ngoại trừ con trỏ chức năng người dùng của chúng.
+
+00:16:23.000 --> 00:16:30.000
+Vì vậy, nếu bạn đang sử dụng con trỏ hàm AIR, bạn cần lưu trữ tất cả các hoán vị của đường ống.
+
+00:16:30.000 --> 00:16:42.000
+Tuy nhiên, khi sử dụng con trỏ hàm nhị phân, chỉ cần lưu trữ một biến thể duy nhất là đủ vì mã nhị phân đường ống không thay đổi khi một con trỏ hàm mới được thêm vào nó.
+
+00:16:42.000 --> 00:16:51.000
+Và bạn có thể sử dụng kho lưu trữ đó để tìm tất cả các biến thể khác của đường ống, độc lập với con trỏ hàm nhị phân nào được sử dụng trong bộ mô tả đường ống.
+
+00:16:51.000 --> 00:16:59.000
+Để kết thúc nó, bạn luôn muốn sử dụng binaryArchives trong Metal, vì nó là một công cụ tuyệt vời để kiểm soát chi phí biên dịch đường ống của bạn.
+
+00:16:59.000 --> 00:17:10.000
+Hỗ trợ cho binaryArchives có sẵn trên tất cả các thiết bị, nhưng việc thêm con trỏ hàm vào BinaryArchive phụ thuộc vào khả năng con trỏ hàm.
+
+00:17:10.000 --> 00:17:17.000
+Bây giờ, tôi muốn nói ngắn gọn về sự bổ sung tiếp theo của chúng tôi trong năm nay, đó là các chức năng liên kết riêng tư.
+
+00:17:17.000 --> 00:17:32.000
+Cho đến nay, chúng tôi đã thảo luận về cách các thư viện động và con trỏ hàm cung cấp nhiều tính linh hoạt cho quy trình phát triển đổ bóng của bạn, nhưng đôi khi, vì lý do hiệu suất, bạn có thể muốn liên kết tĩnh một hàm bên ngoài vào đường ống của mình.
+
+00:17:32.000 --> 00:17:39.000
+Năm ngoái, chúng tôi đã thêm linkedFunctions API với sự hỗ trợ cho các hàm AIR liên kết tĩnh.
+
+00:17:39.000 --> 00:17:45.000
+Tuy nhiên, điều này yêu cầu hỗ trợ con trỏ hàm, vì chúng có thể sử dụng được trong bảng hàm.
+
+00:17:45.000 --> 00:17:48.000
+Năm nay, chúng tôi sẽ giới thiệu các chức năng riêng tư.
+
+00:17:48.000 --> 00:18:02.000
+Cả hai chức năng và chức năng riêng tư đều được liên kết tĩnh ở cấp độ AIR, nhưng vì chúng là riêng tư, không thể xử lý chức năng nào cho con trỏ hàm và điều này cho phép trình biên dịch tối ưu hóa hoàn toàn mã đổ bóng của bạn.
+
+00:18:02.000 --> 00:18:04.000
+Vậy, chúng có sẵn ở đâu?
+
+00:18:04.000 --> 00:18:15.000
+Bởi vì tính năng này hoạt động với mã ở cấp độ AIR, nó có sẵn trên tất cả các thiết bị trong macOS Monterey và iOS 15.
+
+00:18:15.000 --> 00:18:21.000
+Chuyển sang phần bổ sung cuối cùng mà tôi muốn thảo luận hôm nay, khâu chức năng.
+
+00:18:21.000 --> 00:18:26.000
+Một số ứng dụng cần tạo nội dung động trong thời gian chạy.
+
+00:18:26.000 --> 00:18:32.000
+Ví dụ, để thực hiện các tùy chỉnh cho các hiệu ứng đồ họa dựa trên đầu vào của người dùng.
+
+00:18:32.000 --> 00:18:37.000
+Hoặc, giả sử, hạt nhân tính toán phức tạp dựa trên dữ liệu đến.
+
+00:18:37.000 --> 00:18:41.000
+Khâu chức năng là một công cụ tuyệt vời để giải quyết vấn đề này.
+
+00:18:41.000 --> 00:18:48.000
+Trước khi khâu chức năng, cách duy nhất để làm điều này là tạo chuỗi nguồn Kim loại.
+
+00:18:48.000 --> 00:18:59.000
+Kỹ thuật thao tác dây có thể hơi kém hiệu quả và nó cũng ngụ ý rằng việc dịch từ Metal sang AIR sẽ diễn ra trong thời gian chạy, đây có thể là một hoạt động tốn kém.
+
+00:18:59.000 --> 00:19:03.000
+Vì vậy, chúng ta hãy xem cách hoạt động của khâu chức năng.
+
+00:19:03.000 --> 00:19:11.000
+Khâu hàm cung cấp một cơ chế để tạo ra các hàm từ đồ thị tính toán và các hàm được biên dịch trước trong thời gian chạy.
+
+00:19:11.000 --> 00:19:15.000
+Biểu đồ tính toán là Biểu đồ tuần hoàn có định hướng.
+
+00:19:15.000 --> 00:19:26.000
+Và trong một biểu đồ, có hai loại nút: các nút đầu vào đại diện cho các đối số của hàm được tạo và các nút hàm đại diện cho các lệnh gọi hàm.
+
+00:19:26.000 --> 00:19:41.000
+Ngoài ra còn có hai loại cạnh: các cạnh dữ liệu đại diện cho cách dữ liệu chảy từ nút này sang nút khác và các cạnh điều khiển đại diện cho thứ tự thực hiện các lệnh gọi hàm.
+
+00:19:41.000 --> 00:19:47.000
+Chúng ta sẽ xem cách khâu hàm sử dụng biểu đồ tính toán để tạo ra một hàm.
+
+00:19:47.000 --> 00:19:51.000
+Chúng ta sẽ bắt đầu với khái niệm về các chức năng có thể khâu lại.
+
+00:19:51.000 --> 00:19:54.000
+Hàm trong biểu đồ phải có thuộc tính có thể khâu được.
+
+00:19:54.000 --> 00:20:00.000
+Hàm như vậy là một hàm hiển thị, có thể được sử dụng với functionStitching API.
+
+00:20:00.000 --> 00:20:10.000
+Các chức năng có thể khâu có thể là một phần của thư viện Metal được vận chuyển cùng với gói ứng dụng của bạn để tránh chi phí dịch Metal to AIR.
+
+00:20:10.000 --> 00:20:18.000
+Quá trình khâu tạo ra các chức năng trực tiếp trong AIR và bỏ qua hoàn toàn giao diện người dùng Metal.
+
+00:20:18.000 --> 00:20:30.000
+Hàm được tạo là một hàm có thể khâu thông thường, vì vậy nó có thể được liên kết vào một đường ống hoặc được sử dụng trực tiếp làm con trỏ hàm hoặc nó có thể được sử dụng để tạo các hàm khác.
+
+00:20:30.000 --> 00:20:39.000
+Vì vậy, hãy xem xét biểu đồ trước đó và giả sử rằng chúng ta có các hàm kép A và C từ thư viện như đã mô tả trước đây.
+
+00:20:39.000 --> 00:20:43.000
+Bây giờ chúng ta hãy xem điều gì sẽ xảy ra khi chúng ta liên kết các hàm này với biểu đồ.
+
+00:20:43.000 --> 00:20:50.000
+Trình khâu ở đây liên kết một loại hàm tương ứng với mỗi nút hàm.
+
+00:20:50.000 --> 00:20:58.000
+N0 và N1 lấy loại từ FunctionA, và N2 lấy loại từ FunctionC.
+
+00:20:58.000 --> 00:21:06.000
+Sau đó, stitcher suy ra các loại cho các nút đầu vào bằng cách xem xét các loại tham số của các hàm sử dụng chúng.
+
+00:21:06.000 --> 00:21:17.000
+Ví dụ, Input0 được suy ra là loại được nghĩ ra trong con trỏ vì nó là đối số đầu tiên cho N0 và N1.
+
+00:21:17.000 --> 00:21:22.000
+Stitcher sau đó tạo ra một hàm tương đương với hàm sau được mô tả trong Metal.
+
+00:21:22.000 --> 00:21:29.000
+Với functionStitching API, chúng ta có thể tạo một thư viện chứa các hàm như vậy trực tiếp từ AIR.
+
+00:21:29.000 --> 00:21:36.000
+Và bây giờ chúng tôi đã có ý tưởng công bằng về cách khâu hoạt động, đây là cách bạn có thể sử dụng nó trong API.
+
+00:21:36.000 --> 00:21:39.000
+Đầu tiên, chúng ta cần xác định các đầu vào hàm được khâu.
+
+00:21:39.000 --> 00:21:45.000
+Trong trường hợp này, chúng tôi chỉ cần tạo đủ các nút đầu vào để tính đến tất cả các đối số.
+
+00:21:45.000 --> 00:21:51.000
+Tiếp theo, chúng tôi tạo các nút hàm cho mỗi hàm mà chúng tôi muốn gọi trong biểu đồ của mình.
+
+00:21:51.000 --> 00:22:00.000
+Đối với mỗi lần gọi hàm, chúng tôi xác định tên, đối số và kiểm soát các phụ thuộc nếu chúng tôi có bất kỳ yêu cầu sắp xếp rõ ràng nào.
+
+00:22:00.000 --> 00:22:10.000
+Và cuối cùng, chúng tôi tạo biểu đồ với tên hàm, các nút hàm được sử dụng trong biểu đồ và bất kỳ thuộc tính hàm nào chúng tôi muốn áp dụng.
+
+00:22:10.000 --> 00:22:17.000
+Bạn cũng chỉ định một outputNode, nó sẽ trả về giá trị đầu ra của hàm khâu kết quả.
+
+00:22:17.000 --> 00:22:19.000
+Vì vậy, chúng tôi có biểu đồ của mình.
+
+00:22:19.000 --> 00:22:22.000
+Bây giờ, chúng ta có thể tạo ra một hàm bằng cách sử dụng nó.
+
+00:22:22.000 --> 00:22:26.000
+Bước đầu tiên là tạo một StitchedLibraryDescriptor.
+
+00:22:26.000 --> 00:22:32.000
+Chúng tôi thêm các chức năng và biểu đồ hàm có thể khâu của mình vào bộ mô tả này.
+
+00:22:32.000 --> 00:22:39.000
+Sau đó, chúng tôi tạo một thư viện bằng cách sử dụng bộ mô tả và bây giờ, chúng tôi có thể tạo chức năng được ghép của mình ra khỏi thư viện này.
+
+00:22:39.000 --> 00:22:48.000
+Chức năng khâu này hiện đã sẵn sàng để sử dụng ở bất cứ nơi nào mà chức năng có thể khâu được mong đợi, bao gồm cả chức năng trong biểu đồ khâu khác.
+
+00:22:48.000 --> 00:22:51.000
+Và đó là nó cho chức năng khâu.
+
+00:22:51.000 --> 00:22:58.000
+API này cũng có sẵn trên tất cả các thiết bị trong macOS Monterey và iOS 15.
+
+00:22:58.000 --> 00:23:05.000
+Vì vậy, như một bản tóm tắt nhanh, hôm nay, chúng tôi đã xem xét các thư viện động và con trỏ chức năng cho các đường ống kết xuất.
+
+00:23:05.000 --> 00:23:11.000
+Các chức năng được liên kết riêng tư, có thể được sử dụng để liên kết tĩnh các chức năng hiển thị.
+
+00:23:11.000 --> 00:23:17.000
+Và cách khâu hàm có thể tiết kiệm thời gian biên dịch khi tự động tạo đổ bóng.
+
+00:23:17.000 --> 00:23:22.000
+Vậy, khi nào bạn sẽ chọn cái này hơn cái kia?
+
+00:23:22.000 --> 00:23:27.000
+Thư viện động là một lựa chọn tuyệt vời để liên kết các chức năng trợ giúp và tiện ích.
+
+00:23:27.000 --> 00:23:35.000
+Và chúng được sử dụng tốt nhất khi bạn có một bộ chức năng tiện ích cố định và những chức năng đó không thay đổi thường xuyên.
+
+00:23:35.000 --> 00:23:43.000
+Con trỏ hàm thêm khả năng cho một bộ đổ bóng để gọi các hàm mà nó không biết gì về nó, ngoài chữ ký của chúng.
+
+00:23:43.000 --> 00:23:52.000
+Không cần phải biết có bao nhiêu chức năng tồn tại, tên hoặc thậm chí đánh đổi tốc độ linh hoạt mà nhà phát triển đã thực hiện bằng cách sử dụng AIR hoặc nhị phân.
+
+00:23:52.000 --> 00:23:56.000
+Và năm nay, bạn cũng có thể lưu trữ các con trỏ chức năng.
+
+00:23:56.000 --> 00:24:03.000
+Các hàm riêng tư cung cấp cho bạn một cách để liên kết tĩnh các hàm với một đối tượng trạng thái đường ống theo tên.
+
+00:24:03.000 --> 00:24:15.000
+Chúng là nội bộ của đường ống, vì vậy chúng không thể được mã hóa trong bảng hàm hiển thị, nhưng chúng cho phép trình biên dịch thực hiện tối ưu hóa tối đa và chúng được hỗ trợ trên tất cả các họ GPU.
+
+00:24:15.000 --> 00:24:25.000
+Và cuối cùng, khâu chức năng cung cấp cho bạn một cách để biên dịch trước các đoạn mã của bạn trực tiếp với AIR và thực hiện biên dịch chức năng trong thời gian chạy.
+
+00:24:25.000 --> 00:24:35.000
+Nếu bạn đang tổng hợp các chuỗi đổ bóng kim loại ngày hôm nay và phải trả chi phí biên dịch từ nguồn trong thời gian chạy, thì khâu chức năng sẽ đẩy nhanh đáng kể quy trình làm việc này.
+
+00:24:35.000 --> 00:24:41.000
+Tôi hy vọng rằng bạn có thể tận dụng các tính năng biên dịch này để phát triển trải nghiệm mới bằng cách sử dụng Metal.
+
+00:24:41.000 --> 00:24:46.000
+Cảm ơn vì đã xem, và tận hưởng phần còn lại của WWDC 2021.
+
+00:24:46.000 --> 23:59:59.000
+[Âm nhạc].
+

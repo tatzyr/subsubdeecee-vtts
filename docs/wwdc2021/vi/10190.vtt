@@ -1,0 +1,551 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:12.000
+Xin chào. Tên tôi là Baek San Chang, và tôi làm việc trên Core Audio.
+
+00:00:12.000 --> 00:00:16.000
+Hôm nay tôi sẽ thảo luận về một cách mới để tạo trình điều khiển âm thanh với DriverKit.
+
+00:00:16.000 --> 00:00:19.000
+Nhưng trước tiên hãy xem lại cách trình điều khiển âm thanh hoạt động ngày hôm nay.
+
+00:00:19.000 --> 00:00:29.000
+Trước macOS Big Sur, trình cắm máy chủ âm thanh sẽ cần giao tiếp với thiết bị phần cứng thông qua ứng dụng khách của người dùng với tiện ích mở rộng hạt nhân.
+
+00:00:29.000 --> 00:00:38.000
+Trong macOS Big Sur, CoreAudio HAL đã cung cấp hỗ trợ để tạo một trình cắm máy chủ âm thanh được xây dựng trên Tiện ích mở rộng DriverKit.
+
+00:00:38.000 --> 00:00:47.000
+Lớp giữa trình cắm và trình xóa giống như với kext, nhưng bảo mật đã được cải thiện bằng cách di chuyển ra khỏi hạt nhân và vào không gian người dùng.
+
+00:00:47.000 --> 00:00:53.000
+Để biết thêm thông tin về DriverKit, vui lòng xem các video WWDC DriverKit trước đó.
+
+00:00:53.000 --> 00:01:05.000
+Mặc dù giải pháp hiện tại cho phép phát triển trình điều khiển âm thanh ra khỏi hạt nhân, nhưng vẫn cần hai thành phần riêng biệt để triển khai trình điều khiển âm thanh phần cứng chức năng: Trình cắm thêm máy chủ âm thanh và tiện ích mở rộng trình điều khiển.
+
+00:01:05.000 --> 00:01:12.000
+Điều này làm phức tạp sự phát triển, tăng tài nguyên và có thể tăng chi phí và độ trễ.
+
+00:01:12.000 --> 00:01:17.000
+Bắt đầu từ macOS Monterey, bạn chỉ cần một dext, không cần thêm plug-in nữa.
+
+00:01:17.000 --> 00:01:26.000
+AudioDriverKit là một khung DriverKit mới được sử dụng để viết các phần mở rộng trình điều khiển âm thanh cùng với USBDriverKit hoặc PCIDriverKit.
+
+00:01:26.000 --> 00:01:32.000
+Khung mới này xử lý tất cả các giao tiếp giữa các quy trình với CoreAudio HAL.
+
+00:01:32.000 --> 00:01:37.000
+Vì bạn chỉ có một dext, bây giờ bạn không cần giao tiếp giữa dext của bạn và một trình cắm máy chủ âm thanh.
+
+00:01:37.000 --> 00:01:41.000
+Bạn có thể tập trung trong DriverKit.
+
+00:01:41.000 --> 00:01:50.000
+Vì các tiện ích mở rộng AudioDriverKit được đóng gói bên trong một ứng dụng Mac, một trình cài đặt riêng biệt không còn cần thiết nữa.
+
+00:01:50.000 --> 00:01:55.000
+Và bây giờ trình điều khiển của bạn đã được tải ngay lập tức, không cần khởi động lại.
+
+00:01:55.000 --> 00:02:00.000
+Bây giờ bạn đã biết những lợi ích của AudioDriverKit, hãy đi sâu vào việc tạo ra một trình điều khiển âm thanh mới.
+
+00:02:00.000 --> 00:02:10.000
+Tôi sẽ bắt đầu với một cái nhìn tổng quan ngắn gọn về các thành phần liên quan đến trình điều khiển âm thanh, sau đó đề cập đến một số thứ bạn sẽ cần trước khi viết dext của mình.
+
+00:02:10.000 --> 00:02:22.000
+Khi chúng ta đã sẵn sàng để bắt đầu viết mã, tôi sẽ hướng dẫn cách định cấu hình và khởi tạo dext của bạn, tạo thiết bị, luồng và các đối tượng âm thanh khác, đồng thời xử lý đường dẫn IO và dấu thời gian.
+
+00:02:22.000 --> 00:02:30.000
+Cuối cùng, tôi sẽ thảo luận về cách xử lý các thay đổi cấu hình và cho bạn xem bản demo của dext ở cuối.
+
+00:02:30.000 --> 00:02:32.000
+Vậy hãy bắt đầu với kiến trúc.
+
+00:02:32.000 --> 00:02:39.000
+Sơ đồ cho thấy cách HAL giao tiếp với Tiện ích mở rộng trình điều khiển bằng cách sử dụng khung AudioDriverKit.
+
+00:02:39.000 --> 00:02:47.000
+Khung AudioDriverKit sẽ tạo ra một ứng dụng khách người dùng riêng tư sẽ được sử dụng cho tất cả các giao tiếp giữa CoreAudio và dext âm thanh của bạn.
+
+00:02:47.000 --> 00:02:53.000
+Ứng dụng khách người dùng này không có ý định sử dụng trực tiếp và không tiếp xúc với dext của bạn.
+
+00:02:53.000 --> 00:03:00.000
+Lưu ý rằng không có trình cắm hoặc ứng dụng khách người dùng tùy chỉnh nào được yêu cầu để giao tiếp giữa ứng dụng của bạn và dext.
+
+00:03:00.000 --> 00:03:07.000
+Tùy chọn, ứng dụng của bạn có thể mở một ứng dụng người dùng tùy chỉnh để giao tiếp trực tiếp với dext của bạn nếu cần.
+
+00:03:07.000 --> 00:03:10.000
+Bây giờ hãy nói về những quyền lợi bạn sẽ cần.
+
+00:03:10.000 --> 00:03:14.000
+Tất cả các tiện ích mở rộng trình điều khiển DriverKit phải có quyền DriverKit.
+
+00:03:14.000 --> 00:03:20.000
+AudioDriverKit dexts cũng phải có quyền cho phép bất kỳ khách hàng người dùng nào truy cập.
+
+00:03:20.000 --> 00:03:25.000
+Điều này có sẵn cho tất cả các nhà phát triển đã được chấp thuận cho bất kỳ quyền DriverKit nào.
+
+00:03:25.000 --> 00:03:30.000
+Ngoài ra, bất kỳ quyền lợi vận chuyển nào của gia đình nên được thêm vào khi cần thiết.
+
+00:03:30.000 --> 00:03:38.000
+Nếu bạn chưa yêu cầu quyền vận chuyển USB hoặc PCI, hãy truy cập trang web dành cho nhà phát triển của Apple để gửi yêu cầu.
+
+00:03:38.000 --> 00:03:51.000
+Hãy nhớ rằng mã mẫu được trình bày hoàn toàn dành cho mục đích trình diễn và tạo ra một trình điều khiển âm thanh ảo không được liên kết với thiết bị phần cứng và do đó các quyền lợi sẽ không được cấp cho loại trường hợp sử dụng đó.
+
+00:03:51.000 --> 00:03:59.000
+Nếu trình điều khiển hoặc thiết bị âm thanh ảo là tất cả những gì cần thiết, mô hình trình điều khiển trình cắm thêm máy chủ âm thanh sẽ tiếp tục được sử dụng.
+
+00:03:59.000 --> 00:04:01.000
+Bây giờ hãy xem info.plist của dext của bạn.
+
+00:04:01.000 --> 00:04:05.000
+Các cài đặt này cần được thêm vào IOKitPersonalities của dext.
+
+00:04:05.000 --> 00:04:11.000
+AudioDriverKit sẽ xử lý việc tạo IOUserAudioDriverUserClient theo yêu cầu của HAL.
+
+00:04:11.000 --> 00:04:15.000
+HAL có các quyền bắt buộc để kết nối với kết nối máy khách của người dùng.
+
+00:04:15.000 --> 00:04:20.000
+Đây là một ví dụ về ứng dụng khách người dùng tùy chỉnh cho SimpleAudioDriverUserClient.
+
+00:04:20.000 --> 00:04:24.000
+Xem tệp tiêu đề AudioDriverKitTypes.h để biết thêm thông tin.
+
+00:04:24.000 --> 00:04:28.000
+Tiếp theo, hãy nói về cấu hình và khởi tạo.
+
+00:04:28.000 --> 00:04:35.000
+Bước đầu tiên để cấu hình dext âm thanh là phân lớp IOUserAudioDriver và ghi đè các phương thức ảo.
+
+00:04:35.000 --> 00:04:40.000
+IOUserAudioDriver là một lớp con của IOService.
+
+00:04:40.000 --> 00:04:46.000
+Lớp con bất kỳ đối tượng IOUserAudio nào cần thiết để thực hiện hành vi tùy chỉnh.
+
+00:04:46.000 --> 00:04:50.000
+Sau đó cấu hình và thêm chúng vào IOUserAudioDriver.
+
+00:04:50.000 --> 00:04:55.000
+Sơ đồ cho thấy tổng quan về các đối tượng IOUserAudio mà bạn sẽ tạo.
+
+00:04:55.000 --> 00:05:01.000
+SimpleAudioDriver là một lớp con của IOUserAudioDriver và là điểm vào dext.
+
+00:05:01.000 --> 00:05:07.000
+SimpleAudioDriver sẽ tạo ra một SimpleAudioDevice, là một lớp con của IOUserAudioDevice.
+
+00:05:07.000 --> 00:05:12.000
+Thiết bị âm thanh xử lý tất cả các tin nhắn, dấu thời gian và thay đổi cấu hình liên quan đến IO bắt đầu dừng.
+
+00:05:12.000 --> 00:05:16.000
+SimpleAudioDevice sẽ tạo ra nhiều IOUserAudioObjects khác nhau.
+
+00:05:16.000 --> 00:05:26.000
+Đối tượng thiết bị cũng sẽ tạo OSTimerDispatchSources, OSActions và triển khai trình tạo âm để mô phỏng các ngắt phần cứng và IO.
+
+00:05:26.000 --> 00:05:29.000
+IOUserAudioStream là một luồng thuộc sở hữu của thiết bị.
+
+00:05:29.000 --> 00:05:35.000
+Luồng sẽ sử dụng IOMemoryDescriptor cho IO âm thanh, sẽ được ánh xạ đến HAL.
+
+00:05:35.000 --> 00:05:41.000
+IOUserAudioVolumeLevelControl là một đối tượng điều khiển nhận các giá trị vô hướng hoặc dB.
+
+00:05:41.000 --> 00:05:45.000
+Giá trị điều khiển sẽ được sử dụng để áp dụng độ lợi cho bộ đệm âm thanh đầu vào.
+
+00:05:45.000 --> 00:05:50.000
+Tất cả IOUserAudioObjects có thể có IOUserAudioCustomProperties.
+
+00:05:50.000 --> 00:05:57.000
+SimpleAudioDevice sẽ tạo ra một ví dụ về một thuộc tính tùy chỉnh và một chuỗi làm vòng loại và giá trị dữ liệu của nó.
+
+00:05:57.000 --> 00:05:59.000
+Hãy cùng xem mã.
+
+00:05:59.000 --> 00:06:03.000
+SimpleAudioDriver là một lớp con của IOUserAudioDriver.
+
+00:06:03.000 --> 00:06:10.000
+Start, Stop và NewUserClient là các phương thức ảo từ lớp IOService mà trình điều khiển cần ghi đè.
+
+00:06:10.000 --> 00:06:16.000
+StartDevice và StopDevice là các phương pháp ảo liên quan đến IO từ IOUserAudioDriver.
+
+00:06:16.000 --> 00:06:21.000
+Chúng sẽ được gọi khi HAL khởi động hoặc dừng IO cho một thiết bị âm thanh.
+
+00:06:21.000 --> 00:06:26.000
+Tôi sẽ thảo luận về đường dẫn IO sau khi xem qua các thiết bị, luồng và các đối tượng âm thanh khác.
+
+00:06:26.000 --> 00:06:31.000
+Ví dụ cho thấy cách ghi đè NewUserClient để tạo kết nối máy khách của người dùng.
+
+00:06:31.000 --> 00:06:37.000
+NewUserClient sẽ được gọi khi một quy trình khách hàng muốn kết nối với dext.
+
+00:06:37.000 --> 00:06:45.000
+Khung AudioDriverKit sẽ xử lý việc tạo ứng dụng khách người dùng theo yêu cầu của HAL bằng cách gọi NewUserClient trên lớp cơ sở IOUserAudioDriver.
+
+00:06:45.000 --> 00:06:51.000
+Điều này sẽ tạo ra IOUserAudioDriverUserClient cần thiết cho CoreAudio HAL.
+
+00:06:51.000 --> 00:07:02.000
+Một ứng dụng khách người dùng tùy chỉnh cũng có thể được tạo bằng cách gọi IOService Create, điều này sẽ tạo đối tượng ứng dụng khách người dùng từ mục nhập info.plist tiện ích mở rộng trình điều khiển được thêm trước đó.
+
+00:07:02.000 --> 00:07:08.000
+Hãy xem cách ghi đè Bắt đầu và tạo một đối tượng IOUserAudioDevice tùy chỉnh.
+
+00:07:08.000 --> 00:07:11.000
+Đầu tiên, hãy gọi Bắt đầu trên siêu lớp.
+
+00:07:11.000 --> 00:07:16.000
+Sau đó phân bổ SimpleAudioDevice và khởi tạo nó với một vài thông số bắt buộc.
+
+00:07:16.000 --> 00:07:22.000
+Thiết bị được khởi tạo sau đó cần được thêm vào trình điều khiển âm thanh bằng cách gọi AddObject.
+
+00:07:22.000 --> 00:07:26.000
+Cuối cùng, đăng ký dịch vụ, và tài xế đã sẵn sàng để đi.
+
+00:07:26.000 --> 00:07:32.000
+Bây giờ trình điều khiển của bạn đã được khởi tạo, hãy tạo một thiết bị, luồng và một vài đối tượng âm thanh khác.
+
+00:07:32.000 --> 00:07:37.000
+Lớp con IOUserAudioDevice để có được hành vi tùy chỉnh.
+
+00:07:37.000 --> 00:07:42.000
+Hãy tạo một luồng đầu vào, điều khiển âm lượng và một đối tượng thuộc tính tùy chỉnh.
+
+00:07:42.000 --> 00:07:48.000
+Phương pháp init cho SimpleAudioDevice chỉ ra cách định cấu hình thiết bị và tạo các đối tượng âm thanh khác nhau.
+
+00:07:48.000 --> 00:07:56.000
+Thông tin liên quan đến tỷ lệ mẫu của thiết bị được định cấu hình bằng cách gọi SetAvailableSampleRates và SetSampleRate trên thiết bị.
+
+00:07:56.000 --> 00:08:01.000
+Tạo một IOBufferMemoryDescriptor sẽ được chuyển đến IOUserAudioStream.
+
+00:08:01.000 --> 00:08:05.000
+Bộ nhớ sẽ được ánh xạ đến CoreAudio HAL và được sử dụng cho IO âm thanh.
+
+00:08:05.000 --> 00:08:10.000
+Bộ nhớ lý tưởng phải giống như bộ nhớ IO được sử dụng cho DMA với phần cứng.
+
+00:08:10.000 --> 00:08:19.000
+IOUserAudioStream được tạo ra bằng cách chỉ định nó với hướng luồng đầu vào và truyền vào bộ mô tả bộ nhớ IO đã được tạo ở trên.
+
+00:08:19.000 --> 00:08:23.000
+Một vài thứ bổ sung cần được cấu hình trên luồng trước khi nó hoạt động.
+
+00:08:23.000 --> 00:08:30.000
+Các định dạng luồng được xác định bằng cách tạo một danh sách định dạng của IOUserAudio StreamBasicDescriptions.
+
+00:08:30.000 --> 00:08:35.000
+Chỉ định tỷ lệ mẫu, ID định dạng và các thuộc tính định dạng bắt buộc khác.
+
+00:08:35.000 --> 00:08:39.000
+Đặt các định dạng có sẵn bằng cách chuyển vào danh sách định dạng luồng được khai báo ở trên.
+
+00:08:39.000 --> 00:08:42.000
+Và sau đó thiết lập định dạng hiện tại của luồng.
+
+00:08:42.000 --> 00:08:46.000
+Cuối cùng, thêm luồng đã định cấu hình vào thiết bị bằng cách gọi AddStream.
+
+00:08:46.000 --> 00:08:49.000
+Bây giờ chúng ta hãy xem xét việc tạo điều khiển mức âm lượng.
+
+00:08:49.000 --> 00:08:56.000
+Để tạo một đối tượng điều khiển âm lượng, hãy gọi phương thức IOUserAudioLevelControl::Create.
+
+00:08:56.000 --> 00:09:04.000
+Điều khiển là một điều khiển âm lượng có thể thiết lập với mức ban đầu được đặt thành -6dB và với phạm vi 96dB.
+
+00:09:04.000 --> 00:09:08.000
+Phần tử, phạm vi và lớp điều khiển cũng cần được chỉ định.
+
+00:09:08.000 --> 00:09:11.000
+Cuối cùng, thêm đối tượng điều khiển vào thiết bị.
+
+00:09:11.000 --> 00:09:18.000
+Giá trị tăng điều khiển âm lượng sẽ được sử dụng trong đường dẫn IO bằng cách áp dụng độ lợi cho bộ đệm IO của luồng đầu vào.
+
+00:09:18.000 --> 00:09:21.000
+Bây giờ chúng ta hãy xem qua việc tạo một đối tượng thuộc tính tùy chỉnh cho thiết bị.
+
+00:09:21.000 --> 00:09:26.000
+Một địa chỉ tài sản cần được cung cấp cho mọi đối tượng tài sản tùy chỉnh.
+
+00:09:26.000 --> 00:09:31.000
+Xác định một loại bộ chọn tùy chỉnh với phạm vi toàn cầu và phần tử chính.
+
+00:09:31.000 --> 00:09:36.000
+Tiếp theo, tạo đối tượng thuộc tính tùy chỉnh bằng cách cung cấp địa chỉ thuộc tính được xác định ở trên.
+
+00:09:36.000 --> 00:09:42.000
+Thuộc tính tùy chỉnh có thể đặt được, và các loại giá trị dữ liệu và vòng loại đều là chuỗi.
+
+00:09:42.000 --> 00:09:45.000
+Bây giờ hãy tạo một OSString cho vòng loại và giá trị dữ liệu.
+
+00:09:45.000 --> 00:09:47.000
+Sau đó đặt nó trên thuộc tính tùy chỉnh.
+
+00:09:47.000 --> 00:09:51.000
+Cuối cùng, thêm thuộc tính tùy chỉnh vào thiết bị.
+
+00:09:51.000 --> 00:09:55.000
+Bây giờ bạn đã tạo ra các đối tượng âm thanh, hãy nói về IO.
+
+00:09:55.000 --> 00:10:02.000
+Phương thức GetIOMemoryDescriptor sẽ trả về IOMemoryDescriptor được sử dụng bởi IOUserAudioStream.
+
+00:10:02.000 --> 00:10:11.000
+IOMemoryDescriptor được chuyển vào phương thức init khi tạo luồng và luồng cũng có thể được cập nhật với bộ mô tả bộ nhớ mới.
+
+00:10:11.000 --> 00:10:16.000
+Bộ nhớ sẽ được ánh xạ đến HAL và được sử dụng cho IO âm thanh.
+
+00:10:16.000 --> 00:10:22.000
+Bộ mô tả bộ nhớ tương tự được sử dụng bởi luồng lý tưởng phải giống với mô tả được sử dụng cho DMA cho thiết bị phần cứng.
+
+00:10:22.000 --> 00:10:27.000
+IOUserAudioClockDevice là lớp cơ sở của IOUserAudioDevice.
+
+00:10:27.000 --> 00:10:34.000
+UpdateCurrentZeroTimestamp và GetCurrentZeroTimestamp nên được sử dụng để xử lý dấu thời gian từ thiết bị phần cứng.
+
+00:10:34.000 --> 00:10:41.000
+Dấu thời gian sẽ được xử lý nguyên tử và HAL sẽ sử dụng cặp thời gian máy chủ thời gian mẫu để chạy và đồng bộ hóa IO.
+
+00:10:41.000 --> 00:10:45.000
+Điều quan trọng là phải theo dõi dấu thời gian của đồng hồ phần cứng càng gần càng tốt.
+
+00:10:45.000 --> 00:10:51.000
+Hãy cùng xem lớp SimpleAudioDevice và tập trung vào các phương pháp liên quan đến IO.
+
+00:10:51.000 --> 00:10:58.000
+StartIO và StopIO sẽ được gọi từ trình điều khiển khi HAL đang cố gắng chạy IO.
+
+00:10:58.000 --> 00:11:10.000
+Các phương pháp riêng tư được chỉ ra sử dụng IOTimerDispatchSource và OSAction để mô phỏng các ngắt phần cứng, sẽ được sử dụng để tạo dấu thời gian bằng không và dữ liệu âm thanh trên bộ đệm IO đầu vào.
+
+00:11:10.000 --> 00:11:18.000
+Vì ví dụ này không chạy với thiết bị phần cứng, bộ hẹn giờ và hành động được sử dụng thay cho ngắt phần cứng và DMA.
+
+00:11:18.000 --> 00:11:23.000
+StartIO sẽ được gọi trên đối tượng thiết bị khi HAL đang cố gắng khởi động IO trên thiết bị.
+
+00:11:23.000 --> 00:11:27.000
+Bất kỳ cuộc gọi nào cần thiết để khởi động IO trên phần cứng nên được thực hiện tại đây.
+
+00:11:27.000 --> 00:11:31.000
+Sau đó, StartIO nên được gọi vào lớp cơ sở.
+
+00:11:31.000 --> 00:11:38.000
+Tiếp theo, lấy IOMemoryDescriptor của luồng đầu vào để có thể tạo IOMemoryMap bằng cách gọi CreateMapping.
+
+00:11:38.000 --> 00:11:46.000
+Địa chỉ bộ đệm, độ dài và độ lệch sẽ được sử dụng trong trình xử lý hành động xảy ra để tạo âm thanh trên bộ đệm IO.
+
+00:11:46.000 --> 00:11:55.000
+StartTimers được gọi để định cấu hình và cho phép các nguồn thời gian và hành động tạo dấu thời gian và điền vào bộ đệm âm thanh đầu vào.
+
+00:11:55.000 --> 00:12:03.000
+UpdateCurrentZeroTimestamp được gọi để cập nhật nguyên tử cặp thời gian máy chủ thời gian mẫu cho IOUserAudioDevice.
+
+00:12:03.000 --> 00:12:11.000
+Nguồn hẹn giờ được bật và đặt với thời gian đánh thức dựa trên mach_absolute_time và các dấu tích máy chủ được định cấu hình từ thiết bị.
+
+00:12:11.000 --> 00:12:18.000
+Hành động ZtsTimerOccurred sẽ được gọi dựa trên thời gian thức để có thể cập nhật dấu thời gian mới trên thiết bị.
+
+00:12:18.000 --> 00:12:26.000
+Không được hiển thị ở đây, nhưng mã mẫu cũng cập nhật bộ hẹn giờ và hành động tạo âm theo cách tương tự.
+
+00:12:26.000 --> 00:12:35.000
+Khi hành động dấu thời gian bằng không kích hoạt, giá trị dấu thời gian bằng không cuối cùng được lấy từ thiết bị bằng cách gọi GetCurrentZeroTimestamp.
+
+00:12:35.000 --> 00:12:40.000
+Nếu đây là dấu thời gian đầu tiên, hãy sử dụng mach_absolute_time được truyền vào bộ hẹn giờ làm thời gian neo.
+
+00:12:40.000 --> 00:12:47.000
+Mặt khác, dấu thời gian được cập nhật theo khoảng thời gian dấu thời gian bằng không và dấu tích máy chủ trên mỗi bộ đệm.
+
+00:12:47.000 --> 00:12:55.000
+Gọi UpdateCurrentZeroTimestamp sẽ cập nhật dấu thời gian của thiết bị để HAL có thể sử dụng các giá trị mới.
+
+00:12:55.000 --> 00:13:02.000
+Đặt hẹn giờ ZTS để thức dậy trong tương lai cho dấu thời gian bằng không tiếp theo.
+
+00:13:02.000 --> 00:13:08.000
+Để mô phỏng DMA, dữ liệu âm thanh sẽ được ghi vào bộ đệm IO đầu vào khi hành động hẹn giờ chạy.
+
+00:13:08.000 --> 00:13:15.000
+Đầu tiên, hãy kiểm tra xem bản đồ bộ nhớ đầu vào được chỉ định khi bắt đầu IO được gọi có hợp lệ không.
+
+00:13:15.000 --> 00:13:21.000
+Sử dụng độ dài bộ đệm bản đồ bộ nhớ và định dạng luồng để lấy độ dài trong các mẫu cho bộ đệm IO.
+
+00:13:21.000 --> 00:13:30.000
+Vì luồng chỉ hỗ trợ định dạng mẫu pcm 16 bit đã ký, hãy lấy địa chỉ bộ đệm và độ lệch, và gán nó làm con trỏ bộ đệm int16_t.
+
+00:13:30.000 --> 00:13:34.000
+Bây giờ bộ đệm IO đầu vào có thể được điền bằng cách tạo ra âm sin.
+
+00:13:34.000 --> 00:13:38.000
+Đầu tiên, lấy mức tăng điều khiển âm lượng đầu vào dưới dạng giá trị vô hướng.
+
+00:13:38.000 --> 00:13:43.000
+Sau đó lặp lại số lượng mẫu cần thiết và tạo ra âm sin, áp dụng mức tăng điều khiển âm lượng.
+
+00:13:43.000 --> 00:13:51.000
+Tiếp theo, lặp qua bộ đệm và điền vào mẫu âm sin vào bộ đệm IO dựa trên số lượng kênh, cũng tính đến việc bao quanh.
+
+00:13:51.000 --> 00:14:01.000
+Bây giờ dext âm thanh đã được cấu hình và có thể chạy IO, bước tiếp theo là xử lý các thay đổi cấu hình để cập nhật thiết bị và trạng thái liên quan đến IO của nó.
+
+00:14:01.000 --> 00:14:06.000
+Các phương thức thiết bị được hiển thị có thể được sử dụng để yêu cầu và thực hiện các thay đổi cấu hình.
+
+00:14:06.000 --> 00:14:22.000
+Đối với các thay đổi đối với trạng thái của thiết bị âm thanh sẽ ảnh hưởng đến IO hoặc cấu trúc của nó, trình điều khiển cần yêu cầu thay đổi cấu hình bằng cách gọi RequestDeviceConfigurationChange HAL sẽ dừng mọi IO đang chạy và PerformDeviceConfigurationChange sẽ được gọi trên trình điều khiển.
+
+00:14:22.000 --> 00:14:26.000
+Chỉ khi đó thiết bị âm thanh mới có thể cập nhật trạng thái liên quan đến IO của nó.
+
+00:14:26.000 --> 00:14:36.000
+Một kịch bản phổ biến của việc này sẽ là cập nhật tốc độ mẫu hiện tại của thiết bị âm thanh hoặc thay đổi định dạng luồng hiện tại để tương ứng với các thay đổi đối với thiết bị phần cứng.
+
+00:14:36.000 --> 00:14:41.000
+Sơ đồ cho thấy chuỗi sự kiện cho các thay đổi cấu hình thiết bị.
+
+00:14:41.000 --> 00:14:44.000
+Trình điều khiển trước tiên nên yêu cầu thay đổi cấu hình.
+
+00:14:44.000 --> 00:14:49.000
+HAL sẽ thông báo cho bất kỳ người nghe nào rằng thay đổi cấu hình sẽ bắt đầu cho thiết bị.
+
+00:14:49.000 --> 00:14:52.000
+IO sẽ bị dừng trên thiết bị nếu nó hiện đang chạy.
+
+00:14:52.000 --> 00:14:55.000
+Trạng thái hiện tại của thiết bị sẽ được ghi lại.
+
+00:14:55.000 --> 00:14:59.000
+PerformDeviceConfigurationChange sẽ được gọi trên trình điều khiển.
+
+00:14:59.000 --> 00:15:03.000
+Đây là lúc trình điều khiển được phép thay đổi bất kỳ trạng thái nào trên thiết bị và phần cứng.
+
+00:15:03.000 --> 00:15:12.000
+Khi thay đổi cấu hình được thực hiện, trạng thái mới của thiết bị sẽ được ghi lại và tất cả trạng thái liên quan đến IO, chẳng hạn như bộ đệm IO hoặc tốc độ mẫu, sẽ được cập nhật.
+
+00:15:12.000 --> 00:15:16.000
+Mọi thay đổi đối với trạng thái của thiết bị sau đó sẽ được thông báo cho bất kỳ người nghe khách hàng nào.
+
+00:15:16.000 --> 00:15:23.000
+Nếu IO trước đó đã chạy trước khi thay đổi cấu hình, IO sẽ được khởi động lại trên thiết bị.
+
+00:15:23.000 --> 00:15:28.000
+Cuối cùng, HAL sẽ thông báo cho bất kỳ người nghe nào rằng thay đổi cấu hình hiện đã kết thúc.
+
+00:15:28.000 --> 00:15:36.000
+Để mô phỏng yêu cầu thay đổi cấu hình phần cứng từ dưới lên, lệnh máy khách người dùng tùy chỉnh được sử dụng để kích hoạt thay đổi tốc độ mẫu trên dext.
+
+00:15:36.000 --> 00:15:43.000
+RequestDeviceConfigurationChange sẽ thông báo cho HAL về yêu cầu thay đổi cấu hình trên thiết bị âm thanh.
+
+00:15:43.000 --> 00:15:46.000
+Lưu ý rằng thông tin thay đổi có thể là bất kỳ loại OSObject nào.
+
+00:15:46.000 --> 00:15:54.000
+Ví dụ này cung cấp một hành động thay đổi cấu hình tùy chỉnh và thông tin thay đổi dưới dạng OSString.
+
+00:15:54.000 --> 00:16:08.000
+Để xử lý việc thực hiện thay đổi cấu hình, lớp SimpleAudioDevice cần ghi đè phương thức PerformDeviceConfigurationChange trong PerformDeviceConfigurationChange xử lý hành động thay đổi cấu hình trong câu lệnh chuyển đổi.
+
+00:16:08.000 --> 00:16:14.000
+Đăng nhập cùng một đối tượng OSString đã được cung cấp dưới dạng thông tin thay đổi khi yêu cầu thay đổi cấu hình.
+
+00:16:14.000 --> 00:16:19.000
+Tiếp theo, lấy tỷ lệ mẫu hiện tại và đặt tỷ lệ mới trên thiết bị.
+
+00:16:19.000 --> 00:16:28.000
+Đảm bảo luồng âm thanh cập nhật định dạng luồng hiện tại của nó để xử lý sự thay đổi tốc độ mẫu bằng cách gọi DeviceSampleRateChanged trên đối tượng luồng.
+
+00:16:28.000 --> 00:16:34.000
+Các hành động thay đổi cấu hình khác mà thiết bị không xử lý trực tiếp có thể được chuyển sang lớp cơ sở.
+
+00:16:34.000 --> 00:16:36.000
+Hãy cùng xem cái này trên Mac.
+
+00:16:36.000 --> 00:16:41.000
+Vì vậy, SimpleAudio là ứng dụng mã mẫu đi kèm với tiện ích mở rộng trình điều khiển.
+
+00:16:41.000 --> 00:16:47.000
+Để cài đặt tiện ích mở rộng trình điều khiển âm thanh, chỉ cần nhấn Cài đặt Trình điều khiển và điều đó sẽ hiển thị các tùy chọn bảo mật.
+
+00:16:47.000 --> 00:16:53.000
+Vì vậy, nếu chúng ta nhấn Cho phép, điều đó sẽ tự động tải tiện ích mở rộng trình điều khiển âm thanh.
+
+00:16:53.000 --> 00:16:58.000
+Trước đây, điều này là không thể với kext vì sẽ cần phải khởi động lại.
+
+00:16:58.000 --> 00:17:06.000
+Vì vậy, SimpleAudioDevice có sẵn các định dạng tốc độ mẫu và nguồn dữ liệu lựa chọn âm thanh.
+
+00:17:06.000 --> 00:17:09.000
+Và điều khiển âm lượng mà chúng tôi đã thêm vào mã mẫu.
+
+00:17:09.000 --> 00:17:15.000
+Bây giờ chúng ta có thể mở QuickTime và ghi âm trên thiết bị âm thanh.
+
+00:17:15.000 --> 00:17:31.000
+Và để kiểm tra các thay đổi cấu hình từ dưới lên, chúng ta có thể giao tiếp trực tiếp với dext để chuyển đổi tần số âm thanh hoặc tốc độ mẫu và các thay đổi cũng nên được phản ánh trong thiết lập MIDI âm thanh.
+
+00:17:31.000 --> 00:17:42.000
+Để loại bỏ tiện ích mở rộng trình điều khiển, chỉ cần xóa ứng dụng.
+
+00:17:42.000 --> 00:17:46.000
+Và bạn có thể thấy nó không còn khả dụng trong thiết lập Audio MIDI.
+
+00:17:46.000 --> 00:17:51.000
+Để kết thúc mọi thứ, tôi đã tóm tắt lại trạng thái của các trình cắm máy chủ âm thanh và các tiện ích mở rộng DriverKit.
+
+00:17:51.000 --> 00:17:57.000
+Điều này sẽ tiếp tục được hỗ trợ và giao diện trình điều khiển AudioServerPlugIn không bị phản đối.
+
+00:17:57.000 --> 00:18:03.000
+Tôi đã giới thiệu khung AudioDriverKit mới và thảo luận về lợi ích của mô hình trình điều khiển mới.
+
+00:18:03.000 --> 00:18:15.000
+Tôi đã xem qua một ví dụ chuyên sâu về cách áp dụng khung AudioDriverKit và hiển thị mã mẫu để tạo dext âm thanh dựa trên IOUserService, tất cả đều chạy trong không gian người dùng.
+
+00:18:15.000 --> 00:18:18.000
+Tải xuống Xcode và DriverKit SDK mới nhất.
+
+00:18:18.000 --> 00:18:25.000
+Áp dụng AudioDriverKit cho các thiết bị âm thanh có dòng thiết bị phần cứng được DriverKit hỗ trợ.
+
+00:18:25.000 --> 00:18:30.000
+Và vui lòng cung cấp bất kỳ phản hồi nào về AudioDriverKit thông qua Trợ lý Phản hồi của Apple.
+
+00:18:30.000 --> 00:18:32.000
+Cảm ơn.
+
+00:18:32.000 --> 23:59:59.000
+[Nhạc lạc quan].
+

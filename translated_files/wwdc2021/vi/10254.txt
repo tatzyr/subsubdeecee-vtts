@@ -1,0 +1,611 @@
+10254
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Rokhini Prabhu: Xin chào, và chào mừng đến với "Swift Concurrency Behind the Scenes."
+
+Tên tôi là Rokhini, và tôi làm việc trong nhóm Darwin Runtime.
+
+Hôm nay, đồng nghiệp Varun của tôi và tôi rất vui mừng được nói chuyện với bạn về một số sắc thái cơ bản xung quanh sự đồng thời của Swift.
+
+Đây là một cuộc nói chuyện nâng cao được xây dựng dựa trên một số cuộc nói chuyện trước đó về Swift đồng thời.
+
+Nếu bạn không quen thuộc với các khái niệm về không đồng bộ/chờ đợi, đồng thời có cấu trúc và các diễn viên, tôi khuyến khích bạn xem những người khác này nói trước.
+
+Trong các cuộc nói chuyện trước đây về Swift concurrency, bạn đã tìm hiểu về các tính năng ngôn ngữ khác nhau có sẵn trong năm nay có nguồn gốc từ Swift và về cách sử dụng chúng.
+
+Trong buổi nói chuyện này, chúng ta sẽ đi sâu hơn để hiểu tại sao những nguyên thủy này được thiết kế theo cách của chúng, không chỉ vì sự an toàn ngôn ngữ mà còn vì hiệu suất và hiệu quả.
+
+Khi bạn thử nghiệm và áp dụng Swift concurrency trong các ứng dụng của riêng mình, chúng tôi hy vọng bài nói chuyện này sẽ cung cấp cho bạn một mô hình tinh thần tốt hơn về cách suy luận về Swift concurrency cũng như cách nó giao tiếp với các thư viện luồng hiện có như Grand Central Dispatch.
+
+Hôm nay chúng ta sẽ thảo luận một vài điều.
+
+Đầu tiên, chúng ta sẽ nói về mô hình luồng đằng sau Swift đồng thời và đối chiếu nó với Grand Central Dispatch.
+
+Chúng ta sẽ nói về cách chúng ta tận dụng các tính năng ngôn ngữ đồng thời để xây dựng một nhóm luồng mới cho Swift, từ đó đạt được hiệu suất và hiệu quả tốt hơn.
+
+Cuối cùng, trong phần này, chúng tôi sẽ đề cập đến những cân nhắc bạn cần ghi nhớ khi chuyển mã của mình sang sử dụng Swift đồng thời.
+
+Varun sau đó sẽ nói về đồng bộ hóa trong Swift đồng thời thông qua các diễn viên.
+
+Chúng ta sẽ nói về cách các diễn viên làm việc dưới mui xe, cách họ so sánh với các nguyên thủy đồng bộ hóa hiện có mà bạn có thể đã quen thuộc - như hàng đợi điều phối nối tiếp - và cuối cùng, một số điều cần lưu ý khi viết mã với các diễn viên.
+
+Hôm nay chúng ta có rất nhiều đất để trang trải, vì vậy chúng ta hãy đi sâu vào.
+
+Trong cuộc thảo luận của chúng ta hôm nay về các mô hình phân luồng, chúng ta sẽ bắt đầu bằng cách xem xét một ứng dụng ví dụ được viết bằng các công nghệ có sẵn ngày nay như Grand Central Dispatch.
+
+Sau đó, chúng ta sẽ xem cùng một ứng dụng hoạt động như thế nào khi được viết lại bằng Swift đồng thời.
+
+Giả sử tôi muốn viết ứng dụng đọc nguồn cấp tin tức của riêng mình.
+
+Hãy nói về các thành phần cấp cao trong ứng dụng của tôi có thể là gì.
+
+Ứng dụng của tôi sẽ có một chủ đề chính sẽ thúc đẩy giao diện người dùng.
+
+Tôi sẽ có một cơ sở dữ liệu theo dõi các nguồn cấp tin tức mà người dùng đã đăng ký và cuối cùng là một hệ thống con để xử lý logic mạng để tìm nạp nội dung mới nhất từ nguồn cấp dữ liệu.
+
+Hãy xem xét cách người ta có thể cấu trúc ứng dụng này với hàng đợi Grand Central Dispatch.
+
+Giả sử rằng người dùng đã yêu cầu xem tin tức mới nhất.
+
+Trên chủ đề chính, chúng tôi sẽ xử lý cử chỉ sự kiện của người dùng.
+
+Từ đây, chúng tôi sẽ gửi yêu cầu không đồng bộ vào hàng đợi nối tiếp xử lý các hoạt động của cơ sở dữ liệu.
+
+Lý do cho điều này có hai mặt.
+
+Đầu tiên, bằng cách gửi tác phẩm vào một hàng đợi khác, chúng tôi đảm bảo rằng luồng chính có thể vẫn đáp ứng với đầu vào của người dùng ngay cả khi chờ đợi một lượng lớn công việc có khả năng xảy ra.
+
+Thứ hai, quyền truy cập vào cơ sở dữ liệu được bảo vệ, vì hàng đợi nối tiếp đảm bảo loại trừ lẫn nhau.
+
+Trong khi ở trên hàng đợi cơ sở dữ liệu, chúng tôi sẽ lặp lại thông qua các nguồn cấp tin tức mà người dùng đã đăng ký và đối với mỗi người trong số họ, lên lịch yêu cầu kết nối mạng đến URLSession của chúng tôi để tải xuống nội dung của nguồn cấp dữ liệu đó.
+
+Khi kết quả của các yêu cầu mạng đến, cuộc gọi lại URLSession sẽ được gọi trên hàng đợi đại diện của chúng tôi, đây là một hàng đợi đồng thời.
+
+Trong trình xử lý hoàn thành cho mỗi kết quả, chúng tôi sẽ cập nhật đồng bộ cơ sở dữ liệu với các yêu cầu mới nhất từ mỗi nguồn cấp dữ liệu này, để lưu trữ nó để sử dụng trong tương lai.
+
+Và cuối cùng, chúng ta sẽ đánh thức chủ đề chính để làm mới giao diện người dùng.
+
+Đây có vẻ là một cách hoàn toàn hợp lý để cấu trúc một ứng dụng như vậy.
+
+Chúng tôi đã đảm bảo không chặn chủ đề chính trong khi làm việc theo yêu cầu.
+
+Và bằng cách xử lý đồng thời các yêu cầu mạng, chúng tôi đã tận dụng sự song song vốn có trong chương trình của mình.
+
+Chúng ta hãy xem xét kỹ hơn một đoạn mã cho thấy cách chúng ta xử lý kết quả của các yêu cầu mạng của mình.
+
+Đầu tiên, chúng tôi đã tạo một URLSession để thực hiện tải xuống từ nguồn cấp tin tức của chúng tôi.
+
+Như bạn có thể thấy ở đây, chúng tôi đã đặt hàng đợi đại diện của URLSession này là một hàng đợi đồng thời.
+
+Sau đó, chúng tôi lặp lại tất cả các nguồn cấp tin tức cần được cập nhật và đối với mỗi nguồn cấp tin tức, lên lịch cho một nhiệm vụ dữ liệu trong URLSession.
+
+Trong trình xử lý hoàn thành của tác vụ dữ liệu - sẽ được gọi trên hàng đợi đại diện - chúng tôi hủy nối tiếp kết quả tải xuống của mình và định dạng chúng thành các bài viết.
+
+Sau đó, chúng tôi gửi đồng bộ hóa vào hàng đợi cơ sở dữ liệu của mình trước khi cập nhật kết quả cho nguồn cấp dữ liệu.
+
+Vì vậy, ở đây bạn có thể thấy rằng chúng tôi đã viết một số mã đường thẳng để làm điều gì đó khá đơn giản nhưng mã này có một số cạm bẫy hiệu suất ẩn.
+
+Để hiểu thêm về các vấn đề hiệu suất này, trước tiên chúng ta cần tìm hiểu cách các luồng được đưa lên để xử lý công việc trên hàng đợi GCD.
+
+Trong Grand Central Dispatch, khi công việc được xếp hàng vào hàng đợi, hệ thống sẽ hiển thị một chuỗi để phục vụ mục công việc đó.
+
+Vì một hàng đợi đồng thời có thể xử lý nhiều mục công việc cùng một lúc, hệ thống sẽ hiển thị một số luồng cho đến khi chúng tôi bão hòa tất cả các lõi CPU.
+
+Tuy nhiên, nếu một luồng chặn - như đã thấy trên lõi CPU đầu tiên ở đây - và có nhiều việc phải làm hơn trên hàng đợi đồng thời, GCD sẽ hiển thị nhiều luồng hơn để thoát các mục công việc còn lại.
+
+Lý do cho điều này có hai mặt.
+
+Đầu tiên, bằng cách cung cấp cho quy trình của bạn một luồng khác, chúng tôi có thể đảm bảo rằng mỗi lõi tiếp tục có một luồng thực hiện công việc tại bất kỳ thời điểm nào.
+
+Điều này mang lại cho các ứng dụng của bạn một mức độ đồng thời tốt, liên tục.
+
+Thứ hai, chuỗi bị chặn có thể đang chờ trên một tài nguyên như semaphore, trước khi nó có thể tiến bộ hơn nữa.
+
+Chủ đề mới được đưa ra để tiếp tục hoạt động trên hàng đợi có thể giúp bỏ chặn tài nguyên đang được chờ đợi bởi chủ đề đầu tiên.
+
+Vì vậy, bây giờ chúng ta đã hiểu thêm một chút về việc đưa ra luồng trong GCD, chúng ta hãy quay lại và xem xét việc thực thi CPU của mã từ ứng dụng tin tức của chúng ta.
+
+Trên một thiết bị hai lõi như Apple Watch, GCD trước tiên sẽ hiển thị hai luồng để xử lý kết quả cập nhật nguồn cấp dữ liệu.
+
+Khi các luồng chặn truy cập vào hàng đợi cơ sở dữ liệu, nhiều luồng hơn được tạo để tiếp tục hoạt động trên hàng đợi mạng.
+
+CPU sau đó phải chuyển đổi ngữ cảnh giữa các luồng khác nhau xử lý kết quả mạng như được chỉ ra bởi các đường thẳng đứng màu trắng giữa các luồng khác nhau.
+
+Điều này có nghĩa là trong ứng dụng tin tức của chúng tôi, chúng tôi có thể dễ dàng kết thúc với một số lượng rất lớn các chủ đề.
+
+Nếu người dùng có hàng trăm nguồn cấp dữ liệu cần được cập nhật, thì mỗi tác vụ dữ liệu URL đó sẽ có một khối hoàn thành trên hàng đợi đồng thời khi yêu cầu mạng hoàn tất.
+
+GCD sẽ hiển thị nhiều luồng hơn khi mỗi lệnh gọi lại chặn trên hàng đợi cơ sở dữ liệu, dẫn đến ứng dụng có nhiều luồng.
+
+Bây giờ bạn có thể hỏi, có gì tệ khi có nhiều chủ đề trong ứng dụng của chúng tôi?
+
+Có rất nhiều luồng trong các ứng dụng của chúng tôi có nghĩa là hệ thống được cam kết quá mức với nhiều luồng hơn chúng tôi có lõi CPU.
+
+Hãy xem xét một chiếc iPhone có sáu lõi CPU.
+
+Nếu ứng dụng tin tức của chúng tôi có hàng trăm bản cập nhật nguồn cấp dữ liệu cần được xử lý, điều này có nghĩa là chúng tôi đã cam kết quá mức với iPhone với số luồng nhiều hơn 16 lần so với lõi.
+
+Đây là hiện tượng mà chúng tôi gọi là vụ nổ luồng.
+
+Một số cuộc đàm phán WWDC trước đây của chúng tôi đã đi sâu vào chi tiết hơn về các rủi ro liên quan đến điều này, bao gồm khả năng bế tắc trong đơn đăng ký của bạn.
+
+Vụ nổ chủ đề cũng đi kèm với bộ nhớ và chi phí lập lịch có thể không rõ ràng ngay lập tức, vì vậy chúng ta hãy xem xét kỹ hơn về điều này.
+
+Nhìn lại ứng dụng tin tức của chúng tôi, mỗi chủ đề bị chặn đang giữ bộ nhớ và tài nguyên có giá trị trong khi chờ chạy lại.
+
+Mỗi luồng bị chặn có một ngăn xếp và các cấu trúc dữ liệu hạt nhân liên quan để theo dõi luồng.
+
+Một số chủ đề này có thể đang giữ các khóa mà các chủ đề khác đang chạy có thể cần.
+
+Đây là một số lượng lớn tài nguyên và bộ nhớ cần lưu giữ cho các luồng không tiến triển.
+
+Ngoài ra còn có chi phí lập kế hoạch lớn hơn do vụ nổ luồng.
+
+Khi các luồng mới được đưa lên, CPU cần thực hiện chuyển đổi ngữ cảnh luồng đầy đủ để chuyển từ luồng cũ để bắt đầu thực thi luồng mới.
+
+Khi các luồng bị chặn có thể chạy lại được, bộ lập lịch sẽ phải chia sẻ thời gian các luồng trên CPU để tất cả chúng có thể tiến tới.
+
+Bây giờ, việc chia sẻ thời gian các luồng là tốt nếu điều đó xảy ra một vài lần - đó là sức mạnh của sự đồng thời.
+
+Nhưng khi có sự bùng nổ luồng, việc phải chia sẻ thời gian hàng trăm luồng trên một thiết bị có lõi hạn chế có thể dẫn đến việc chuyển đổi ngữ cảnh quá mức.
+
+Độ trễ lập lịch của các luồng này lớn hơn số lượng công việc hữu ích mà chúng sẽ làm, do đó, dẫn đến việc CPU cũng chạy kém hiệu quả hơn.
+
+Như chúng ta đã thấy cho đến nay, rất dễ bỏ lỡ một số sắc thái này về vệ sinh luồng khi viết các ứng dụng với hàng đợi GCD do đó dẫn đến hiệu suất kém và chi phí lớn hơn.
+
+Dựa trên kinh nghiệm này, Swift đã thực hiện một cách tiếp cận khác khi thiết kế đồng thời sang ngôn ngữ.
+
+Chúng tôi đã xây dựng tính đồng thời của Swift với hiệu suất và hiệu quả trong tâm trí để các ứng dụng của bạn có thể tận hưởng tính đồng thời được kiểm soát, có cấu trúc và an toàn.
+
+Với Swift, chúng tôi muốn thay đổi mô hình thực thi của các ứng dụng từ mô hình sau, có nhiều luồng và công tắc ngữ cảnh, sang mô hình này.
+
+Ở đây bạn thấy rằng chúng tôi chỉ có hai luồng thực thi trên hệ thống hai lõi của chúng tôi và không có công tắc ngữ cảnh luồng nào.
+
+Tất cả các chủ đề bị chặn của chúng tôi biến mất và thay vào đó chúng tôi có một đối tượng nhẹ được gọi là sự tiếp nối để theo dõi việc nối lại công việc.
+
+Khi các luồng thực hiện công việc dưới Swift đồng thời, chúng chuyển đổi giữa các lần tiếp tục thay vì thực hiện chuyển đổi ngữ cảnh luồng đầy đủ.
+
+Điều này có nghĩa là bây giờ chúng tôi chỉ trả chi phí cho một cuộc gọi hàm thay thế.
+
+Vì vậy, hành vi thời gian chạy mà chúng tôi muốn cho Swift đồng thời là chỉ tạo ra nhiều luồng như có lõi CPU và để các luồng có thể chuyển đổi giữa các mục công việc một cách rẻ tiền và hiệu quả khi chúng bị chặn.
+
+Chúng tôi muốn bạn có thể viết mã đường thẳng dễ lý luận và cũng mang lại cho bạn sự đồng thời an toàn, được kiểm soát.
+
+Để đạt được hành vi này mà chúng ta đang theo đuổi, hệ điều hành cần một hợp đồng thời gian chạy mà các luồng sẽ không chặn và điều đó chỉ có thể thực hiện được nếu ngôn ngữ có thể cung cấp cho chúng ta điều đó.
+
+Do đó, mô hình đồng thời của Swift và ngữ nghĩa xung quanh nó đã được thiết kế với mục tiêu này.
+
+Cuối cùng, tôi muốn đi sâu vào hai tính năng cấp ngôn ngữ của Swift cho phép chúng tôi duy trì hợp đồng với thời gian chạy.
+
+Đầu tiên đến từ ngữ nghĩa của await và thứ hai, từ việc theo dõi các phụ thuộc nhiệm vụ trong thời gian chạy Swift.
+
+Hãy xem xét các tính năng ngôn ngữ này trong ngữ cảnh của ứng dụng tin tức ví dụ của chúng tôi.
+
+Đây là đoạn mã mà chúng tôi đã xem qua trước đó xử lý kết quả cập nhật nguồn cấp tin tức của chúng tôi.
+
+Thay vào đó, hãy xem logic này trông như thế nào khi được viết bằng Swift concurrency primitives.
+
+Đầu tiên chúng tôi sẽ bắt đầu với việc tạo ra một triển khai không đồng bộ chức năng trợ giúp của chúng tôi.
+
+Sau đó, thay vì xử lý kết quả của các yêu cầu mạng của chúng tôi trên hàng đợi điều phối đồng thời, ở đây chúng tôi đang sử dụng một nhóm tác vụ thay thế để quản lý đồng thời của mình.
+
+Trong nhóm nhiệm vụ, chúng tôi sẽ tạo các nhiệm vụ con cho mỗi nguồn cấp dữ liệu cần được cập nhật.
+
+Mỗi tác vụ con sẽ thực hiện tải xuống từ URL của nguồn cấp dữ liệu bằng cách sử dụng URLSession được chia sẻ.
+
+Sau đó, nó sẽ hủy nối tiếp kết quả tải xuống, định dạng chúng thành các bài viết và cuối cùng, chúng tôi sẽ gọi một hàm không đồng bộ để cập nhật cơ sở dữ liệu của mình.
+
+Ở đây, khi gọi bất kỳ hàm không đồng bộ nào, chúng tôi chú thích nó bằng một từ khóa await.
+
+Từ cuộc nói chuyện "Gặp gỡ không đồng bộ/chờ đợi trong Swift", chúng tôi đã học được rằng chờ đợi là chờ đợi không đồng bộ.
+
+Đó là, nó không chặn luồng hiện tại trong khi chờ kết quả từ hàm không đồng bộ.
+
+Thay vào đó, chức năng có thể bị đình chỉ và luồng sẽ được giải phóng để thực hiện các tác vụ khác.
+
+Điều này xảy ra như thế nào?
+
+Làm thế nào để một người từ bỏ một chủ đề?
+
+Đồng nghiệp Varun của tôi bây giờ sẽ làm sáng tỏ những gì được thực hiện dưới mui xe trong thời gian chạy Swift để biến điều này thành có thể.
+
+Varun Gandhi: Cảm ơn, Rokhini.
+
+Trước khi tìm hiểu cách các hàm không đồng bộ được triển khai, hãy làm mới nhanh về cách các hàm không đồng bộ hoạt động.
+
+Mỗi luồng trong một chương trình đang chạy có một ngăn xếp, nó sử dụng để lưu trữ trạng thái cho các lệnh gọi hàm.
+
+Hãy tập trung vào một chủ đề ngay bây giờ.
+
+Khi luồng thực hiện một lệnh gọi hàm, một khung mới được đẩy lên ngăn xếp của nó.
+
+Khung ngăn xếp mới được tạo này có thể được sử dụng bởi hàm để lưu trữ các biến cục bộ, địa chỉ trả về và bất kỳ thông tin nào khác cần thiết.
+
+Khi hàm kết thúc thực thi và trả về, khung ngăn xếp của nó sẽ được bật lên.
+
+Bây giờ hãy xem xét các chức năng không đồng bộ.
+
+Giả sử rằng một luồng được gọi là phương thức add(_:) trên loại Nguồn cấp dữ liệu từ hàm updateDatabase.
+
+Ở giai đoạn này, khung ngăn xếp gần đây nhất sẽ dành cho add(_:).
+
+Khung ngăn xếp lưu trữ các biến cục bộ không cần phải có sẵn trên một điểm treo.
+
+Phần thân của add(_:) có một điểm treo, được đánh dấu bằng await.
+
+Các biến cục bộ, id và article, ngay lập tức được sử dụng trong phần thân của vòng lặp for sau khi được xác định, mà không có bất kỳ điểm treo nào ở giữa.
+
+Vì vậy, chúng sẽ được lưu trữ trong khung ngăn xếp.
+
+Ngoài ra, sẽ có hai khung không đồng bộ trên đống, một cho updateDatabase và một để thêm.
+
+Khung không đồng bộ lưu trữ thông tin cần có sẵn trên các điểm treo.
+
+Lưu ý rằng đối số newArticles được xác định trước khi chờ đợi nhưng cần có sẵn sau khi chờ đợi.
+
+Điều này có nghĩa là khung không đồng bộ để thêm sẽ theo dõi các Bài viết mới.
+
+Giả sử luồng tiếp tục thực thi.
+
+Khi chức năng lưu bắt đầu thực thi, khung ngăn xếp để thêm sẽ được thay thế bằng khung ngăn xếp để lưu.
+
+Thay vì thêm các khung ngăn xếp mới, khung ngăn xếp hàng đầu được thay thế vì bất kỳ biến nào cần thiết trong tương lai sẽ được lưu trữ trong danh sách các khung không đồng bộ.
+
+Chức năng lưu cũng có được một khung không đồng bộ để sử dụng.
+
+Trong khi các bài viết đang được lưu vào cơ sở dữ liệu, sẽ tốt hơn nếu chủ đề có thể thực hiện một số công việc hữu ích thay vì bị chặn.
+
+Giả sử việc thực thi hàm lưu bị đình chỉ.
+
+Và chủ đề được sử dụng lại để thực hiện một số công việc hữu ích khác thay vì bị chặn.
+
+Vì tất cả thông tin được duy trì trên một điểm treo được lưu trữ trên đống, nó có thể được sử dụng để tiếp tục thực thi ở giai đoạn sau.
+
+Danh sách các khung không đồng bộ này là biểu diễn thời gian chạy của một sự tiếp tục.
+
+Giả sử sau một thời gian ngắn, yêu cầu cơ sở dữ liệu đã hoàn tất và giả sử một số luồng được giải phóng.
+
+Đây có thể là cùng một chủ đề như trước đây, hoặc nó có thể là một chủ đề khác.
+
+Giả sử chức năng lưu tiếp tục thực thi trên chuỗi này.
+
+Khi nó hoàn thành việc thực thi và trả về một số ID, thì khung ngăn xếp để lưu sẽ lại được thay thế bằng khung ngăn xếp để thêm vào.
+
+Sau đó, luồng có thể bắt đầu thực thi zip.
+
+Zipping hai mảng là một thao tác không đồng bộ, vì vậy nó sẽ tạo ra một khung ngăn xếp mới.
+
+Vì Swift tiếp tục sử dụng ngăn xếp hệ điều hành, cả mã Swift không đồng bộ và không đồng bộ đều có thể gọi vào C và Objective-C một cách hiệu quả.
+
+Hơn nữa, mã C và Objective-C có thể tiếp tục gọi mã Swift không đồng bộ một cách hiệu quả.
+
+Khi chức năng zip kết thúc, khung ngăn xếp của nó sẽ được bật lên và việc thực thi sẽ tiếp tục.
+
+Cho đến nay, tôi đã mô tả cách await được thiết kế để đảm bảo đình chỉ và nối lại hiệu quả, đồng thời giải phóng tài nguyên của luồng để thực hiện các công việc khác.
+
+Tiếp theo, Rokhini sẽ mô tả tính năng ngôn ngữ thứ hai, đó là thời gian chạy theo dõi sự phụ thuộc giữa các tác vụ.
+
+Rokhini: Cảm ơn, Varun.
+
+Như đã mô tả trước đó, một hàm có thể được chia thành các phần tiếp theo đang chờ, còn được gọi là điểm tạm dừng tiềm năng.
+
+Trong trường hợp này, tác vụ dữ liệu URLSession là hàm không đồng bộ và công việc còn lại sau khi nó là phần tiếp tục.
+
+Việc tiếp tục chỉ có thể được thực hiện sau khi chức năng không đồng bộ được hoàn thành.
+
+Đây là một sự phụ thuộc được theo dõi bởi thời gian chạy đồng thời Swift.
+
+Tương tự, trong nhóm nhiệm vụ, một nhiệm vụ mẹ có thể tạo ra một số nhiệm vụ con và mỗi nhiệm vụ con đó cần phải hoàn thành trước khi nhiệm vụ mẹ có thể tiến hành.
+
+Đây là một sự phụ thuộc được thể hiện trong mã của bạn bởi phạm vi của nhóm tác vụ và do đó được trình biên dịch Swift và thời gian chạy biết rõ ràng.
+
+Trong Swift, các tác vụ chỉ có thể chờ các tác vụ khác được biết đến trong thời gian chạy Swift - có thể là tiếp tục hoặc các tác vụ con.
+
+Do đó, mã khi được cấu trúc với các nguyên thủy đồng thời của Swift cung cấp cho thời gian chạy sự hiểu biết rõ ràng về chuỗi phụ thuộc giữa các tác vụ.
+
+Cho đến nay, bạn đã học được cách các tính năng ngôn ngữ của Swift cho phép một nhiệm vụ bị đình chỉ trong quá trình chờ đợi.
+
+Thay vào đó, luồng thực thi có thể lý luận về sự phụ thuộc nhiệm vụ và thay vào đó chọn một nhiệm vụ khác.
+
+Điều này có nghĩa là mã được viết bằng Swift đồng thời có thể duy trì hợp đồng thời gian chạy mà các luồng luôn có thể tiến tới.
+
+Chúng tôi đã tận dụng hợp đồng thời gian chạy này để xây dựng hỗ trợ hệ điều hành tích hợp cho Swift đồng thời.
+
+Điều này ở dạng một nhóm luồng hợp tác mới để sao lưu Swift đồng thời với tư cách là người thực thi mặc định.
+
+Nhóm luồng mới sẽ chỉ tạo ra nhiều luồng như có lõi CPU, do đó đảm bảo không cam kết quá mức với hệ thống.
+
+Không giống như hàng đợi đồng thời của GCD, sẽ tạo ra nhiều luồng hơn khi các mục công việc bị chặn, với các luồng Swift luôn có thể tiến trình chuyển tiếp.
+
+Do đó, thời gian chạy mặc định có thể thận trọng trong việc kiểm soát số lượng luồng được tạo ra.
+
+Điều này cho phép chúng tôi cung cấp cho các ứng dụng của bạn sự đồng thời mà bạn cần trong khi đảm bảo tránh được những cạm bẫy đã biết của sự đồng thời quá mức.
+
+Trong các cuộc nói chuyện trước đây của WWDC về sự đồng thời với Grand Central Dispatch, chúng tôi đã khuyên bạn nên cấu trúc các ứng dụng của mình thành các hệ thống con riêng biệt và duy trì một hàng đợi điều phối nối tiếp trên mỗi hệ thống con để kiểm soát tính đồng thời của ứng dụng của bạn.
+
+Điều này có nghĩa là bạn khó có thể có được sự đồng thời lớn hơn một trong một hệ thống con mà không có nguy cơ nổ luồng.
+
+Với Swift, ngôn ngữ cung cấp cho chúng ta những bất biến mạnh mẽ mà thời gian chạy đã tận dụng, do đó có thể cung cấp cho bạn sự đồng thời được kiểm soát tốt hơn trong thời gian chạy mặc định.
+
+Bây giờ bạn đã hiểu thêm một chút về mô hình phân luồng cho Swift đồng thời, hãy xem qua một số cân nhắc cần ghi nhớ khi áp dụng các tính năng mới thú vị này trong mã của bạn.
+
+Sự cân nhắc đầu tiên mà bạn cần ghi nhớ liên quan đến hiệu suất khi chuyển đổi mã đồng bộ thành mã không đồng bộ.
+
+Trước đó, chúng tôi đã nói về một số chi phí liên quan đến tính đồng thời như phân bổ bộ nhớ bổ sung và logic trong thời gian chạy Swift.
+
+Như vậy, bạn cần cẩn thận chỉ viết mã mới với Swift đồng thời khi chi phí giới thiệu đồng thời vào mã của bạn lớn hơn chi phí quản lý nó.
+
+Đoạn mã ở đây có thể không thực sự được hưởng lợi từ tính đồng thời bổ sung của việc sinh ra một tác vụ con chỉ đơn giản là đọc một giá trị từ mặc định của người dùng.
+
+Điều này là do công việc hữu ích được thực hiện bởi nhiệm vụ con được giảm bớt bởi chi phí tạo và quản lý nhiệm vụ.
+
+Do đó, chúng tôi khuyên bạn nên lập hồ sơ mã của mình với dấu vết hệ thống Công cụ để hiểu các đặc điểm hiệu suất của nó khi bạn áp dụng đồng thời Swift.
+
+Điều thứ hai cần cẩn thận là khái niệm nguyên tử xung quanh một sự chờ đợi.
+
+Swift không đảm bảo rằng luồng đã thực thi mã trước khi chờ đợi là cùng một luồng cũng sẽ tiếp tục.
+
+Trên thực tế, chờ đợi là một điểm rõ ràng trong mã của bạn chỉ ra rằng tính nguyên tử bị phá vỡ vì nhiệm vụ có thể được tự nguyện hủy bỏ.
+
+Như vậy, bạn nên cẩn thận không giữ ổ khóa bên kia.
+
+Tương tự, dữ liệu cụ thể của luồng cũng sẽ không được lưu giữ trong suốt quá trình chờ đợi.
+
+Bất kỳ giả định nào trong mã của bạn mong đợi địa phương luồng nên được xem xét lại để giải thích cho hành vi tạm dừng của await.
+
+Và cuối cùng, sự cân nhắc cuối cùng liên quan đến hợp đồng thời gian chạy là nền tảng cho mô hình phân luồng hiệu quả trong Swift.
+
+Nhớ lại rằng với Swift, ngôn ngữ cho phép chúng tôi duy trì một hợp đồng thời gian chạy mà các luồng sẽ luôn có thể đạt được tiến bộ.
+
+Dựa trên hợp đồng này, chúng tôi đã xây dựng một nhóm luồng hợp tác để trở thành người thực thi mặc định cho Swift.
+
+Khi bạn áp dụng Swift đồng thời, điều quan trọng là phải đảm bảo rằng bạn cũng tiếp tục duy trì hợp đồng này trong mã của mình để nhóm luồng hợp tác có thể hoạt động tối ưu.
+
+Có thể duy trì hợp đồng này trong nhóm luồng hợp tác bằng cách sử dụng các nguyên thủy an toàn làm cho các phụ thuộc trong mã của bạn rõ ràng và được biết đến.
+
+Với các nguyên thủy đồng thời Swift như await, actors và task groups, những phụ thuộc này được biết đến tại thời điểm biên dịch.
+
+Do đó, trình biên dịch Swift thực thi điều này và giúp bạn duy trì hợp đồng thời gian chạy.
+
+Các nguyên thủy như os_unfair_locks và NSLocks cũng an toàn nhưng cần thận trọng khi sử dụng chúng.
+
+Sử dụng khóa trong mã đồng bộ là an toàn khi được sử dụng để đồng bộ hóa dữ liệu xung quanh một phần quan trọng chặt chẽ, nổi tiếng.
+
+Điều này là do sợi chỉ giữ khóa luôn có thể tiến tới việc giải phóng khóa.
+
+Như vậy, trong khi nguyên thủy có thể chặn một luồng trong một khoảng thời gian ngắn dưới sự tranh chấp, nó không vi phạm hợp đồng thời gian chạy của tiến trình chuyển tiếp.
+
+Điều đáng chú ý là không giống như các nguyên thủy đồng thời Swift, không có hỗ trợ trình biên dịch để hỗ trợ sử dụng khóa chính xác, vì vậy bạn có trách nhiệm sử dụng nguyên thủy này một cách chính xác.
+
+Mặt khác, các nguyên thủy như semaphores và biến điều kiện không an toàn để sử dụng với Swift concurrency.
+
+Điều này là do họ ẩn thông tin phụ thuộc khỏi thời gian chạy Swift, nhưng giới thiệu sự phụ thuộc trong việc thực thi trong mã của bạn.
+
+Vì thời gian chạy không biết về sự phụ thuộc này, nó không thể đưa ra quyết định lên lịch đúng đắn và giải quyết chúng.
+
+Đặc biệt, không sử dụng các nguyên thủy tạo ra các nhiệm vụ phi cấu trúc và sau đó giới thiệu hồi tố sự phụ thuộc qua các ranh giới nhiệm vụ bằng cách sử dụng semaphore hoặc nguyên thủy không an toàn.
+
+Một mẫu mã như vậy có nghĩa là một luồng có thể chặn vô thời hạn đối với semaphore cho đến khi một luồng khác có thể bỏ chặn nó.
+
+Điều này vi phạm hợp đồng thời gian chạy của tiến trình chuyển tiếp cho các luồng.
+
+Để giúp bạn xác định việc sử dụng các nguyên thủy không an toàn như vậy trong cơ sở mã của mình, chúng tôi khuyên bạn nên kiểm tra các ứng dụng của mình với biến môi trường sau.
+
+Điều này chạy ứng dụng của bạn trong thời gian chạy gỡ lỗi đã sửa đổi, điều này thực thi bất biến của tiến trình chuyển tiếp.
+
+Biến môi trường này có thể được đặt trong Xcode trên ngăn Run Arguments của sơ đồ dự án của bạn như được hiển thị ở đây.
+
+Khi chạy các ứng dụng của bạn với biến môi trường này, nếu bạn thấy một luồng từ nhóm luồng hợp tác dường như bị treo, nó cho thấy việc sử dụng nguyên thủy chặn không an toàn.
+
+Bây giờ, sau khi tìm hiểu về cách mô hình luồng được thiết kế cho Swift đồng thời, chúng ta hãy khám phá thêm một chút về các nguyên thủy có sẵn cho chúng ta để đồng bộ hóa trạng thái trong thế giới mới này.
+
+Varun: Trong cuộc nói chuyện đồng thời Swift về các diễn viên, bạn đã thấy cách các diễn viên có thể được sử dụng để bảo vệ trạng thái có thể thay đổi khỏi sự truy cập đồng thời.
+
+Nói cách khác, các diễn viên cung cấp một nguyên thủy đồng bộ hóa mới mạnh mẽ mà bạn có thể sử dụng.
+
+Nhớ lại rằng các diễn viên đảm bảo loại trừ lẫn nhau: một diễn viên có thể thực hiện nhiều nhất một cuộc gọi phương thức tại một thời điểm.
+
+Loại trừ lẫn nhau có nghĩa là trạng thái của diễn viên không được truy cập đồng thời, ngăn chặn các cuộc đua dữ liệu.
+
+Hãy xem các diễn viên so sánh với các hình thức loại trừ lẫn nhau như thế nào.
+
+Hãy xem xét ví dụ trước đó về việc cập nhật cơ sở dữ liệu với một số bài viết bằng cách đồng bộ hóa với hàng đợi nối tiếp.
+
+Nếu hàng đợi chưa chạy, chúng tôi nói rằng không có tranh chấp.
+
+Trong trường hợp này, chuỗi gọi được sử dụng lại để thực hiện mục công việc mới trên hàng đợi mà không có bất kỳ chuyển đổi ngữ cảnh nào.
+
+Thay vào đó, nếu hàng đợi nối tiếp đã chạy, hàng đợi được cho là đang bị tranh chấp.
+
+Trong tình huống này, chuỗi cuộc gọi bị chặn.
+
+Hành vi chặn này là nguyên nhân gây ra sự bùng nổ chủ đề như Rokhini đã mô tả trước đó trong buổi nói chuyện.
+
+Các ổ khóa có hành vi tương tự.
+
+Do các vấn đề liên quan đến việc chặn, chúng tôi thường khuyên bạn nên sử dụng công văn không đồng bộ.
+
+Lợi ích chính của việc gửi không đồng bộ là nó không bị chặn.
+
+Vì vậy, ngay cả khi tranh cãi, nó sẽ không dẫn đến nổ chỉ.
+
+Nhược điểm của việc sử dụng công văn không đồng bộ với hàng đợi nối tiếp là khi không có tranh chấp, Dispatch cần yêu cầu một luồng mới để thực hiện công việc không đồng bộ trong khi luồng gọi tiếp tục làm việc khác.
+
+Do đó, việc sử dụng không đồng bộ công văn thường xuyên có thể dẫn đến đánh thức luồng dư thừa và chuyển đổi ngữ cảnh.
+
+Điều này đưa chúng ta đến với các diễn viên.
+
+Các diễn viên của Swift kết hợp những gì tốt nhất của cả hai thế giới bằng cách tận dụng nhóm chủ đề hợp tác để lên lịch hiệu quả.
+
+Khi bạn gọi một phương thức trên một diễn viên không chạy, chuỗi gọi có thể được sử dụng lại để thực hiện lệnh gọi phương thức.
+
+Trong trường hợp diễn viên được gọi đang chạy, chuỗi gọi có thể tạm dừng chức năng mà nó đang thực hiện và nhận các công việc khác.
+
+Hãy xem hai thuộc tính này hoạt động như thế nào trong ngữ cảnh của ứng dụng tin tức ví dụ.
+
+Hãy tập trung vào cơ sở dữ liệu và các hệ thống con mạng.
+
+Khi cập nhật ứng dụng để sử dụng Swift đồng thời, hàng đợi nối tiếp cho cơ sở dữ liệu sẽ được thay thế bằng một tác nhân cơ sở dữ liệu.
+
+Hàng đợi đồng thời cho mạng có thể được thay thế bằng một diễn viên cho mỗi nguồn cấp tin tức.
+
+Để đơn giản, tôi chỉ hiển thị ba diễn viên nguồn cấp dữ liệu ở đây - cho nguồn cấp dữ liệu thể thao, nguồn cấp dữ liệu thời tiết và nguồn cấp dữ liệu sức khỏe - nhưng trên thực tế, sẽ còn nhiều hơn nữa.
+
+Những diễn viên này sẽ chạy trên nhóm chủ đề hợp tác.
+
+Các tác nhân nguồn cấp dữ liệu tương tác với cơ sở dữ liệu để lưu các bài báo và thực hiện các hành động khác.
+
+Sự tương tác này liên quan đến việc thực hiện chuyển đổi từ diễn viên này sang diễn viên khác.
+
+Chúng tôi gọi quá trình này là nhảy diễn viên.
+
+Hãy thảo luận về cách hoạt động của diễn viên nhảy.
+
+Giả sử rằng diễn viên cho nguồn cấp dữ liệu thể thao đang chạy trên một chủ đề từ nhóm hợp tác xã và nó quyết định lưu một số bài viết vào cơ sở dữ liệu.
+
+Hiện tại, hãy xem xét rằng cơ sở dữ liệu không được sử dụng.
+
+Đây là trường hợp không thể tranh luận.
+
+Luồng có thể chuyển trực tiếp từ diễn viên nguồn cấp dữ liệu thể thao sang diễn viên cơ sở dữ liệu.
+
+Có hai điều cần chú ý ở đây.
+
+Đầu tiên, chủ đề không chặn trong khi nhảy diễn viên.
+
+Thứ hai, nhảy không yêu cầu một luồng khác; thời gian chạy có thể trực tiếp đình chỉ mục công việc cho diễn viên nguồn cấp dữ liệu thể thao và tạo một mục công việc mới cho diễn viên cơ sở dữ liệu.
+
+Giả sử diễn viên cơ sở dữ liệu chạy trong một thời gian nhưng nó chưa hoàn thành mục công việc đầu tiên.
+
+Tại thời điểm này, giả sử rằng tác nhân nguồn cấp dữ liệu thời tiết cố gắng lưu một số bài viết trong cơ sở dữ liệu.
+
+Điều này tạo ra một mục công việc mới cho diễn viên cơ sở dữ liệu.
+
+Một tác nhân đảm bảo an toàn bằng cách đảm bảo loại trừ lẫn nhau; nhiều nhất, một mục công việc có thể hoạt động tại một thời điểm nhất định.
+
+Vì đã có một mục công việc đang hoạt động, D1, mục công việc mới, D2, sẽ được giữ chờ xử lý.
+
+Các diễn viên cũng không chặn.
+
+Trong tình huống này, diễn viên nguồn cấp dữ liệu thời tiết sẽ bị đình chỉ và chủ đề mà nó đang thực hiện hiện đã được giải phóng để thực hiện các công việc khác.
+
+Sau một thời gian ngắn, yêu cầu cơ sở dữ liệu ban đầu được hoàn thành, vì vậy mục công việc đang hoạt động cho tác nhân cơ sở dữ liệu sẽ bị xóa.
+
+Tại thời điểm này, thời gian chạy có thể chọn bắt đầu thực hiện mục công việc đang chờ xử lý cho tác nhân cơ sở dữ liệu.
+
+Hoặc nó có thể chọn tiếp tục một trong những diễn viên nguồn cấp dữ liệu.
+
+Hoặc nó có thể thực hiện một số công việc khác trên chuỗi giải phóng.
+
+Khi có nhiều công việc không đồng bộ, và đặc biệt là nhiều tranh chấp, hệ thống cần phải đánh đổi dựa trên công việc nào quan trọng hơn.
+
+Lý tưởng nhất, công việc ưu tiên cao như liên quan đến tương tác của người dùng, sẽ được ưu tiên hơn công việc nền, chẳng hạn như lưu các bản sao lưu.
+
+Các diễn viên được thiết kế để cho phép hệ thống ưu tiên công việc tốt do khái niệm tái nhập.
+
+Nhưng để hiểu tại sao việc tái nhập lại quan trọng ở đây, trước tiên chúng ta hãy xem cách GCD xử lý các ưu tiên.
+
+Hãy xem xét ứng dụng tin tức ban đầu với hàng đợi cơ sở dữ liệu nối tiếp.
+
+Giả sử cơ sở dữ liệu nhận được một số công việc ưu tiên cao, chẳng hạn như để tìm nạp dữ liệu mới nhất để cập nhật giao diện người dùng.
+
+Nó cũng nhận được công việc ưu tiên thấp, chẳng hạn như sao lưu cơ sở dữ liệu vào iCloud.
+
+Điều này cần phải được thực hiện vào một thời điểm nào đó, nhưng không nhất thiết phải ngay lập tức.
+
+Khi mã chạy, các mục công việc mới được tạo và thêm vào hàng đợi cơ sở dữ liệu theo một số thứ tự xen kẽ.
+
+Hàng đợi điều phối thực hiện các mục nhận được theo thứ tự vào trước, ra trước nghiêm ngặt.
+
+Thật không may, điều này có nghĩa là sau khi mục A đã thực hiện năm mục có mức độ ưu tiên thấp cần thực hiện trước khi chuyển đến mục có mức độ ưu tiên cao tiếp theo.
+
+Đây được gọi là đảo ngược ưu tiên.
+
+Hàng đợi nối tiếp hoạt động xung quanh sự đảo ngược ưu tiên bằng cách tăng mức độ ưu tiên của tất cả các công việc trong hàng đợi trước công việc ưu tiên cao.
+
+Trong thực tế, điều này có nghĩa là công việc trong hàng đợi sẽ được hoàn thành sớm hơn.
+
+Tuy nhiên, nó không giải quyết được vấn đề chính, đó là các mục từ 1 đến 5 vẫn cần hoàn thành trước khi mục B có thể bắt đầu thực hiện.
+
+Giải quyết vấn đề này đòi hỏi phải thay đổi mô hình ngữ nghĩa khỏi việc vào trước, ra trước nghiêm ngặt.
+
+Điều này đưa chúng ta đến với sự tái định của diễn viên.
+
+Hãy cùng khám phá cách reentrancy được kết nối với thứ tự với một ví dụ.
+
+Xem xét tác nhân cơ sở dữ liệu đang thực thi trên một chuỗi.
+
+Giả sử rằng nó bị đình chỉ, chờ đợi một số công việc và diễn viên nguồn cấp dữ liệu thể thao bắt đầu thực hiện trên chủ đề đó.
+
+Giả sử sau một thời gian, diễn viên nguồn cấp dữ liệu thể thao gọi diễn viên cơ sở dữ liệu để lưu một số bài báo.
+
+Vì diễn viên cơ sở dữ liệu không được tranh luận, luồng có thể chuyển đến diễn viên cơ sở dữ liệu mặc dù nó có một mục công việc đang chờ xử lý.
+
+Để thực hiện thao tác lưu, một mục công việc mới sẽ được tạo cho tác nhân cơ sở dữ liệu.
+
+Đây là ý nghĩa của việc tái nhập diễn viên; các mục công việc mới trên một diễn viên có thể đạt được tiến bộ trong khi một hoặc nhiều mục công việc cũ hơn trên đó bị đình chỉ.
+
+Diễn viên vẫn duy trì sự loại trừ lẫn nhau: nhiều nhất một mục công việc có thể được thực hiện tại một thời điểm nhất định.
+
+Sau một thời gian, mục D2 sẽ hoàn thành việc thực hiện.
+
+Lưu ý rằng D2 đã hoàn thành việc thực thi trước D1, mặc dù nó được tạo sau D1.
+
+Do đó, hỗ trợ cho việc nhập lại diễn viên có nghĩa là các diễn viên có thể thực hiện các mục theo thứ tự không hoàn toàn là vào trước, ra trước.
+
+Hãy xem lại ví dụ từ trước nhưng với một diễn viên cơ sở dữ liệu thay vì một hàng đợi nối tiếp.
+
+Đầu tiên, mục công việc A sẽ thực hiện, vì nó có mức độ ưu tiên cao.
+
+Một khi điều đó được thực hiện, có sự đảo ngược ưu tiên giống như trước đây.
+
+Vì các diễn viên được thiết kế để tái nhập, thời gian chạy có thể chọn di chuyển mục ưu tiên cao hơn lên đầu hàng đợi, trước các mục ưu tiên thấp hơn.
+
+Bằng cách này, công việc ưu tiên cao hơn có thể được thực hiện trước, với công việc ưu tiên thấp hơn sẽ theo sau.
+
+Điều này trực tiếp giải quyết vấn đề đảo ngược ưu tiên, cho phép lập lịch trình và sử dụng tài nguyên hiệu quả hơn.
+
+Tôi đã nói một chút về cách các tác nhân sử dụng nhóm hợp tác xã được thiết kế để duy trì sự loại trừ lẫn nhau và hỗ trợ ưu tiên công việc hiệu quả.
+
+Có một loại diễn viên khác, diễn viên chính, và các đặc điểm của nó có phần khác biệt vì nó trừu tượng hóa một khái niệm hiện có trong hệ thống: chủ đề chính.
+
+Hãy xem xét ứng dụng tin tức ví dụ sử dụng diễn viên.
+
+Khi cập nhật giao diện người dùng, bạn sẽ cần thực hiện cuộc gọi đến và đi từ MainActor.
+
+Vì luồng chính tách rời khỏi các luồng trong nhóm hợp tác, điều này yêu cầu chuyển đổi ngữ cảnh.
+
+Hãy xem xét ý nghĩa hiệu suất của điều này với một ví dụ mã.
+
+Hãy xem xét mã sau đây nơi chúng tôi có chức năng updateArticles trên MainActor, tải các bài viết ra khỏi cơ sở dữ liệu và cập nhật giao diện người dùng cho mỗi bài viết.
+
+Mỗi lần lặp lại của vòng lặp yêu cầu ít nhất hai công tắc ngữ cảnh: một để chuyển từ diễn viên chính sang diễn viên cơ sở dữ liệu và một để chuyển trở lại.
+
+Hãy xem việc sử dụng CPU cho một vòng lặp như vậy sẽ trông như thế nào.
+
+Vì mỗi lần lặp vòng lặp yêu cầu hai công tắc ngữ cảnh, nên có một mẫu lặp lại trong đó hai luồng chạy lần lượt trong một khoảng thời gian ngắn.
+
+Nếu số lần lặp vòng lặp thấp và công việc đáng kể đang được thực hiện trong mỗi lần lặp, điều đó có lẽ không sao cả.
+
+Tuy nhiên, nếu việc thực thi nhảy vào và tắt tác nhân chính thường xuyên, chi phí chuyển đổi luồng có thể bắt đầu cộng lại.
+
+Nếu ứng dụng của bạn dành một phần lớn thời gian để chuyển đổi ngữ cảnh, bạn nên cấu trúc lại mã của mình để hoạt động cho tác nhân chính được trộn lại.
+
+Bạn có thể làm việc hàng loạt bằng cách đẩy vòng lặp vào các lệnh gọi phương thức loadArticles và updateUI, đảm bảo chúng xử lý các mảng thay vì một giá trị tại một thời điểm.
+
+Việc trộn công việc làm giảm số lượng công tắc ngữ cảnh.
+
+Mặc dù nhảy giữa các diễn viên trong nhóm hợp tác rất nhanh, bạn vẫn cần chú ý đến các bước nhảy đến và đi từ diễn viên chính khi viết ứng dụng của mình.
+
+Nhìn lại, trong bài nói chuyện này, bạn đã học được cách chúng tôi đã làm việc để làm cho hệ thống hiệu quả nhất có thể, từ thiết kế của nhóm luồng hợp tác - cơ chế treo không chặn - đến cách các tác nhân được triển khai.
+
+Ở mỗi bước, chúng tôi đang sử dụng một số khía cạnh của hợp đồng thời gian chạy để cải thiện hiệu suất của các ứng dụng của bạn.
+
+Chúng tôi rất vui khi thấy cách bạn sử dụng các tính năng ngôn ngữ mới đáng kinh ngạc này để viết mã Swift rõ ràng, hiệu quả và thú vị.
+
+Cảm ơn bạn đã xem và có một WWDC tuyệt vời.
+
+♪

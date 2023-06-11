@@ -1,0 +1,501 @@
+10038
+
+Xin chào, và chào mừng đến với WWDC.
+
+Tên tôi là John, và tôi làm việc trên Core ML, khuôn khổ học máy của Apple.
+
+Cùng với đồng nghiệp Brian của tôi, chúng tôi rất vui mừng được chỉ cho bạn cách điều chỉnh các mô hình của mình khi bạn mang đến sự kỳ diệu của việc học máy cho các ứng dụng của mình.
+
+Để bắt đầu mọi thứ, tôi sẽ chỉ cho bạn một số cải tiến cho API học máy của chúng tôi.
+
+Sau đó, chúng ta sẽ đi sâu vào các cải tiến định dạng tệp mở ra một loạt các khả năng mới.
+
+Sau đó, Brian sẽ chỉ cho chúng tôi các Chương trình ML và đưa chúng tôi dưới mui xe và hướng dẫn chúng tôi thực hiện đánh máy và cách bạn có thể sử dụng nó để tinh chỉnh độ chính xác và hiệu suất của các mô hình của bạn.
+
+Bạn có thể sử dụng những cải tiến này để hợp lý hóa quy trình làm việc của mình và đẩy trải nghiệm được hỗ trợ ML của bạn hơn nữa.
+
+Hãy bắt đầu với những cải tiến API.
+
+Core ML cung cấp cho bạn một API đơn giản để làm việc với các mô hình trên thiết bị của người dùng.
+
+Các mô hình này có thể được thiết kế để hoạt động với nhiều đầu vào và đầu ra khác nhau, chẳng hạn như chuỗi hoặc giá trị nguyên thủy hoặc đầu vào phức tạp hơn như hình ảnh và Đa mảng.
+
+Hãy nói nhiều hơn về loại cuối cùng này, MultiArray.
+
+Core ML giúp dễ dàng làm việc với dữ liệu đa chiều bằng cách sử dụng MLMultiArray.
+
+Mặc dù nó là một API đơn giản, mã bạn phải viết để thao tác dữ liệu với nó không phải lúc nào cũng cảm thấy tự nhiên trong Swift.
+
+Ví dụ, để khởi tạo một MultiArray với một loạt các số nguyên, bạn phải chuyển loại trong thời gian chạy.
+
+Thêm vào đó, bạn phải sử dụng NSNumber thay vì các số nguyên thông thường, và điều đó không an toàn với loại và không thực sự trông giống Swift thanh lịch.
+
+Core ML đang giới thiệu MLShapedArray để giúp bạn làm việc với dữ liệu đa chiều dễ dàng hơn.
+
+MLShapedArray là một loại Swift thuần túy tương tự như một mảng thông thường nhưng hỗ trợ nhiều chiều.
+
+Giống như mảng, nó là một loại giá trị, với ngữ nghĩa sao chép khi ghi và cú pháp cắt phong phú hoạt động dễ dàng với mã MLMultiArray hiện có của bạn.
+
+Để khởi tạo MLMultiArray hai chiều, bạn thường sử dụng hai vòng lặp "for" lồng nhau.
+
+Với MLShapedArray, bạn có thể khởi tạo cùng một mảng 2D với một dòng duy nhất.
+
+MLShapedArray phù hợp với Swift một cách tự nhiên và giúp việc viết và xem lại mã của bạn dễ dàng hơn nhiều.
+
+Đây là một ví dụ khác.
+
+Để truy cập hàng thứ hai dưới dạng một lát cắt, bạn chỉ cần lập chỉ mục vào nó như thế này.
+
+Để truy cập nhiều hàng và cột dưới dạng lát cắt, bạn có thể sử dụng một phạm vi cho mỗi chiều.
+
+MLShapedArray và MLMultiArray hoàn toàn tương thích với nhau.
+
+Bạn có thể dễ dàng chuyển đổi loại này sang loại khác bằng cách sử dụng trình khởi tạo lấy một ví dụ của loại khác.
+
+Bạn cũng có thể chuyển đổi các kiểu dữ liệu bằng cách sử dụng trình khởi tạo chuyển đổi.
+
+Ví dụ, mã này chuyển đổi MultiArray of doubles thành ShapedArray of Floats.
+
+Các mảng có hình dạng có ích bất cứ lúc nào bạn cần làm việc với dữ liệu đa chiều.
+
+Ví dụ, mô hình phát hiện đối tượng YOLO tìm các đối tượng trong một hình ảnh, và sau đó nó xuất ra một mảng 2 chiều.
+
+Bảng hiển thị dữ liệu từ một dự đoán.
+
+Mỗi hàng đại diện cho một hộp giới hạn và các giá trị trong mỗi cột nằm trong khoảng từ 0 đến 1.
+
+Mỗi giá trị thể hiện mức độ tự tin của mô hình rằng hộp giới hạn chứa một người, xe đạp hoặc ô tô, v.v.
+
+Tôi muốn viết một số mã để chọn nhãn có khả năng nhất cho mỗi hộp giới hạn.
+
+Đây là một ví dụ về cách làm điều đó.
+
+Mã bắt đầu với thuộc tính tin cậy của đầu ra, đó là MultiArray 2 chiều.
+
+Hàm này lặp qua mỗi hàng để tìm điểm tin cậy cao nhất trong hàng đó.
+
+Lưu ý rằng nó phải thường xuyên truyền các số nguyên vào NSNumber.
+
+Mã này sử dụng MLShapedArray thay thế và thực hiện công việc tương tự trong ít dòng dễ đọc hơn.
+
+Lưu ý kết quả dự đoán của mô hình cung cấp cho chúng ta một thuộc tính ShapedArray có chứa các giá trị tin cậy.
+
+Mã này đơn giản hơn vì MLShapedArray và vô hướng của nó phù hợp với các giao thức thu thập Swift tiêu chuẩn.
+
+Điều này cung cấp một trải nghiệm đánh máy mạnh mẽ, dễ đọc hơn và là niềm vui khi làm việc trong Swift.
+
+Tiếp theo, hãy nói về các mô hình Core ML và cách chúng được thể hiện trong hệ thống tệp.
+
+Core ML giúp bạn dễ dàng xây dựng trải nghiệm hỗ trợ học máy phong phú cho người dùng của mình.
+
+Mô hình ML là động cơ mang những trải nghiệm này vào cuộc sống.
+
+Định dạng tệp .mlmodel mã hóa và tóm tắt chức năng của mô hình nên bạn không cần phải lo lắng về nó.
+
+Định dạng lưu trữ tất cả các chi tiết triển khai và sự phức tạp của một mô hình.
+
+Là một nhà phát triển, bạn không cần phải quan tâm đến việc đó là một tập hợp cây hay một mạng lưới thần kinh với hàng triệu tham số.
+
+Mô hình ML chỉ là một tệp duy nhất mà bạn chỉ cần thêm vào dự án Xcode và viết mã hoạt động với nó, giống như bất kỳ API nào khác.
+
+Mỗi tệp mô hình Core ML bao gồm một số thành phần.
+
+Siêu dữ liệu lưu trữ thông tin như tác giả, giấy phép, phiên bản và mô tả ngắn.
+
+Giao diện xác định đầu vào và đầu ra của mô hình.
+
+Kiến trúc xác định cấu trúc bên trong của mô hình.
+
+Ví dụ, với một mạng nơ-ron, phần kiến trúc mô tả các lớp của mô hình và tất cả các kết nối giữa chúng.
+
+Cuối cùng, phần cuối cùng lưu trữ một loạt các giá trị mà mô hình đã học được trong giai đoạn đào tạo.
+
+Tệp Mô hình ML mã hóa tất cả các phần này thành định dạng nhị phân protobuf, mà hệ thống tệp và phần mềm điều khiển nguồn xem như một tệp nhị phân duy nhất.
+
+Phần mềm kiểm soát nguồn không thể nói rằng tệp mô hình nhị phân thực sự là sự kết hợp của một số thành phần riêng biệt.
+
+Để giải quyết điều đó, Core ML đang thêm một định dạng mô hình mới chia các thành phần này thành các tệp riêng biệt, sử dụng chức năng gói tích hợp của macOS.
+
+Điều này đưa chúng ta đến với Gói Mô hình ML Cốt lõi mới.
+
+Đó là một vùng chứa lưu trữ từng thành phần của mô hình trong tệp riêng của nó, tách biệt kiến trúc, trọng số và siêu dữ liệu của nó.
+
+Bằng cách tách các thành phần này, các gói mô hình cho phép bạn dễ dàng chỉnh sửa siêu dữ liệu và theo dõi các thay đổi với điều khiển nguồn.
+
+Họ cũng biên dịch hiệu quả hơn và cung cấp sự linh hoạt hơn cho các công cụ đọc và viết mô hình.
+
+Core ML và Xcode vẫn hỗ trợ đầy đủ định dạng mô hình ML ban đầu.
+
+Nhưng bạn có thể chuyển sang định dạng có thể mở rộng hơn và biên dịch hiệu quả hơn bằng cách cập nhật lên gói mô hình.
+
+Hãy thử cái này trong Xcode.
+
+Đây là một ứng dụng đơn giản sử dụng mô hình phát hiện đối tượng để xác định động vật trong một hình ảnh.
+
+Lưu ý rằng một số trường siêu dữ liệu trống.
+
+Nó khá phổ biến khi bắt gặp các mô hình mà siêu dữ liệu không được điền vào.
+
+Trước đây, bạn không thể chỉnh sửa các trường này trong Xcode.
+
+Nhưng bây giờ Xcode hỗ trợ các gói mô hình, bạn có thể.
+
+Hiện tại loại tệp của mô hình là Mô hình ML, nhưng khi tôi nhấp vào nút Chỉnh sửa, Xcode sẽ nhắc tôi cập nhật tệp Mô hình ML lên Gói ML.
+
+Xcode cho tôi biết rằng nó sắp cập nhật bất kỳ tham chiếu nào trong không gian làm việc của tôi đến tệp mô hình gốc để trỏ đến gói new.ml.
+
+Tôi sẽ tiếp tục và nhấp vào Cập nhật và Chỉnh sửa.
+
+Giao diện người dùng của Xcode hiện cho biết mô hình ở định dạng Gói ML.
+
+Bây giờ tôi có thể điền trực tiếp vào các giá trị còn thiếu trong Xcode.
+
+Tôi sẽ tiếp tục và cập nhật mô tả với từ "động vật". Vì mô hình này đến từ đồng nghiệp của tôi, Joseph, tôi sẽ đưa tên anh ấy vào trường Tác giả.
+
+Tôi sẽ nói Giấy phép MIT và phiên bản 2.0.
+
+Tôi cũng có thể thêm, sửa đổi và xóa các trường siêu dữ liệu bổ sung.
+
+Tôi sẽ thêm một mục siêu dữ liệu mới cho biết năm nào chúng tôi đã sử dụng mô hình này tại WWDC.
+
+Vậy chúng ta sẽ nói năm 2021.
+
+Bây giờ, ngoài hỗ trợ giao diện người dùng, tất cả thông tin này cũng có thể truy cập được bằng API MLModelDescription của Core ML trong thời gian chạy.
+
+Tôi cũng có thể sửa đổi mô tả về Đầu vào và Đầu ra của mô hình trong tab Dự đoán.
+
+Ở đây tôi sẽ thay đổi mô tả của Đầu vào này.
+
+Chúng tôi sẽ thêm "của một con vật."
+
+Và ở dưới đây, tôi sẽ sửa lỗi đánh máy bằng cách thêm dấu gạch nối bị thiếu.
+
+Bây giờ, một mô hình với siêu dữ liệu tốt rất giống mã với nhận xét tốt.
+
+Nó giúp bạn và nhóm của bạn hiểu được ý định của mô hình, và vì vậy điều đặc biệt quan trọng là đảm bảo bạn viết mô tả tốt cho đầu vào và đầu ra của mô hình.
+
+Tôi sẽ nhấp vào Xong để lưu các thay đổi.
+
+Bây giờ nếu tôi nhấp vào Kiểm soát nguồn và sau đó Cam kết, Xcode sẽ hiển thị các thay đổi trong chế độ xem khác nhau.
+
+Siêu dữ liệu hiện có trong tệp .json của riêng nó, giúp dễ dàng xác minh các thay đổi của tôi.
+
+Tương tự, Mô tả Tính năng có tệp .json riêng biệt của chúng.
+
+Nếu chúng tôi đã thay đổi một vài byte của tệp Mô hình ML nhị phân 62 megabyte, chúng tôi sẽ có sự khác biệt nhị phân 62 megabyte.
+
+Tuy nhiên, các gói mô hình hiệu quả và dễ làm việc hơn nhiều, đặc biệt là đối với các thay đổi văn bản nhỏ.
+
+Xcode hỗ trợ cả gói mô hình và tệp mô hình như nhau.
+
+Ví dụ, tôi có thể sử dụng tab Xem trước để kiểm tra gói mô hình của mình.
+
+Nếu tôi mang theo hình ảnh của hai con gấu, chúng ta sẽ thấy rằng chúng ta nhận được hai hộp giới hạn, một cho mỗi con gấu.
+
+Tương tự, tôi có thể vào tab Tiện ích, nơi tôi có thể tạo khóa mã hóa hoặc kho lưu trữ ML cho gói mô hình giống như tôi làm cho tệp mô hình ML.
+
+Vậy đó là các gói mô hình trong Xcode.
+
+Các gói có thể làm mọi thứ mà tệp mô hình có thể và hơn thế nữa, chẳng hạn như chỉnh sửa siêu dữ liệu mô hình.
+
+Điều cuối cùng tôi muốn hiển thị là mã mà Xcode tự động tạo cho mỗi mô hình bạn thêm vào dự án.
+
+Tôi sẽ nhấp vào biểu tượng này để xem mã được tạo.
+
+Trước đó, chúng tôi đã xem xét MLMultiArray và đối tác Swift mới của nó, MLShapedArray.
+
+Xcode hiện thêm một thuộc tính mảng có hình dạng mới cho mỗi đầu ra MultiArray trong lớp trình bao bọc.
+
+Ví dụ, lớp được tạo hiện có thuộc tính confidenceShapedArray cho đầu ra của mô hình.
+
+Bạn vẫn có thể sử dụng thuộc tính MLMultiArray tự tin ban đầu nếu bạn thích.
+
+Lưu ý rằng mục tiêu triển khai dự án của bạn phải là một trong những phiên bản hệ điều hành này, ví dụ: macOS 12 hoặc iOS 15, để tận dụng thuộc tính mảng có hình dạng mới.
+
+Bây giờ chúng ta đã thấy tất cả những điều này đang hoạt động, chúng ta hãy xem Mô hình ML và Gói ML cạnh nhau.
+
+Gói ML hỗ trợ tất cả các loại tương tự mà các tệp Mô hình ML hỗ trợ, bao gồm cây, SVM, mạng thần kinh, v.v.
+
+Ngoài các loại này, Gói ML cũng hỗ trợ một loại mô hình mới mạnh mẽ được gọi là Chương trình ML.
+
+Chương trình ML là một loại mô hình đại diện cho các mạng thần kinh ở định dạng định hướng mã hơn.
+
+Để cho bạn biết thêm về các Chương trình ML và các tính năng mới mà chúng kích hoạt, tôi sẽ giao nó cho Brian.
+
+Cảm ơn, John.
+
+Tên tôi là Brian Keene, và tôi rất hào hứng khi nói về các Chương trình ML và cách thực thi đánh máy giúp bạn kiểm soát nhiều hơn độ chính xác và hiệu suất mô hình tốt hơn.
+
+Có nhiều cách khác nhau mà một mô hình học máy có thể đã được trình bày cho bạn.
+
+Nếu bạn đang tham gia một khóa học máy hoặc đọc một bài báo, bạn có thể gặp phải một mô hình được mô tả liên quan đến công thức toán học hoặc thống kê của nó.
+
+Tuy nhiên, các biểu thức toán học này thường được trừu tượng hóa và trình bày thay thế cho bạn dưới dạng biểu đồ hoặc mạng tính toán.
+
+Biểu diễn đồ họa này như được mô tả trong hai hình giữa, mô tả cách dữ liệu chảy qua một loạt các lớp, mỗi lớp áp dụng biến đổi cụ thể của riêng chúng.
+
+Trong thư viện phần mềm học máy, mô hình thay vào đó được thể hiện dưới dạng các thao tác trong mã.
+
+Các kỹ sư học máy đang ngày càng tận dụng cấu trúc chương trình chung chung hơn này bao gồm các khối, chức năng và luồng điều khiển.
+
+Loại mô hình Chương trình ML mới trong Core ML tự sắp xếp với đại diện cuối cùng này.
+
+Đây là một Chương trình ML đại diện.
+
+Nó ở định dạng văn bản có thể đọc được của con người, mặc dù mục đích là bạn không cần phải tự viết nó.
+
+Chương trình ML sẽ được tạo tự động bởi bộ chuyển đổi của Core ML.
+
+Một chương trình ML bao gồm một chức năng chính.
+
+Chức năng chính này bao gồm một chuỗi các hoạt động, hoặc hoạt động.
+
+Mỗi op tạo ra một biến, và biến này được gõ mạnh.
+
+Đối với các hoạt động có trọng số, chẳng hạn như hoạt động tuyến tính hoặc tích chập, trọng số thường được tuần tự hóa thành một tệp nhị phân riêng biệt.
+
+Đây là một bản tóm tắt ngắn gọn về cách các Chương trình ML so sánh với Mạng thần kinh.
+
+Mạng thần kinh có các lớp, trong khi các chương trình ML có các hoạt động.
+
+Trọng số trong các mô hình mạng nơ-ron được nhúng trong mô tả lớp của chúng, trong khi các Chương trình ML tuần tự hóa các trọng số riêng biệt.
+
+Và các mạng nơ-ron không chỉ định các loại tenxơ trung gian.
+
+Thay vào đó, đơn vị tính toán xác định các loại này trong thời gian chạy.
+
+Mặt khác, các chương trình ML có các tenxơ đánh máy mạnh.
+
+Hôm nay tôi sẽ tập trung vào cú pháp được nhập mạnh của Chương trình ML và ý nghĩa của các tenxơ trung gian được nhập có đối với việc học máy trên thiết bị với Chương trình ML.
+
+Nhưng trước tiên, làm thế nào để bạn có được một Chương trình ML?
+
+Core ML trước đây đã giới thiệu một API chuyển đổi thống nhất.
+
+API chuyển đổi thống nhất này cung cấp một phương tiện thuận tiện để đưa mô hình của bạn từ Tensorflow hoặc PyTorch sang mô hình mạng thần kinh Core ML với một lệnh gọi chức năng duy nhất.
+
+Bây giờ bạn có thể sử dụng cùng một API để chuyển đổi sang Chương trình ML bằng cách chọn iOS 15 làm mục tiêu triển khai tối thiểu.
+
+Dưới mui xe, bộ chuyển đổi Core ML chọn một biểu diễn trên đĩa cho mô hình tại thời điểm chuyển đổi.
+
+Đối với các Chương trình ML, biểu diễn trung gian trên đĩa được cung cấp bởi Ngôn ngữ Trung cấp Mô hình, một tính năng được giới thiệu tại WWDC 2020.
+
+API chuyển đổi thống nhất là nơi bạn có thể chọn tham gia để triển khai mô hình của mình dưới dạng Chương trình ML.
+
+Trong tương lai, Chương trình ML sẽ là định dạng được ưa chuộng hơn mạng nơ-ron.
+
+Và Chương trình ML có sẵn bắt đầu với iOS15 và macOS Monterey.
+
+Core ML hỗ trợ cả định dạng Mô hình ML và Gói ML cho các mô hình mạng thần kinh, nhưng Chương trình ML phải là Gói ML để lưu trữ trọng lượng của nó tách biệt với kiến trúc.
+
+Core ML đang đầu tư vào Chương trình ML như một nền tảng cho tương lai.
+
+Sẽ có sự hỗ trợ liên tục cho các mạng thần kinh, nhưng Chương trình ML sẽ là trung tâm của các tính năng mới.
+
+Vậy nếu Chương trình ML là tương lai, lợi ích của việc áp dụng Chương trình ML ngày hôm nay là gì?
+
+Điều này đưa chúng ta đến việc thực hiện đánh máy.
+
+Để làm nổi bật lợi ích của việc thực thi đánh máy với các Chương trình ML, trước tiên chúng ta hãy thảo luận về những gì xảy ra với mạng nơ-ron.
+
+Được hiển thị ở đây là đầu vào và đầu ra ví dụ cho mô hình Mạng thần kinh Core ML chỉ định Float32 cho các tenxơ đầu vào và đầu ra.
+
+Đầu vào và đầu ra cũng có thể là loại số nguyên kép hoặc 32 bit.
+
+Vì vậy, mô hình mạng nơ-ron mạnh mẽ nhập các tenxơ đầu vào và đầu ra này.
+
+Còn các loại tenxơ trung gian thì sao?
+
+Một mạng nơ-ron không đánh máy mạnh các tenxơ trung gian của nó.
+
+Không có thông tin về các loại tenxơ này trong mô hình trên đĩa.
+
+Thay vào đó, đơn vị tính toán chạy mô hình suy ra các loại tensor sau khi Core ML tải mô hình.
+
+Khi thời gian chạy Core ML tải một mạng thần kinh, nó sẽ tự động và tự động phân chia biểu đồ mạng thành các phần: Thân thiện với Apple Neural Engine, thân thiện với GPU và CPU.
+
+Mỗi đơn vị tính toán thực hiện phần của mạng bằng cách sử dụng loại gốc của nó để tối đa hóa hiệu suất và hiệu suất tổng thể của mô hình.
+
+GPU và Neural Engine đều sử dụng Float16, và CPU sử dụng Float32.
+
+Là nhà phát triển, bạn có một số quyền kiểm soát đối với sơ đồ thực thi này bằng cách chọn .all, .cpuAndGPU hoặc .cpuOnly với thuộc tính computeUnits của mô hình.
+
+Thuộc tính này mặc định là .all, hướng dẫn Core ML phân vùng mô hình trên công cụ thần kinh, GPU và CPU trong thời gian chạy để cung cấp cho ứng dụng của bạn hiệu suất tốt nhất có thể.
+
+Và nếu bạn đặt nó thành cpuOnly, Core ML sẽ không sử dụng Neural Engine hoặc GPU, điều này đảm bảo mô hình của bạn chỉ thực hiện độ chính xác Float32 trên CPU.
+
+Tóm lại, các mạng nơ-ron có các tenxơ trung gian, được tự động nhập trong thời gian chạy bởi đơn vị tính toán chịu trách nhiệm tạo ra chúng.
+
+Bạn có một số quyền kiểm soát độ chính xác của chúng bằng cách định cấu hình tập hợp các đơn vị tính toán được phép, nhưng làm như vậy là cài đặt toàn cầu cho mô hình và có thể để lại một số hiệu suất trên bảng.
+
+Còn Chương trình ML thì sao?
+
+Trong Chương trình ML được mô tả ở đây, các tenxơ đầu vào và đầu ra được nhập mạnh, và mọi tenxơ trung gian của chương trình cũng vậy.
+
+Bạn thậm chí có thể kết hợp và kết hợp hỗ trợ chính xác trong một đơn vị tính toán duy nhất, chẳng hạn như CPU hoặc GPU và các loại này được xác định rõ ràng tại thời điểm chuyển đổi mô hình.
+
+Đó là rất lâu trước khi bạn sử dụng Core ML để tải và chạy mô hình trong kịch bản triển khai.
+
+Các chương trình ML sử dụng cùng một sơ đồ phân chia tự động phân phối công việc cho Neural Engine, GPU và CPU.
+
+Tuy nhiên, nó thêm một ràng buộc kiểu.
+
+Core ML vẫn giữ được khả năng thúc đẩy tenxơ đến độ chính xác cao hơn, nhưng thời gian chạy Core ML không bao giờ sử dụng các tenxơ trung gian với độ chính xác thấp hơn độ chính xác được chỉ định trong Chương trình ML.
+
+Hỗ trợ mới này cho việc thực thi kiểu đã được thực hiện thông qua hỗ trợ op mở rộng trên cả GPU và CPU, đặc biệt là cho các hoạt động Float32 trên GPU và các hoạt động được chọn trong Float16 trên CPU.
+
+Với sự hỗ trợ mở rộng này, bạn vẫn có thể thấy lợi ích hiệu suất của GPU khi Chương trình ML của bạn chỉ định độ chính xác Float32.
+
+Hãy thử API chuyển đổi thống nhất để tạo ra các Chương trình ML với các độ chính xác khác nhau.
+
+Được rồi, bây giờ tôi đang ở trong một sổ ghi chép Jupyter, đây là một công cụ tiện lợi để thực thi mã Python theo cách tương tác.
+
+Tôi sẽ xem xét quá trình chuyển đổi một mô hình sang định dạng Chương trình ML mới.
+
+Mô hình tôi sẽ sử dụng hôm nay là mô hình chuyển đổi phong cách.
+
+Tôi đã tải xuống một mô hình Tensorflow được đào tạo trước từ Nguồn Mở.
+
+Mô hình này lấy một hình ảnh và tạo ra một hình ảnh cách điệu.
+
+Điều đầu tiên cần thiết là một vài báo cáo nhập khẩu.
+
+Tôi sẽ nhập coremltools, thư viện hình ảnh Python, cũng như một vài thư viện trợ giúp và các hàm trợ giúp đơn giản mà tôi đã viết để giữ cho mã tôi sử dụng ở đây ngắn gọn.
+
+Bây giờ tôi sẽ chỉ định đường dẫn của mô hình chuyển phong cách và đường dẫn đến hình ảnh mà tôi sẽ cách điệu.
+
+Tôi cũng sẽ thiết lập các loại đầu vào để chuyển đổi.
+
+Trong trường hợp này, nó sẽ là một loại đầu vào hình ảnh chỉ định kích thước của hình ảnh mà mô hình được đào tạo.
+
+Cuối cùng, có một số thiết lập bổ sung để chuẩn bị từ điển đầu vào mà tôi có thể sử dụng để chạy chuyển đổi sau mô hình Core ML.
+
+Vì vậy, đầu vào đã được tải và mô hình nguồn có sẵn.
+
+Tại thời điểm này, tất cả các tài nguyên bên ngoài đã sẵn sàng để chuyển đổi sang Chương trình ML.
+
+Để chuyển đổi, tôi sẽ sử dụng API chuyển đổi hợp nhất.
+
+Đối số đầu tiên là đường dẫn mô hình nguồn.
+
+Tiếp theo, chuyển mảng các loại đầu vào.
+
+Ở đây, chỉ có một cái.
+
+Cuối cùng, đối số mục tiêu triển khai tối thiểu sẽ xác định xem Công cụ Core ML tạo ra mạng nơ-ron hay Chương trình ML.
+
+Nó mặc định là iOS 13 và tạo ra một mạng lưới thần kinh.
+
+Ngay bây giờ tôi muốn có một Chương trình ML, vì vậy tôi sẽ đặt mục tiêu triển khai thành iOS 15.
+
+Cuối cùng tôi muốn triển khai mô hình này trên một ứng dụng iOS.
+
+Tôi có thể đã chỉ định một mục tiêu triển khai của macOS 12, nếu thiết bị mục tiêu của tôi là Mac.
+
+Tôi sẽ nhấn Shift-Enter để chuyển đổi mô hình.
+
+Và quá trình chuyển đổi đã hoàn tất.
+
+Có một sự biến đổi biểu đồ xảy ra tự động cho các Chương trình ML trong quá trình chuyển đổi.
+
+Nó được gọi là thẻ FP16ComputePrecision.
+
+Biểu đồ này truyền mọi tenxơ Float32 trong biểu đồ Tensorflow ban đầu sang tenxơ Float16 trong chương trình ML.
+
+Được rồi, bây giờ kể từ khi quá trình chuyển đổi hoàn tất, bước tiếp theo là kiểm tra tính chính xác của chương trình ML.
+
+Tôi có thể so sánh các số đầu ra với mô hình Tensorflow ban đầu bằng cách gọi dự đoán với cùng một hình ảnh với cả hai mô hình.
+
+Điều đáng chú ý là đối với các Chương trình ML, tôi đang sử dụng chính xác các API Công cụ ML Cốt lõi giống như những năm trước để dự đoán, lưu mô hình và các tiện ích khác.
+
+Để so sánh, tôi đã viết một phương thức tiện ích gọi là _get_coreml_tensorflow_output.
+
+Nó sẽ in ra nhiều chỉ số lỗi để đánh giá đầu ra từ Tensorflow và đầu ra từ Core ML.
+
+Vì vậy, vì đây là một hình ảnh, số liệu sai số thích hợp nhất có thể là tỷ lệ tín hiệu trên nhiễu, hoặc SNR.
+
+Trong thực tế, SNR trên 20 hoặc 30 thường là dấu hiệu của kết quả tốt.
+
+Ở đây tôi có SNR là 71, và điều đó khá tuyệt.
+
+Có một vài chỉ số khác: sai số tuyệt đối tối đa, sai số tuyệt đối trung bình.
+
+Tuy nhiên, tôi tò mò, chi phí chính xác của việc sử dụng Float16 là bao nhiêu?
+
+Tôi đã mất gì?
+
+Để tìm hiểu, tôi có thể vô hiệu hóa biến đổi Float16 và chuyển đổi lại.
+
+Tôi sẽ sử dụng cùng một lệnh chuyển đổi, nhưng lần này tôi sẽ chỉ định một đối số compute_precision và đặt nó thành Float32.
+
+Điều này sẽ yêu cầu bộ chuyển đổi không tiêm các phôi Float16 đó, và vì vậy bộ chuyển đổi Core ML Tools sẽ tạo ra Chương trình Float32 ML.
+
+Được rồi, bây giờ tôi sẽ so sánh Chương trình Float32 ML này với chương trình Tensorflow gốc.
+
+Và SNR đã tăng lên hơn 100, và sai số tuyệt đối tối đa đã giảm từ khoảng 1 xuống 0.02.
+
+Tôi vẫn chưa trả lời liệu lỗi mà tôi gặp phải trước đó với mô hình Float16 có bất kỳ tác động rõ ràng nào hay không.
+
+Đây là một mô hình chuyển đổi phong cách, vì vậy phán quyết có thể được đưa ra dựa trên một cốt truyện đơn giản của hình ảnh đầu ra.
+
+Tôi sẽ vẽ biểu đồ hình ảnh nguồn và các phiên bản cách điệu từ cả ba mô hình mà tôi có: Chương trình Float16 ML, chương trình Float32 ML và mô hình Tensorflow.
+
+Và tôi thực sự không thấy bất kỳ sự khác biệt nào giữa ba đầu ra của mô hình.
+
+Tất nhiên, việc đánh giá một hình ảnh duy nhất, một lần với một vài số liệu và kiểm tra trực quan thực sự chỉ là một bài kiểm tra khói.
+
+Mọi thứ có vẻ ổn.
+
+Trong thực tế, tôi sẽ đánh giá với nhiều chỉ số lỗi hơn trên một tập dữ liệu lớn, đánh giá các trường hợp lỗi trong đường ống được sử dụng bởi mô hình học máy và phân loại chúng.
+
+Tôi có sẵn một tập dữ liệu nhỏ và để tiến thêm một bước nữa với ví dụ này, tôi có thể so sánh hai Chương trình ML với mô hình Tensorflow cho mỗi hình ảnh trong tập dữ liệu.
+
+SNR của chương trình Float32 ML so với Tensorflow được mô tả là một đường màu đỏ với Xs, và Chương trình Float16 ML là một đường màu xanh lam với các vòng tròn.
+
+Chương trình Float32 ML dường như trung bình SNR khoảng 100 và Chương trình Float16 ML vẫn ở mức 70.
+
+Độ chính xác của Float16 ảnh hưởng đến các số một chút, nhưng nó có vẻ không đáng kể đối với trường hợp sử dụng này.
+
+Mặc dù, ngay cả trong tập dữ liệu nhỏ gồm 131 hình ảnh này, vẫn có một vài ngoại lệ.
+
+Nhìn chung, mô hình đang làm khá tốt những gì nó dự kiến sẽ làm.
+
+Và đây là trường hợp của phần lớn các mô hình học sâu.
+
+Chúng thường có xu hướng hoạt động tốt, ngay cả với độ chính xác của Float16.
+
+Đó là lý do tại sao chúng tôi đã bật biến đổi Float16 theo mặc định trong bộ chuyển đổi Core ML.
+
+Một chương trình ML kiểu Float16 sẽ có sẵn để thực thi trên động cơ thần kinh, có thể giúp tăng hiệu suất đáng kể và giảm mức tiêu thụ điện năng.
+
+Vì thời gian chạy coi các loại tenxơ là độ chính xác tối thiểu trong quá trình thực thi, Chương trình Float32 ML sẽ thực thi chỉ trên sự kết hợp của GPU và CPU.
+
+Bản demo này đã chứng minh việc kiểm soát độ chính xác tối thiểu mà Chương trình ML sẽ thực hiện ngay tại thời điểm chuyển đổi dễ dàng như thế nào.
+
+Và không giống như các mô hình Core ML mạng thần kinh, nếu mô hình của bạn cần độ chính xác cao hơn, bạn không cần phải thay đổi cài đặt của đơn vị tính toán thành cpuOnly trong mã ứng dụng để đạt được điều đó.
+
+Và như một lưu ý cuối cùng, sổ ghi chép demo này sẽ có sẵn như một ví dụ trên trang web tài liệu Công cụ Core ML.
+
+Tóm lại, để có được một chương trình ML, hãy sử dụng chức năng chuyển đổi và chuyển một đối số bổ sung để chỉ định mục tiêu triển khai và đặt nó thành ít nhất iOS 15 hoặc macOS 12.
+
+Theo mặc định, bộ chuyển đổi Core ML sẽ tạo ra một mô hình Float16 được tối ưu hóa đủ điều kiện để thực thi trên công cụ thần kinh.
+
+Nếu, như nó có thể xảy ra trong một số trường hợp, mô hình nhạy cảm với độ chính xác của Float16, thay vào đó, thật đơn giản để đặt độ chính xác thành Float32.
+
+Trên thực tế, có các tùy chọn nâng cao hơn có sẵn trong Core ML Tools API, sử dụng mà bạn có thể chọn các hoạt động cụ thể để thực thi trong Float32 trong khi vẫn giữ phần còn lại trong Float16 để tạo ra một Chương trình ML loại hỗn hợp.
+
+Vui lòng xem tài liệu của chúng tôi để biết những ví dụ này.
+
+Tóm lại, Core ML có một số cải tiến mới giúp điều chỉnh và làm việc với các mô hình của bạn dễ dàng hơn.
+
+Loại MLShapedArray mới giúp dễ dàng làm việc với dữ liệu đa chiều.
+
+Định dạng Gói ML cho phép bạn chỉnh sửa siêu dữ liệu trực tiếp trong Xcode.
+
+Gói ML với loại mô hình Chương trình ML mới hỗ trợ thực thi đánh máy với hỗ trợ Float32 trên GPU, cung cấp cho bạn nhiều tùy chọn hơn để chơi khi bạn điều chỉnh hiệu suất và độ chính xác của mô hình.
+
+Chúng tôi khuyến khích bạn nâng cấp mô hình của mình lên Gói ML và sử dụng Chương trình ML.
+
+Cảm ơn vì đã xem phiên của chúng tôi, và tận hưởng phần còn lại của WWDC.
+
+[Âm nhạc].

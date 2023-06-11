@@ -1,0 +1,259 @@
+10098
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+David Stites: Xin chào, và chào mừng đến với "Hiển thị dữ liệu ứng dụng trong Spotlight".
+
+Tên tôi là David Stites, và tôi là một kỹ sư trong nhóm Core Data.
+
+Trong phiên này, tôi rất vui được chỉ cho bạn cách thêm lập chỉ mục Spotlight trong ứng dụng của bạn bằng NSCoreDataCoreSpotlightDelegate.
+
+Chương trình nghị sự cho phiên này là tìm hiểu về đối tượng NSCoreDataCoreSpotlightDelegate và lý do tại sao bạn nên sử dụng nó, thiết lập một triển khai đơn giản, tìm hiểu cách tùy chỉnh triển khai đó và cuối cùng, xác thực mã bằng cách thêm tìm kiếm toàn văn.
+
+Đầu tiên, hãy nhìn vào Dữ liệu cốt lõi và Tiêu điểm.
+
+Mọi người sẽ tạo và lưu trữ rất nhiều nội dung tuyệt vời và quan trọng trong ứng dụng của bạn.
+
+Khi việc họ sử dụng ứng dụng của bạn và kích thước tập dữ liệu của họ tăng lên, họ sẽ muốn có thể nhanh chóng tìm thấy dữ liệu đó cả bên trong ứng dụng bằng các phương pháp tìm kiếm tiêu chuẩn và bên ngoài ứng dụng, ví dụ, trong tìm kiếm Spotlight.
+
+Thật tuyệt vời khi có dữ liệu bên trong ứng dụng của bạn hiển thị trong Spotlight phải không?
+
+Chà, đây là nơi Dữ liệu cốt lõi có thể giúp bạn.
+
+Đối tượng NSCoreDataCore SpotlightDelegate thực hiện tất cả các công việc nặng nhọc và cung cấp một bộ API lập chỉ mục nội dung do ứng dụng của bạn cung cấp một cách nhanh chóng và hiệu quả.
+
+Bạn chỉ cần bật nó lên!
+
+Sau khi được lập chỉ mục, kết quả tìm kiếm cũng sẽ xuất hiện trong giao diện người dùng tìm kiếm Spotlight bên ngoài ứng dụng của bạn.
+
+Đại diện Spotlight tự động xử lý các thay đổi đối với các đối tượng được quản lý biểu đồ của bạn và sau đó cập nhật chỉ mục Spotlight cho phù hợp.
+
+Ngoài ra, nó cung cấp khả năng quản lý chỉ mục mạnh mẽ để tương tác với chỉ mục riêng tư, chỉ trên thiết bị và cho phép bạn điều chỉnh kết quả chỉ mục theo ý thích của mình.
+
+Trên thực tế, bất kỳ nội dung nào trong cửa hàng liên tục của bạn đều đủ điều kiện để được lập chỉ mục.
+
+Lý do để sử dụng đại diện Spotlight có ba mặt: (1) đại diện Spotlight duy trì tính chẵn lẻ tính năng với Core Spotlight APIs, (2) nó loại bỏ rất nhiều mã triển khai cần thiết và (3) nó cung cấp một bộ tính năng bổ sung tuyệt vời mà chúng ta sẽ thảo luận sau trong phiên này.
+
+Để minh họa điểm trước đây của tôi, đây là một triển khai rất đơn giản bằng cách sử dụng Core Spotlight APIs chỉ thêm các mục vào chỉ mục tìm kiếm và giảm nó xuống... cái này!
+
+Hai dòng!
+
+Đơn giản, dễ đọc và bảo trì.
+
+Ý tôi là, thôi nào, ai mà không thích ít mã hơn?
+
+Hãy xem cách thiết lập và chạy ngay lập tức.
+
+Ví dụ đơn giản này sẽ bao gồm việc quyết định lập chỉ mục và tạo đại biểu.
+
+Trong suốt phiên này, tôi sẽ đề cập đến một ứng dụng có tên là Thẻ mà tôi đã tự viết, đây là một ứng dụng gắn thẻ ảnh đơn giản.
+
+Ứng dụng mẫu này sẽ kết hợp nhiều API mà tôi đang thảo luận hôm nay.
+
+Trước khi thêm hỗ trợ Spotlight, bạn có thể thấy rằng tất cả dữ liệu thẻ và ảnh bị mắc kẹt bên trong Thẻ vì không có kết quả truy vấn tìm kiếm Spotlight cho "Natural Bridges State Park".
+
+Hãy thay đổi điều đó!
+
+Bước đầu tiên trong bất kỳ triển khai nào sử dụng NSCoreDataCoreSpotlightDelegate là quyết định những gì bạn sẽ lập chỉ mục trong Spotlight.
+
+Những gì được lập chỉ mục trong Spotlight hoàn toàn phụ thuộc vào bạn.
+
+Trong Thẻ, tôi đã quyết định lập chỉ mục thuộc tính userSpecifiedName trên thực thể Ảnh và thuộc tính tên trên Thẻ thực thể.
+
+Để chuẩn bị mô hình lập chỉ mục, tôi đã mở mô hình Dữ liệu cốt lõi của dự án trong Xcode, chọn từng thuộc tính tôi muốn lập chỉ mục và đã đánh dấu vào hộp kiểm Chỉ mục trong Spotlight trong trình kiểm tra thuộc tính.
+
+Công việc của chúng tôi tiếp tục trong trình chỉnh sửa mô hình Dữ liệu Cốt lõi, vì nó được yêu cầu để đặt tên hiển thị Tiêu điểm Dữ liệu Cốt lõi.
+
+Tên hiển thị Core Data Spotlight là một NSExpression.
+
+Tại thời điểm lập chỉ mục, biểu thức này được đánh giá với mỗi đối tượng được quản lý có các thuộc tính được Spotlight lập chỉ mục và kết quả được lưu lại.
+
+Sau đó, khi giao diện người dùng tìm kiếm Spotlight được hiển thị, các kết quả được lưu trữ này được sử dụng làm "tên hiển thị" cho kết quả tìm kiếm.
+
+NSExpression là gì?
+
+Chà, một biểu thức có thể đơn giản như đánh giá một đường dẫn chính, trong trường hợp này là Tag.name.
+
+Tuy nhiên, đối tượng này có khá nhiều thủ thuật khác mà nó có thể thực hiện ngoài việc đánh giá các đường dẫn chính.
+
+Trong ví dụ này, nó đang làm một số phép toán cho bạn.
+
+Biểu thức có thể phức tạp hơn, chẳng hạn như tính toán độ lệch chuẩn của một tập hợp các số.
+
+Trong Thẻ, tên hiển thị Spotlight được đặt thành userSpecifiedName trên thực thể Ảnh và tên trên Thẻ thực thể.
+
+Bây giờ mô hình đã được chuẩn bị để lập chỉ mục, hãy tạo đại diện Spotlight.
+
+Bắt đầu từ iOS 15 và macOS Monterey, trình khởi tạo forStoreWith: model: hiện không được chấp nhận.
+
+Cách mới khởi tạo đại diện Spotlight đang sử dụng forStoreWith: điều phối viên:.
+
+Bằng cách áp dụng trình khởi tạo được chỉ định mới, không còn cần thiết phải thêm một phiên bản của đại diện Spotlight vào các tùy chọn cửa hàng trước khi thêm cửa hàng vào điều phối viên.
+
+Tuy nhiên, bạn phải gọi startSpotlightIndexing để đại diện Spotlight bắt đầu công việc của mình.
+
+Tôi muốn đưa ra một vài yêu cầu để sử dụng NSCoreDataCoreSpotlightDelegate.
+
+Loại cửa hàng của cửa hàng được lập chỉ mục phải là SQLite và phải bật tính năng theo dõi lịch sử liên tục.
+
+Và với điều đó, bạn đã hoàn thành!
+
+Thế là xong!
+
+Bạn không cần phải làm bất cứ điều gì khác và dữ liệu của bạn sẽ được lập chỉ mục trong Spotlight.
+
+Tôi vừa chứng minh việc thêm lập chỉ mục Spotlight vào ứng dụng Thẻ của mình dễ dàng như thế nào.
+
+Bây giờ tôi đã mô tả những điều cơ bản, hãy tùy chỉnh việc triển khai đó một chút.
+
+Cách đầu tiên để tùy chỉnh việc triển khai là xác định tên miền và tên chỉ mục.
+
+Để bắt đầu, tôi sẽ xác định một lớp, TagsSpotlightDelegate, là một lớp con của NSCoreDataCoreSpotlightDelegate.
+
+Bây giờ, tôi sẽ ghi đè domainName và indexName với một triển khai.
+
+Ghi đè các bộ chọn này cho Spotlight biết nơi lưu trữ dữ liệu được lập chỉ mục và cho phép bạn xác định nó tốt hơn sau này, đặc biệt nếu bạn có nhiều chỉ mục.
+
+Nếu bạn không ghi đè domainIdentifier, mã định danh miền mặc định là mã định danh cửa hàng.
+
+Nếu bạn không ghi đè indexName, tên chỉ mục mặc định là nil.
+
+Bước tiếp theo trong việc tùy chỉnh đại diện Spotlight là xác định một tập hợp thuộc tính.
+
+Trong phần thiết lập của phiên này, đối tượng NSCoreDataCore SpotlightDelegate đã xác định bộ thuộc tính được trả về Spotlight cho chúng tôi, chỉ bằng cách đánh dấu vào hộp kiểm Chỉ mục trong Spotlight.
+
+Bây giờ, tôi sẽ trình bày chính xác cách xác định các thuộc tính sẽ được sử dụng để lập chỉ mục.
+
+Chỉ định thuộc tính nào cần được lập chỉ mục cho phép kiểm soát rõ ràng hơn những gì được lập chỉ mục và cách tìm kiếm.
+
+Để làm điều đó, hãy sử dụng CSSearchableItemAttributeSet.
+
+Một bộ thuộc tính chứa một số thuộc tính được xác định trước cho phép bạn chỉ định siêu dữ liệu để hiển thị về đối tượng được quản lý được chỉ định khi nó xuất hiện dưới dạng kết quả tìm kiếm.
+
+Các thuộc tính bạn chọn phụ thuộc hoàn toàn vào miền của bạn.
+
+Bạn có thể sử dụng các thuộc tính được xác định trước có sẵn trong CSSearchableItemAttributeSet hoặc bạn có thể xác định các thuộc tính của riêng mình.
+
+Ứng dụng Thẻ sử dụng các từ khóa thuộc tính được xác định trước, displayName và thumbnailData.
+
+Điều quan trọng cần lưu ý là bạn chỉ nên sửa đổi một thuộc tính được đặt trên một luồng tại một thời điểm vì quyền truy cập đồng thời vào các thuộc tính trong bộ thuộc tính có hành vi không xác định.
+
+Quay lại lớp TagsSpotlightDelegate, hãy xem cách thức hoạt động của nó bằng cách ghi đè attributeSet (cho đối tượng:).
+
+Trong quá trình triển khai ghi đè, hãy bắt đầu bằng cách xác định xem đối tượng đó có phải là đối tượng loại Ảnh hay không.
+
+Tiếp theo, khởi tạo một attributeSet với loại nội dung .image.
+
+Sau đó, đặt mã định danh thuộc tính, displayName và thumbnailData trên bộ thuộc tính bằng cách sử dụng các thuộc tính thích hợp từ đối tượng Ảnh.
+
+Bây giờ, thêm các thẻ từ bộ thẻ đối tượng Ảnh vào mảng từ khóa trên bộ thuộc tính.
+
+Điều đáng nói tại thời điểm này là nếu mô hình của bạn lập chỉ mục một mối quan hệ, attributeSet (cho đối tượng:) phải được ghi đè để nó xác định những gì về mối quan hệ đó nói riêng được lập chỉ mục.
+
+Cuối cùng, trả về tập hợp thuộc tính.
+
+Vì mô hình cũng đang lập chỉ mục các đối tượng Thẻ, mã cần xử lý trường hợp của Thẻ.
+
+Đối với điều đó, hãy tạo một bộ thuộc tính với contentType .text, đặt tên hiển thị thành tên của thẻ và sau đó trả về bộ thuộc tính.
+
+Bước cuối cùng, hãy xóa tên hiển thị Core Data Spotlight đã được đặt trong trình chỉnh sửa mô hình ở bước trước.
+
+Hãy đi xa hơn và xác định một vòng lặp sự kiện để bắt đầu và dừng lập chỉ mục.
+
+Trước đó, khi chúng tôi thiết lập đại diện Spotlight, startSpotlightIndexing đã được gọi ngay sau khi tạo đại diện Spotlight.
+
+Để cung cấp cho bạn quyền kiểm soát chính xác khi NSCoreDataCoreSpotlightDelegate đang thực hiện công việc lập chỉ mục, stopSpotlightIndexing cũng đã được thêm vào khuôn khổ.
+
+Sử dụng hai bộ chọn này trong buổi hòa nhạc cung cấp cho bạn khả năng bắt đầu và dừng công việc lập chỉ mục khi cần thiết, ví dụ, trong trường hợp ứng dụng của bạn đang thực hiện các hoạt động CPU hoặc đĩa cường độ cao.
+
+Bây giờ, hãy thêm một số hỗ trợ để được thông báo khi cập nhật chỉ mục hoàn tất.
+
+Khi một thay đổi xảy ra với một thực thể hoặc các thực thể được lập chỉ mục trong Spotlight, chỉ mục đó được cập nhật không đồng bộ.
+
+Trong iOS 15 và macOS Monterey, khung Dữ liệu Cốt lõi đã thêm thông báo cập nhật chỉ mục.
+
+Để được thông báo khi cập nhật chỉ mục hoàn tất, hãy đăng ký NSCoreDataCoreSpotlightDelegate .indexDidUpdateNotification, được đăng bởi đại diện Spotlight.
+
+Những thông báo này sẽ được đăng sau khi xử lý cuộc gọi lưu: trên NSManagedObjectContext hoặc sau khi hoàn thành các hoạt động hàng loạt.
+
+Hãy xem điều này đang hoạt động.
+
+Đầu tiên, hãy kiểm tra xem việc lập chỉ mục có được bật hay không.
+
+Nếu có, hãy đăng ký indexDidUpdateNotification.
+
+Sau đó, trong trình xử lý, kiểm tra thông báo, sẽ có từ điển userInfo chứa hai cặp khóa-giá trị, tương tự như thông báo thay đổi từ xa: NSString UUID của cửa hàng mà đại diện Spotlight đã cập nhật chỉ mục của nó và mã thông báo lịch sử liên tục của cửa hàng mà đại diện Spotlight đã cập nhật chỉ mục của nó
+
+Bạn có thể sử dụng cả hai khóa này để xác định xem cửa hàng bạn quan tâm đã được lập chỉ mục cho đến mã thông báo lịch sử liên tục mới nhất hay chưa.
+
+Nếu lập chỉ mục không được bật, bạn có thể tự xóa mình với tư cách là người quan sát khỏi các thông báo.
+
+Trước năm nay, cách duy nhất để xóa dữ liệu được lập chỉ mục bởi ứng dụng của bạn là triển khai API Core Spotlight để xóa các mục nhập chỉ mục hoặc xóa toàn bộ biểu đồ khách hàng trong Dữ liệu cốt lõi.
+
+Điều quan trọng là mới trong iOS 15 và macOS Monterey, Core Data đã mang đến cho nhà phát triển một cách mới để quản lý chỉ mục Spotlight mà không xóa biểu đồ khách hàng, đây là một chiến thắng tuyệt vời cho quyền riêng tư của người dùng!
+
+Đầu tiên, mã sẽ ngừng lập chỉ mục.
+
+Sau đó, gọi deleteSpotlightIndex.
+
+Cuối cùng, xử lý bất kỳ lỗi nào dẫn đến trình xử lý hoàn thành.
+
+Lưu ý rằng việc gọi phương thức này có thể trả về lỗi từ các phụ thuộc lớp dưới, chẳng hạn như Core Data và Core Spotlight, và bạn nên chuẩn bị để xử lý chúng.
+
+Bây giờ tôi đã chỉ cho bạn cách tùy chỉnh việc triển khai đại diện Spotlight, hãy xác thực thiết lập của chúng tôi bằng cách thêm tìm kiếm toàn văn vào ứng dụng Thẻ bằng cách sử dụng Core Spotlight APIs.
+
+Kết quả sẽ là những gì đã được lập chỉ mục trước đó.
+
+Bắt đầu bằng cách xác định tiện ích mở rộng cho PhotosViewController áp dụng giao thức UISearchResultsUpdating và chức năng updateSearchResults (cho bộ điều khiển).
+
+Giao diện người dùng Thẻ có UISearchController.
+
+Chúng tôi sẽ nhận được đầu vào của người dùng từ thanh tìm kiếm của bộ điều khiển tìm kiếm đó.
+
+Nếu đầu vào của người dùng trống, hãy tìm nạp tất cả hình ảnh từ nhà cung cấp dữ liệu của chúng tôi và sau đó tải lại chế độ xem bộ sưu tập vì không có truy vấn tìm kiếm.
+
+Bây giờ hãy xử lý trường hợp có truy vấn tìm kiếm.
+
+Để bắt đầu, hãy vệ sinh chuỗi đầu vào của người dùng bằng cách thoát khỏi nó.
+
+Tiếp theo, xác định một chuỗi truy vấn bằng cách sử dụng chuỗi đầu vào được khử trùng của người dùng.
+
+Chuỗi truy vấn hoạt động trên các giá trị được liên kết với một thuộc tính trong đối tượng CSSearchableItemAttributeSet.
+
+Trong trường hợp này, mã sẽ hoạt động trên thuộc tính Từ khóa đã được đặt ở bước trước.
+
+Trong truy vấn tìm kiếm, các công cụ sửa đổi c, d và w đang được sử dụng.
+
+C dành cho trường hợp không phân biệt chữ hoa chữ thường.
+
+D dành cho dấu phụ không nhạy cảm.
+
+Và w dành cho tìm kiếm dựa trên từ.
+
+Bây giờ, tạo một đối tượng CSSearchQuery bằng cách chỉ định chuỗi truy vấn được định dạng vừa được tạo và một mảng các tên thuộc tính tương ứng với các thuộc tính được xác định bởi CSSearchableItemAttributeSet.
+
+Đối tượng truy vấn tìm kiếm này quản lý các tiêu chí để áp dụng khi tìm kiếm nội dung ứng dụng mà bạn đã lập chỉ mục trước đó bằng API đại diện Spotlight.
+
+Sau đó, đặt foundItemsHandler.
+
+Trình xử lý này sẽ được gọi lặp đi lặp lại với các mục khớp với truy vấn tìm kiếm đã xác định trước đó.
+
+Trong trình xử lý hoàn thành cho truy vấn, sẽ được gọi một lần, kiểm tra lỗi và có khả năng thực hiện một số xử lý lỗi.
+
+Không có lỗi, gửi một khối vào hàng đợi chính để sử dụng nhà cung cấp dữ liệu của chúng tôi để thực hiện tìm nạp cho các mục Spotlight được tìm thấy và tải chúng vào giao diện người dùng.
+
+Cuối cùng, và quan trọng nhất, đừng quên bắt đầu truy vấn.
+
+Bây giờ ứng dụng Thẻ có một đại diện Spotlight lập chỉ mục nội dung của nó, dữ liệu đã được giải phóng từ bên trong ứng dụng!
+
+Khi tôi truy cập Spotlight và tôi tìm kiếm một thẻ mà tôi đã thêm trước đó, nó sẽ trả về hai kết quả: tên thẻ và ảnh cụ thể mà tôi đã gắn thẻ với từ khóa "Natural Bridges State Park".
+
+Kết thúc, chúng tôi đã tìm hiểu về NSCoreDataCoreSpotlightDelegate và cách nó có thể giúp người dùng của bạn tìm thấy nội dung của họ bên trong ứng dụng của bạn và bên ngoài ứng dụng của bạn trong tìm kiếm Spotlight, thiết lập đại diện Spotlight một cách nhanh chóng và dễ dàng để bắt đầu lập chỉ mục mà không phải chịu gánh nặng mã
+
+Tôi hy vọng bạn thấy thông tin này hữu ích và bạn sẽ cân nhắc việc áp dụng NSCoreDataCoreSpotlightDelegate trong dự án của mình để giúp người dùng tìm thấy nội dung của họ.
+
+Chúc một WWDC tuyệt vời!
+
+♪

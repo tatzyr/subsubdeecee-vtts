@@ -1,0 +1,431 @@
+10252
+
+♪ ♪
+
+Xin chào, tôi là Aditya Krishnadevan, một kỹ sư trong nhóm UIKit.
+
+Cốt lõi của nhiều ứng dụng là danh sách hoặc chế độ xem bộ sưu tập.
+
+Có tính năng cuộn siêu mượt là một phần quan trọng trong việc làm cho các ứng dụng đó cảm thấy tuyệt vời.
+
+Video này sẽ giúp bạn thành công khi tạo danh sách cực nhanh và lượt xem bộ sưu tập.
+
+Chúng tôi sẽ xây dựng ứng dụng này ở đây sử dụng chế độ xem bộ sưu tập để hiển thị danh sách các bài đăng hình ảnh của một số điểm đến du lịch tuyệt vời.
+
+Thoạt nhìn nó khá đơn giản, với một bức ảnh của điểm đến và một vài nhãn văn bản.
+
+Xuyên suốt video này, chúng ta sẽ nói về cách nó được thiết lập và cách nó đạt được hiệu suất mà mọi người mong đợi.
+
+Đầu tiên, chúng ta sẽ học cách bắt đầu từ một nền tảng vững chắc khi sử dụng API, như nguồn dữ liệu có thể thay đổi và đăng ký ô.
+
+Chúng ta sẽ làm mới sự hiểu biết của mình về vòng đời của một ô xem bộ sưu tập.
+
+Sau đó, chúng tôi sẽ nói về lý do tại sao bạn có thể không thấy cuộn hoàn hảo mượt mà và một số tiến bộ trong việc tìm nạp trước có thể hữu ích.
+
+Cuối cùng, Patrick sẽ giải thích cách cập nhật chính xác các ô khi nội dung của chúng không đồng bộ và cách sử dụng UIImage API mới để có được hiệu suất cuộn tốt nhất tuyệt đối trên tất cả các thiết bị.
+
+Được rồi.
+
+Hãy bắt đầu bằng cách nói về cách ứng dụng cấu trúc dữ liệu của nó.
+
+Ứng dụng mẫu truy xuất danh sách các bài đăng để hiển thị, trong đó mỗi bài đăng được đại diện bởi cấu trúc DestinationPost này.
+
+DestinationPost phù hợp với nhận dạng, có nghĩa là nó có thuộc tính ID này lưu trữ số nhận dạng của nó.
+
+Đây là một mã định danh duy nhất cho mỗi DestinationPost vẫn ổn định ngay cả khi các thuộc tính khác thay đổi.
+
+Nguồn dữ liệu có thể khuếch tán được xây dựng để lưu trữ số nhận dạng của các mục trong mô hình của bạn chứ không phải bản thân các đối tượng mô hình.
+
+Vì vậy, trong ứng dụng mẫu, nguồn dữ liệu có thể thay đổi được điền bằng cách sử dụng thuộc tính ID ở đây chứ không phải chính DestinationPost.
+
+Đây là nguồn dữ liệu có thể thay đổi được sử dụng trong ứng dụng.
+
+Như chúng ta vừa thảo luận, nó sử dụng loại DestinationPost.ID cho các số nhận dạng mặt hàng của nó.
+
+Loại Phần ở đây là một enum với một trường hợp, vì ứng dụng chỉ có một phần.
+
+Để điền vào nguồn dữ liệu, trước tiên ứng dụng tạo một ảnh chụp nhanh trống và nối thêm phần chính.
+
+Sau đó, nó tìm nạp tất cả các bài đăng từ cửa hàng sao lưu của nó và thêm số nhận dạng của chúng.
+
+Bằng cách này, nếu một trong những thuộc tính khác của DestinationPost thay đổi, biểu diễn của nó trong nguồn dữ liệu có thể thay đổi vẫn ổn định, vì mã định danh không thay đổi.
+
+Bước cuối cùng là áp dụng ảnh chụp nhanh cho nguồn dữ liệu.
+
+Trước iOS 15, việc áp dụng ảnh chụp nhanh không có hoạt ảnh sẽ được dịch sang reloadData trong nội bộ.
+
+Điều đó không tuyệt vời cho hiệu suất, vì chế độ xem bộ sưu tập phải loại bỏ và tạo lại tất cả các ô trên màn hình.
+
+Từ iOS 15 trở đi, áp dụng ảnh chụp nhanh mà không có hình ảnh động sẽ chỉ áp dụng sự khác biệt và không thực hiện bất kỳ công việc bổ sung nào.
+
+Với iOS 15, nguồn dữ liệu có thể khuếch tán cũng có được phương pháp reconfigureItems mới giúp dễ dàng cập nhật nội dung của các ô có thể nhìn thấy.
+
+Chúng ta sẽ xem xét cách nó hoạt động sau trong video này.
+
+Đầu tiên, hãy lấy dữ liệu từ nguồn dữ liệu của chúng ta vào các ô và lên màn hình.
+
+Đăng ký di động là một cách tuyệt vời để giữ tất cả cấu hình cho từng loại ô ở một nơi và chúng cho phép chúng tôi truy cập thuận tiện vào các số nhận dạng từ nguồn dữ liệu có thể thay đổi.
+
+UICollectionView duy trì hàng đợi sử dụng lại cho mỗi trường hợp đăng ký, vì vậy hãy đảm bảo rằng bạn chỉ tạo đăng ký một lần cho mỗi loại ô.
+
+Đây là đăng ký đơn giản cho các ô trong ứng dụng.
+
+PostID được chuyển vào được sử dụng để truy xuất DestinationPost và một đối tượng nội dung chứa hình ảnh.
+
+Các thuộc tính từ DestinationPost được sử dụng để đặt tiêu đề và hình ảnh trong ô.
+
+Để sử dụng đăng ký, hãy gọi dequeueConfiguredReusableCell bên trong nhà cung cấp di động của nguồn dữ liệu.
+
+Lưu ý cách đăng ký được tạo bên ngoài nhà cung cấp di động và sau đó được sử dụng bên trong.
+
+Điều này rất quan trọng đối với hiệu suất, vì việc tạo đăng ký bên trong nhà cung cấp có nghĩa là chế độ xem bộ sưu tập sẽ không bao giờ sử dụng lại bất kỳ ô nào của nó.
+
+Bây giờ chúng ta đã hiểu cách cấu hình một ô, chúng ta sẽ chuyển sang thời điểm một ô được cấu hình và vòng đời của nó như thế nào.
+
+Tuổi thọ của một tế bào bao gồm hai giai đoạn: chuẩn bị và hiển thị.
+
+Bước đầu tiên để chuẩn bị là lấy tế bào để làm việc.
+
+Bất cứ khi nào UICollectionView cần một ô, nó sẽ yêu cầu một ô từ nguồn dữ liệu của nó.
+
+Nếu đây là một nguồn dữ liệu có thể khác biệt, nó sẽ chạy nhà cung cấp ô và trả về kết quả.
+
+Khi nhà cung cấp ô chạy, chế độ xem bộ sưu tập được yêu cầu hủy xếp hàng một ô mới bằng cách sử dụng đăng ký.
+
+Nếu một ô tồn tại trong nhóm tái sử dụng, UICollectionView sẽ gọi prepareForReuse trên đó, và sau đó hủy xếp hàng ô.
+
+Nếu nhóm tái sử dụng trống, nó sẽ khởi tạo một ô mới.
+
+Ô đó sau đó được chuyển đến trình xử lý cấu hình từ khi đăng ký.
+
+Đây là nơi các ứng dụng thiết lập ô để hiển thị cho một mã định danh mục nhất định và đường dẫn chỉ mục.
+
+Ô được cấu hình được đưa trở lại chế độ xem bộ sưu tập cho bước tiếp theo.
+
+Chế độ xem bộ sưu tập truy vấn ô cho các thuộc tính bố cục ưa thích của nó và kích thước ô một cách thích hợp.
+
+Tại thời điểm này, ô đã được chuẩn bị đầy đủ và sẵn sàng cho giai đoạn hai: hiển thị.
+
+willDisplayCell được gọi trên đại diện và ô được hiển thị bên trong UICollectionView.
+
+Di động hiện đang ở trên màn hình.
+
+Không còn thay đổi nào đối với vòng đời của nó trong khi nó vẫn có thể nhìn thấy được.
+
+Khi nó được cuộn ra khỏi màn hình, didEndDisplaying được gọi cho ô và nó kết thúc ngay trong nhóm tái sử dụng.
+
+Từ nhóm tái sử dụng, một ô có thể được xếp hàng một lần nữa, lặp lại quy trình này.
+
+Bây giờ chúng ta hãy kiểm tra cảm giác của ứng dụng với những điều cơ bản này.
+
+Ứng dụng có tính năng Cusco ở Peru và Saint Lucia ở Caribbean.
+
+Hãy cuộn qua ứng dụng và xem một số điểm đến khác, nhưng chú ý cách nó không cuộn trơn tru.
+
+Những gián đoạn này trong quá trình cuộn được gọi là "hitches".
+
+Để hiểu nguyên nhân gây ra trở ngại, trước tiên chúng ta hãy tìm hiểu cách một ứng dụng cập nhật màn hình.
+
+Đối với mỗi khung hình, các sự kiện như chạm được gửi đến một ứng dụng.
+
+Đáp lại, nó cập nhật các thuộc tính của chế độ xem và các lớp của nó.
+
+Ví dụ: contentOffset của chế độ xem cuộn sẽ thay đổi trong cử chỉ xoay, thay đổi vị trí trên màn hình của tất cả các chế độ xem mà nó chứa.
+
+Do những thay đổi đó, chế độ xem và các lớp của ứng dụng thực hiện bố cục.
+
+Quá trình này được gọi là "cam kết".
+
+Sau đó, cây lớp được gửi đến máy chủ kết xuất.
+
+Mỗi khung có một thời hạn cam kết.
+
+Đây là thời điểm mà tất cả các cam kết cho khung đó cần phải hoàn thành.
+
+Lượng thời gian mà một ứng dụng phải cam kết cho mỗi khung hình phụ thuộc vào tốc độ làm mới của màn hình.
+
+Ví dụ, trên iPad Pro chạy ở tốc độ làm mới cao hơn 120 Hz, các ứng dụng có ít thời gian hơn để hoàn thành công việc cho mỗi khung hình so với iPhone chạy ở 60 Hz.
+
+Đây là một ví dụ điển hình về việc cuộn danh sách các ô trong chế độ xem bộ sưu tập hoặc bảng.
+
+Khi một ô mới hiển thị, sẽ có một cam kết dài hơn, trong đó ô mới được định cấu hình và thực hiện bố cục.
+
+Sau đó, có một vài khung hình trong đó chỉ là các ô hiện có được di chuyển xung quanh trên màn hình.
+
+Các cam kết cho các khung này rất nhanh vì không cần ô mới.
+
+Cuối cùng, vị trí cuộn thay đổi đủ để khiến một ô mới hiển thị và mẫu này lặp lại.
+
+Vậy điều gì gây ra những trở ngại như trong bản demo trước đó?
+
+Khi cam kết cho một khung mất quá nhiều thời gian và bỏ lỡ thời hạn, những cập nhật đó sẽ không được tích hợp vào khung dự định.
+
+Màn hình hiển thị giữ khung hình trước đó trên màn hình cho đến khi cam kết kết thúc và khung bị trì hoãn này có thể hiển thị.
+
+Đây là một trở ngại cam kết và được coi là một sự gián đoạn nhất thời khi cuộn.
+
+Để tìm hiểu thêm về điều này và các loại quá giang khác, hãy xem video "Khám phá các quá giang hoạt hình giao diện người dùng".
+
+Để giúp tránh những trở ngại này, UICollectionView và UITableView đều có cơ chế tìm nạp trước tế bào hoàn toàn mới trong iOS 15.
+
+Chúng tôi quay lại đây với ví dụ về một ô đắt tiền gây ra trở ngại trong quá trình cuộn.
+
+Một điểm mấu chốt rút ra từ điều này là bạn thường không cần một ô mỗi khung hình.
+
+Chúng tôi có một vài khung hình với các cam kết rất ngắn để thực hiện công việc tối thiểu.
+
+Tìm nạp trước ô trong iOS 15 tận dụng thời gian rảnh rỗi này bằng cách chuẩn bị ô tiếp theo ngay sau khi hoàn thành một cam kết ngắn.
+
+Sau đó, khi tế bào cuối cùng là cần thiết, vấn đề chỉ là làm cho nó có thể nhìn thấy được.
+
+Đó là lý do tại sao cam kết cho khung nơi ô được tìm nạp sẵn trở nên hiển thị rất nhanh, bởi vì tất cả công việc đã được thực hiện trước đó.
+
+Lượng thời gian dành cho việc tìm nạp trước ô giống như khi nó gây ra trở ngại.
+
+Nhưng bởi vì chúng tôi có thể bắt đầu thuận lợi, chúng tôi có thể tránh được một trở ngại.
+
+Hãy hiểu tại sao điều này hoạt động bằng cách bước qua từng cam kết.
+
+Trước khi tìm nạp trước xảy ra, chúng tôi đã thực hiện cam kết cho khung này.
+
+Vì không cần ô nào, đó là một cam kết nhanh chóng và nó đã kết thúc với rất nhiều thời gian còn lại trước thời hạn.
+
+Thay vì chỉ đợi đến khung hình tiếp theo, trong iOS 15, hệ thống nhận ra tình huống và sử dụng thời gian rảnh rỗi để bắt đầu tìm nạp trước ô tiếp theo.
+
+Bây giờ, khung hình sau đây là nơi mọi thứ trở nên thú vị.
+
+Bởi vì ô được tìm nạp trước rất tốn kém, nó thực sự khiến cam kết cho khung đó bắt đầu muộn hơn bình thường.
+
+Tuy nhiên, mặc dù cam kết đó bắt đầu muộn, nhưng nó vẫn kết thúc tốt trước thời hạn vì nó nhanh chóng.
+
+So sánh điều này với hình minh họa mà chúng ta đã thấy trước đó mà không cần tìm nạp trước.
+
+Lưu ý rằng không còn bất kỳ cam kết nào còn thiếu thời hạn, và vì vậy, không còn trở ngại nào với việc tìm nạp trước ô.
+
+Điều này có nghĩa là các ứng dụng của bạn có thời gian gấp đôi để chuẩn bị cho mỗi ô, mà không gây ra bất kỳ trở ngại nào.
+
+Hơn nữa, tất cả những gì bạn cần làm để có được chức năng mới tuyệt vời này là xây dựng ứng dụng của bạn với iOS 15 SDK.
+
+Khi tôi chạy bản demo lần cuối, ứng dụng được xây dựng bằng iOS 14 SDK.
+
+Hãy kiểm tra việc cuộn trong ứng dụng khi được xây dựng bằng iOS 15 SDK.
+
+Điều này thật tuyệt!
+
+Có vẻ như tìm nạp trước đang làm chính xác những gì chúng ta muốn.
+
+Việc cuộn bây giờ hoàn toàn trơn tru và chúng tôi không phải thay đổi một dòng mã nào.
+
+Hãy nhớ rằng, tất cả những gì bạn cần làm là xây dựng ứng dụng của mình bằng iOS 15 SDK.
+
+Đối với UICollectionView, tính năng tìm nạp trước mới này mở rộng những gì đã được giới thiệu trong iOS 10.
+
+Tìm nạp trước ô hiện được hỗ trợ cho các danh sách, cũng như tất cả các bố cục bố cục khác.
+
+Tính năng tìm nạp trước mới tuyệt vời này hiện thậm chí còn được bật trong UITableView.
+
+Tìm nạp trước có thể cải thiện hiệu suất cuộn bằng cách loại bỏ các trở ngại, nhưng nó cũng sẽ giảm mức sử dụng năng lượng và tăng tuổi thọ pin.
+
+Nếu các tế bào của bạn nhanh chóng chuẩn bị, hệ thống có thể sử dụng thêm thời gian để chạy ở trạng thái tiết kiệm năng lượng hơn và vẫn tránh được những trở ngại.
+
+Vì vậy, ngay cả khi bạn không nhận thấy bất kỳ trở ngại nào, việc triển khai cấu hình và bố cục ô của bạn vẫn rất quan trọng.
+
+Bây giờ chúng ta hãy nói về việc tìm nạp trước ảnh hưởng đến vòng đời tế bào như thế nào.
+
+Đây là vòng đời mà chúng ta đã nói trước đó, mà không cần tìm hiểu trước, với hai giai đoạn riêng biệt.
+
+Khi một ô được tìm nạp trước, đó là giai đoạn chuẩn bị được thực hiện trước khi ô được yêu cầu trên màn hình.
+
+Để tận dụng tối đa việc tìm nạp trước, một ô phải được cấu hình đầy đủ trong giai đoạn này.
+
+Đừng đợi cho đến khi có thể nhìn thấy một ô để thực hiện bất kỳ công việc nặng nhọc nào.
+
+Khi một ô quay trở lại chế độ xem bộ sưu tập, nó có kích thước để có được các thuộc tính bố cục ưa thích, cũng như một phần của tìm nạp trước.
+
+Sau khi được tìm nạp trước, bây giờ có trạng thái ở giữa này, nơi một ô đang chờ được hiển thị.
+
+Với giai đoạn mới này, có hai cân nhắc quan trọng đối với các ứng dụng.
+
+Có thể một ô đã chuẩn bị không bao giờ được hiển thị, điều này có thể xảy ra nếu người dùng đột nhiên thay đổi hướng cuộn.
+
+Sau đó, một khi một ô được hiển thị, nó có thể quay trở lại trạng thái chờ sau khi tắt màn hình.
+
+Cùng một ô có thể được hiển thị nhiều lần cho cùng một đường dẫn chỉ mục.
+
+Không còn trường hợp một ô sẽ ngay lập tức được thêm vào nhóm tái sử dụng khi nó kết thúc hiển thị.
+
+Tìm nạp trước giúp chúng tôi đạt được khả năng cuộn mượt mà, nhưng chỉ vì nó cho chúng tôi nhiều thời gian hơn.
+
+Trên các thiết bị khác có tốc độ khung hình cao hơn, vẫn có khả năng ứng dụng sẽ gặp trở ngại trong quá trình cuộn.
+
+Patrick bây giờ sẽ cung cấp cho bạn thêm chi tiết về cách ứng dụng định cấu hình các ô của nó và cũng nói về các chiến lược để giảm lượng thời gian cho mỗi cam kết khi hiển thị hình ảnh.
+
+Cảm ơn, Adi.
+
+Xin chào, tôi là Patrick từ nhóm Hiệu suất Cấp cao.
+
+Bây giờ, tôi sẽ hướng dẫn chúng tôi cập nhật các ô hiện có trong ứng dụng mẫu và sau đó là cách hiển thị hình ảnh với hiệu suất tốt nhất có thể, sử dụng một số API mới trong iOS 15.
+
+Ứng dụng mẫu được xây dựng với các tệp hình ảnh cục bộ trên đĩa.
+
+Khi chúng tôi cuộn ứng dụng, các ô được chuẩn bị ngoài màn hình và hình ảnh bên trong chúng được tải từ hệ thống tệp ngay lập tức.
+
+Bây giờ, chúng tôi muốn hiển thị hình ảnh được lưu trữ trên một máy chủ từ xa.
+
+Vì vậy, khi các ô cuộn vào, chúng ta có thể không có hình ảnh để hiển thị trong chế độ xem hình ảnh.
+
+Khi chế độ xem hình ảnh hiển thị lần đầu tiên, nó sẽ trống và chỉ được điền khi yêu cầu máy chủ hoàn tất.
+
+Chúng ta hãy xem xét việc mở rộng trình xử lý cấu hình đăng ký của chúng tôi để hỗ trợ cách tiếp cận mới này.
+
+Ở đây trong trình xử lý cấu hình đăng ký, chúng tôi đã tìm nạp tài sản từ kho tài sản.
+
+Cửa hàng sẽ luôn trả lại một hình ảnh, nhưng nó có thể không phải là toàn bộ tài sản.
+
+Nó có thể cần được tải xuống.
+
+Đối tượng tài sản chỉ ra điều này với thuộc tính isPlaceholder.
+
+Khi điều này là đúng, chúng tôi sẽ yêu cầu cửa hàng tài sản tải xuống hình ảnh đầy đủ.
+
+Khi thao tác tải hoàn tất, đã đến lúc cập nhật chế độ xem hình ảnh của ô.
+
+Ở đây, chúng tôi lấy đối tượng ô hiện có và đặt nội dung trên chế độ xem hình ảnh của nó.
+
+Đây là một sai lầm.
+
+Các ô được sử dụng lại cho các điểm đến khác nhau và vào thời điểm cửa hàng nội dung tải tài sản cuối cùng, đối tượng ô mà chúng tôi đã chụp có thể được định cấu hình cho một bài đăng khác.
+
+Thay vì cập nhật trực tiếp ô, chúng tôi phải thông báo cho nguồn dữ liệu của chế độ xem bộ sưu tập về bản cập nhật cần thiết.
+
+iOS 15 giới thiệu phương pháp ảnh chụp nhanh reconfigureItems.
+
+Gọi reconfigureItems trên một ô đã chuẩn bị sẽ chạy lại trình xử lý cấu hình đăng ký của nó.
+
+Sử dụng cái này thay vì tải lại các mục vì nó sử dụng lại ô hiện có của mục, thay vì xếp hàng và định cấu hình một ô mới.
+
+Trong ứng dụng mẫu của chúng tôi, chúng tôi sẽ khai báo một phương thức setPostNeedsUpdate, gọi reconfigureItems trên ID được chuyển vào.
+
+Bây giờ, trở lại trình xử lý cấu hình đăng ký của chúng tôi, khi hình ảnh là trình giữ chỗ, chúng tôi sẽ tải xuống nội dung kích thước đầy đủ và gọi phương thức mới.
+
+reconfigureItems sau đó sẽ gọi lại trình xử lý này, nhưng bây giờ, fetchByID sẽ trả về toàn bộ tài sản chứ không phải trình giữ chỗ.
+
+Điều này cho phép chúng tôi giữ tất cả mã cập nhật chế độ xem của mình ở một nơi và cập nhật không đồng bộ các ô của chúng tôi khi chúng tôi có dữ liệu.
+
+Để tối đa hóa thời gian chuẩn bị, chúng tôi cũng có thể sử dụng phương thức downloadAsset bên trong nguồn dữ liệu tìm nạp trước của mình.
+
+Tìm nạp trước nguồn dữ liệu là một nơi tuyệt vời để bắt đầu tải xuống mạng cho một mục xem bộ sưu tập.
+
+Nó cho nhiều thời gian hơn để tải xuống nội dung và chuẩn bị sẵn sàng trước khi ô hiển thị, giảm thời gian người dùng xem nội dung giữ chỗ.
+
+Hãy cùng xem cái này trông như thế nào trong ứng dụng của chúng tôi.
+
+Nó trông ổn, nhưng có những trở ngại có thể nhìn thấy trong khi cuộn.
+
+Chúng cũng có vẻ trùng với thời điểm hình ảnh mới được hiển thị.
+
+Khi một tế bào mới được chuẩn bị, không có trở ngại nào.
+
+Chỉ khi một hình ảnh được cập nhật với hình ảnh có độ phân giải đầy đủ mà chúng tôi quá giang.
+
+Đó là bởi vì tất cả các hình ảnh đều mất thời gian để giải mã để hiển thị và một số hình ảnh, như tài sản không giữ chỗ lớn hơn, quá lớn để có thể giải mã kịp thời để hiển thị.
+
+Khi trình xử lý cấu hình của đăng ký ô được gọi lần đầu tiên và nội dung là trình giữ chỗ, mã sẽ bắt đầu yêu cầu không đồng bộ cho hình ảnh kích thước đầy đủ và hoàn thành cấu hình của nó.
+
+Khi nội dung cuối cùng được tải xuống sau đó, trình xử lý cấu hình ô được chạy lại với hình ảnh cuối cùng.
+
+Khi chế độ xem hình ảnh cố gắng cam kết một hình ảnh mới, trước tiên nó phải chuẩn bị hình ảnh để hiển thị trên luồng chính.
+
+Việc này có thể mất nhiều thời gian và có một trở ngại khi ứng dụng bỏ lỡ thời hạn cam kết.
+
+Chuẩn bị hình ảnh là một quá trình bắt buộc mà tất cả các hình ảnh phải trải qua để được hiển thị.
+
+Máy chủ kết xuất chỉ có thể hiển thị hình ảnh là bitmap, có nghĩa là chúng là dữ liệu pixel thô.
+
+Hình ảnh có nhiều định dạng khác nhau, như PNG, HEIC và JPEG, được nén và phải được xử lý và giải nén để hiển thị.
+
+Chế độ xem hình ảnh thực hiện quá trình xử lý này khi nó cam kết một hình ảnh mới và nó xảy ra trên luồng chính.
+
+Lý tưởng nhất, chúng tôi có thể chuẩn bị hình ảnh trước và chỉ cập nhật giao diện người dùng khi cuối cùng nó hoàn thành.
+
+Bằng cách đó, chúng tôi không bao giờ chặn chủ đề chính và không quá giang.
+
+iOS 15 giới thiệu các API chuẩn bị hình ảnh, cho phép bạn kiểm soát việc chuẩn bị hình ảnh diễn ra ở đâu và khi nào.
+
+Các API này tạo ra một UIImage mới, chỉ chứa dữ liệu pixel mà trình kết xuất cần.
+
+Không cần thêm công việc nào khi nó được đặt trên chế độ xem hình ảnh.
+
+Nó có hai dạng: một dạng đồng bộ, mà bạn có thể chạy trên bất kỳ luồng nào và một dạng không đồng bộ, chạy trên hàng đợi nối tiếp UIKit nội bộ.
+
+Để sử dụng nó, chúng tôi lấy một UIImage mà chúng tôi đã tạo và đặt một hình ảnh giữ chỗ trên chế độ xem hình ảnh của chúng tôi.
+
+Sau đó, gọi API mới sẽ bắt đầu chuẩn bị trong nền trên hình ảnh lớn hơn.
+
+Khi nó hoàn thành, chúng ta có thể đặt nó ở chế độ xem hình ảnh.
+
+Hình ảnh đã chuẩn bị giải quyết một vấn đề lớn trong bất kỳ ứng dụng nặng về hình ảnh nào, nhưng chúng cũng đi kèm với một số cân nhắc.
+
+Các hình ảnh đã chuẩn bị chứa dữ liệu điểm ảnh thô từ hình ảnh gốc.
+
+Nó sẽ vẫn hiển thị miễn phí trong chế độ xem hình ảnh miễn là nó được giữ lại trong bộ nhớ.
+
+Nhưng điều này cũng có nghĩa là nó chiếm rất nhiều bộ nhớ và chúng nên được lưu trữ một cách tiết kiệm.
+
+Cuối cùng, vì định dạng của chúng, chúng không lý tưởng cho việc lưu trữ đĩa.
+
+Thay vào đó, hãy lưu tài sản ban đầu vào đĩa.
+
+Một cân nhắc cuối cùng là cách chuẩn bị hình ảnh có thể sử dụng tìm nạp trước.
+
+Tìm nạp trước giúp tải xuống và chuẩn bị thêm thời gian cho hình ảnh.
+
+Cho quá trình nhiều thời gian hơn có nghĩa là người dùng sẽ không nhìn thấy trình giữ chỗ lâu, và có lẽ hoàn toàn không.
+
+Trong ứng dụng mẫu, chúng tôi đã có một đường dẫn không đồng bộ để truy xuất hình ảnh.
+
+Sau khi quá trình tải xuống hoàn tất, chúng ta có thể chuẩn bị nội dung trước khi gọi trình xử lý hoàn thành.
+
+Những tài sản này lớn, nhưng cũng có giá trị, vì vậy một khi hình ảnh được chuẩn bị, chúng tôi muốn lưu trữ nó.
+
+Bộ nhớ đệm hình ảnh của chúng tôi sử dụng kích thước của hình ảnh để ước tính việc sử dụng bộ nhớ của hình ảnh đã chuẩn bị.
+
+Bây giờ, khi một ô yêu cầu một tài sản, chúng tôi kiểm tra bộ nhớ cache đó trước khi tìm nạp nó từ máy chủ của chúng tôi.
+
+Nếu chúng ta có những hình ảnh nhỏ hơn, chúng ta sẽ có thể lưu trữ nhiều hơn.
+
+Hình ảnh có thể lớn và iOS 15 giới thiệu một API tương tự để chuẩn bị hình thu nhỏ của hình ảnh.
+
+Những thứ này có thể chia tỷ lệ và chuẩn bị một hình ảnh với kích thước nhỏ hơn.
+
+Nó đảm bảo rằng hình ảnh được đọc và xử lý với kích thước đích của nó, tiết kiệm rất nhiều thời gian và bộ nhớ CPU.
+
+Bạn sử dụng nó giống như API Chuẩn bị Hình ảnh.
+
+Đầu tiên, lấy UIImage và đặt hình ảnh giữ chỗ trên chế độ xem hình ảnh.
+
+Sau đó, gọi API thay đổi kích thước mới, với kích thước của chế độ xem là kích thước mục tiêu cho hình thu nhỏ.
+
+Khi nó được chuẩn bị, chỉ cần cập nhật chế độ xem hình ảnh với hình thu nhỏ mới.
+
+Cùng với API Chuẩn bị Hình ảnh, việc tăng tốc hình ảnh và tránh trở ngại trong bất kỳ ứng dụng nào với iOS 15 sẽ dễ dàng hơn nhiều.
+
+Khi làm việc với hình ảnh, hãy tập trung vào việc có một API không đồng bộ có thể cập nhật giao diện người dùng khi hình ảnh đã sẵn sàng.
+
+Trong thời gian chờ đợi, hãy sử dụng hình ảnh giữ chỗ, nhỏ hoặc đủ rẻ để hiển thị đồng bộ.
+
+Khi được sử dụng với tìm nạp trước và cấu hình lại Mục, việc hiển thị nội dung không đồng bộ trong chế độ xem bộ sưu tập và danh sách chưa bao giờ dễ dàng hơn hoặc hiệu quả hơn thế.
+
+Để bắt đầu với bộ sưu tập nhanh và chế độ xem bảng, trước tiên, hãy xây dựng ứng dụng của bạn với SDK iOS 15 để mở khóa nhiều tối ưu hóa mới.
+
+Đặc biệt, đảm bảo bạn xác thực hành vi của bộ sưu tập và chế độ xem bảng của mình với tính năng tìm nạp trước mới.
+
+Tất cả các API mới được trình bày ở đây có thể được tìm thấy trong mã mẫu cho buổi nói chuyện này.
+
+Kiểm tra nó và đảm bảo áp dụng API chuẩn bị hình ảnh và thay đổi kích thước trên ứng dụng của bạn.
+
+Điều này sẽ đảm bảo bộ sưu tập và chế độ xem bảng của bạn hoạt động nhanh chóng.
+
+Cảm ơn vì đã xem.
+
+[Nhạc lạc quan].

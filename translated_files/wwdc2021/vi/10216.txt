@@ -1,0 +1,331 @@
+10216
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Meghana Gupta: Xin chào, tên tôi là Meghana.
+
+Hôm nay, tôi sẽ nói chuyện với bạn về ARC trong Swift.
+
+Swift cung cấp các loại giá trị mạnh mẽ như cấu trúc và liệt kê.
+
+Bạn nên thích sử dụng các loại giá trị khi có thể để tránh sự nguy hiểm của việc chia sẻ ngoài ý muốn đi kèm với các loại tham chiếu.
+
+Các lớp học là các loại tham chiếu trong Swift và nếu bạn quyết định sử dụng chúng, Swift sẽ quản lý bộ nhớ của nó thông qua Đếm tham chiếu tự động hoặc ARC.
+
+Để viết Swift hiệu quả, điều quan trọng là phải hiểu cách hoạt động của ARC.
+
+Trong phiên này, chúng ta sẽ làm điều đó.
+
+Tôi sẽ bắt đầu với đánh giá về thời gian tồn tại của đối tượng và ARC trong Swift.
+
+Sau đó, tôi sẽ mô tả thời gian tồn tại của đối tượng có thể quan sát được là gì.
+
+Tôi sẽ giải thích chi tiết những đặc điểm ngôn ngữ nào làm cho tuổi thọ của đối tượng có thể quan sát được, hậu quả của việc dựa vào tuổi thọ của đối tượng quan sát được và một số kỹ thuật an toàn để khắc phục chúng.
+
+Hãy bắt đầu.
+
+Tuổi thọ của một đối tượng trong Swift bắt đầu khi khởi tạo và kết thúc ở lần sử dụng cuối cùng.
+
+ARC tự động quản lý bộ nhớ, bằng cách phân bổ một đối tượng sau khi vòng đời của nó kết thúc.
+
+Nó xác định tuổi thọ của một đối tượng bằng cách theo dõi số lượng tham chiếu của nó.
+
+ARC chủ yếu được điều khiển bởi trình biên dịch Swift chèn các hoạt động giữ lại và phát hành.
+
+Trong thời gian chạy, giữ lại gia số lượng tham chiếu và giải phóng các giảm giá của nó.
+
+Khi số lượng tham chiếu giảm xuống 0, đối tượng sẽ được phân bổ.
+
+Hãy xem nó hoạt động như thế nào với một ví dụ.
+
+Hãy tưởng tượng chúng ta muốn xây dựng một ứng dụng du lịch.
+
+Để đại diện cho một khách du lịch, hãy viết một lớp học với tên và một thuộc tính điểm đến tùy chọn.
+
+Trong hàm test(), đầu tiên, một đối tượng Traveler được tạo, sau đó tham chiếu của nó được sao chép và cuối cùng, đích đến của nó được cập nhật.
+
+Để tự động quản lý bộ nhớ của đối tượng Traveler, trình biên dịch Swift chèn thao tác giữ lại khi tham chiếu bắt đầu và thao tác phát hành sau lần sử dụng tham chiếu cuối cùng.
+
+Traveler1 là tham chiếu đầu tiên đến đối tượng Traveler, và lần sử dụng cuối cùng của nó là bản sao.
+
+Tại đây, trình biên dịch Swift chèn thao tác phát hành ngay sau lần sử dụng cuối cùng của tham chiếu traveler1.
+
+Nó không chèn thao tác giữ lại khi tham chiếu bắt đầu, bởi vì khởi tạo đặt số lượng tham chiếu thành một.
+
+Traveler2 là một tham chiếu khác đến đối tượng Traveler và lần sử dụng cuối cùng của nó là cập nhật điểm đến.
+
+Ở đây, trình biên dịch Swift chèn thao tác giữ lại khi tham chiếu bắt đầu và thao tác phát hành ngay sau lần sử dụng tham chiếu cuối cùng.
+
+Hãy xem qua mã và xem điều gì sẽ xảy ra trong thời gian chạy.
+
+Đầu tiên, đối tượng Traveler được tạo trên đống và được khởi tạo với số tham chiếu là một.
+
+Sau đó, để chuẩn bị tham chiếu mới, thực hiện thao tác giữ lại, tăng số lượng tham chiếu lên hai.
+
+Bây giờ traveler2 cũng là một tham chiếu đến đối tượng Traveler.
+
+Sau lần sử dụng cuối cùng của tham chiếu traveler1, thao tác phát hành sẽ thực hiện, giảm số lượng tham chiếu xuống còn một.
+
+Sau đó, điểm đến của đối tượng Khách du lịch được cập nhật thành Big Sur.
+
+Vì đó là lần sử dụng cuối cùng của tham chiếu traveler2, thao tác phát hành sẽ thực hiện, giảm số lượng tham chiếu xuống 0.
+
+Khi số lượng tham chiếu giảm xuống 0, đối tượng có thể được phân bổ.
+
+Thời gian tồn tại của đối tượng trong Swift dựa trên việc sử dụng.
+
+Tuổi thọ tối thiểu được đảm bảo của một đối tượng bắt đầu khi khởi tạo và kết thúc ở lần sử dụng cuối cùng.
+
+Điều này khác với các ngôn ngữ như C++, trong đó tuổi thọ của một đối tượng được đảm bảo kết thúc ở dấu ngoặc nhọn.
+
+Trong ví dụ này, chúng tôi thấy đối tượng đã được phân bổ ngay lập tức sau lần sử dụng cuối cùng.
+
+Tuy nhiên, trong thực tế, tuổi thọ của đối tượng được xác định bởi các hoạt động giữ và phát hành được chèn bởi trình biên dịch Swift.
+
+Và tùy thuộc vào tối ưu hóa ARC bắt đầu, tuổi thọ của đối tượng quan sát được có thể khác với mức tối thiểu được đảm bảo của chúng, kết thúc sau lần sử dụng cuối cùng của đối tượng.
+
+Trong những trường hợp như vậy, đối tượng được phân bổ tại một điểm chương trình ngoài lần sử dụng cuối cùng của nó.
+
+Trong hầu hết các trường hợp, không thực sự quan trọng tuổi thọ chính xác của một vật thể là bao nhiêu.
+
+Tuy nhiên, với các tính năng ngôn ngữ như tài liệu tham khảo yếu và không được sở hữu và các tác dụng phụ của bộ khử khởi tạo, có thể quan sát tuổi thọ của vật thể.
+
+Và nếu bạn có các chương trình dựa trên tuổi thọ đối tượng quan sát được thay vì tuổi thọ đối tượng được đảm bảo, bạn có thể gặp vấn đề trong tương lai.
+
+Bởi vì dựa vào thời gian tồn tại của vật thể quan sát được có thể hoạt động ngày nay, nhưng nó chỉ là một sự trùng hợp ngẫu nhiên.
+
+Tuổi thọ đối tượng quan sát được là một thuộc tính mới nổi của trình biên dịch Swift và có thể thay đổi khi chi tiết triển khai thay đổi.
+
+Những lỗi như vậy có thể không được phát hiện trong quá trình phát triển và có thể bị ẩn trong một thời gian dài, chỉ được phát hiện bởi bản cập nhật trình biên dịch với tối ưu hóa ARC được cải thiện hoặc các thay đổi nguồn không liên quan cho phép tối ưu hóa ARC bị hạn chế trước đó.
+
+Tôi sẽ xem xét các tính năng ngôn ngữ làm cho thời gian tồn tại của đối tượng có thể quan sát được, xem qua những gì có thể xảy ra nếu chúng ta chỉ dựa vào thời gian tồn tại của đối tượng quan sát được và một số kỹ thuật an toàn để khắc phục chúng.
+
+Không giống như các tham chiếu mặc định là các tham chiếu mạnh, các tham chiếu yếu và không thuộc sở hữu không tham gia vào việc đếm tham chiếu và vì lý do này, chúng thường được sử dụng để phá vỡ các chu kỳ tham chiếu.
+
+Trước khi tôi đi vào chi tiết của họ, hãy xem chu kỳ tham chiếu là gì.
+
+Đây là một phần mở rộng của ứng dụng Du lịch của chúng tôi.
+
+Bây giờ chúng tôi muốn giới thiệu một hệ thống điểm tùy chọn.
+
+Một khách du lịch có thể có một tài khoản và tích lũy điểm trong đó.
+
+Để thể hiện điều này, chúng tôi có một lớp Tài khoản mới với thuộc tính điểm.
+
+Lớp Tài khoản đề cập đến lớp Khách du lịch và lớp Khách du lịch đề cập đến lớp Tài khoản.
+
+Trong hàm test(), chúng tôi tạo các đối tượng Traveler và Account, và sau đó gọi hàm printSummary() thông qua tham chiếu khách du lịch.
+
+Hãy xem qua mã và xem điều gì sẽ xảy ra với ARC.
+
+Đầu tiên, đối tượng Traveler được tạo trên đống với số lượng tham chiếu là một.
+
+Sau đó, đối tượng Tài khoản được tạo trên đống với số lượng tham chiếu là một.
+
+Vì đối tượng Tài khoản đề cập đến đối tượng Khách du lịch, số lượng tham chiếu của đối tượng Khách du lịch được tăng lên hai.
+
+Bây giờ đối tượng Traveler bắt đầu đề cập đến đối tượng Tài khoản, vì vậy số lượng tham chiếu của đối tượng Tài khoản cũng được tăng lên hai.
+
+Đây là lần sử dụng tài liệu tham khảo cuối cùng.
+
+Sau đó, tham chiếu tài khoản biến mất và số lượng tham chiếu của đối tượng Tài khoản giảm xuống còn một.
+
+Sau đó, hàm printSummary() được gọi để in tên và điểm.
+
+Đây là lần sử dụng cuối cùng của tài liệu tham khảo Traveler.
+
+Sau đó, tham chiếu Khách du lịch biến mất và số lượng tham chiếu của đối tượng Khách du lịch giảm xuống còn một.
+
+Ngay cả sau khi tất cả các tham chiếu làm cho các đối tượng có thể truy cập được biến mất, số lượng tham chiếu của các đối tượng vẫn là một.
+
+Điều này là do chu kỳ tham chiếu.
+
+Kết quả là, các đối tượng không bao giờ được phân bổ, gây ra rò rỉ bộ nhớ.
+
+Bạn có thể phá vỡ chu kỳ tham chiếu bằng một tham chiếu yếu hoặc không được sở hữu.
+
+Bởi vì họ không tham gia vào việc đếm tham chiếu, đối tượng được giới thiệu có thể được phân bổ trong khi tham chiếu yếu hoặc không thuộc sở hữu đang được sử dụng.
+
+Khi điều này xảy ra, thời gian chạy Swift sẽ chuyển quyền truy cập vào các tham chiếu yếu thành số không một cách an toàn và quyền truy cập vào các tham chiếu không thuộc sở hữu dưới dạng bẫy.
+
+Bất kỳ tham chiếu nào tham gia vào chu kỳ tham chiếu đều có thể được đánh dấu là yếu hoặc không thuộc sở hữu để phá vỡ chu kỳ tham chiếu.
+
+Nó phụ thuộc vào ứng dụng.
+
+Trong ví dụ của chúng tôi, hãy đánh dấu tham chiếu khách du lịch trong lớp Tài khoản là yếu.
+
+Bởi vì tham chiếu yếu không tham gia vào việc đếm tham chiếu, sau lần sử dụng cuối cùng của đối tượng Traveler, số lượng tham chiếu của nó giảm xuống 0.
+
+Khi số lượng tham chiếu của đối tượng Traveler bằng 0, nó có thể được phân bổ.
+
+Khi đối tượng Traveler biến mất, tham chiếu của nó đến đối tượng Tài khoản sẽ biến mất, làm cho tham chiếu của nó bằng không.
+
+Bây giờ đối tượng Tài khoản có thể được phân bổ.
+
+Trong ví dụ này, chúng tôi đã sử dụng tham chiếu yếu để chỉ phá vỡ chu kỳ tham chiếu.
+
+Nếu một tham chiếu yếu được sử dụng để truy cập một đối tượng trong khi thời gian tồn tại đối tượng được đảm bảo của nó đã kết thúc và bạn đang dựa vào thời gian tồn tại của đối tượng quan sát để đối tượng có sẵn, bạn có thể gặp lỗi trong tương lai khi thời gian tồn tại của đối tượng quan sát thay đổi vì những lý do không liên quan.
+
+Hãy xem một ví dụ.
+
+Ở đây, hàm printSummary() được chuyển từ lớp Traveler sang lớp Account.
+
+Và hàm test() bây giờ gọi hàm printSummary() thông qua tham chiếu Tài khoản.
+
+Chính xác thì điều gì xảy ra khi hàm printSummary() được gọi?
+
+Nó có thể in tên và điểm của khách du lịch hôm nay, nhưng đây chỉ là một sự trùng hợp ngẫu nhiên.
+
+Điều này là do lần sử dụng cuối cùng của đối tượng Traveler là trước khi gọi hàm printSummary().
+
+Sau đó, số lượng tham chiếu của đối tượng Traveler có thể giảm xuống 0 nếu trình biên dịch chèn bản phát hành ngay sau lần sử dụng cuối cùng.
+
+Nếu số lượng tham chiếu đã giảm xuống 0, quyền truy cập vào đối tượng Khách du lịch thông qua tham chiếu yếu sẽ là số không và đối tượng Khách du lịch có thể được phân bổ.
+
+Vì vậy, khi hàm printSummary() được gọi, lực mở gói của tham chiếu Traveler yếu sẽ bẫy, gây ra sự cố.
+
+Bạn có thể tự hỏi liệu việc tháo dây buộc có phải là lý do cho sự cố ở đây hay không và ràng buộc tùy chọn có thể đã ngăn chặn nó.
+
+Ràng buộc tùy chọn thực sự làm trầm trọng thêm vấn đề.
+
+Nếu không có sự cố rõ ràng, nó sẽ tạo ra một lỗi im lặng có thể không được chú ý khi tuổi thọ của đối tượng quan sát được thay đổi vì những lý do không liên quan.
+
+Có nhiều kỹ thuật khác nhau để xử lý an toàn các tài liệu tham khảo yếu và không thuộc sở hữu, mỗi kỹ thuật đều có mức độ chi phí triển khai trả trước khác nhau so với chi phí bảo trì liên tục.
+
+Hãy khám phá từng cái một với ví dụ của chúng ta.
+
+Swift cung cấp tiện ích withExtendedLifetime() có thể kéo dài tuổi thọ của một đối tượng một cách rõ ràng.
+
+Sử dụng withExtendedLifetime(), có thể kéo dài tuổi thọ của đối tượng Traveler một cách an toàn, trong khi hàm printSummary() đang được gọi, ngăn chặn các lỗi tiềm ẩn.
+
+Hiệu quả tương tự có thể đạt được bằng cách đặt một cuộc gọi trống đến withExtendedLifetime() ở cuối phạm vi hiện có.
+
+Đối với các trường hợp phức tạp hơn, chúng tôi có thể yêu cầu trình biên dịch kéo dài tuổi thọ của một đối tượng đến cuối phạm vi hiện tại bằng cách sử dụng trì hoãn.
+
+withExtendedLifetime() có thể trông giống như một cách dễ dàng để thoát khỏi các lỗi suốt đời của đối tượng.
+
+Tuy nhiên, kỹ thuật này rất mong manh và chuyển trách nhiệm về sự đúng đắn cho bạn.
+
+Với cách tiếp cận này, bạn nên đảm bảo withExtendedLifetime() được sử dụng mỗi khi một tham chiếu yếu có khả năng gây ra lỗi.
+
+Nếu không được kiểm soát, withExtendedLifetime() có thể leo lên khắp cơ sở mã, tăng chi phí bảo trì.
+
+Thiết kế lại các lớp với API tốt hơn là một cách tiếp cận nguyên tắc hơn nhiều.
+
+Những bất ngờ về tuổi thọ của đối tượng có thể được ngăn chặn, nếu quyền truy cập vào đối tượng chỉ có thể bị giới hạn ở các tham chiếu mạnh.
+
+Ở đây, hàm printSummary() được chuyển trở lại lớp Traveler và tham chiếu yếu trong lớp Tài khoản bị ẩn.
+
+Các bài kiểm tra hiện buộc phải gọi hàm printSummary() thông qua một tham chiếu mạnh, loại bỏ các lỗi tiềm ẩn.
+
+Ngoài việc mang chi phí hiệu suất, các tài liệu tham khảo yếu và không thuộc sở hữu có thể làm lộ lỗi nếu bạn không cẩn thận với thiết kế lớp học.
+
+Điều quan trọng là phải tạm dừng và suy nghĩ, tại sao các tài liệu tham khảo yếu và không thuộc sở hữu lại cần thiết?
+
+Có phải chúng chỉ được sử dụng để phá vỡ chu kỳ tham chiếu?
+
+Điều gì sẽ xảy ra nếu bạn tránh tạo ra các chu kỳ tham chiếu ngay từ đầu?
+
+Các chu kỳ tham chiếu thường có thể tránh được bằng cách suy nghĩ lại các thuật toán và chuyển đổi các mối quan hệ lớp tuần hoàn thành các cấu trúc cây.
+
+Trong ví dụ của chúng tôi, lớp Khách du lịch cần tham khảo lớp Tài khoản.
+
+Lớp Tài khoản không thực sự cần thiết phải tham khảo lớp Khách du lịch.
+
+Lớp tài khoản chỉ cần truy cập vào thông tin cá nhân của khách du lịch.
+
+Chúng ta có thể chuyển thông tin cá nhân của khách du lịch sang một lớp mới gọi là PersonalInfo.
+
+Cả lớp Khách du lịch và lớp Tài khoản đều có thể tham khảo lớp PersonalInfo, tránh chu kỳ.
+
+Tránh nhu cầu về các tài liệu tham khảo yếu và không thuộc sở hữu có thể có thêm chi phí triển khai, nhưng đây là một cách nhất định để loại bỏ tất cả các lỗi tồn tại của đối tượng tiềm ẩn.
+
+Một tính năng ngôn ngữ khác làm cho tuổi thọ của đối tượng có thể quan sát được là tác dụng phụ của bộ khử khởi tạo.
+
+Một trình khử khởi tạo chạy trước khi phân bổ giao dịch và các tác dụng phụ của nó có thể được quan sát bởi các hiệu ứng chương trình bên ngoài.
+
+Nếu bạn viết mã để giải trình tự các tác dụng phụ của trình khử khởi tạo với các hiệu ứng chương trình bên ngoài, nó có thể dẫn đến các lỗi ẩn, chỉ được phát hiện khi tuổi thọ của đối tượng quan sát được thay đổi do các lý do không liên quan.
+
+Trước khi tôi tìm hiểu làm thế nào những lỗi như vậy có thể xuất hiện, hãy xem trình khử khởi tạo là gì.
+
+Đây là sự lặp lại của ví dụ đầu tiên, bây giờ với một trình khử khởi tạo.
+
+Trình khử khởi tạo có tác dụng phụ toàn cầu: in tin nhắn trên bảng điều khiển.
+
+Hôm nay trình khởi tạo có thể chạy sau khi "Done travel" được in.
+
+Nhưng vì lần sử dụng cuối cùng của đối tượng Traveler là cập nhật điểm đến, trình khởi tạo có thể chạy trước khi "Xong hành" được in, tùy thuộc vào tối ưu hóa ARC bắt đầu.
+
+Trong ví dụ này, các tác dụng phụ của thuốc khử khởi tạo có thể quan sát được nhưng không được dựa vào.
+
+Hãy xem xét một ví dụ phức tạp hơn, trong đó các tác dụng phụ của bộ khử khởi tạo được dựa vào bởi các hiệu ứng chương trình bên ngoài.
+
+Bây giờ chúng tôi giới thiệu các chỉ số du lịch cho lớp Khách du lịch.
+
+Bất cứ khi nào một điểm đến được cập nhật, nó sẽ được ghi lại trong lớp TravelMetrics.
+
+Cuối cùng khi khử khởi tạo đối tượng Traveler, các số liệu được công bố lên bản ghi toàn cầu.
+
+Các chỉ số được công bố là ID ẩn danh của khách du lịch, số điểm đến được tra cứu và danh mục sở thích du lịch được tính toán.
+
+Trong hàm test(), đầu tiên, một đối tượng Traveler được tạo, sau đó tham chiếu đến travelMetrics được sao chép từ đối tượng Traveler.
+
+Điểm đến của khách du lịch được cập nhật lên Big Sur, ghi lại Big Sur trong TravelMetrics.
+
+Điểm đến của khách du lịch được cập nhật thành Catalina, ghi lại Catalina trong TravelMetrics.
+
+Sau đó, danh mục sở thích du lịch được tính toán bằng cách xem xét các điểm đến được ghi lại.
+
+Ngày nay, trình khử khởi tạo có thể chạy sau khi tính toán lãi suất du lịch, xuất bản danh mục quan tâm là Thiên nhiên.
+
+Nhưng lần sử dụng cuối cùng của đối tượng Traveler là cập nhật điểm đến cho Catalina, ngay sau đó trình khởi tạo có thể chạy.
+
+Kể từ khi trình khởi tạo chạy trước khi tính toán lãi suất du lịch, nil được xuất bản, gây ra lỗi.
+
+Cũng giống như các tài liệu tham khảo yếu và không thuộc sở hữu, có nhiều kỹ thuật khác nhau để xử lý an toàn các tác dụng phụ của thuốc khử khởi tạo.
+
+Mỗi người trong số họ với mức độ khác nhau của chi phí thực hiện trả trước so với chi phí bảo trì liên tục.
+
+Hãy nhìn từng cái một.
+
+withExtendedLifetime() có thể được sử dụng để kéo dài rõ ràng tuổi thọ của đối tượng Traveler cho đến khi danh mục sở thích du lịch được tính toán, ngăn chặn các lỗi tiềm ẩn.
+
+Như đã thảo luận trước đây, điều này chuyển trách nhiệm về sự đúng đắn cho bạn.
+
+Với cách tiếp cận này, bạn nên đảm bảo vớiExtendedLifetime được sử dụng mỗi khi có khả năng tương tác không chính xác giữa các tác dụng phụ của bộ khử khởi tạo và các tác dụng chương trình bên ngoài, làm tăng chi phí bảo trì.
+
+Không thể quan sát thấy các tác dụng phụ của thuốc khử khởi tạo nếu tất cả các tác dụng đều cục bộ.
+
+Thiết kế lại API lớp bằng cách giới hạn khả năng hiển thị của các chi tiết lớp nội bộ có thể ngăn chặn các lỗi suốt đời của đối tượng.
+
+Ở đây, TravelMetrics được đánh dấu là riêng tư, ẩn nó khỏi quyền truy cập bên ngoài.
+
+Trình khởi tạo hiện tính toán danh mục du lịch quan tâm nhất và xuất bản các số liệu.
+
+Điều này hiệu quả, nhưng một cách tiếp cận nguyên tắc hơn là loại bỏ hoàn toàn các tác dụng phụ của chất khử khởi tạo.
+
+Ở đây, defer được sử dụng thay vì deinitializer để xuất bản các số liệu và deinitializer chỉ thực hiện xác minh.
+
+Bằng cách loại bỏ các tác dụng phụ của deinitializer, chúng ta có thể loại bỏ tất cả các lỗi tiềm ẩn trong suốt đời của đối tượng.
+
+Chúng tôi đã khám phá ví dụ ứng dụng Du lịch giáo dục của mình để tìm hiểu về ARC, các tài liệu tham khảo yếu và không được sở hữu, và các tác dụng phụ của bộ khử khởi tạo.
+
+Điều quan trọng là phải hiểu thấu đáo các tính năng ngôn ngữ làm cho thời gian tồn tại của đối tượng có thể quan sát được và loại bỏ sự phụ thuộc có khả năng không chính xác vào thời gian tồn tại của đối tượng quan sát được, để chúng tôi không phát hiện ra lỗi vào những thời điểm đáng ngạc nhiên.
+
+Với Xcode 13, một cài đặt xây dựng thử nghiệm mới được gọi là "Tối ưu hóa tuổi thọ đối tượng" có sẵn cho trình biên dịch Swift.
+
+Điều này cho phép tối ưu hóa ARC rút ngắn tuổi thọ mạnh mẽ.
+
+Với cài đặt xây dựng này được bật, bạn có thể thấy các đối tượng được phân bổ ngay lập tức sau lần sử dụng cuối cùng nhất quán hơn nhiều, đưa tuổi thọ của đối tượng quan sát được gần hơn với mức tối thiểu được đảm bảo của chúng.
+
+Điều này có thể phơi bày các lỗi suốt đời của đối tượng ẩn, tương tự như các ví dụ được thảo luận.
+
+Bạn có thể làm theo các kỹ thuật an toàn được thảo luận trong phiên này để loại bỏ tất cả các lỗi như vậy.
+
+Tôi hy vọng bạn thích buổi học này.
+
+Cảm ơn vì đã xem.
+
+♪

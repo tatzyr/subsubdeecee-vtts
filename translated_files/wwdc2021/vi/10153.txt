@@ -1,0 +1,561 @@
+10153
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Eugene Zhidkov: Xin chào và chào mừng đến với WWDC.
+
+Tên tôi là Eugene Zhidkov. Tôi đến từ phần mềm GPU.
+
+Và cùng với, với Harsh Patil từ kiến trúc hệ thống Mac, chúng tôi sẽ chỉ cho bạn cách tạo các ứng dụng xử lý hình ảnh được cung cấp bởi Metal trên Apple silicon.
+
+Đầu tiên, tôi sẽ tập trung vào các phương pháp hay nhất và bài học kinh nghiệm, tối ưu hóa các ứng dụng xử lý hình ảnh cho M1 dựa trên các cam kết của nhà phát triển mà chúng tôi đã có trong năm qua.
+
+Và sau đó Harsh sẽ cung cấp cho bạn hướng dẫn từng bước về cách bạn có thể thiết kế lại quy trình xử lý hình ảnh của mình để có hiệu suất tối ưu trên Apple silicon.
+
+Vậy hãy nhảy ngay vào!
+
+Để bắt đầu, hãy xem lại ngắn gọn kiến trúc hệ thống trên chip của Apple và những lợi ích của nó.
+
+Nhiều ứng dụng xử lý hình ảnh và chỉnh sửa video được thiết kế với GPU rời rạc.
+
+Vì vậy, điều quan trọng là phải làm nổi bật những gì khác biệt về GPU của Apple.
+
+Đầu tiên, tất cả các chip của Apple đều sử dụng Kiến trúc Bộ nhớ Hợp nhất.
+
+Tất cả các khối - chẳng hạn như công cụ CPU, GPU, Neural và Media - đều có quyền truy cập vào cùng một bộ nhớ hệ thống bằng giao diện bộ nhớ thống nhất.
+
+Và thứ hai, GPU của chúng tôi là Trình kết xuất hoãn lại dựa trên ô, hoặc TBDR.
+
+TBDR có hai giai đoạn chính: ốp lát, trong đó toàn bộ bề mặt kết xuất tách thành gạch và hình học được xử lý sau đó được xử lý độc lập; và kết xuất, nơi tất cả các điểm ảnh sẽ được xử lý cho mỗi ô.
+
+Vì vậy, để hiệu quả nhất trên Apple silicon, ứng dụng xử lý hình ảnh của bạn nên bắt đầu tận dụng bộ nhớ thống nhất - để tránh bất kỳ bản sao nào mà đường ống của bạn từng có - và kiến trúc TBDR bằng cách khai thác bộ nhớ lát gạch và khối hình ảnh cục bộ.
+
+Để tìm hiểu thêm về cách Apple TBDR hoạt động ở mức thấp và cách nhắm mục tiêu lõi đổ bóng của chúng tôi, vui lòng xem các phiên này từ năm ngoái.
+
+Và bây giờ, hãy nói về những điều chính xác mà chúng ta sẽ làm để tối ưu hóa khối lượng công việc tính toán xử lý hình ảnh cho Apple silicon.
+
+Năm ngoái, chúng tôi đã hợp tác chặt chẽ với nhiều nhà phát triển tuyệt vời trong quá trình chuyển đổi đường ống hình ảnh của họ.
+
+Chúng tôi đã chọn sáu mẹo bổ ích nhất để chia sẻ.
+
+Đầu tiên, chúng ta sẽ thảo luận về cách tránh các bản sao hoặc âm vật bộ nhớ không cần thiết.
+
+Điều này thực sự quan trọng vì chúng tôi hiện đang làm việc với hình ảnh lên đến 8K.
+
+Sau đó, chúng tôi muốn làm nổi bật những lợi ích của việc sử dụng đường ống kết xuất và kết cấu thay vì sử dụng tính toán trên bộ đệm và cách bạn có thể làm điều đó trong quy trình xử lý hình ảnh của riêng mình.
+
+Khi chúng tôi đã thiết lập và chạy các đường dẫn kết xuất và kết cấu, chúng tôi muốn cho bạn thấy tầm quan trọng của các hành động tải/lưu trữ thích hợp và các tệp đính kèm không cần nhớ.
+
+Điều này sẽ giúp bạn tận dụng tối đa bộ nhớ gạch.
+
+Sau đó, chúng ta sẽ nói về cách tiếp cận tốt nhất các máy hủy Uber với luồng điều khiển động của nó và cũng như cách tận dụng các loại dữ liệu nhỏ hơn - chẳng hạn như ngắn và một nửa - để cải thiện hiệu suất và hiệu quả.
+
+Và chúng tôi sẽ kết thúc với lời khuyên quan trọng về định dạng kết cấu để có được thông lượng tốt nhất.
+
+Được rồi.
+
+Vì vậy, hãy bắt đầu với một trong những mẹo bổ ích nhất: tránh các vết bẩn không cần thiết trên Apple silicon.
+
+Hầu hết các ứng dụng xử lý hình ảnh được thiết kế xung quanh các GPU rời rạc.
+
+Với GPU rời, bạn có bộ nhớ hệ thống và bộ nhớ video riêng biệt.
+
+Để làm cho hình ảnh khung hiển thị hoặc cư trú trên GPU, cần phải có bản sao rõ ràng.
+
+Hơn nữa, nó thường được yêu cầu hai lần; để tải lên dữ liệu cho GPU để xử lý nó và để kéo nó trở lại.
+
+Hãy xem xét chúng ta đang giải mã một video 8K, xử lý nó và lưu nó vào đĩa.
+
+Vì vậy, đây là một chuỗi CPU, giải mã, trong trường hợp này.
+
+Đó là nơi chúng ta cần sao chép khung được giải mã sang GPU VRAM.
+
+Và đây là dòng thời gian GPU, nơi tất cả các hiệu ứng và bộ lọc được áp dụng.
+
+Hãy tiến thêm một bước nữa và hãy nhớ lại rằng chúng ta cần lưu kết quả vào đĩa, phải không?
+
+Vì vậy, chúng ta cũng phải xem xét đưa khung đã xử lý trở lại bộ nhớ hệ thống và mã hóa thực tế của khung.
+
+Vì vậy, chúng được gọi là "sao chép" hoặc "khoảng trống bóng bay", và các ứng dụng xử lý hình ảnh tiên tiến phải thực hiện đường ống sâu và những thứ thông minh khác để lấp đầy chúng.
+
+Chà, tin tốt là trên Apple GPUs, việc làm việc vì mục đích cư trú không còn cần thiết nữa.
+
+Vì bộ nhớ được chia sẻ, cả CPU và GPU đều có thể truy cập trực tiếp vào nó.
+
+Vì vậy, vui lòng thêm một kiểm tra đơn giản để phát hiện xem bạn có đang chạy trên hệ thống bộ nhớ thống nhất hay không và tránh các bản sao không cần thiết.
+
+Nó sẽ giúp bạn tiết kiệm trí nhớ, thời gian và là bước đầu tiên tuyệt đối cần làm.
+
+Vì vậy, đây là nơi chúng tôi hạ cánh trên Kiến trúc Bộ nhớ Thống nhất với các âm vật bị loại bỏ.
+
+Bằng cách loại bỏ các khe hở, chúng tôi hoàn toàn tránh được các khoảng trống sao chép và có thể bắt đầu xử lý ngay lập tức.
+
+Điều này cũng mang lại đường ống CPU và GPU tốt hơn với ít rắc rối hơn.
+
+Hãy đảm bảo rằng bạn triển khai đường dẫn bộ nhớ thống nhất mà không có bản sao nào liên quan.
+
+Nếu bạn chỉ để lại các bản sao âm vật chính xác như trên GPU rời, bạn sẽ thanh toán bằng băng thông bộ nhớ hệ thống, thời gian GPU ít hơn để xử lý thực tế và chi phí lập lịch tiềm năng.
+
+Chưa kể chúng tôi không còn cần phân bổ hình ảnh VRAM riêng biệt nữa.
+
+Chụp khung GPU có thể giúp bạn phát hiện ra các âm vật lớn.
+
+Vui lòng kiểm tra các bản sao ứng dụng của bạn và đảm bảo rằng bạn chỉ thực hiện các bản sao được yêu cầu.
+
+Bây giờ, hãy nói về cách chính xác chúng ta nên bắt đầu tận dụng kiến trúc Apple GPU TBDR để xử lý hình ảnh.
+
+Hầu hết các ứng dụng xử lý hình ảnh hoạt động trên bộ đệm hình ảnh bằng cách gửi hàng loạt hạt nhân tính toán.
+
+Khi bạn gửi một hạt nhân tính toán ở chế độ nối tiếp mặc định, Metal đảm bảo rằng tất cả các công văn tiếp theo sẽ thấy tất cả các ghi bộ nhớ.
+
+Sự đảm bảo này ngụ ý sự kết hợp bộ nhớ cho tất cả các lõi đổ bóng, vì vậy mọi ghi bộ nhớ đều được hiển thị cho tất cả các lõi khác vào thời điểm công văn tiếp theo bắt đầu.
+
+Điều này cũng có nghĩa là lưu lượng bộ nhớ có thể thực sự cao; toàn bộ hình ảnh phải được đọc và ghi vào.
+
+Với M1, Apple GPUs cho phép công văn gạch trên MacOS.
+
+Trái ngược với tính toán thông thường, chúng hoạt động trong bộ nhớ ô với các điểm đồng bộ hóa chỉ có ô.
+
+Một số bộ lọc - như tích chập - không thể được ánh xạ đến mô hình ô, nhưng nhiều bộ lọc khác thì có!
+
+Trì hoãn bộ nhớ hệ thống tuôn ra cho đến khi điểm cuối bộ mã hóa mang lại hiệu quả vững chắc.
+
+Bạn có thể thực hiện công việc GPU hữu ích hơn khi không bị giới hạn bởi băng thông bộ nhớ hệ thống.
+
+Để tiến xa hơn nữa, hãy lưu ý rằng nhiều thao tác trên mỗi pixel không yêu cầu quyền truy cập vào các pixel lân cận, vì vậy điểm đồng bộ hóa ô là không cần thiết.
+
+Điều này lập bản đồ thực sự tốt để phân mảnh các chức năng.
+
+Các hàm phân đoạn có thể được thực thi mà không cần đồng bộ hóa ô ngầm, chỉ yêu cầu đồng bộ hóa tại ranh giới bộ mã hóa hoặc khi hạt nhân ô được gửi nối tiếp sau hạt nhân phân đoạn.
+
+Bây giờ chúng ta đã biết rằng GPU của Apple cho phép các chức năng phân đoạn và hạt nhân lát gạch để xử lý hình ảnh hiệu quả hơn.
+
+Hãy xem làm thế nào chúng ta có thể sử dụng nó.
+
+Chúng tôi làm điều đó bằng cách chuyển đổi các công văn tính toán thông thường trên bộ đệm để hiển thị bộ mã hóa lệnh trên kết cấu.
+
+Như chúng ta vừa thảo luận, quy tắc ngón tay cái như sau.
+
+Các hoạt động trên mỗi pixel không phụ thuộc vào điểm ảnh nên được thực hiện bằng cách sử dụng các chức năng phân đoạn.
+
+Bất kỳ bộ lọc nào có hoạt động phạm vi nhóm luồng nên được thực hiện với đổ bóng ô, vì cần phải truy cập các pixel lân cận trong ô.
+
+Các bộ lọc thu thập phân tán và tích chập không thể được ánh xạ đến mô hình gạch vì chúng yêu cầu truy cập ngẫu nhiên, vì vậy chúng vẫn nên vẫn là công văn tính toán.
+
+Bộ mã hóa lệnh kết xuất cũng cho phép tính năng GPU độc đáo của Apple: nén băng thông không mất dữ liệu cho kết cấu và mục tiêu kết xuất.
+
+Đây là một trình tiết kiệm băng thông thực sự tuyệt vời, đặc biệt là đối với quy trình xử lý hình ảnh, vì vậy hãy xem chúng ta nên sử dụng nó như thế nào.
+
+Chà, nói về việc cho phép nén không mất dữ liệu, việc nói những gì bạn không nên làm thực sự dễ dàng hơn.
+
+Đầu tiên, các định dạng kết cấu đã được nén không thể hưởng lợi từ việc không mất dữ liệu.
+
+Thứ hai, có ba cờ kết cấu cụ thể không thể hoạt động với tính năng nén này, vì vậy hãy đảm bảo rằng bạn không đặt chúng một cách tình cờ.
+
+Và thứ ba, kết cấu tuyến tính - hoặc được hỗ trợ bởi MTLBuffer - cũng không được phép.
+
+Một số xử lý đặc biệt cũng được yêu cầu cho các kết cấu không riêng tư; đảm bảo gọi optimizeContentsForGPUAccess để luôn đi trên con đường nhanh nhất.
+
+Khung Tóm tắt chụp khung GPU hiện hiển thị cho bạn các cảnh báo nén không mất dữ liệu và làm nổi bật lý do tại sao kết cấu đã chọn không tham gia.
+
+Trong ví dụ này, cờ PixelFormatView đã được đặt.
+
+Trong nhiều trường hợp, các nhà phát triển đang vô tình đặt những lá cờ này.
+
+Đừng đặt PixelFormatView nếu tất cả những gì bạn cần là swizzle thành phần hoặc chuyển đổi sRGB.
+
+Được rồi, chúng tôi đã thiết lập và chạy đường dẫn kết xuất và kết cấu.
+
+Bây giờ, hãy đảm bảo rằng chúng ta sử dụng bộ nhớ gạch đúng cách.
+
+Các khái niệm TBDR bộ nhớ gạch - chẳng hạn như hành động tải/lưu trữ và tệp đính kèm không bộ nhớ - hoàn toàn mới đối với thế giới máy tính để bàn.
+
+Vì vậy, hãy đảm bảo rằng chúng ta sử dụng chúng đúng cách.
+
+Hãy bắt đầu với các hành động tải/lưu trữ!
+
+Như chúng ta đã biết, toàn bộ mục tiêu kết xuất được chia thành các ô.
+
+Tải/lưu trữ là các hành động hàng loạt trên mỗi gạch được đảm bảo để thực hiện con đường tối ưu nhất thông qua hệ thống phân cấp bộ nhớ.
+
+Chúng được thực thi ở đầu đường chuyền kết xuất - nơi chúng tôi cho GPU biết cách khởi tạo bộ nhớ gạch - và ở cuối đường chuyền để thông báo cho GPU những tệp đính kèm nào cần được ghi lại.
+
+Điều quan trọng ở đây là tránh tải những gì chúng ta không cần.
+
+Nếu chúng ta đang ghi đè lên toàn bộ hình ảnh hoặc tài nguyên là tạm thời, hãy đặt hành động tải thành LoadActionDontCare.
+
+Với bộ mã hóa kết xuất, bạn không còn cần phải xóa đầu ra hoặc dữ liệu tạm thời của mình nữa, như bạn có thể đã làm trước đây với thẻ tính toán chuyên dụng hoặc cuộc gọi fillBuffer.
+
+Bằng cách cài đặt LoadActionClear, bạn có thể chỉ định giá trị rõ ràng một cách hiệu quả.
+
+Và hành động của cửa hàng cũng vậy.
+
+Đảm bảo chỉ lưu trữ dữ liệu bạn cần sau này - như tệp đính kèm chính - và không lưu trữ bất cứ thứ gì tạm thời.
+
+Bên cạnh các hành động tải và lưu trữ rõ ràng, Apple GPUs lưu dấu chân bộ nhớ của bạn với các tệp đính kèm không bộ nhớ.
+
+Chúng ta có thể định nghĩa rõ ràng tệp đính kèm là có chế độ lưu trữ không bộ nhớ.
+
+Điều này cho phép phân bổ bộ nhớ chỉ có ô, có nghĩa là tài nguyên của bạn sẽ tồn tại cho từng ô chỉ trong vòng đời của bộ mã hóa.
+
+Điều này có thể làm giảm đáng kể dung lượng bộ nhớ của bạn, đặc biệt là đối với hình ảnh 6K/8K, nơi mỗi khung hình chiếm hàng trăm megabyte.
+
+Hãy xem tất cả điều này có thể được thực hiện như thế nào trong mã.
+
+Chúng tôi bắt đầu bằng cách tạo textureDescriptor và sau đó tạo outputTexture.
+
+Sau đó chúng tôi tạo ra một kết cấu tạm thời.
+
+Lưu ý rằng tôi đã đánh dấu nó là không có bộ nhớ, vì chúng tôi không muốn bất kỳ bộ nhớ nào ở đây.
+
+Sau đó, chúng tôi tạo đường chuyền kết xuất bằng cách trước tiên mô tả các tệp đính kèm là gì và sau đó là các hành động tải/lưu trữ là gì.
+
+Chúng tôi không quan tâm đến việc tải đầu ra vì nó bị ghi đè hoàn toàn, nhưng chúng tôi cần lưu trữ nó.
+
+Đối với kết cấu tạm thời, chúng tôi không tải nhưng xóa nó, và chúng tôi cũng không cần lưu trữ nó.
+
+Cuối cùng, chúng tôi tạo ra renderPass của mình từ bộ mô tả.
+
+Thế là xong.
+
+Vì vậy, chúng tôi đang sử dụng bộ nhớ thống nhất, di chuyển quy trình xử lý hình ảnh của mình để hiển thị bộ mã hóa lệnh và đang tận dụng đúng bộ nhớ ô.
+
+Bây giờ, hãy nói về uber-shaders.
+
+Uber-shaders, hay uber-kernels, là một cách khá phổ biến để giúp cuộc sống của các nhà phát triển dễ dàng hơn.
+
+Mã máy chủ thiết lập cấu trúc điều khiển và bộ đổ bóng chỉ lặp qua một loạt các câu lệnh if/else, ví dụ: nếu ánh xạ âm được bật hoặc nếu đầu vào ở định dạng HDR hoặc SDR.
+
+Cách tiếp cận này còn được gọi là "ubers-shader" và thực sự tốt trong việc giảm tổng số đối tượng trạng thái đường ống xuống.
+
+Tuy nhiên, nó có nhược điểm.
+
+Cái chính là tăng áp lực đăng ký để theo kịp dòng điều khiển phức tạp hơn.
+
+Sử dụng nhiều thanh ghi hơn có thể dễ dàng hạn chế công suất tối đa mà bộ đổ bóng của bạn đang chạy.
+
+Hãy xem xét một hạt nhân đơn giản nơi chúng ta vượt qua trong cấu trúc điều khiển.
+
+Chúng tôi sử dụng cờ bên trong cấu trúc để kiểm soát những gì chúng tôi làm.
+
+Chúng tôi có hai tính năng ở đây: nếu đầu vào ở chế độ HDR và nếu ánh xạ tông màu được bật.
+
+Tất cả trông ổn, phải không?
+
+Chà, đây là những gì xảy ra trên GPU.
+
+Vì chúng tôi không thể suy ra bất cứ điều gì tại thời điểm biên dịch, chúng tôi phải giả định rằng chúng tôi có thể đi cả hai con đường - HDR và không phải HDR - và sau đó kết hợp dựa trên cờ.
+
+Ánh xạ âm thanh cũng vậy.
+
+Chúng tôi đánh giá nó và sau đó che nó vào hoặc ra, dựa trên cờ đầu vào.
+
+Vấn đề ở đây là đăng ký.
+
+Mọi đường dẫn luồng điều khiển đều cần đăng ký trực tiếp.
+
+Đây là nơi mà uber-shaders không tốt lắm.
+
+Như bạn nhớ lại, các thanh ghi được sử dụng bởi hạt nhân xác định công suất tối đa mà bộ đổ bóng có thể chạy.
+
+Điều đó xảy ra bởi vì tệp đăng ký được chia sẻ bởi tất cả các simdlanes trên lõi đổ bóng.
+
+Nếu chúng ta chỉ có thể chạy những gì chỉ cần thiết, điều đó sẽ cho phép sử dụng đồng thời và GPU simdgroup cao hơn.
+
+Hãy nói về cách khắc phục điều này.
+
+Metal API có công cụ phù hợp cho công việc và nó được gọi là "function_constants".
+
+Chúng tôi xác định cả hai tham số điều khiển là function_constants và chúng tôi sửa đổi mã cho phù hợp.
+
+Ở đây, chúng tôi đang hiển thị mã hạt nhân đã sửa đổi.
+
+Phía máy chủ cũng phải được cập nhật để cung cấp giá trị function_constant tại thời điểm tạo đường ống.
+
+Một cách tuyệt vời khác để giảm áp suất đăng ký là sử dụng các loại 16-bit trong bộ đổ bóng của bạn.
+
+GPU của Apple có hỗ trợ loại 16-bit gốc.
+
+Vì vậy, khi sử dụng các kiểu dữ liệu nhỏ hơn, bộ đổ bóng của bạn sẽ yêu cầu ít thanh ghi hơn, tăng công suất.
+
+Các loại một nửa và ngắn cũng đòi hỏi ít năng lượng hơn và có thể đạt được tỷ lệ cao nhất.
+
+Vì vậy, vui lòng sử dụng các loại một nửa và ngắn thay vì float và int khi có thể, vì chuyển đổi kiểu thường miễn phí.
+
+Trong ví dụ này, hãy xem xét một hạt nhân sử dụng thread_position trong threadgroup cho một số tính toán.
+
+Chúng tôi đang sử dụng int không dấu, nhưng kích thước nhóm luồng tối đa được Metal hỗ trợ có thể dễ dàng phù hợp với short không dấu.
+
+Threadgroup_position_in_grid, tuy nhiên, có khả năng yêu cầu một kiểu dữ liệu lớn hơn.
+
+Nhưng đối với kích thước lưới mà chúng tôi đang sử dụng trong xử lý hình ảnh - lên đến 8K hoặc 16K - short không dấu cũng đủ.
+
+Nếu chúng ta sử dụng các loại 16-bit thay thế, mã kết quả sẽ sử dụng số lượng thanh ghi nhỏ hơn, có khả năng làm tăng công suất sử dụng.
+
+Bây giờ, hãy để tôi chỉ cho bạn nơi bạn có thể có tất cả các chi tiết trên sổ đăng ký.
+
+Trình gỡ lỗi khung GPU trong Xcode13 hiện có chế độ xem đối tượng trạng thái đường ống nâng cao để hiển thị, gạch và tính toán PSO.
+
+Bạn có thể kiểm tra số liệu thống kê đường ống chi tiết - ngay bây giờ với việc sử dụng thanh ghi - và tinh chỉnh tất cả các bộ đổ bóng của bạn.
+
+Với các mối quan tâm về đăng ký được đề cập, hãy nói về các định dạng kết cấu.
+
+Đầu tiên, chúng tôi muốn lưu ý rằng các định dạng pixel khác nhau có thể có tốc độ lấy mẫu khác nhau.
+
+Tùy thuộc vào việc tạo phần cứng và số lượng kênh, các loại dấu phẩy động rộng hơn có thể đã giảm tốc độ lấy mẫu điểm.
+
+Đặc biệt là các định dạng dấu phẩy động như RGBA32F sẽ chậm hơn các biến thể FP16 khi lấy mẫu các giá trị được lọc.
+
+Các loại nhỏ hơn cũng làm giảm dung lượng lưu trữ bộ nhớ, băng thông và dấu chân bộ nhớ cache.
+
+Vì vậy, một lần nữa, chúng tôi khuyến khích sử dụng loại nhỏ nhất có thể, nhưng trong trường hợp này, để lưu trữ kết cấu.
+
+Đây thực sự là một trường hợp phổ biến đối với LUT 3D trong xử lý hình ảnh; hầu hết các ứng dụng mà chúng tôi đã làm việc đều sử dụng RGBA nổi cho giai đoạn ứng dụng 3D LUT với tính năng lọc song tuyến được bật.
+
+Vui lòng xem xét liệu ứng dụng của bạn có thể sử dụng một nửa hay không và độ chính xác là đủ.
+
+Nếu đúng như vậy, hãy chuyển sang FP16 ngay lập tức để có được tỷ lệ lấy mẫu cao nhất.
+
+Nếu độ chính xác một nửa là không đủ, chúng tôi phát hiện ra rằng short không dấu điểm cố định cung cấp phạm vi giá trị đồng nhất tuyệt vời, vì vậy mã hóa LUT của bạn ở quy mô đơn vị và cung cấp phạm vi LUT cho bộ đổ bóng là một cách tuyệt vời để có được cả tốc độ lấy mẫu đỉnh và độ chính xác số đủ.
+
+Được rồi, vì vậy chúng tôi vừa xem xét cách chúng tôi nên tận dụng kiến trúc GPU của Apple để làm cho đường ống xử lý hình ảnh của bạn chạy hiệu quả nhất có thể.
+
+Để áp dụng tất cả ngay lập tức, hãy gặp Harsh!
+
+Harsh Patil: Cảm ơn, Eugene.
+
+Bây giờ chúng ta hãy đi qua việc thiết kế lại một đường ống xử lý hình ảnh cho Apple silicon dựa trên tất cả các phương pháp hay nhất mà chúng ta đã học được cho đến nay.
+
+Cụ thể, chúng tôi sẽ điều chỉnh giai đoạn xử lý hình ảnh của đường ống xử lý video cho GPU của Apple.
+
+Xử lý hình ảnh thời gian thực rất tốn nhiều tính toán GPU và băng thông bộ nhớ.
+
+Đầu tiên chúng ta sẽ hiểu nó thường được thiết kế như thế nào và sau đó là cách chúng ta có thể tối ưu hóa nó cho silicon của Apple.
+
+Chúng tôi sẽ không đi sâu vào chi tiết về quy trình chỉnh sửa video trong phần này, vì vậy vui lòng tham khảo bài nói chuyện của chúng tôi từ hai năm trước.
+
+Chúng tôi sẽ chỉ tập trung vào việc chuyển đổi phần tính toán của quá trình xử lý hình ảnh sang đường dẫn kết xuất.
+
+Trước khi chúng ta bắt đầu, hãy bắt đầu nhanh chóng, hãy xem giai đoạn xử lý hình ảnh đứng ở đâu trong một quy trình xử lý video điển hình.
+
+Chúng tôi sẽ lấy tệp đầu vào được mã hóa ProRes làm ví dụ.
+
+Đầu tiên chúng ta đọc khung được mã hóa ProRes từ đĩa hoặc bộ nhớ ngoài.
+
+Sau đó, chúng tôi giải mã khung trên CPU và bây giờ giai đoạn xử lý hình ảnh thực hiện trên khung được giải mã này trên GPU và hiển thị khung đầu ra cuối cùng.
+
+Cuối cùng, chúng tôi hiển thị khung đầu ra này.
+
+Chúng tôi cũng có thể mã hóa khung được hiển thị cuối cùng để giao hàng.
+
+Tiếp theo, chúng ta hãy xem xét những gì bao gồm một quy trình xử lý hình ảnh.
+
+Quá trình xử lý hình ảnh bắt đầu bằng việc giải nén các kênh khác nhau của hình ảnh nguồn RGB trong alpha thành các bộ đệm riêng biệt ngay từ đầu.
+
+Chúng tôi sẽ xử lý từng kênh này trong quy trình xử lý hình ảnh của mình, cùng nhau hoặc riêng biệt.
+
+Tiếp theo, có thể có các chuyển đổi không gian màu để hoạt động trong môi trường được quản lý màu mong muốn.
+
+Sau đó, chúng tôi áp dụng LUT 3D; thực hiện hiệu chỉnh màu sắc; và sau đó áp dụng giảm nhiễu không gian-thời gian, tích chập, làm mờ và các hiệu ứng khác.
+
+Và cuối cùng, chúng tôi đóng gói các kênh được xử lý riêng lẻ lại với nhau để có đầu ra cuối cùng.
+
+Những bước được chọn này có điểm gì chung?
+
+Chúng đều là các bộ lọc điểm, chỉ hoạt động trên một điểm ảnh duy nhất mà không phụ thuộc vào điểm ảnh giữa các điểm ảnh.
+
+Những bản đồ này tốt để phân mảnh việc triển khai đổ bóng.
+
+Các hoạt động kiểu không gian và tích chập yêu cầu quyền truy cập vào bán kính lớn của các điểm ảnh và chúng tôi cũng có các mẫu truy cập đọc-ghi rải rác.
+
+Những thứ này rất phù hợp cho các hạt nhân tính toán.
+
+Chúng ta sẽ sử dụng kiến thức này sau.
+
+Hiện tại, hãy xem các thao tác này được thực hiện như thế nào.
+
+Các ứng dụng đại diện cho chuỗi hiệu ứng được áp dụng cho một hình ảnh dưới dạng biểu đồ bộ lọc.
+
+Mỗi bộ lọc là hạt nhân riêng của nó, xử lý các đầu vào từ giai đoạn trước và tạo ra đầu ra cho giai đoạn tiếp theo.
+
+Mỗi mũi tên ở đây có nghĩa là một bộ đệm được ghi vào/từ đầu ra của một giai đoạn và được đọc làm đầu vào trong giai đoạn tiếp theo.
+
+Vì bộ nhớ bị hạn chế, các ứng dụng thường tuyến tính hóa biểu đồ bằng cách sắp xếp tôpô.
+
+Điều này được thực hiện để giữ tổng số tài nguyên trung gian ở mức thấp nhất có thể đồng thời tránh các điều kiện chủng tộc.
+
+Biểu đồ bộ lọc đơn giản này trong ví dụ đó sẽ cần hai bộ đệm trung gian để có thể hoạt động mà không cần điều kiện đua và tạo ra đầu ra cuối cùng.
+
+Biểu đồ tuyến tính hóa ở đây đại khái cũng đại diện cho mã hóa bộ đệm lệnh GPU.
+
+Hãy xem xét kỹ hơn lý do tại sao biểu đồ bộ lọc này lại sử dụng nhiều băng thông bộ nhớ thiết bị.
+
+Mọi thao tác của bộ lọc phải tải toàn bộ hình ảnh từ bộ nhớ thiết bị vào thanh ghi và ghi kết quả trở lại bộ nhớ thiết bị.
+
+Và đó là khá nhiều lưu lượng bộ nhớ.
+
+Hãy ước tính dấu chân bộ nhớ cho việc xử lý hình ảnh khung hình 4K dựa trên biểu đồ xử lý hình ảnh ví dụ của chúng tôi.
+
+Bản thân khung được giải mã 4K mất 67 megabyte bộ nhớ cho độ chính xác dấu phẩy động 16 hoặc 135 megabyte bộ nhớ cho độ chính xác dấu phẩy động 32 và quy trình làm việc chuyên nghiệp hoàn toàn cần độ chính xác dấu phẩy động 32.
+
+Để xử lý một khung 4K với độ chính xác dấu phẩy động 32 thông qua biểu đồ xử lý hình ảnh này, chúng ta đang nói về hơn hai gigabyte lưu lượng đọc-ghi vào bộ nhớ thiết bị.
+
+Ngoài ra, ghi vào bộ đệm giữ đầu ra trung gian sẽ ngăn chặn hệ thống phân cấp bộ nhớ cache và cũng tác động đến các khối khác trên chip.
+
+Hạt nhân tính toán thông thường không được hưởng lợi từ bộ nhớ gạch trên chip một cách ngầm định.
+
+Hạt nhân có thể phân bổ rõ ràng bộ nhớ có phạm vi nhóm luồng, bộ nhớ này sẽ được hỗ trợ bởi bộ nhớ ô trên chip.
+
+Tuy nhiên, bộ nhớ ô đó không liên tục giữa các công văn trong bộ mã hóa tính toán.
+
+Ngược lại, bộ nhớ ô thực sự liên tục trên các đường rút trong một bộ mã hóa lệnh kết xuất.
+
+Hãy xem cách chúng ta có thể thiết kế lại quy trình xử lý hình ảnh đại diện này để tận dụng bộ nhớ gạch.
+
+Chúng tôi sẽ giải quyết vấn đề này bằng cách làm theo ba bước.
+
+Đầu tiên chúng tôi thay đổi đường chuyền tính toán để hiển thị đường chuyền và tất cả các bộ đệm đầu ra trung gian thành kết cấu.
+
+Sau đó, chúng tôi mã hóa các hoạt động trên mỗi pixel mà không có sự phụ thuộc giữa các pixel dưới dạng các lệnh gọi đổ bóng phân đoạn trong một bộ mã hóa lệnh kết xuất, đảm bảo tính đến tất cả các kết quả trung gian và thiết lập các hành động tải/lưu trữ thích hợp.
+
+Và cuối cùng, chúng tôi thảo luận về những gì chúng tôi làm trong tình huống phức tạp hơn là chỉ các bộ lọc điểm.
+
+Bước đầu tiên của chúng tôi là sử dụng MTLRenderCommandEncoder riêng biệt để mã hóa các bộ đổ bóng đủ điều kiện.
+
+Trong biểu đồ bộ lọc này, các bộ lọc giải nén, chuyển đổi không gian màu, LUT và hiệu chỉnh màu là tất cả các bộ lọc điểm trên mỗi pixel mà chúng ta có thể chuyển đổi thành bộ đổ bóng phân đoạn và mã hóa chúng bằng cách sử dụng một bộ mã hóa lệnh kết xuất.
+
+Tương tự, bộ trộn và bộ đổ bóng gói - nằm ở cuối đường ống xử lý hình ảnh này - cũng có thể được chuyển đổi thành bộ đổ bóng phân đoạn và được mã hóa bằng cách sử dụng một MTLRenderCommandEncoder khác.
+
+Sau đó, chúng ta có thể gọi các bộ đổ bóng này trong các đường dẫn kết xuất tương ứng của chúng.
+
+Khi bạn tạo đường chuyền kết xuất, tất cả các tài nguyên được đính kèm với các tệp đính kèm màu trong đường chuyền kết xuất đó được gạch ngầm cho bạn.
+
+Bộ đổ bóng phân đoạn chỉ có thể cập nhật dữ liệu khối hình ảnh được liên kết với vị trí của phân đoạn trong ô.
+
+Bộ đổ bóng tiếp theo trong cùng một lần kết xuất có thể nhận đầu ra của bộ đổ bóng trước đó trực tiếp từ bộ nhớ ô.
+
+Trong phần tiếp theo, chúng ta sẽ xem xét cách chúng ta có thể cấu trúc các bộ đổ bóng phân đoạn ánh xạ đến các bộ lọc này.
+
+Chúng tôi cũng sẽ xem xét những cấu trúc nào chúng tôi cần xác định và sử dụng để cho phép truy cập vào bộ nhớ gạch bên dưới từ bên trong các bộ đổ bóng phân đoạn này.
+
+Và cuối cùng, chúng ta sẽ xem xét cách đầu ra được tạo ra trong bộ nhớ ô bằng bộ đổ bóng một đoạn có thể được tiêu thụ trực tiếp từ bộ nhớ ô bằng bộ đổ bóng đoạn tiếp theo trong cùng một bộ mã hóa lệnh kết xuất.
+
+Đây là những gì bạn phải làm trong mã của mình.
+
+Ở đây tôi đã đính kèm hình ảnh đầu ra dưới dạng kết cấu được đính kèm với tệp đính kèm màu 0 của bộ mô tả vượt qua kết xuất.
+
+Tôi đã đính kèm kết cấu giữ kết quả trung gian vào tệp đính kèm màu 1 của bộ mô tả vượt qua kết xuất.
+
+Cả hai thứ này sẽ được lát gạch ngầm cho bạn.
+
+Vui lòng đặt các thuộc tính tải/lưu trữ thích hợp như đã thảo luận trước đó trong bài nói chuyện.
+
+Bây giờ, thiết lập một cấu trúc để truy cập các kết cấu này trong bộ đổ bóng phân đoạn của bạn.
+
+Trong các ví dụ sắp tới, chúng tôi sẽ chỉ ra cách sử dụng cấu trúc này trong các bộ đổ bóng phân đoạn của bạn.
+
+Bạn chỉ cần truy cập đầu ra và kết cấu trung gian trong bộ đổ bóng phân đoạn của mình như được tô sáng bằng cách sử dụng cấu trúc mà chúng tôi đã xác định trước đó.
+
+Việc ghi vào các kết cấu này được thực hiện đến vị trí bộ nhớ gạch thích hợp tương ứng với đoạn.
+
+Đầu ra được tạo ra bởi bộ đổ bóng giải nén được tiêu thụ dưới dạng đầu vào bởi bộ đổ bóng chuyển đổi không gian màu bằng cách sử dụng cùng một cấu trúc mà chúng tôi đã xác định trước đó.
+
+Bộ đổ bóng phân đoạn này có thể tự xử lý và cập nhật kết cấu đầu ra và trung gian, một lần nữa, sẽ cập nhật vị trí bộ nhớ ô tương ứng.
+
+Bạn phải tiếp tục các bước tương tự cho tất cả các bộ đổ bóng phân đoạn khác trong cùng một đường chuyền bộ mã hóa kết xuất.
+
+Tiếp theo, hãy hình dung chuỗi hoạt động này trông như thế nào với những thay đổi này.
+
+Như bạn có thể thấy, bây giờ bạn đã giải nén, chuyển đổi không gian màu, ứng dụng LUT 3D và các bước hiệu chỉnh màu sắc, tất cả được thực hiện trên bộ nhớ gạch bằng cách sử dụng một đường kết xuất mà không có bộ nhớ thiết bị nào chuyển ở giữa.
+
+Khi kết thúc quá trình kết xuất, các mục tiêu kết xuất không phải là không có bộ nhớ sẽ được xả vào bộ nhớ thiết bị.
+
+Sau đó bạn có thể thực hiện lớp bộ lọc tiếp theo.
+
+Hãy nói một chút về các bộ lọc có các mẫu truy cập thu thập phân tán.
+
+Các hạt nhân đại diện cho các bộ lọc như vậy có thể hoạt động trực tiếp trên dữ liệu trong bộ nhớ thiết bị.
+
+Các bộ lọc tích chập rất phù hợp cho các hoạt động dựa trên ô trong hạt nhân tính toán.
+
+Tại đây, bạn có thể thể hiện ý định sử dụng bộ nhớ ô bằng cách khai báo bộ nhớ có phạm vi nhóm luồng.
+
+Bây giờ, bạn đưa khối pixel vào bộ nhớ ô cùng với tất cả các điểm ảnh hào quang cần thiết, tùy thuộc vào bán kính bộ lọc và thực hiện thao tác tích chập trực tiếp trên bộ nhớ ô.
+
+Hãy nhớ rằng, bộ nhớ ô không liên tục trên các công văn tính toán trong bộ mã hóa tính toán.
+
+Vì vậy, sau khi thực hiện Filter1, bạn phải xóa rõ ràng nội dung bộ nhớ gạch vào bộ nhớ thiết bị.
+
+Bằng cách đó, Filter2 có thể tiêu thụ đầu ra của Filter1.
+
+Vậy chúng ta hạ cánh ở đâu một khi chúng ta thực hiện tất cả những thay đổi này?
+
+Để xử lý một khung 4K ở độ chính xác dấu phẩy động 32 thông qua biểu đồ xử lý hình ảnh được cấu trúc lại ví dụ của chúng tôi, đây là những gì chúng tôi có bây giờ.
+
+Băng thông giảm từ 2,16 gigabyte xuống chỉ tải và lưu trữ trị giá 810 megabyte, và đó là giảm 62% lưu lượng bộ nhớ đến bộ nhớ thiết bị.
+
+Chúng tôi không cần hai bộ đệm thiết bị trung gian tiết kiệm 270 megabyte bộ nhớ trên mỗi khung hình.
+
+Và cuối cùng, chúng tôi đã giảm việc đập bộ nhớ cache, và đó là bởi vì tất cả các bộ đổ bóng phân đoạn trong đường chuyền kết xuất đó đang hoạt động trực tiếp trên bộ nhớ gạch.
+
+Một trong những tính năng chính của Apple silicon là Kiến trúc Bộ nhớ Thống nhất.
+
+Hãy xem một ví dụ về cách tận dụng Kiến trúc Bộ nhớ Hợp nhất này để tương tác giữa các khối khác nhau trên silicon Apple.
+
+Chúng tôi sẽ lấy mã hóa HEVC của khung hình video cuối cùng được hiển thị bởi GPU làm nghiên cứu điển hình.
+
+Mã hóa này được thực hiện bằng cách sử dụng các công cụ đa phương tiện phần cứng chuyên dụng trên Apple silicon.
+
+Khung đầu ra cuối cùng được hiển thị bởi GPU có thể được tiêu thụ trực tiếp bởi các công cụ phương tiện của chúng tôi mà không cần thêm bản sao bộ nhớ.
+
+Trong phần sắp tới, chúng ta sẽ đi qua một ví dụ về cách thiết lập đường ống để mã hóa HEVC của khung đầu ra cuối cùng do GPU tạo ra một cách hiệu quả nhất.
+
+Đối với điều đó, trước tiên chúng tôi sẽ tận dụng CoreVideo API để tạo ra một nhóm bộ đệm pixel được hỗ trợ bởi IOSurfaces.
+
+Sau đó, sử dụng Metal API, chúng tôi kết xuất các khung hình cuối cùng thành các kết cấu Metal được hỗ trợ bởi IOSurfaces từ nhóm mà chúng tôi vừa tạo.
+
+Và cuối cùng, chúng tôi gửi các bộ đệm pixel này trực tiếp đến công cụ phương tiện để mã hóa mà không cần bất kỳ bản sao bổ sung nào của các khung đầu ra do GPU tạo ra, do đó tận dụng Kiến trúc Bộ nhớ Hợp nhất.
+
+Hãy cùng xem qua cách thực hiện từng bước và bao gồm tất cả các cấu trúc mà chúng ta cần để kích hoạt luồng này.
+
+Đầu tiên, chúng tôi tạo một CVPixelBufferPool được hỗ trợ bởi IOSurface ở định dạng pixel mong muốn.
+
+Ở đây, chúng tôi sẽ sử dụng định dạng pixel lấy mẫu phụ sắc độ hai mặt phẳng để mã hóa HEVC.
+
+Bây giờ, bạn nhận được CVPixelBuffer từ CVPixelBufferPool này.
+
+Chuyển CVPixelBuffer này đến MetalTextureCache với chỉ mục mặt phẳng phù hợp để lấy CVMetalTextureReference.
+
+Vì chúng tôi đang sử dụng định dạng pixel hai mặt phẳng, bạn cần thực hiện bước này cho cả hai mặt phẳng của bộ đệm pixel hai mặt phẳng.
+
+Tiếp theo, lấy kết cấu Kim loại bên dưới từ đối tượng CVMetalTextureReference.
+
+Thực hiện bước này cho cả mặt phẳng độ sáng và sắc độ.
+
+Hãy nhớ rằng các kết cấu Kim loại này được hỗ trợ bởi cùng một bề mặt IOS cũng đang hỗ trợ các mặt phẳng CVPixelBuffer.
+
+Sử dụng Metal API, kết xuất thành các kết cấu tương ứng với mặt phẳng độ sáng và sắc độ.
+
+Điều này sẽ cập nhật bề mặt IOS cũng hỗ trợ các kết cấu Kim loại này.
+
+Chúng tôi thực sự khuyên bạn nên thực hiện bước lấy mẫu phụ sắc độ trên các mặt phẳng sắc độ trên chính GPU như một đường chuyền đổ bóng trong quy trình xử lý hình ảnh của bạn.
+
+Một điều quan trọng cần lưu ý là cả CVPixelBuffer và kết cấu Kim loại - mà chúng tôi vừa kết xuất vào - đều được hỗ trợ bởi cùng một bản sao bề mặt IOS cơ bản trong bộ nhớ hệ thống.
+
+Bây giờ bạn có thể gửi CVPixelBuffer này trực tiếp đến công cụ phương tiện để mã hóa.
+
+Như bạn có thể thấy, do Kiến trúc bộ nhớ hợp nhất, chúng ta có thể di chuyển dữ liệu liền mạch giữa GPU và khối công cụ phương tiện mà không cần bản sao bộ nhớ.
+
+Và cuối cùng, hãy nhớ phát hành tham chiếu CVPixelBuffer và CVMetalTexture sau mỗi khung hình.
+
+Phát hành CVPixelBuffer cho phép tái chế bộ đệm này cho các khung trong tương lai.
+
+Để kết thúc, chúng tôi khuyến khích bạn một lần nữa làm như sau: tận dụng Kiến trúc bộ nhớ hợp nhất, sử dụng MTLRenderCommandEncoder thay vì tính toán khi áp dụng, hợp nhất tất cả các thẻ kết xuất đủ điều kiện của bạn trong bộ mã hóa lệnh kết xuất đơn, đặt hành động tải / lưu trữ thích hợp, sử dụng không bộ
+
+Chúng tôi muốn cảm ơn bạn vì đã tham gia phiên họp này hôm nay.
+
+Tận hưởng phần còn lại của WWDC 2021!
+
+♪

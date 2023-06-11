@@ -1,0 +1,197 @@
+10023
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Tanu Singhal: Xin chào mọi người.
+
+Tên tôi là Tanu, và tôi là một kỹ sư SwiftUI trong nhóm Apple TV.
+
+Hôm nay, chúng ta sẽ nói về một số cách làm việc tập trung mới trong SwiftUI.
+
+Một trong những điều tuyệt vời về SwiftUI là bạn nhận được bao nhiêu chức năng miễn phí, ngay lập tức.
+
+Các thành phần tích hợp dựa trên hành vi mặc định của chúng dựa trên kiến thức của SwiftUI về các quy ước nền tảng, dẫn đến trải nghiệm tổng thể hợp lý và quen thuộc trong các bối cảnh khác nhau.
+
+Chúng ta thấy trí thông minh này trong công việc khi chúng ta nhìn vào sự tập trung.
+
+Focus là hệ thống cho phép ứng dụng của bạn lấy đầu vào từ bàn phím, điều khiển từ xa, bộ điều khiển trò chơi, điều khiển chuyển đổi có thể truy cập và các nguồn khác - không giống như đầu vào cảm ứng - không bị ràng buộc với tọa độ màn hình cụ thể.
+
+Thông thường, chế độ xem trọng tâm được vẽ bằng các tô điểm đặc biệt, giúp mọi người dễ dàng dự đoán nơi đầu vào của họ sẽ được hướng đến.
+
+Phần lớn, SwiftUI quản lý sự tập trung thay mặt bạn.
+
+Khi ai đó nhấp vào trường văn bản hoặc nhấn phím Tab hoặc khi ai đó nhấn vào biến chứng đồng hồ có thể điều chỉnh hoặc vuốt trên Siri Remote, SwiftUI sẽ quyết định cách tiêu điểm bị ảnh hưởng và vị trí tiếp theo của nó được chỉ định như thế nào.
+
+Điều này rất tốt cho những trường hợp đơn giản mà hành vi đúng đắn có thể được quyết định theo quy ước.
+
+Tuy nhiên, có một số trường hợp bạn có thể muốn trải nghiệm tăng tốc hơn xung quanh việc tập trung.
+
+Trong ví dụ này từ ứng dụng Ghi chú, khi chúng tôi chọn nút ghi chú mới, chúng tôi muốn tập trung tự động di chuyển đến ghi chú mới được tạo.
+
+Loại hành vi này chắc chắn yêu cầu triển khai tùy chỉnh.
+
+Ở đây, chúng tôi có một kịch bản trong đó chúng tôi muốn di chuyển tiêu điểm từ một nút ở phía dưới bên trái sang nội dung gần đầu màn hình khi người dùng vuốt sang phải trên điều khiển từ xa.
+
+Vì nút Nhạc và các ô Ứng dụng không liền kề nhau, SwiftUI không thể tự động đoán được nơi để di chuyển tiêu điểm.
+
+Nó cần thêm thông tin trước khi các mục tiêu tiêu điểm từ xa có thể được liên kết.
+
+Và trong ví dụ này từ iOS, chúng tôi chỉ đơn giản muốn bàn phím biến mất khi người dùng chọn một sự kiện.
+
+Nhờ các API mới mà chúng tôi giới thiệu trong năm nay, giờ đây bạn có thể thực hiện tất cả những điều này trong SwiftUI.
+
+Trong buổi nói chuyện này, chúng ta sẽ tập trung vào hai loại trường hợp sử dụng.
+
+Chúng ta sẽ xem cách chúng ta có thể di chuyển tiêu điểm đến một chế độ xem cụ thể mà không cần bất kỳ đầu vào trực tiếp nào và chúng ta sẽ tạo các mục tiêu điều hướng lớn từ các chế độ xem nhỏ để không có gì nằm ngoài tầm với của người dùng.
+
+Trước tiên chúng ta hãy xem một ví dụ mà chúng ta có thể muốn chuyển trọng tâm để giúp hướng sự chú ý của người dùng.
+
+Chúng tôi đã rất sẵn sàng để đi nghỉ và chúng tôi đã bắt đầu làm việc trên một ứng dụng lập kế hoạch kỳ nghỉ.
+
+Ứng dụng này hoạt động trên tất cả các nền tảng của Apple và nó cho phép bạn duyệt các điểm đến cũng như đặt các chuyến đi.
+
+Khi bạn khởi chạy ứng dụng này, chúng tôi sẽ trình bày trường email, trường mật khẩu và nút Đăng nhập bằng Apple để bạn có thể đăng nhập vào tài khoản của mình.
+
+Trên màn hình đăng nhập này, nếu chúng tôi phát hiện ra rằng email đã nhập không ở định dạng chính xác, chúng tôi muốn lập trình di chuyển tiêu điểm trở lại trường email.
+
+Để thực hiện hành vi này, chúng tôi sẽ sử dụng FocusState APIs.
+
+Mã hiện có cho chế độ xem đăng nhập của chúng tôi chứa VStack có TextField và SecureField.
+
+Bây giờ, chúng ta sẽ thêm một trình bao bọc thuộc tính FocusState vào chế độ xem này.
+
+FocusState là một API mới mà chúng tôi đã giới thiệu trong năm nay!
+
+Đây là một loại trạng thái đặc biệt thay đổi tùy thuộc vào vị trí tập trung hiện tại.
+
+Chúng tôi sẽ sử dụng FocusState để giữ một mã định danh cho trường được tập trung.
+
+Biến focusedField thuộc loại enum mà chúng tôi đã tạo cho ví dụ này.
+
+Bạn có thể sử dụng chuỗi, số nguyên hoặc bất kỳ loại giá trị có thể băm nào khác cho FocusState.
+
+Lưu ý rằng giá trị FocusState là tùy chọn.
+
+Nói chung, các loại được sử dụng cho FocusState phải vừa có thể băm vừa tùy chọn, không được sử dụng cho các trường hợp tiêu điểm ở một phần không liên quan của màn hình.
+
+Tiếp theo chúng ta sẽ thêm một công cụ sửa đổi tập trung vào TextField và SecureField.
+
+Cũng mới trong năm nay, công cụ sửa đổi này tạo ra một liên kết giữa vị trí lấy nét và giá trị của thuộc tính focusField.
+
+Liên kết đơn giản này là một công cụ mạnh mẽ, bởi vì nó có nghĩa là bạn có thể sử dụng vị trí tập trung hiện tại để đưa ra các quyết định khác trong ứng dụng của mình.
+
+Chúng ta có thể xem diễn ra trong biểu mẫu đăng nhập của mình.
+
+Khi màn hình xuất hiện lần đầu tiên, không có gì lấy nét, vì vậy giá trị của trường lấy nét là không.
+
+Nhưng nếu ai đó nhấn vào trường văn bản email, trường đó sẽ lấy nét và bàn phím sẽ xuất hiện.
+
+Vì trường văn bản tập trung được liên kết với giá trị FocusState, giá trị của focusedField sẽ tự động được cập nhật để giữ mã định danh cho trường văn bản email.
+
+Liên kết giữa vị trí tập trung và FocusState hoạt động theo cả hai cách.
+
+Điều này có nghĩa là chúng ta không bị giới hạn trong việc phản ứng với các thay đổi tiêu điểm; chúng ta có thể di chuyển tiêu điểm theo chương trình chỉ bằng cách cập nhật thuộc tính FocusState của chúng ta.
+
+Vì vậy, ví dụ, nếu chúng tôi lập trình đặt giá trị của focusedField thành .password, SwiftUI sẽ biết rằng SecureField của chúng tôi được liên kết với giá trị mới mà chúng tôi đang thiết lập và focus sẽ tự động di chuyển đến trường mật khẩu.
+
+Bây giờ các ràng buộc trọng tâm của chúng tôi đã được đặt đúng chỗ, chúng tôi có thể đưa chúng vào hoạt động.
+
+Trong ứng dụng Vacation Planner, khi người dùng gửi dữ liệu của họ, chúng tôi muốn xác thực nó.
+
+Nếu email không ở định dạng mong đợi, chúng tôi đặt Trường tập trung thành email.
+
+Điều này sẽ gửi tiêu điểm trở lại trường văn bản email, nếu nó chưa có ở đó.
+
+Hơn nữa, chúng tôi muốn làm nổi bật trường email bằng đường viền nếu email không hợp lệ.
+
+Chúng tôi muốn đường viền này chỉ xuất hiện khi trọng tâm là trường email.
+
+Để làm điều đó, chúng ta có thể dễ dàng đọc giá trị của focusedField khi chúng ta tạo đường viền.
+
+Hãy xem tất cả điều này kết hợp với nhau như thế nào.
+
+Lưu ý rằng trường email không có địa chỉ hợp lệ.
+
+Trọng tâm hiện đang ở trường mật khẩu.
+
+Khi chúng tôi nhấn Go, cuộc gọi lại onSubmit được kích hoạt ở nơi focusedField được đặt.
+
+Điều này khiến con trỏ di chuyển trở lại trường email.
+
+Trong khi trường email được tập trung, chúng tôi thấy đường viền màu đỏ xung quanh nó.
+
+Tuy nhiên, một khi chúng tôi di chuyển tiêu điểm ra khỏi trường email, Trường tập trung của chúng tôi không còn bằng số nhận dạng email nữa, và do đó đường viền màu đỏ biến mất.
+
+Trong trường hợp tất cả dữ liệu biểu mẫu hợp lệ, chúng tôi chỉ muốn loại bỏ bàn phím.
+
+Để loại bỏ bàn phím, chúng tôi sẽ đặt biến FocusState thành nil.
+
+Vì focusField là một tùy chọn, chúng tôi sử dụng nil để chỉ ra rằng focus đã rời khỏi chế độ xem này.
+
+Trong video, lưu ý rằng địa chỉ email đã được cập nhật.
+
+Lần này khi chúng tôi gửi, bàn phím bị loại bỏ vì chúng tôi đã đặt biến FocusState thành số không.
+
+Chúng tôi đã thấy cách có thể hữu ích khi kiểm soát tiêu điểm theo chương trình khi ứng dụng của chúng tôi có các trường văn bản.
+
+Tuy nhiên, FocusStates không chỉ dành cho các trường văn bản.
+
+Chúng có thể được sử dụng để điều khiển tiêu điểm theo chương trình cho bất kỳ chế độ xem có thể lấy nét nào trên iOS, tvOS, watchOS hoặc macOS!
+
+Trong phần tiếp theo, chúng ta sẽ thảo luận về vai trò của điều hướng dựa trên tiêu điểm trong các ứng dụng của chúng ta.
+
+Hãy cùng xem phiên bản tvOS của ứng dụng Vacation Planner của chúng tôi.
+
+Chúng tôi đã tận dụng thêm không gian trên TV bằng cách thêm ảnh từ một số điểm đến mà bạn có thể muốn ghé thăm.
+
+Bạn có thể xem nhiều ảnh hơn bằng cách nhấp vào nút Duyệt ảnh ngay cả trước khi đăng nhập.
+
+Lưu ý rằng trọng tâm ban đầu là trường Email.
+
+Nếu chúng ta vuốt sang phải trên Siri Remote, chúng ta mong đợi trọng tâm sẽ chuyển sang nút Duyệt ảnh.
+
+Tuy nhiên, điều đó không hoạt động theo mặc định.
+
+Điều này là do điều hướng tiêu điểm định hướng dựa trên các mối quan hệ liền kề.
+
+Khi vuốt để di chuyển tiêu điểm, tiêu điểm sẽ chỉ di chuyển nếu có thứ gì đó liền kề và có thể lấy nét theo hướng đã cho.
+
+Hãy xem các chế độ xem có thể tập trung trong ứng dụng này.
+
+Vì không có chế độ xem có thể lấy nét liền kề với các trường đăng nhập ở bên trái, nút ở phía dưới không thể truy cập được.
+
+Để làm cho màn hình này có thể điều hướng được, chúng tôi sẽ mở rộng khu vực có thể tập trung của nút Duyệt, để nó trở nên liền kề với các trường đăng nhập.
+
+Điều này được thực hiện bằng cách sử dụng FocusSections API mới.
+
+Hãy xem điều đó dễ dàng như thế nào.
+
+Ở đây chúng tôi có một phiên bản đơn giản của mã Vacation Planner cho TV.
+
+Nó chứa một HStack với hai VStacks; một cho các trường đăng nhập, và một VStack khác cho hình ảnh và nút.
+
+Chúng tôi muốn tạo một mục tiêu tiêu điểm logic lớn hơn xung quanh nút để tiêu điểm có thể hoạt động như thể nút liền kề với các trường đăng nhập.
+
+Điều này có thể được thực hiện bằng cách chỉ cần thêm một công cụ sửa đổi focusSection() vào VStack có chứa nút.
+
+Khi công cụ sửa đổi focusSection() được thêm vào bất kỳ chế độ xem nào, khung của chế độ xem đó có khả năng chấp nhận tiêu điểm nếu nó chứa bất kỳ chế độ xem phụ có thể tập trung nào.
+
+Vì chúng tôi cũng muốn di chuyển tiêu điểm trở lại các trường đăng nhập khi vuốt sang trái trên nút, chúng tôi sẽ thêm một công cụ sửa đổi focusSection() khác vào VStack đầu tiên.
+
+Bây giờ khi chúng tôi chạy ứng dụng này, người dùng có thể di chuyển tiêu điểm giữa các trường nhập và nút Duyệt bằng cách vuốt sang trái và phải trên điều khiển từ xa.
+
+Khi chúng ta kết thúc mọi thứ, tôi khuyến khích bạn suy nghĩ về sự tập trung, thường có thể trông khác nhau trên các nền tảng khác nhau.
+
+SwiftUI có các hành vi mặc định tuyệt vời được tích hợp sẵn cho hầu hết các trường hợp.
+
+Các trạng thái tập trung mới và API FocusSections có thể giúp bạn tận dụng sự tập trung để tạo ra những trải nghiệm hợp lý hơn nữa.
+
+Khi bạn làm việc trên các ứng dụng của mình, hãy dành một chút thời gian để quan sát nhiều cách mà sự tập trung tác động đến hành vi của người dùng.
+
+Chúng tôi hy vọng phiên này đã trang bị cho bạn các công cụ giúp người dùng tập trung vào những gì quan trọng nhất.
+
+Cảm ơn vì đã xem, và chúc bạn có một WWDC tuyệt vời!
+
+♪

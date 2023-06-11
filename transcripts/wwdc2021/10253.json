@@ -1,0 +1,4230 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=3"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=7"
+  },
+  {
+    "text": "Becca Royal-Gordon: Hi, I’m Becca ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=9"
+  },
+  {
+    "text": "from the Swift Compiler team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=10"
+  },
+  {
+    "text": "I’m going to be talking today ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=12"
+  },
+  {
+    "text": "about how you can implement DSLs in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=13"
+  },
+  {
+    "text": "If you’ve never heard that term, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=17"
+  },
+  {
+    "text": "a DSL is a domain-specific language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=19"
+  },
+  {
+    "text": "and even if the name is new to you, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=21"
+  },
+  {
+    "text": "you’ve probably used one before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=23"
+  },
+  {
+    "text": "I’m going to start by explaining what DSLs actually are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=25"
+  },
+  {
+    "text": "and what they look like in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=28"
+  },
+  {
+    "text": "Then I’ll explain how result builders work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=31"
+  },
+  {
+    "text": "They’re one of the main features used to implement Swift DSLs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=34"
+  },
+  {
+    "text": "After that, I’ll walk you through designing a simple DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=39"
+  },
+  {
+    "text": "for part of our sample app, Fruta. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=42"
+  },
+  {
+    "text": "And finally, I’ll show you how to write the implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=46"
+  },
+  {
+    "text": "that’s in the Fruta sample code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=49"
+  },
+  {
+    "text": "But let’s start by explaining that acronym a little better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=52"
+  },
+  {
+    "text": "A DSL is a sort of miniature programming language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=56"
+  },
+  {
+    "text": "that’s designed for programs that work in a specific area ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=59"
+  },
+  {
+    "text": "called a \"domain.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=62"
+  },
+  {
+    "text": "Because the language is designed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=65"
+  },
+  {
+    "text": "with a particular kind of work in mind, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=66"
+  },
+  {
+    "text": "it can have special features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=68"
+  },
+  {
+    "text": "which make that kind of work easier to do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=69"
+  },
+  {
+    "text": "So when you write code for a DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=72"
+  },
+  {
+    "text": "instead of a general-purpose language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=74"
+  },
+  {
+    "text": "you only have to write the things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=76"
+  },
+  {
+    "text": "that are specific to your exact problem. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=77"
+  },
+  {
+    "text": "Many DSLs are declarative. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=81"
+  },
+  {
+    "text": "That is, you’re not really writing precise instructions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=83"
+  },
+  {
+    "text": "to solve the problem; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=85"
+  },
+  {
+    "text": "it’s more like you’re describing the problem in the language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=87"
+  },
+  {
+    "text": "and then it goes and solves it for you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=89"
+  },
+  {
+    "text": "The traditional way you would do this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=92"
+  },
+  {
+    "text": "is called a \"standalone DSL.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=94"
+  },
+  {
+    "text": "You would design the entire language from scratch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=96"
+  },
+  {
+    "text": "and write an interpreter or compiler for it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=98"
+  },
+  {
+    "text": "Embedded DSLs are a more modern alternative. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=103"
+  },
+  {
+    "text": "In an embedded DSL, you use the built-in features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=106"
+  },
+  {
+    "text": "of a host language like Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=109"
+  },
+  {
+    "text": "to add the DSL’s implicit behavior ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=111"
+  },
+  {
+    "text": "to some parts of your code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=113"
+  },
+  {
+    "text": "effectively modifying the host language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=115"
+  },
+  {
+    "text": "into one tailored for your domain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=116"
+  },
+  {
+    "text": "This is obviously way easier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=120"
+  },
+  {
+    "text": "than designing the entire language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=121"
+  },
+  {
+    "text": "and writing a compiler for it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=123"
+  },
+  {
+    "text": "because you’re starting from an existing language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=125"
+  },
+  {
+    "text": "that has already decided the basics of the syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=127"
+  },
+  {
+    "text": "and already has a compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=129"
+  },
+  {
+    "text": "It also makes it easier to mix the DSL code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=133"
+  },
+  {
+    "text": "together with non-DSL code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=135"
+  },
+  {
+    "text": "Often you want to use a DSL to solve a problem ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=137"
+  },
+  {
+    "text": "that’s just one part of a much larger app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=140"
+  },
+  {
+    "text": "If you’re writing a standalone DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=142"
+  },
+  {
+    "text": "you have to design a way to call from one language to the other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=144"
+  },
+  {
+    "text": "With an embedded DSL, the parts written in the DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=148"
+  },
+  {
+    "text": "look like normal code to the rest of the app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=151"
+  },
+  {
+    "text": "so you have a much easier time interoperating. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=153"
+  },
+  {
+    "text": "An embedded DSL can also use the tools designed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=158"
+  },
+  {
+    "text": "for the host language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=160"
+  },
+  {
+    "text": "You already have debuggers and editors for Swift, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=162"
+  },
+  {
+    "text": "and those work just fine for a Swift DSL; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=164"
+  },
+  {
+    "text": "if you wanted those for a standalone DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=168"
+  },
+  {
+    "text": "you’d have to write your own. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=169"
+  },
+  {
+    "text": "And because you’re starting from the host language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=173"
+  },
+  {
+    "text": "clients who already know that language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=175"
+  },
+  {
+    "text": "have a lot less to learn. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=177"
+  },
+  {
+    "text": "They already know how to declare a variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=179"
+  },
+  {
+    "text": "or whether there’s a space in \"else if\"; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=180"
+  },
+  {
+    "text": "all they need to learn is how you’ve customized the language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=183"
+  },
+  {
+    "text": "Swift is designed to support embedded DSLs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=188"
+  },
+  {
+    "text": "And in fact, if you’ve used SwiftUI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=191"
+  },
+  {
+    "text": "you’ve already used one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=193"
+  },
+  {
+    "text": "The SwiftUI view DSL assumes you want to describe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=195"
+  },
+  {
+    "text": "the layout of views on a device’s screen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=198"
+  },
+  {
+    "text": "So when you’re writing in the SwiftUI DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=201"
+  },
+  {
+    "text": "your custom code simply creates the views, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=203"
+  },
+  {
+    "text": "and the DSL is responsible for building a tree out of them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=206"
+  },
+  {
+    "text": "for SwiftUI to process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=208"
+  },
+  {
+    "text": "To understand the value of a DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=211"
+  },
+  {
+    "text": "think about what SwiftUI might be like ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=213"
+  },
+  {
+    "text": "if you wrote views in ordinary Swift instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=215"
+  },
+  {
+    "text": "You’d have to create views, modify them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=219"
+  },
+  {
+    "text": "add them to other views, and return one at the end. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=221"
+  },
+  {
+    "text": "You’d be creating temporary variables all over the place ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=225"
+  },
+  {
+    "text": "to hold individual views, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=227"
+  },
+  {
+    "text": "and the result wouldn’t really convey ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=229"
+  },
+  {
+    "text": "the way the views are nested in the same way the DSL does. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=231"
+  },
+  {
+    "text": "You’d write more code but it would convey less meaning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=234"
+  },
+  {
+    "text": "The SwiftUI DSL, by contrast, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=238"
+  },
+  {
+    "text": "makes all of those tedious details implicit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=240"
+  },
+  {
+    "text": "It’s your job to describe the views; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=243"
+  },
+  {
+    "text": "it’s the DSL’s job to collect the views you’re describing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=245"
+  },
+  {
+    "text": "and figure out how to show them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=248"
+  },
+  {
+    "text": "But DSLs take extra effort to implement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=251"
+  },
+  {
+    "text": "and they take extra effort to use. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=253"
+  },
+  {
+    "text": "So when do you want to create one? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=255"
+  },
+  {
+    "text": "Well, there are no hard-and-fast rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=258"
+  },
+  {
+    "text": "but here are some signs that you might want to use one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=260"
+  },
+  {
+    "text": "Look for places where the mechanics of using vanilla Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=265"
+  },
+  {
+    "text": "obscure the meaning of the code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=268"
+  },
+  {
+    "text": "Where you spend half your time rearranging commas ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=271"
+  },
+  {
+    "text": "and square brackets and parentheses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=273"
+  },
+  {
+    "text": "every time you change something, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=274"
+  },
+  {
+    "text": "or have to append things to temporary arrays ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=276"
+  },
+  {
+    "text": "to accommodate the control flow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=278"
+  },
+  {
+    "text": "Look for situations where the best approach ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=281"
+  },
+  {
+    "text": "is to describe something to another part of your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=283"
+  },
+  {
+    "text": "instead of directly writing instructions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=286"
+  },
+  {
+    "text": "about what to do with it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=288"
+  },
+  {
+    "text": "Like, in a server-side web framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=289"
+  },
+  {
+    "text": "there might be an area that registers handlers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=292"
+  },
+  {
+    "text": "for the URLs it supports. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=294"
+  },
+  {
+    "text": "Instead of calling an add handler method over and over, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=297"
+  },
+  {
+    "text": "you could design a DSL for clients ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=300"
+  },
+  {
+    "text": "to declare each URL and its handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=301"
+  },
+  {
+    "text": "and then your framework can register them automatically. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=303"
+  },
+  {
+    "text": "Look for parts of your code that will be maintained ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=308"
+  },
+  {
+    "text": "by people whose primary job isn’t programming. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=310"
+  },
+  {
+    "text": "Like, imagine you’re writing a text adventure game; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=313"
+  },
+  {
+    "text": "only a few developers will work on most of the code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=316"
+  },
+  {
+    "text": "but the map of rooms will be updated by game designers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=319"
+  },
+  {
+    "text": "and NPC dialog will be added by writers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=321"
+  },
+  {
+    "text": "Maybe a DSL would make their jobs easier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=325"
+  },
+  {
+    "text": "And look for situations where you’ll get a lot of mileage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=329"
+  },
+  {
+    "text": "out of the DSL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=332"
+  },
+  {
+    "text": "Libraries are a good example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=334"
+  },
+  {
+    "text": "because they get used by many different clients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=336"
+  },
+  {
+    "text": "But a good DSL could also handle something in your project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=338"
+  },
+  {
+    "text": "that you define a lot, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=341"
+  },
+  {
+    "text": "or even just something you have to read or update frequently ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=343"
+  },
+  {
+    "text": "and you want to make that as easy as possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=346"
+  },
+  {
+    "text": "Whatever reason you see to create a DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=349"
+  },
+  {
+    "text": "you need to balance it against the fact that it will not only ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=352"
+  },
+  {
+    "text": "take some effort for you to design and implement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=354"
+  },
+  {
+    "text": "it will also take some effort for its clients to learn. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=357"
+  },
+  {
+    "text": "If methods and array literals are nearly as good as a DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=360"
+  },
+  {
+    "text": "they’re often the right answer, because Swift programmers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=363"
+  },
+  {
+    "text": "will already know exactly how to use them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=366"
+  },
+  {
+    "text": "But sometimes, like in SwiftUI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=370"
+  },
+  {
+    "text": "a DSL is the right answer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=372"
+  },
+  {
+    "text": "So how do you make one? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=374"
+  },
+  {
+    "text": "Well, let’s break down how Swift features are used together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=377"
+  },
+  {
+    "text": "to build the SwiftUI DSL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=379"
+  },
+  {
+    "text": "In addition to Swift’s generally clean syntax, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=383"
+  },
+  {
+    "text": "the SwiftUI DSL takes advantage of four things. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=385"
+  },
+  {
+    "text": "Property wrappers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=390"
+  },
+  {
+    "text": "These let clients declare variables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=391"
+  },
+  {
+    "text": "that are tied to DSL behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=393"
+  },
+  {
+    "text": "Trailing closure arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=396"
+  },
+  {
+    "text": "These let the DSL provide functions or initializers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=398"
+  },
+  {
+    "text": "that read almost like custom syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=401"
+  },
+  {
+    "text": "that’s been added to the language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=403"
+  },
+  {
+    "text": "Result builders. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=406"
+  },
+  {
+    "text": "These collect the values computed in your DSL’s code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=408"
+  },
+  {
+    "text": "into a return value so you can process them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=410"
+  },
+  {
+    "text": "And finally, modifier-style methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=414"
+  },
+  {
+    "text": "These are basically just methods that return a wrapped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=417"
+  },
+  {
+    "text": "or modified version of the value they’re called on; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=419"
+  },
+  {
+    "text": "since result builders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=422"
+  },
+  {
+    "text": "collect the values computed by your code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=423"
+  },
+  {
+    "text": "this pattern works really well with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=425"
+  },
+  {
+    "text": "Now, property wrappers were already covered ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=427"
+  },
+  {
+    "text": "in the last half of this session from 2019, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=429"
+  },
+  {
+    "text": "so I’m not going to talk much about them today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=432"
+  },
+  {
+    "text": "But these other three, and especially result builders, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=435"
+  },
+  {
+    "text": "are going to be major topics of this session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=438"
+  },
+  {
+    "text": "Trailing closures and modifier-style methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=441"
+  },
+  {
+    "text": "are things a lot of Swift programmers are familiar with, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=443"
+  },
+  {
+    "text": "but result builders are a more behind-the-scenes feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=446"
+  },
+  {
+    "text": "So let’s talk about how they work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=450"
+  },
+  {
+    "text": "so we can start building DSLs with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=452"
+  },
+  {
+    "text": "Result builders are used to gather up the values ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=455"
+  },
+  {
+    "text": "created in your DSL and stitch them together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=458"
+  },
+  {
+    "text": "into whatever data structure your language wants them in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=460"
+  },
+  {
+    "text": "They’re a bit like property wrappers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=464"
+  },
+  {
+    "text": "in that you declare a special type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=465"
+  },
+  {
+    "text": "and then you can use that type as an attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=467"
+  },
+  {
+    "text": "Specifically, you can apply a result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=471"
+  },
+  {
+    "text": "to pretty much any function body with a return value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=473"
+  },
+  {
+    "text": "like a function or method, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=475"
+  },
+  {
+    "text": "the getter of a computed property, or a closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=477"
+  },
+  {
+    "text": "When you apply a result builder to a function body, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=482"
+  },
+  {
+    "text": "Swift inserts various calls to static methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=484"
+  },
+  {
+    "text": "on the result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=487"
+  },
+  {
+    "text": "These end up capturing the results of statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=488"
+  },
+  {
+    "text": "that would otherwise have been discarded. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=491"
+  },
+  {
+    "text": "So where Swift would normally ignore a return value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=493"
+  },
+  {
+    "text": "it instead gets passed to the result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=496"
+  },
+  {
+    "text": "These calls ultimately compute a value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=500"
+  },
+  {
+    "text": "which is returned from the function body. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=502"
+  },
+  {
+    "text": "So when you call the function, it executes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=504"
+  },
+  {
+    "text": "all of the statements in that function normally, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=506"
+  },
+  {
+    "text": "gathers up the values produced by them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=509"
+  },
+  {
+    "text": "and combines them into a single value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=511"
+  },
+  {
+    "text": "that becomes the closure’s result. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=513"
+  },
+  {
+    "text": "Result builders are a compile-time feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=515"
+  },
+  {
+    "text": "so they work on any OS that your app will run on. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=517"
+  },
+  {
+    "text": "The final version of the feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=521"
+  },
+  {
+    "text": "from open-source Swift Evolution proposal 289, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=522"
+  },
+  {
+    "text": "was included in Swift 5.4, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=525"
+  },
+  {
+    "text": "so it shipped in Xcode 12.5 back in April. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=528"
+  },
+  {
+    "text": "But prototypes of the feature were available before that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=532"
+  },
+  {
+    "text": "so you might see some older tutorials or libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=534"
+  },
+  {
+    "text": "that use the prototype. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=537"
+  },
+  {
+    "text": "Those will say \"function builder\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=539"
+  },
+  {
+    "text": "instead of \"result builder,\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=541"
+  },
+  {
+    "text": "and they might not quite match the final feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=542"
+  },
+  {
+    "text": "So I pointed out the features used in the SwiftUI DSL before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=545"
+  },
+  {
+    "text": "but now let’s talk about how they work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=548"
+  },
+  {
+    "text": "I’ll be simplifying a few details -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=551"
+  },
+  {
+    "text": "like removing irrelevant parts of some SwiftUI types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=553"
+  },
+  {
+    "text": "and showing some fake variable names like v0 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=556"
+  },
+  {
+    "text": "for variables generated by the compiler -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=559"
+  },
+  {
+    "text": "but this should help you understand the basics. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=562"
+  },
+  {
+    "text": "The first thing to realize is that, at the top level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=565"
+  },
+  {
+    "text": "this VStack thing with a block that looks like new syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=568"
+  },
+  {
+    "text": "is actually a trailing closure argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=571"
+  },
+  {
+    "text": "If we look up what VStack is, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=574"
+  },
+  {
+    "text": "we find that it’s a struct in SwiftUI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=576"
+  },
+  {
+    "text": "So the trailing closure argument gets passed to this initializer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=579"
+  },
+  {
+    "text": "on that struct. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=583"
+  },
+  {
+    "text": "Now, when we look at the parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=584"
+  },
+  {
+    "text": "the closure gets passed to, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=586"
+  },
+  {
+    "text": "we notice that it has a ViewBuilder attribute on it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=588"
+  },
+  {
+    "text": "That attribute tells the compiler that it should ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=591"
+  },
+  {
+    "text": "apply the result builder named ViewBuilder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=593"
+  },
+  {
+    "text": "to the closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=595"
+  },
+  {
+    "text": "But what is ViewBuilder? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=596"
+  },
+  {
+    "text": "Well, we look for a type by that name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=598"
+  },
+  {
+    "text": "and we find this type, again in SwiftUI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=601"
+  },
+  {
+    "text": "Note how it has an @resultBuilder attribute on it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=603"
+  },
+  {
+    "text": "to tell the compiler that it’s a result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=606"
+  },
+  {
+    "text": "Now that Swift has located the result builder type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=610"
+  },
+  {
+    "text": "it starts applying it to the closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=612"
+  },
+  {
+    "text": "The first thing it does is create variables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=616"
+  },
+  {
+    "text": "for all of the statements that produce results. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=618"
+  },
+  {
+    "text": "Once it’s created these variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=623"
+  },
+  {
+    "text": "it writes a call to the buildBlock method in ViewBuilder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=624"
+  },
+  {
+    "text": "and passes all of those variables to it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=627"
+  },
+  {
+    "text": "buildBlock’s job is to process or combine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=631"
+  },
+  {
+    "text": "all of its parameters into a single value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=634"
+  },
+  {
+    "text": "which it returns. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=636"
+  },
+  {
+    "text": "Then the compiler writes a return statement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=638"
+  },
+  {
+    "text": "that returns buildBlock’s result from the closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=640"
+  },
+  {
+    "text": "So basically, the compiler took your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=643"
+  },
+  {
+    "text": "and added the code in yellow so that the ViewBuilder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=645"
+  },
+  {
+    "text": "could assemble all of the values you created into a single value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=648"
+  },
+  {
+    "text": "that VStack will use as its content. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=651"
+  },
+  {
+    "text": "Now, I’d like to point out how modifier-style methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=654"
+  },
+  {
+    "text": "fit into this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=657"
+  },
+  {
+    "text": "A modifier-style method returns either a modified copy of self ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=658"
+  },
+  {
+    "text": "or a copy of self wrapped in a different type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=662"
+  },
+  {
+    "text": "that adds new behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=664"
+  },
+  {
+    "text": "And it does this within the same statement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=666"
+  },
+  {
+    "text": "that created self in the first place. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=668"
+  },
+  {
+    "text": "So it ends up changing the value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=670"
+  },
+  {
+    "text": "before the result builder sees it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=672"
+  },
+  {
+    "text": "And you can call other modifier-style methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=674"
+  },
+  {
+    "text": "on that method’s result, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=677"
+  },
+  {
+    "text": "so you can apply several changes and compose them together, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=678"
+  },
+  {
+    "text": "all before the result builder ever sees the value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=681"
+  },
+  {
+    "text": "Those two things -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=684"
+  },
+  {
+    "text": "the ability to compose modifiers and the fact that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=685"
+  },
+  {
+    "text": "they modify the value before the result builder sees it -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=688"
+  },
+  {
+    "text": "are why Swift DSLs often use modifiers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=691"
+  },
+  {
+    "text": "The two just work nicely together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=694"
+  },
+  {
+    "text": "Now, one thing we were worried about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=696"
+  },
+  {
+    "text": "when we designed result builders was that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=698"
+  },
+  {
+    "text": "if they let you change Swift’s behavior too radically, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=700"
+  },
+  {
+    "text": "clients wouldn’t be able to trust that anything in the DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=703"
+  },
+  {
+    "text": "worked like normal Swift code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=705"
+  },
+  {
+    "text": "So when we designed result builders, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=708"
+  },
+  {
+    "text": "we tried to strike a balance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=709"
+  },
+  {
+    "text": "between having enough power to make a useful DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=711"
+  },
+  {
+    "text": "and making sure that Swift’s features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=714"
+  },
+  {
+    "text": "still work as clients expect them to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=716"
+  },
+  {
+    "text": "Result builders don’t radically reinterpret ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=720"
+  },
+  {
+    "text": "the code a client writes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=722"
+  },
+  {
+    "text": "Statements still end with newlines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=724"
+  },
+  {
+    "text": "calls still use parentheses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=726"
+  },
+  {
+    "text": "curly brackets still have to match up; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=728"
+  },
+  {
+    "text": "all of the basics of Swift syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=731"
+  },
+  {
+    "text": "work exactly the way your clients expect. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=733"
+  },
+  {
+    "text": "They also don’t introduce new names that wouldn’t be visible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=736"
+  },
+  {
+    "text": "from normal code written in the same place. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=739"
+  },
+  {
+    "text": "There are some language features that don’t make much sense ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=743"
+  },
+  {
+    "text": "when you’re using a result builder -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=746"
+  },
+  {
+    "text": "mostly things like catch or break ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=748"
+  },
+  {
+    "text": "that interrupt control flow in ways that don’t really fit well ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=750"
+  },
+  {
+    "text": "into the idea of capturing and using statement results. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=753"
+  },
+  {
+    "text": "Those features are disabled when you’re using a result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=757"
+  },
+  {
+    "text": "And there are some features -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=761"
+  },
+  {
+    "text": "like if, switch, and for-in statements -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=762"
+  },
+  {
+    "text": "that are disabled unless your result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=765"
+  },
+  {
+    "text": "provides extra methods that are used to implement them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=767"
+  },
+  {
+    "text": "But if Swift allows you to use a keyword, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=771"
+  },
+  {
+    "text": "it will work the way it normally does. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=773"
+  },
+  {
+    "text": "You won’t end up with, like, if-else statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=776"
+  },
+  {
+    "text": "that run both the true and false blocks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=778"
+  },
+  {
+    "text": "or loops that skip some of the elements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=780"
+  },
+  {
+    "text": "Result builders just capture the statement results ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=783"
+  },
+  {
+    "text": "that would otherwise have been thrown away, nothing more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=785"
+  },
+  {
+    "text": "So clients can count on them, you know, making sense.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=789"
+  },
+  {
+    "text": "OK. So now that we have an idea of what result builders are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=794"
+  },
+  {
+    "text": "and how they work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=797"
+  },
+  {
+    "text": "we can start designing a DSL that will use them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=799"
+  },
+  {
+    "text": "If you’ve never worked on a language before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=804"
+  },
+  {
+    "text": "you might find that thought intimidating, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=806"
+  },
+  {
+    "text": "but designing a Swift DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=808"
+  },
+  {
+    "text": "is actually a lot like designing a Swift API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=810"
+  },
+  {
+    "text": "Like a Swift API, a Swift DSL is not starting from scratch; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=814"
+  },
+  {
+    "text": "it uses Swift’s syntax and capabilities ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=819"
+  },
+  {
+    "text": "to express ideas and behavior ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=821"
+  },
+  {
+    "text": "relevant to the problem you’re trying to solve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=823"
+  },
+  {
+    "text": "A DSL is just using additional capabilities ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=826"
+  },
+  {
+    "text": "that an API usually wouldn’t. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=828"
+  },
+  {
+    "text": "Like a Swift API, a Swift DSL could be designed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=832"
+  },
+  {
+    "text": "in several different ways that would all solve the problem, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=835"
+  },
+  {
+    "text": "so your job is to think of alternatives ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=838"
+  },
+  {
+    "text": "and select the one you think is best; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=841"
+  },
+  {
+    "text": "a DSL just has a much larger space of potential solutions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=843"
+  },
+  {
+    "text": "And like a Swift API, a Swift DSL’s best rule of thumb ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=848"
+  },
+  {
+    "text": "is usually to choose the design ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=852"
+  },
+  {
+    "text": "that results in the clearest use sites. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=854"
+  },
+  {
+    "text": "A DSL just assumes that clients will invest ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=856"
+  },
+  {
+    "text": "a little time up front learning the language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=858"
+  },
+  {
+    "text": "so it puts less priority on being crystal clear ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=860"
+  },
+  {
+    "text": "to people who’ve never seen it before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=863"
+  },
+  {
+    "text": "So if you’ve designed APIs before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=867"
+  },
+  {
+    "text": "you’ve got a good starting point to design DSLs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=869"
+  },
+  {
+    "text": "And for that matter, some of the suggestions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=873"
+  },
+  {
+    "text": "and techniques I’ll be using for DSLs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=874"
+  },
+  {
+    "text": "transfer really well to API design. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=876"
+  },
+  {
+    "text": "In this talk, we’ll be designing a DSL for the app Fruta. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=879"
+  },
+  {
+    "text": "You’ll find a working implementation of this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=883"
+  },
+  {
+    "text": "in the Fruta sample code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=885"
+  },
+  {
+    "text": "Fruta includes 15 smoothie recipes in its source code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=889"
+  },
+  {
+    "text": "and before the DSL, we simply created each smoothie ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=892"
+  },
+  {
+    "text": "by calling the memberwise initializer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=895"
+  },
+  {
+    "text": "and assigning it to a static constant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=897"
+  },
+  {
+    "text": "And then we stored an array of all the smoothies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=900"
+  },
+  {
+    "text": "into another static constant, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=902"
+  },
+  {
+    "text": "and depending on whether the particular view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=904"
+  },
+  {
+    "text": "wants to include recipes that require an in-app purchase, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=906"
+  },
+  {
+    "text": "we either return the entire list or filter out the paid ones. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=909"
+  },
+  {
+    "text": "Now, this is perfectly shippable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=913"
+  },
+  {
+    "text": "and you could stick with it if you wanted to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=915"
+  },
+  {
+    "text": "But the smoothie recipes get updated pretty often ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=917"
+  },
+  {
+    "text": "and, unlike the rest of the app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=920"
+  },
+  {
+    "text": "they’re updated by designers and marketing folks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=922"
+  },
+  {
+    "text": "and  managers, so we might want a DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=924"
+  },
+  {
+    "text": "to make that a little less complicated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=928"
+  },
+  {
+    "text": "And looking at the way we’re doing it now, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=931"
+  },
+  {
+    "text": "I can’t help but notice a few drawbacks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=933"
+  },
+  {
+    "text": "The need to filter the paid smoothies out of the list ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=936"
+  },
+  {
+    "text": "has contorted this code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=938"
+  },
+  {
+    "text": "allSmoothies and hasFreeRecipe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=941"
+  },
+  {
+    "text": "are only ever used in this function; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=943"
+  },
+  {
+    "text": "they otherwise don’t need to exist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=945"
+  },
+  {
+    "text": "Yet if you try to imagine implementing this without them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=948"
+  },
+  {
+    "text": "you can see why we didn’t do that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=951"
+  },
+  {
+    "text": "The mechanics of creating the array ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=954"
+  },
+  {
+    "text": "and appending elements to it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=956"
+  },
+  {
+    "text": "start to obscure the actual list of smoothies, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=957"
+  },
+  {
+    "text": "which is sort of the point of this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=960"
+  },
+  {
+    "text": "Similarly, the fact that the list of smoothies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=963"
+  },
+  {
+    "text": "is separate from the smoothie definitions is a little silly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=965"
+  },
+  {
+    "text": "A few of these constants are used by previews, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=969"
+  },
+  {
+    "text": "but most of them appear only in this list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=971"
+  },
+  {
+    "text": "And because you define a smoothie in one place ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=975"
+  },
+  {
+    "text": "and add it to the list in another, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=977"
+  },
+  {
+    "text": "it creates an opportunity for mistakes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=979"
+  },
+  {
+    "text": "What if you declare a new smoothie constant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=982"
+  },
+  {
+    "text": "but forget to add it to the list? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=984"
+  },
+  {
+    "text": "Or what if you add a smoothie twice? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=986"
+  },
+  {
+    "text": "If we look back at the definitions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=989"
+  },
+  {
+    "text": "of individual smoothies, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=991"
+  },
+  {
+    "text": "I also see two other things that bother me. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=992"
+  },
+  {
+    "text": "One is that the ingredient list is just incredibly wordy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=996"
+  },
+  {
+    "text": "Like, each entry repeats ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1000"
+  },
+  {
+    "text": "some version of the word \"measure\" three times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1001"
+  },
+  {
+    "text": "In this line, the actual information we care about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1005"
+  },
+  {
+    "text": "is 1.5 cups of oranges. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1007"
+  },
+  {
+    "text": "The rest of the line isn’t saying anything useful; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1011"
+  },
+  {
+    "text": "it’s just visual clutter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1013"
+  },
+  {
+    "text": "There’s inevitably going to be some supporting syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1015"
+  },
+  {
+    "text": "around the information that matters, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1017"
+  },
+  {
+    "text": "but when there’s this much, the boilerplate around it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1019"
+  },
+  {
+    "text": "just overwhelms the information we’re trying to convey. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1021"
+  },
+  {
+    "text": "The other thing I notice is the sheer number of lines ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1026"
+  },
+  {
+    "text": "devoted to each smoothie compared to ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1029"
+  },
+  {
+    "text": "the amount of information that’s actually present. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1030"
+  },
+  {
+    "text": "I think the culprit here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1033"
+  },
+  {
+    "text": "is the difference in the length of arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1035"
+  },
+  {
+    "text": "Some of these arguments are very short ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1038"
+  },
+  {
+    "text": "and could fit together on a single line. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1040"
+  },
+  {
+    "text": "Others are longer and really need a line of their own. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1043"
+  },
+  {
+    "text": "Now, you could combine the short arguments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1047"
+  },
+  {
+    "text": "onto a single line ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1049"
+  },
+  {
+    "text": "and then use separate lines for the long ones, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1050"
+  },
+  {
+    "text": "but most style guides frown on that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1053"
+  },
+  {
+    "text": "We’d like a syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1055"
+  },
+  {
+    "text": "where it’d be natural to style them differently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1056"
+  },
+  {
+    "text": "Put these altogether and we’ve got a bunch of goals ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1060"
+  },
+  {
+    "text": "we want our DSL to accomplish ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1062"
+  },
+  {
+    "text": "to make it easier to maintain the smoothie list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1063"
+  },
+  {
+    "text": "Now, the next thing to do is to look at various ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1067"
+  },
+  {
+    "text": "we could design the DSL to achieve these goals. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1070"
+  },
+  {
+    "text": "There are a ton of different designs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1073"
+  },
+  {
+    "text": "that would address each of these points. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1074"
+  },
+  {
+    "text": "I’m going to quickly explain what I decided to do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1077"
+  },
+  {
+    "text": "for the first three goals, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1080"
+  },
+  {
+    "text": "and then we can explore the last goal in more detail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1081"
+  },
+  {
+    "text": "I decided we’d define the smoothie list in the all method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1085"
+  },
+  {
+    "text": "The smoothies will be defined directly in the body ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1088"
+  },
+  {
+    "text": "without using static variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1090"
+  },
+  {
+    "text": "so we don’t have to worry about someone defining a smoothie ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1092"
+  },
+  {
+    "text": "and forgetting to list it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1095"
+  },
+  {
+    "text": "We’ll use a result builder called \"SmoothieArrayBuilder\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1097"
+  },
+  {
+    "text": "to activate our DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1099"
+  },
+  {
+    "text": "and collect the smoothies into an array; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1101"
+  },
+  {
+    "text": "that way we don’t need to use an array literal ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1103"
+  },
+  {
+    "text": "or collect things into a temporary variable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1105"
+  },
+  {
+    "text": "And we’ll allow smoothies to be put in if statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1109"
+  },
+  {
+    "text": "so we don’t need to filter the list like we did before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1111"
+  },
+  {
+    "text": "This is great because clients who already know Swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1115"
+  },
+  {
+    "text": "will know how an if statement is used, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1117"
+  },
+  {
+    "text": "and clients who don’t will probably understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1120"
+  },
+  {
+    "text": "\"if includingPaid\" with little trouble. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1122"
+  },
+  {
+    "text": "I decided to specify the ingredient amounts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1127"
+  },
+  {
+    "text": "by using modifier-style methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1129"
+  },
+  {
+    "text": "Ingredient will have a method called, \"measured(with: )\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1131"
+  },
+  {
+    "text": "which takes a unit and returns a measured ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1134"
+  },
+  {
+    "text": "with one of that unit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1136"
+  },
+  {
+    "text": "If you want a different amount of that unit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1139"
+  },
+  {
+    "text": "the scaled(by: ) modifier on a measured ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1141"
+  },
+  {
+    "text": "returns it with the quantity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1143"
+  },
+  {
+    "text": "multiplied by the number you pass. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1145"
+  },
+  {
+    "text": "So one cup of oranges becomes 1.5 cups of oranges, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1147"
+  },
+  {
+    "text": "and one cup of avocado becomes 0.2 cups of avocado. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1150"
+  },
+  {
+    "text": "Now, why is scaled(by: ) a separate modifier? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1154"
+  },
+  {
+    "text": "One of the screens in Fruta has a control ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1159"
+  },
+  {
+    "text": "that can be used to scale the ingredient quantities ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1161"
+  },
+  {
+    "text": "in a smoothie recipe. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1163"
+  },
+  {
+    "text": "We previously passed the multiplier down ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1165"
+  },
+  {
+    "text": "to each ingredient row, which multiplied its quantity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1167"
+  },
+  {
+    "text": "But I realized that I could actually use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1170"
+  },
+  {
+    "text": "the scaled(by: ) modifier to instead scale the ingredients ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1172"
+  },
+  {
+    "text": "before they’re passed to the rows, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1175"
+  },
+  {
+    "text": "which let me simplify the row views. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1177"
+  },
+  {
+    "text": "So by tweaking my smoothie DSL design a bit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1181"
+  },
+  {
+    "text": "I was able to reuse a piece of it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1183"
+  },
+  {
+    "text": "in another part of the project. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1185"
+  },
+  {
+    "text": "So with the changes to achieve our first three goals, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1189"
+  },
+  {
+    "text": "we’re starting to see our new DSL take shape. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1191"
+  },
+  {
+    "text": "Now let’s focus in on that last goal: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1194"
+  },
+  {
+    "text": "redesigning the individual smoothie entries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1197"
+  },
+  {
+    "text": "so they’re more compact, and hopefully so there’s also ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1199"
+  },
+  {
+    "text": "less confusing punctuation our clients could trip over. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1202"
+  },
+  {
+    "text": "Let’s take a look at a few different ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1206"
+  },
+  {
+    "text": "we could arrange this information to help with that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1208"
+  },
+  {
+    "text": "One thing we could do is use modifier-style methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1211"
+  },
+  {
+    "text": "to add the description and ingredients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1214"
+  },
+  {
+    "text": "This would work, but it’s kind of wordy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1217"
+  },
+  {
+    "text": "and it’d be easy for someone to forget the description ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1219"
+  },
+  {
+    "text": "or specify it twice or something. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1222"
+  },
+  {
+    "text": "Another thing we could do is give each field a marker type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1225"
+  },
+  {
+    "text": "and put them in a result builder closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1228"
+  },
+  {
+    "text": "But this puts the ID and title on their own lines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1230"
+  },
+  {
+    "text": "which we’re trying to avoid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1233"
+  },
+  {
+    "text": "So maybe we could move the ID and title ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1236"
+  },
+  {
+    "text": "back into the parameter list, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1238"
+  },
+  {
+    "text": "and use marker types for the other two fields. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1240"
+  },
+  {
+    "text": "But I feel like this is still maybe a little more ceremony ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1243"
+  },
+  {
+    "text": "than we really need. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1245"
+  },
+  {
+    "text": "I realized that when I looked at the user interface for recipes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1248"
+  },
+  {
+    "text": "They’re always presented in a specific order: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1252"
+  },
+  {
+    "text": "title at the top, description in the middle, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1256"
+  },
+  {
+    "text": "list of ingredients at the bottom. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1259"
+  },
+  {
+    "text": "And we don’t bother labeling the title or description. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1262"
+  },
+  {
+    "text": "We let their visual hierarchy -- the fact that the title ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1265"
+  },
+  {
+    "text": "is presented more prominently than the description -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1268"
+  },
+  {
+    "text": "do the talking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1270"
+  },
+  {
+    "text": "So I drew some inspiration from that and decided ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1273"
+  },
+  {
+    "text": "that our smoothie DSL should do the same. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1275"
+  },
+  {
+    "text": "It puts the title at the top, the description in the middle, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1278"
+  },
+  {
+    "text": "and the list of ingredients at the bottom. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1282"
+  },
+  {
+    "text": "And it lets the fact that the description is below ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1285"
+  },
+  {
+    "text": "and more indented than the title -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1288"
+  },
+  {
+    "text": "so it’s less visually prominent -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1290"
+  },
+  {
+    "text": "convey the meaning of the description string ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1292"
+  },
+  {
+    "text": "so there’s no need to label it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1294"
+  },
+  {
+    "text": "I think the result is immediately understandable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1297"
+  },
+  {
+    "text": "without unnecessary complications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1299"
+  },
+  {
+    "text": "And when we put it into the context of the DSL as a whole, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1302"
+  },
+  {
+    "text": "I think we have a pretty comfortable fit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1305"
+  },
+  {
+    "text": "But you might disagree, and that’s OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1308"
+  },
+  {
+    "text": "DSLs are programming languages, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1312"
+  },
+  {
+    "text": "and personal taste and subjective trade-offs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1314"
+  },
+  {
+    "text": "are a big part of designing any programming language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1316"
+  },
+  {
+    "text": "That doesn’t mean you shouldn’t be rigorous. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1320"
+  },
+  {
+    "text": "You should start with a clear idea of what you want ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1322"
+  },
+  {
+    "text": "from the language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1324"
+  },
+  {
+    "text": "You should look into whether there’s an existing solution -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1327"
+  },
+  {
+    "text": "like the if statement -- that can solve your problem ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1329"
+  },
+  {
+    "text": "because if you can adopt a familiar solution, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1332"
+  },
+  {
+    "text": "people won’t have to learn a new one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1334"
+  },
+  {
+    "text": "You should think about how each part of the language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1337"
+  },
+  {
+    "text": "interacts with the rest of it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1340"
+  },
+  {
+    "text": "In a Swift DSL, that also means thinking about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1342"
+  },
+  {
+    "text": "how your DSL interacts with the ordinary Swift code around it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1344"
+  },
+  {
+    "text": "like when I picked the scaled-by modifier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1348"
+  },
+  {
+    "text": "because I could use it somewhere else. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1350"
+  },
+  {
+    "text": "You should look for solutions that will make mistakes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1353"
+  },
+  {
+    "text": "either detectable at compile time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1355"
+  },
+  {
+    "text": "or totally impossible to write. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1357"
+  },
+  {
+    "text": "If you recall, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1359"
+  },
+  {
+    "text": "that’s why we didn’t make description a modifier; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1360"
+  },
+  {
+    "text": "you could have left it out by accident. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1363"
+  },
+  {
+    "text": "With all of that in mind, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1366"
+  },
+  {
+    "text": "you should come up with several different possibilities. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1368"
+  },
+  {
+    "text": "Imagine how each of them would be used, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1371"
+  },
+  {
+    "text": "write little mock-ups; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1372"
+  },
+  {
+    "text": "you know, weigh them against each other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1373"
+  },
+  {
+    "text": "But in the end, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1376"
+  },
+  {
+    "text": "you usually won’t find one that’s obviously right ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1377"
+  },
+  {
+    "text": "where the others are obviously wrong. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1380"
+  },
+  {
+    "text": "All you can do is pick something ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1382"
+  },
+  {
+    "text": "you feel will be best for your language’s clients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1384"
+  },
+  {
+    "text": "If you’re not sure which is best, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1388"
+  },
+  {
+    "text": "you should probably favor whichever is most readable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1389"
+  },
+  {
+    "text": "And if you’re still not sure after that... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1392"
+  },
+  {
+    "text": "Well, personally, I like taking bolder options. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1395"
+  },
+  {
+    "text": "I’d rather try something and walk it back if it doesn’t work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1398"
+  },
+  {
+    "text": "than never try it and be left wondering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1401"
+  },
+  {
+    "text": "Now that we’ve decided what our DSL will look like, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1404"
+  },
+  {
+    "text": "let’s go ahead and add it to Fruta. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1406"
+  },
+  {
+    "text": "I’ve replaced the previous smoothie definitions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1410"
+  },
+  {
+    "text": "with the final all method that uses our DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1412"
+  },
+  {
+    "text": "but I haven’t actually implemented the DSL yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1415"
+  },
+  {
+    "text": "So unsurprisingly, we’ve got a ton of errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1417"
+  },
+  {
+    "text": "But that’s OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1421"
+  },
+  {
+    "text": "As we work through this, I’ll let these errors guide me ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1422"
+  },
+  {
+    "text": "to the problems I need to solve, and by the end ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1425"
+  },
+  {
+    "text": "we’ll have something that builds without any errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1427"
+  },
+  {
+    "text": "So let’s just start at the top of the function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1430"
+  },
+  {
+    "text": "with this first error: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1432"
+  },
+  {
+    "text": "\"Unknown attribute ‘SmoothieArrayBuilder’.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1433"
+  },
+  {
+    "text": "The result builder doesn’t actually exist yet, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1436"
+  },
+  {
+    "text": "so of course that's not going to work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1437"
+  },
+  {
+    "text": "Let’s go fix that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1439"
+  },
+  {
+    "text": "I’ll start by making a type called \"SmoothieArrayBuilder\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1441"
+  },
+  {
+    "text": "that’s marked with the result builder attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1444"
+  },
+  {
+    "text": "Now, Swift will never actually make an instance of this type; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1448"
+  },
+  {
+    "text": "it’s just a container for a bunch of static methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1450"
+  },
+  {
+    "text": "So I’ve made it an enum and I won’t define any cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1453"
+  },
+  {
+    "text": "It’s impossible to create an instance of an enum ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1457"
+  },
+  {
+    "text": "which has no cases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1459"
+  },
+  {
+    "text": "so this keeps people from using it incorrectly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1461"
+  },
+  {
+    "text": "If I build just this, I’ll get an error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1464"
+  },
+  {
+    "text": "saying that the result builder needs a buildBlock(_:) method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1467"
+  },
+  {
+    "text": "It has a fix-it which will insert one, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1470"
+  },
+  {
+    "text": "so I’ll accept that fix-it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1472"
+  },
+  {
+    "text": "and then we’ll figure out how to implement it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1474"
+  },
+  {
+    "text": "Now, if you recall from earlier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1478"
+  },
+  {
+    "text": "the way buildBlock(_:) works is that if you have code like this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1481"
+  },
+  {
+    "text": "with a bunch of individual statements, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1484"
+  },
+  {
+    "text": "each of those statements gets assigned to a variable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1486"
+  },
+  {
+    "text": "the variables are all passed to buildBlock(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1489"
+  },
+  {
+    "text": "and the value returned by buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1491"
+  },
+  {
+    "text": "gets returned by the closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1493"
+  },
+  {
+    "text": "So it stands to reason that our buildBlock(_:) method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1495"
+  },
+  {
+    "text": "needs to accept a bunch of smoothies as parameters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1497"
+  },
+  {
+    "text": "and return an array of smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1500"
+  },
+  {
+    "text": "If we implement that using a variadic parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1503"
+  },
+  {
+    "text": "so that any number of smoothies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1505"
+  },
+  {
+    "text": "can be passed to the method... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1507"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1509"
+  },
+  {
+    "text": "...and build... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1518"
+  },
+  {
+    "text": "...well, what we get is a bit better. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1523"
+  },
+  {
+    "text": "There are still plenty of errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1526"
+  },
+  {
+    "text": "but the one saying smoothie array builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1527"
+  },
+  {
+    "text": "was an invalid attribute is gone ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1529"
+  },
+  {
+    "text": "and the attribute even changed color ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1532"
+  },
+  {
+    "text": "to indicate that it’s a known type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1534"
+  },
+  {
+    "text": "So let’s move on to the next errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1536"
+  },
+  {
+    "text": "the ones for the smoothie initializer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1538"
+  },
+  {
+    "text": "One says that we’re passing a trailing closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1542"
+  },
+  {
+    "text": "to a string parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1544"
+  },
+  {
+    "text": "The other says we’re missing the measuredIngredients argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1547"
+  },
+  {
+    "text": "So clearly we’re using the old initializer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1550"
+  },
+  {
+    "text": "which expects the description and ingredients as parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1553"
+  },
+  {
+    "text": "We’ll need to make a new one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1556"
+  },
+  {
+    "text": "So let’s implement that initializer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1558"
+  },
+  {
+    "text": "with an ID, a title, and a trailing closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1563"
+  },
+  {
+    "text": "that returns the description and ingredients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1568"
+  },
+  {
+    "text": "I’m going to tell you right now, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1572"
+  },
+  {
+    "text": "we’ll have to come back to this initializer later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1574"
+  },
+  {
+    "text": "If I build right now, it does clear away all of the errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1578"
+  },
+  {
+    "text": "from the smoothie initializers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1582"
+  },
+  {
+    "text": "so you might think this is working perfectly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1584"
+  },
+  {
+    "text": "But that’s actually a little misleading. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1587"
+  },
+  {
+    "text": "You see, there’s another error down here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1591"
+  },
+  {
+    "text": "on the if statement that’s caused by ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1593"
+  },
+  {
+    "text": "the smoothie array builder not being finished. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1595"
+  },
+  {
+    "text": "And because that error is there, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1598"
+  },
+  {
+    "text": "Swift isn’t checking the insides of the closures yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1600"
+  },
+  {
+    "text": "Like, if I go into this closure and I just write ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1604"
+  },
+  {
+    "text": "some random variable name that I know doesn’t exist, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1607"
+  },
+  {
+    "text": "and then build it, Swift doesn’t flag an error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1610"
+  },
+  {
+    "text": "What’s happening is that Swift sees that the result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1615"
+  },
+  {
+    "text": "didn’t apply correctly, so it doesn’t really trust ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1618"
+  },
+  {
+    "text": "that any errors it found in these closures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1621"
+  },
+  {
+    "text": "would actually be accurate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1623"
+  },
+  {
+    "text": "So it’s just not looking for errors there yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1625"
+  },
+  {
+    "text": "Later on, when we finish the smoothie array builder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1629"
+  },
+  {
+    "text": "we’ll suddenly start seeing those errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1631"
+  },
+  {
+    "text": "and we can fix them at that point. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1633"
+  },
+  {
+    "text": "But for now it’s easier to keep working ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1635"
+  },
+  {
+    "text": "on the smoothie array builder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1637"
+  },
+  {
+    "text": "so let’s set those closures aside ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1639"
+  },
+  {
+    "text": "and move on to the next error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1641"
+  },
+  {
+    "text": "If we look at this error, Swift tells us that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1644"
+  },
+  {
+    "text": "we can’t use an if statement with smoothie array builder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1646"
+  },
+  {
+    "text": "but there’s a method we can add to support it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1649"
+  },
+  {
+    "text": "If statements are one of a few Swift features like this; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1652"
+  },
+  {
+    "text": "they are disabled unless your result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1655"
+  },
+  {
+    "text": "implements extra methods to support them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1657"
+  },
+  {
+    "text": "So to get started implementing this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1660"
+  },
+  {
+    "text": "let’s hit the fix-it here and see what it adds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1662"
+  },
+  {
+    "text": "So apparently we need to implement a method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1668"
+  },
+  {
+    "text": "called buildOptional(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1669"
+  },
+  {
+    "text": "which takes an optional array of smoothies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1671"
+  },
+  {
+    "text": "and returns an array of smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1673"
+  },
+  {
+    "text": "So how does this method get used? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1675"
+  },
+  {
+    "text": "Well, take this simplified example of the all method, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1679"
+  },
+  {
+    "text": "which has an if statement with no else. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1683"
+  },
+  {
+    "text": "Like our previous example without the if statement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1686"
+  },
+  {
+    "text": "this is going to capture the result of each statement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1688"
+  },
+  {
+    "text": "into a variable, pass those variables to buildBlock(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1691"
+  },
+  {
+    "text": "and return the result of buildBlock(_:) from the closure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1694"
+  },
+  {
+    "text": "The only question is, how is it going to capture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1697"
+  },
+  {
+    "text": "the result of the if statement? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1699"
+  },
+  {
+    "text": "Well, the first thing it’s going to do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1702"
+  },
+  {
+    "text": "is capture all of the statements in the if statement’s body ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1703"
+  },
+  {
+    "text": "into variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1707"
+  },
+  {
+    "text": "and then combine those variables together using buildBlock(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1708"
+  },
+  {
+    "text": "just like it does at the top level. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1711"
+  },
+  {
+    "text": "But this is where buildOptional(_:) comes in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1714"
+  },
+  {
+    "text": "Instead of returning the result of that inner buildBlock(_:) call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1716"
+  },
+  {
+    "text": "Swift will pass it to buildOptional(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1719"
+  },
+  {
+    "text": "and the value returned by buildOptional(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1721"
+  },
+  {
+    "text": "becomes the value of the if statement as a whole. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1723"
+  },
+  {
+    "text": "But this leaves the variable uninitialized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1726"
+  },
+  {
+    "text": "if the if condition is false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1728"
+  },
+  {
+    "text": "That’s why buildOptional’s parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1731"
+  },
+  {
+    "text": "is an optional array of smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1733"
+  },
+  {
+    "text": "Swift will add an else branch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1736"
+  },
+  {
+    "text": "which sets the value of the if statement’s result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1737"
+  },
+  {
+    "text": "to the return value from buildOptional(nil). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1739"
+  },
+  {
+    "text": "For SmoothieArrayBuilder, the upshot of this is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1743"
+  },
+  {
+    "text": "we want buildOptional(_:) to either return ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1745"
+  },
+  {
+    "text": "the array that was passed to it from buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1747"
+  },
+  {
+    "text": "or return an empty array if the parameter is nil. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1749"
+  },
+  {
+    "text": "If we build it now, we get... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1754"
+  },
+  {
+    "text": "...a really weird-looking error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1758"
+  },
+  {
+    "text": "Can’t pass array of type smoothie as variadic arguments? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1762"
+  },
+  {
+    "text": "What? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1766"
+  },
+  {
+    "text": "Well, let’s go back to our generated code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1767"
+  },
+  {
+    "text": "The if statement ends up producing an array of smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1770"
+  },
+  {
+    "text": "But actually, buildBlock(_:) doesn’t want arrays of smoothies; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1773"
+  },
+  {
+    "text": "it wants single smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1776"
+  },
+  {
+    "text": "We’ll need to change that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1778"
+  },
+  {
+    "text": "So maybe we can make buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1780"
+  },
+  {
+    "text": "take arrays of smoothies as its arguments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1782"
+  },
+  {
+    "text": "and then use flatMap(_:) to concatenate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1785"
+  },
+  {
+    "text": "those many arrays of smoothies together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1787"
+  },
+  {
+    "text": "into a single array of smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1789"
+  },
+  {
+    "text": "Great! Build that, and... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1794"
+  },
+  {
+    "text": "...no. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1797"
+  },
+  {
+    "text": "Now our if statement works, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1800"
+  },
+  {
+    "text": "but all the smoothie lines broke. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1801"
+  },
+  {
+    "text": "We kind of need those. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1804"
+  },
+  {
+    "text": "Cannot convert value of type smoothie to array of smoothie. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1807"
+  },
+  {
+    "text": "What happened? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1811"
+  },
+  {
+    "text": "Well, we changed buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1813"
+  },
+  {
+    "text": "so that it matches the array of smoothies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1815"
+  },
+  {
+    "text": "returned by buildOptional(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1817"
+  },
+  {
+    "text": "But we forgot that it also needs to match the individual ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1820"
+  },
+  {
+    "text": "smoothies returned by the normal statements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1822"
+  },
+  {
+    "text": "Oops. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1825"
+  },
+  {
+    "text": "Basically, if you’re going to allow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1827"
+  },
+  {
+    "text": "any sophisticated control flow, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1828"
+  },
+  {
+    "text": "buildBlock’s return type needs to be something ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1830"
+  },
+  {
+    "text": "that can be passed as a parameter to buildBlock(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1833"
+  },
+  {
+    "text": "There are two ways you can accomplish this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1836"
+  },
+  {
+    "text": "One way is to make sure that buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1839"
+  },
+  {
+    "text": "and the other result builder methods return types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1841"
+  },
+  {
+    "text": "compatible with the statements allowed in the result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1843"
+  },
+  {
+    "text": "For example, this is how SwiftUI’s ViewBuilder works. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1846"
+  },
+  {
+    "text": "In the SwiftUI DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1849"
+  },
+  {
+    "text": "everything conforms to the View protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1851"
+  },
+  {
+    "text": "including the types returned by buildBlock(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1853"
+  },
+  {
+    "text": "and other view builder methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1855"
+  },
+  {
+    "text": "But that’s not a great fit for our smoothie DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1856"
+  },
+  {
+    "text": "because unlike SwiftUI views, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1859"
+  },
+  {
+    "text": "you don’t nest smoothies inside of other smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1861"
+  },
+  {
+    "text": "The other thing you can do is have the result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1866"
+  },
+  {
+    "text": "convert the values of normal statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1868"
+  },
+  {
+    "text": "into the same type returned by buildBlock(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1870"
+  },
+  {
+    "text": "That’s a better fit for this DSL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1873"
+  },
+  {
+    "text": "We can do that by adding a method called buildExpression(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1876"
+  },
+  {
+    "text": "When we add a buildExpression(_:) method, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1880"
+  },
+  {
+    "text": "Swift passes each bare expression to that method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1882"
+  },
+  {
+    "text": "before it captures it into a variable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1884"
+  },
+  {
+    "text": "That will give us an opportunity to convert those into arrays. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1886"
+  },
+  {
+    "text": "But values that come from other result builder methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1890"
+  },
+  {
+    "text": "like the ones produced by buildOptional(_:) and buildBlock(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1892"
+  },
+  {
+    "text": "don’t get wrapped in these calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1895"
+  },
+  {
+    "text": "so they won’t have this conversion applied to them -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1897"
+  },
+  {
+    "text": "which is good because they’re already returning arrays. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1899"
+  },
+  {
+    "text": "So what we’re going to do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1903"
+  },
+  {
+    "text": "is implement a buildExpression(_:) method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1904"
+  },
+  {
+    "text": "Xcode’s code completion ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1908"
+  },
+  {
+    "text": "knows all about result-builder methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1909"
+  },
+  {
+    "text": "so we can ask it to write the signature for one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1912"
+  },
+  {
+    "text": "Then we change the parameter type to Smoothie ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1916"
+  },
+  {
+    "text": "and just return the expression parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1920"
+  },
+  {
+    "text": "wrapped in an array literal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1922"
+  },
+  {
+    "text": "So now our single smoothies will be turned into ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1926"
+  },
+  {
+    "text": "the arrays of smoothies that buildBlock(_:) needs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1928"
+  },
+  {
+    "text": "Build that, and... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1933"
+  },
+  {
+    "text": "...fantastic! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1936"
+  },
+  {
+    "text": "Our if statement works ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1937"
+  },
+  {
+    "text": "and so do the smoothie initializers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1938"
+  },
+  {
+    "text": "However, if we look in the minimap, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1941"
+  },
+  {
+    "text": "we’ll see that there’s a second if statement down here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1944"
+  },
+  {
+    "text": "that doesn’t work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1946"
+  },
+  {
+    "text": "That’s because this one has an else clause. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1948"
+  },
+  {
+    "text": "buildOptional(_:) actually only works for plain if statements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1952"
+  },
+  {
+    "text": "If you have an else statement, or an else-if, or a switch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1956"
+  },
+  {
+    "text": "you need to implement a pair of methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1960"
+  },
+  {
+    "text": "called buildEither(first:) and buildEither(second:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1962"
+  },
+  {
+    "text": "Let’s create these using the fix-it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1965"
+  },
+  {
+    "text": "and then talk about how they work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1969"
+  },
+  {
+    "text": "So let’s look at this simplified example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1971"
+  },
+  {
+    "text": "with an if-else statement. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1973"
+  },
+  {
+    "text": "Most of the transform is just like the one for buildOptional(_:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1975"
+  },
+  {
+    "text": "Like buildOptional(_:), the whole if-else statement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1978"
+  },
+  {
+    "text": "will end up filling a single variable. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1981"
+  },
+  {
+    "text": "And also like buildOptional(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1983"
+  },
+  {
+    "text": "each of the blocks in the if statement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1985"
+  },
+  {
+    "text": "will have the statements inside it captured into variables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1987"
+  },
+  {
+    "text": "and then buildBlock will be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1990"
+  },
+  {
+    "text": "to combine them together into one value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1991"
+  },
+  {
+    "text": "What’s different from a plain if statement is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1994"
+  },
+  {
+    "text": "instead of using buildOptional(_:) to generate the final value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=1997"
+  },
+  {
+    "text": "we use one of the buildEither methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2000"
+  },
+  {
+    "text": "If there are two branches, like an if and an else, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2003"
+  },
+  {
+    "text": "then the first one uses buildEither(first:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2006"
+  },
+  {
+    "text": "and the second uses buildEither(second:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2008"
+  },
+  {
+    "text": "That allows result builders which care about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2011"
+  },
+  {
+    "text": "which branch you took to distinguish between them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2013"
+  },
+  {
+    "text": "Now, if you’re wondering what we do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2017"
+  },
+  {
+    "text": "if there are three or more cases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2018"
+  },
+  {
+    "text": "the answer to that is actually pretty cool. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2020"
+  },
+  {
+    "text": "We build a balanced binary tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2025"
+  },
+  {
+    "text": "with each branch as one of the leaves, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2026"
+  },
+  {
+    "text": "and then we treat the nonleaf nodes as calls we need to make, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2029"
+  },
+  {
+    "text": "with the edge telling us whether to use buildEither(first:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2032"
+  },
+  {
+    "text": "or buildEither(second:). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2035"
+  },
+  {
+    "text": "We note which sequence of calls each branch should use, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2038"
+  },
+  {
+    "text": "then we generate code that assigns to the variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2041"
+  },
+  {
+    "text": "with that sequence of calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2043"
+  },
+  {
+    "text": "So even though we only have two methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2045"
+  },
+  {
+    "text": "the result builder can still distinguish ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2047"
+  },
+  {
+    "text": "between the three branches. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2049"
+  },
+  {
+    "text": "Not too bad. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2050"
+  },
+  {
+    "text": "Anyway, now that we know how the buildEither methods work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2052"
+  },
+  {
+    "text": "we can go ahead and write them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2056"
+  },
+  {
+    "text": "And since SmoothieArrayBuilder doesn’t actually care ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2058"
+  },
+  {
+    "text": "which branch you took, there’s not much we need to do; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2060"
+  },
+  {
+    "text": "just return the array argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2063"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2065"
+  },
+  {
+    "text": "So now we build this thing, and... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2070"
+  },
+  {
+    "text": "it still doesn’t quite work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2074"
+  },
+  {
+    "text": "But we’re close! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2076"
+  },
+  {
+    "text": "You might remember this kind of error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2078"
+  },
+  {
+    "text": "from when we had the array-of-smoothie problem, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2080"
+  },
+  {
+    "text": "only now, it’s not complaining about type Smoothie, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2082"
+  },
+  {
+    "text": "it’s type '()'. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2085"
+  },
+  {
+    "text": "That’s an empty tuple, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2088"
+  },
+  {
+    "text": "the type you probably think of as Void. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2090"
+  },
+  {
+    "text": "If we think about the generated code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2092"
+  },
+  {
+    "text": "it makes sense why this is a problem. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2094"
+  },
+  {
+    "text": "We’re calling buildExpression(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2097"
+  },
+  {
+    "text": "but the expression that's being passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2098"
+  },
+  {
+    "text": "is calling logger.log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2100"
+  },
+  {
+    "text": "which returns Void, not Smoothie. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2102"
+  },
+  {
+    "text": "So we’ll write an overload of buildExpression(_:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2104"
+  },
+  {
+    "text": "which takes a Void parameter and returns an empty array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2110"
+  },
+  {
+    "text": "Then we rebuild, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2117"
+  },
+  {
+    "text": "and now the log call works correctly! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2119"
+  },
+  {
+    "text": "We do have a zillion more errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2124"
+  },
+  {
+    "text": "but this is actually good news. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2126"
+  },
+  {
+    "text": "See, the first of these errors is from that fake variable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2131"
+  },
+  {
+    "text": "I added way back at the beginning ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2134"
+  },
+  {
+    "text": "to show you that Swift wasn’t finding errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2136"
+  },
+  {
+    "text": "in the trailing closures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2138"
+  },
+  {
+    "text": "Now it is, which means that we’ve finished ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2139"
+  },
+  {
+    "text": "the smoothie array builder! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2142"
+  },
+  {
+    "text": "So yay, errors! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2143"
+  },
+  {
+    "text": "Let’s delete that fake variable and look at what’s left. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2146"
+  },
+  {
+    "text": "If we look closely, we’ll find that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2150"
+  },
+  {
+    "text": "there’s less to do here than it looks like. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2152"
+  },
+  {
+    "text": "All of the description lines have the same warning, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2154"
+  },
+  {
+    "text": "and all of the ingredient lines have the same two errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2160"
+  },
+  {
+    "text": "So even though we have, like, a hundred errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2164"
+  },
+  {
+    "text": "and a dozen warnings, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2166"
+  },
+  {
+    "text": "this is actually just the same couple of problems ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2168"
+  },
+  {
+    "text": "happening over and over. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2170"
+  },
+  {
+    "text": "Let’s take a closer look at the errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2172"
+  },
+  {
+    "text": "on one of these ingredient lines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2174"
+  },
+  {
+    "text": "The compiler has two complaints: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2176"
+  },
+  {
+    "text": "it can’t figure out what type to look for cups in, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2179"
+  },
+  {
+    "text": "and it doesn’t think Ingredient has a member called \"measured.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2182"
+  },
+  {
+    "text": "Well, that makes sense; we haven’t implemented ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2186"
+  },
+  {
+    "text": "the measured(with:) or scaled(by:) modifiers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2189"
+  },
+  {
+    "text": "so it can’t find anything called \"measured.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2191"
+  },
+  {
+    "text": "And it has no idea what cups are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2194"
+  },
+  {
+    "text": "because it doesn’t know that measured(with:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2196"
+  },
+  {
+    "text": "is supposed to take a volume unit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2197"
+  },
+  {
+    "text": "So let’s pop over to MeasuredIngredient.swift ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2200"
+  },
+  {
+    "text": "and implement these two modifiers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2203"
+  },
+  {
+    "text": "measured(with:) goes on an Ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2208"
+  },
+  {
+    "text": "and returns a measured ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2210"
+  },
+  {
+    "text": "with one of the unit the caller passed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2212"
+  },
+  {
+    "text": "And scaled(by:) goes on a measured ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2216"
+  },
+  {
+    "text": "and returns a new measured ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2219"
+  },
+  {
+    "text": "with the measurement multiplied by the scale the caller passed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2221"
+  },
+  {
+    "text": "Pop back over to Smoothie.swift and build... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2225"
+  },
+  {
+    "text": "...and, OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2231"
+  },
+  {
+    "text": "We’re seeing a lot more warnings and only a few errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2233"
+  },
+  {
+    "text": "And if we look closely, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2236"
+  },
+  {
+    "text": "we’re seeing only one kind of warning -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2237"
+  },
+  {
+    "text": "telling us that each expression in the closures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2239"
+  },
+  {
+    "text": "is being ignored -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2242"
+  },
+  {
+    "text": "and one kind of error -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2244"
+  },
+  {
+    "text": "telling us that the closures don’t have return statements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2247"
+  },
+  {
+    "text": "To understand why, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2252"
+  },
+  {
+    "text": "let’s talk about these trailing closures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2253"
+  },
+  {
+    "text": "and how result builders interact with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2255"
+  },
+  {
+    "text": "In this example, the SmoothieArrayBuilder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2259"
+  },
+  {
+    "text": "is going to affect the outer statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2261"
+  },
+  {
+    "text": "just the way we’ve seen before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2263"
+  },
+  {
+    "text": "They get passed to buildExpression(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2265"
+  },
+  {
+    "text": "saved to variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2266"
+  },
+  {
+    "text": "and the variables get passed to buildBlock. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2267"
+  },
+  {
+    "text": "But what about these closures? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2270"
+  },
+  {
+    "text": "What will the result builder do to them? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2273"
+  },
+  {
+    "text": "Well, it does... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2276"
+  },
+  {
+    "text": "...absolutely nothing because the closures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2278"
+  },
+  {
+    "text": "are actually separate functions nested inside the function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2281"
+  },
+  {
+    "text": "we’ve applied the result builder to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2284"
+  },
+  {
+    "text": "Result builders only apply to one function; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2287"
+  },
+  {
+    "text": "they don’t affect the functions or closures nested inside it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2290"
+  },
+  {
+    "text": "If you want them to be affected by the result builder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2294"
+  },
+  {
+    "text": "then you have to apply it to them in some other way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2297"
+  },
+  {
+    "text": "There are three ways to apply a result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2301"
+  },
+  {
+    "text": "to a function body. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2303"
+  },
+  {
+    "text": "The first is to write the attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2305"
+  },
+  {
+    "text": "directly on the function or property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2307"
+  },
+  {
+    "text": "like we did for SmoothieArrayBuilder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2309"
+  },
+  {
+    "text": "The second way to apply a result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2312"
+  },
+  {
+    "text": "is to write it on a function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2314"
+  },
+  {
+    "text": "or property requirement in a protocol; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2315"
+  },
+  {
+    "text": "then it will be automatically applied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2317"
+  },
+  {
+    "text": "to the implementations on all conforming types. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2319"
+  },
+  {
+    "text": "That’s how the body property in SwiftUI Views works: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2322"
+  },
+  {
+    "text": "the ViewBuilder attribute is applied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2325"
+  },
+  {
+    "text": "to the body requirement in View, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2327"
+  },
+  {
+    "text": "so it’s automatically applied to any View’s body property too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2330"
+  },
+  {
+    "text": "The third way to apply a result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2335"
+  },
+  {
+    "text": "is to write it before a closure parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2337"
+  },
+  {
+    "text": "If you do that, Swift will then infer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2340"
+  },
+  {
+    "text": "that any closure passed to that parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2343"
+  },
+  {
+    "text": "should have the result builder applied to it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2344"
+  },
+  {
+    "text": "If Swift has inferred a result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2348"
+  },
+  {
+    "text": "from a protocol or parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2350"
+  },
+  {
+    "text": "and you don’t actually want it to be applied, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2351"
+  },
+  {
+    "text": "you can disable it by explicitly returning a value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2353"
+  },
+  {
+    "text": "using a return statement. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2356"
+  },
+  {
+    "text": "But in this case, since we’re using a closure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2358"
+  },
+  {
+    "text": "we want the last of those three options: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2361"
+  },
+  {
+    "text": "infer the result builder from the closure parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2364"
+  },
+  {
+    "text": "We do that by writing an attribute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2368"
+  },
+  {
+    "text": "before the argument label. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2369"
+  },
+  {
+    "text": "Now, we could write SmoothieArrayBuilder here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2371"
+  },
+  {
+    "text": "but that’s probably not the best way to do this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2375"
+  },
+  {
+    "text": "SmoothieArrayBuilder produces an array of smoothies, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2379"
+  },
+  {
+    "text": "but we don’t want this closure to produce smoothies; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2382"
+  },
+  {
+    "text": "we want it to produce a string and an array of ingredients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2385"
+  },
+  {
+    "text": "And we don’t need if statements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2390"
+  },
+  {
+    "text": "or Void-returning calls in this closure, either. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2392"
+  },
+  {
+    "text": "So really, we’re applying a separate set ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2395"
+  },
+  {
+    "text": "of language rules to this closure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2397"
+  },
+  {
+    "text": "and rather than mixing that second set of rules ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2399"
+  },
+  {
+    "text": "into SmoothieArrayBuilder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2401"
+  },
+  {
+    "text": "it makes more sense to create a new result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2402"
+  },
+  {
+    "text": "that implements these new rules. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2405"
+  },
+  {
+    "text": "Let’s call it SmoothieBuilder and create a new type for it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2409"
+  },
+  {
+    "text": "and start writing a buildBlock(_:) method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2418"
+  },
+  {
+    "text": "Now, this one is a little special. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2423"
+  },
+  {
+    "text": "We want to accept any number of measured ingredients, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2425"
+  },
+  {
+    "text": "but we also want to take a string at the front. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2429"
+  },
+  {
+    "text": "So how are we going to do that? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2432"
+  },
+  {
+    "text": "Well, if you think about how SmoothieBuilder -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2436"
+  },
+  {
+    "text": "which, remember, is a simple result builder ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2438"
+  },
+  {
+    "text": "with only a buildBlock method -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2440"
+  },
+  {
+    "text": "is going to be expanded out, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2442"
+  },
+  {
+    "text": "each of those lines is going to be passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2446"
+  },
+  {
+    "text": "as a different parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2447"
+  },
+  {
+    "text": "So it seems like maybe you could just write a string parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2449"
+  },
+  {
+    "text": "at the beginning of buildBlock, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2452"
+  },
+  {
+    "text": "and then the first statement would have to produce ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2454"
+  },
+  {
+    "text": "a string instead of a MeasuredIngredient. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2456"
+  },
+  {
+    "text": "So let’s try doing that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2459"
+  },
+  {
+    "text": "Add a string parameter up front, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2462"
+  },
+  {
+    "text": "and have it return a tuple of a string ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2465"
+  },
+  {
+    "text": "and an array of ingredients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2467"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2469"
+  },
+  {
+    "text": "And if we build... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2474"
+  },
+  {
+    "text": "Hey, look at that! Zero errors! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2478"
+  },
+  {
+    "text": "Our DSL works! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2482"
+  },
+  {
+    "text": "Now, result builders support a couple more features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2484"
+  },
+  {
+    "text": "like for-in loops and processing the final return result. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2487"
+  },
+  {
+    "text": "If you want to use those, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2490"
+  },
+  {
+    "text": "they’re described in the Swift Programming Language book. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2492"
+  },
+  {
+    "text": "But before we finish, I want to call attention ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2497"
+  },
+  {
+    "text": "to one of the most important parts of language design: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2500"
+  },
+  {
+    "text": "good error messages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2503"
+  },
+  {
+    "text": "One of the things you learn when you’re designing a language ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2506"
+  },
+  {
+    "text": "is that there are many more ways to write invalid code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2509"
+  },
+  {
+    "text": "than valid code, so you should spend some time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2511"
+  },
+  {
+    "text": "thinking about the errors you’ll emit for invalid code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2514"
+  },
+  {
+    "text": "Your behavior when the code is wrong ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2518"
+  },
+  {
+    "text": "is just as important as when the code is right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2520"
+  },
+  {
+    "text": "Now, for a Swift DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2523"
+  },
+  {
+    "text": "you’ll get Swift’s error handling for free. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2526"
+  },
+  {
+    "text": "But the error messages clients will get ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2529"
+  },
+  {
+    "text": "are designed for general Swift code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2531"
+  },
+  {
+    "text": "They aren’t phrased in terms of your language’s rules, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2533"
+  },
+  {
+    "text": "so they may not communicate the problem clearly to your clients. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2536"
+  },
+  {
+    "text": "For example, imagine someone forgot ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2540"
+  },
+  {
+    "text": "to put a description in one of these smoothies. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2542"
+  },
+  {
+    "text": "Swift is going to emit an error message, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2549"
+  },
+  {
+    "text": "but it’s a little unclear. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2551"
+  },
+  {
+    "text": "It complains that the first ingredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2553"
+  },
+  {
+    "text": "can’t be converted to a string. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2555"
+  },
+  {
+    "text": "So how does this code end up producing this error? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2559"
+  },
+  {
+    "text": "Well, the Swift compiler doesn’t really understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2563"
+  },
+  {
+    "text": "the semantics of our Smoothie DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2565"
+  },
+  {
+    "text": "it only understands the semantics of the Swift code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2567"
+  },
+  {
+    "text": "generated to use the result builder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2570"
+  },
+  {
+    "text": "So when it tries to diagnose this error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2573"
+  },
+  {
+    "text": "it doesn’t think of this value as the description ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2575"
+  },
+  {
+    "text": "of the Smoothie or the first ingredient. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2577"
+  },
+  {
+    "text": "It thinks of it as the first argument to buildBlock. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2580"
+  },
+  {
+    "text": "v0, the first argument to buildBlock (_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2584"
+  },
+  {
+    "text": "is a MeasuredIngredient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2587"
+  },
+  {
+    "text": "but it’s being passed to a string parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2589"
+  },
+  {
+    "text": "So Swift thinks of this error as, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2594"
+  },
+  {
+    "text": "\"You’re trying to pass a MeasuredIngredient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2596"
+  },
+  {
+    "text": "to a string parameter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2598"
+  },
+  {
+    "text": "but I can’t convert MeasuredIngredient to a string.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2599"
+  },
+  {
+    "text": "The error message is not technically wrong ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2603"
+  },
+  {
+    "text": "but it’s not really helpful, either. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2605"
+  },
+  {
+    "text": "Compiler engineers have a trick for this: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2608"
+  },
+  {
+    "text": "we make the compiler support the invalid thing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2611"
+  },
+  {
+    "text": "but produce an error when you do it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2614"
+  },
+  {
+    "text": "For example, there’s a slot in Swift’s function grammar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2617"
+  },
+  {
+    "text": "where you can write throws, rethrows, or nothing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2620"
+  },
+  {
+    "text": "If you write some other unsupported word, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2624"
+  },
+  {
+    "text": "the compiler guesses that it was supposed to be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2626"
+  },
+  {
+    "text": "part of a different statement and gives you an error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2628"
+  },
+  {
+    "text": "telling you to either add a semicolon or use a new line. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2630"
+  },
+  {
+    "text": "But, if you write \"try\" specifically, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2635"
+  },
+  {
+    "text": "you get a different error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2637"
+  },
+  {
+    "text": "The compiler suggests replacing it with throws ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2639"
+  },
+  {
+    "text": "and then parses the rest of the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2642"
+  },
+  {
+    "text": "as though you’d written throws there instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2644"
+  },
+  {
+    "text": "This is a special case we added to the Swift parser. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2647"
+  },
+  {
+    "text": "We noticed that developers sometimes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2651"
+  },
+  {
+    "text": "type other error-handling keywords here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2652"
+  },
+  {
+    "text": "when they mean to write throws, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2654"
+  },
+  {
+    "text": "so we made a tiny, undocumented extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2656"
+  },
+  {
+    "text": "to the formal grammar of the language. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2659"
+  },
+  {
+    "text": "We parse those mistaken keywords here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2661"
+  },
+  {
+    "text": "and then diagnose a different error than usual, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2663"
+  },
+  {
+    "text": "tailored for that specific mistake. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2665"
+  },
+  {
+    "text": "I point this out because you can do something similar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2669"
+  },
+  {
+    "text": "in a result builder to improve its error behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2671"
+  },
+  {
+    "text": "Specifically, if you make an overload ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2675"
+  },
+  {
+    "text": "of a result-builder method which matches the bad code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2677"
+  },
+  {
+    "text": "and then you mark that overload as unavailable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2680"
+  },
+  {
+    "text": "you can specify an error message to use when diagnosing it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2683"
+  },
+  {
+    "text": "And so instead of getting a generic error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2687"
+  },
+  {
+    "text": "that might not convey the problem very well, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2688"
+  },
+  {
+    "text": "clients will get a more specific error message ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2691"
+  },
+  {
+    "text": "tailored to that mistake. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2693"
+  },
+  {
+    "text": "What we’ll do is copy buildBlock(_:), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2697"
+  },
+  {
+    "text": "delete the description parameter so we’re matching blocks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2701"
+  },
+  {
+    "text": "with only an ingredient list in them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2703"
+  },
+  {
+    "text": "and replace the body with fatalError() ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2708"
+  },
+  {
+    "text": "so we don’t have to fake a return value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2711"
+  },
+  {
+    "text": "The method will never be called successfully, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2716"
+  },
+  {
+    "text": "so the body just has to be something that’s valid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2718"
+  },
+  {
+    "text": "Then we’ll mark this overload as unavailable ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2720"
+  },
+  {
+    "text": "and give it a message describing the problem more clearly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2723"
+  },
+  {
+    "text": "This unavailable annotation means that the method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2727"
+  },
+  {
+    "text": "can’t actually be used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2730"
+  },
+  {
+    "text": "If you write a call to it, that’s an error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2733"
+  },
+  {
+    "text": "So now, if I pop back up to the top and rebuild, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2736"
+  },
+  {
+    "text": "I see that I get a much, much clearer description ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2740"
+  },
+  {
+    "text": "of what’s wrong. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2742"
+  },
+  {
+    "text": "Instead of saying that the first ingredient should be a string, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2744"
+  },
+  {
+    "text": "it says that the description string is missing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2747"
+  },
+  {
+    "text": "So the client doesn’t start ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2751"
+  },
+  {
+    "text": "thinking that the ingredient is wrong ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2752"
+  },
+  {
+    "text": "or have to wonder what the string is for; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2754"
+  },
+  {
+    "text": "the error tells them that right up front. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2756"
+  },
+  {
+    "text": "That’s a much better experience. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2758"
+  },
+  {
+    "text": "And the most important thing to remember ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2761"
+  },
+  {
+    "text": "about implementing a DSL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2763"
+  },
+  {
+    "text": "is that it’s all about improving the client’s experience. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2764"
+  },
+  {
+    "text": "A DSL can make some very complex, repetitive code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2768"
+  },
+  {
+    "text": "much cleaner by allowing clients to define things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2771"
+  },
+  {
+    "text": "without worrying about the mechanics ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2775"
+  },
+  {
+    "text": "of assembling the definition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2776"
+  },
+  {
+    "text": "Result builders are a powerful tool ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2780"
+  },
+  {
+    "text": "that allow your DSL to collect the values being defined. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2782"
+  },
+  {
+    "text": "And modifier-style methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2786"
+  },
+  {
+    "text": "give you a composable way to change those values ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2788"
+  },
+  {
+    "text": "before the result builder captures them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2790"
+  },
+  {
+    "text": "But remember that if you write a DSL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2794"
+  },
+  {
+    "text": "clients will have to learn how to use it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2796"
+  },
+  {
+    "text": "Provide a DSL only when it’s going to be worth ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2800"
+  },
+  {
+    "text": "their time and effort. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2802"
+  },
+  {
+    "text": "So thanks for your time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2804"
+  },
+  {
+    "text": "and enjoy building some little languages. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2806"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10253/?time=2809"
+  }
+]

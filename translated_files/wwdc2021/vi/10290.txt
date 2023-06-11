@@ -1,0 +1,155 @@
+10290
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Marty Pye: Chào mừng đến với "Có gì mới trong AVKit".
+
+Tên tôi là Marty Pye và tôi là một kỹ sư trong nhóm AVKit.
+
+Hôm nay, tôi muốn nói về một số cải tiến mà chúng tôi đã thực hiện cho Picture in Picture - hoặc ngắn gọn, PiP - cũng như trải nghiệm toàn màn hình trên macOS.
+
+Hãy bắt đầu với Picture in Picture.
+
+Với Picture in Picture, người dùng có thể tiếp tục thưởng thức nội dung video của họ trong khi đa nhiệm với thiết bị của họ.
+
+Ví dụ: nếu bạn đang xem video toàn màn hình và nhận được tin nhắn, bạn có thể trả lời ngắn gọn tin nhắn đó trong khi tiếp tục xem nội dung của mình.
+
+Video sẽ tự động nhập PiP và khi bạn trả lời xong, bạn có thể nhanh chóng tiếp tục phát lại toàn màn hình.
+
+Điều này tạo ra trải nghiệm xem thực sự liền mạch và chúng tôi nghĩ rằng người dùng sẽ mong đợi hành vi này bất cứ khi nào họ xem video.
+
+Để biết thêm thông tin về cách tích hợp PiP vào các ứng dụng của riêng bạn, tôi khuyến khích bạn xem phiên 2019 này về việc cung cấp phát lại phương tiện trực quan với AVKit.
+
+Mới trong năm nay, nếu video của bạn đang phát nội tuyến, bạn có thể tùy chọn cho phép nó tự động nhập PiP khi người dùng vuốt trở lại Màn hình chính.
+
+Kích hoạt hành vi này đạt được thông qua thuộc tính canStartPictureInPicture AutomaticallyFromInline.
+
+Thuộc tính này có sẵn cả trên AVPlayerViewController cho các ứng dụng sử dụng các điều khiển gốc của chúng tôi và trên AVPictureInPictureController cho các ứng dụng triển khai giao diện người dùng tùy chỉnh của riêng họ.
+
+Đảm bảo chỉ đặt cờ này thành true khi nội dung phát được dự định là trọng tâm chính của người dùng.
+
+Nếu bạn đang sử dụng AVPlayerViewController để trình bày nội dung video, PiP sẽ được xử lý cho bạn.
+
+Bạn không cần phải làm gì cả.
+
+Nếu bạn không sử dụng AVPlayerViewController, bạn vẫn có thể sử dụng AVPictureInPictureController để mang trải nghiệm PiP gốc vào ứng dụng của mình.
+
+Trước tiên, bạn cần định cấu hình danh mục phiên âm thanh của ứng dụng để phát lại và bật chế độ nền PiP.
+
+Sau đó, tất cả những gì bạn cần làm là tạo một pictureInPictureController, chuyển một tham chiếu đến playerLayer.
+
+Sau đó, khi người dùng cố gắng chuyển đổi Ảnh trong Ảnh bằng nút bạn cung cấp, bạn chỉ cần gọi bắt đầu hoặc dừng PiP trên đối tượng bộ điều khiển.
+
+Cho đến nay, trải nghiệm Picture in Picture của chúng tôi được xây dựng dựa trên nội dung dựa trên AVPlayer.
+
+Hôm nay, tôi vui mừng thông báo mức độ hỗ trợ tương tự cho AVSampleBufferDisplayLayer.
+
+Thay vì tạo bộ điều khiển Picture in Picture với lớp trình phát, trước tiên bạn tạo ContentSource, mà bạn đã thiết lập với AVPlayerLayer hoặc - như được hiển thị ở đây - bằng AVSampleBufferDisplayLayer.
+
+Đối với người dùng, trải nghiệm Picture in Picture sẽ giống hệt nhau.
+
+Đối với bạn với tư cách là nhà phát triển, có một số trách nhiệm mới liên quan đến việc hỗ trợ PiP cho AVSampleBufferDisplayLayer.
+
+Hãy cùng xem đại diện phát lại này.
+
+Chúng tôi phải dựa vào thông tin trạng thái phát lại được cung cấp thông qua AVPictureInPictureSample BufferPlaybackDelegate mới để hiển thị giao diện người dùng PiP, vì phát lại phương tiện không được quản lý bởi AVPlayer.
+
+Khi người dùng cố gắng kiểm soát phương tiện từ giao diện người dùng PiP, chúng tôi chuyển tiếp các lệnh đó đến đại diện để xử lý.
+
+Hãy xem qua năm cuộc gọi lại riêng lẻ từng cái một.
+
+Chức năng setPlaying được gọi khi người dùng nhấn nút Phát/Tạm dừng trong cửa sổ PiP.
+
+Chức năng skipByInterval được gọi khi người dùng nhấn một trong các nút bỏ qua.
+
+Sử dụng các cuộc gọi lại này để kiểm soát phương tiện của bạn cho phù hợp.
+
+Chức năng timeRangeForPlayback cho phép bạn chỉ định phạm vi thời gian hiện có thể chơi được.
+
+Điều này cho phép chúng tôi hiển thị dòng thời gian và hiển thị vị trí hiện tại của đầu phát.
+
+Phạm vi thời gian với thời lượng hữu hạn phải luôn chứa thời gian hiện tại của cơ sở thời gian của lớp hiển thị bộ đệm mẫu.
+
+Sử dụng phạm vi thời gian với thời lượng vô hạn để chỉ ra nội dung trực tiếp.
+
+Hàm didTransitionToRenderSize được gọi khi cửa sổ Picture in Picture thay đổi kích thước, chẳng hạn như trong quá trình pinch-to-zoom.
+
+Hãy tính đến kích thước kết xuất này khi chọn các biến thể phương tiện để tránh chi phí giải mã không cần thiết.
+
+Chức năng isPlaybackPaused được gọi định kỳ và thông báo cho Picture in Picture UI xem có phản ánh trạng thái tạm dừng hay đang phát hay không.
+
+Về mặt khái niệm, điều này tương đương với timeControlStatus trên AVPlayer.
+
+Tiếp theo, chúng ta hãy xem xét một số cải tiến mà chúng tôi đã thực hiện đối với trải nghiệm toàn màn hình trên macOS.
+
+Trong Big Sur, khi bạn quay video toàn màn hình trong ứng dụng Mac Catalyst, video sẽ lấp đầy toàn bộ cửa sổ nhưng không phải toàn bộ màn hình.
+
+Bây giờ trong macOS Monterey, video sẽ chiếm toàn bộ màn hình.
+
+Bạn kết thúc với trải nghiệm toàn màn hình thực sự cho cả ứng dụng macOS gốc và Mac Catalyst.
+
+Các điều khiển phát lại trông giống nhau cho cả hai.
+
+Tất cả các ứng dụng Mac Catalyst sẽ tự động nhận được hành vi mới này.
+
+Giống như trong bất kỳ trải nghiệm toàn màn hình macOS gốc nào, người dùng có thể vuốt trở lại cửa sổ ứng dụng.
+
+Trình giữ chỗ sẽ được hiển thị thay vì video gốc, cho biết nội dung đang phát toàn màn hình.
+
+Điều này rất giống với trình giữ chỗ được hiển thị khi video đang phát trong Ảnh trong Ảnh.
+
+Trong trường hợp bạn trình bày bộ điều khiển chế độ xem toàn màn hình của người chơi sau khi người dùng chọn một số nội dung, bộ điều khiển chế độ xem sẽ vẫn hiển thị trong toàn bộ cửa sổ.
+
+Tuy nhiên, mới trong macOS Monterey, người dùng có thể tách ra trải nghiệm phát lại toàn màn hình thực sự bằng cách nhấn nút toàn màn hình màu xanh lá cây ở trên cùng bên trái của cửa sổ.
+
+Vòng đời toàn màn hình có thể được quản lý rõ ràng để cung cấp trải nghiệm người dùng tốt hơn dựa trên nhu cầu ứng dụng của bạn.
+
+Hãy xem xét một ví dụ.
+
+Như chúng tôi đã chỉ ra, người dùng sẽ có thể quay video toàn màn hình và sau đó vuốt trở lại ứng dụng của bạn trong khi phát lại tiếp tục.
+
+Họ sẽ có thể điều hướng ứng dụng của bạn một cách tự do, ngay cả khi điều đó dẫn đến việc bộ điều khiển chế độ xem của người chơi bị xóa khỏi hệ thống phân cấp chế độ xem của bạn.
+
+Tại bất kỳ thời điểm nào, họ sẽ có thể vuốt hoặc sử dụng Mission Control để điều hướng trở lại video toàn màn hình.
+
+Vì vậy, chúng ta hãy xem làm thế nào để làm cho nó hoạt động.
+
+Bạn chịu trách nhiệm về vòng đời của playerViewController.
+
+Để đạt được trải nghiệm tối ưu, bạn cần đảm bảo giữ cho playerViewController hoạt động ngay cả khi nó không nằm trong hệ thống phân cấp chế độ xem của ứng dụng của bạn.
+
+Nếu không, khi người dùng điều hướng ra khỏi trang có video, việc phát lại toàn màn hình sẽ kết thúc khi trình phátViewController được phát hành.
+
+Tất cả những gì bạn cần làm là giữ một tham chiếu mạnh mẽ đến playerViewController khi bạn nhận được lệnh gọi lại willBeginFullScreenPresentation.
+
+Sau đó, khi người dùng thoát khỏi toàn màn hình, bạn sẽ nhận được cuộc gọi lại willEndFullScreenPresentation.
+
+Đây là cơ hội của bạn để buông bỏ trình phátViewController mà bạn đang giữ sống, giả sử người dùng đã điều hướng ra khỏi chế độ xem ban đầu mà nó được trình bày.
+
+Điều tương tự cũng áp dụng cho macOS gốc.
+
+Bạn có thể sử dụng playerViewDelegate mới để giữ cho playerView tồn tại cho đến khi bạn nhận được cuộc gọi lại playerViewWillExitFullScreen.
+
+Khi người dùng thoát khỏi toàn màn hình, bạn cũng sẽ nhận được cuộc gọi lại restoreUserInterface này.
+
+Đây là cơ hội để ứng dụng của bạn điều hướng trở lại trang gốc chứa video, giả sử điều đó phù hợp với trường hợp sử dụng của bạn.
+
+Điều này rất giống với cuộc gọi lại hiện tại mà bạn nhận được khi người dùng dừng Picture in Picture.
+
+Đảm bảo quay lại từ Trình xử lý hoàn thành này càng nhanh càng tốt để không chặn quá trình chuyển đổi từ toàn màn hình sang nội tuyến.
+
+Trả về false chỉ ra rằng việc khôi phục không thành công hoặc không thể thực hiện được, trong trường hợp đó nội dung thoát toàn màn hình mà không có hình ảnh động.
+
+Với điều đó, tôi muốn kết thúc phiên hôm nay.
+
+Chúng tôi đã thấy cách sử dụng API nguồn nội dung mới để thêm hỗ trợ Picture in Picture vào ứng dụng của bạn khi sử dụng AVSampleBufferDisplayLayer thay vì AVPlayerLayer.
+
+Đối với macOS và Mac Catalyst, chúng tôi đã xem xét trải nghiệm toàn màn hình nâng cao và phác thảo các bước cần thiết để mã của bạn tích hợp liền mạch.
+
+Tôi hy vọng bạn thích phiên hôm nay và tôi mong muốn thấy một số tính năng này được tích hợp vào ứng dụng của bạn.
+
+Tận hưởng phần còn lại của hội nghị.
+
+♪

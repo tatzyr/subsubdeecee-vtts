@@ -1,0 +1,529 @@
+10133
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Dario Rexin: Xin chào, tên tôi là Dario Rexin, và tôi là một kỹ sư trong nhóm Swift tại Apple.
+
+Hôm nay, đồng nghiệp Doug của tôi và tôi sẽ nói về các diễn viên trong Swift và cách chúng được sử dụng để bảo vệ trạng thái có thể thay đổi trong các ứng dụng Swift đồng thời.
+
+Một trong những vấn đề khó khăn về cơ bản khi viết các chương trình đồng thời là tránh các cuộc đua dữ liệu.
+
+Các cuộc đua dữ liệu xảy ra khi hai luồng riêng biệt truy cập đồng thời vào cùng một dữ liệu và ít nhất một trong số các truy cập đó là ghi.
+
+Các cuộc đua dữ liệu rất tầm thường để xây dựng nhưng nổi tiếng là khó gỡ lỗi.
+
+Đây là một lớp bộ đếm đơn giản với một thao tác làm tăng bộ đếm và trả về giá trị mới của nó.
+
+Giả sử chúng ta tiếp tục và cố gắng tăng từ hai nhiệm vụ đồng thời.
+
+Đây là một ý tưởng tồi.
+
+Tùy thuộc vào thời gian thực hiện, chúng ta có thể nhận được 1 và sau đó là 2, hoặc 2 và sau đó là 1.
+
+Điều này được mong đợi, và trong cả hai trường hợp, bộ đếm sẽ được để ở trạng thái nhất quán.
+
+Nhưng bởi vì chúng tôi đã giới thiệu một cuộc đua dữ liệu, chúng tôi cũng có thể nhận được 1 và 1 nếu cả hai nhiệm vụ đều đọc 0 và viết 1.
+
+Hoặc thậm chí 2 và 2 nếu các câu lệnh trả về xảy ra sau cả hai thao tác gia tăng.
+
+Các cuộc đua dữ liệu nổi tiếng là khó tránh và gỡ lỗi.
+
+Họ yêu cầu lý luận không cục bộ vì việc truy cập dữ liệu gây ra cuộc đua có thể nằm trong các phần khác nhau của chương trình.
+
+Và chúng không xác định vì bộ lập lịch của hệ điều hành có thể xen kẽ các tác vụ đồng thời theo những cách khác nhau mỗi khi bạn chạy chương trình của mình.
+
+Các cuộc đua dữ liệu được gây ra bởi trạng thái có thể thay đổi được chia sẻ.
+
+Nếu dữ liệu của bạn không thay đổi hoặc nó không được chia sẻ trên nhiều tác vụ đồng thời, bạn không thể có một cuộc đua dữ liệu trên đó.
+
+Một cách để tránh các cuộc đua dữ liệu là loại bỏ trạng thái có thể thay đổi được chia sẻ bằng cách sử dụng ngữ nghĩa giá trị.
+
+Với một biến của một loại giá trị, tất cả các đột biến là cục bộ.
+
+Hơn nữa, các thuộc tính "cho phép" của các loại ngữ nghĩa giá trị thực sự bất biến, vì vậy việc truy cập chúng từ các tác vụ đồng thời khác nhau là an toàn.
+
+Swift đã thúc đẩy ngữ nghĩa giá trị kể từ khi thành lập vì chúng giúp lý luận về chương trình của chúng tôi dễ dàng hơn và những điều tương tự cũng giúp chúng an toàn khi sử dụng trong các chương trình đồng thời.
+
+Trong ví dụ này, chúng tôi tạo ra một mảng với một số giá trị.
+
+Tiếp theo, chúng tôi gán mảng đó cho biến thứ hai.
+
+Bây giờ chúng ta thêm một giá trị khác nhau vào mỗi bản sao của mảng.
+
+Khi chúng tôi in cả hai mảng ở cuối, chúng tôi thấy rằng cả hai bản sao đều chứa các giá trị mà mảng đã được khởi tạo, nhưng mỗi giá trị được thêm vào chỉ có trong bản sao tương ứng mà chúng tôi đã thêm chúng vào.
+
+Phần lớn các loại trong thư viện tiêu chuẩn của Swift có ngữ nghĩa giá trị, bao gồm các loại bộ sưu tập như từ điển, hoặc như trong ví dụ này, mảng.
+
+Bây giờ chúng ta đã thiết lập ngữ nghĩa giá trị đó giải quyết tất cả các cuộc đua dữ liệu của chúng ta, hãy tiếp tục và biến bộ đếm của chúng ta thành một loại giá trị bằng cách biến nó thành một cấu trúc.
+
+Chúng ta cũng phải đánh dấu hàm gia tăng là đột biến, vì vậy nó có thể sửa đổi thuộc tính giá trị.
+
+Khi chúng tôi đang cố gắng sửa đổi bộ đếm, chúng tôi sẽ gặp lỗi trình biên dịch vì bộ đếm là cho phép, điều này ngăn chúng tôi biến đổi nó.
+
+Bây giờ, có vẻ rất hấp dẫn khi chỉ thay đổi biến bộ đếm thành var để làm cho nó có thể thay đổi được.
+
+Nhưng điều đó sẽ khiến chúng ta, một lần nữa, với một điều kiện chủng tộc bởi vì bộ đếm sẽ được tham chiếu bởi cả hai nhiệm vụ đồng thời.
+
+May mắn thay, trình biên dịch đã bảo vệ chúng tôi và không cho phép chúng tôi biên dịch mã không an toàn này.
+
+Thay vào đó, chúng ta có thể gán bộ đếm cho một biến có thể thay đổi cục bộ bên trong mỗi tác vụ đồng thời.
+
+Khi chúng tôi thực hiện ví dụ của mình ngay bây giờ, nó sẽ luôn in 1 cho cả hai tác vụ đồng thời.
+
+Nhưng mặc dù mã của chúng tôi bây giờ không có chủng tộc, hành vi đó không còn là điều chúng tôi muốn nữa.
+
+Điều này cho thấy rằng vẫn có những trường hợp yêu cầu trạng thái có thể thay đổi được chia sẻ.
+
+Khi chúng tôi đã chia sẻ trạng thái có thể thay đổi trong một chương trình đồng thời, chúng tôi cần một số hình thức đồng bộ hóa để đảm bảo rằng việc sử dụng đồng thời trạng thái có thể thay đổi được chia sẻ của chúng tôi sẽ không gây ra các cuộc đua dữ liệu.
+
+Có một số nguyên thủy để đồng bộ hóa, từ các công cụ cấp thấp như nguyên tử và khóa đến các cấu trúc cấp cao hơn như hàng đợi điều phối nối tiếp.
+
+Mỗi nguyên thủy này có những điểm mạnh khác nhau, nhưng tất cả chúng đều có chung điểm yếu quan trọng: chúng đòi hỏi kỷ luật cẩn thận để sử dụng chính xác một cách chính xác, mọi lúc, hoặc chúng ta sẽ kết thúc với một cuộc đua dữ liệu.
+
+Đây là nơi các diễn viên bước vào.
+
+Các diễn viên là một cơ chế đồng bộ hóa cho trạng thái có thể thay đổi được chia sẻ.
+
+Một diễn viên có trạng thái riêng và trạng thái đó bị cô lập với phần còn lại của chương trình.
+
+Cách duy nhất để truy cập trạng thái đó là thông qua diễn viên.
+
+Và bất cứ khi nào bạn xem qua diễn viên, cơ chế đồng bộ hóa của diễn viên đảm bảo rằng không có mã nào khác truy cập đồng thời vào trạng thái của diễn viên.
+
+Điều này mang lại cho chúng tôi cùng một thuộc tính loại trừ lẫn nhau mà chúng tôi nhận được từ việc sử dụng khóa thủ công hoặc hàng đợi điều phối nối tiếp, nhưng với các tác nhân, đó là một đảm bảo cơ bản do Swift cung cấp.
+
+Bạn không thể quên thực hiện đồng bộ hóa, bởi vì Swift sẽ tạo ra lỗi trình biên dịch nếu bạn thử.
+
+Diễn viên là một loại hình mới trong Swift.
+
+Chúng cung cấp các khả năng giống như tất cả các loại được đặt tên trong Swift.
+
+Chúng có thể có các thuộc tính, phương thức, trình khởi tạo, chỉ số con, v.v.
+
+Chúng có thể phù hợp với các giao thức và được tăng cường với các phần mở rộng.
+
+Giống như các lớp học, chúng là các loại tham chiếu; bởi vì mục đích của các diễn viên là thể hiện trạng thái có thể thay đổi được chia sẻ.
+
+Trên thực tế, đặc điểm phân biệt chính của các loại diễn viên là chúng cô lập dữ liệu phiên bản của chúng với phần còn lại của chương trình và đảm bảo quyền truy cập đồng bộ vào dữ liệu đó.
+
+Tất cả hành vi đặc biệt của họ đều xuất phát từ những ý tưởng cốt lõi đó.
+
+Ở đây, chúng tôi đã xác định bộ đếm của mình là một loại diễn viên.
+
+Chúng tôi vẫn có giá trị thuộc tính thể hiện cho bộ đếm và phương thức tăng để tăng giá trị đó và trả về giá trị mới.
+
+Sự khác biệt là diễn viên sẽ đảm bảo giá trị không được truy cập đồng thời.
+
+Trong trường hợp này, điều đó có nghĩa là phương thức tăng, khi được gọi, sẽ chạy đến hoàn thành mà không cần bất kỳ mã nào khác thực thi trên diễn viên.
+
+Sự đảm bảo đó loại bỏ khả năng xảy ra các cuộc đua dữ liệu ở trạng thái của diễn viên.
+
+Hãy mang lại ví dụ cuộc đua dữ liệu của chúng ta.
+
+Chúng tôi lại có hai nhiệm vụ đồng thời cố gắng tăng cùng một bộ đếm.
+
+Cơ chế đồng bộ hóa nội bộ của diễn viên đảm bảo rằng một cuộc gọi gia tăng được thực hiện để hoàn thành trước khi cuộc gọi kia có thể bắt đầu.
+
+Vì vậy, chúng tôi có thể nhận được 1 và 2 hoặc 2 và 1 vì cả hai đều là các thực thi đồng thời hợp lệ, nhưng chúng tôi không thể nhận được cùng một số lượng hai lần hoặc bỏ qua bất kỳ giá trị nào vì sự đồng bộ hóa bên trong của diễn viên đã loại bỏ tiềm năng cho các cuộc đua dữ liệu ở trạng thái diễn viên.
+
+Hãy xem xét điều gì thực sự xảy ra khi cả hai nhiệm vụ đồng thời cố gắng tăng bộ đếm cùng một lúc.
+
+Một người sẽ đến đó trước, và người kia sẽ phải đợi đến lượt mình.
+
+Nhưng làm thế nào chúng ta có thể đảm bảo rằng nhiệm vụ thứ hai có thể kiên nhẫn chờ đợi đến lượt diễn viên?
+
+Swift có một cơ chế cho điều đó.
+
+Bất cứ khi nào bạn tương tác với một diễn viên từ bên ngoài, bạn làm như vậy một cách không đồng bộ.
+
+Nếu diễn viên đang bận, thì mã của bạn sẽ tạm dừng để CPU bạn đang chạy có thể thực hiện các công việc hữu ích khác.
+
+Khi diễn viên được tự do trở lại, nó sẽ đánh thức mã của bạn - tiếp tục thực thi - để cuộc gọi có thể chạy trên diễn viên.
+
+Từ khóa await trong ví dụ này chỉ ra rằng cuộc gọi không đồng bộ đến diễn viên có thể liên quan đến việc tạm ngưng như vậy.
+
+Hãy kéo dài ví dụ ngược lại của chúng ta xa hơn một chút bằng cách thêm thao tác đặt lại chậm một cách không cần thiết.
+
+Thao tác này đặt giá trị trở lại 0, sau đó gọi tăng số lần thích hợp để đưa bộ đếm đến giá trị mới.
+
+Phương pháp resetSlowly này được xác định trong một phần mở rộng của loại diễn viên truy cập để nó nằm bên trong diễn viên.
+
+Điều đó có nghĩa là nó có thể truy cập trực tiếp vào trạng thái của diễn viên, điều này sẽ đặt lại giá trị bộ đếm về 0.
+
+Nó cũng có thể gọi đồng bộ các phương thức khác trên diễn viên, chẳng hạn như trong cuộc gọi tăng.
+
+Không cần chờ đợi vì chúng tôi đã biết rằng chúng tôi đang chạy trên diễn viên.
+
+Đây là một tài sản quan trọng của các diễn viên.
+
+Mã đồng bộ trên diễn viên luôn chạy đến hoàn thành mà không bị gián đoạn.
+
+Vì vậy, chúng ta có thể lý luận về mã đồng bộ một cách tuần tự, mà không cần phải xem xét ảnh hưởng của sự đồng thời đối với trạng thái diễn viên của chúng ta.
+
+Chúng tôi đã nhấn mạnh rằng mã đồng bộ của chúng tôi chạy không bị gián đoạn, nhưng các tác nhân thường tương tác với nhau hoặc với các mã không đồng bộ khác trong hệ thống.
+
+Hãy dành vài phút để nói về mã và diễn viên không đồng bộ.
+
+Nhưng trước tiên, chúng ta cần một ví dụ tốt hơn.
+
+Ở đây chúng tôi đang xây dựng một diễn viên tải xuống hình ảnh.
+
+Nó chịu trách nhiệm tải xuống một hình ảnh từ một dịch vụ khác.
+
+Nó cũng lưu trữ các hình ảnh đã tải xuống trong bộ nhớ cache để tránh tải xuống cùng một hình ảnh nhiều lần.
+
+Luồng logic rất đơn giản: kiểm tra bộ nhớ cache, tải xuống hình ảnh, sau đó ghi lại hình ảnh vào bộ nhớ cache trước khi quay lại.
+
+Bởi vì chúng tôi đang ở trong một diễn viên, mã này không có các cuộc đua dữ liệu cấp thấp; bất kỳ số lượng hình ảnh nào cũng có thể được tải xuống đồng thời.
+
+Cơ chế đồng bộ hóa của diễn viên đảm bảo rằng chỉ có một tác vụ có thể thực thi mã truy cập vào thuộc tính phiên bản bộ nhớ cache tại một thời điểm, vì vậy không có cách nào bộ nhớ cache có thể bị hỏng.
+
+Điều đó nói rằng, từ khóa chờ đợi ở đây đang truyền đạt điều gì đó rất quan trọng.
+
+Bất cứ khi nào một sự chờ đợi xảy ra, điều đó có nghĩa là chức năng có thể bị đình chỉ tại thời điểm này.
+
+Nó từ bỏ CPU của nó để mã khác trong chương trình có thể thực thi, điều này ảnh hưởng đến trạng thái chương trình tổng thể.
+
+Tại thời điểm chức năng của bạn tiếp tục, trạng thái chương trình tổng thể sẽ thay đổi.
+
+Điều quan trọng là phải đảm bảo rằng bạn chưa đưa ra giả định về trạng thái đó trước khi chờ đợi mà có thể không được giữ lại sau khi chờ đợi.
+
+Hãy tưởng tượng chúng ta có hai tác vụ đồng thời khác nhau đang cố gắng tìm nạp cùng một hình ảnh cùng một lúc.
+
+Người đầu tiên thấy rằng không có mục nhập bộ nhớ cache, tiến hành bắt đầu tải xuống hình ảnh từ máy chủ và sau đó bị đình chỉ vì quá trình tải xuống sẽ mất một lúc.
+
+Trong khi nhiệm vụ đầu tiên là tải xuống hình ảnh, một hình ảnh mới có thể được triển khai đến máy chủ dưới cùng một URL.
+
+Bây giờ, một tác vụ đồng thời thứ hai cố gắng tìm nạp hình ảnh dưới URL đó.
+
+Nó cũng không thấy mục nhập bộ nhớ cache vì lần tải xuống đầu tiên chưa kết thúc, sau đó bắt đầu tải xuống hình ảnh lần thứ hai.
+
+Nó cũng bị đình chỉ trong khi quá trình tải xuống hoàn tất.
+
+Sau một thời gian, một trong những lần tải xuống - giả sử đó là lần đầu tiên - sẽ hoàn thành và nhiệm vụ của nó sẽ tiếp tục thực hiện trên diễn viên.
+
+Nó điền vào bộ nhớ cache và trả về hình ảnh kết quả của một con mèo.
+
+Bây giờ nhiệm vụ thứ hai đã hoàn tất quá trình tải xuống, vì vậy nó thức dậy.
+
+Nó ghi đè lên cùng một mục nhập trong bộ nhớ cache với hình ảnh của con mèo buồn mà nó có.
+
+Vì vậy, mặc dù bộ nhớ cache đã được điền với một hình ảnh, bây giờ chúng tôi nhận được một hình ảnh khác cho cùng một URL.
+
+Đó là một chút bất ngờ.
+
+Chúng tôi mong đợi rằng một khi chúng tôi lưu trữ một hình ảnh, chúng tôi luôn lấy lại cùng một hình ảnh đó cho cùng một URL để giao diện người dùng của chúng tôi vẫn nhất quán, ít nhất là cho đến khi chúng tôi đi và xóa bộ nhớ cache theo cách thủ công.
+
+Nhưng ở đây, hình ảnh được lưu trong bộ nhớ cache đã thay đổi bất ngờ.
+
+Chúng tôi không có bất kỳ cuộc đua dữ liệu cấp thấp nào, nhưng vì chúng tôi đã đưa ra các giả định về trạng thái trong một thời gian chờ đợi, chúng tôi đã kết thúc với một lỗi tiềm ẩn.
+
+Việc sửa chữa ở đây là kiểm tra các giả định của chúng tôi sau khi chờ đợi.
+
+Nếu đã có một mục nhập trong bộ nhớ cache khi chúng tôi tiếp tục, chúng tôi sẽ giữ lại phiên bản gốc đó và vứt bỏ phiên bản mới.
+
+Một giải pháp tốt hơn là tránh tải xuống dư thừa hoàn toàn.
+
+Chúng tôi đã đưa giải pháp đó vào mã được liên kết với video này.
+
+Sự tái nhập diễn viên ngăn chặn bế tắc và đảm bảo tiến độ chuyển tiếp, nhưng nó yêu cầu bạn kiểm tra các giả định của mình trong mỗi lần chờ đợi.
+
+Để thiết kế tốt cho việc tái nhập, hãy thực hiện đột biến trạng thái tác nhân trong mã đồng bộ.
+
+Lý tưởng nhất, hãy làm điều đó trong một hàm đồng bộ để tất cả các thay đổi trạng thái được gói gọn tốt.
+
+Những thay đổi trạng thái có thể liên quan đến việc tạm thời đưa diễn viên của chúng ta vào trạng thái không nhất quán.
+
+Đảm bảo khôi phục tính nhất quán trước khi chờ đợi.
+
+Và hãy nhớ rằng chờ đợi là một điểm đình chỉ tiềm năng.
+
+Nếu mã của bạn bị đình chỉ, chương trình và thế giới sẽ tiếp tục trước khi mã của bạn được nối lại.
+
+Bất kỳ giả định nào bạn đã đưa ra về trạng thái toàn cầu, đồng hồ, bộ hẹn giờ hoặc diễn viên của bạn sẽ cần được kiểm tra sau khi chờ đợi.
+
+Và bây giờ đồng nghiệp Doug của tôi sẽ cho bạn biết thêm về sự cô lập diễn viên. Doug?
+
+Doug Gregor: Cảm ơn, Dario.
+
+Sự cô lập diễn viên là nền tảng cho hành vi của các loại diễn viên.
+
+Dario đã thảo luận về cách cô lập diễn viên được đảm bảo bởi mô hình ngôn ngữ Swift, thông qua các tương tác không đồng bộ từ bên ngoài diễn viên.
+
+Trong phần này, chúng ta sẽ nói về cách cô lập diễn viên tương tác với các tính năng ngôn ngữ khác, bao gồm tuân thủ giao thức, đóng và lớp học.
+
+Giống như các loại khác, các tác nhân có thể tuân thủ các giao thức miễn là chúng có thể đáp ứng các yêu cầu của giao thức.
+
+Ví dụ, hãy làm cho diễn viên LibraryAccount này phù hợp với giao thức Equatable.
+
+Phương pháp bình đẳng tĩnh so sánh hai tài khoản thư viện dựa trên số ID của chúng.
+
+Bởi vì phương thức là tĩnh, không có tự thể hiện và vì vậy nó không bị cô lập với diễn viên.
+
+Thay vào đó, chúng ta có hai tham số của loại diễn viên và phương thức tĩnh này nằm ngoài cả hai.
+
+Điều đó ổn vì việc triển khai chỉ truy cập trạng thái bất biến trên tác nhân.
+
+Hãy mở rộng ví dụ của chúng tôi hơn nữa để làm cho tài khoản thư viện của chúng tôi phù hợp với giao thức Hashable.
+
+Làm như vậy đòi hỏi phải thực hiện thao tác băm (vào), điều mà chúng ta có thể làm như thế này.
+
+Tuy nhiên, trình biên dịch Swift sẽ phàn nàn rằng sự phù hợp này không được phép.
+
+Chuyện gì đã xảy ra vậy?
+
+Chà, tuân thủ Hashable theo cách này có nghĩa là hàm này có thể được gọi từ bên ngoài diễn viên, nhưng hash (vào) không đồng bộ, vì vậy không có cách nào để duy trì sự cô lập của diễn viên.
+
+Để khắc phục điều này, chúng ta có thể làm cho phương pháp này không bị cô lập.
+
+Không cô lập có nghĩa là phương pháp này được coi là nằm ngoài diễn viên, mặc dù về mặt cú pháp, nó được mô tả trên diễn viên.
+
+Điều này có nghĩa là nó có thể đáp ứng yêu cầu đồng bộ từ giao thức Hashable.
+
+Bởi vì các phương pháp không cô lập được coi là nằm ngoài diễn viên, chúng không thể tham chiếu trạng thái có thể thay đổi trên diễn viên.
+
+Phương pháp này ổn vì nó đề cập đến số ID bất biến.
+
+Nếu chúng tôi cố gắng băm dựa trên thứ khác, chẳng hạn như mảng sách cho mượn, chúng tôi sẽ gặp lỗi vì quyền truy cập vào trạng thái có thể thay đổi từ bên ngoài sẽ cho phép chạy đua dữ liệu.
+
+Thế là đủ sự phù hợp của giao thức.
+
+Hãy nói về việc đóng cửa.
+
+Đóng cửa là các hàm nhỏ được xác định trong một hàm, sau đó có thể được chuyển sang một hàm khác để được gọi một thời gian sau đó.
+
+Giống như các hàm, một đóng có thể bị cô lập bởi diễn viên hoặc nó có thể không bị cô lập.
+
+Trong ví dụ này, chúng tôi sẽ đọc một số từ mỗi cuốn sách chúng tôi có cho mượn và trả lại tổng số trang chúng tôi đã đọc.
+
+Lời kêu gọi giảm liên quan đến việc đóng cửa thực hiện việc đọc.
+
+Lưu ý rằng không có sự chờ đợi trong cuộc gọi này để đọc Một số.
+
+Đó là bởi vì sự đóng cửa này, được hình thành trong hàm "đọc" bị cô lập bởi diễn viên, bản thân nó được cô lập bởi diễn viên.
+
+Chúng tôi biết điều này là an toàn vì hoạt động giảm sẽ thực hiện đồng bộ và không thể thoát khỏi việc đóng cửa ra một số luồng khác, nơi nó có thể gây ra truy cập đồng thời.
+
+Bây giờ, hãy làm điều gì đó khác biệt một chút.
+
+Tôi không có thời gian để đọc ngay bây giờ, vì vậy hãy đọc sau.
+
+Ở đây, chúng tôi tạo ra một nhiệm vụ tách rời.
+
+Một nhiệm vụ tách rời thực hiện việc đóng cửa đồng thời với các công việc khác mà diễn viên đang làm.
+
+Do đó, việc đóng cửa không thể thuộc về diễn viên hoặc chúng tôi sẽ giới thiệu các cuộc đua dữ liệu.
+
+Vì vậy, việc đóng cửa này không bị cô lập với diễn viên.
+
+Khi nó muốn gọi phương thức đọc, nó phải làm như vậy không đồng bộ, như được chỉ ra bởi await.
+
+Chúng tôi đã nói một chút về sự cô lập của diễn viên đối với mã, đó là liệu mã đó chạy bên trong diễn viên hay bên ngoài nó.
+
+Bây giờ, hãy nói về sự cô lập và dữ liệu diễn viên.
+
+Trong ví dụ tài khoản thư viện của chúng tôi, chúng tôi đã cẩn trọng tránh nói loại sách thực sự là gì.
+
+Tôi đã giả định đó là một loại giá trị, giống như một cấu trúc.
+
+Đó là một lựa chọn tốt bởi vì nó có nghĩa là tất cả trạng thái cho một ví dụ của diễn viên tài khoản thư viện là khép kín.
+
+Nếu chúng ta tiếp tục và gọi phương pháp này để chọn một cuốn sách ngẫu nhiên để đọc, chúng ta sẽ nhận được một bản sao của cuốn sách mà chúng ta có thể đọc.
+
+Những thay đổi chúng tôi thực hiện đối với bản sao cuốn sách của mình sẽ không ảnh hưởng đến diễn viên và ngược lại.
+
+Tuy nhiên, nếu biến cuốn sách thành một lớp học, mọi thứ sẽ hơi khác một chút.
+
+Diễn viên tài khoản thư viện của chúng tôi hiện tham khảo các trường hợp của lớp sách.
+
+Bản thân nó không phải là vấn đề.
+
+Tuy nhiên, điều gì sẽ xảy ra khi chúng ta gọi phương thức để chọn một cuốn sách ngẫu nhiên?
+
+Bây giờ chúng ta có một tham chiếu đến trạng thái có thể thay đổi của diễn viên, đã được chia sẻ bên ngoài diễn viên.
+
+Chúng tôi đã tạo ra tiềm năng cho các cuộc đua dữ liệu.
+
+Bây giờ, nếu chúng ta đi và cập nhật tiêu đề của cuốn sách, việc sửa đổi sẽ xảy ra ở trạng thái có thể truy cập được trong diễn viên.
+
+Bởi vì phương pháp truy cập không có trên diễn viên, sửa đổi này cuối cùng có thể là một cuộc đua dữ liệu.
+
+Các loại giá trị và tác nhân đều an toàn để sử dụng đồng thời, nhưng các lớp vẫn có thể gây ra vấn đề.
+
+Chúng tôi có tên cho các loại an toàn để sử dụng đồng thời: Có thể gửi được.
+
+Loại Sendable là loại có giá trị có thể được chia sẻ giữa các diễn viên khác nhau.
+
+Nếu bạn sao chép một giá trị từ nơi này sang nơi khác và cả hai nơi có thể sửa đổi một cách an toàn các bản sao của chính họ về giá trị đó mà không can thiệp lẫn nhau, loại đó có thể là Sendable.
+
+Các loại giá trị có thể gửi được vì mỗi bản sao là độc lập, như Dario đã nói trước đó.
+
+Các loại diễn viên có thể gửi được vì chúng đồng bộ hóa quyền truy cập vào trạng thái có thể thay đổi của chúng.
+
+Các lớp học có thể được gửi đi, nhưng chỉ khi chúng được triển khai cẩn thận.
+
+Ví dụ, nếu một lớp và tất cả các lớp con của nó chỉ chứa dữ liệu bất biến, thì nó có thể được gọi là Sendable.
+
+Hoặc nếu lớp thực hiện đồng bộ hóa nội bộ, ví dụ như với khóa, để đảm bảo truy cập đồng thời an toàn, nó có thể là Sendable.
+
+Nhưng hầu hết các lớp học đều không phải trong số này, và không thể gửi được.
+
+Các hàm không nhất thiết phải có thể gửi được, vì vậy có một loại chức năng mới cho các chức năng an toàn để truyền qua các tác nhân.
+
+Chúng tôi sẽ sớm quay lại với những thứ đó.
+
+Các tác nhân của bạn - trên thực tế, tất cả mã đồng thời của bạn - chủ yếu nên giao tiếp theo các loại Có thể gửi được.
+
+Các loại có thể gửi được bảo vệ mã khỏi các cuộc đua dữ liệu.
+
+Đây là một thuộc tính mà Swift cuối cùng sẽ bắt đầu kiểm tra tĩnh.
+
+Tại thời điểm đó, sẽ trở thành một lỗi khi chuyển một loại không thể gửi qua ranh giới diễn viên.
+
+Làm thế nào để người ta biết rằng một loại có thể gửi được?
+
+Chà, Sendable là một giao thức và bạn nói rằng loại của bạn phù hợp với Sendable giống như cách bạn làm với các giao thức khác.
+
+Swift sau đó sẽ kiểm tra để đảm bảo loại của bạn có ý nghĩa như một loại Có thể gửi được.
+
+Cấu trúc Sách có thể là Có thể gửi được nếu tất cả các thuộc tính được lưu trữ của nó thuộc loại Có thể gửi được.
+
+Giả sử Tác giả thực sự là một lớp, có nghĩa là nó - và do đó mảng tác giả - không thể gửi được.
+
+Swift sẽ tạo ra lỗi trình biên dịch chỉ ra rằng Book không thể gửi được.
+
+Đối với các loại chung, việc chúng có thể gửi được hay không có thể phụ thuộc vào các đối số chung của chúng.
+
+Chúng ta có thể sử dụng sự phù hợp có điều kiện để truyền bá Sendable khi thích hợp.
+
+Ví dụ, một loại cặp sẽ chỉ là Sendable khi cả hai đối số chung của nó đều là Sendable.
+
+Cách tiếp cận tương tự được sử dụng để kết luận rằng một mảng các loại Sendable tự nó là Sendable.
+
+Chúng tôi khuyến khích bạn giới thiệu sự phù hợp Sendable cho các loại có giá trị an toàn để chia sẻ đồng thời.
+
+Sử dụng những loại đó trong diễn viên của bạn.
+
+Sau đó, khi Swift bắt đầu thực thi Sendable giữa các diễn viên, mã của bạn sẽ sẵn sàng.
+
+Bản thân các hàm có thể được Gửi được, có nghĩa là việc truyền giá trị hàm qua các tác nhân là an toàn.
+
+Điều này đặc biệt quan trọng đối với việc đóng cửa, nơi nó hạn chế những gì việc đóng cửa có thể làm để giúp ngăn chặn các cuộc đua dữ liệu.
+
+Ví dụ, đóng Sendable không thể nắm bắt được biến cục bộ có thể thay đổi, bởi vì điều đó sẽ cho phép các cuộc đua dữ liệu trên biến cục bộ.
+
+Bất cứ thứ gì mà việc đóng cửa nắm bắt cần phải có thể gửi được, để đảm bảo rằng việc đóng cửa không thể được sử dụng để di chuyển các loại không thể gửi qua ranh giới diễn viên.
+
+Và cuối cùng, một đóng Sendable đồng bộ không thể bị cô lập bởi diễn viên, bởi vì điều đó sẽ cho phép mã được chạy trên diễn viên từ bên ngoài.
+
+Chúng tôi thực sự đang dựa vào ý tưởng đóng cửa Sendable trong buổi nói chuyện này.
+
+Thao tác tạo ra các tác vụ tách rời nhận một hàm Sendable, được viết ở đây với @Sendable trong loại hàm.
+
+Bạn có nhớ ví dụ phản biện của chúng ta từ đầu cuộc nói chuyện không?
+
+Chúng tôi đã cố gắng xây dựng một bộ đếm kiểu giá trị.
+
+Sau đó, chúng tôi đã cố gắng đi và sửa đổi nó từ hai lần đóng khác nhau cùng một lúc.
+
+Đây sẽ là một cuộc đua dữ liệu trên biến cục bộ có thể thay đổi.
+
+Tuy nhiên, vì việc đóng cho một nhiệm vụ tách rời là Sendable, Swift sẽ tạo ra lỗi ở đây.
+
+Các loại hàm có thể gửi được sử dụng để chỉ ra nơi thực thi đồng thời có thể xảy ra và do đó ngăn chặn các cuộc đua dữ liệu.
+
+Đây là một ví dụ khác mà chúng ta đã thấy trước đó.
+
+Bởi vì việc đóng cửa cho nhiệm vụ tách rời là Sendable, chúng tôi biết rằng nó không nên bị cô lập với diễn viên.
+
+Do đó, các tương tác với nó sẽ phải không đồng bộ.
+
+Các loại có thể gửi và đóng giúp duy trì sự cô lập của diễn viên bằng cách kiểm tra rằng trạng thái có thể thay đổi không được chia sẻ giữa các tác nhân và không thể sửa đổi đồng thời.
+
+Chúng tôi đã nói chủ yếu về các loại diễn viên và cách chúng tương tác với các giao thức, đóng và các loại Có thể gửi được.
+
+Có một diễn viên nữa để thảo luận - một diễn viên đặc biệt mà chúng tôi gọi là diễn viên chính.
+
+Khi bạn đang xây dựng một ứng dụng, bạn cần suy nghĩ về chủ đề chính.
+
+Đó là nơi kết xuất giao diện người dùng cốt lõi xảy ra, cũng như nơi các sự kiện tương tác người dùng được xử lý.
+
+Các hoạt động hoạt động với giao diện người dùng thường cần được thực hiện từ luồng chính.
+
+Tuy nhiên, bạn không muốn làm tất cả công việc của mình trên chủ đề chính.
+
+Nếu bạn làm quá nhiều việc trên luồng chính, giả sử, vì bạn có một số thao tác đầu vào/đầu ra chậm hoặc chặn tương tác với máy chủ, giao diện người dùng của bạn sẽ bị đóng băng.
+
+Vì vậy, bạn cần phải cẩn thận để thực hiện công việc trên luồng chính khi nó tương tác với giao diện người dùng nhưng nhanh chóng thoát khỏi luồng chính cho các hoạt động tốn kém về mặt tính toán hoặc chờ đợi lâu.
+
+Vì vậy, chúng tôi làm việc trên luồng chính khi chúng tôi có thể và sau đó gọi DispatchQueue.main.async trong mã của bạn bất cứ khi nào bạn có một thao tác cụ thể phải được thực hiện trên luồng chính.
+
+Quay trở lại từ các chi tiết của cơ chế, cấu trúc của mã này trông mơ hồ quen thuộc.
+
+Trên thực tế, tương tác với chủ đề chính rất giống với tương tác với một diễn viên.
+
+Nếu bạn biết bạn đang chạy trên luồng chính, bạn có thể truy cập và cập nhật trạng thái giao diện người dùng của mình một cách an toàn.
+
+Nếu bạn không chạy trên luồng chính, bạn cần tương tác với nó một cách không đồng bộ.
+
+Đây chính xác là cách các diễn viên làm việc.
+
+Có một diễn viên đặc biệt để mô tả chủ đề chính, mà chúng tôi gọi là diễn viên chính.
+
+Diễn viên chính là một diễn viên đại diện cho chủ đề chính.
+
+Nó khác với một diễn viên bình thường theo hai cách quan trọng.
+
+Đầu tiên, diễn viên chính thực hiện tất cả sự đồng bộ hóa của nó thông qua hàng đợi điều phối chính.
+
+Điều này có nghĩa là, từ góc độ thời gian chạy, diễn viên chính có thể hoán đổi cho nhau bằng cách sử dụng DispatchQueue.main.
+
+Thứ hai, mã và dữ liệu cần có trên luồng chính nằm rải rác khắp nơi.
+
+Nó có trong SwiftUI, AppKit, UIKit và các khung hệ thống khác.
+
+Nó trải rộng trên các chế độ xem của riêng bạn, bộ điều khiển chế độ xem và các phần giao diện người dùng trong mô hình dữ liệu của bạn.
+
+Với Swift concurrency, bạn có thể đánh dấu một khai báo bằng thuộc tính diễn viên chính để nói rằng nó phải được thực thi trên diễn viên chính.
+
+Chúng tôi đã làm điều đó với thao tác kiểm tra ở đây, vì vậy nó luôn chạy trên diễn viên chính.
+
+Nếu bạn gọi nó từ bên ngoài diễn viên chính, bạn cần đợi, để cuộc gọi sẽ được thực hiện không đồng bộ trên chuỗi chính.
+
+Bằng cách đánh dấu mã phải chạy trên luồng chính là trên diễn viên chính, không còn phỏng đoán nào về thời điểm sử dụng DispatchQueue.main.
+
+Swift đảm bảo rằng mã này luôn được thực thi trên luồng chính.
+
+Các loại cũng có thể được đặt trên diễn viên chính, điều này làm cho tất cả các thành viên và lớp con của họ nằm trên diễn viên chính.
+
+Điều này hữu ích cho các phần của cơ sở mã của bạn phải tương tác với giao diện người dùng, nơi hầu hết mọi thứ cần chạy trên luồng chính.
+
+Các phương pháp riêng lẻ có thể chọn không tham gia thông qua từ khóa không cô lập, với các quy tắc tương tự mà bạn đã quen thuộc từ các diễn viên bình thường.
+
+Bằng cách sử dụng tác nhân chính cho các loại và hoạt động đối mặt với giao diện người dùng của bạn và giới thiệu các tác nhân của riêng bạn để quản lý trạng thái chương trình khác, bạn có thể kiến trúc ứng dụng của mình để đảm bảo sử dụng đồng thời an toàn, chính xác.
+
+Trong phiên này, chúng tôi đã nói về cách các diễn viên bảo vệ trạng thái có thể thay đổi của họ khỏi sự truy cập đồng thời, sử dụng cách ly diễn viên và bằng cách yêu cầu quyền truy cập không đồng bộ từ bên ngoài diễn viên để tuần tự hóa việc thực thi.
+
+Sử dụng các tác nhân để xây dựng các trừu tượng an toàn, đồng thời trong mã Swift của bạn.
+
+Trong việc triển khai các tác nhân của bạn và trong bất kỳ mã không đồng bộ nào, hãy luôn thiết kế để tái nhập; chờ đợi trong mã của bạn có nghĩa là thế giới có thể tiếp tục và làm mất hiệu lực các giả định của bạn.
+
+Các loại giá trị và tác nhân làm việc cùng nhau để loại bỏ các chủng tộc dữ liệu.
+
+Hãy lưu ý các lớp không xử lý đồng bộ hóa của riêng chúng và các loại không thể gửi khác giới thiệu lại trạng thái có thể thay đổi được chia sẻ.
+
+Cuối cùng, sử dụng diễn viên chính trên mã của bạn tương tác với giao diện người dùng để đảm bảo rằng mã phải có trên luồng chính luôn chạy trên luồng chính.
+
+Để tìm hiểu thêm về cách sử dụng các diễn viên trong ứng dụng của riêng bạn, hãy xem phiên của chúng tôi về việc cập nhật ứng dụng cho Swift đồng thời.
+
+Và để tìm hiểu thêm về việc triển khai mô hình đồng thời của Swift, bao gồm cả các diễn viên, hãy xem phiên "Hậu trường" của chúng tôi.
+
+Diễn viên là một phần cốt lõi của mô hình đồng thời Swift.
+
+Họ làm việc cùng nhau với sự đồng thời không đồng bộ/chờ đợi và có cấu trúc để giúp việc xây dựng các chương trình đồng thời chính xác và hiệu quả dễ dàng hơn.
+
+Chúng tôi nóng lòng muốn xem bạn xây dựng những gì với họ.
+
+♪

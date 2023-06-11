@@ -1,0 +1,1362 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=0"
+  },
+  {
+    "text": "♪ ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=3"
+  },
+  {
+    "text": "Hi. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=10"
+  },
+  {
+    "text": "I’m Johannes Fortmann from the Cloud File Providers team, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=11"
+  },
+  {
+    "text": "and I’m here to show you file providers on macOS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=14"
+  },
+  {
+    "text": "If you’re a cloud storage vendor syncing your users’ files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=18"
+  },
+  {
+    "text": "to macOS, you’re in the right talk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=21"
+  },
+  {
+    "text": "After the introduction, we’re going to talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=23"
+  },
+  {
+    "text": "some of the user flows involved with syncing files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=26"
+  },
+  {
+    "text": "We’ll then run through one of the flows in Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=31"
+  },
+  {
+    "text": "and discuss the order ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=35"
+  },
+  {
+    "text": "in which you will implement support for each of them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=37"
+  },
+  {
+    "text": "We’ll have a quick overview ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=40"
+  },
+  {
+    "text": "of additional optional integration points ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=42"
+  },
+  {
+    "text": "and your next steps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=45"
+  },
+  {
+    "text": "First off, let’s talk about what file providers can do for you.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=48"
+  },
+  {
+    "text": "The File Provider framework allows you to integrate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=54"
+  },
+  {
+    "text": "your cloud storage into the file system on macOS. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=57"
+  },
+  {
+    "text": "It uses new APFS features to allow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=61"
+  },
+  {
+    "text": "on-demand downloads of user files and folders. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=64"
+  },
+  {
+    "text": "The API is entirely in user space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=68"
+  },
+  {
+    "text": "We’re deprecating kernel extensions on macOS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=71"
+  },
+  {
+    "text": "so this is a good alternative for you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=74"
+  },
+  {
+    "text": "if you were relying on FUSE or KAUTH ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=76"
+  },
+  {
+    "text": "to intercept syscalls or download files on demand.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=79"
+  },
+  {
+    "text": "All you have to do is handle uploads, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=84"
+  },
+  {
+    "text": "downloads, and tell us what changed remotely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=87"
+  },
+  {
+    "text": "The system will tell you what changed locally ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=91"
+  },
+  {
+    "text": "and handle all the rest. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=94"
+  },
+  {
+    "text": "All of this functionality is well integrated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=96"
+  },
+  {
+    "text": "with the system and in particular in Finder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=98"
+  },
+  {
+    "text": "Your provider will show up in the sidebar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=103"
+  },
+  {
+    "text": "File status will be shown and tracked in Finder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=105"
+  },
+  {
+    "text": "and there are several customizable integration points ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=109"
+  },
+  {
+    "text": "with the UI. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=111"
+  },
+  {
+    "text": "You implement an app extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=113"
+  },
+  {
+    "text": "that integrates with the system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=117"
+  },
+  {
+    "text": "Its life cycle is driven by user actions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=119"
+  },
+  {
+    "text": "Initially, you create a domain which represents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=123"
+  },
+  {
+    "text": "the file tree that the user can access in your cloud storage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=127"
+  },
+  {
+    "text": "The system will expose that domain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=132"
+  },
+  {
+    "text": "in the Finder sidebar and create a root directory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=134"
+  },
+  {
+    "text": "for the domain in the file system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=137"
+  },
+  {
+    "text": "At this point, no actual data is on the device, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=141"
+  },
+  {
+    "text": "but the user can already start interacting with the root. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=144"
+  },
+  {
+    "text": "How does this work? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=149"
+  },
+  {
+    "text": "The root is what we call a dataless directory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=151"
+  },
+  {
+    "text": "It’s a new kind of object in APFS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=154"
+  },
+  {
+    "text": "and there are APIs to recognize them and interact with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=157"
+  },
+  {
+    "text": "But more importantly, dataless objects are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=162"
+  },
+  {
+    "text": "fully transparent to processes who happen upon them unprepared. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=164"
+  },
+  {
+    "text": "Reads trigger downloads, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=169"
+  },
+  {
+    "text": "and files lose their dataless property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=171"
+  },
+  {
+    "text": "before the reads are allowed to resume. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=173"
+  },
+  {
+    "text": "In this presentation, we will see how the File Provider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=177"
+  },
+  {
+    "text": "framework allows you to implement callbacks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=179"
+  },
+  {
+    "text": "that get called when processes read dataless files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=183"
+  },
+  {
+    "text": "Let’s have a look at some user flows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=188"
+  },
+  {
+    "text": "to get sync up and running. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=190"
+  },
+  {
+    "text": "We’re going to look at four key flows that cover ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=192"
+  },
+  {
+    "text": "both sync down and sync up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=196"
+  },
+  {
+    "text": "In each flow, you’ll see that the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=199"
+  },
+  {
+    "text": "calls your extension whenever it needs new data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=202"
+  },
+  {
+    "text": "We’ll show you that you can talk to your cloud server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=207"
+  },
+  {
+    "text": "to pull that data and, finally, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=210"
+  },
+  {
+    "text": "call a completion handler to reply. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=212"
+  },
+  {
+    "text": "First, we’re going to look at what happens ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=216"
+  },
+  {
+    "text": "when a dataless file is read.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=219"
+  },
+  {
+    "text": "When the kernel detects a read access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=224"
+  },
+  {
+    "text": "to a dataless file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=226"
+  },
+  {
+    "text": "that syscall is paused ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=228"
+  },
+  {
+    "text": "while your extension is called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=230"
+  },
+  {
+    "text": "to fetch the contents of the file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=232"
+  },
+  {
+    "text": "Your extension’s fetchContents method is called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=235"
+  },
+  {
+    "text": "Typically, you will implement it to perform a download. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=239"
+  },
+  {
+    "text": "When the download completes, it calls a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=242"
+  },
+  {
+    "text": "The contents of the file are handed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=246"
+  },
+  {
+    "text": "to the system which fills in the formerly dataless file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=248"
+  },
+  {
+    "text": "without invalidating the open file descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=252"
+  },
+  {
+    "text": "The system then unpauses the read access. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=255"
+  },
+  {
+    "text": "Now that the file is no longer dataless, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=259"
+  },
+  {
+    "text": "subsequent reads won’t have to involve your extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=262"
+  },
+  {
+    "text": "Enumerating a directory works very similarly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=266"
+  },
+  {
+    "text": "The kernel detects a readdir call and pauses it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=269"
+  },
+  {
+    "text": "It calls your extension to enumerate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=273"
+  },
+  {
+    "text": "the items in that directory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=276"
+  },
+  {
+    "text": "You fetch the metadata for these items from your server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=278"
+  },
+  {
+    "text": "And you reply with a number of items. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=282"
+  },
+  {
+    "text": "The enumeration is paginated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=285"
+  },
+  {
+    "text": "You can return less than the full set of items, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=288"
+  },
+  {
+    "text": "and the system will pick up enumerating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=291"
+  },
+  {
+    "text": "from where it left off. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=294"
+  },
+  {
+    "text": "Once all pages have been enumerated, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=296"
+  },
+  {
+    "text": "the system will allow the original call to go through. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=299"
+  },
+  {
+    "text": "Like in the file case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=303"
+  },
+  {
+    "text": "once the directory has been enumerated, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=305"
+  },
+  {
+    "text": "subsequent readdir calls will use the contents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=308"
+  },
+  {
+    "text": "from disk and not have to involve your extension.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=311"
+  },
+  {
+    "text": "But what if those contents change remotely? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=316"
+  },
+  {
+    "text": "Well, you will have to inform the system of the remote change. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=320"
+  },
+  {
+    "text": "Let’s look at how that works. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=324"
+  },
+  {
+    "text": "If there’s a remote change, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=327"
+  },
+  {
+    "text": "your server can send a push notification to the Mac. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=329"
+  },
+  {
+    "text": "In response to that push notification, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=334"
+  },
+  {
+    "text": "you signal the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=336"
+  },
+  {
+    "text": "that there are changes that need to be enumerated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=338"
+  },
+  {
+    "text": "from a special enumerator, the .workingSet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=341"
+  },
+  {
+    "text": "The system will turn around and enumerate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=345"
+  },
+  {
+    "text": "the items that have changed in the .workingSet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=347"
+  },
+  {
+    "text": "A continuation token called the syncAnchor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=351"
+  },
+  {
+    "text": "is used to enumerate only the new changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=354"
+  },
+  {
+    "text": "This token is defined by your extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=358"
+  },
+  {
+    "text": "The system keeps track of the syncAnchor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=361"
+  },
+  {
+    "text": "it last enumerated to. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=363"
+  },
+  {
+    "text": "It will call your enumerator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=365"
+  },
+  {
+    "text": "with the enumerateChanges(from syncAnchor:) method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=366"
+  },
+  {
+    "text": "In response, you return changed items, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=369"
+  },
+  {
+    "text": "and once you’re done, give us a new syncAnchor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=373"
+  },
+  {
+    "text": "that we can use next time around. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=376"
+  },
+  {
+    "text": "The system will asynchronously go ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=379"
+  },
+  {
+    "text": "and update the user-visible files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=380"
+  },
+  {
+    "text": "We use an APFS compare-and-swap feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=383"
+  },
+  {
+    "text": "which makes sure that local changes aren’t lost ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=386"
+  },
+  {
+    "text": "in the process. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=389"
+  },
+  {
+    "text": "Furthermore, the system integrates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=391"
+  },
+  {
+    "text": "with file coordination ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=393"
+  },
+  {
+    "text": "and other advisory locking mechanisms ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=395"
+  },
+  {
+    "text": "to coordinate with applications.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=397"
+  },
+  {
+    "text": "With these three mechanisms, we are able to sync files ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=401"
+  },
+  {
+    "text": "from the cloud and keep them in sync ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=405"
+  },
+  {
+    "text": "in case of remote changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=407"
+  },
+  {
+    "text": "The last flow deals with syncing up local changes to the cloud. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=410"
+  },
+  {
+    "text": "The system detects when local items have changed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=414"
+  },
+  {
+    "text": "and calls a modifyItem method on your extension, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=418"
+  },
+  {
+    "text": "passing in the exact set of fields that have changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=422"
+  },
+  {
+    "text": "It aggregates low-level events into events ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=426"
+  },
+  {
+    "text": "that are meaningful for sync. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=429"
+  },
+  {
+    "text": "For example, the kernel detects safe saves and remaps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=431"
+  },
+  {
+    "text": "your item identifiers to the new file IDs transparently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=436"
+  },
+  {
+    "text": "The system will also zip package files for you if you request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=440"
+  },
+  {
+    "text": "and present you with consistent package-level changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=444"
+  },
+  {
+    "text": "In response to the modifyItem call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=449"
+  },
+  {
+    "text": "you will update the state of the item server-side. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=451"
+  },
+  {
+    "text": "If the contents of the file have changed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=455"
+  },
+  {
+    "text": "the system will hand you a clone of the changed file so you can ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=458"
+  },
+  {
+    "text": "upload a consistent version even in the event of further changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=461"
+  },
+  {
+    "text": "When done, you call a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=467"
+  },
+  {
+    "text": "The completion handler is used to update the version identifier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=471"
+  },
+  {
+    "text": "of the item and confirms delivery ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=474"
+  },
+  {
+    "text": "of the change to your extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=476"
+  },
+  {
+    "text": "The completion handler also takes the final state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=479"
+  },
+  {
+    "text": "of the item as a parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=482"
+  },
+  {
+    "text": "Updating an item in the cloud may change its state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=484"
+  },
+  {
+    "text": "for example, if it conflicts with a remote change. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=488"
+  },
+  {
+    "text": "Since you pass the final state back, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=491"
+  },
+  {
+    "text": "the system is able to update the local state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=494"
+  },
+  {
+    "text": "of the item to match the truth in the cloud.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=496"
+  },
+  {
+    "text": "There is a fifth flow: eviction. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=501"
+  },
+  {
+    "text": "The system will evict local files automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=504"
+  },
+  {
+    "text": "and without involving your file provider extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=507"
+  },
+  {
+    "text": "when there is an urgent need for disk space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=510"
+  },
+  {
+    "text": "That might happen, for example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=514"
+  },
+  {
+    "text": "when the user is recording a video ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=516"
+  },
+  {
+    "text": "or downloading a software update. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=518"
+  },
+  {
+    "text": "The system will evict the minimum set ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=521"
+  },
+  {
+    "text": "of least recently used files necessary to free up ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=523"
+  },
+  {
+    "text": "the disk space required to write those new files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=527"
+  },
+  {
+    "text": "Let’s review the transitions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=531"
+  },
+  {
+    "text": "Eviction turns a local file into a dataless file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=534"
+  },
+  {
+    "text": "and download turns a dataless file into a local file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=537"
+  },
+  {
+    "text": "Files can start dataless if they are created remotely ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=542"
+  },
+  {
+    "text": "or not if they are created locally. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=546"
+  },
+  {
+    "text": "But not all files can be evicted. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=549"
+  },
+  {
+    "text": "The system will only evict a file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=552"
+  },
+  {
+    "text": "that you report as uploaded ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=554"
+  },
+  {
+    "text": "so that it can be downloaded again. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=556"
+  },
+  {
+    "text": "So there really are two sorts of local files: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=559"
+  },
+  {
+    "text": "uploaded and non-uploaded files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=562"
+  },
+  {
+    "text": "After a local edit, the new version of the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=565"
+  },
+  {
+    "text": "needs to be uploaded, so we’re back in a non-evictable state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=569"
+  },
+  {
+    "text": "In this presentation so far, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=573"
+  },
+  {
+    "text": "we have seen how your file provider extension is invoked ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=576"
+  },
+  {
+    "text": "by the system to download files upon access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=578"
+  },
+  {
+    "text": "and to upload files after local edits. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=581"
+  },
+  {
+    "text": "While you’re not involved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=584"
+  },
+  {
+    "text": "in disk-pressure triggered eviction, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=586"
+  },
+  {
+    "text": "there are methods to trigger ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=588"
+  },
+  {
+    "text": "or prevent eviction from your extension.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=590"
+  },
+  {
+    "text": "This was a lot of theory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=594"
+  },
+  {
+    "text": "Let’s have a look at one of the flows in practice.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=596"
+  },
+  {
+    "text": "We’ve written an app that runs a small local file server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=600"
+  },
+  {
+    "text": "and embeds a file provider extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=603"
+  },
+  {
+    "text": "that operates against that server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=605"
+  },
+  {
+    "text": "It’s called FruitBasket. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=608"
+  },
+  {
+    "text": "I’ve already logged in to that server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=610"
+  },
+  {
+    "text": "so there’s an entry for the root folder here in the sidebar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=612"
+  },
+  {
+    "text": "I’ve also selected the root folder which caused the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=616"
+  },
+  {
+    "text": "to make dataless entries for the items in that folder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=618"
+  },
+  {
+    "text": "You can tell that the items are dataless ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=623"
+  },
+  {
+    "text": "from the cloud download icon next to the file name.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=625"
+  },
+  {
+    "text": "We’re going to use ‘cat’ on the command line ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=631"
+  },
+  {
+    "text": "to read a file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=633"
+  },
+  {
+    "text": "Since the file is dataless, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=635"
+  },
+  {
+    "text": "this will cause a content fetch in our extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=637"
+  },
+  {
+    "text": "I’ve already attached to the extension in Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=640"
+  },
+  {
+    "text": "and set a breakpoint to intercept this content fetch.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=642"
+  },
+  {
+    "text": "‘cat’ is running, and our breakpoint has hit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=652"
+  },
+  {
+    "text": "Since we are blocking the completion ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=656"
+  },
+  {
+    "text": "of the content fetch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=657"
+  },
+  {
+    "text": "the read in our Terminal window is also blocked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=658"
+  },
+  {
+    "text": "Note how in the Finder window, the cloud icon has been replaced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=662"
+  },
+  {
+    "text": "by a progress indicator. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=666"
+  },
+  {
+    "text": "The system has a consistent view of the download status. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=669"
+  },
+  {
+    "text": "Of course, since we are actually blocked ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=673"
+  },
+  {
+    "text": "in the debugger rather than busy downloading, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=675"
+  },
+  {
+    "text": "the progress isn’t updating.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=678"
+  },
+  {
+    "text": "Let’s continue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=681"
+  },
+  {
+    "text": "I’ve set a second breakpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=683"
+  },
+  {
+    "text": "just before we call the completion handler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=684"
+  },
+  {
+    "text": "At this time, our provider has downloaded ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=690"
+  },
+  {
+    "text": "the contents of the file to a local URL on disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=693"
+  },
+  {
+    "text": "Once we call the completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=696"
+  },
+  {
+    "text": "the system will swap out the contents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=698"
+  },
+  {
+    "text": "of the user-visible file with what we’ve downloaded. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=700"
+  },
+  {
+    "text": "Let’s unblock the system by continuing in Xcode. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=704"
+  },
+  {
+    "text": "The status in Finder updates to show the file as being local, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=707"
+  },
+  {
+    "text": "and the read that the cat process was blocked on succeeds.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=711"
+  },
+  {
+    "text": "I’ve still got the breakpoints set, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=718"
+  },
+  {
+    "text": "but now that the file is local, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=720"
+  },
+  {
+    "text": "I can run ‘cat’ again without hitting the breakpoint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=722"
+  },
+  {
+    "text": "Those reads are going against a regular local file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=725"
+  },
+  {
+    "text": "and don’t involve our extension.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=728"
+  },
+  {
+    "text": "Of course, this is just a small part ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=735"
+  },
+  {
+    "text": "of the feature set of our sample file provider. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=737"
+  },
+  {
+    "text": "We’ve covered the full feature set of the API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=741"
+  },
+  {
+    "text": "and we are publishing the source code as part of this session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=743"
+  },
+  {
+    "text": "Let’s talk about how you can approach implementing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=746"
+  },
+  {
+    "text": "the flows that we’ve talked about. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=749"
+  },
+  {
+    "text": "First of all, we’re going to want ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=751"
+  },
+  {
+    "text": "to tell the system that we’re ready to sync. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=752"
+  },
+  {
+    "text": "This will make an entry show up in the sidebar in Finder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=755"
+  },
+  {
+    "text": "We call these entries domains, and they usually correspond ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=759"
+  },
+  {
+    "text": "to a login session on your cloud server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=763"
+  },
+  {
+    "text": "Each domain has a unique identifier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=766"
+  },
+  {
+    "text": "and to make it show up, you create a new instance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=768"
+  },
+  {
+    "text": "and add it via the manager object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=771"
+  },
+  {
+    "text": "You can also remove a domain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=774"
+  },
+  {
+    "text": "You’d usually do this when the user logs out, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=776"
+  },
+  {
+    "text": "but it’s also going to be useful ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=779"
+  },
+  {
+    "text": "during your initial development and testing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=781"
+  },
+  {
+    "text": "With the domain showing up in Finder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=785"
+  },
+  {
+    "text": "the system will request enumeration of items ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=787"
+  },
+  {
+    "text": "as soon as you navigate to the entry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=790"
+  },
+  {
+    "text": "So let’s implement that next. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=794"
+  },
+  {
+    "text": "Our first step here is to implement an item class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=796"
+  },
+  {
+    "text": "Its instances represent the individual entries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=800"
+  },
+  {
+    "text": "that we’re going to enumerate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=803"
+  },
+  {
+    "text": "Then we implement an enumerator that calls the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=806"
+  },
+  {
+    "text": "with our items when the system requests it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=810"
+  },
+  {
+    "text": "At this point, we can look at directories ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=813"
+  },
+  {
+    "text": "by navigating to our sidebar entry. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=816"
+  },
+  {
+    "text": "Of course, all the files in those directories ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=819"
+  },
+  {
+    "text": "will be dataless. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=821"
+  },
+  {
+    "text": "Let’s change that by implementing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=823"
+  },
+  {
+    "text": "content fetch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=825"
+  },
+  {
+    "text": "The fetchContents method is called by the system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=827"
+  },
+  {
+    "text": "when we open one of the dataless files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=829"
+  },
+  {
+    "text": "Our job is to download the file contents to a location on disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=832"
+  },
+  {
+    "text": "then call the completion handler with that location’s URL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=836"
+  },
+  {
+    "text": "The system will use the contents to fill the dataless file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=840"
+  },
+  {
+    "text": "and then clean them up for us. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=844"
+  },
+  {
+    "text": "To allow our directory structure to stay in sync, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=847"
+  },
+  {
+    "text": "we’ll implement another type of enumerator. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=850"
+  },
+  {
+    "text": "This one syncs remote changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=853"
+  },
+  {
+    "text": "The system calls the currentSyncAnchor method first ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=855"
+  },
+  {
+    "text": "to get a sync anchor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=858"
+  },
+  {
+    "text": "You return a data object that describes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=860"
+  },
+  {
+    "text": "a change cursor for your database. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=863"
+  },
+  {
+    "text": "Whenever you signal that something has changed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=865"
+  },
+  {
+    "text": "the system will ask for changes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=868"
+  },
+  {
+    "text": "since the last anchor you provided. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=870"
+  },
+  {
+    "text": "You can then return the changes and finally a new anchor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=872"
+  },
+  {
+    "text": "The last step is to allow sync up of changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=877"
+  },
+  {
+    "text": "If the system detects changes to the local files, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=881"
+  },
+  {
+    "text": "it will call one of three methods to create, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=884"
+  },
+  {
+    "text": "modify, or delete an existing item. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=887"
+  },
+  {
+    "text": "We’ll have a quick look at the create method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=891"
+  },
+  {
+    "text": "The system hands you the new item that it asks you to create. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=894"
+  },
+  {
+    "text": "This is a system item, although it follows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=900"
+  },
+  {
+    "text": "the same protocol as your own items. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=902"
+  },
+  {
+    "text": "The system will also hand you a set of fields ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=906"
+  },
+  {
+    "text": "that are of interest on the item. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=908"
+  },
+  {
+    "text": "For example, the item may or may not ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=911"
+  },
+  {
+    "text": "have extended attributes attached to it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=913"
+  },
+  {
+    "text": "and there are fields to describe that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=916"
+  },
+  {
+    "text": "If the content field is set, the system will pass you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=920"
+  },
+  {
+    "text": "a file URL with the contents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=923"
+  },
+  {
+    "text": "Items that describe folders or symlinks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=926"
+  },
+  {
+    "text": "will not have contents. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=928"
+  },
+  {
+    "text": "Your job is to upload the new local item’s data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=931"
+  },
+  {
+    "text": "to the server and then call the completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=935"
+  },
+  {
+    "text": "with the resulting remote item.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=938"
+  },
+  {
+    "text": "And that’s it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=944"
+  },
+  {
+    "text": "At this point, you have a functional ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=946"
+  },
+  {
+    "text": "file provider on macOS providing files on demand, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=948"
+  },
+  {
+    "text": "propagating local changes to the cloud ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=952"
+  },
+  {
+    "text": "and remote changes to the Mac. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=955"
+  },
+  {
+    "text": "There are a lot of additional optional APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=959"
+  },
+  {
+    "text": "in the File Provider framework, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=962"
+  },
+  {
+    "text": "which allow finer integration with the system. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=964"
+  },
+  {
+    "text": "Let’s have a have a look.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=967"
+  },
+  {
+    "text": "Icon decorations can be used to visually decorate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=970"
+  },
+  {
+    "text": "items in Finder. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=974"
+  },
+  {
+    "text": "You can badge a file icon, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=976"
+  },
+  {
+    "text": "emboss a folder, or indicate sharing status. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=978"
+  },
+  {
+    "text": "You provide custom artwork for the decorations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=982"
+  },
+  {
+    "text": "via a UTType declared in your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=985"
+  },
+  {
+    "text": "Contextual menu actions allow the user to execute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=989"
+  },
+  {
+    "text": "custom actions on your files via the contextual menu. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=993"
+  },
+  {
+    "text": "There are UI and non-UI variants. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=998"
+  },
+  {
+    "text": "You can define which files these actions apply to ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1002"
+  },
+  {
+    "text": "with NSPredicates declared in your extension’s Info.plist.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1005"
+  },
+  {
+    "text": "Pre-flight alerts allow you to warn the user ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1012"
+  },
+  {
+    "text": "before they take an action ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1015"
+  },
+  {
+    "text": "which may have unintended consequences. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1017"
+  },
+  {
+    "text": "The alert UI and the criteria to activate the alert ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1020"
+  },
+  {
+    "text": "are configured in the Info.plist as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1023"
+  },
+  {
+    "text": "So what are your next steps? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1028"
+  },
+  {
+    "text": "Well, first of all, you can download ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1030"
+  },
+  {
+    "text": "the session’s sample code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1032"
+  },
+  {
+    "text": "It’s very comprehensive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1034"
+  },
+  {
+    "text": "and it’ll give you a lot of pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1035"
+  },
+  {
+    "text": "Add a target to your existing app for the new extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1039"
+  },
+  {
+    "text": "There is an Xcode template that will help you get going. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1043"
+  },
+  {
+    "text": "From there, all you have to do is implement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1047"
+  },
+  {
+    "text": "the method stubs in the order we’ve discussed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1051"
+  },
+  {
+    "text": "and you’ll be up and running in no time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1053"
+  },
+  {
+    "text": "Thank you for watching this session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1057"
+  },
+  {
+    "text": "We look forward to seeing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1059"
+  },
+  {
+    "text": "your file provider\nextensions on macOS.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10182/?time=1060"
+  }
+]

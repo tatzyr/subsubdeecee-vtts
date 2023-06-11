@@ -1,0 +1,869 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:12.000
+Ali de Jong: Chào mừng đến với WWDC 2021.
+
+00:00:12.000 --> 00:00:16.000
+Tên tôi là Ali de Jong, và tôi là một kỹ sư phần mềm GPU tại Apple.
+
+00:00:16.000 --> 00:00:23.000
+Và hôm nay, cùng với đồng nghiệp của tôi David Núñez Rubio, chúng ta sẽ khám phá kết xuất lai với dò tia kim loại.
+
+00:00:23.000 --> 00:00:43.000
+Chúng tôi sẽ bắt đầu bằng cách chỉ cho bạn một số cải tiến mà dò tia có thể mang lại cho hình ảnh của bạn; sau đó thảo luận về cách kết hợp đường truyền dò tia vào rasterization, sử dụng một kỹ thuật gọi là "kết xuất lai;" sau đó David sẽ hướng dẫn chúng tôi các công cụ mới để giúp bạn thực hiện truy tìm tia.
+
+00:00:43.000 --> 00:00:48.000
+Hãy bắt đầu bằng cách xem xét một số trường hợp sử dụng tuyệt vời để dò tia.
+
+00:00:48.000 --> 00:00:57.000
+Trò chơi và phim ảnh liên tục theo đuổi chủ nghĩa hiện thực ngày càng tăng, và trong nhiều năm, cách tiếp cận đồ họa là bằng phương tiện rasterization.
+
+00:00:57.000 --> 00:01:01.000
+Rasterization rất tốt trong việc tạo ra những hình ảnh đẹp với tốc độ thời gian thực.
+
+00:01:01.000 --> 00:01:04.000
+Tuy nhiên, có những hạn chế đối với những gì chúng ta có thể đạt được.
+
+00:01:04.000 --> 00:01:11.000
+Dò tia là một cơ chế cho phép chúng ta truy vấn thế giới từ đổ bóng, mở ra cánh cửa cho các kỹ thuật mới, thú vị.
+
+00:01:11.000 --> 00:01:16.000
+Và bằng cách kết hợp nó với rasterization, chúng ta có thể cải thiện đáng kể hình ảnh của mình.
+
+00:01:16.000 --> 00:01:19.000
+Hãy cùng xem xét một vài ví dụ.
+
+00:01:19.000 --> 00:01:23.000
+Một lĩnh vực luôn có vấn đề đối với rasterization là phản xạ.
+
+00:01:23.000 --> 00:01:34.000
+Điều này là do khi chúng ta tô bóng một điểm ảnh rasterized, chúng ta không có ngữ cảnh của phần còn lại của cảnh để phản xạ chính xác và chúng ta phải làm thêm công việc để tạo ra thông tin đó.
+
+00:01:34.000 --> 00:01:39.000
+Dò tia cho phép chúng ta theo dõi mảng từ điểm ảnh được tô bóng và khám phá những gì ngoài kia trên thế giới.
+
+00:01:39.000 --> 00:01:48.000
+Thậm chí tốt hơn, chúng ta có thể áp dụng quy trình này một cách đệ quy để áp dụng bóng chính xác và thậm chí phản xạ trong phản xạ.
+
+00:01:48.000 --> 00:01:51.000
+Một lĩnh vực khác mà dò tia vượt trội là bóng tối.
+
+00:01:51.000 --> 00:02:00.000
+Lưu ý với rasterization, độ mờ chung của bóng và răng cưa gây ra bởi độ phân giải bản đồ bóng trên các bề mặt cong của xe máy.
+
+00:02:00.000 --> 00:02:07.000
+Bóng theo dõi tia sắc nét hơn và giải quyết các vấn đề răng cưa mà không cần các thông số nhân tạo như thiên vị bóng.
+
+00:02:07.000 --> 00:02:11.000
+Bóng mềm cũng có thể được ước tính chính xác hơn.
+
+00:02:11.000 --> 00:02:18.000
+Chúng ta có thể tạo ra các bóng tối cứng hơn hoặc mềm hơn một cách tự nhiên, tùy thuộc vào khoảng cách của vật thể tắc nghẽn với điểm bóng mờ.
+
+00:02:18.000 --> 00:02:23.000
+Với rasterization, chúng ta sẽ cần dựa vào việc lọc bản đồ bóng tại thời điểm lấy mẫu.
+
+00:02:23.000 --> 00:02:27.000
+Nhưng với dò tia, chúng ta có thể chỉ cần theo dõi các tia trong hình nón để có được kết quả này.
+
+00:02:27.000 --> 00:02:32.000
+Cuối cùng, một lĩnh vực khác mà dò tia có thể nâng cao hình ảnh của chúng ta là độ trong suốt.
+
+00:02:32.000 --> 00:02:36.000
+Theo truyền thống, điều này rất khó xử lý chính xác đối với các kỹ thuật rasterization.
+
+00:02:36.000 --> 00:02:42.000
+Trong hình ảnh này, hãy lưu ý cách ánh sáng mặt trời chiếu qua cửa sổ, nhưng các chữ cái mờ đục trên kính không tạo ra bóng.
+
+00:02:42.000 --> 00:02:48.000
+Các kỹ thuật lập bản đồ bóng truyền thống thường có vấn đề với các đối tượng trong suốt.
+
+00:02:48.000 --> 00:02:52.000
+Với dò tia, chúng ta có thể tạo ra một chức năng giao nhau tùy chỉnh cho các vật liệu trong suốt.
+
+00:02:52.000 --> 00:03:01.000
+Với điều này, chúng ta có thể xác định tia nào có thể đi qua vật liệu và tia nào không, tạo ra bóng sáng chiếu một cách tự nhiên như các chữ cái trên đầu bức tượng bán thân.
+
+00:03:01.000 --> 00:03:05.000
+Và tất nhiên, nhìn chung tất cả các bóng đều trông sắc nét hơn.
+
+00:03:05.000 --> 00:03:10.000
+Vậy tại sao việc dò tia có thể cải thiện hình ảnh của chúng ta một cách đáng kể như vậy?
+
+00:03:10.000 --> 00:03:15.000
+Để hiểu điều này, chúng ta hãy xem quy trình rasterization truyền thống hoạt động như thế nào.
+
+00:03:15.000 --> 00:03:20.000
+Trong quá trình rasterization, các mắt lưới được gửi xuống Metal để được kết xuất.
+
+00:03:20.000 --> 00:03:28.000
+Chúng được đặt trên thế giới và trước máy ảnh bởi một bộ đổ bóng đỉnh, và những nguyên thủy đó được đặt trên các điểm ảnh - hoặc các mảnh vỡ - bởi rasterizer.
+
+00:03:28.000 --> 00:03:35.000
+Những điểm ảnh này sau đó được tô bóng bởi một bộ đổ bóng phân đoạn và kết quả được trộn vào hình ảnh đầu ra.
+
+00:03:35.000 --> 00:03:43.000
+Như bạn đã biết, mỗi điểm ảnh có thể được tô bóng độc lập, hoạt động song song, đó là điều khiến GPU trở nên tốt trong quá trình rasterization.
+
+00:03:43.000 --> 00:03:54.000
+Tuy nhiên, sự đánh đổi là tại thời điểm chúng tôi áp dụng bóng của mình, chúng tôi đã hoàn toàn mất bối cảnh của phần còn lại của cảnh và chúng tôi không biết những đối tượng nào có thể bao quanh điểm được liên kết với điểm ảnh này.
+
+00:03:54.000 --> 00:04:01.000
+Các công cụ trò chơi nâng cao bù đắp cho tình huống này bằng cách thêm các thẻ kết xuất bổ sung tạo ra thông tin trung gian.
+
+00:04:01.000 --> 00:04:08.000
+Bộ đổ bóng phân đoạn sau đó có thể tận dụng dữ liệu đó để gần đúng các chi tiết của bối cảnh hình học mà điểm đang ở.
+
+00:04:08.000 --> 00:04:11.000
+Chúng ta hãy xem cách thức hoạt động chi tiết hơn một chút.
+
+00:04:11.000 --> 00:04:19.000
+Đối với kỹ thuật này, bạn rasterize thông tin hình học về cảnh thành kết cấu trung gian thay vì trực tiếp lên màn hình.
+
+00:04:19.000 --> 00:04:23.000
+Đây có thể là những thứ như suất phản chiếu, chiều sâu hoặc bình thường.
+
+00:04:23.000 --> 00:04:29.000
+Đây thường được gọi tắt là thẻ đệm hình học hoặc viết tắt là thẻ đệm G.
+
+00:04:29.000 --> 00:04:38.000
+Các kết cấu trung gian được sử dụng làm đầu vào cho các đường chuyền xấp xỉ ánh sáng sử dụng các thủ thuật thông minh để ước tính cách ánh sáng sẽ tương tác với các vật thể trong cảnh.
+
+00:04:38.000 --> 00:04:43.000
+Một số ví dụ là tắc nghẽn không gian màn hình xung quanh và phản xạ không gian màn hình.
+
+00:04:43.000 --> 00:04:53.000
+Trong bước cuối cùng, các tệp đính kèm trung gian của chúng tôi thường được khử nhiễu hoặc làm mờ một chút để tạo ra hình ảnh mượt mà hơn và mọi thứ được kết hợp với nhau để tạo ra hình ảnh cuối cùng.
+
+00:04:53.000 --> 00:04:59.000
+Mặc dù những kỹ thuật đôi khi phức tạp này có thể giúp cải thiện hình ảnh, nhưng chúng vẫn chỉ là những phép gần đúng.
+
+00:04:59.000 --> 00:05:06.000
+Mặt khác, dò tia có một cách tiếp cận hoàn toàn khác cho phép hình ảnh chính xác hơn và kỹ thuật hình ảnh đơn giản hóa.
+
+00:05:06.000 --> 00:05:14.000
+Thay vì xử lý từng mắt lưới một, trong dò tia, chúng tôi xây dựng một cấu trúc gia tốc bao gồm toàn bộ cảnh.
+
+00:05:14.000 --> 00:05:20.000
+Một khi chúng ta có điều đó, chúng ta có thể có các tia theo dõi GPU từ một điểm về một hướng nhất định và tìm các giao điểm.
+
+00:05:20.000 --> 00:05:25.000
+Điều này cho phép chúng tôi truy cập vào tất cả thông tin cảnh theo ngữ cảnh.
+
+00:05:25.000 --> 00:05:30.000
+Vì các mô hình dò tia tương tác tia, nó cũng có các ứng dụng ngoài kết xuất.
+
+00:05:30.000 --> 00:05:37.000
+Nó có thể được sử dụng để mô phỏng âm thanh và vật lý, phát hiện va chạm, hoặc AI và tìm đường.
+
+00:05:37.000 --> 00:05:49.000
+Vì dò tia là một kỹ thuật mạnh mẽ, chúng tôi muốn kết hợp truy tìm tia và rasterization để có được những lợi ích độc đáo của từng loại và chúng tôi có thể làm như vậy thông qua một kỹ thuật gọi là "kết xuất lai".
+
+00:05:49.000 --> 00:05:55.000
+Bây giờ chúng ta hãy xem cách tạo khung kết xuất lai và một số trường hợp sử dụng cho kỹ thuật này.
+
+00:05:55.000 --> 00:06:04.000
+Nếu chúng ta bắt đầu từ sơ đồ khung rasterized của mình, chúng ta có thể sử dụng dò tia để thay thế một số hoặc tất cả các lần truyền xấp xỉ ánh sáng của chúng ta.
+
+00:06:04.000 --> 00:06:14.000
+Chúng tôi vẫn rasterize G-Buffer của mình - nó đóng vai trò là các tia chính của chúng tôi - và sau đó chúng tôi sử dụng dò tia để mô phỏng thực tế hơn các thuộc tính của ánh sáng bằng cách truy vấn vào phần còn lại của cảnh.
+
+00:06:14.000 --> 00:06:21.000
+Chúng tôi vẫn khử nhiễu và vượt qua bố cục ánh sáng, nhưng kết quả của chúng tôi chính xác hơn nhiều so với dữ liệu cảnh.
+
+00:06:21.000 --> 00:06:27.000
+Kiến trúc khung này cung cấp một nền tảng tốt để khám phá một số kỹ thuật kết xuất kết hợp.
+
+00:06:27.000 --> 00:06:32.000
+Hãy xem cách chúng ta có thể mã hóa một khung như thế này bằng Metal.
+
+00:06:32.000 --> 00:06:36.000
+Chúng tôi bắt đầu với việc điền vào G-Buffer của chúng tôi.
+
+00:06:36.000 --> 00:06:44.000
+Để làm như vậy, chúng tôi tạo một đường chuyền kết xuất và điền vào G-Buffer và đặt kết cấu của nó làm tệp đính kèm cho đường chuyền của chúng tôi.
+
+00:06:44.000 --> 00:06:50.000
+Chúng tôi đảm bảo hình ảnh của chúng tôi được lưu trữ vào bộ nhớ để nội dung được hiển thị có sẵn cho các lần vượt qua tiếp theo.
+
+00:06:50.000 --> 00:06:56.000
+Chúng tôi bắt đầu vượt qua, mã hóa kết xuất của chúng tôi và kết thúc vượt qua kết xuất.
+
+00:06:56.000 --> 00:07:00.000
+Tiếp theo, chúng ta sẽ thêm một công văn tính toán dò tia vào cái này.
+
+00:07:00.000 --> 00:07:07.000
+Vì vậy, sau khi chúng tôi tạo ra các kết cấu trung gian, hãy mã hóa đường truyền dò tia của chúng tôi.
+
+00:07:07.000 --> 00:07:13.000
+Chúng tôi tạo đường chuyền tính toán từ cùng một bộ đệm lệnh và đảm bảo đặt kết cấu G-Buffer làm đầu vào.
+
+00:07:13.000 --> 00:07:22.000
+Theo mặc định, Metal sẽ theo dõi các phụ thuộc ghi-đọc cho bạn, vì vậy bạn có thể tự do tập trung vào thuật toán của mình mà không quá lo lắng về đồng bộ hóa.
+
+00:07:22.000 --> 00:07:29.000
+Vì đây là tính toán, chúng tôi đặt kết cấu đầu ra của mình để viết kết quả của công việc dò tia của chúng tôi.
+
+00:07:29.000 --> 00:07:33.000
+Chúng tôi đặt đối tượng PipelineState cho kỹ thuật dò tia của mình.
+
+00:07:33.000 --> 00:07:39.000
+Mỗi luồng trong bộ đổ bóng tính toán sẽ tính toán kết quả dò tia cho một điểm ảnh hoặc vùng.
+
+00:07:39.000 --> 00:07:45.000
+Cuối cùng, chúng tôi gửi lưới 2D của mình và kết thúc thẻ này.
+
+00:07:45.000 --> 00:07:57.000
+Sau khi đường chuyền này được mã hóa, bây giờ chúng ta có thể tiếp tục mã hóa nhiều công việc hơn như đường chuyền tích lũy ánh sáng hoặc chúng ta có thể gửi bộ đệm lệnh ngay bây giờ để GPU bắt đầu làm việc trên nó trong khi chúng ta mã hóa phần còn lại của khung hình.
+
+00:07:57.000 --> 00:08:06.000
+Vì chúng tôi đã mã hóa công việc của mình trong hai lần, điều này yêu cầu lưu các tệp đính kèm kết xuất trung gian của chúng tôi vào bộ nhớ hệ thống để các lần truyền giao tiếp với nhau.
+
+00:08:06.000 --> 00:08:14.000
+Điều này hoạt động, nhưng trên các thiết bị Apple Silicon và iOS có một cơ hội để làm cho điều này thậm chí còn tốt hơn.
+
+00:08:14.000 --> 00:08:20.000
+Trên GPU của Apple, phần cứng sử dụng bộ nhớ gạch để giữ dữ liệu pixel của chúng tôi khi chúng tôi làm việc trên đó.
+
+00:08:20.000 --> 00:08:27.000
+Vào cuối đường chuyền, bộ nhớ ô này được bổ sung vào bộ nhớ hệ thống và phải được tải lại vào đầu lần vượt qua tiếp theo.
+
+00:08:27.000 --> 00:08:35.000
+Tuy nhiên, lý tưởng nhất là chúng tôi sẽ có các đường chuyền tính toán hoạt động trực tiếp trên bộ nhớ gạch, tránh các chuyến đi khứ hồi đến bộ nhớ hệ thống.
+
+00:08:35.000 --> 00:08:41.000
+Tôi rất vui được chia sẻ năm nay chúng tôi đã thêm khả năng làm điều đó bằng cách gửi công việc dò tia từ các đường ống kết xuất.
+
+00:08:41.000 --> 00:08:49.000
+Điều này cho phép kết xuất và tính toán lẫn thông qua các bộ đổ bóng gạch trong một lần duy nhất để tận dụng bộ nhớ trên gạch để dò tia.
+
+00:08:49.000 --> 00:08:56.000
+Điều này sẽ giảm việc sử dụng băng thông, tiêu thụ bộ nhớ và giúp thiết bị của người dùng chạy mát hơn.
+
+00:08:56.000 --> 00:09:13.000
+Vui lòng đảm bảo xem lại phiên "Kết xuất hiện đại với Kim loại" năm 2019 của chúng tôi để tìm hiểu cách kết hợp kết xuất và tính toán hiệu quả, vì vậy bạn có thể áp dụng điều đó cho truy tìm tia từ kết xuất; cũng như phiên "Nâng cao ứng dụng của bạn với dò tia kim loại" năm nay để tìm hiểu về các cải tiến khác
+
+00:09:13.000 --> 00:09:20.000
+Bây giờ chúng ta đã biết cách mã hóa khối lượng công việc kết xuất lai, hãy xem lại một số kỹ thuật có thể được cải thiện với dò tia.
+
+00:09:20.000 --> 00:09:25.000
+Chúng ta sẽ tập trung vào bóng tối, tắc nghẽn môi trường xung quanh và phản xạ.
+
+00:09:25.000 --> 00:09:28.000
+Hãy bắt đầu với những cái bóng.
+
+00:09:28.000 --> 00:09:32.000
+Bóng tối giúp truyền tải sự gần gũi của các vật thể với nhau trong khung cảnh.
+
+00:09:32.000 --> 00:09:38.000
+Tuy nhiên, đây là một thách thức đối với việc rasterization, bởi vì chúng ta mất bối cảnh của cảnh tại thời điểm đổ bóng.
+
+00:09:38.000 --> 00:09:46.000
+Ánh xạ bóng tối có thể giúp bổ sung cho sự thiếu thông tin này nhưng yêu cầu kết xuất thêm từ quan điểm của mỗi ánh sáng.
+
+00:09:46.000 --> 00:09:51.000
+Kỹ thuật rasterization này bắt đầu bằng cách hiển thị cảnh từ mọi góc nhìn của ánh sáng.
+
+00:09:51.000 --> 00:09:57.000
+Điều này tạo ra một loạt các bản đồ độ sâu cần được lưu trữ cùng với ma trận biến đổi của mỗi ánh sáng.
+
+00:09:57.000 --> 00:10:01.000
+Sau đó, chúng tôi kết xuất từ góc nhìn của máy ảnh chính.
+
+00:10:01.000 --> 00:10:05.000
+Để tô bóng từng điểm ảnh, chúng ta cần chuyển đổi điểm thành tọa độ của ánh sáng.
+
+00:10:05.000 --> 00:10:14.000
+Chúng tôi lấy mẫu độ sâu đến từ bản đồ độ sâu và cuối cùng so sánh các giá trị độ sâu này để xác định xem chúng tôi đang ở trong ánh sáng hay bóng tối cho mỗi nguồn sáng.
+
+00:10:14.000 --> 00:10:17.000
+Có một vài nhược điểm với kỹ thuật này.
+
+00:10:17.000 --> 00:10:21.000
+Đầu tiên, chúng ta sẽ phải hiển thị cảnh từ góc nhìn của ánh sáng cho mỗi ánh sáng.
+
+00:10:21.000 --> 00:10:24.000
+Điều này có nghĩa là xử lý cảnh nhiều lần.
+
+00:10:24.000 --> 00:10:36.000
+Thứ hai, bản đồ bóng có độ phân giải được xác định trước, có nghĩa là bóng của chúng ta sẽ phải được răng cưa; và tệ hơn, chúng ta sẽ không có thông tin cho các điểm ảnh không vừa với hình ảnh.
+
+00:10:36.000 --> 00:10:39.000
+Hãy so sánh điều này với những cái bóng dò tia.
+
+00:10:39.000 --> 00:10:48.000
+Để tính toán bóng bằng cách dò tia, chúng ta có thể chỉ cần theo dõi một tia từ một điểm về hướng của nguồn sáng và xác định xem có vật thể nào đang chặn đường đi của nó hay không.
+
+00:10:48.000 --> 00:10:54.000
+Nếu chúng ta không tìm thấy bất cứ điều gì, điều đó có nghĩa là vấn đề nên xem xét nguồn sáng này để che bóng.
+
+00:10:54.000 --> 00:11:01.000
+Trong trường hợp một vật thể đang chặn đường đi, chúng tôi chỉ loại trừ sự đóng góp của nguồn sáng đó trong phương trình ánh sáng.
+
+00:11:01.000 --> 00:11:07.000
+Chú ý cách điều này tạo ra một bóng tự nhiên tương ứng với hình bóng của vật thể tắc nghẽn.
+
+00:11:07.000 --> 00:11:11.000
+Thậm chí tốt hơn, chúng tôi không còn bị giới hạn trong thông tin được lưu trữ trong bản đồ chiều sâu.
+
+00:11:11.000 --> 00:11:17.000
+Chúng ta có thể xác định bóng tối cho các điểm bên ngoài ánh sáng hoặc tầm nhìn của máy ảnh.
+
+00:11:17.000 --> 00:11:21.000
+Hãy xem kỹ thuật đổ bóng của chúng ta được đơn giản hóa như thế nào với tính cách dò tia.
+
+00:11:21.000 --> 00:11:24.000
+Chúng tôi bắt đầu bằng cách kết xuất từ camera chính.
+
+00:11:24.000 --> 00:11:33.000
+Tiếp theo, chúng tôi lấy cấu trúc gia tốc và bản đồ độ sâu được hiển thị từ vị trí của máy ảnh và đưa nó vào hạt nhân dò tia của chúng tôi.
+
+00:11:33.000 --> 00:11:45.000
+Tính toán vị trí điểm ảnh, và sau đó chúng tôi chỉ cần theo dõi một tia theo hướng ánh sáng Từ đó, chúng tôi xác định xem điểm đó sáng hay trong bóng tối, tùy thuộc vào việc một giao điểm được tìm thấy với một vật thể che khuất.
+
+00:11:45.000 --> 00:11:52.000
+Quá trình này tạo ra một kết cấu bóng mà sau đó chúng ta có thể kết hợp với kết quả vượt qua kết xuất của mình để có được hình ảnh cuối cùng.
+
+00:11:52.000 --> 00:11:56.000
+Hãy xem cách mã hóa bộ đổ bóng kim loại để thực hiện việc này.
+
+00:11:56.000 --> 00:12:03.000
+Trong mã đổ bóng của chúng tôi, chúng tôi bắt đầu bằng cách tính toán vị trí mà mỗi luồng sẽ xử lý từ độ sâu và thread_id.
+
+00:12:03.000 --> 00:12:09.000
+Chúng tôi tạo ra tia bóng của mình từ vị trí được tính toán và thiết lập nó để theo dõi theo hướng của ánh sáng.
+
+00:12:09.000 --> 00:12:18.000
+Đối với hầu hết các loại ánh sáng, như đèn điểm, đèn chiếu sáng và đèn khu vực, chúng tôi đặt tối thiểu và tối đa để theo dõi tất cả các cách từ điểm đến nguồn sáng.
+
+00:12:18.000 --> 00:12:22.000
+Đối với bóng định hướng, chúng ta có thể muốn đặt tối đa thành vô cùng.
+
+00:12:22.000 --> 00:12:30.000
+Ngoài ra, nếu chúng tôi quyết định thực hiện truy tìm tia hình nón cho các bóng tối mềm hơn, đây là một nơi tuyệt vời để thêm jitter vào shadowRay của chúng tôi.
+
+00:12:30.000 --> 00:12:33.000
+Sau đó chúng tôi tạo ra một đối tượng liên ngành.
+
+00:12:33.000 --> 00:12:40.000
+Nếu chúng tôi tìm thấy bất kỳ một giao điểm nào, điều đó có nghĩa là chúng tôi đang ở trong bóng tối, vì vậy chúng tôi định cấu hình liên ngành để chấp nhận bất kỳ giao lộ nào.
+
+00:12:40.000 --> 00:12:45.000
+Cuối cùng, chúng ta giao nhau với cấu trúc gia tốc.
+
+00:12:45.000 --> 00:12:54.000
+Dựa trên kết quả giao nhau đó, chúng tôi viết xem điểm có sáng hay không, điều này tạo ra kết cấu bóng chính xác hơn với cảnh.
+
+00:12:54.000 --> 00:13:02.000
+Khi kết cấu bóng đó được áp dụng, bạn có thể thấy chúng ta có được bóng thực tế hơn nhiều và loại bỏ răng cưa.
+
+00:13:02.000 --> 00:13:07.000
+Với dò tia, việc xác định bóng trở thành một kỹ thuật rất tự nhiên.
+
+00:13:07.000 --> 00:13:11.000
+Chúng tôi chỉ theo dõi một tia sáng để tìm xem có thứ gì đó làm tắc nghẽn nguồn sáng cho điểm đó hay không.
+
+00:13:11.000 --> 00:13:18.000
+Không còn cần phải có bản đồ độ sâu trung gian nữa và chúng ta có thể tránh có thêm nhiều lần kết xuất cho mỗi ánh sáng.
+
+00:13:18.000 --> 00:13:24.000
+Kỹ thuật này rất dễ thực hiện vào trình kết xuất hoãn lại hoặc chuyển tiếp, vì nó chỉ phụ thuộc vào độ sâu.
+
+00:13:24.000 --> 00:13:29.000
+Và cuối cùng, nó cho phép các chức năng giao nhau tùy chỉnh cho các vật liệu mờ.
+
+00:13:29.000 --> 00:13:33.000
+Tiếp theo, chúng ta hãy xem xét sự tắc nghẽn môi trường xung quanh.
+
+00:13:33.000 --> 00:13:39.000
+Về mặt khái niệm, một điểm được bao quanh bởi hình học ít có khả năng nhận được một lượng lớn ánh sáng xung quanh.
+
+00:13:39.000 --> 00:13:51.000
+Sự tắc nghẽn môi trường xung quanh bao gồm việc tắt tiếng ánh sáng xung quanh nhận được tại một điểm dựa trên mức độ bận rộn của khu vực lân cận, điều này làm tối các kẽ hở một cách tự nhiên, giúp hình ảnh cuối cùng có chiều sâu hơn.
+
+00:13:51.000 --> 00:14:01.000
+Các kỹ thuật Rasterization để đạt được điều này phụ thuộc vào việc lấy mẫu độ sâu và chuẩn trong vùng lân cận của điểm, để xác định xem có các vật thể xung quanh và có khả năng che khuất nó hay không.
+
+00:14:01.000 --> 00:14:10.000
+Dựa trên số lượng vật thể gần đó được tìm thấy, chúng tôi tính toán hệ số suy giảm để tắt tiếng ánh sáng xung quanh và tạo kết cấu để áp dụng cho hình ảnh của chúng tôi.
+
+00:14:10.000 --> 00:14:20.000
+Tuy nhiên, việc dựa vào thông tin không gian màn hình như bộ đệm độ sâu và chuẩn bề mặt là thiếu thông tin cho các bộ tắc nghẽn không nhìn thấy được và các đối tượng bên ngoài đường viền của hình ảnh.
+
+00:14:20.000 --> 00:14:27.000
+Với dò tia, thay vì dựa vào thông tin không gian màn hình, chúng ta có thể dựa vào dữ liệu hình học thực tế của cảnh của mình.
+
+00:14:27.000 --> 00:14:35.000
+Ý tưởng là để mỗi điểm ảnh tô bóng, chúng tôi tạo ra các tia ngẫu nhiên ở bán cầu và tìm kiếm các giao điểm đối với các vật thể.
+
+00:14:35.000 --> 00:14:42.000
+Nếu bất kỳ giao lộ nào được tìm thấy, chúng tôi sẽ xem xét nó cho yếu tố tắc nghẽn môi trường xung quanh của chúng tôi.
+
+00:14:42.000 --> 00:14:44.000
+Chúng tôi bắt đầu lại với cấu trúc gia tốc.
+
+00:14:44.000 --> 00:14:51.000
+Đối với kỹ thuật này, chúng tôi yêu cầu dữ liệu bình thường cũng như độ sâu, vì vậy chúng tôi thu thập những dữ liệu đó trong thẻ G-Buffer của mình.
+
+00:14:51.000 --> 00:14:55.000
+Độ sâu và chuẩn được sử dụng để tạo ra các tia ngẫu nhiên ở bán cầu.
+
+00:14:55.000 --> 00:14:59.000
+Tiếp theo, chúng tôi theo dõi các tia và tính toán hệ số suy giảm.
+
+00:14:59.000 --> 00:15:04.000
+Điều này tạo ra một hình ảnh nơi các kẽ hở được làm tối một cách tự nhiên, tạo ra hiệu ứng.
+
+00:15:04.000 --> 00:15:08.000
+Chúng ta hãy xem một bộ đổ bóng kim loại để che khuất môi trường xung quanh.
+
+00:15:08.000 --> 00:15:11.000
+Đầu tiên, chúng ta tạo ra các tia ngẫu nhiên.
+
+00:15:11.000 --> 00:15:16.000
+Trong trường hợp này, chúng tôi lấy một cosineWeightedRay dọc theo bình thường trong mỗi sợi.
+
+00:15:16.000 --> 00:15:22.000
+Chúng tôi đặt khoảng cách_tối đa thành một số nhỏ, vì chúng tôi chỉ quan tâm đến một khu phố nhỏ.
+
+00:15:22.000 --> 00:15:27.000
+Tiếp theo, chúng tôi tạo ra liên ngành của mình và giao với cấu trúc gia tốc.
+
+00:15:27.000 --> 00:15:33.000
+Tùy thuộc vào kết quả, chúng ta tích lũy vào yếu tố suy giảm của mình.
+
+00:15:33.000 --> 00:15:35.000
+Đây là một so sánh song song.
+
+00:15:35.000 --> 00:15:39.000
+Và chúng ta có thể thấy ngay cách tiếp cận dò tia trông tốt hơn bao nhiêu.
+
+00:15:39.000 --> 00:15:44.000
+Tôi muốn làm nổi bật một vài nơi thực sự cho thấy những hạn chế của hiệu ứng không gian màn hình.
+
+00:15:44.000 --> 00:15:50.000
+Đây là một ví dụ mà khu phố bị xuyên tạc do thông tin không gian màn hình hạn chế.
+
+00:15:50.000 --> 00:15:57.000
+Điều này là do hình học thực tế gần như vuông góc với máy ảnh và do đó, không nằm trong bộ đệm độ sâu ở góc này.
+
+00:15:57.000 --> 00:16:02.000
+Vấn đề tương tự xảy ra trên hình ảnh, đặc biệt, dưới xe máy.
+
+00:16:02.000 --> 00:16:06.000
+Từ góc độ này, phần dưới của xe máy bị thiếu trong bộ đệm độ sâu.
+
+00:16:06.000 --> 00:16:09.000
+Vì vậy, kỹ thuật không gian màn hình hoàn toàn bỏ lỡ sự suy giảm.
+
+00:16:09.000 --> 00:16:16.000
+Mặt khác, phiên bản dò tia phát hiện chính xác các giao điểm so với đáy xe máy cho các điểm ảnh sàn.
+
+00:16:16.000 --> 00:16:21.000
+Và đây là một ví dụ tuyệt vời về những hạn chế xung quanh đường viền màn hình.
+
+00:16:21.000 --> 00:16:30.000
+Hình học tắc nghẽn nằm ngoài màn hình, vì vậy sự đóng góp của nó bị mất trong kỹ thuật không gian màn hình, nhưng được tính đến trong dò tia.
+
+00:16:30.000 --> 00:16:40.000
+Như chúng ta có thể thấy, kết xuất kết hợp cung cấp một sự cải thiện chất lượng đáng kể bằng cách sử dụng hình học thực tế của cảnh, giải phóng kỹ thuật khỏi những hạn chế trong thông tin không gian màn hình.
+
+00:16:40.000 --> 00:16:44.000
+Và cuối cùng, chúng ta hãy xem xét những phản ánh.
+
+00:16:44.000 --> 00:16:48.000
+Theo truyền thống, những phản ánh rất khó khăn cho việc rasterization.
+
+00:16:48.000 --> 00:16:57.000
+Đầu dò phản xạ là một kỹ thuật hoạt động tốt nhưng bị hạn chế về độ phân giải, yêu cầu lọc và gặp khó khăn với hình học động.
+
+00:16:57.000 --> 00:17:01.000
+Các kỹ thuật phản xạ không gian màn hình bị giới hạn bởi thông tin không gian màn hình.
+
+00:17:01.000 --> 00:17:09.000
+Đầu dò phản xạ là một giải pháp đòi hỏi phải đặt máy ảnh một cách chiến lược dọc theo toàn bộ cảnh để thu thập thông tin màu sắc xung quanh.
+
+00:17:09.000 --> 00:17:15.000
+Để sử dụng các đầu dò phản xạ, bản đồ khối lập phương được chụp từ các vị trí khác nhau trong cảnh.
+
+00:17:15.000 --> 00:17:20.000
+Về cơ bản, đây là kết xuất cảnh theo sáu hướng từ cùng một điểm.
+
+00:17:20.000 --> 00:17:28.000
+Khi một điểm ảnh được tô bóng, bạn tính toán mối quan hệ với các đầu dò và lấy mẫu bản đồ khối lập phương để tạo ra bóng phản xạ.
+
+00:17:28.000 --> 00:17:33.000
+Để có kết quả thực tế, thông thường nhiều cuộc thăm dò cần được phân tán khắp hiện trường.
+
+00:17:33.000 --> 00:17:41.000
+Và khi các vật thể động di chuyển qua cảnh, các bộ đổ bóng cần lấy mẫu từ nhiều bản đồ khối lập phương và nội suy các màu phản chiếu theo cách thủ công.
+
+00:17:41.000 --> 00:17:49.000
+Các bản đồ khối lập phương cũng cần được lọc trước để thể hiện chính xác bức xạ và có độ phân giải hạn chế.
+
+00:17:49.000 --> 00:17:59.000
+Một kỹ thuật rasterization khác, phản xạ không gian màn hình, tránh được một số vấn đề này bằng cách dựa trên phản xạ của nó trên các pixel đã có trên bộ đệm khung hình.
+
+00:17:59.000 --> 00:18:06.000
+Bộ đổ bóng mảnh vỡ sử dụng các chuẩn mực chuẩn để diễu hành dần dần ra ngoài và kiểm tra bản đồ độ sâu để tìm các vật thể tiềm năng gần đó.
+
+00:18:06.000 --> 00:18:12.000
+Nếu chúng tôi tìm thấy thứ gì đó, chúng tôi lấy mẫu màu trực tiếp từ bộ đệm khung và tô bóng nó lên hình ảnh đầu ra.
+
+00:18:12.000 --> 00:18:18.000
+Tuy nhiên, nó bị giới hạn bởi không gian màn hình mà chúng ta đã thảo luận trước đó.
+
+00:18:18.000 --> 00:18:26.000
+Lưu ý trong ví dụ xe máy này làm thế nào chỉ một phần của bề mặt có thể có được sự phản xạ chính xác, tương ứng với gạch lát sàn có trong bộ đệm khung.
+
+00:18:26.000 --> 00:18:28.000
+Phần còn lại của cảnh bị mất tích.
+
+00:18:28.000 --> 00:18:39.000
+Tệ hơn nữa, phần dưới phía sau chắn bùn, được đánh dấu bằng màu vàng, thiếu thông tin; chúng tôi không có cách nào để biết bề mặt hướng ra khỏi máy ảnh sẽ trông như thế nào.
+
+00:18:39.000 --> 00:18:43.000
+Cuộc diễu hành tia cũng có thể tốn kém về mặt tính toán.
+
+00:18:43.000 --> 00:18:52.000
+Tuy nhiên, phản xạ dò tia giúp chúng ta vượt qua cả hai loạt vấn đề, vì chúng ta có thể dựa vào thông tin cảnh thực sự trong cấu trúc gia tốc.
+
+00:18:52.000 --> 00:18:56.000
+Hãy cùng xem một chiếc gương hoàn hảo sẽ hoạt động như thế nào.
+
+00:18:56.000 --> 00:19:00.000
+Đầu tiên, chúng tôi lấy tia sự cố từ vị trí của máy ảnh đến điểm.
+
+00:19:00.000 --> 00:19:04.000
+Sau đó, chúng tôi phản ánh điểm này về mức bình thường liên quan đến điểm.
+
+00:19:04.000 --> 00:19:09.000
+Điều này cung cấp cho chúng ta một hướng mà chúng ta có thể theo dõi một tia về phía và tìm thấy bất kỳ vật thể phản xạ nào.
+
+00:19:09.000 --> 00:19:16.000
+Đối với điều này, chúng tôi cung cấp hạt nhân dò tia phản xạ của mình với các chuẩn mực và độ sâu của G-Buffer.
+
+00:19:16.000 --> 00:19:25.000
+Hạt nhân dò tia này tính toán vectơ xem, từ máy ảnh đến từng điểm, phản xạ vectơ này và theo dõi một vectơ theo hướng đó từ điểm đó.
+
+00:19:25.000 --> 00:19:32.000
+Cuối cùng, để phản xạ chính xác, chúng ta có thể che bóng giao điểm được tìm thấy trực tiếp trong hạt nhân dò tia.
+
+00:19:32.000 --> 00:19:35.000
+Chúng ta hãy xem mã hóa bộ đổ bóng này.
+
+00:19:35.000 --> 00:19:39.000
+Một lần nữa, chúng ta bắt đầu từ độ sâu của điểm và xây dựng lại vị trí của nó.
+
+00:19:39.000 --> 00:19:43.000
+Lần này, chúng tôi muốn vị trí trong không gian thế giới.
+
+00:19:43.000 --> 00:19:49.000
+Vì vậy, trong hàm calculatePosition của chúng tôi, chúng tôi sẽ cần nhân nghịch đảo của ma trận chế độ xem.
+
+00:19:49.000 --> 00:19:56.000
+Sau đó, chúng tôi tính toán vectơ tới phản xạ của mình trên chuẩn và tạo ra một tia theo hướng đó.
+
+00:19:56.000 --> 00:20:02.000
+Tiếp theo, chúng tôi tạo ra liên ngành của mình và theo dõi tia phản xạ của chúng tôi.
+
+00:20:02.000 --> 00:20:07.000
+Nếu chúng ta va vào một vật thể, bây giờ chúng ta sẽ tô bóng điểm đó để tạo ra sự phản chiếu.
+
+00:20:07.000 --> 00:20:15.000
+Nếu giao lộ bỏ lỡ tất cả các vật thể, chúng ta chỉ có thể lấy mẫu một hộp bầu trời và trả lại màu sắc của nó để mô phỏng sự phản chiếu đang hiển thị bầu trời.
+
+00:20:15.000 --> 00:20:21.000
+Lưu ý rằng việc đổ bóng được thực hiện trực tiếp trong hạt nhân tính toán cho kỹ thuật này.
+
+00:20:21.000 --> 00:20:25.000
+Hãy so sánh các đầu dò phản xạ với các phản xạ dò tia.
+
+00:20:25.000 --> 00:20:31.000
+Hình ảnh bên phải đã sử dụng kết xuất kết hợp và chúng ta có thể thấy các chi tiết của gạch lát sàn rõ ràng hơn nhiều.
+
+00:20:31.000 --> 00:20:37.000
+Các tòa nhà có mặt, và chúng ta thậm chí có thể thấy bóng đổ phản chiếu trên bảng điều khiển phía trước của xe máy.
+
+00:20:37.000 --> 00:20:40.000
+Phản xạ là một sự phù hợp tự nhiên để dò tia.
+
+00:20:40.000 --> 00:20:44.000
+Nó xử lý độc đáo các phản xạ giống như gương và phản xạ thô.
+
+00:20:44.000 --> 00:20:49.000
+Những điều đó có thể đạt được bằng cách theo dõi nhiều tia dọc theo một hình nón và lọc kết quả.
+
+00:20:49.000 --> 00:21:01.000
+Bởi vì chúng dựa vào thông tin hoàn hảo đến từ cấu trúc gia tốc, phản xạ dò tia không có các tạo tác không gian màn hình và có thể xử lý cả hình học tĩnh và động trong cảnh.
+
+00:21:01.000 --> 00:21:08.000
+Bây giờ, một chi tiết quan trọng: chúng tôi đã đề cập rằng để phản xạ, chúng tôi cần tô bóng điểm trực tiếp trong hạt nhân tính toán.
+
+00:21:08.000 --> 00:21:17.000
+Một số kỹ thuật như kỹ thuật này hoặc chiếu sáng toàn cầu yêu cầu truy cập trực tiếp dữ liệu đỉnh và tài nguyên Kim loại từ hạt nhân tính toán.
+
+00:21:17.000 --> 00:21:24.000
+Đối với những trường hợp này, chúng tôi cần đảm bảo GPU có quyền truy cập vào dữ liệu mà nó cần để áp dụng các phương trình đổ bóng của chúng tôi.
+
+00:21:24.000 --> 00:21:30.000
+Điều này đạt được với một mô hình ràng buộc không liên kết mà trong Kim loại được biểu diễn dưới dạng bộ đệm đối số.
+
+00:21:30.000 --> 00:21:36.000
+Vui lòng đảm bảo xem bài nói chuyện "Bindless rendering in Metal" năm nay để biết thêm chi tiết.
+
+00:21:36.000 --> 00:21:41.000
+Chúng tôi vừa thấy cách kết xuất kết hợp có thể được đưa vào thực tế với một số kỹ thuật khác nhau.
+
+00:21:41.000 --> 00:21:48.000
+Điều này dẫn đến các thuật toán tự nhiên hơn cũng có lợi thế là tạo ra kết quả chính xác hơn.
+
+00:21:48.000 --> 00:21:58.000
+Trong một số trường hợp, khi chúng tôi so sánh với các kỹ thuật rasterization truyền thống, chúng tôi thấy rằng chúng tôi có thể loại bỏ các đường dẫn kết xuất và tiết kiệm bộ nhớ và băng thông trong một số trường hợp.
+
+00:21:58.000 --> 00:22:04.000
+Với việc bổ sung dò tia từ kết xuất, chúng tôi thậm chí có thể giữ toàn bộ công việc của mình trên chip.
+
+00:22:04.000 --> 00:22:12.000
+Việc áp dụng Ray-tracing là một nhiệm vụ lớn và chúng tôi có công cụ mới tuyệt vời để hỗ trợ bạn trong quá trình đưa những kỹ thuật này vào động cơ của bạn.
+
+00:22:12.000 --> 00:22:21.000
+Năm nay, chúng tôi sẽ giới thiệu các công cụ cho phép bạn ghi lại công việc dò tia, kiểm tra cấu trúc gia tốc và kiểm tra các chức năng nhìn thấy và giao lộ.
+
+00:22:21.000 --> 00:22:25.000
+Bây giờ David sẽ cho chúng ta một chuyến tham quan những công cụ mới này.
+
+00:22:25.000 --> 00:22:30.000
+David Núñez Rubio: Cảm ơn, Ali. Tên tôi là David Núñez Rubio, và tôi là một kỹ sư phần mềm GPU.
+
+00:22:30.000 --> 00:22:34.000
+Năm ngoái, chúng tôi đã giới thiệu hỗ trợ dò tia trong Metal.
+
+00:22:34.000 --> 00:22:38.000
+Tuy nhiên, việc phát triển ứng dụng phức tạp có thể là một thách thức.
+
+00:22:38.000 --> 00:22:42.000
+May mắn thay, Metal Debugger ở đây để giúp bạn.
+
+00:22:42.000 --> 00:22:47.000
+Năm nay, chúng tôi đã giới thiệu hỗ trợ dò tia trong Metal Debugger.
+
+00:22:47.000 --> 00:22:52.000
+Nhờ việc áp dụng kết xuất kết hợp, bản demo của chúng tôi trông đẹp hơn bao giờ hết.
+
+00:22:52.000 --> 00:22:58.000
+Bóng mềm theo dõi tia, phản xạ, tắc nghẽn môi trường xung quanh; kết quả thật tuyệt vời.
+
+00:22:58.000 --> 00:23:02.000
+Trong quá trình phát triển bản demo, chúng tôi đã gặp phải một số vấn đề.
+
+00:23:02.000 --> 00:23:07.000
+Đây là cách các công cụ có thể giúp bạn giải quyết những vấn đề này.
+
+00:23:07.000 --> 00:23:12.000
+Trong phiên bản đầu tiên của bản demo này, các bóng dò tia đã được triển khai.
+
+00:23:12.000 --> 00:23:18.000
+Nhưng nếu bạn nhìn kỹ, bạn sẽ nhận thấy những cái bóng bị thiếu trên lá cây trên mặt đất.
+
+00:23:18.000 --> 00:23:21.000
+Rõ ràng hơn nếu chúng ta so sánh với phiên bản tham khảo.
+
+00:23:21.000 --> 00:23:26.000
+Xem tham chiếu so với dấu vết tia.
+
+00:23:26.000 --> 00:23:34.000
+Hãy nhảy vào Xcode và chụp để xem các công cụ có thể giúp chúng tôi gỡ lỗi vấn đề này như thế nào.
+
+00:23:34.000 --> 00:23:39.000
+Chúng ta cần nhấn nút Kim loại và nhấp vào Chụp.
+
+00:23:39.000 --> 00:23:45.000
+Vì đây là một vấn đề tĩnh, chúng ta chỉ cần một khung duy nhất.
+
+00:23:45.000 --> 00:23:51.000
+Trong trình gỡ lỗi, các lệnh gọi API được tổ chức ở phía bên trái trên trình điều hướng gỡ lỗi.
+
+00:23:51.000 --> 00:23:57.000
+Hãy mở bộ đệm lệnh ngoài màn hình để tìm mã hóa bóng của chúng ta.
+
+00:23:57.000 --> 00:24:02.000
+Tôi đã gắn nhãn bộ mã hóa lệnh tính toán của mình là "Raytrace Shadows".
+
+00:24:02.000 --> 00:24:08.000
+Bạn nên gắn nhãn các đối tượng Kim loại của mình để bạn có thể dễ dàng tìm thấy chúng trong Trình gỡ lỗi kim loại.
+
+00:24:08.000 --> 00:24:13.000
+Hình thu nhỏ cũng cho chúng ta một gợi ý rằng, thực sự, đây là bộ mã hóa mà chúng tôi đang tìm kiếm.
+
+00:24:13.000 --> 00:24:19.000
+Bây giờ chúng ta có thể nhấp vào lệnh gọi API nhóm chủ đề gửi đi để hiển thị tài nguyên băng tần.
+
+00:24:19.000 --> 00:24:25.000
+Đây là danh sách tất cả các đối tượng được liên kết với công văn hạt nhân hiện tại của chúng tôi.
+
+00:24:25.000 --> 00:24:31.000
+Và ở đây, chúng ta có thể thấy sự gia tốc của cấu trúc, mà chúng ta cũng đã dán nhãn một cách thuận tiện.
+
+00:24:31.000 --> 00:24:35.000
+Hạt nhân của chúng tôi sử dụng cấu trúc gia tốc để tạo ra các tia.
+
+00:24:35.000 --> 00:24:47.000
+Điều này thường được thực hiện như một hệ thống phân cấp khối lượng giới hạn hoặc BVH, là một cấu trúc dữ liệu giống như cây đại diện cho thế giới 3D mà các tia sẽ giao nhau.
+
+00:24:47.000 --> 00:24:56.000
+Bây giờ, nhấp đúp chuột để mở trình xem cấu trúc tăng tốc.
+
+00:24:56.000 --> 00:25:00.000
+Đây là một công cụ mới tuyệt vời được tích hợp trong Metal Debugger.
+
+00:25:00.000 --> 00:25:04.000
+Hãy để tôi cung cấp cho bạn một cái nhìn tổng quan về cách nó được tổ chức.
+
+00:25:04.000 --> 00:25:14.000
+Ở phía bên phải, chúng tôi có chế độ xem 3D, nơi chúng tôi có hình ảnh trực quan theo dõi tia của cảnh 3D của mình, bao gồm bất kỳ chức năng hình học hoặc giao điểm tùy chỉnh nào.
+
+00:25:14.000 --> 00:25:20.000
+Điều này hoạt động tốt với hình học tùy chỉnh như tóc hoặc khi sử dụng thử nghiệm alpha.
+
+00:25:20.000 --> 00:25:25.000
+Bạn có thể sử dụng các điều khiển quen thuộc để di chuyển máy ảnh và nhìn xung quanh.
+
+00:25:25.000 --> 00:25:31.000
+Và đây là một mẹo: nhấn phím Tùy chọn trong khi cuộn để phóng to và thu nhỏ.
+
+00:25:31.000 --> 00:25:36.000
+Chúng tôi đã xây dựng một số công cụ trực quan hóa tuyệt vời để hiểu rõ hơn về cảnh của chúng tôi.
+
+00:25:36.000 --> 00:25:42.000
+Hãy nhấp vào menu được đánh dấu để xem các chế độ khác nhau có sẵn.
+
+00:25:42.000 --> 00:25:46.000
+Ví dụ, chúng ta có thể hình dung các chuyến đi khối lượng giới hạn.
+
+00:25:46.000 --> 00:25:54.000
+Đây là bản đồ nhiệt cho thấy một tia sẽ cần đi qua bao nhiêu nút trước khi chạm vào bề mặt.
+
+00:25:54.000 --> 00:26:02.000
+Màu tối hơn có nghĩa là nhiều nút hơn cần được đi qua và kiểm tra giao lộ chậm hơn.
+
+00:26:02.000 --> 00:26:11.000
+Chúng ta cũng có thể mã màu cảnh của mình dựa trên cấu trúc gia tốc...
+
+00:26:11.000 --> 00:26:15.000
+Hình học...
+
+00:26:15.000 --> 00:26:19.000
+Các trường hợp...
+
+00:26:19.000 --> 00:26:26.000
+Hoặc các chức năng giao nhau.
+
+00:26:26.000 --> 00:26:31.000
+Bây giờ chúng ta đã quen thuộc hơn một chút với công cụ này, chúng ta có thể quay lại vấn đề ban đầu của mình.
+
+00:26:31.000 --> 00:26:36.000
+Nhờ chế độ xem 3D, chúng tôi đã xác nhận rằng hình học của chúng tôi ở đó.
+
+00:26:36.000 --> 00:26:39.000
+Vì vậy, phải có một cái gì đó khác.
+
+00:26:39.000 --> 00:26:42.000
+Ở phía bên trái, có khu vực hoa tiêu.
+
+00:26:42.000 --> 00:26:47.000
+Ở đây chúng ta có thể thấy cấu trúc gia tốc cấp trên và dưới của chúng ta.
+
+00:26:47.000 --> 00:26:53.000
+Chúng ta có thể mở ra bất kỳ cấu trúc gia tốc nào để xem danh sách các hình học mà nó được xây dựng từ đó.
+
+00:26:53.000 --> 00:27:03.000
+Chúng ta có thể mở ra một lần nữa để xem các thuộc tính của chúng như độ mờ đục hoặc số lượng nguyên thủy.
+
+00:27:03.000 --> 00:27:07.000
+Chúng ta cũng có thể xem danh sách các trường hợp của cấu trúc gia tốc này.
+
+00:27:07.000 --> 00:27:15.000
+Hãy nhấp vào lá cây để hiển thị ví dụ của chúng trên trình điều hướng và kiểm tra các thuộc tính của nó.
+
+00:27:15.000 --> 00:27:24.000
+Ma trận có vẻ chính xác, và không có cờ nào được đặt, nhưng có vẻ như mặt nạ đang thiếu thứ gì đó.
+
+00:27:24.000 --> 00:27:27.000
+Trong bản demo này, chúng tôi đang sử dụng mặt nạ giao lộ.
+
+00:27:27.000 --> 00:27:32.000
+Chúng tôi sử dụng bit thấp nhất của mặt nạ để gắn cờ các đối tượng đổ bóng.
+
+00:27:32.000 --> 00:27:40.000
+Sau đó, liên ngành của chúng tôi sẽ kiểm tra mặt nạ này bằng cách sử dụng một bitwise và vận hành và từ chối giao lộ nếu nó bị lỗi.
+
+00:27:40.000 --> 00:27:44.000
+Chúng ta có thể hình dung hành vi này trực tiếp trong chế độ xem 3D.
+
+00:27:44.000 --> 00:27:49.000
+Chúng ta cần mở menu gợi ý liên ngành.
+
+00:27:49.000 --> 00:27:54.000
+Ở đây chúng ta có thể cấu hình các tùy chọn dò tia để trực quan hóa.
+
+00:27:54.000 --> 00:28:02.000
+Chúng ta có thể thay đổi các hoạt động loại bỏ, vô hiệu hóa các giao lộ tùy chỉnh hoặc thay đổi mặt nạ của liên ngành.
+
+00:28:02.000 --> 00:28:05.000
+Theo mặc định, nó sẽ giao nhau với mọi thứ.
+
+00:28:05.000 --> 00:28:11.000
+Hãy thay đổi nó thành giá trị mà chúng ta đang sử dụng cho bóng tối.
+
+00:28:11.000 --> 00:28:19.000
+Điều này sẽ cho chúng ta thấy một hình ảnh trực quan chính xác về cảnh của chúng ta khi sử dụng mặt nạ bóng của chúng ta.
+
+00:28:19.000 --> 00:28:24.000
+Và thực sự, chúng tôi đã xác nhận rằng lá cây của chúng tôi hiện đang mất tích.
+
+00:28:24.000 --> 00:28:33.000
+Khi chúng tôi đã xác định được vấn đề, chúng tôi cần quay lại nguồn của mình và đảm bảo rằng chúng tôi đang đặt đúng giá trị mặt nạ.
+
+00:28:33.000 --> 00:28:37.000
+Đây là cách bóng tối trông như thế nào trước đây.
+
+00:28:37.000 --> 00:28:41.000
+Và đây là cách họ chăm sóc sau khi sửa giá trị mặt nạ.
+
+00:28:41.000 --> 00:28:47.000
+Đây là một ví dụ về quy trình làm việc có thể giúp bạn gỡ lỗi các ứng dụng dò tia của mình.
+
+00:28:47.000 --> 00:28:58.000
+Nếu bạn muốn tìm hiểu thêm về các công cụ, hãy đảm bảo rằng bạn xem phiên WWDC "Khám phá các công cụ gỡ lỗi, lập hồ sơ và tạo tài sản bằng kim loại" năm nay.
+
+00:28:58.000 --> 00:29:03.000
+Trong phiên này, chúng tôi đã xem xét cách dò tia có thể nâng cao hình ảnh của bạn.
+
+00:29:03.000 --> 00:29:08.000
+Kết xuất lai là sự kết hợp giữa rasterization và dò tia.
+
+00:29:08.000 --> 00:29:16.000
+Điều này cho phép thay thế các kỹ thuật xấp xỉ ánh sáng bằng những kỹ thuật chính xác hơn cũng đơn giản hơn.
+
+00:29:16.000 --> 00:29:22.000
+Chúng tôi cũng đã thấy các công cụ mới để hỗ trợ bạn trong quá trình áp dụng dò tia trong động cơ của bạn.
+
+00:29:22.000 --> 00:29:31.000
+Chúng tôi chỉ làm xước bề mặt về những khả năng mới có sẵn cho bạn bằng cách kết hợp rasterization và dò tia.
+
+00:29:31.000 --> 00:29:39.000
+Chúng tôi nóng lòng muốn xem bạn đưa những công nghệ này vào thực tế như thế nào để phát triển các kỹ thuật đồ họa sáng tạo mới trong tương lai.
+
+00:29:39.000 --> 00:29:43.000
+Cảm ơn bạn và tận hưởng phần còn lại của WWDC.
+
+00:29:43.000 --> 23:59:59.000
+♪
+

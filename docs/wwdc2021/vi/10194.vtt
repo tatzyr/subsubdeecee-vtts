@@ -1,0 +1,1262 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:19.000
+Ben Cohen: Xin chào, tôi là Ben từ nhóm Swift, và trong video này, tôi sẽ chuyển một ứng dụng hiện có sang sử dụng các tính năng đồng thời mới của Swift.
+
+00:00:19.000 --> 00:00:34.000
+Chúng tôi sẽ xem các tính năng mới này giúp bạn viết mã không đồng bộ rõ ràng hơn như thế nào và bảo vệ chống lại các điều kiện chủng tộc có thể xảy ra, cũng như xem xét một số kỹ thuật để dần dần chuyển mã của bạn sang cách vận hành mới này.
+
+00:00:34.000 --> 00:00:43.000
+Tôi sẽ sử dụng một ứng dụng có tên Coffee Tracker, và nó dựa trên một cuộc nói chuyện từ WWDC 2020 về việc tạo và cập nhật các biến chứng của đồng hồ.
+
+00:00:43.000 --> 00:00:52.000
+Đây là một ứng dụng đơn giản cho phép bạn theo dõi tất cả cà phê bạn đã uống hôm nay, cũng như một biến chứng để hiển thị mức caffeine hiện tại của bạn trên mặt đồng hồ.
+
+00:00:52.000 --> 00:01:10.000
+Đó là một ví dụ hay để sử dụng cho mục đích của chúng tôi bởi vì mặc dù nó là một ứng dụng nhỏ, nó hiển thị rất nhiều điều khác nhau mà chúng tôi muốn suy nghĩ, bao gồm cách hoạt động đồng thời với SwiftUI, ủy quyền gọi lại từ SDK đồng hồ, một số I/O và giao tiếp với các API không đồng bộ trong SDK của Apple.
+
+00:01:10.000 --> 00:01:12.000
+Bây giờ chúng ta hãy tham quan nhanh ứng dụng.
+
+00:01:12.000 --> 00:01:15.000
+Nó gần như được chia thành ba lớp.
+
+00:01:15.000 --> 00:01:18.000
+Đầu tiên, có lớp giao diện người dùng.
+
+00:01:18.000 --> 00:01:27.000
+Đây chủ yếu là chế độ xem SwiftUI, nhưng trong đó chúng ta cũng có thể xem xét những thứ như nguồn dữ liệu phức tạp như một phần của lớp giao diện người dùng.
+
+00:01:27.000 --> 00:01:36.000
+Tiếp theo là lớp mô hình bao gồm một vài loại giá trị đơn giản để đại diện cho đồ uống chứa caffeine, cũng như một loại mô hình được gọi là "Mô hình cà phê".
+
+00:01:36.000 --> 00:01:39.000
+Bây giờ, đây là cái mà bạn có thể gọi là Mô hình giao diện người dùng.
+
+00:01:39.000 --> 00:01:44.000
+Đó là, nơi bạn giữ dữ liệu để hiển thị bởi lớp giao diện người dùng.
+
+00:01:44.000 --> 00:01:52.000
+Đó là một đối tượng có thể quan sát được cung cấp cho chế độ xem SwiftUI của chúng tôi và tất cả các cập nhật trên đó sẽ cần được thực hiện trên luồng chính.
+
+00:01:52.000 --> 00:01:59.000
+Tôi đang đề cập đến nó như một mô hình giao diện người dùng vì nó có thể không phải là mô hình đầy đủ của tất cả dữ liệu ứng dụng của bạn.
+
+00:01:59.000 --> 00:02:08.000
+Nó có thể chỉ là một phép chiếu của mô hình dữ liệu của bạn hoặc một tập hợp con của nó; chỉ là những gì bạn cần hiển thị trên giao diện người dùng tại thời điểm này.
+
+00:02:08.000 --> 00:02:20.000
+Cuối cùng, chúng tôi có những gì bạn có thể nghĩ là lớp phụ trợ: quá trình xử lý xảy ra - có thể là trong nền - để điền mô hình của bạn hoặc nói chuyện với thế giới bên ngoài ứng dụng của bạn.
+
+00:02:20.000 --> 00:02:31.000
+Trong trường hợp của chúng tôi, điều đó được thể hiện bằng loại HealthKitController này quản lý giao tiếp với HealthKit để lưu và tải lượng caffeine của người dùng.
+
+00:02:31.000 --> 00:02:37.000
+Bây giờ, trước khi chúng ta bắt đầu xem xét mã, hãy nói về cách quản lý đồng thời trong ứng dụng.
+
+00:02:37.000 --> 00:02:46.000
+Kiến trúc này trông khá sạch sẽ, nhưng khi chúng ta phân lớp về cách xử lý đồng thời, chúng ta sẽ có được một bức tranh lộn xộn hơn nhiều.
+
+00:02:46.000 --> 00:02:53.000
+Ứng dụng này về cơ bản được chia thành ba hàng đợi đồng thời mà mã có thể được thực thi.
+
+00:02:53.000 --> 00:02:57.000
+Công việc trong giao diện người dùng và trên mô hình được thực hiện trong hàng đợi chính.
+
+00:02:57.000 --> 00:03:02.000
+Ứng dụng cũng có một hàng đợi điều phối để thực hiện công việc trong nền.
+
+00:03:02.000 --> 00:03:10.000
+Và cuối cùng, một số cuộc gọi lại nhất định vào trình xử lý hoàn thành - như những kết quả trả về từ HealthKit - được thực hiện trên các hàng đợi tùy ý.
+
+00:03:10.000 --> 00:03:13.000
+Đây là một tình huống khá phổ biến.
+
+00:03:13.000 --> 00:03:21.000
+Những gì có vẻ giống như một kiến trúc ứng dụng đơn giản bỏ qua rất nhiều sự phức tạp tiềm ẩn trong cách nó xử lý đồng thời.
+
+00:03:21.000 --> 00:03:23.000
+Bây giờ, để tiết lộ nhanh chóng.
+
+00:03:23.000 --> 00:03:32.000
+Khi áp dụng đồng thời Swift, chúng ta sẽ đi từ kiến trúc đồng thời đặc biệt này sang một cái gì đó sẽ trông như thế này.
+
+00:03:32.000 --> 00:03:37.000
+Chúng tôi sẽ đặt chế độ xem và mô hình giao diện người dùng của mình lên cái được gọi là diễn viên chính.
+
+00:03:37.000 --> 00:03:47.000
+Chúng tôi sẽ tạo ra các diễn viên mới để hoạt động trong nền và các loại này sẽ chuyển các giá trị an toàn luồng giữa nhau bằng cách sử dụng tính năng không đồng bộ/chờ đợi.
+
+00:03:47.000 --> 00:03:55.000
+Khi chúng ta hoàn thành, kiến trúc đồng thời phải rõ ràng và dễ mô tả như kiến trúc kiểu.
+
+00:03:55.000 --> 00:04:04.000
+Bây giờ chúng tôi đã sử dụng một vài thuật ngữ ở đây mà bạn có thể không quen thuộc, như "async/await" và "actors", và chúng tôi sẽ giải thích chúng một cách ngắn gọn khi chúng tôi sử dụng chúng trong mã.
+
+00:04:04.000 --> 00:04:12.000
+Nhưng để được giải thích sâu hơn về các tính năng này, có một số cuộc nói chuyện khác có sẵn đi vào chi tiết hơn nhiều.
+
+00:04:12.000 --> 00:04:19.000
+Vì vậy, bây giờ chúng ta đã thấy kiến trúc tổng thể, hãy đi sâu vào mã.
+
+00:04:19.000 --> 00:04:21.000
+Ở đây chúng tôi có các tệp khác nhau.
+
+00:04:21.000 --> 00:04:24.000
+Đầu tiên, của một số chế độ xem giao diện người dùng Swift.
+
+00:04:24.000 --> 00:04:30.000
+Và sau đó chúng tôi có đại diện mở rộng của bộ điều khiển biến chứng đồng hồ của chúng tôi.
+
+00:04:30.000 --> 00:04:39.000
+Chúng tôi có loại mô hình đơn giản đại diện cho đồ uống chứa caffeine và mô hình CoffeeData UI chứa một loạt các loại đồ uống này.
+
+00:04:39.000 --> 00:04:42.000
+Và cuối cùng, chúng ta có HealthKitController.
+
+00:04:42.000 --> 00:04:51.000
+Và trong lớp này, tôi sẽ bắt đầu giới thiệu một số tính năng đồng thời mới của Swift vào ứng dụng của chúng tôi.
+
+00:04:51.000 --> 00:04:58.000
+HealthKitController chứa một vài cuộc gọi khác nhau vào HealthKit SDK để xử lý hoàn thành.
+
+00:04:58.000 --> 00:05:01.000
+Hãy bắt đầu bằng cách xem xét thao tác lưu của bộ điều khiển này.
+
+00:05:01.000 --> 00:05:09.000
+Vì vậy, tôi vừa nhấn Control-6, và điều đó sẽ hiển thị danh sách các chức năng trong tệp này và chúng ta sẽ chuyển sang thao tác lưu.
+
+00:05:09.000 --> 00:05:17.000
+Bây giờ, trước khi chúng ta đi vào các tính năng đồng thời mới, hãy nói một chút về an toàn luồng trong Swift ngay hôm nay.
+
+00:05:17.000 --> 00:05:22.000
+Mã này truy cập một số biến, isAvailable và lưu trữ.
+
+00:05:22.000 --> 00:05:26.000
+Bây giờ, có vẻ như chúng ta chỉ đang đọc các biến này trong hàm này.
+
+00:05:26.000 --> 00:05:28.000
+Điều đó có an toàn không?
+
+00:05:28.000 --> 00:05:32.000
+Chà không, không phải nếu mã khác có thể được viết cho họ cùng một lúc.
+
+00:05:32.000 --> 00:05:38.000
+Để biết liệu mã này có an toàn với luồng hay không, tôi cần nhiều thông tin hơn là chỉ nhìn vào chức năng này.
+
+00:05:38.000 --> 00:05:46.000
+Không sử dụng hàng đợi hoặc khóa điều phối trong đó, vì vậy bất cứ điều gì làm cho chuỗi mã này an toàn - giả sử là như vậy - phải ở nơi khác.
+
+00:05:46.000 --> 00:05:50.000
+Có thể người gọi tuần tự hóa tất cả các cuộc gọi để lưu qua một hàng đợi.
+
+00:05:50.000 --> 00:05:53.000
+Hoặc có thể ứng dụng được xây dựng theo một cách nào đó có nghĩa là nó ổn.
+
+00:05:53.000 --> 00:05:58.000
+Nhưng tôi không thể biết điều này chỉ bằng cách nhìn vào chức năng này.
+
+00:05:58.000 --> 00:06:12.000
+Có thể làm điều đó - xem xét chức năng này và biết một số điều nhất định mà không cần phải xem các phần khác trong chương trình của tôi - là những gì chúng tôi gọi là lý luận cục bộ và đó là một mục tiêu thực sự quan trọng đối với Swift.
+
+00:06:12.000 --> 00:06:16.000
+Ví dụ, sự nhấn mạnh của Swift vào các loại giá trị là về lý luận cục bộ.
+
+00:06:16.000 --> 00:06:24.000
+Không giống như loại tham chiếu, bạn không phải lo lắng rằng loại giá trị bạn đã được chuyển đang bị đột biến ở những nơi khác trong chương trình của bạn.
+
+00:06:24.000 --> 00:06:35.000
+Rất nhiều tính năng ngôn ngữ được giới thiệu đồng thời trong Swift 5.5 là để cung cấp cho bạn nhiều cơ hội hơn để lý luận cục bộ về mã của bạn.
+
+00:06:35.000 --> 00:06:43.000
+Bây giờ, khi nó xảy ra, chức năng này hoàn toàn an toàn với luồng, nhưng tôi đã tự mình tìm ra điều đó; trình biên dịch không giúp tôi phát hiện ra những vấn đề này.
+
+00:06:43.000 --> 00:06:51.000
+Vì vậy, ở dưới đây, chúng tôi có một cuộc gọi đến HealthKit SDK để lưu một caffeineSample vào dữ liệu sức khỏe của người dùng.
+
+00:06:51.000 --> 00:06:57.000
+Và điều này cần một trình xử lý hoàn thành, và trình xử lý hoàn thành đó có hai giá trị: thành công hay sai.
+
+00:06:57.000 --> 00:07:01.000
+Nếu thao tác thành công, không có lỗi; lỗi sẽ là số không.
+
+00:07:01.000 --> 00:07:10.000
+Điều này có nghĩa là chúng ta cần nhớ kiểm tra trạng thái và sau đó, khi thích hợp, hãy mở gói lỗi tùy chọn ở đây.
+
+00:07:10.000 --> 00:07:13.000
+Bây giờ, đây không phải là cách chúng tôi xử lý lỗi thông thường trong Swift.
+
+00:07:13.000 --> 00:07:18.000
+Điều này sẽ tốt hơn nhiều như một phương pháp có thể gây ra thất bại.
+
+00:07:18.000 --> 00:07:22.000
+Nhưng cách tiếp cận đó không hiệu quả với những người xử lý hoàn thành.
+
+00:07:22.000 --> 00:07:29.000
+Nhưng bây giờ, với các phương thức không đồng bộ, chúng ta có thể có các hàm không đồng bộ có thể ném.
+
+00:07:29.000 --> 00:07:38.000
+Phương pháp lưu HealthKit này hiện có một phương pháp tương đương không đồng bộ thực hiện chính xác điều đó, vì vậy hãy chuyển sang sử dụng nó.
+
+00:07:38.000 --> 00:07:51.000
+Để làm điều đó, trước tiên chúng tôi xóa trình xử lý hoàn thành và chúng tôi viết "chờ" trước cuộc gọi phương thức.
+
+00:07:51.000 --> 00:07:59.000
+Điều này nhắc nhở chúng ta rằng đó là một cuộc gọi hàm không đồng bộ và mã sẽ tạm dừng tại thời điểm này và cho phép các mã khác chạy.
+
+00:07:59.000 --> 00:08:03.000
+Chúng ta sẽ quay lại lý do tại sao điều này lại quan trọng một lát sau.
+
+00:08:03.000 --> 00:08:12.000
+Vì vậy, nếu chúng tôi biên dịch, bây giờ chúng tôi đã làm điều này, chúng tôi thấy rằng trình biên dịch đang nói với chúng tôi rằng chúng tôi cần một "thử".
+
+00:08:12.000 --> 00:08:16.000
+Và đây là một lợi ích lớn của các chức năng không đồng bộ; chúng có thể ném.
+
+00:08:16.000 --> 00:08:22.000
+Không còn phải nhớ kiểm tra lỗi tùy chọn nữa.
+
+00:08:22.000 --> 00:08:30.000
+Vì vậy, chúng tôi có thể thêm "thử" trước cuộc gọi phương thức này và chúng tôi muốn xử lý lỗi ngay lập tức.
+
+00:08:30.000 --> 00:08:33.000
+Vì vậy, chúng tôi kết thúc cuộc gọi này trong một khối làm...
+
+00:08:33.000 --> 00:08:39.000
+Và sau đó bắt lỗi.
+
+00:08:39.000 --> 00:08:47.000
+Chúng ta có thể loại bỏ bộ phận bảo vệ này.
+
+00:08:47.000 --> 00:08:54.000
+Và bây giờ chúng tôi đang bắt gặp lỗi, nó không còn là tùy chọn nữa, vì vậy chúng tôi có thể xóa phần mở gói.
+
+00:08:54.000 --> 00:09:16.000
+Điều này cũng có nghĩa là chúng ta có thể sắp xếp lại mã của mình để giữ đường dẫn hạnh phúc ở trên cùng để chúng ta có thể di chuyển dòng nhật ký thành công lên ngay bên dưới bản lưu và sau đó chỉ cần xử lý lỗi đăng nhập vào bộ nhớ cache.
+
+00:09:16.000 --> 00:09:19.000
+Lưu ý rằng lưu không còn trả về một giá trị nữa.
+
+00:09:19.000 --> 00:09:32.000
+Trả về thành công/thất bại thực sự trùng lặp với lỗi, vì vậy chức năng mới của chúng tôi chỉ ném hoặc thành công.
+
+00:09:32.000 --> 00:09:37.000
+Bây giờ chúng tôi đã thêm tính năng bắt thử, chúng tôi đang gặp thêm một lỗi nữa từ trình biên dịch.
+
+00:09:37.000 --> 00:09:44.000
+Chúng tôi đang gọi một hàm không đồng bộ, nhưng chúng tôi đang gọi nó từ bên trong một hàm đồng bộ.
+
+00:09:44.000 --> 00:09:46.000
+Cái này không hoạt động.
+
+00:09:46.000 --> 00:09:57.000
+Các chức năng không đồng bộ có khả năng mà các chức năng đồng bộ không có: khả năng từ bỏ quyền kiểm soát luồng mà chúng đang chạy trong khi chờ đợi.
+
+00:09:57.000 --> 00:10:04.000
+Để làm điều này, họ có một cách riêng để xử lý khung ngăn xếp của họ và điều này không tương thích với các chức năng đồng bộ.
+
+00:10:04.000 --> 00:10:12.000
+Vì vậy, một lựa chọn là làm cho chức năng này không đồng bộ thay thế.
+
+00:10:12.000 --> 00:10:17.000
+Vì vậy, chúng ta chỉ có thể thêm từ khóa không đồng bộ sau định nghĩa hàm.
+
+00:10:17.000 --> 00:10:21.000
+Và bây giờ, tệp này biên dịch.
+
+00:10:21.000 --> 00:10:24.000
+Nhưng toàn bộ dự án vẫn chưa được biên soạn.
+
+00:10:24.000 --> 00:10:34.000
+Làm cho chức năng này không đồng bộ đã đẩy vấn đề lên một cấp độ đến nơi nó được gọi.
+
+00:10:34.000 --> 00:10:40.000
+Ở đây trong mô hình dữ liệu của tôi, bây giờ tôi đang gặp lỗi trình biên dịch tương tự vì chức năng này không đồng bộ.
+
+00:10:40.000 --> 00:10:48.000
+Bây giờ tôi có thể tiếp tục đi lên chuỗi, nhưng bây giờ, hãy xem một kỹ thuật khác để giữ cho các thay đổi được bản địa hóa.
+
+00:10:48.000 --> 00:10:56.000
+Để gọi hàm không đồng bộ của tôi, tôi sẽ tách ra một tác vụ không đồng bộ mới sẽ được phép gọi các hàm không đồng bộ.
+
+00:10:56.000 --> 00:11:09.000
+Nhiệm vụ không đồng bộ này rất giống với việc gọi async trên hàng đợi điều phối toàn cầu.
+
+00:11:09.000 --> 00:11:16.000
+Bạn không thể trả lại một giá trị từ nó cho hàm bên ngoài vì khối thực thi đồng thời.
+
+00:11:16.000 --> 00:11:21.000
+Vì vậy, bất cứ điều gì bạn làm với việc đóng cửa tách rời cần phải khép kín.
+
+00:11:21.000 --> 00:11:28.000
+Trong trường hợp này, chúng tôi chỉ gọi lưu, không trả về giá trị, vì vậy không sao cả.
+
+00:11:28.000 --> 00:11:36.000
+Bạn cũng cần cẩn thận rằng bạn không chạm vào trạng thái toàn cầu có thể bị đột biến đồng thời từ các luồng khác.
+
+00:11:36.000 --> 00:11:50.000
+Và đây là nơi có liên quan rằng lưu hoàn toàn an toàn với luồng, nếu không chúng tôi có thể vô tình giới thiệu các điều kiện cuộc đua mới bằng cách thêm nhiệm vụ mới này.
+
+00:11:50.000 --> 00:12:04.000
+Bây giờ chúng tôi đã đặt nó bên trong một tác vụ không đồng bộ, hàm đang chờ của chúng tôi được biên dịch và chúng tôi đã hoàn thành lần đầu tiên sử dụng async/await trong ứng dụng này, chúng tôi có thể chạy nó ngay bây giờ.
+
+00:12:04.000 --> 00:12:13.000
+Hãy thực hiện một trong những tái cấu trúc khác và lần này, hãy xem xét một số kỹ thuật khác khi chuyển sang không đồng bộ.
+
+00:12:13.000 --> 00:12:25.000
+Vì vậy, chúng ta hãy xem cuộc gọi yêu cầu ủy quyền truy cập vào dữ liệu sức khỏe của người dùng.
+
+00:12:25.000 --> 00:12:29.000
+Điều này tương tự gọi HealthKit với trình xử lý hoàn thành.
+
+00:12:29.000 --> 00:12:35.000
+Nhưng không giống như trước đây, bản thân chức năng này cần một trình xử lý hoàn thành.
+
+00:12:35.000 --> 00:12:42.000
+Những gì tôi sẽ làm là tôi sẽ tạo phiên bản thứ hai của hàm để trở thành không đồng bộ trong khi vẫn giữ phiên bản trình xử lý hoàn thành.
+
+00:12:42.000 --> 00:12:51.000
+Bằng cách đó, các phần khác trong mã của chúng tôi gọi nó với trình xử lý hoàn thành có thể tiếp tục hoạt động trong khi chúng tôi tái cấu trúc.
+
+00:12:51.000 --> 00:12:56.000
+Tôi có thể làm điều này một cách dễ dàng bằng cách sử dụng hành động tái cấu trúc "Tạo thay thế không đồng bộ".
+
+00:12:56.000 --> 00:13:05.000
+Điều đó có sẵn trong menu Code Action - mà tôi có thể đưa ra với Command-Shift-A - và chọn tùy chọn để thêm giải pháp thay thế không đồng bộ.
+
+00:13:05.000 --> 00:13:20.000
+Vì vậy, điều này đã thêm phiên bản không đồng bộ thứ hai của cuộc gọi ban đầu.
+
+00:13:20.000 --> 00:13:30.000
+Và nó đã thay thế mã xử lý hoàn thành ban đầu bằng mã tạo ra một tác vụ không đồng bộ mới...
+
+00:13:30.000 --> 00:13:37.000
+...Và sau đó chỉ chờ phiên bản không đồng bộ của chức năng.
+
+00:13:37.000 --> 00:13:45.000
+Lưu ý rằng việc tái cấu trúc không đồng bộ đã thêm cảnh báo ngừng sử dụng vào cảnh báo ban đầu.
+
+00:13:45.000 --> 00:13:53.000
+Những điều này sẽ giúp hướng dẫn tôi đến các phần mã của mình có thể được hưởng lợi tiếp theo từ việc tái cấu trúc để gọi phiên bản không đồng bộ mới này.
+
+00:13:53.000 --> 00:13:59.000
+Hãy hoàn tác và quay lại phiên bản xử lý hoàn thành ban đầu đó trong giây lát.
+
+00:13:59.000 --> 00:14:08.000
+Bên trong yêu cầu này Ủy quyền gọi lại, cuộc gọi lại này có thể xảy ra trên một chuỗi tùy ý.
+
+00:14:08.000 --> 00:14:14.000
+Vì vậy, bạn cần biết rằng mã bên trong nó an toàn với luồng.
+
+00:14:14.000 --> 00:14:19.000
+Nhưng tôi không nghĩ là như vậy.
+
+00:14:19.000 --> 00:14:27.000
+Bài tập này ở đây có thể xảy ra đồng thời với mã khác đọc giá trị này trên các luồng khác.
+
+00:14:27.000 --> 00:14:31.000
+Và có một ví dụ khác về việc thiếu lý luận cục bộ trong mã này.
+
+00:14:31.000 --> 00:14:41.000
+Sau bài tập đó, trình xử lý hoàn thành này được gọi và tôi không biết liệu mã bên trong trình xử lý hoàn thành đó có an toàn cho luồng hay không.
+
+00:14:41.000 --> 00:14:52.000
+Tôi sẽ phải đi và xem xét tất cả các trang web cuộc gọi cho chức năng này để xem cách trình xử lý hoàn thành của họ được viết để biết rằng điều này ổn.
+
+00:14:52.000 --> 00:14:58.000
+Bây giờ, hãy làm lại lần nữa và xem phiên bản được tái cấu trúc.
+
+00:14:58.000 --> 00:15:07.000
+Bây giờ hãy nhớ rằng, một tác vụ không đồng bộ cũng chạy trên một chuỗi tùy ý tương tự như một cuộc gọi lại công văn.
+
+00:15:07.000 --> 00:15:14.000
+Vì vậy, phiên bản chuyển tiếp này có các vấn đề tương tự như phiên bản trình xử lý hoàn thành mà chúng tôi đã gặp phải trước đây.
+
+00:15:14.000 --> 00:15:18.000
+Chúng tôi vẫn chưa làm cho mã của mình an toàn hơn.
+
+00:15:18.000 --> 00:15:21.000
+Chúng tôi sẽ sớm khắc phục điều này bằng cách giới thiệu các diễn viên vào mã của chúng tôi.
+
+00:15:21.000 --> 00:15:28.000
+Nhưng hiện tại, chúng ta nên lưu ý rằng chỉ vì chúng ta đã chuyển đổi chức năng này thành không đồng bộ không có nghĩa là chúng ta không có điều kiện chủng tộc.
+
+00:15:28.000 --> 00:15:36.000
+Trên thực tế, bạn nên nhận thức được rủi ro khi đưa các điều kiện chủng tộc mới vào mã của mình nếu bạn chỉ thực hiện tái cấu trúc để giới thiệu các chức năng không đồng bộ.
+
+00:15:36.000 --> 00:15:40.000
+Bây giờ hãy xem xét chức năng không đồng bộ mới này.
+
+00:15:40.000 --> 00:15:52.000
+Hành động tái cấu trúc đã chuyển đổi cuộc gọi với trình xử lý hoàn thành ở đây để gọi phiên bản không đồng bộ mới của API SDK này.
+
+00:15:52.000 --> 00:15:58.000
+Nhưng việc chuyển đổi chức năng này thành không đồng bộ đã làm nổi bật điều gì đó thú vị.
+
+00:15:58.000 --> 00:16:05.000
+Ở đây, khi chúng tôi đang sử dụng kỹ thuật xử lý hoàn thành, chúng tôi đã trả lại mà không gọi trình xử lý hoàn thành.
+
+00:16:05.000 --> 00:16:08.000
+Và đây có lẽ là một lỗi.
+
+00:16:08.000 --> 00:16:11.000
+Người gọi sẽ bị treo cổ.
+
+00:16:11.000 --> 00:16:26.000
+Nhưng với các hàm không đồng bộ, bạn phải trả về một giá trị, vì vậy bây giờ chúng tôi đang gặp lỗi biên dịch, mà chúng tôi có thể giải quyết chỉ bằng cách trả về false cho thất bại.
+
+00:16:26.000 --> 00:16:43.000
+Và giống như trước đây, phiên bản không đồng bộ mới này của requestAuthorization không thực sự trả về một giá trị, nó thành công hoặc nó ném.
+
+00:16:43.000 --> 00:16:47.000
+Vì vậy, chúng ta chỉ cần xóa giá trị trả về này.
+
+00:16:47.000 --> 00:16:57.000
+Và thay vào đó trên con đường này, chúng ta cần giả định rằng nó đã thành công...
+
+00:16:57.000 --> 00:17:05.000
+...Và trên con đường thất bại, chúng ta cần trả về sai.
+
+00:17:05.000 --> 00:17:31.000
+Nếu tôi thử và biên dịch ngay bây giờ, dự án sẽ biên dịch vì mã cũ ở nơi khác vẫn có thể tiếp tục gọi phiên bản trình xử lý hoàn thành và bây giờ chúng tôi đang thấy những cảnh báo ngừng sử dụng này khi chúng tôi làm điều đó, điều này có thể dẫn chúng tôi đến một nơi tiếp theo mà chúng tôi có thể muốn tái cấu trúc.
+
+00:17:31.000 --> 00:17:35.000
+Được rồi, hãy thực hiện thêm một chuyển đổi không đồng bộ.
+
+00:17:35.000 --> 00:17:38.000
+Hãy tìm chức năng tải dữ liệu từ HealthKit.
+
+00:17:38.000 --> 00:17:47.000
+Chúng ta sẽ bắt đầu - giống như trước đây - bằng cách tạo một sơ khai cho mã cũ để gọi.
+
+00:17:47.000 --> 00:18:38.000
+Sau đó chuyển sang phiên bản không đồng bộ, tình cờ, phiên bản này nhận một trình xử lý hoàn thành tùy chọn, tương đương không đồng bộ của điều này sẽ là làm cho chức năng này có kết quả có thể loại bỏ.
+
+00:18:38.000 --> 00:19:02.000
+Vì vậy, tiếp theo, chúng tôi bắt đầu di chuyển xuống, thay thế bất kỳ việc sử dụng trình xử lý hoàn thành nào bằng lợi nhuận.
+
+00:19:02.000 --> 00:19:06.000
+Vì vậy, ví dụ, chúng ta có thể xóa trình xử lý hoàn thành này và chỉ trả về false.
+
+00:19:06.000 --> 00:19:19.000
+Nhưng một khi chúng tôi tiến xa hơn một chút, chúng tôi bắt đầu gặp khó khăn và nó liên quan đến cách API truy vấn HealthKit được sắp xếp.
+
+00:19:19.000 --> 00:19:36.000
+Ở đây, có một trình xử lý hoàn thành nhưng nó nằm trên đối tượng truy vấn này; trong khi thực sự, những gì tôi muốn chờ đợi là việc thực hiện truy vấn ở dưới cùng của hàm.
+
+00:19:36.000 --> 00:19:44.000
+Ngẫu nhiên, việc nhảy lên nhảy xuống xung quanh chức năng là một điều khác mà async/await rất tốt trong việc giúp giải quyết.
+
+00:19:44.000 --> 00:19:53.000
+Vì vậy, những gì tôi muốn làm là tạo một hàm không đồng bộ duy nhất vừa tạo truy vấn vừa thực thi nó.
+
+00:19:53.000 --> 00:19:58.000
+Chúng ta sẽ làm điều đó ngay bây giờ bằng cách sử dụng một kỹ thuật gọi là tiếp tục.
+
+00:19:58.000 --> 00:20:08.000
+Vì vậy, tôi sẽ quay trở lại đầu chức năng này và tôi sẽ tạo một chức năng trợ giúp được gọi là "queryHealthKit".
+
+00:20:08.000 --> 00:20:17.000
+Tôi có thể thực hiện tất cả công việc này bên trong chức năng hiện có nhưng nó có thể hơi lộn xộn, vì vậy tôi muốn giữ nó riêng biệt trong chức năng trợ giúp.
+
+00:20:17.000 --> 00:20:26.000
+Chức năng này sẽ không đồng bộ, vì vậy chúng ta có thể chờ đợi nó, và nó sẽ ném vì thao tác truy vấn có thể thất bại.
+
+00:20:26.000 --> 00:20:38.000
+Và hàm này sẽ trả về các giá trị hữu ích ở đây hiện đang được chuyển vào trình xử lý hoàn thành trên truy vấn.
+
+00:20:38.000 --> 00:20:47.000
+Vì vậy, tôi sẽ lấy logic để thực hiện truy vấn, cắt nó và chuyển nó vào hàm trợ giúp.
+
+00:20:47.000 --> 00:20:52.000
+Và tôi cũng sẽ thực hiện truy vấn và di chuyển nó.
+
+00:20:52.000 --> 00:21:13.000
+Bây giờ, bằng cách nào đó tôi cần đảo ngược mã này để nó có thể chờ trình xử lý hoàn thành và trả về các giá trị này được chuyển vào trình xử lý hoàn thành trở lại từ hàm không đồng bộ mới của tôi.
+
+00:21:13.000 --> 00:21:15.000
+Và đây là nơi tôi sử dụng phần tiếp theo.
+
+00:21:15.000 --> 00:21:29.000
+Vì vậy, trong hàm này, chúng tôi sẽ trả về kết quả của việc cố gắng chờ đợi một cuộc gọi đến hàm withCheckedThrowingContinuation.
+
+00:21:29.000 --> 00:21:33.000
+Và điều này cần một khối cần tiếp tục.
+
+00:21:33.000 --> 00:22:01.000
+Và chúng ta sẽ di chuyển mã này vào bên trong khối đó và sau đó trong khối, chúng ta sẽ sử dụng tiếp tục để truyền dữ liệu trở lại chức năng này bằng cách sử dụng tiếp tục để tiếp tục ném lỗi ở đây...
+
+00:22:01.000 --> 00:22:08.000
+...Hoặc...
+
+00:22:08.000 --> 00:22:18.000
+...Để tiếp tục trả lại các giá trị mà chúng tôi đã nhận được vào trình xử lý hoàn thành.
+
+00:22:18.000 --> 00:22:41.000
+Bây giờ chúng ta đã có chức năng chờ đợi này, chúng ta có thể sử dụng nó trong mã gốc của mình.
+
+00:22:41.000 --> 00:22:47.000
+Vì vậy, chúng tôi chỉ định kết quả từ việc gọi hàm.
+
+00:22:47.000 --> 00:23:03.000
+Và chúng ta cần xử lý lỗi có thể xảy ra.
+
+00:23:03.000 --> 00:23:23.000
+Trên thực tế, thực ra, tôi sẽ lên đây và ghi nhật ký một chút này và làm điều đó trong trình xử lý.
+
+00:23:23.000 --> 00:23:30.000
+Và sau đó chúng ta chỉ cần chuyển tất cả mã thành công này lên con đường hạnh phúc.
+
+00:23:30.000 --> 00:23:46.000
+Cuối cùng, chúng ta cần giải quyết việc đóng cửa này.
+
+00:23:46.000 --> 00:23:52.000
+Ở đây, chúng tôi đang sử dụng công văn không đồng bộ trở lại chuỗi chính.
+
+00:23:52.000 --> 00:23:59.000
+Nhưng chúng tôi đã bỏ trình xử lý hoàn thành của mình, vì vậy không có cách nào để chuyển thông tin này trở lại luồng chính bằng cách sử dụng nó.
+
+00:23:59.000 --> 00:24:02.000
+Chúng ta cần một cách khác.
+
+00:24:02.000 --> 00:24:06.000
+Để giải quyết vấn đề này, chúng tôi sẽ sử dụng diễn viên lần đầu tiên.
+
+00:24:06.000 --> 00:24:17.000
+Trong mô hình đồng thời của Swift, có một diễn viên toàn cầu được gọi là diễn viên chính điều phối tất cả các hoạt động của nó trên luồng chính.
+
+00:24:17.000 --> 00:24:27.000
+Chúng ta có thể thay thế cuộc gọi dispatch main.async của mình bằng một cuộc gọi đến chức năng chạy của diễn viên chính.
+
+00:24:27.000 --> 00:24:40.000
+Và điều này cần một khối mã để chạy trên diễn viên chính.
+
+00:24:40.000 --> 00:24:43.000
+Run là một chức năng không đồng bộ, vì vậy chúng ta cần chờ đợi nó.
+
+00:24:43.000 --> 00:24:57.000
+Chờ đợi nó là cần thiết bởi vì chức năng này có thể cần phải tạm dừng cho đến khi luồng chính sẵn sàng để xử lý hoạt động này.
+
+00:24:57.000 --> 00:25:14.000
+Nhưng vì chúng tôi đang chờ đợi nó, chúng tôi chỉ có thể xóa trình xử lý hoàn thành của mình và thay vào đó, trả về một giá trị.
+
+00:25:14.000 --> 00:25:35.000
+Được rồi, cuối cùng, trình biên dịch hiện đang cho tôi một lỗi về một biến bị bắt.
+
+00:25:35.000 --> 00:25:42.000
+Đây là một lỗi mới chỉ xảy ra bên trong các hàm không đồng bộ.
+
+00:25:42.000 --> 00:26:01.000
+Bởi vì việc đóng cửa trong Swift chụp các biến bằng cách tham chiếu, khi bạn chụp một biến có thể thay đổi - trong trường hợp này là mảng NewDrinks của chúng tôi - bạn tạo ra khả năng cho trạng thái có thể thay đổi được chia sẻ và đó có thể là nguồn gốc của các điều kiện chủng tộc.
+
+00:26:01.000 --> 00:26:07.000
+Vì vậy, khi làm điều này, bạn cần đảm bảo rằng bạn đang tạo một bản sao của giá trị này.
+
+00:26:07.000 --> 00:26:12.000
+Một cách để làm điều này là thêm newDrinks vào danh sách chụp của việc đóng cửa, như thế này.
+
+00:26:12.000 --> 00:26:29.000
+Nhưng thường thì tốt hơn hết là tránh vấn đề này bằng cách không có các biến có thể thay đổi ngay từ đầu.
+
+00:26:29.000 --> 00:26:34.000
+Ở đây, thay vào đó, chúng ta có thể làm điều này bằng cách thay đổi mã ở trên.
+
+00:26:34.000 --> 00:26:40.000
+Nó được viết theo cách này bởi vì các mẫu là tùy chọn.
+
+00:26:40.000 --> 00:27:00.000
+Nhưng thay vào đó, những gì chúng ta có thể làm là thay đổi newDrinks thành một giá trị bất biến và đặt giá trị ở đây trong nhánh if hoặc thêm một "else" để đặt nó thành mảng trống.
+
+00:27:00.000 --> 00:27:04.000
+Chúng tôi cũng có thể đã làm điều này với một nhà điều hành kết hợp không nếu chúng tôi thích.
+
+00:27:04.000 --> 00:27:18.000
+Vì giá trị này hiện được khai báo bằng let thay vì var, nó bất biến và giải quyết vấn đề mà không cần thực hiện chụp bổ sung.
+
+00:27:18.000 --> 00:27:32.000
+Bây giờ chúng ta hãy tiếp tục nói về diễn viên chính bằng cách xem chức năng này cần được gọi trên chuỗi chính.
+
+00:27:32.000 --> 00:27:45.000
+Ở đầu hàm này, có một cái gì đó thực sự tuyệt vời: có một khẳng định rằng hàm đang chạy chính xác trên luồng chính.
+
+00:27:45.000 --> 00:27:58.000
+Nếu bạn đã từng mắc lỗi và gọi hàm này mà không gói nó trong một công văn không đồng bộ với luồng chính, bạn sẽ gặp lỗi trong các bản dựng gỡ lỗi của mình và bạn chắc chắn nên áp dụng phương pháp này trong một số mã hiện có của mình.
+
+00:27:58.000 --> 00:28:01.000
+Nhưng cách tiếp cận này có một số hạn chế.
+
+00:28:01.000 --> 00:28:11.000
+Bạn có thể quên đặt một khẳng định ở mọi nơi cần thiết và bạn không thể khẳng định quyền truy cập vào các thuộc tính được lưu trữ, hoặc ít nhất là không phải không có nhiều bản mẫu.
+
+00:28:11.000 --> 00:28:19.000
+Sẽ tốt hơn nhiều nếu trình biên dịch có thể thực thi một số quy tắc này cho bạn, vì vậy bạn hoàn toàn không thể mắc phải những sai lầm như thế này.
+
+00:28:19.000 --> 00:28:23.000
+Và đó là cách chúng tôi sử dụng diễn viên chính.
+
+00:28:23.000 --> 00:28:31.000
+Tôi có thể chú thích các chức năng với "@MainActor."
+
+00:28:31.000 --> 00:28:42.000
+Và điều đó sẽ yêu cầu người gọi chuyển sang diễn viên chính trước khi chức năng này được chạy.
+
+00:28:42.000 --> 00:28:50.000
+Bây giờ tôi đã làm điều này, tôi có thể xóa xác nhận vì trình biên dịch sẽ không cho phép hàm này được gọi ở bất kỳ nơi nào khác ngoài luồng chính.
+
+00:28:50.000 --> 00:29:13.000
+Chúng tôi có thể chứng minh rằng điều này đang hoạt động bằng cách quay lại người gọi và di chuyển cuộc gọi này ra ngoài khối MainActor.run này.
+
+00:29:13.000 --> 00:29:20.000
+Và bạn thấy trình biên dịch nói với chúng tôi, không, chúng tôi không thể gọi điều đó từ đây bởi vì chúng tôi không ở trên diễn viên chính.
+
+00:29:20.000 --> 00:29:24.000
+Đây là một cách để suy nghĩ về tính năng này: nó rất giống các giá trị tùy chọn.
+
+00:29:24.000 --> 00:29:37.000
+Chúng tôi đã từng có các giá trị như con trỏ và phải nhớ kiểm tra số không, nhưng rất dễ quên và tốt hơn hết là để trình biên dịch đảm bảo kiểm tra này luôn xảy ra cùng với một số đường cú pháp ngôn ngữ để làm cho nó dễ dàng hơn.
+
+00:29:37.000 --> 00:29:47.000
+Ở đây, chúng tôi đang làm một điều tương tự, chỉ thay vì thực thi kiểm tra số không, nó đang thực thi diễn viên mà bạn đang chạy.
+
+00:29:47.000 --> 00:29:54.000
+Bây giờ chúng tôi đã đặt chức năng này trên diễn viên chính, nói đúng ra, chúng tôi không cần MainActor.run này nữa.
+
+00:29:54.000 --> 00:30:01.000
+Nếu bạn ở bên ngoài một diễn viên, bạn luôn có thể chạy các chức năng trên diễn viên đó bằng cách chờ họ.
+
+00:30:01.000 --> 00:30:03.000
+Và trên thực tế, đó là những gì trình biên dịch đang nói với chúng tôi ở đây.
+
+00:30:03.000 --> 00:30:10.000
+Nó nói rằng chúng ta cần một từ khóa đang chờ để chuyển sang diễn viên chính để chạy chức năng này.
+
+00:30:10.000 --> 00:30:22.000
+Vì vậy, nếu chúng ta thêm nó, thì mã sẽ biên dịch ngay cả khi không có cuộc gọi này nằm trong khối chạy.
+
+00:30:22.000 --> 00:30:35.000
+Ở đây, chúng tôi đang sử dụng await trên một hàm đồng bộ - updateModel là đồng bộ - nhưng await chỉ ra rằng hàm chúng tôi đang ở có thể cần phải tạm dừng để có được chính nó vào tác nhân chính.
+
+00:30:35.000 --> 00:30:51.000
+Hãy nghĩ về điều này tương tự như thực hiện cuộc gọi DispatchQueue.sync, ngoại trừ với await, chức năng của bạn bị đình chỉ thay vì chặn và sau đó tiếp tục sau khi cuộc gọi đến luồng chính hoàn tất.
+
+00:30:51.000 --> 00:30:59.000
+Vì vậy, chúng tôi không cần nó ở đây nữa, nhưng kỹ thuật MainActor.run này vẫn quan trọng vì một lý do khác.
+
+00:30:59.000 --> 00:31:05.000
+Tại mỗi lần chờ đợi, chức năng của bạn có thể bị đình chỉ và các mã khác có thể chạy.
+
+00:31:05.000 --> 00:31:10.000
+Đó là mục đích của việc chờ đợi: để mã khác chạy thay vì chặn.
+
+00:31:10.000 --> 00:31:21.000
+Trong trường hợp này, chúng tôi chỉ có một chức năng để chờ đợi, vì vậy nó không thực sự quan trọng, nhưng đôi khi bạn có thể muốn chạy nhiều cuộc gọi trên luồng chính.
+
+00:31:21.000 --> 00:31:36.000
+Ví dụ: nếu bạn đang làm việc trên các bản cập nhật giao diện người dùng, chẳng hạn như cập nhật các mục nhập trong chế độ xem bảng, bạn có thể không muốn vòng lặp chạy chính chuyển sang giữa các thao tác bạn thực hiện.
+
+00:31:36.000 --> 00:31:58.000
+Trong trường hợp đó, bạn sẽ muốn sử dụng MainActor.run để nhóm nhiều cuộc gọi lại với nhau cho diễn viên chính để đảm bảo rằng mỗi cuộc gọi chạy mà không có bất kỳ sự đình chỉ nào có thể xảy ra ở giữa.
+
+00:31:58.000 --> 00:32:05.000
+Vì vậy, chúng tôi hiện đang sử dụng diễn viên chính để bảo vệ mã cần chạy trên luồng chính.
+
+00:32:05.000 --> 00:32:10.000
+Nhưng còn mã khác trong lớp này thì sao?
+
+00:32:10.000 --> 00:32:20.000
+Đặc biệt, mã biến đổi các biến cục bộ, như neo truy vấn mà chúng ta đã thấy được gán ở đây.
+
+00:32:20.000 --> 00:32:25.000
+Làm thế nào chúng ta có thể đảm bảo những thứ đó không có điều kiện chủng tộc?
+
+00:32:25.000 --> 00:32:32.000
+Hoặc một cách sẽ là chỉ đặt mọi thứ vào HealthKitController trên diễn viên chính.
+
+00:32:32.000 --> 00:32:57.000
+Nếu tôi đi đến định nghĩa bộ điều khiển HealthKit và chỉ viết "@MainActor" ở đây trên lớp thay vì trên các phương thức riêng lẻ, điều đó sẽ bảo vệ mọi phương thức trên loại này và mọi thuộc tính được lưu trữ trên đó sẽ được phối hợp trên luồng chính.
+
+00:32:57.000 --> 00:33:02.000
+Và đối với một ứng dụng đơn giản như thế này, đó có lẽ sẽ là một lựa chọn OK.
+
+00:33:02.000 --> 00:33:04.000
+Nhưng điều đó cũng có vẻ hơi sai.
+
+00:33:04.000 --> 00:33:13.000
+HealthKitController này thực sự là phần cuối của ứng dụng của chúng tôi; có vẻ như không cần thiết phải thực hiện tất cả công việc của nó trên luồng chính.
+
+00:33:13.000 --> 00:33:19.000
+Chúng tôi muốn để chủ đề đó tự do thực hiện các hoạt động tập trung vào giao diện người dùng.
+
+00:33:19.000 --> 00:33:25.000
+Vì vậy, thay vào đó, chúng ta có thể thay đổi lớp học này để, chính nó, trở thành một diễn viên.
+
+00:33:25.000 --> 00:33:38.000
+Không giống như diễn viên chính, là diễn viên toàn cầu, loại diễn viên này có thể được khởi tạo nhiều lần.
+
+00:33:38.000 --> 00:33:47.000
+Trong dự án của tôi, tôi vẫn sẽ chỉ tạo ra một trong số chúng, nhưng có nhiều cách sử dụng khác của các diễn viên mà bạn có thể khởi tạo nhiều bản sao của cùng một diễn viên.
+
+00:33:47.000 --> 00:33:52.000
+Ví dụ, bạn có thể biến mỗi phòng trong máy chủ trò chuyện thành diễn viên riêng của nó.
+
+00:33:52.000 --> 00:33:59.000
+Vì vậy, bây giờ chúng ta đã biến lớp này thành một diễn viên, hãy xem trình biên dịch nói gì.
+
+00:33:59.000 --> 00:34:04.000
+OK. Vì vậy, chúng tôi đang gặp một số lỗi biên dịch.
+
+00:34:04.000 --> 00:34:08.000
+Bây giờ chúng ta hãy tạm dừng ở đây và nói về lỗi trình biên dịch.
+
+00:34:08.000 --> 00:34:18.000
+Những lỗi này đang hướng dẫn bạn đến những vị trí trong mã mà bạn cần cập nhật khi bạn di chuyển mã sang mô hình đồng thời mới.
+
+00:34:18.000 --> 00:34:22.000
+Khi bạn gặp những lỗi này, hãy chắc chắn rằng bạn hiểu những gì họ đang nói với bạn.
+
+00:34:22.000 --> 00:34:30.000
+Chống lại sự cám dỗ để nghiền nút sửa nó khi bạn không chắc chắn làm thế nào hoặc tại sao nó sẽ khắc phục sự cố.
+
+00:34:30.000 --> 00:34:34.000
+Một điều cần cảnh giác là rơi vào một loạt các lỗi.
+
+00:34:34.000 --> 00:34:43.000
+Đôi khi bạn sẽ thực hiện thay đổi - như chuyển đổi một lớp thành một diễn viên như chúng tôi vừa làm hoặc tạo một phương thức không đồng bộ - và nó sẽ tạo ra một số lỗi trình biên dịch.
+
+00:34:43.000 --> 00:34:52.000
+Vì vậy, bạn truy cập trang web của những lỗi đó và thật hấp dẫn khi thực hiện nhiều thay đổi hơn để sửa những lỗi đó, như làm cho phương thức đó không đồng bộ hoặc đưa nó vào diễn viên chính.
+
+00:34:52.000 --> 00:34:58.000
+Vấn đề là điều này có thể dẫn đến nhiều lỗi hơn nữa, và nhanh chóng, bạn có thể cảm thấy choáng ngợp.
+
+00:34:58.000 --> 00:35:11.000
+Thay vào đó, hãy sử dụng các kỹ thuật như chúng tôi đang sử dụng ở đây trong hướng dẫn này và cố gắng giữ cho thay đổi riêng biệt và thực hiện từng bước một với dự án của bạn biên dịch và chạy ở giữa.
+
+00:35:11.000 --> 00:35:17.000
+Thêm miếng chêm để cho phép mã cũ của bạn tiếp tục hoạt động, mặc dù bạn có thể sẽ xóa chúng sau này.
+
+00:35:17.000 --> 00:35:23.000
+Bằng cách đó, bạn có thể dần dần di chuyển ra khỏi một điểm, dọn dẹp mã khi bạn đi.
+
+00:35:23.000 --> 00:35:31.000
+Ngẫu nhiên, những gì tôi đã làm ở đây trước tiên là chuyển đổi các phương thức của HealthKitController thành không đồng bộ và sau đó biến nó thành một diễn viên.
+
+00:35:31.000 --> 00:35:40.000
+Và tôi thấy nó sẽ dễ dàng nhất nếu bạn làm theo cách đó, thay vì bắt đầu với việc chuyển đổi diễn viên.
+
+00:35:40.000 --> 00:35:45.000
+Được rồi, vậy hãy xem xét những lỗi này bằng cách nhảy xuống chúng.
+
+00:35:45.000 --> 00:35:49.000
+Họ đang ở dưới đây về chức năng mà chúng tôi đưa vào diễn viên chính.
+
+00:35:49.000 --> 00:35:58.000
+Và điều này có ý nghĩa, bởi vì trong chức năng này, chúng tôi đang chạm vào một thuộc tính được lưu trữ của tác nhân HealthKitController mới của chúng tôi, thuộc tính mô hình.
+
+00:35:58.000 --> 00:36:09.000
+Diễn viên bảo vệ trạng thái của nó và sẽ không cho phép các chức năng, không phải trên diễn viên - chẳng hạn như chức năng này mà chúng tôi đã đặt rõ ràng trên diễn viên chính - chạm vào các thuộc tính được lưu trữ của nó.
+
+00:36:09.000 --> 00:36:18.000
+Bây giờ nhìn vào chức năng này, có vẻ như trạng thái duy nhất trên diễn viên mà nó chạm vào là đối tượng mô hình.
+
+00:36:18.000 --> 00:36:21.000
+Mọi thứ khác được truyền vào như một đối số hàm.
+
+00:36:21.000 --> 00:36:30.000
+Và với tôi, điều này gợi ý rằng chức năng này thuộc về mô hình; rằng mô hình ở đây thực sự phải là bản thân.
+
+00:36:30.000 --> 00:36:33.000
+Vậy hãy chuyển nó sang mô hình.
+
+00:36:33.000 --> 00:36:47.000
+Vì vậy, chúng tôi có thể thực hiện chức năng này, cắt nó, chuyển sang mô hình giao diện người dùng CoffeeData của chúng tôi và dán nó vào.
+
+00:36:47.000 --> 00:36:54.000
+Nó sẽ là nội bộ hơn là riêng tư, vì vậy nó có thể được gọi từ HealthKitController.
+
+00:36:54.000 --> 00:36:59.000
+Và chúng ta chỉ cần xem qua và loại bỏ tất cả các tham chiếu đến mô hình bởi vì bây giờ đó là bản thân.
+
+00:36:59.000 --> 00:37:11.000
+Cuối cùng, chúng ta cần đến nơi nó được gọi là...
+
+00:37:11.000 --> 00:37:20.000
+...Và thay thế bản thân ở đây bằng một cuộc gọi đến người mẫu.
+
+00:37:20.000 --> 00:37:28.000
+Vì vậy, bây giờ, tệp HealthKitController này được biên dịch và tôi nhận được một bộ lỗi mới từ các tệp khác.
+
+00:37:28.000 --> 00:37:30.000
+Hãy nhìn vào những lỗi đó.
+
+00:37:30.000 --> 00:37:42.000
+Vì vậy, ở đây chúng tôi đang gọi vào các miếng chêm trình xử lý hoàn thành mà chúng tôi đã gọi trước đó để cho phép chúng tôi tiếp tục chuyển trình xử lý hoàn thành mặc dù chúng tôi đã viết lại chức năng này thành không đồng bộ.
+
+00:37:42.000 --> 00:37:48.000
+Các chức năng này hiện đang được bảo vệ bởi diễn viên nên tôi không thể gọi chúng trực tiếp.
+
+00:37:48.000 --> 00:37:55.000
+Nhưng họ không chạm vào bất kỳ phần nào khác trong trạng thái của diễn viên nếu chúng ta nhìn vào họ.
+
+00:37:55.000 --> 00:38:02.000
+Tất cả những gì họ đang làm là quay một nhiệm vụ và sau đó chờ một cuộc gọi đến phiên bản không đồng bộ của hàm.
+
+00:38:02.000 --> 00:38:10.000
+Vì họ không chạm vào bất kỳ phần nào trong trạng thái bên trong của diễn viên, tôi có thể đánh dấu họ là cái được gọi là "không cô lập".
+
+00:38:10.000 --> 00:38:16.000
+Làm tương tự ở dưới đây.
+
+00:38:16.000 --> 00:38:31.000
+Đánh dấu một cái gì đó là không cô lập cho trình biên dịch biết rằng bạn sẽ không chạm vào bất kỳ trạng thái bị cô lập nào, và do đó, hàm này có thể được gọi từ bất cứ đâu.
+
+00:38:31.000 --> 00:38:41.000
+Việc chuyển sang diễn viên thực sự đang diễn ra tự động khi chúng tôi chờ cuộc gọi vào phiên bản không đồng bộ của hàm.
+
+00:38:41.000 --> 00:38:47.000
+Lưu ý rằng trình biên dịch sẽ kiểm tra xem yêu cầu không bị cô lập này có đúng không.
+
+00:38:47.000 --> 00:39:10.000
+Nếu tôi thử và truy cập một số trạng thái của diễn viên - chẳng hạn như, ví dụ, in ra trạng thái ủy quyền - trình biên dịch sẽ ngăn tôi lại.
+
+00:39:10.000 --> 00:39:19.000
+Vì vậy, bây giờ, tôi đã hoàn thành công việc của mình để chuyển đổi HealthKitController thành một tác nhân bảo vệ trạng thái bên trong của nó khỏi các điều kiện chủng tộc.
+
+00:39:19.000 --> 00:39:30.000
+Tiếp theo, hãy làm theo những mẩu bánh mì không dùng nữa đó đến tệp tiếp theo để làm việc, đó là loại mô hình CoffeeData của chúng tôi.
+
+00:39:30.000 --> 00:39:39.000
+Bây giờ lớp này triển khai ObservableObject, và nó có một thuộc tính Published.
+
+00:39:39.000 --> 00:39:56.000
+Bất kỳ cập nhật nào cho các thuộc tính được xuất bản cho Chế độ xem SwiftUI phải được thực hiện trên luồng chính, vì vậy lớp này có lẽ là một ứng cử viên tốt để đưa vào diễn viên chính.
+
+00:39:56.000 --> 00:40:04.000
+Nhưng cũng có nền DispatchQueue này để thực hiện một số công việc trong nền.
+
+00:40:04.000 --> 00:40:11.000
+Hãy xem nó được sử dụng như thế nào.
+
+00:40:11.000 --> 00:40:15.000
+Và nó chỉ có hai chức năng: tải và lưu.
+
+00:40:15.000 --> 00:40:23.000
+Điều đó có ý nghĩa; bạn có thể không muốn tải và lưu trên chủ đề chính.
+
+00:40:23.000 --> 00:40:41.000
+Khi bạn thấy một mẫu như thế này - trong đó một hàng đợi đang được sử dụng để điều phối một số hoạt động cụ thể, nhưng phần còn lại của lớp cần phải nằm trên chuỗi chính - đó là dấu hiệu cho thấy bạn muốn đưa mã nền đó vào một diễn viên riêng biệt.
+
+00:40:41.000 --> 00:40:43.000
+Vậy hãy làm điều đó.
+
+00:40:43.000 --> 00:40:49.000
+Vì vậy, hãy đi đến đầu tệp và tạo một diễn viên riêng mới...
+
+00:40:49.000 --> 00:40:54.000
+...Mà chúng ta sẽ gọi là "CoffeeDataStore."
+
+00:40:54.000 --> 00:41:04.000
+Và hãy mở CoffeeData trong một cửa sổ khác.
+
+00:41:04.000 --> 00:41:07.000
+Và bắt đầu chuyển mã qua diễn viên mới của chúng tôi.
+
+00:41:07.000 --> 00:41:13.000
+Vì vậy, chúng tôi có thể cung cấp cho nó logger của riêng nó.
+
+00:41:13.000 --> 00:41:17.000
+Và hãy điều chỉnh danh mục để chúng ta có thể biết khi nào diễn viên được sử dụng.
+
+00:41:17.000 --> 00:41:25.000
+Và tiếp theo, thay vì DispatchQueue này, chúng tôi sẽ khởi tạo một bản sao của diễn viên mới của chúng tôi.
+
+00:41:25.000 --> 00:41:38.000
+Tiếp theo, chúng ta hãy chuyển sang thao tác lưu và chuyển nó qua.
+
+00:41:38.000 --> 00:41:42.000
+Vì vậy chúng ta có thể thực hiện chức năng này...
+
+00:41:42.000 --> 00:41:47.000
+...Cắt nó từ đây, và chuyển nó vào diễn viên.
+
+00:41:47.000 --> 00:41:52.000
+Hãy bắt đầu bằng cách biên soạn và xem những vấn đề nào xuất hiện.
+
+00:41:52.000 --> 00:41:56.000
+Vì vậy, trước tiên, có tài sản Đồ uống hiện tại này.
+
+00:41:56.000 --> 00:42:02.000
+Đây là một thuộc tính của kiểu mô hình trước khi chúng tôi chuyển phương pháp này ra khỏi mô hình thành tác nhân của nó.
+
+00:42:02.000 --> 00:42:05.000
+Vậy làm thế nào chúng ta có thể truy cập nó bây giờ?
+
+00:42:05.000 --> 00:42:12.000
+Chà, cách các diễn viên chuyển tiếp thông tin là họ truyền các giá trị giữa nhau.
+
+00:42:12.000 --> 00:42:17.000
+Vì vậy, chúng ta nên để hàm này lấy currentDrinks làm đối số.
+
+00:42:17.000 --> 00:42:32.000
+Đối số để lưu này nhận danh sách các Đồ uống hiện tại để lưu được truyền bởi loại mô hình.
+
+00:42:32.000 --> 00:42:35.000
+Vì vậy, điều đó giải quyết được điều đó.
+
+00:42:35.000 --> 00:42:38.000
+Tiếp theo, Đồ uống đã lưu.
+
+00:42:38.000 --> 00:42:46.000
+Đây là bản sao của các giá trị được lưu lần cuối để tránh lưu không cần thiết khi không có gì thay đổi.
+
+00:42:46.000 --> 00:42:56.000
+Giá trị này bị đột biến bởi cả chức năng lưu và tải, vì vậy nó chắc chắn cần được bảo vệ bởi diễn viên.
+
+00:42:56.000 --> 00:42:58.000
+Vậy hãy tìm nó trong mô hình của chúng ta...
+
+00:42:58.000 --> 00:43:09.000
+...Và di chuyển nó qua.
+
+00:43:09.000 --> 00:43:13.000
+Được rồi, tiếp theo là gì?
+
+00:43:13.000 --> 00:43:33.000
+Được rồi, thuộc tính dataURL này, thực sự đang được sử dụng chỉ bởi hoạt động tải và lưu, vì vậy chúng ta có thể chuyển nó sang để trở thành người trợ giúp riêng cho diễn viên.
+
+00:43:33.000 --> 00:43:36.000
+Được rồi, những vấn đề cuối cùng cần giải quyết.
+
+00:43:36.000 --> 00:43:48.000
+Bây giờ, ở đây chúng ta đang gặp lỗi và nếu chúng ta nhìn, có vẻ như có một sự đóng cửa đang thu giữ một số trạng thái từ diễn viên, vì vậy chúng ta cần khắc phục điều đó.
+
+00:43:48.000 --> 00:43:50.000
+Vậy tại sao lại đóng cửa ở đây?
+
+00:43:50.000 --> 00:44:01.000
+Chà, nếu bạn nhìn xuống, đó là vì cùng một đoạn mã đang được gọi ở hai nơi.
+
+00:44:01.000 --> 00:44:06.000
+Và hóa ra trình biên dịch đã gắn cờ một cái gì đó thực sự thú vị đối với chúng tôi.
+
+00:44:06.000 --> 00:44:13.000
+Những gì mã này đang làm là kiểm tra xem tiện ích mở rộng đồng hồ có đang chạy trong nền hay không.
+
+00:44:13.000 --> 00:44:27.000
+Và ý tưởng là, nếu nó đã chạy ở chế độ nền, thì đừng vào hàng đợi nền; chỉ cần ở trên luồng chính và thực hiện nhiệm vụ lưu đồng bộ.
+
+00:44:27.000 --> 00:44:29.000
+Nhưng điều này có vẻ không đúng.
+
+00:44:29.000 --> 00:44:39.000
+Bạn không bao giờ nên chặn luồng chính để thực hiện thao tác I/O như lưu, ngay cả khi ứng dụng của bạn đang chạy ở chế độ nền.
+
+00:44:39.000 --> 00:44:40.000
+Tại sao ứng dụng làm điều này?
+
+00:44:40.000 --> 00:44:52.000
+Chà, chúng ta có thể theo dõi nó trở lại nơi hoạt động lưu đang được gọi.
+
+00:44:52.000 --> 00:44:58.000
+Nó đang được gọi từ một didSet xuống đây trên currentDrinks.
+
+00:44:58.000 --> 00:45:06.000
+Và điều đó kích hoạt để bất cứ khi nào tài sản được chỉ định, nó sẽ lưu các giá trị mới.
+
+00:45:06.000 --> 00:45:12.000
+Bây giờ, didSets cực kỳ tiện lợi, nhưng chúng có thể hơi quá hấp dẫn.
+
+00:45:12.000 --> 00:45:16.000
+Hãy xem xét tất cả những người gọi thuộc tính currentDrinks.
+
+00:45:16.000 --> 00:45:25.000
+Nếu chúng ta khoan hết con đường xuống đây...
+
+00:45:25.000 --> 00:45:41.000
+...Chúng tôi thấy rằng thao tác lưu cuối cùng là đồng bộ vì cách nó được gọi từ hàm này, đó là cuộc gọi để xử lý các tác vụ nền từ tiện ích mở rộng WatchKit.
+
+00:45:41.000 --> 00:45:45.000
+Bây giờ API xử lý này có một hợp đồng.
+
+00:45:45.000 --> 00:45:57.000
+Bạn phải làm tất cả công việc của mình, và sau đó, khi tất cả công việc của bạn hoàn thành, hãy gọi phương thức setTaskCompletedWithSnapshot này.
+
+00:45:57.000 --> 00:46:04.000
+Và bạn phải đảm bảo tất cả công việc của bạn đã hoàn thành khi bạn gọi cái này vì ứng dụng đồng hồ của bạn sẽ bị tạm ngưng.
+
+00:46:04.000 --> 00:46:11.000
+Bạn không thể có một số thao tác I/O, như thao tác lưu của chúng tôi, vẫn đang chạy khi bạn nói rằng bạn đã hoàn tất.
+
+00:46:11.000 --> 00:46:18.000
+Đây là một ví dụ hoàn hảo về cách không đồng bộ buộc lý luận toàn cầu trong suốt mã của bạn.
+
+00:46:18.000 --> 00:46:21.000
+Hãy hình dung những gì đang xảy ra ở đây.
+
+00:46:21.000 --> 00:46:28.000
+Chúng tôi bắt đầu trong xử lý (backgroundTasks:) gọi tải từ hàm HealthKit.
+
+00:46:28.000 --> 00:46:31.000
+Điều này cần một trình xử lý hoàn thành.
+
+00:46:31.000 --> 00:46:42.000
+Nhưng sau đó chúng tôi chuyển sang updateModel(), được thực hiện đồng bộ, và do đó đồng bộ gọi didSet, lưu đồng bộ.
+
+00:46:42.000 --> 00:46:50.000
+Sau khi hoàn tất, trình xử lý hoàn thành được gọi và thông báo cho WatchKit rằng tất cả đã hoàn tất.
+
+00:46:50.000 --> 00:46:56.000
+Đó là các bộ phận đồng bộ buộc chúng ta phải thực hiện I/O đồng bộ trên luồng chính.
+
+00:46:56.000 --> 00:46:59.000
+Làm thế nào chúng ta có thể khắc phục điều này?
+
+00:46:59.000 --> 00:47:08.000
+Để khắc phục nó với trình xử lý hoàn thành, bạn phải cập nhật từng phương thức đồng bộ hiện tại để bây giờ thực hiện trình xử lý hoàn thành.
+
+00:47:08.000 --> 00:47:16.000
+Nhưng bạn không thể làm điều đó với didSet; nó không nhận đối số, nó chỉ tự động kích hoạt khi bạn cập nhật tài sản.
+
+00:47:16.000 --> 00:47:27.000
+Nhưng tin tốt là tất cả việc tái cấu trúc không đồng bộ của chúng tôi sẽ được đền đáp ngay bây giờ, bởi vì việc cập nhật các chức năng từ đồng bộ sang không đồng bộ dễ dàng hơn nhiều.
+
+00:47:27.000 --> 00:47:42.000
+Vì vậy, trước tiên, hãy đi đến thuộc tính đã xuất bản, currentDrinks và thay đổi nó thành (bộ) riêng tư để chúng ta biết tất cả các đột biến chỉ xảy ra từ tệp này.
+
+00:47:42.000 --> 00:48:00.000
+Và sau đó hãy thực hiện thao tác didSet này và thay vào đó chuyển logic đó vào một hàm mới...
+
+00:48:00.000 --> 00:48:03.000
+...Được gọi là "đồ uống đã cập nhật()."
+
+00:48:03.000 --> 00:48:11.000
+Chúng tôi sẽ làm cho nó không đồng bộ, bởi vì nó sẽ gọi hoạt động lưu của chúng tôi trên diễn viên của chúng tôi.
+
+00:48:11.000 --> 00:48:19.000
+Và đó cần phải là một sự chờ đợi...
+
+00:48:19.000 --> 00:48:27.000
+...Trên cửa hàng CoffeeData, nơi chúng tôi sẽ chuyển giá trị Đồ uống hiện tại mới.
+
+00:48:27.000 --> 00:48:41.000
+Sau đó, chúng ta cần đến nơi currentDrinks được cập nhật và đảm bảo chúng ta gọi đồ uống được cập nhật sau đó.
+
+00:48:41.000 --> 00:49:16.000
+Bây giờ trong chức năng này, có một điều cần lưu ý.
+
+00:49:16.000 --> 00:49:29.000
+Điều quan trọng là thao tác này - lấy một bản sao của currentDrinks, biến đổi nó và sau đó ghi lại - tất cả đều xảy ra theo nguyên tử.
+
+00:49:29.000 --> 00:49:43.000
+Và đây là lý do tại sao từ khóa await rất quan trọng; nó chỉ ra rằng tại thời điểm này, thao tác này có thể bị đình chỉ và các chức năng khác - các chức năng cũng có thể cập nhật currentDrinks - có thể chạy.
+
+00:49:43.000 --> 00:50:01.000
+Vì vậy, chúng tôi cần đảm bảo rằng toàn bộ đột biến và ghi lại của chúng tôi xảy ra trước khi bất kỳ sự chờ đợi nào, nếu không, các chức năng khác đến và đột biến CurrentDrinks có thể dẫn đến trạng thái không nhất quán.
+
+00:50:01.000 --> 00:50:04.000
+Vì vậy chức năng này cần phải không đồng bộ.
+
+00:50:04.000 --> 00:50:26.000
+Chúng ta có thể đi đến hoạt động lưu của mình và loại bỏ nhánh nền và tiền cảnh không cần thiết này và chỉ thực hiện thao tác trên diễn viên mỗi lần.
+
+00:50:26.000 --> 00:50:39.000
+OK. Cuối cùng, hãy xem xét hoạt động tải.
+
+00:50:39.000 --> 00:50:54.000
+Bây giờ ở đây, logic được phân chia giữa mã cần chạy trong nền và mã cần chạy trên luồng chính.
+
+00:50:54.000 --> 00:51:06.000
+Vì vậy, trước tiên chúng ta hãy lấy nửa đầu - phần nền - và chuyển nó vào diễn viên.
+
+00:51:06.000 --> 00:51:14.000
+Bây giờ làm điều này, chúng tôi nhận thấy một điều kiện chủng tộc có thể xảy ra khác.
+
+00:51:14.000 --> 00:51:25.000
+savedValues ở đây đã bị đột biến trên hàng đợi chính, nhưng nếu bạn nhớ thao tác lưu, nó vừa được đọc vừa được ghi từ hàng đợi nền.
+
+00:51:25.000 --> 00:51:31.000
+Bây giờ, khi nó xảy ra, cách ứng dụng được xây dựng, tải chỉ xảy ra khi khởi động, vì vậy điều này ổn.
+
+00:51:31.000 --> 00:51:40.000
+Nhưng một lần nữa, đó là dựa vào lý luận toàn cầu, và đó là loại giả định có thể phá vỡ theo những cách tinh tế khi bạn thực hiện những thay đổi trong tương lai.
+
+00:51:40.000 --> 00:51:46.000
+Sẽ tốt hơn nhiều nếu để diễn viên đảm bảo chương trình sẽ luôn chính xác.
+
+00:51:46.000 --> 00:51:47.000
+Vì vậy chúng ta sẽ sửa nó ngay bây giờ.
+
+00:51:47.000 --> 00:51:54.000
+Vì vậy, trước tiên, hãy loại bỏ quản lý hàng đợi này...
+
+00:51:54.000 --> 00:51:58.000
+...Tái thụt lề chức năng, xóa quản lý hàng đợi khác này.
+
+00:51:58.000 --> 00:52:12.000
+Và cũng giống như với lưu, chúng ta cần một cách để truyền lại các giá trị đã tải, điều mà chúng ta thực hiện chỉ bằng cách trả về một giá trị từ hàm tải này trên diễn viên.
+
+00:52:12.000 --> 00:52:27.000
+Vì vậy, bây giờ, hãy quay trở lại tải ban đầu.
+
+00:52:27.000 --> 00:52:36.000
+Và chúng tôi đã di chuyển logic này, vì vậy chúng tôi có thể xóa nó...
+
+00:52:36.000 --> 00:52:40.000
+Và thay thế nó bằng một cuộc gọi để chờ đợi...
+
+00:52:40.000 --> 00:52:59.000
+...Nạp đồ uống từ diễn viên.
+
+00:52:59.000 --> 00:53:06.000
+Bây giờ, bởi vì chúng tôi đang chờ diễn viên, điều đó có nghĩa là chức năng này cần phải không đồng bộ.
+
+00:53:06.000 --> 00:53:19.000
+Và trong khi chúng ta ở đây, chúng ta có thể dọn dẹp những cảnh báo không dùng nữa.
+
+00:53:19.000 --> 00:53:50.000
+Và cuối cùng, bởi vì tải này hiện không đồng bộ, chúng ta cần đợi nó ở đây.
+
+00:53:50.000 --> 00:53:59.000
+Và bởi vì chúng ta đang chờ đợi nó ở đây, chúng ta cần tạo ra một nhiệm vụ.
+
+00:53:59.000 --> 00:54:13.000
+Nhưng tại thời điểm này, nếu chúng tôi chỉ sử dụng một nhiệm vụ không đồng bộ, chúng tôi có khả năng giới thiệu một điều kiện cuộc đua mới.
+
+00:54:13.000 --> 00:54:21.000
+Hãy nhớ rằng, bên ngoài một diễn viên, nhiệm vụ mới này chỉ chạy trên một chuỗi tùy ý.
+
+00:54:21.000 --> 00:54:28.000
+Chúng ta không nên đột biến trạng thái được chia sẻ, như currentDrinks, từ một chuỗi tùy ý.
+
+00:54:28.000 --> 00:54:40.000
+Bây giờ, một cách để giải quyết điều này là đặt hàm tải trên diễn viên chính, Nhưng tốt hơn hết là di chuyển toàn bộ loại mô hình sang diễn viên chính.
+
+00:54:40.000 --> 00:55:01.000
+Vì vậy, chúng tôi đi đến định nghĩa CoffeeModel của chúng tôi và thêm "MainActor" vào loại mô hình của chúng tôi.
+
+00:55:01.000 --> 00:55:12.000
+Bằng cách đặt mô hình trên tác nhân chính, chúng tôi hiện đang đảm bảo rằng tất cả quyền truy cập vào các thuộc tính của CoffeeData sẽ được thực hiện từ chuỗi chính.
+
+00:55:12.000 --> 00:55:23.000
+Và điều này là tốt bởi vì, như chúng tôi đã lưu ý trước đó, nó là một đối tượng có thể quan sát được và nó có một thuộc tính được xuất bản.
+
+00:55:23.000 --> 00:55:29.000
+Và các thuộc tính được xuất bản lên SwiftUI chỉ được cập nhật trên chủ đề chính.
+
+00:55:29.000 --> 00:55:36.000
+Nó cũng có nghĩa là bất kỳ cuộc gọi nào đến không đồng bộ từ diễn viên cũng sẽ chạy trên diễn viên.
+
+00:55:36.000 --> 00:55:42.000
+Vì vậy chúng tôi có thể xóa bất kỳ chú thích "MainActor" nào khác như chú thích mà chúng tôi đã thêm trước đó.
+
+00:55:42.000 --> 00:56:06.000
+Vì vậy, bây giờ bạn có thể nhận thấy rằng khi chúng tôi biên dịch, chúng tôi không gặp bất kỳ lỗi biên dịch nào, không giống như khi chúng tôi chuyển những thứ khác thành một diễn viên trước đó.
+
+00:56:06.000 --> 00:56:15.000
+Và đó là bởi vì những nơi chúng tôi đang gọi vào mô hình của mình là những thứ như chế độ xem SwiftUI.
+
+00:56:15.000 --> 00:56:17.000
+Ví dụ, chúng ta hãy vào DrinkListView.
+
+00:56:17.000 --> 00:56:26.000
+Bây giờ, loại này hiển thị danh sách các nút trên màn hình.
+
+00:56:26.000 --> 00:56:30.000
+Và sau đó nó gọi addDrink, thuộc loại mô hình của chúng tôi.
+
+00:56:30.000 --> 00:56:35.000
+Nhưng bản thân DrinkListView này cũng là diễn viên chính.
+
+00:56:35.000 --> 00:56:40.000
+Và vì vậy các phương pháp của nó...
+
+00:56:40.000 --> 00:56:47.000
+...Có thể gọi vào mô hình CoffeeData mà không cần chờ đợi.
+
+00:56:47.000 --> 00:56:52.000
+Điều gì quyết định rằng chế độ xem SwiftUI này nằm trên diễn viên chính?
+
+00:56:52.000 --> 00:56:58.000
+Chà, nó được suy ra từ việc sử dụng EnvironmentObject ở đây.
+
+00:56:58.000 --> 00:57:11.000
+Bất kỳ chế độ xem SwiftUI nào truy cập trạng thái được chia sẻ - chẳng hạn như các đối tượng môi trường hoặc đối tượng quan sát được - sẽ luôn nằm trên tác nhân chính.
+
+00:57:11.000 --> 00:57:15.000
+Ở những nơi khác...
+
+00:57:15.000 --> 00:57:25.000
+...Chúng tôi cũng đang truy cập mô hình của mình từ cuộc gọi đại diện tiện ích mở rộng này.
+
+00:57:25.000 --> 00:57:43.000
+Vì đại diện tiện ích mở rộng này được đảm bảo được gọi trên luồng chính, nó đã được WatchKit chú thích là đang chạy trên diễn viên chính và vì vậy nó cũng có thể gọi trực tiếp vào loại mô hình của chúng tôi.
+
+00:57:43.000 --> 00:57:53.000
+Cuối cùng, bây giờ chúng ta đã ở đây, hãy cấu trúc lại phương pháp này và loại bỏ việc sử dụng trình xử lý hoàn thành không được chấp nhận này.
+
+00:57:53.000 --> 00:58:01.000
+Thay vào đó, chúng ta có thể gói phần này trong một nhiệm vụ không đồng bộ mới.
+
+00:58:01.000 --> 00:58:17.000
+Hãy nhớ rằng, trình xử lý này đang chạy trên luồng chính, vì vậy khi chúng ta tạo một tác vụ, tác vụ đó cũng sẽ chạy trên luồng chính.
+
+00:58:17.000 --> 00:58:22.000
+Và bên trong nhiệm vụ mới này, bây giờ chúng ta có thể chờ đợi...
+
+00:58:22.000 --> 00:58:31.000
+...Cuộc gọi của chúng tôi để tải dữ liệu mới từ HealthKit.
+
+00:58:31.000 --> 00:58:49.000
+Và một điều thực sự tuyệt vời về việc loại bỏ các trình xử lý hoàn thành là bây giờ bạn có thể soạn các chức năng cùng nhau.
+
+00:58:49.000 --> 00:58:58.000
+Vì vậy, nếu bạn muốn, bạn có thể chuyển câu lệnh chờ đợi này trực tiếp vào câu lệnh if.
+
+00:58:58.000 --> 00:59:08.000
+Khi cuộc gọi hàm này trả về, chúng tôi biết rằng tất cả công việc của chúng tôi đã hoàn tất bởi vì, bên trong nó, chúng tôi sẽ chờ thao tác lưu.
+
+00:59:08.000 --> 00:59:19.000
+Và vì vậy, bây giờ chúng ta có thể tự tin gọi background.Task.setTaskCompleted khi biết rằng chúng tôi đã hoàn thành tất cả các hoạt động I/O của mình.
+
+00:59:19.000 --> 00:59:28.000
+Bây giờ chúng tôi có cách tiếp cận từ trên xuống, có cấu trúc, tốt đẹp này để chờ đợi một hoạt động không đồng bộ trước khi hoàn thành thêm bất kỳ công việc nào.
+
+00:59:28.000 --> 00:59:35.000
+Ngẫu nhiên, cách tiếp cận có cấu trúc này đối với đồng thời là một phần thực sự quan trọng khác trong tính năng đồng thời của Swift.
+
+00:59:35.000 --> 00:59:50.000
+Để tìm hiểu thêm, hãy xem bài nói chuyện liên quan, bao gồm cách bạn có thể tận dụng tính năng này để cấu trúc các ví dụ phức tạp hơn, chẳng hạn như chờ nhiều thao tác không đồng bộ hoàn thành trước khi tiếp tục.
+
+00:59:50.000 --> 01:00:01.000
+Nếu, trong khi bạn xem bài nói chuyện này, bạn tự hỏi chính xác một số tính năng mới này hoạt động như thế nào, hãy xem bài nói chuyện dưới mui xe của chúng tôi khám phá một số công nghệ một cách chi tiết.
+
+01:00:01.000 --> 01:00:03.000
+Vậy hãy tóm tắt lại.
+
+01:00:03.000 --> 01:00:14.000
+Chúng tôi đã lấy một số mã có kiến trúc loại âm thanh nhưng kiến trúc đồng thời phức tạp có một số điều kiện chủng tộc ẩn thực sự khó phát hiện.
+
+01:00:14.000 --> 01:00:23.000
+Và với sự trợ giúp của các tính năng đồng thời mới, chúng tôi đã bảo vệ lại nó để kiến trúc đồng thời và kiểu được căn chỉnh độc đáo.
+
+01:00:23.000 --> 01:00:27.000
+Và trình biên dịch đã giúp chúng tôi tìm thấy một số điều kiện chủng tộc tiềm ẩn trên đường đi.
+
+01:00:27.000 --> 01:00:39.000
+Có rất nhiều thứ khác cho Swift 5.5 mà chúng tôi chưa đề cập đến, như tính đồng thời có cấu trúc với các nhóm tác vụ, chuỗi không đồng bộ và một số API không đồng bộ mới tuyệt vời trong SDK.
+
+01:00:39.000 --> 01:00:46.000
+Ngoài ra còn có một vài tái cấu trúc nữa mà chúng tôi đã không thực hiện trong dự án này mà bạn có thể muốn tự mình thử.
+
+01:00:46.000 --> 01:00:53.000
+Cách tốt nhất để học các kỹ thuật này là dùng thử chúng trong các ứng dụng của riêng bạn, vì vậy hãy vui vẻ và tận hưởng những cách viết mã sạch hơn, an toàn hơn này.
+
+01:00:53.000 --> 23:59:59.000
+♪
+

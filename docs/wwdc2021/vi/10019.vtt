@@ -1,0 +1,566 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:12.000
+Xin chào, chào mừng đến với "Khám phá sự đồng thời trong SwiftUI."
+
+00:00:12.000 --> 00:00:15.000
+Tôi là Curt Clifton, một kỹ sư trong nhóm SwiftUI.
+
+00:00:15.000 --> 00:00:18.000
+Lát nữa, tôi sẽ được tham gia bởi đồng nghiệp Jessica của tôi.
+
+00:00:18.000 --> 00:00:24.000
+Swift 5.5 giới thiệu nhiều công cụ mới để quản lý đồng thời trong mã Swift của bạn.
+
+00:00:24.000 --> 00:00:32.000
+Trong buổi nói chuyện này, Jessica và tôi sẽ giúp bạn hiểu những cải tiến này tương tác với các ứng dụng SwiftUI của bạn như thế nào.
+
+00:00:32.000 --> 00:00:40.000
+Tôi sẽ hướng dẫn cách các công cụ mới có thể giúp bạn làm cho các mô hình dữ liệu của mình trở nên tốt hơn và chỉ cho bạn cách SwiftUI hoạt động với diễn viên chính mới.
+
+00:00:40.000 --> 00:00:52.000
+Sau đó, Jessica sẽ chỉ cho bạn cách kết nối mô hình dữ liệu đồng thời với chế độ xem SwiftUI của bạn và giới thiệu một số API mới tuyệt vời tận dụng các công cụ đồng thời mới của Swift.
+
+00:00:52.000 --> 00:00:59.000
+Để tận dụng tối đa thông tin Jessica và tôi sẽ chia sẻ, điều quan trọng là phải có một số thông tin cơ bản về hỗ trợ đồng thời mới của Swift.
+
+00:00:59.000 --> 00:01:09.000
+Chúng tôi khuyên bạn nên xem "Gặp gỡ không đồng bộ/chờ đợi trong Swift" và "Khám phá sự đồng thời có cấu trúc trong Swift" trước khi đi sâu vào phần còn lại của video này.
+
+00:01:09.000 --> 00:01:12.000
+Khi tôi còn là một đứa trẻ, tôi luôn mơ ước trở thành một phi hành gia.
+
+00:01:12.000 --> 00:01:17.000
+Đôi khi tôi làm việc trong một con tàu vũ trụ, nhưng nếu không thì giấc mơ thời thơ ấu đặc biệt đó đã không thành hiện thực.
+
+00:01:17.000 --> 00:01:21.000
+Tuy nhiên, tôi vẫn chưa mất đi sự nhiệt tình của mình đối với không gian.
+
+00:01:21.000 --> 00:01:27.000
+Vì vậy, tôi quyết định áp dụng các kỹ năng thực tế của mình với tư cách là một kỹ sư SwiftUI để xây dựng một ứng dụng tải xuống các bức ảnh liên quan đến không gian.
+
+00:01:27.000 --> 00:01:31.000
+Hãy cùng xem ứng dụng mà tôi đã lên kế hoạch.
+
+00:01:31.000 --> 00:01:33.000
+Ứng dụng hiển thị một danh sách các bức ảnh không gian ngẫu nhiên.
+
+00:01:33.000 --> 00:01:35.000
+Những màu này thật đẹp.
+
+00:01:35.000 --> 00:01:40.000
+Khi tôi nhìn thấy một bức ảnh mà tôi thực sự yêu thích, tôi có thể lưu nó để xem sau.
+
+00:01:40.000 --> 00:01:47.000
+Để tìm nạp những hình ảnh đẹp này, ứng dụng của tôi sẽ tương tác với dịch vụ web bằng REST API.
+
+00:01:47.000 --> 00:01:52.000
+Điều này nghe có vẻ như là một cách sử dụng hoàn hảo các tính năng đồng thời mới được giới thiệu trong Swift.
+
+00:01:52.000 --> 00:01:55.000
+Hãy bắt đầu với mô hình dữ liệu của chúng ta.
+
+00:01:55.000 --> 00:02:00.000
+Tôi đang sử dụng cấu trúc SpacePhoto để giữ thông tin cho một hình ảnh duy nhất.
+
+00:02:00.000 --> 00:02:12.000
+Cấu trúc có các trường như tiêu đề, mô tả về ảnh, ngày hình ảnh được đăng và URL trỏ đến hình ảnh thực tế.
+
+00:02:12.000 --> 00:02:24.000
+Tôi đã tạo Type Codable của mình để tôi có thể dễ dàng khởi tạo các phiên bản từ phản hồi của máy chủ hoặc lưu chúng vào đĩa và có thể nhận dạng để tôi có thể sử dụng chúng trong ForEach và các chế độ xem dựa trên dữ liệu khác.
+
+00:02:24.000 --> 00:02:27.000
+Tiếp theo, tôi muốn hiển thị danh sách các mục này.
+
+00:02:27.000 --> 00:02:32.000
+Đối với điều đó, tôi cần một mô hình sẽ tìm nạp và giữ một bộ sưu tập của chúng.
+
+00:02:32.000 --> 00:02:36.000
+Tôi đang sử dụng một lớp Ảnh cho việc này.
+
+00:02:36.000 --> 00:02:45.000
+Bằng cách làm cho lớp Ảnh của tôi phù hợp với ObservableObject, chế độ xem SwiftUI của tôi sẽ tự động cập nhật bất cứ khi nào dữ liệu của tôi cập nhật.
+
+00:02:45.000 --> 00:02:51.000
+Tôi đang sử dụng một tài sản đã xuất bản để lưu trữ một mảng SpacePhotos.
+
+00:02:51.000 --> 00:02:56.000
+Để tìm nạp các mục đã cập nhật từ điểm cuối REST, tôi đang sử dụng phương pháp Cập nhật các mục.
+
+00:02:56.000 --> 00:02:59.000
+Tôi sẽ sớm nói về điều đó chi tiết hơn.
+
+00:02:59.000 --> 00:03:03.000
+Nhưng trước tiên tôi muốn thô bạo trong giao diện người dùng cơ bản.
+
+00:03:03.000 --> 00:03:06.000
+Đây là giao diện người dùng mà tôi muốn xây dựng.
+
+00:03:06.000 --> 00:03:13.000
+Cho đến nay, tôi chỉ có chế độ xem tab của mình và Chế độ xem ảnh cơ bản.
+
+00:03:13.000 --> 00:03:17.000
+PhotoView của tôi chụp một bức ảnh không gian và hiển thị tiêu đề của nó.
+
+00:03:17.000 --> 00:03:21.000
+Thế là đủ hệ thống ống nước để tôi có thể thấy mô hình dữ liệu của mình đang hoạt động.
+
+00:03:21.000 --> 00:03:24.000
+Hãy xem chế độ xem Danh mục tiếp theo.
+
+00:03:24.000 --> 00:03:27.000
+Chế độ xem Danh mục của tôi sẽ hiển thị danh sách các bức ảnh.
+
+00:03:27.000 --> 00:03:34.000
+Để làm điều đó, tôi sẽ thêm một Đối tượng Trạng thái và khởi tạo nó với đối tượng có thể quan sát được Ảnh của tôi.
+
+00:03:34.000 --> 00:03:38.000
+Trong phần thân chế độ xem của tôi, tôi sẽ thêm Chế độ xem điều hướng.
+
+00:03:38.000 --> 00:03:43.000
+Sử dụng chế độ xem điều hướng ở đây sẽ cho phép tôi thêm một tiêu đề điều hướng lớn trong thời gian ngắn.
+
+00:03:43.000 --> 00:03:47.000
+Tiếp theo, bên trong NavigationView của tôi, tôi sẽ thêm một Danh sách.
+
+00:03:47.000 --> 00:03:56.000
+Và bên trong Danh sách của mình, tôi sẽ sử dụng ForEach để lập bản đồ các bức ảnh của mình, hiển thị Chế độ xem ảnh cho từng bức ảnh.
+
+00:03:56.000 --> 00:04:00.000
+Với điều đó, tôi có thể xem dữ liệu mẫu của mình.
+
+00:04:00.000 --> 00:04:05.000
+Đó là xa như tôi cần đi bây giờ, nhưng hãy thêm một chút đánh bóng ở đây.
+
+00:04:05.000 --> 00:04:08.000
+Đầu tiên, đây là tiêu đề điều hướng đã hứa.
+
+00:04:08.000 --> 00:04:21.000
+Bây giờ, kiểu danh sách chèn mặc định ở đây trông rất tuyệt, nhưng để thực sự thể hiện các bức ảnh không gian của mình, tôi muốn chuyển sang kiểu đơn giản để các bức ảnh sẽ thực sự bật lên trên nền đen.
+
+00:04:21.000 --> 00:04:27.000
+Tôi có thể làm cho kiểu danh sách đơn giản bằng cách sử dụng cú pháp thành viên tĩnh giống như enum mới ở đây.
+
+00:04:27.000 --> 00:04:36.000
+Với cú pháp này, các công cụ sửa đổi kiểu của SwiftUI có được chính tả ngắn gọn hơn với sự hỗ trợ tốt hơn cho việc tự động hoàn thành trong Xcode 13.
+
+00:04:36.000 --> 00:04:43.000
+Cuối cùng, hãy để tôi sử dụng một tính năng mới khác trong SwiftUI năm nay: kiểm soát dấu phân cách danh sách.
+
+00:04:43.000 --> 00:04:50.000
+Bên trong ForEach của tôi, tôi có thể sử dụng công cụ sửa đổi listRowSeparator để ẩn các dấu phân cách.
+
+00:04:50.000 --> 00:04:55.000
+Đôi khi khi tôi đánh bóng giao diện người dùng với SwiftUI, tôi cảm thấy khó dừng lại.
+
+00:04:55.000 --> 00:04:57.000
+Nhưng tôi sẽ rời khỏi giao diện người dùng ngay bây giờ.
+
+00:04:57.000 --> 00:05:01.000
+Jessica đang lên kế hoạch hoàn thành nó sau khi tôi hoàn thành mô hình dữ liệu.
+
+00:05:01.000 --> 00:05:09.000
+Tuy nhiên, trước khi tôi đào sâu vào mô hình dữ liệu, tôi muốn nói một chút về cách SwiftUI tương tác với các đối tượng có thể quan sát được của bạn.
+
+00:05:09.000 --> 00:05:16.000
+Và cách các tính năng đồng thời mới trong Swift 5.5 giúp tương tác này trở nên dễ dàng hơn bao giờ hết.
+
+00:05:16.000 --> 00:05:25.000
+Tại Dub Dub 2020, trong "Data Essentials trong SwiftUI", đồng nghiệp Raj của tôi đã nói về vòng đời cập nhật SwiftUI.
+
+00:05:25.000 --> 00:05:33.000
+Tôi sẽ đề cập đến mã điều khiển vòng đời này là "vòng lặp chạy". Với Swift 5.5, vòng lặp chạy chạy trên diễn viên chính.
+
+00:05:33.000 --> 00:05:44.000
+Để biết thêm chi tiết về các diễn viên nói chung, hãy xem bài nói chuyện, "Bảo vệ trạng thái có thể thay đổi với các diễn viên Swift." Jessica và tôi sẽ tập trung vào diễn viên chính trong buổi nói chuyện này.
+
+00:05:44.000 --> 00:05:51.000
+Vòng lặp chạy SwiftUI nhận các sự kiện từ người dùng của bạn, cho phép bạn cập nhật mô hình của mình và sau đó hiển thị chế độ xem SwiftUI của bạn lên màn hình.
+
+00:05:51.000 --> 00:06:01.000
+Tôi muốn gọi những cập nhật này là "các ký tên của vòng lặp chạy." Hãy mở vòng lặp này để chúng ta có thể xem xét nhiều tích tắc liên tiếp.
+
+00:06:01.000 --> 00:06:07.000
+Trong SwiftUI, ObservableObjects có thể tương tác với vòng lặp chạy SwiftUI theo một số cách thú vị.
+
+00:06:07.000 --> 00:06:12.000
+Hãy quay lại Photos ObservableObject và xem phương thức updateItems.
+
+00:06:12.000 --> 00:06:17.000
+Tôi sẽ gọi updateItems từ chế độ xem SwiftUI của mình và nó sẽ chạy trên diễn viên chính.
+
+00:06:17.000 --> 00:06:23.000
+Hãy sử dụng hình chữ nhật màu xanh này để hiển thị thời gian khi updateItems đang chạy.
+
+00:06:23.000 --> 00:06:29.000
+Tôi muốn tập trung vào dòng mã này, nơi tôi gán các bức ảnh đã tìm nạp cho thuộc tính "mục" của mình.
+
+00:06:29.000 --> 00:06:46.000
+Bởi vì "các mục" là một thuộc tính đã xuất bản, bài tập này kích hoạt một sự kiện objectWillChange, ngay sau đó là viết các bức ảnh đã tìm nạp vào bộ nhớ cho "các mục". Khi SwiftUI nhìn thấy đối tượng này WillChange, nó sẽ chụp nhanh các mục của tôi.
+
+00:06:46.000 --> 00:06:53.000
+Trong lần đánh dấu tiếp theo của vòng lặp chạy sau ảnh chụp nhanh, SwiftUI so sánh ảnh chụp nhanh với giá trị hiện tại.
+
+00:06:53.000 --> 00:06:59.000
+Bởi vì những giá trị này khác nhau, SwiftUI biết cập nhật quan điểm của tôi phụ thuộc vào Ảnh.
+
+00:06:59.000 --> 00:07:09.000
+Lưu ý rằng vì objectWillChange, cập nhật bộ nhớ và vòng lặp chạy đều xảy ra trên tác nhân chính, chúng được đảm bảo xảy ra theo thứ tự.
+
+00:07:09.000 --> 00:07:17.000
+Trong bài nói chuyện "Data Essentials" năm 2020, Raj mô tả các cập nhật chậm khi chế độ xem của bạn thực hiện quá nhiều công việc trong cơ thể.
+
+00:07:17.000 --> 00:07:24.000
+Cập nhật chậm cũng có thể xảy ra nếu mã mô hình của bạn làm quá nhiều việc trên diễn viên chính.
+
+00:07:24.000 --> 00:07:33.000
+Ví dụ, giả sử chức năng fetchPhotos của tôi chặn trong khi chờ quá trình tải xuống hoàn tất và giả sử tôi đang kết nối chậm.
+
+00:07:33.000 --> 00:07:38.000
+Bởi vì tôi đang chặn diễn viên chính, tôi nhớ dấu tích này của vòng lặp chạy.
+
+00:07:38.000 --> 00:07:42.000
+Điều này hiển thị với người dùng của tôi như một trở ngại.
+
+00:07:42.000 --> 00:07:51.000
+Trước đây, bạn có thể đã gửi đến một hàng đợi khác để thực hiện công việc, để các ảnh tìm nạp tiền xảy ra ngoài luồng chính.
+
+00:07:51.000 --> 00:07:56.000
+Điều này có vẻ hoạt động tốt, nhưng tôi có một vấn đề khó khăn ở đây.
+
+00:07:56.000 --> 00:08:00.000
+Tôi đang thay đổi ObservableObject của mình từ diễn viên chính.
+
+00:08:00.000 --> 00:08:04.000
+Các thay đổi của tôi và đánh dấu vòng lặp chạy có thể xen kẽ.
+
+00:08:04.000 --> 00:08:15.000
+Ví dụ: khi tôi gán cho "các mục" và SwiftUI chụp nhanh objectWillChange của nó, có thể điều này xảy ra ngay lập tức trước khi tích tắc vòng lặp chạy.
+
+00:08:15.000 --> 00:08:23.000
+Sự thay đổi trạng thái vẫn chưa xảy ra, vì vậy SwiftUI so sánh ảnh chụp nhanh với giá trị không thay đổi.
+
+00:08:23.000 --> 00:08:31.000
+Thay đổi trạng thái thực tế xảy ra sau khi đánh dấu vòng lặp chạy, nhưng SwiftUI không thấy thay đổi đó và vì vậy chế độ xem của tôi không được cập nhật.
+
+00:08:31.000 --> 00:08:44.000
+Để cập nhật chính xác, SwiftUI cần các sự kiện này xảy ra theo thứ tự: objectWillChange, trạng thái của ObservableObject được cập nhật và sau đó vòng lặp chạy đạt đến lần đánh dấu tiếp theo.
+
+00:08:44.000 --> 00:08:49.000
+Nếu tôi có thể đảm bảo rằng tất cả những điều này xảy ra trên diễn viên chính, tôi có thể đảm bảo đơn đặt hàng này.
+
+00:08:49.000 --> 00:08:57.000
+Trước Swift 5.5, tôi có thể đã gửi trở lại hàng đợi chính để cập nhật trạng thái của mình, nhưng bây giờ nó dễ dàng hơn nhiều.
+
+00:08:57.000 --> 00:08:59.000
+Chỉ cần sử dụng chờ đợi!
+
+00:08:59.000 --> 00:09:08.000
+Bằng cách sử dụng await để thực hiện cuộc gọi không đồng bộ từ diễn viên chính, tôi để công việc khác tiếp tục trên diễn viên chính trong khi công việc không đồng bộ xảy ra.
+
+00:09:08.000 --> 00:09:13.000
+Điều này được gọi là "năng suất" diễn viên chính.
+
+00:09:13.000 --> 00:09:24.000
+Trong updateItems, tôi có thể sử dụng await để đưa diễn viên chính trở lại SwiftUI trong I/O chạy dài của mình, vì vậy nó có thể giữ cho vòng lặp chạy tích tắc và tránh bất kỳ trở ngại nào của giao diện người dùng.
+
+00:09:24.000 --> 00:09:33.000
+Khi công việc không đồng bộ hoàn tất, Swift sẽ nhập lại phương thức updateItems của tôi trở lại diễn viên chính, vì vậy tôi có thể cập nhật trạng thái của mình.
+
+00:09:33.000 --> 00:09:35.000
+Hãy xem cái này hoạt động như thế nào.
+
+00:09:35.000 --> 00:09:41.000
+Thay vì gửi đến một hàng đợi khác, tôi chỉ đơn giản là chờ đợi kết quả của hoạt động kéo dài.
+
+00:09:41.000 --> 00:09:49.000
+Khi tôi viết await, hàm updateItems mang lại quyền kiểm soát của diễn viên chính để vòng lặp chạy có thể tiếp tục.
+
+00:09:49.000 --> 00:10:04.000
+Khi quá trình tìm nạp đang chờ hoàn tất, diễn viên chính sẽ nhập lại chức năng của tôi, để tôi có thể cập nhật tài sản đã xuất bản của mình một cách an toàn, kích hoạt objectWillChange và cung cấp giá trị mới cho SwiftUI.
+
+00:10:04.000 --> 00:10:09.000
+Hãy nhảy vào Xcode và xem liệu tôi có thể thực hiện việc tìm nạp hay không.
+
+00:10:09.000 --> 00:10:12.000
+Đây là phương thức updateItems mà tôi đã trình bày trên các trang trình bày.
+
+00:10:12.000 --> 00:10:17.000
+Để triển khai fetchPhotos, hãy bắt đầu bằng cách thêm mã để tìm nạp một bức ảnh duy nhất.
+
+00:10:17.000 --> 00:10:27.000
+Tôi sẽ làm cho phương thức fetchPhoto của mình lấy URL của ảnh từ điểm cuối còn lại và trả về SpacePhoto.
+
+00:10:27.000 --> 00:10:35.000
+Tiếp theo, tôi sẽ sử dụng phiên bản không đồng bộ mới của sự tiện lợi dữ liệu trên URLSession để tìm nạp dữ liệu từ URL.
+
+00:10:35.000 --> 00:10:54.000
+Để đưa ra điều này, tôi đang sử dụng một lần thử bắt buộc.
+
+00:10:54.000 --> 00:11:01.000
+Tôi sẽ dọn dẹp nó trong thời gian ngắn.
+
+00:11:01.000 --> 00:11:07.000
+À, phương thức dữ liệu không đồng bộ, vì vậy tôi cần sử dụng await.
+
+00:11:07.000 --> 00:11:13.000
+Và điều đó có nghĩa là tôi cần làm cho phương thức fetchPhoto của mình không đồng bộ.
+
+00:11:13.000 --> 00:11:14.000
+Được rồi, tuyệt vời.
+
+00:11:14.000 --> 00:11:19.000
+Bây giờ tôi đã có dữ liệu của mình, tôi sẽ sử dụng trình khởi tạo Decodable để khởi tạo ảnh và trả lại nó.
+
+00:11:19.000 --> 00:11:30.000
+Hãy xem xét fetchPhotos tiếp theo.
+
+00:11:30.000 --> 00:11:34.000
+Tôi đã viết một số mã để có được một lựa chọn ngẫu nhiên về ngày tháng và lặp lại chúng.
+
+00:11:34.000 --> 00:11:43.000
+Tôi muốn xây dựng một mảng, vì vậy tôi sẽ tạo "tải xuống" một var và thêm một biến ngày vào vòng lặp của mình.
+
+00:11:43.000 --> 00:11:59.000
+Bên trong vòng lặp, tôi sẽ gọi một phương thức trợ giúp mà tôi đã phải xây dựng URL điểm cuối còn lại để tìm nạp một ngày cụ thể.
+
+00:11:59.000 --> 00:12:03.000
+Sau đó, tôi sẽ gọi phương thức fetchPhoto của mình và nối thêm kết quả vào mảng của tôi.
+
+00:12:03.000 --> 00:12:16.000
+Và hãy xây dựng.
+
+00:12:16.000 --> 00:12:23.000
+Ah, bởi vì fetchPhoto không đồng bộ, tôi cần chờ kết quả.
+
+00:12:23.000 --> 00:12:27.000
+Và điều đó có nghĩa là fetchPhotos cũng cần phải không đồng bộ.
+
+00:12:27.000 --> 00:12:31.000
+Tôi đang thực hiện các cuộc gọi này để tìm nạp Ảnh tuần tự để đơn giản.
+
+00:12:31.000 --> 00:12:37.000
+Kiểm tra các nhóm nhiệm vụ của Swift 5.5 để biết các tùy chọn mạnh mẽ hơn nữa.
+
+00:12:37.000 --> 00:12:43.000
+Bây giờ, tôi chỉ cần đợi tìm nạp Ảnh như tôi đã hiển thị trong các trang trình bày.
+
+00:12:43.000 --> 00:12:47.000
+Và với điều đó, logic cập nhật của tôi đã được áp dụng.
+
+00:12:47.000 --> 00:12:52.000
+Bây giờ, có lẽ bạn cũng lo lắng như tôi bởi những nỗ lực bắt buộc này để thực hiện việc tìm nạp.
+
+00:12:52.000 --> 00:12:53.000
+Hãy dọn dẹp nó đi.
+
+00:12:53.000 --> 00:12:56.000
+Hiện tại, tôi sẽ trả lại nil khi quá trình tải xuống không thành công.
+
+00:12:56.000 --> 00:13:20.000
+Sau đó, trong fetchPhotos, tôi sẽ chỉ thêm các giá trị non-nil vào mảng của mình.
+
+00:13:20.000 --> 00:13:30.000
+Bây giờ Photos sử dụng async-await, tôi có thể chắc chắn rằng nó sẽ không gặp phải bất kỳ lỗi thay đổi đối tượng phức tạp nào mà tôi đã thảo luận, miễn là nó chạy trên diễn viên chính.
+
+00:13:30.000 --> 00:13:32.000
+Nhưng làm thế nào tôi có thể đảm bảo điều đó?
+
+00:13:32.000 --> 00:13:35.000
+May mắn thay, trình biên dịch Swift có thể giúp tôi ở đây.
+
+00:13:35.000 --> 00:13:46.000
+Bằng cách thêm chú thích @MainActor mới vào Ảnh, trình biên dịch sẽ đảm bảo rằng các thuộc tính và phương thức trên Ảnh chỉ được truy cập từ tác nhân chính.
+
+00:13:46.000 --> 00:13:49.000
+Với điều đó đã hoàn thành, mô hình đã sẵn sàng.
+
+00:13:49.000 --> 00:13:58.000
+Tiếp theo, Jessica sẽ kết nối quan điểm của chúng tôi với mô hình và hiển thị cho bạn một số API SwiftUI mới tuyệt vời để tận dụng tính đồng thời trong các ứng dụng của bạn.
+
+00:13:58.000 --> 00:14:00.000
+Jessica?
+
+00:14:00.000 --> 00:14:01.000
+Cảm ơn bạn, Curt.
+
+00:14:01.000 --> 00:14:09.000
+Hãy chuyển sang CatalogView và sử dụng phương thức updateItems mà Curt vừa chỉ cho chúng ta.
+
+00:14:09.000 --> 00:14:13.000
+Tôi muốn gọi updateItems bất cứ khi nào Danh mục của tôi hiển thị.
+
+00:14:13.000 --> 00:14:20.000
+Trước đây, bạn có thể đã sử dụng onAppear cho việc này, nhưng bắt đầu từ năm nay trong SwiftUI, hãy sử dụng công cụ sửa đổi tác vụ.
+
+00:14:20.000 --> 00:14:24.000
+Nhiệm vụ cho phép bạn liên kết một nhiệm vụ không đồng bộ với chế độ xem của mình.
+
+00:14:24.000 --> 00:14:27.000
+Nhiệm vụ bắt đầu từ đầu cuộc đời của quan điểm.
+
+00:14:27.000 --> 00:14:42.000
+Nhiệm vụ được đồng bộ theo mặc định, vì vậy bên trong phần đóng của nó, tôi có thể gọi updateItems trên đối tượng myPhotos và chờ kết quả.
+
+00:14:42.000 --> 00:14:46.000
+Đây là một cách sử dụng nhiệm vụ tuyệt vời, nhưng thậm chí còn có nhiều hơn cho công cụ sửa đổi mới này.
+
+00:14:46.000 --> 00:14:54.000
+Tuổi thọ của một nhiệm vụ gắn liền với vòng đời của chế độ xem, vì vậy bạn có thể làm những việc như chờ đợi trên một chuỗi không đồng bộ và phản hồi các giá trị của nó.
+
+00:14:54.000 --> 00:14:58.000
+Và nhiệm vụ sẽ tự động bị hủy khi thời gian tồn tại của chế độ xem kết thúc.
+
+00:14:58.000 --> 00:15:08.000
+Để biết thêm về thời gian xem trọn đời, hãy chắc chắn xem bài nói chuyện "Demystify SwiftUI." Sử dụng bản xem trước trực tiếp, tôi có thể thấy rằng các mục nhập đã được cập nhật.
+
+00:15:08.000 --> 00:15:10.000
+Nhưng chúng tôi vẫn đang thiếu những hình ảnh đẹp.
+
+00:15:10.000 --> 00:15:15.000
+Tôi đã cập nhật PhotoView mà Curt đã hiển thị trước đó.
+
+00:15:15.000 --> 00:15:18.000
+Tôi sẽ thêm một số tài liệu cơ bản đằng sau tiêu đề.
+
+00:15:18.000 --> 00:15:20.000
+Bây giờ, hãy thêm các hình ảnh.
+
+00:15:20.000 --> 00:15:27.000
+May mắn thay, sử dụng API AsyncImage mới, tải hình ảnh từ máy chủ từ xa dễ dàng hơn bao giờ hết.
+
+00:15:27.000 --> 00:15:34.000
+Tất cả những gì tôi phải làm là lấy URL hình ảnh mà tôi muốn lấy ra khỏi mục nhập của chúng tôi và chuyển nó đến AsyncImage.
+
+00:15:34.000 --> 00:16:00.000
+Chà, cái này hơi quá lớn ở kích thước đầy đủ của nó, vì vậy hãy sử dụng quá tải của AsyncImage cho phép tôi điều chỉnh hình ảnh và hiển thị trình giữ chỗ để người dùng biết hình ảnh của họ đang tải.
+
+00:16:00.000 --> 00:16:29.000
+Tiếp theo, tôi sẽ làm cho hình ảnh có thể thay đổi kích thước và đặt tỷ lệ khung hình của nó để lấp đầy khoảng trống.
+
+00:16:29.000 --> 00:16:53.000
+Cuối cùng, tôi sẽ thêm chiều rộng và chiều cao tối thiểu để làm cho hình ảnh của tôi linh hoạt.
+
+00:16:53.000 --> 00:16:59.000
+Sử dụng chiều cao tối thiểu khác 0 cũng sẽ đảm bảo rằng chế độ xem tiến trình ló ra khu vực tiêu đề của tôi.
+
+00:16:59.000 --> 00:17:20.000
+Giống như phần còn lại của SwiftUI, AsyncImage được xây dựng với các mặc định thông minh, vì vậy ngay cả khi có lỗi khi tải hình ảnh của bạn, kết quả sẽ là tiếp tục hiển thị trình giữ chỗ.
+
+00:17:20.000 --> 00:17:24.000
+Bạn cũng có thể chọn tùy chỉnh hành vi xử lý lỗi.
+
+00:17:24.000 --> 00:17:33.000
+Để làm điều đó, hãy xem "Quá tải của AsyncImage sử dụng một pha." Sẽ thật tuyệt nếu người dùng có thể lưu những hình ảnh yêu thích của họ để xem sau.
+
+00:17:33.000 --> 00:17:36.000
+Hãy thêm một nút vào khu vực tiêu đề này để làm điều đó.
+
+00:17:36.000 --> 00:17:41.000
+Nút sẽ kích hoạt một hành động không đồng bộ để lưu mục nhập hình ảnh vào đĩa.
+
+00:17:41.000 --> 00:17:45.000
+Các mục đã lưu sẽ xuất hiện trong tab Đã lưu trong ứng dụng của chúng tôi.
+
+00:17:45.000 --> 00:17:47.000
+Tôi đã bối rối trước việc làm điều này.
+
+00:17:47.000 --> 00:17:51.000
+Hãy để tôi thêm nó vào đây, sau đó chúng ta có thể xem mã của nó.
+
+00:17:51.000 --> 00:18:05.000
+Đây là phiên bản bị bỏ qua của nút Lưu của tôi.
+
+00:18:05.000 --> 00:18:09.000
+Hãy thêm một hành động để lưu ảnh.
+
+00:18:09.000 --> 00:18:14.000
+Các hành động của nút trong SwiftUI là đồng bộ, nhưng phương thức "lưu" của tôi không đồng bộ.
+
+00:18:14.000 --> 00:18:21.000
+Để gọi phương thức, tôi sẽ bắt đầu một nhiệm vụ không đồng bộ.
+
+00:18:21.000 --> 00:18:37.000
+Sau đó, bên trong phần đóng, tôi sẽ gọi phương thức "lưu" trên "ảnh". Nó không đồng bộ, vì vậy tôi sẽ chỉ sử dụng chờ đợi.
+
+00:18:37.000 --> 00:18:41.000
+Tôi nghĩ sẽ rất tuyệt nếu hiển thị chế độ xem tiến độ trong khi việc lưu đang diễn ra.
+
+00:18:41.000 --> 00:18:44.000
+Để làm điều đó, tôi sẽ thêm một tài sản Nhà nước.
+
+00:18:44.000 --> 00:19:02.000
+Sau đó, tôi sẽ cập nhật Trạng thái xung quanh cuộc gọi của mình để lưu.
+
+00:19:02.000 --> 00:19:25.000
+Sau đó, tôi sẽ cập nhật nhãn trên nút của mình để hiển thị chế độ xem tiến trình khi quá trình lưu đang diễn ra.
+
+00:19:25.000 --> 00:19:31.000
+Tôi đang sử dụng "độ mờ" để ẩn nhãn Lưu và lớp phủ để hiển thị chế độ xem tiến trình.
+
+00:19:31.000 --> 00:20:18.000
+Sự kết hợp này đảm bảo rằng nút vẫn giữ nguyên kích thước, dựa trên bản địa hóa của từ "lưu". Cuối cùng, tôi sẽ vô hiệu hóa nút trong khi lưu đang diễn ra.
+
+00:20:18.000 --> 00:20:24.000
+Hãy xem điều này hoạt động như thế nào với bản xem trước trực tiếp.
+
+00:20:24.000 --> 00:20:26.000
+Điều đó khá tuyệt!
+
+00:20:26.000 --> 00:20:36.000
+Hãy quay lại chế độ xem Danh mục để ghép tất cả lại với nhau.
+
+00:20:36.000 --> 00:20:42.000
+SwiftUI có một công cụ sửa đổi mới tuyệt vời trong năm nay mà bạn có thể sử dụng để cung cấp cho mọi người khả năng làm mới dữ liệu của họ theo cách thủ công.
+
+00:20:42.000 --> 00:20:49.000
+Bằng cách thêm công cụ sửa đổi có thể làm mới vào Danh sách của tôi, tôi nói với SwiftUI rằng nội dung này có thể làm mới được.
+
+00:20:49.000 --> 00:20:56.000
+Tôi có thể cung cấp một đóng cửa không đồng bộ để làm mới và gọi phương thức updateItems của chúng tôi để cập nhật Danh sách.
+
+00:20:56.000 --> 00:21:10.000
+Như tôi đã chỉ ra trước đó với "nhiệm vụ", tôi sẽ sử dụng await trên phương pháp không đồng bộ này.
+
+00:21:10.000 --> 00:21:16.000
+Chỉ báo làm mới sẽ tự động loại bỏ khi công việc không đồng bộ của tôi hoàn tất.
+
+00:21:16.000 --> 00:21:29.000
+Bây giờ, tôi có thể kéo xuống để làm mới hình ảnh của mình, nhấn Lưu để lưu hình ảnh tôi thích và chuyển sang tab Đã lưu để xem hình ảnh đã lưu của tôi.
+
+00:21:29.000 --> 00:21:34.000
+Các tính năng mới của Swift giúp dễ dàng làm việc với dữ liệu đồng thời.
+
+00:21:34.000 --> 00:21:40.000
+SwiftUI tích hợp độc đáo với các tính năng đồng thời của Swift để cung cấp cho bạn hành vi tốt nhất theo mặc định.
+
+00:21:40.000 --> 00:21:46.000
+Trong nhiều trường hợp, bạn chỉ cần sử dụng await để tận dụng sức mạnh của sự đồng thời.
+
+00:21:46.000 --> 00:21:55.000
+Đánh dấu ObservableObject của bạn là “@MainActor” để kiểm tra mạnh mẽ hơn rằng đối tượng của bạn có cập nhật theo những cách phù hợp với quan điểm của bạn hay không.
+
+00:21:55.000 --> 00:22:03.000
+Tận dụng các bổ sung API của SwiftUI để viết các ứng dụng đồng thời an toàn và hiệu quả với nỗ lực tối thiểu.
+
+00:22:03.000 --> 00:22:07.000
+Sử dụng AsyncImage để tải đồng thời hình ảnh.
+
+00:22:07.000 --> 00:22:15.000
+Thêm công cụ sửa đổi "có thể làm mới" vào hệ thống phân cấp chế độ xem của bạn để cho phép người dùng làm mới dữ liệu của họ theo cách thủ công.
+
+00:22:15.000 --> 00:22:22.000
+Như chúng ta đã thấy với nút Lưu, bạn có thể sử dụng các tính năng đồng thời mới của Swift trong chế độ xem tùy chỉnh của riêng bạn.
+
+00:22:22.000 --> 00:22:25.000
+Như chúng ta đều biết, đồng thời rất khó khăn.
+
+00:22:25.000 --> 00:22:35.000
+Đó là một vấn đề khó khăn, nhưng với các tính năng ngôn ngữ mới này và SwiftUI APIs, giờ đây bạn đã có các công cụ để quản lý sự phức tạp đó trong các ứng dụng của mình.
+
+00:22:35.000 --> 00:22:47.000
+Chúng tôi hy vọng bạn thích tìm hiểu về các công cụ đồng thời mới tuyệt vời trong Swift 5.5 và SwiftUI, và chúng tôi mong muốn được xem tất cả các cách bạn sử dụng chúng để giải quyết các vấn đề phức tạp trong ứng dụng của mình.
+
+00:22:47.000 --> 23:59:59.000
+[Âm nhạc].
+

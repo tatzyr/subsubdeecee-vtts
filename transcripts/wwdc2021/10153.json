@@ -1,0 +1,2702 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=2"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=7"
+  },
+  {
+    "text": "Eugene Zhidkov: Hi and welcome to WWDC.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=9"
+  },
+  {
+    "text": "My name is Eugene Zhidkov. I am from GPU software.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=11"
+  },
+  {
+    "text": "And together, with Harsh Patil from Mac system architecture, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=14"
+  },
+  {
+    "text": "we'll show you how to create image-processing applications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=18"
+  },
+  {
+    "text": "powered by Metal on Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=21"
+  },
+  {
+    "text": "First, I will focus ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=24"
+  },
+  {
+    "text": "on the best practices and lessons learned, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=25"
+  },
+  {
+    "text": "optimizing image-processing applications for M1 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=28"
+  },
+  {
+    "text": "based on developer engagements we have had over the last year.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=31"
+  },
+  {
+    "text": "And then Harsh will give you a step-by-step guide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=35"
+  },
+  {
+    "text": "to how you can redesign your image-processing pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=38"
+  },
+  {
+    "text": "for optimal performance on Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=41"
+  },
+  {
+    "text": "So let’s jump right in! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=44"
+  },
+  {
+    "text": "To start, let’s briefly revisit Apple system ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=46"
+  },
+  {
+    "text": "on-the-chip architecture and its benefits.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=49"
+  },
+  {
+    "text": "Many image-processing and video-editing apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=52"
+  },
+  {
+    "text": "are designed with discrete GPUs in mind.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=54"
+  },
+  {
+    "text": "So it’s important to highlight what’s so different ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=57"
+  },
+  {
+    "text": "about Apple GPUs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=60"
+  },
+  {
+    "text": "First, all Apple chips use Unified Memory Architecture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=62"
+  },
+  {
+    "text": "All blocks -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=66"
+  },
+  {
+    "text": "such as CPU, GPU, Neural and Media engines -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=67"
+  },
+  {
+    "text": "have access to the same system memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=70"
+  },
+  {
+    "text": "using unified memory interface.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=72"
+  },
+  {
+    "text": "And second, our GPUs are Tile Based Deferred Renderers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=75"
+  },
+  {
+    "text": "or TBDRs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=79"
+  },
+  {
+    "text": "TBDRs have two main phases: tiling, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=81"
+  },
+  {
+    "text": "where whole render surfaces split into tiles ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=84"
+  },
+  {
+    "text": "and processed geometry is then handled independently; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=87"
+  },
+  {
+    "text": "and rendering, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=90"
+  },
+  {
+    "text": "where all of the pixels will be processed for each tile.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=91"
+  },
+  {
+    "text": "So in order to be most efficient on Apple silicon, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=95"
+  },
+  {
+    "text": "your image-processing app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=98"
+  },
+  {
+    "text": "should start leveraging unified memory -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=100"
+  },
+  {
+    "text": "to avoid any copies your pipeline used to have -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=103"
+  },
+  {
+    "text": "and TBDR architecture by exploiting tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=105"
+  },
+  {
+    "text": "and local image block.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=109"
+  },
+  {
+    "text": "To learn more about how Apple TBDR works at low level ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=111"
+  },
+  {
+    "text": "and how to target our shader core, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=115"
+  },
+  {
+    "text": "please watch these sessions from the last year.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=117"
+  },
+  {
+    "text": "And now, let’s talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=120"
+  },
+  {
+    "text": "the exact things we are going to do to optimize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=122"
+  },
+  {
+    "text": "image-processing compute workloads ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=125"
+  },
+  {
+    "text": "for Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=126"
+  },
+  {
+    "text": "Last year, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=128"
+  },
+  {
+    "text": "we’ve been working closely with many great developers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=129"
+  },
+  {
+    "text": "on their image pipeline transitions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=132"
+  },
+  {
+    "text": "We picked the six most rewarding tips to share.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=134"
+  },
+  {
+    "text": "First, we’ll discuss how to avoid ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=137"
+  },
+  {
+    "text": "unnecessary memory copies or blits.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=140"
+  },
+  {
+    "text": "This is really important ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=142"
+  },
+  {
+    "text": "given we are now working with images up to 8K.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=143"
+  },
+  {
+    "text": "Then, we wanted to highlight the benefits of using ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=147"
+  },
+  {
+    "text": "render pipeline and textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=149"
+  },
+  {
+    "text": "instead of using compute on buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=151"
+  },
+  {
+    "text": "and how you could do that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=153"
+  },
+  {
+    "text": "in your own image-processing pipeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=155"
+  },
+  {
+    "text": "Once we have the render and textures paths ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=158"
+  },
+  {
+    "text": "up and running, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=160"
+  },
+  {
+    "text": "we wanted to show you the importance of proper ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=161"
+  },
+  {
+    "text": "load/store actions and memoryless attachments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=163"
+  },
+  {
+    "text": "This will help you getting the most out of the tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=166"
+  },
+  {
+    "text": "Then, we’ll talk how to best approach Uber-shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=170"
+  },
+  {
+    "text": "with its dynamic control flow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=173"
+  },
+  {
+    "text": "and also how to leverage smaller data types -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=176"
+  },
+  {
+    "text": "such as short and half -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=179"
+  },
+  {
+    "text": "to improve performance and efficiency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=180"
+  },
+  {
+    "text": "And we’ll finish with important advice ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=183"
+  },
+  {
+    "text": "about texture formats to get the best throughput.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=185"
+  },
+  {
+    "text": "All right.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=188"
+  },
+  {
+    "text": "So let’s get started with one of the most rewarding tips: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=189"
+  },
+  {
+    "text": "avoiding unneeded blits on Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=192"
+  },
+  {
+    "text": "Most image-processing apps are designed around discrete GPUs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=195"
+  },
+  {
+    "text": "With discrete GPUs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=200"
+  },
+  {
+    "text": "you have separate system memory and video memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=202"
+  },
+  {
+    "text": "To make the frame image visible or resident to the GPU, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=205"
+  },
+  {
+    "text": "explicit copy is required.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=208"
+  },
+  {
+    "text": "Moreover, it is usually required twice; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=211"
+  },
+  {
+    "text": "to upload the data for the GPU to process it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=213"
+  },
+  {
+    "text": "and to pull it back.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=215"
+  },
+  {
+    "text": "Let’s consider we are decoding an 8K video, processing it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=217"
+  },
+  {
+    "text": "and saving it to disk.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=221"
+  },
+  {
+    "text": "So this is a CPU thread, decoding, in this case.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=223"
+  },
+  {
+    "text": "That’s where we need to copy the decoded frame to GPU VRAM.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=228"
+  },
+  {
+    "text": "And here is GPU timeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=233"
+  },
+  {
+    "text": "where all the effects and filters are applied.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=234"
+  },
+  {
+    "text": "Let’s take it one step further and let’s recall ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=238"
+  },
+  {
+    "text": "we need to save the results to disk, right? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=241"
+  },
+  {
+    "text": "So we must also consider bringing the processed frame ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=243"
+  },
+  {
+    "text": "back to system memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=247"
+  },
+  {
+    "text": "and the actual encoding of the frame.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=249"
+  },
+  {
+    "text": "So, these are known as \"copy\" or \"blit gaps\", ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=252"
+  },
+  {
+    "text": "and advanced image-processing applications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=255"
+  },
+  {
+    "text": "had to do deep pipelining and other smart things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=257"
+  },
+  {
+    "text": "to fill them in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=260"
+  },
+  {
+    "text": "Well, the good news is that on Apple GPUs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=261"
+  },
+  {
+    "text": "blitting for the sake of residence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=264"
+  },
+  {
+    "text": "is no longer needed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=266"
+  },
+  {
+    "text": "Since memory is shared, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=268"
+  },
+  {
+    "text": "both the CPU and GPU can access it directly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=269"
+  },
+  {
+    "text": "So please add a simple check to detect if you are running ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=273"
+  },
+  {
+    "text": "on unified memory system and avoid unnecessary copies.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=276"
+  },
+  {
+    "text": "It will save you memory, time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=280"
+  },
+  {
+    "text": "and is an absolute first step to do.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=282"
+  },
+  {
+    "text": "So this is where we land on Unified Memory Architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=285"
+  },
+  {
+    "text": "with the blits removed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=288"
+  },
+  {
+    "text": "By removing the blits, we completely avoid copy gaps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=291"
+  },
+  {
+    "text": "and can start processing immediately.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=294"
+  },
+  {
+    "text": "This also gives better CPU and GPU pipelining ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=298"
+  },
+  {
+    "text": "with less hassle.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=301"
+  },
+  {
+    "text": "Let’s make sure you implement unified memory path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=303"
+  },
+  {
+    "text": "with no copies involved.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=305"
+  },
+  {
+    "text": "If you just leave blit copies exactly as it was ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=307"
+  },
+  {
+    "text": "on the discrete GPU, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=310"
+  },
+  {
+    "text": "you’ll pay with system memory bandwidth, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=312"
+  },
+  {
+    "text": "less GPU time for actual processing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=314"
+  },
+  {
+    "text": "and potential scheduling overhead.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=316"
+  },
+  {
+    "text": "Not to mention we no longer need separate VRAM image allocated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=318"
+  },
+  {
+    "text": "GPU frame capture can help you with spotting large blits.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=324"
+  },
+  {
+    "text": "Please inspect your application blits ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=328"
+  },
+  {
+    "text": "and make sure you only do the copies required.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=330"
+  },
+  {
+    "text": "Now, let’s talk about how exactly we should start ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=334"
+  },
+  {
+    "text": "leveraging Apple GPU TBDR architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=336"
+  },
+  {
+    "text": "for image processing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=338"
+  },
+  {
+    "text": "Most image-processing applications operate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=340"
+  },
+  {
+    "text": "on image buffers by dispatching series of compute kernels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=342"
+  },
+  {
+    "text": "When you dispatch a compute kernel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=347"
+  },
+  {
+    "text": "in default serial mode, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=348"
+  },
+  {
+    "text": "Metal guarantees that all subsequent dispatches ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=350"
+  },
+  {
+    "text": "see all the memory writes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=353"
+  },
+  {
+    "text": "This guarantee implies memory coherency for all shader cores, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=355"
+  },
+  {
+    "text": "so every memory write is made visible to all other cores ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=360"
+  },
+  {
+    "text": "by the time the next dispatch starts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=363"
+  },
+  {
+    "text": "This also means memory traffic could be really high; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=366"
+  },
+  {
+    "text": "the whole image has to be read and written to.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=369"
+  },
+  {
+    "text": "With M1, Apple GPUs enable tile dispatches on MacOS.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=372"
+  },
+  {
+    "text": "In contrast to regular compute, they operate in tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=377"
+  },
+  {
+    "text": "with tile-only sync points.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=381"
+  },
+  {
+    "text": "Some filters -- like convolutions -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=383"
+  },
+  {
+    "text": "cannot be mapped to the tile paradigm, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=385"
+  },
+  {
+    "text": "but many other filters can! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=387"
+  },
+  {
+    "text": "Deferring system memory flush until the encoder end point ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=389"
+  },
+  {
+    "text": "provides solid efficiency gains.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=393"
+  },
+  {
+    "text": "You can execute more useful GPU work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=395"
+  },
+  {
+    "text": "when not limited by system memory bandwidth.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=398"
+  },
+  {
+    "text": "To take it even further, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=401"
+  },
+  {
+    "text": "let’s notice that many per-pixel operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=403"
+  },
+  {
+    "text": "don’t require access to neighboring pixels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=406"
+  },
+  {
+    "text": "so tile sync point is not necessary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=408"
+  },
+  {
+    "text": "This maps really well to fragment functions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=412"
+  },
+  {
+    "text": "Fragment functions can be executed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=415"
+  },
+  {
+    "text": "without implicit tile sync, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=417"
+  },
+  {
+    "text": "requiring sync only at the encoder boundary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=418"
+  },
+  {
+    "text": "or when tile kernels are dispatched serially ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=421"
+  },
+  {
+    "text": "after the fragment kernels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=423"
+  },
+  {
+    "text": "We now learned that Apple GPUs enable fragment functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=425"
+  },
+  {
+    "text": "and tile kernels for more efficient image processing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=428"
+  },
+  {
+    "text": "Let’s see how we could use that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=431"
+  },
+  {
+    "text": "We do that by converting regular compute dispatches ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=434"
+  },
+  {
+    "text": "on buffers to render command encoder on textures.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=437"
+  },
+  {
+    "text": "As we just discussed, rule of thumb is the following.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=441"
+  },
+  {
+    "text": "Per-pixel operations with no interpixel dependency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=445"
+  },
+  {
+    "text": "should be implemented using fragment functions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=448"
+  },
+  {
+    "text": "Any filter with threadgroup scoped operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=451"
+  },
+  {
+    "text": "should be implemented with tile shading, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=453"
+  },
+  {
+    "text": "since neighbor pixels access within a tile is required.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=455"
+  },
+  {
+    "text": "Scatter-gather and convolution filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=459"
+  },
+  {
+    "text": "cannot be mapped to tile paradigm ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=461"
+  },
+  {
+    "text": "since they require random access, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=463"
+  },
+  {
+    "text": "so these should still remain compute dispatches.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=465"
+  },
+  {
+    "text": "Render command encoder also enables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=469"
+  },
+  {
+    "text": "a unique Apple GPU feature: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=471"
+  },
+  {
+    "text": "lossless bandwidth compression for textures and render targets.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=473"
+  },
+  {
+    "text": "This is a really great bandwidth saver, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=476"
+  },
+  {
+    "text": "especially for an image-processing pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=478"
+  },
+  {
+    "text": "so let’s see how we should use it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=481"
+  },
+  {
+    "text": "Well, speaking of enabling lossless compression, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=484"
+  },
+  {
+    "text": "it’s actually easier to say what you should not do.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=486"
+  },
+  {
+    "text": "First, already-compressed texture formats ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=490"
+  },
+  {
+    "text": "cannot benefit from lossless.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=492"
+  },
+  {
+    "text": "Second, there are three particular texture flags ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=495"
+  },
+  {
+    "text": "which cannot work with this compression, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=498"
+  },
+  {
+    "text": "so make sure you don’t set them just by an accident.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=500"
+  },
+  {
+    "text": "And third, linear textures -- or backed by an MTLBuffer -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=504"
+  },
+  {
+    "text": "are not allowed as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=508"
+  },
+  {
+    "text": "Some special treatment is also required ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=511"
+  },
+  {
+    "text": "for nonprivate textures; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=513"
+  },
+  {
+    "text": "make sure to call optimizeContentsForGPUAccess ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=515"
+  },
+  {
+    "text": "to stay on the fastest path.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=518"
+  },
+  {
+    "text": "GPU frame capture Summary pane now shows you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=521"
+  },
+  {
+    "text": "lossless compression warnings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=524"
+  },
+  {
+    "text": "and highlights the reasons why the texture has opted out.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=526"
+  },
+  {
+    "text": "In this example, PixelFormatView flag was set.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=529"
+  },
+  {
+    "text": "In many cases, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=534"
+  },
+  {
+    "text": "developers are setting these flags unintentionally.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=535"
+  },
+  {
+    "text": "Don’t set PixelFormatView ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=538"
+  },
+  {
+    "text": "if all you need is components swizzle or sRGB conversion.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=539"
+  },
+  {
+    "text": "All right, we have the render and textures path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=545"
+  },
+  {
+    "text": "up and running.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=547"
+  },
+  {
+    "text": "Now, let’s make sure we properly use tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=548"
+  },
+  {
+    "text": "Tile memory TBDR concepts -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=551"
+  },
+  {
+    "text": "such as load/store actions and memoryless attachments -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=554"
+  },
+  {
+    "text": "are totally new to the desktop world.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=557"
+  },
+  {
+    "text": "So let’s make sure we use them properly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=559"
+  },
+  {
+    "text": "Let’s start with load/store actions! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=562"
+  },
+  {
+    "text": "As we already know, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=565"
+  },
+  {
+    "text": "the whole render target is split into the tiles.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=566"
+  },
+  {
+    "text": "Load/store are per-tile bulk actions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=569"
+  },
+  {
+    "text": "guaranteed to take the most optimal path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=572"
+  },
+  {
+    "text": "through memory hierarchy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=574"
+  },
+  {
+    "text": "They are executed at the beginning of the render pass -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=576"
+  },
+  {
+    "text": "where we tell the GPU how to initialize the tile memory -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=579"
+  },
+  {
+    "text": "and at the end of the pass to inform the GPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=583"
+  },
+  {
+    "text": "what attachments need to be written back.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=585"
+  },
+  {
+    "text": "The key thing here is to avoid loading what we don’t need.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=588"
+  },
+  {
+    "text": "If we are overwriting the whole image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=592"
+  },
+  {
+    "text": "or the resource is temporary, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=594"
+  },
+  {
+    "text": "set load action to LoadActionDontCare.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=596"
+  },
+  {
+    "text": "With render encoder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=599"
+  },
+  {
+    "text": "you no longer need to clear your output or temporary data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=600"
+  },
+  {
+    "text": "as you probably did before with dedicated compute pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=604"
+  },
+  {
+    "text": "or fillBuffer call.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=607"
+  },
+  {
+    "text": "By setting LoadActionClear, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=609"
+  },
+  {
+    "text": "you can efficiently specify the clear value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=611"
+  },
+  {
+    "text": "And the same goes for the store action.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=614"
+  },
+  {
+    "text": "Make sure to only store the data you will later need -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=616"
+  },
+  {
+    "text": "like the main attachment -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=619"
+  },
+  {
+    "text": "and don’t store anything temporary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=620"
+  },
+  {
+    "text": "Besides explicit load and store actions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=623"
+  },
+  {
+    "text": "Apple GPUs saves your memory footprint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=626"
+  },
+  {
+    "text": "with memoryless attachments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=628"
+  },
+  {
+    "text": "We can explicitly define an attachment ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=630"
+  },
+  {
+    "text": "as having memoryless storage mode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=633"
+  },
+  {
+    "text": "This enables tile-only memory allocation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=635"
+  },
+  {
+    "text": "meaning that your resource will persist ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=638"
+  },
+  {
+    "text": "for each and every tile only within encoder lifetime.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=640"
+  },
+  {
+    "text": "This can greatly reduce your memory footprint, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=643"
+  },
+  {
+    "text": "especially for 6K/8K images, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=645"
+  },
+  {
+    "text": "where every frame takes hundreds of megabytes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=648"
+  },
+  {
+    "text": "Let’s see how this all can be done in code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=651"
+  },
+  {
+    "text": "We start by creating the textureDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=654"
+  },
+  {
+    "text": "and then create the outputTexture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=657"
+  },
+  {
+    "text": "We then create a temporary texture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=660"
+  },
+  {
+    "text": "Notice that I’ve marked it memoryless, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=662"
+  },
+  {
+    "text": "as we don’t want any storage here.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=664"
+  },
+  {
+    "text": "Then we create the render pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=667"
+  },
+  {
+    "text": "by first describing what the attachments are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=669"
+  },
+  {
+    "text": "and then what are the load/store actions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=672"
+  },
+  {
+    "text": "We don’t care about loading the output ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=674"
+  },
+  {
+    "text": "since it is fully overwritten, but we need to store it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=676"
+  },
+  {
+    "text": "As for the temporary texture, we don’t load but clear it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=680"
+  },
+  {
+    "text": "and we don’t need to store it either.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=683"
+  },
+  {
+    "text": "Finally, we create our renderPass from the descriptor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=686"
+  },
+  {
+    "text": "That’s it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=691"
+  },
+  {
+    "text": "So we are using unified memory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=692"
+  },
+  {
+    "text": "moved our image-processing pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=695"
+  },
+  {
+    "text": "to render command encoder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=697"
+  },
+  {
+    "text": "and are properly leveraging tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=698"
+  },
+  {
+    "text": "Now, let’s talk about uber-shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=701"
+  },
+  {
+    "text": "Uber-shaders, or uber-kernels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=704"
+  },
+  {
+    "text": "is a pretty popular way to make developers' life easier.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=706"
+  },
+  {
+    "text": "Host code sets up the control structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=710"
+  },
+  {
+    "text": "and shader just loops through a series of if/else statements, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=713"
+  },
+  {
+    "text": "for example, if tone mapping is enabled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=717"
+  },
+  {
+    "text": "or if the input is in HDR or SDR formats.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=719"
+  },
+  {
+    "text": "This approach is also known as \"ubers-shader\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=723"
+  },
+  {
+    "text": "and is really good at bringing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=726"
+  },
+  {
+    "text": "total number of pipeline state objects down.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=728"
+  },
+  {
+    "text": "However, it has drawbacks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=731"
+  },
+  {
+    "text": "The main one is increased register pressure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=734"
+  },
+  {
+    "text": "to keep up with more complex control flow.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=737"
+  },
+  {
+    "text": "Using more registers can easily limit maximum occupancy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=739"
+  },
+  {
+    "text": "your shader is running at.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=743"
+  },
+  {
+    "text": "Consider a simple kernel where we pass in the control struct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=745"
+  },
+  {
+    "text": "We use flags inside the struct to control what we do.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=749"
+  },
+  {
+    "text": "We have two features here: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=753"
+  },
+  {
+    "text": "if the input is in HDR and if tonemapping is enabled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=755"
+  },
+  {
+    "text": "All look good, right? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=758"
+  },
+  {
+    "text": "Well, here is what happens on the GPU.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=760"
+  },
+  {
+    "text": "Since we cannot deduce anything at compile time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=764"
+  },
+  {
+    "text": "we have to assume we could take both paths -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=766"
+  },
+  {
+    "text": "HDR and non-HDR -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=769"
+  },
+  {
+    "text": "and then combine based on the flag.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=771"
+  },
+  {
+    "text": "Same goes for tone mapping.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=774"
+  },
+  {
+    "text": "We evaluate it and then mask it in or out, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=776"
+  },
+  {
+    "text": "based on the input flag.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=779"
+  },
+  {
+    "text": "The problem here is registers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=782"
+  },
+  {
+    "text": "Every control flow path needs live registers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=784"
+  },
+  {
+    "text": "This is where uber-shaders are not so good.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=787"
+  },
+  {
+    "text": "As you recall, registers used by the kernel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=790"
+  },
+  {
+    "text": "define maximum occupancy the shader could run.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=794"
+  },
+  {
+    "text": "That happens because registers file is shared by all simdlanes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=797"
+  },
+  {
+    "text": "on the shader core.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=800"
+  },
+  {
+    "text": "If we could only run what’s only needed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=802"
+  },
+  {
+    "text": "that would enable higher simdgroup concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=804"
+  },
+  {
+    "text": "and GPU utilization.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=807"
+  },
+  {
+    "text": "Let’s talk how to fix this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=810"
+  },
+  {
+    "text": "Metal API has the right tool for the job, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=812"
+  },
+  {
+    "text": "and it's called \"function_constants\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=814"
+  },
+  {
+    "text": "We define both control parameters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=817"
+  },
+  {
+    "text": "as function_constants, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=819"
+  },
+  {
+    "text": "and we modify the code accordingly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=821"
+  },
+  {
+    "text": "Here, we are showing the modified kernel code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=823"
+  },
+  {
+    "text": "Host side must be also updated to provide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=826"
+  },
+  {
+    "text": "function_constant value at pipeline creation time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=829"
+  },
+  {
+    "text": "Another great way to reduce register pressure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=832"
+  },
+  {
+    "text": "is using 16-bit types in your shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=836"
+  },
+  {
+    "text": "Apple GPUs have native 16-bit type support.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=839"
+  },
+  {
+    "text": "So, when using smaller data types, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=843"
+  },
+  {
+    "text": "your shaders will require less registers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=845"
+  },
+  {
+    "text": "increasing occupancy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=848"
+  },
+  {
+    "text": "Half and short types also require less energy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=850"
+  },
+  {
+    "text": "and might achieve higher peak rates.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=853"
+  },
+  {
+    "text": "So, please use half and short types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=856"
+  },
+  {
+    "text": "instead of float and int when possible, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=858"
+  },
+  {
+    "text": "since type conversions are usually free.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=860"
+  },
+  {
+    "text": "In this example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=864"
+  },
+  {
+    "text": "consider a kernel using the thread_position ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=865"
+  },
+  {
+    "text": "in threadgroup for some computations.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=868"
+  },
+  {
+    "text": "We are using unsigned int, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=872"
+  },
+  {
+    "text": "but the maximum threadgroup size supported by Metal ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=873"
+  },
+  {
+    "text": "can easily fit in unsigned short.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=877"
+  },
+  {
+    "text": "threadgroup_position_in_grid, however, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=880"
+  },
+  {
+    "text": "could potentially require a larger data type.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=882"
+  },
+  {
+    "text": "But for the grid sizes we’re using in image processing -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=886"
+  },
+  {
+    "text": "up to 8K or 16K -- unsigned short is also enough.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=889"
+  },
+  {
+    "text": "If we use 16-bit types instead, the resulting code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=894"
+  },
+  {
+    "text": "will use a smaller number of registers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=897"
+  },
+  {
+    "text": "potentially increasing the occupancy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=899"
+  },
+  {
+    "text": "Now, let me show you where you can have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=902"
+  },
+  {
+    "text": "all the details on registers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=904"
+  },
+  {
+    "text": "GPU frame debugger in Xcode13 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=907"
+  },
+  {
+    "text": "now has advanced pipeline state object view for render, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=910"
+  },
+  {
+    "text": "tile, and compute PSOs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=913"
+  },
+  {
+    "text": "You can inspect detailed pipeline statistics -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=915"
+  },
+  {
+    "text": "now with registers usage -- and fine-tune all your shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=918"
+  },
+  {
+    "text": "With register concerns covered, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=922"
+  },
+  {
+    "text": "let’s talk about texture formats.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=925"
+  },
+  {
+    "text": "First, we want to note that different pixel formats ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=928"
+  },
+  {
+    "text": "might have different sampling rates.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=930"
+  },
+  {
+    "text": "Depending on hardware generation and number of channels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=933"
+  },
+  {
+    "text": "wider floating-point types might have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=936"
+  },
+  {
+    "text": "reduced point sampling rate.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=938"
+  },
+  {
+    "text": "Especially floating-point formats such as RGBA32F ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=940"
+  },
+  {
+    "text": "will be slower than FP16 variants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=944"
+  },
+  {
+    "text": "when sampling filtered values.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=946"
+  },
+  {
+    "text": "Smaller types reduce memory storage, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=949"
+  },
+  {
+    "text": "bandwidth, and cache footprint as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=951"
+  },
+  {
+    "text": "So we encourage, again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=953"
+  },
+  {
+    "text": "to use the smallest type possible, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=954"
+  },
+  {
+    "text": "but in this case, for the textures storage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=956"
+  },
+  {
+    "text": "This was actually a common case for 3D LUTs in image processing; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=959"
+  },
+  {
+    "text": "most applications we worked with were using float RGBA ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=963"
+  },
+  {
+    "text": "for a 3D LUT application phase with bilinear filtering enabled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=967"
+  },
+  {
+    "text": "Please consider if your app can instead use halfs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=972"
+  },
+  {
+    "text": "and the precision will be enough.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=974"
+  },
+  {
+    "text": "If that’s the case, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=977"
+  },
+  {
+    "text": "switch to FP16 right away to get peak sampling rates.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=978"
+  },
+  {
+    "text": "If half precision is not enough, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=982"
+  },
+  {
+    "text": "we found out that fixed-point unsigned short ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=984"
+  },
+  {
+    "text": "provides great uniform range of values, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=986"
+  },
+  {
+    "text": "so encoding your LUTs in unit scale ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=989"
+  },
+  {
+    "text": "and providing LUT range to the shader ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=991"
+  },
+  {
+    "text": "was a great way to get both peak sampling rate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=993"
+  },
+  {
+    "text": "and sufficient numerical accuracy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=996"
+  },
+  {
+    "text": "All right, so we just went over ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=999"
+  },
+  {
+    "text": "how we should leverage Apple GPU architecture to make ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1001"
+  },
+  {
+    "text": "your image-processing pipeline run as efficient as possible.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1004"
+  },
+  {
+    "text": "To apply it all right away, please meet Harsh! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1008"
+  },
+  {
+    "text": "Harsh Patil: Thanks, Eugene.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1010"
+  },
+  {
+    "text": "Now let’s walk through redesigning ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1012"
+  },
+  {
+    "text": "an image-processing pipeline for Apple silicon ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1014"
+  },
+  {
+    "text": "based on all the best practices we have learned so far.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1016"
+  },
+  {
+    "text": "To be specific, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1019"
+  },
+  {
+    "text": "we are going to tailor the image-processing phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1020"
+  },
+  {
+    "text": "of the video-processing pipeline for Apple GPUs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1022"
+  },
+  {
+    "text": "Real-time image processing is very GPU compute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1025"
+  },
+  {
+    "text": "and memory bandwidth intensive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1028"
+  },
+  {
+    "text": "We will first understand how it is usually designed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1030"
+  },
+  {
+    "text": "and then how we can optimize it for Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1033"
+  },
+  {
+    "text": "We are not going to go into the details ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1036"
+  },
+  {
+    "text": "of video-editing workflow in this section, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1038"
+  },
+  {
+    "text": "so please refer to our talk from two years ago.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1040"
+  },
+  {
+    "text": "We will solely focus on transitioning ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1042"
+  },
+  {
+    "text": "the compute part of image processing to render path.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1044"
+  },
+  {
+    "text": "Before we start, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1047"
+  },
+  {
+    "text": "let's begin quickly take a look at where image-processing phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1048"
+  },
+  {
+    "text": "stands in a typical video-processing pipeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1050"
+  },
+  {
+    "text": "We'll take ProRes-encoded input file as an example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1053"
+  },
+  {
+    "text": "We first read the ProRes-encoded frame from the disk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1057"
+  },
+  {
+    "text": "or external storage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1060"
+  },
+  {
+    "text": "We then decode the frame on CPU, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1061"
+  },
+  {
+    "text": "and now the image-processing phase ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1064"
+  },
+  {
+    "text": "executes on this decoded frame on the GPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1065"
+  },
+  {
+    "text": "and renders the final output frame.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1068"
+  },
+  {
+    "text": "Finally, we display this output frame.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1070"
+  },
+  {
+    "text": "We could additionally also encode the final rendered frame ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1073"
+  },
+  {
+    "text": "for delivery.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1076"
+  },
+  {
+    "text": "Next, let’s take a look at what comprises ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1077"
+  },
+  {
+    "text": "an image-processing pipeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1079"
+  },
+  {
+    "text": "Image processing starts with unpacking different channels ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1082"
+  },
+  {
+    "text": "of the source image RGB in alpha ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1084"
+  },
+  {
+    "text": "into separate buffers in the beginning.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1087"
+  },
+  {
+    "text": "We will process each of these channels ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1089"
+  },
+  {
+    "text": "in our image-processing pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1091"
+  },
+  {
+    "text": "either together or separately.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1092"
+  },
+  {
+    "text": "Next, there might be color space conversions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1095"
+  },
+  {
+    "text": "to operate in the desired color-managed environment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1097"
+  },
+  {
+    "text": "We then apply a 3D LUT; perform color corrections; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1101"
+  },
+  {
+    "text": "and then apply spatial-temporal noise reduction, convolutions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1106"
+  },
+  {
+    "text": "blurs, and other effects.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1109"
+  },
+  {
+    "text": "And finally, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1111"
+  },
+  {
+    "text": "we pack the individually processed channels together ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1112"
+  },
+  {
+    "text": "for final output.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1114"
+  },
+  {
+    "text": "What do these selected steps have in common? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1116"
+  },
+  {
+    "text": "They are all point filters, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1119"
+  },
+  {
+    "text": "operating only on a single pixel with no interpixel dependency.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1120"
+  },
+  {
+    "text": "These map well to fragment shader implementation.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1123"
+  },
+  {
+    "text": "Spatial and convolution-style operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1127"
+  },
+  {
+    "text": "require access to large radius of pixels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1129"
+  },
+  {
+    "text": "and we have scattered ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1131"
+  },
+  {
+    "text": "read-write access patterns as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1132"
+  },
+  {
+    "text": "These are well-suited for compute kernels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1134"
+  },
+  {
+    "text": "We’ll use this knowledge later.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1137"
+  },
+  {
+    "text": "For now, let’s see how these operations are executed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1138"
+  },
+  {
+    "text": "Applications represent chain of effects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1142"
+  },
+  {
+    "text": "applied to an image as a filter graph.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1143"
+  },
+  {
+    "text": "Every filter is its own kernel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1146"
+  },
+  {
+    "text": "processing the inputs from the previous stage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1148"
+  },
+  {
+    "text": "and producing outputs for the next stage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1150"
+  },
+  {
+    "text": "Every arrow here means a buffer being written ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1152"
+  },
+  {
+    "text": "to/from output of one stage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1155"
+  },
+  {
+    "text": "and read as the input in the next stage.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1156"
+  },
+  {
+    "text": "Since memory is limited, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1160"
+  },
+  {
+    "text": "applications usually linearize the graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1162"
+  },
+  {
+    "text": "by doing a topological sort.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1164"
+  },
+  {
+    "text": "This is done to keep the total number of intermediate resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1166"
+  },
+  {
+    "text": "as low as possible while also avoiding race conditions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1169"
+  },
+  {
+    "text": "This simple filter graph in that example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1173"
+  },
+  {
+    "text": "would need two intermediate buffers to be able to operate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1175"
+  },
+  {
+    "text": "without race conditions and produce the final output.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1178"
+  },
+  {
+    "text": "The linearized graph here roughly represents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1181"
+  },
+  {
+    "text": "the GPU command buffer encoding as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1183"
+  },
+  {
+    "text": "Let’s look deeper on why this filter graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1186"
+  },
+  {
+    "text": "is very device memory bandwidth intensive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1189"
+  },
+  {
+    "text": "Every filter operation has to load whole image ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1192"
+  },
+  {
+    "text": "from device memory into the registers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1195"
+  },
+  {
+    "text": "and write the result back to the device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1198"
+  },
+  {
+    "text": "And that’s quite a bit of memory traffic.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1201"
+  },
+  {
+    "text": "Let’s estimate the memory footprint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1203"
+  },
+  {
+    "text": "for a 4K-frame image processing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1205"
+  },
+  {
+    "text": "based on our example image-processing graph.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1207"
+  },
+  {
+    "text": "A 4K decoded frame itself takes 67 megabytes of memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1211"
+  },
+  {
+    "text": "for floating-point 16 precision ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1215"
+  },
+  {
+    "text": "or 135 megabytes of memory for floating-point 32 precision, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1217"
+  },
+  {
+    "text": "and professional workflows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1221"
+  },
+  {
+    "text": "absolutely need floating-point 32 precision.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1222"
+  },
+  {
+    "text": "For processing one 4K frame in floating-point 32 precision ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1225"
+  },
+  {
+    "text": "through this image-processing graph, we are talking more than ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1229"
+  },
+  {
+    "text": "two gigabytes of read-write traffic to device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1232"
+  },
+  {
+    "text": "Also, writes to buffers holding the intermediate output ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1236"
+  },
+  {
+    "text": "thrashes the cache hierarchy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1239"
+  },
+  {
+    "text": "and impacts other blocks on the chip as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1240"
+  },
+  {
+    "text": "Regular compute kernels ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1243"
+  },
+  {
+    "text": "don’t benefit from the on-chip tile memory implicitly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1245"
+  },
+  {
+    "text": "Kernels can explicitly allocate threadgroup-scoped memory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1248"
+  },
+  {
+    "text": "which will be backed by the on-chip tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1251"
+  },
+  {
+    "text": "However, that tile memory is not persistent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1254"
+  },
+  {
+    "text": "across dispatches within a compute encoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1256"
+  },
+  {
+    "text": "In contrast, the tile memory is actually persistent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1260"
+  },
+  {
+    "text": "across draw passes within one render command encoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1262"
+  },
+  {
+    "text": "Let’s see how we can redesign this representative ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1266"
+  },
+  {
+    "text": "image-processing pipeline to leverage the tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1268"
+  },
+  {
+    "text": "We are going to address this by following three steps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1272"
+  },
+  {
+    "text": "We first change the compute pass to render pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1275"
+  },
+  {
+    "text": "and all the intermediate output buffers to textures.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1278"
+  },
+  {
+    "text": "We then encode per-pixel operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1281"
+  },
+  {
+    "text": "with no interpixel dependency as fragment shader invocations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1283"
+  },
+  {
+    "text": "within one render command encoder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1287"
+  },
+  {
+    "text": "making sure to account for all the intermediate results ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1288"
+  },
+  {
+    "text": "and setting appropriate load/store actions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1291"
+  },
+  {
+    "text": "And finally, we discuss what do we do in more complex situation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1294"
+  },
+  {
+    "text": "than just point filters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1298"
+  },
+  {
+    "text": "Our first step is to use separate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1300"
+  },
+  {
+    "text": "MTLRenderCommandEncoder to encode eligible shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1302"
+  },
+  {
+    "text": "In this filter graph, unpack, color space conversion, LUT, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1305"
+  },
+  {
+    "text": "and color-correction filters are all point per-pixel filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1309"
+  },
+  {
+    "text": "that we can convert to fragment shader ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1313"
+  },
+  {
+    "text": "and encode them using one render command encoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1315"
+  },
+  {
+    "text": "Similarly, mixer and pack shaders -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1319"
+  },
+  {
+    "text": "which are towards the end ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1322"
+  },
+  {
+    "text": "of this image-processing pipeline -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1323"
+  },
+  {
+    "text": "can also be converted to fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1325"
+  },
+  {
+    "text": "and encoded using another MTLRenderCommandEncoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1327"
+  },
+  {
+    "text": "Then we can invoke these shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1331"
+  },
+  {
+    "text": "within their respective render passes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1332"
+  },
+  {
+    "text": "When you create the render pass, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1335"
+  },
+  {
+    "text": "all the resources attached to the color attachments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1337"
+  },
+  {
+    "text": "in that render pass are implicitly tiled for you.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1339"
+  },
+  {
+    "text": "A fragment shader can only update the image block data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1342"
+  },
+  {
+    "text": "associated with fragment’s position in the tile.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1346"
+  },
+  {
+    "text": "Next shader in the same render pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1349"
+  },
+  {
+    "text": "can pick up the output of the previous shader ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1351"
+  },
+  {
+    "text": "directly from the tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1353"
+  },
+  {
+    "text": "In the next section, we will take a look ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1355"
+  },
+  {
+    "text": "at how we can structure the fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1357"
+  },
+  {
+    "text": "which map to these filters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1359"
+  },
+  {
+    "text": "We will also take a look at what constructs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1361"
+  },
+  {
+    "text": "we need to define and use to enable access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1363"
+  },
+  {
+    "text": "to the underlying tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1366"
+  },
+  {
+    "text": "from within these fragment shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1368"
+  },
+  {
+    "text": "And finally, we will take a look ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1370"
+  },
+  {
+    "text": "at how the output generated in the tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1372"
+  },
+  {
+    "text": "by one fragment shader can be consumed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1374"
+  },
+  {
+    "text": "directly from the tile memory by the next fragment shader ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1376"
+  },
+  {
+    "text": "within the same render command encoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1379"
+  },
+  {
+    "text": "This is what you have to do in your code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1382"
+  },
+  {
+    "text": "Here I have attached output image as a texture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1385"
+  },
+  {
+    "text": "attached to color attachment 0 of the render pass descriptor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1387"
+  },
+  {
+    "text": "I have attached texture holding intermediate result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1391"
+  },
+  {
+    "text": "to color attachment 1 of the render pass descriptor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1394"
+  },
+  {
+    "text": "Both of these will be implicitly tiled for you.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1397"
+  },
+  {
+    "text": "Please set the appropriate load/store properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1401"
+  },
+  {
+    "text": "as discussed earlier in the talk.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1403"
+  },
+  {
+    "text": "Now, set up a structure to access these textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1406"
+  },
+  {
+    "text": "in your fragment shader.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1409"
+  },
+  {
+    "text": "In the coming examples, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1410"
+  },
+  {
+    "text": "we will show how to use this structure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1411"
+  },
+  {
+    "text": "within your fragment shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1413"
+  },
+  {
+    "text": "You simply access the output and the intermediate textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1415"
+  },
+  {
+    "text": "within your fragment shader as highlighted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1418"
+  },
+  {
+    "text": "by using the structure we defined earlier.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1420"
+  },
+  {
+    "text": "Writes to these textures are done ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1423"
+  },
+  {
+    "text": "to appropriate tile memory location ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1425"
+  },
+  {
+    "text": "corresponding to the fragment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1427"
+  },
+  {
+    "text": "Output produced by the unpack shader is consumed as input ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1429"
+  },
+  {
+    "text": "by color space conversion shader ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1433"
+  },
+  {
+    "text": "using the same structure that we defined earlier.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1434"
+  },
+  {
+    "text": "This fragment shader can do its own processing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1437"
+  },
+  {
+    "text": "and update the output and intermediate textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1440"
+  },
+  {
+    "text": "which will, once again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1442"
+  },
+  {
+    "text": "update the corresponding tile memory location.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1443"
+  },
+  {
+    "text": "You are to continue the same steps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1446"
+  },
+  {
+    "text": "for all the other fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1448"
+  },
+  {
+    "text": "within the same render encoder pass.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1449"
+  },
+  {
+    "text": "Next, let's visualize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1452"
+  },
+  {
+    "text": "how this sequence of operations looks now with these changes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1453"
+  },
+  {
+    "text": "As you can see, now you have unpack, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1457"
+  },
+  {
+    "text": "color space conversion, application of 3D LUT, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1460"
+  },
+  {
+    "text": "and color-correction steps, all executed on the tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1463"
+  },
+  {
+    "text": "using one render pass ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1466"
+  },
+  {
+    "text": "with no device memory passes in between.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1467"
+  },
+  {
+    "text": "At the end of the render pass, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1470"
+  },
+  {
+    "text": "render targets that are not memoryless ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1472"
+  },
+  {
+    "text": "are flushed to the device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1474"
+  },
+  {
+    "text": "You can then execute the next class of filters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1476"
+  },
+  {
+    "text": "Let’s talk a bit about filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1479"
+  },
+  {
+    "text": "that have scatter-gather access patterns.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1481"
+  },
+  {
+    "text": "Kernels representing such filters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1483"
+  },
+  {
+    "text": "can directly operate on the data in the device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1485"
+  },
+  {
+    "text": "Convolution filters are very well-suited ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1489"
+  },
+  {
+    "text": "for tile-based operations in compute kernels.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1491"
+  },
+  {
+    "text": "Here, you can express intent to use tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1494"
+  },
+  {
+    "text": "by declaring a threadgroup-scoped memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1497"
+  },
+  {
+    "text": "Now, you bring in the block of pixels into the tile memory ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1500"
+  },
+  {
+    "text": "along with all the necessary halo pixels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1503"
+  },
+  {
+    "text": "depending upon the filter radius, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1505"
+  },
+  {
+    "text": "and perform the convolution operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1507"
+  },
+  {
+    "text": "directly on the tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1509"
+  },
+  {
+    "text": "Remember, tile memory is not persistent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1511"
+  },
+  {
+    "text": "across compute dispatches within a compute encoder.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1514"
+  },
+  {
+    "text": "So after executing Filter1, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1517"
+  },
+  {
+    "text": "you have to explicitly flush the tile memory contents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1519"
+  },
+  {
+    "text": "to device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1521"
+  },
+  {
+    "text": "That way, Filter2 can consume the output of Filter1.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1523"
+  },
+  {
+    "text": "So where do we land once we make all of these changes? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1527"
+  },
+  {
+    "text": "For processing one 4K frame in floating-point 32 precision ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1530"
+  },
+  {
+    "text": "through our example restructured image-processing graph, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1534"
+  },
+  {
+    "text": "here’s what we have now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1537"
+  },
+  {
+    "text": "Bandwidth goes down from 2.16 gigabytes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1539"
+  },
+  {
+    "text": "to just load and store worth 810 megabytes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1542"
+  },
+  {
+    "text": "and that’s 62 percent reduction in memory traffic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1545"
+  },
+  {
+    "text": "to the device memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1547"
+  },
+  {
+    "text": "We don't need two intermediate device buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1548"
+  },
+  {
+    "text": "saving 270 megabytes of memory per frame.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1551"
+  },
+  {
+    "text": "And finally, we have reduced cache thrashing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1554"
+  },
+  {
+    "text": "and that's because all the fragment shaders ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1556"
+  },
+  {
+    "text": "within that render pass are operating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1559"
+  },
+  {
+    "text": "directly on the tile memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1560"
+  },
+  {
+    "text": "One of the key features of Apple silicon ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1562"
+  },
+  {
+    "text": "is its Unified Memory Architecture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1565"
+  },
+  {
+    "text": "Let’s see an example of how to leverage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1567"
+  },
+  {
+    "text": "this Unified Memory Architecture for interaction ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1569"
+  },
+  {
+    "text": "between different blocks on the Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1571"
+  },
+  {
+    "text": "We will take HEVC encoding of the final video frame ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1575"
+  },
+  {
+    "text": "rendered by GPU as a case study.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1578"
+  },
+  {
+    "text": "This encoding is done using dedicated hardware media engines ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1581"
+  },
+  {
+    "text": "on Apple silicon.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1584"
+  },
+  {
+    "text": "The final output frame rendered by the GPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1587"
+  },
+  {
+    "text": "can be consumed directly by our media engines ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1589"
+  },
+  {
+    "text": "with no extra memory copies.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1591"
+  },
+  {
+    "text": "In the coming section, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1593"
+  },
+  {
+    "text": "we will walk through an example on how to set up a pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1595"
+  },
+  {
+    "text": "for HEVC encoding of the final output frame ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1598"
+  },
+  {
+    "text": "produced by the GPU in the most efficient way.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1601"
+  },
+  {
+    "text": "For that, first we will leverage CoreVideo API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1603"
+  },
+  {
+    "text": "to create a pool of pixel buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1607"
+  },
+  {
+    "text": "backed by IOSurfaces.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1609"
+  },
+  {
+    "text": "Then, using the Metal API, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1611"
+  },
+  {
+    "text": "we render the final frames into Metal textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1613"
+  },
+  {
+    "text": "backed by IOSurfaces from the pool we just created.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1615"
+  },
+  {
+    "text": "And finally, we dispatch these pixel buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1619"
+  },
+  {
+    "text": "directly to the media engine for encode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1621"
+  },
+  {
+    "text": "without any additional copies of the output frames ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1623"
+  },
+  {
+    "text": "produced by the GPU, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1626"
+  },
+  {
+    "text": "thus leveraging the Unified Memory Architecture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1627"
+  },
+  {
+    "text": "Let’s walk through on how to do this step by step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1629"
+  },
+  {
+    "text": "and covering all the constructs we need to enable this flow.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1631"
+  },
+  {
+    "text": "First, we create a CVPixelBufferPool ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1635"
+  },
+  {
+    "text": "backed by IOSurface in the desired pixel format.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1637"
+  },
+  {
+    "text": "Here, we will use the biplanar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1641"
+  },
+  {
+    "text": "chroma-subsampled pixel format for HEVC encode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1643"
+  },
+  {
+    "text": "Now, you get a CVPixelBuffer from this CVPixelBufferPool.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1648"
+  },
+  {
+    "text": "Pass this CVPixelBuffer to the MetalTextureCache ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1652"
+  },
+  {
+    "text": "with the right plane index ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1655"
+  },
+  {
+    "text": "to get the CVMetalTextureReference.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1656"
+  },
+  {
+    "text": "Since we are using biplanar pixel format, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1659"
+  },
+  {
+    "text": "you need to perform this step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1661"
+  },
+  {
+    "text": "for both planes of the biplanar pixel buffer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1662"
+  },
+  {
+    "text": "Next, get the underlying Metal texture from the ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1665"
+  },
+  {
+    "text": "CVMetalTextureReference object.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1668"
+  },
+  {
+    "text": "Perform this step for both luma and chroma planes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1670"
+  },
+  {
+    "text": "Remember that these Metal textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1673"
+  },
+  {
+    "text": "are backed by the same IOSurfaces ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1675"
+  },
+  {
+    "text": "which are also backing the CVPixelBuffer planes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1677"
+  },
+  {
+    "text": "Using Metal API, render into the textures ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1680"
+  },
+  {
+    "text": "corresponding to luma and chroma planes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1683"
+  },
+  {
+    "text": "This will update the IOSurface ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1686"
+  },
+  {
+    "text": "which backs these Metal textures as well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1687"
+  },
+  {
+    "text": "We highly recommend doing the chroma subsampling step ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1690"
+  },
+  {
+    "text": "on the chroma planes on the GPU itself ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1692"
+  },
+  {
+    "text": "as a shader pass within your image-processing pipeline.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1694"
+  },
+  {
+    "text": "An important thing to note ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1698"
+  },
+  {
+    "text": "is that both CVPixelBuffer and the Metal textures -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1699"
+  },
+  {
+    "text": "which we just rendered into -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1702"
+  },
+  {
+    "text": "are backed by the same underlying IOSurface copy ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1704"
+  },
+  {
+    "text": "in the system memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1706"
+  },
+  {
+    "text": "You can now send this CVPixelBuffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1709"
+  },
+  {
+    "text": "directly to the media engine for encode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1710"
+  },
+  {
+    "text": "As you can see, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1713"
+  },
+  {
+    "text": "due to the Unified Memory Architecture, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1714"
+  },
+  {
+    "text": "we can seamlessly move data between GPU ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1716"
+  },
+  {
+    "text": "and media engine block with no memory copies.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1718"
+  },
+  {
+    "text": "And finally, remember to release the CVPixelBuffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1721"
+  },
+  {
+    "text": "and CVMetalTexture reference after every frame.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1724"
+  },
+  {
+    "text": "Releasing the CVPixelBuffer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1728"
+  },
+  {
+    "text": "enables recycling of this buffer for future frames.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1729"
+  },
+  {
+    "text": "To wrap up, we encourage you again to do the following: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1733"
+  },
+  {
+    "text": "leverage Unified Memory Architecture, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1736"
+  },
+  {
+    "text": "use MTLRenderCommandEncoder instead of compute ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1738"
+  },
+  {
+    "text": "when applicable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1740"
+  },
+  {
+    "text": "merge all your eligible render passes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1742"
+  },
+  {
+    "text": "within single render command encoder, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1744"
+  },
+  {
+    "text": "set appropriate load/store actions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1746"
+  },
+  {
+    "text": "use memoryless for transient resources, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1748"
+  },
+  {
+    "text": "leverage tile shading when applicable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1751"
+  },
+  {
+    "text": "and use buffer pools with other APIs for zero-copy.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1753"
+  },
+  {
+    "text": "We want to thank you for joining this session today.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1756"
+  },
+  {
+    "text": "Enjoy the rest of WWDC 2021! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1759"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1762"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10153/?time=1768"
+  }
+]

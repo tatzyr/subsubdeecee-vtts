@@ -1,0 +1,583 @@
+10148
+
+Chào mừng đến với WWDC.
+
+Xin chào, tôi là Jonathan Metzgar.
+
+Tôi là thành viên của nhóm Hệ sinh thái kim loại tại Apple.
+
+Chúng tôi có thể làm việc với các nhà phát triển trò chơi để giúp họ có được hiệu suất đồ họa tốt nhất trên GPU Apple của chúng tôi.
+
+Dustin và tôi sẽ chỉ cho bạn cách chúng tôi tối ưu hóa các trò chơi cao cấp cho GPU của Apple.
+
+Trong video này, tôi sẽ đề cập đến quy trình mà chúng tôi sử dụng để tối ưu hóa trò chơi.
+
+Sau đó, tôi sẽ chỉ cho bạn các loại tối ưu hóa được sử dụng trong các trò chơi Baldur's Gate 3 và Metro Exodus.
+
+Và cuối cùng, Dustin sẽ trình diễn một công cụ có trò chơi Divinity: Original Sin 2, trong khi anh ấy giới thiệu Dòng thời gian GPU mới trong Xcode 13.
+
+Hãy đi sâu vào và nói về tối ưu hóa.
+
+Vì vậy, trong năm qua, chúng tôi đã hợp tác với Larian Studios và 4A Games để tìm cách điều chỉnh hiệu suất đồ họa trong các trò chơi của họ cho GPU của Apple.
+
+Tôi chắc rằng bạn sẽ rất hào hứng khi xem chi tiết và tôi muốn dành một chút thời gian và cảm ơn cả Larian Studios và 4A Games đã cho phép chúng tôi hiển thị tài liệu phát triển trong bài thuyết trình này.
+
+Nhìn lại trong suốt cả năm, chúng tôi đã phân tích nhiều trò chơi và xác định một số kịch bản phổ biến ảnh hưởng đến hiệu suất đồ họa.
+
+Bạn có thể quan tâm đến việc tìm kiếm cơ hội để tối ưu hóa trò chơi của riêng mình, vì vậy chúng tôi đã hướng phiên này để nhấn mạnh cách các công cụ GPU của chúng tôi đặc biệt hữu ích trong việc xác định chính xác các khu vực vấn đề này và đề xuất các cách giải quyết chúng.
+
+Và, đặc biệt, tôi muốn chia sẻ một số nguyên tắc mà nhóm của chúng tôi sử dụng để giúp các nhà phát triển tối ưu hóa trò chơi của họ.
+
+Khi chúng ta tối ưu hóa một ứng dụng đồ họa, điều quan trọng là phải có một phương pháp luận, một tập hợp các nguyên tắc xác định cách chúng ta giải quyết một vấn đề cụ thể.
+
+Vì vậy, hãy để tôi chỉ cho bạn quy trình bốn bước.
+
+Đầu tiên, bạn cần chọn dữ liệu nào để thu thập hoặc đo lường, vì vậy nó sẽ giúp bạn hiểu những gì đang xảy ra với trò chơi của mình.
+
+Ngay sau khi bạn bắt đầu đo dữ liệu, bạn sẽ muốn chọn một số mục tiêu hiệu suất hoặc nơi bạn muốn đến khi hoàn thành.
+
+Bạn có thể quyết định vị trí trong trò chơi để chụp khung GPU và dấu vết hệ thống Kim loại, độ phức tạp của cảnh, cài đặt đồ họa và các chỉ số khác quan trọng đối với bạn, như thời gian khung hình.
+
+Sau đó, bạn phân tích dữ liệu để tìm hiểu về hành vi của động cơ của bạn.
+
+Phân tích chuyên sâu giúp bạn tìm ra nơi và lý do tắc nghẽn đang xảy ra.
+
+Một khi bạn biết điều gì đang gây ra nút cổ chai, thì bạn có thể cải thiện trò chơi, nhưng thông thường bạn chọn một hoặc hai cái cùng một lúc, vì vậy bạn có thể hiểu tác động của mỗi thay đổi.
+
+Cuối cùng, bạn xác minh những cải tiến của mình bằng cách so sánh một số phép đo mới với các phép đo ban đầu của bạn.
+
+Vì tối ưu hóa là một quá trình, bạn sẽ quay lại và lặp lại cho đến khi các mục tiêu hiệu suất của bạn được đáp ứng.
+
+Đối với những trò chơi này, chúng tôi sử dụng Trình gỡ lỗi kim loại của Xcode để cung cấp cho chúng tôi thông tin chi tiết về hiệu suất của chúng và cách cấu trúc biểu đồ khung của chúng và chúng tôi sử dụng Metal System Trace trong Instruments để tìm hiểu về hiệu suất của trò chơi theo thời gian.
+
+Đó là một ý tưởng tuyệt vời để lưu tệp theo dõi GPU và tệp theo dõi Công cụ để bạn có thể có dữ liệu trước và sau của mình, cả trước và sau khi tối ưu hóa.
+
+Vì vậy, tôi có một danh sách nhỏ những thứ bạn có thể cân nhắc, hoặc tìm kiếm, trong trò chơi của bạn.
+
+Như tôi đã đề cập, Xcode và Instruments là những công cụ tuyệt vời để giúp bạn hiểu ứng dụng Metal của mình.
+
+Tối ưu hóa là tận dụng tối đa một số lĩnh vực, từ hiệu suất đổ bóng đến băng thông bộ nhớ.
+
+Một khu vực khác đang nhận được sự chồng chéo tốt trên đỉnh, phân đoạn và khối lượng công việc tính toán của bạn.
+
+Và trong khi kết xuất một số khung hình đang bay, một số GPU của Apple có thể chồng chéo khối lượng công việc giữa chúng.
+
+Tôi sẽ chỉ cho bạn một số gợi ý để giúp bạn phụ thuộc vào tài nguyên, điều này có thể ngăn chặn sự chồng chéo đó.
+
+Và vì một số nhà phát triển sử dụng quy trình làm việc tùy chỉnh cho bộ đổ bóng của họ, tôi sẽ chỉ cho bạn cách cài đặt trình biên dịch có thể ảnh hưởng đến hiệu suất.
+
+Cuối cùng, tôi sẽ nói về cách giảm tác động của các ràng buộc dư thừa.
+
+Hãy bắt đầu với Baldur's Gate 3 từ Larian Studios.
+
+Baldur's Gate 3 là một game nhập vai được xây dựng dựa trên di sản trò chơi 20 năm và nổi bật với các hiệu ứng hình ảnh điện ảnh.
+
+Sự tham gia của chúng tôi với Larian Studios đã giúp chúng tôi xác định cách họ có thể tối ưu hóa công cụ kết xuất tuyệt vời của mình cho GPU của Apple.
+
+Đầu tiên, chúng tôi bắt đầu với việc chụp khung hình GPU, giống như cảnh Bãi biển Bị tàn phá mà chúng tôi thấy ở đây.
+
+Sau đó, chúng tôi chia cảnh thành một biểu đồ khung.
+
+Biểu đồ khung là bảng phân tích thứ tự và mục đích của mỗi lần vượt qua kết xuất.
+
+Các trò chơi cao cấp có nhiều đường chuyền kết xuất chuyên đạt được hiệu ứng hình ảnh nhất định, chẳng hạn như tắc nghẽn môi trường xung quanh, ánh xạ bóng tối, xử lý hậu kỳ, v.v.
+
+Baldur's Gate 3 có một biểu đồ khung phức tạp, vì vậy đây là một phiên bản đơn giản hóa.
+
+Bằng cách sử dụng Trình gỡ lỗi kim loại của Xcode, chúng tôi ghi lại dấu vết GPU và sử dụng nó để xem tất cả các đường chuyền kết xuất trong trò chơi.
+
+Nhấp vào Hiển thị Phụ thuộc sẽ hiển thị hình ảnh trực quan mà bạn có thể xoay và phóng to.
+
+Nó cho thấy cách kết xuất của bạn trôi qua phụ thuộc vào kết quả của những cái trước đó để giúp bạn hiểu chuyện gì đang xảy ra.
+
+Ví dụ, tôi đang phóng to giai đoạn kết xuất decal hoãn lại này để biết thêm chi tiết.
+
+Tiếp theo, tôi sẽ chỉ cho bạn các công cụ Dụng cụ.
+
+Chúng tôi dành thời gian phân tích các trò chơi bằng cách sử dụng dấu vết Dụng cụ, sử dụng Dấu vết Hệ thống Kim loại hoặc các mẫu hiệu suất Trò chơi.
+
+Metal System Trace là lý tưởng nếu bạn muốn tập trung vào việc thực hiện GPU và phân tích lịch trình, và Game Performance mở rộng điều đó để giúp bạn giải quyết các vấn đề khác, như gian hàng chuỗi hoặc thông báo nhiệt.
+
+Hãy chọn Metal System Trace để xem hành vi của động cơ của chúng tôi từ khung này sang khung khác.
+
+Các công cụ cho phép bạn xem một số kênh dữ liệu dọc theo dòng thời gian.
+
+Ở đây, chúng tôi tìm thấy vấn đề đầu tiên của mình: Khối lượng công việc đắt đỏ trong các thẻ kết xuất của chúng tôi.
+
+Một khối lượng công việc tốn kém có thể có nghĩa là chúng ta cần tối ưu hóa một bộ đổ bóng.
+
+Ví dụ, chúng ta thấy một bộ đổ bóng tính toán dài giữ phần còn lại của khung hình của chúng ta.
+
+Chúng tôi gọi những khoảng trống này là "bong bóng".
+
+Hãy chuyển trở lại dấu vết GPU và điều tra thêm về điều này.
+
+Đây là dấu vết GPU "trước".
+
+Hãy thay đổi nhóm từ API CALL thành PIPELINE STATE.
+
+Bạn có thể nhận thấy các trạng thái đường ống được sắp xếp theo thời gian thực hiện.
+
+Hãy kiểm tra đường ống tính toán đầu tiên.
+
+Chúng ta có thể mở rộng chi tiết hàm tính toán để xem xét kỹ hơn số liệu thống kê của nó.
+
+Lưu ý ở đây rằng có hơn bốn nghìn rưỡi hướng dẫn.
+
+Đó là khá nhiều. Vậy, còn gì nữa?
+
+Hãy xem những tài nguyên nào đang được sử dụng bởi hàm tính toán này.
+
+Tùy thuộc vào dữ liệu đầu vào, chức năng này sử dụng tới 120 kết cấu để tạo ra đầu ra.
+
+Tuy nhiên, chúng tôi phát hiện ra rằng chỉ có sáu đến 12 thực sự được sử dụng 90% thời gian.
+
+Vì vậy, hãy nói về cách bộ đổ bóng này có thể được cải thiện.
+
+Shader cần xử lý nhiều điều kiện khác nhau có thể dự trữ nhiều thanh ghi hơn mức cần thiết và điều này có thể làm giảm số lượng luồng chạy song song.
+
+Chia khối lượng công việc của bạn thành các bộ đổ bóng nhỏ hơn, tập trung hơn, cần ít thanh ghi hơn, có thể cải thiện việc sử dụng các lõi đổ bóng.
+
+Vì vậy, thay vì chọn thuật toán thích hợp trong bộ đổ bóng, bạn sẽ chọn hoán vị bộ đổ bóng thích hợp khi bạn phát hành khối lượng công việc GPU của mình.
+
+Ngoài ra, chức năng đổ bóng sử dụng quá nhiều thanh ghi có thể dẫn đến áp lực thanh ghi, khi một đơn vị thực thi hết bộ nhớ thanh ghi nhanh và phải sử dụng bộ nhớ thiết bị thay thế.
+
+Đó là một lý do để sử dụng các loại 16-bit, như một nửa, khi thích hợp, vì chúng sử dụng một nửa không gian đăng ký so với các loại 32-bit, như phao.
+
+Trong trường hợp này, Larian Studios đã tối ưu hóa bộ đổ bóng của họ để sử dụng dấu phẩy động có độ chính xác một nửa và thay vào đó quyết định tạo các biến thể đổ bóng chuyên dụng.
+
+Vì vậy, hãy xem chuyện gì đã xảy ra.
+
+Khi so sánh các con số trước đó, trong hộp bên trái, với các con số trong hộp bên phải, số lượng hướng dẫn giảm 84%, các nhánh giảm 90%, thanh ghi giảm 25% và kết cấu đọc giảm 92%.
+
+Biến thể đổ bóng này được sử dụng 90% thời gian.
+
+Chúng ta cũng có thể thấy điều này trong Metal System Trace.
+
+Lưu ý ở đây, trong dấu vết trước đó, những bong bóng mà chúng ta đã thấy trước đó.
+
+Và ở đây, trong dấu vết sau, chúng đã được giảm thiểu.
+
+Larian Studios đã có thể giảm trung bình tám mili giây đổ bóng này.
+
+Đó là một chiến thắng lớn!
+
+Nếu bạn nhìn vào các đối tượng và bộ đổ bóng trạng thái đường ống đắt nhất của mình, bạn có thể tìm thấy một bộ đổ bóng phức tạp có thể được đơn giản hóa.
+
+Điều này đặc biệt đúng nếu kết quả của bộ đổ bóng đó được sử dụng bởi một lần vượt qua sau.
+
+Đây là một cải tiến lớn cho trò chơi, nhưng thiếu mục tiêu hiệu suất của nhà phát triển.
+
+Chúng tôi vừa đề cập đến bộ nhớ như một vấn đề và một trong những tính năng của GPU của chúng tôi là nén không mất dữ liệu, được bật trong một số điều kiện nhất định.
+
+Vì vậy, có thể có một lá cờ mà chúng tôi vô tình đặt hoặc quên đặt.
+
+Nén không mất dữ liệu giúp giảm băng thông bằng cách nén kết cấu khi chúng được lưu trữ từ ô đến bộ nhớ thiết bị.
+
+Nếu bạn nhìn vào Thông tin chi tiết về băng thông trên trang Tóm tắt, bạn có thể nhận thấy cảnh báo Nén không mất dữ liệu cho một số kết cấu.
+
+Họ nói với bạn rằng những kết cấu này không thể nén không mất dữ liệu và bạn có thể phải trả tiền phạt băng thông.
+
+Metal Debugger cũng sẽ cho bạn biết lý do tại sao những kết cấu này không thể nén không mất dữ liệu.
+
+Ở đây chúng ta thấy đó là do cờ sử dụng ShaderWrite.
+
+Chúng ta có thể xem tất cả các cờ sử dụng bằng cách đi đến phần bộ nhớ.
+
+Khi ở trong phần bộ nhớ, chúng ta có thể lọc theo mục tiêu kết xuất.
+
+Sau đó, nhấp chuột phải vào tiêu đề bảng, chọn kết cấu và sau đó sử dụng.
+
+Bây giờ, chúng ta có thể sắp xếp theo cách sử dụng và tìm kết cấu bằng ShaderWrite.
+
+Nếu bạn đặt cờ ShaderWrite hoặc PixelFormatView khi bạn tạo kết cấu của mình, bạn sẽ vô hiệu hóa tính năng nén không mất dữ liệu.
+
+Chúng ta hãy xem những lá cờ này chi tiết hơn.
+
+Các cờ Unknown, ShaderWrite và PixelFormatView ngăn kết cấu của bạn bị nén không mất dữ liệu.
+
+Nguyên tắc chung là chỉ sử dụng những lá cờ này khi được yêu cầu.
+
+Ví dụ, bạn sẽ sử dụng cờ ShaderWrite nếu bạn sử dụng phương thức write() để lưu trữ các giá trị trong một kết cấu từ một đoạn hoặc hàm tính toán.
+
+Kết xuất thành một kết cấu bị ràng buộc dưới dạng tệp đính kèm màu không yêu cầu cờ ShaderWrite.
+
+Và đừng đặt tùy chọn PixelFormatView nếu bạn chỉ cần đọc các giá trị thành phần theo thứ tự khác.
+
+Thay vào đó, hãy tạo chế độ xem kết cấu bằng cách sử dụng mẫu swizzle để chỉ định thứ tự mới.
+
+Tương tự, đừng đặt tùy chọn PixelFormatView nếu chế độ xem kết cấu của bạn chỉ chuyển đổi giữa không gian tuyến tính và sRGB.
+
+Kiểm tra tài liệu để biết thêm thông tin.
+
+Tối ưu hóa Shader và nén không mất dữ liệu là hai kỹ thuật đã giúp chúng tôi giải quyết, nhưng một vấn đề khác là chồng chéo tốt trên các kênh đỉnh, đoạn và tính toán.
+
+Chúng ta hãy xem xét hai cách để tối ưu hóa khối lượng công việc trên các kênh.
+
+Đầu tiên, chúng ta sẽ bắt đầu bằng cách xem lại Dấu vết Hệ thống Kim loại của chúng ta.
+
+Ở đây, chúng ta có thể thấy rằng chúng ta có sự chồng chéo thấp trên các kênh đỉnh, đoạn và tính toán của chúng ta.
+
+Sẽ thật tuyệt nếu cải thiện điều này để giữ cho GPU luôn bận rộn.
+
+Một cách để giải quyết vấn đề này là xem liệu chúng ta có thể tái cấu trúc thứ tự mã hóa trong biểu đồ khung của mình hay không.
+
+Nói cách khác, chúng tôi muốn chuyển công việc này sang nơi mà giai đoạn đỉnh có sức chứa rất thấp.
+
+Chúng tôi muốn xử lý các đỉnh đó sớm hơn, cùng với giai đoạn phân đoạn của một đường kết xuất trước đó.
+
+Chúng ta có thể nghĩ về biểu đồ khung của mình như một danh sách các nhiệm vụ kết xuất, như ví dụ mã giả này.
+
+Nhận được sự chồng chéo tốt có thể đơn giản như thay đổi thứ tự các tác vụ kết xuất trong biểu đồ khung của bạn.
+
+Một số nhiệm vụ có thể dựa vào kết quả từ những nhiệm vụ trước đó, nhưng không phải lúc nào cũng vậy.
+
+Hóa ra giai đoạn CascadedShadowBuffer, nặng về độ bóng đỉnh, có thể được di chuyển một vài tác vụ sớm hơn, vì nó có ít phụ thuộc.
+
+Và bây giờ, chúng tôi thấy rằng khu vực của chúng tôi với sự chồng chéo thấp đã sử dụng tốt hơn các kênh đỉnh và phân mảnh, mang lại cho chúng tôi thêm 1 ms chiến thắng.
+
+Nhưng có một sự tối ưu hóa khác mà chúng ta có thể thử.
+
+Các trò chơi thường có hai đến ba khung hình trong chuyến bay.
+
+Vì vậy, một tính năng thú vị trong kết xuất hoãn lại dựa trên ô của chúng tôi, hoặc GPU kiến trúc TBDR, là chồng chéo khối lượng công việc từ hai khung hình khi không có sự phụ thuộc tài nguyên giữa chúng.
+
+Vì vậy, tôi sẽ chỉ cho bạn cách tối ưu hóa cho khả năng này.
+
+Chúng ta hãy xem lại bản nhạc GPU trong Instruments một lần nữa.
+
+Ở đây, bạn có thể thấy rằng những khung này được xử lý, gần như nối tiếp.
+
+Điều này được gây ra bởi việc sử dụng bộ mã hóa blit để cập nhật bộ đệm không đổi, như dữ liệu hoạt hình trên mỗi khung hình, v.v.
+
+Để cập nhật hiệu quả dữ liệu bộ đệm liên tục với GPU rời rạc, chúng tôi chuyển từ bộ đệm được chia sẻ trên CPU sang bộ đệm riêng trên GPU, bộ đệm này sẽ được sử dụng để hiển thị khung.
+
+Chiến lược này hiệu quả đối với GPU có bộ nhớ rời rạc, vì vậy bạn muốn giữ hành vi này cho mục đích đó.
+
+Nếu thiết bị của bạn có kiến trúc bộ nhớ thống nhất, thì không cần sử dụng bộ mã hóa blit để sao chép dữ liệu của bạn vào bộ đệm riêng.
+
+Tuy nhiên, khi bạn sử dụng bộ đệm được chia sẻ theo mẫu bộ đệm vòng, bạn cần đề phòng các vấn đề đồng bộ hóa vì hỏng hình ảnh có thể xảy ra nếu CPU của bạn ghi vào dữ liệu hiện đang được GPU đọc.
+
+Hãy xem điều này đang hoạt động.
+
+Tại đây, bạn có thể thấy trong sơ đồ này mã hóa và kết xuất các khung của chúng tôi.
+
+Chúng tôi đang sử dụng màu sắc để thể hiện các bộ đệm được chia sẻ, được cập nhật ở đầu khung: màu xanh lam cho bộ đệm một, màu xanh lá cây cho bộ đệm hai và màu vàng cho bộ đệm ba.
+
+Bộ đệm vòng thường được sử dụng để triển khai hàng đợi, cần sử dụng một lượng bộ nhớ nhỏ gọn.
+
+Ở đây, không có mối quan tâm nào về điều kiện chạy đua dữ liệu với sự sắp xếp này, vì việc viết và đọc các bộ đệm được chia sẻ của chúng tôi loại trừ lẫn nhau.
+
+Rất phổ biến khi có độ trễ giữa mã hóa khung và kết xuất khung.
+
+Điều này gây ra sự thay đổi khi kết xuất thực sự bắt đầu.
+
+Miễn là độ trễ không quá dài, bạn sẽ không có điều kiện chạy đua dữ liệu.
+
+Tuy nhiên, điều gì sẽ xảy ra nếu độ trễ tiếp tục tăng?
+
+Chà, điều này giới thiệu một điều kiện chạy đua dữ liệu, trong đó luồng chính đang cập nhật bộ đệm được chia sẻ của nó trong thời gian GPU hiển thị khung.
+
+Và nếu điều đó xảy ra, bạn có thể bị hỏng hình ảnh nếu các yếu tố trong khung của bạn phụ thuộc vào dữ liệu này.
+
+Trong trường hợp của Baldur's Gate 3, việc loại bỏ bộ đệm riêng và bộ mã hóa blit đã loại bỏ điểm đồng bộ hóa, nhưng đã đưa ra một điều kiện chủng tộc, điều này ảnh hưởng đến việc vượt qua kết xuất khử răng cưa tạm thời của chúng.
+
+Vì vậy, hãy xem làm thế nào để tránh tình huống này.
+
+Để tránh tình trạng cuộc đua này, bạn cần đảm bảo rằng bạn không ghi vào cùng một tài nguyên mà GPU đang đọc.
+
+Ví dụ, bạn có thể sử dụng trình xử lý hoàn thành và sau đó đợi cho đến khi an toàn để cập nhật bộ đệm được chia sẻ trong chuỗi mã hóa của bạn.
+
+Nhưng hãy để tôi chỉ cho bạn cách chúng ta tránh thời gian chờ đợi.
+
+Chúng tôi đã duy trì trình xử lý hoàn thành của mình, nhưng đã thêm một bộ đệm bổ sung vào bộ đệm vòng của chúng tôi để tránh phải chờ đợi.
+
+Bộ đệm phụ có màu tím trên sơ đồ dưới cùng.
+
+Mức tiêu thụ bộ nhớ vẫn giữ nguyên như với GPU rời rạc.
+
+Nhưng nếu bạn cần tiết kiệm bộ nhớ và thời gian chờ CPU không ảnh hưởng đến tốc độ khung hình trò chơi của bạn, thì bạn chỉ có thể sử dụng ba bộ đệm.
+
+Vì vậy, hãy xem xét một cách dễ dàng để quyết định tạo bao nhiêu bộ đệm được chia sẻ và riêng tư với một ví dụ mã giả.
+
+Trong đoạn mã này, bạn có thể xem cách chọn số lượng bộ đệm được chia sẻ và riêng tư tại thời điểm khởi tạo.
+
+Khi chúng tôi đã tạo thiết bị của mình, chúng tôi có thể kiểm tra xem thiết bị có bộ nhớ thống nhất hay không, sau đó đảm bảo rằng chúng tôi tạo thêm bộ đệm được chia sẻ hoặc sử dụng bộ đệm riêng.
+
+Bộ đệm bổ sung này sẽ giúp giảm tác động của việc chờ xử lý hoàn thành, mà chúng tôi đang sử dụng để tránh điều kiện chạy đua dữ liệu.
+
+Và bây giờ, chúng ta có thể thấy khối lượng công việc Fragment từ khung trước trùng lặp với khối lượng công việc Vertex từ khung tiếp theo như thế nào.
+
+Nhìn chung, điều này có thể cho chúng ta một đến hai mili giây, tùy thuộc vào cảnh.
+
+Và, tất nhiên, cách tiếp cận này có thể được áp dụng không chỉ cho dữ liệu bộ đệm không đổi mà chúng tôi đã hiển thị trong ví dụ này, mà còn cho tất cả dữ liệu bộ đệm bạn chuyển từ CPU sang GPU.
+
+Vì vậy, hãy xem lại.
+
+Larian Studios đã có thể đạt được các mục tiêu hiệu suất của họ bằng cách áp dụng các tối ưu hóa sau: Tối ưu hóa các bộ đổ bóng đắt nhất của họ để giảm bong bóng, chọn nén không mất dữ liệu để cải thiện băng thông, khối lượng công việc đỉnh và đoạn chồng chéo để sử dụng GPU tốt hơn và kiểm tra sự phụ thuộc tài nguyên ngăn chặn sự chồng
+
+Khi họ hoàn thành, Larian Studios không chỉ đạt được mục tiêu hiệu suất của họ mà còn cải thiện 33% về thời gian khung hình cho trò chơi của họ.
+
+Và bây giờ, chúng ta sẽ xem xét một bộ tối ưu hóa khác với trò chơi Metro Exodus.
+
+Metro Exodus được biết đến với cốt truyện hoành tráng và các hiệu ứng hình ảnh đòi hỏi khắt khe, như bạn có thể thấy trong loạt clip chơi trò chơi này.
+
+Sau khi tích hợp các tối ưu hóa được đề xuất của chúng tôi, 4A Games đã có thể đáp ứng các mục tiêu hiệu suất của họ.
+
+Vì vậy, bây giờ, chúng ta hãy xem một cảnh trong trò chơi từ Metro Exodus.
+
+Metro Exodus sử dụng quy trình làm việc tùy chỉnh để dịch các lệnh kết xuất thành các lệnh Metal API, điều này khá phổ biến đối với các trò chơi đa nền tảng.
+
+Lớp dịch mà họ đang sử dụng được tối ưu hóa cho Kim loại, nhưng một số vấn đề có thể phát sinh khi hai hệ thống phức tạp kết hợp với nhau trong thực tế.
+
+Vì vậy, cần phải điều chỉnh hiệu suất bổ sung để đáp ứng các mục tiêu dự án của họ.
+
+Như trong trò chơi trước, chúng tôi bắt đầu bằng cách điều tra cách một khung được hiển thị.
+
+Các trình kết xuất hiện đại có rất nhiều kỹ thuật khác nhau liên quan nên trước tiên chúng tôi cố gắng hiểu biểu đồ khung cấp cao.
+
+Một lần nữa, chúng tôi bắt đầu phân tích bằng cách nhìn vào dấu vết GPU.
+
+Nó luôn cung cấp cho chúng ta những hiểu biết hữu ích về hiệu suất trò chơi.
+
+Vì vậy, trước tiên, hãy bắt đầu với thời gian GPU, không đáp ứng các mục tiêu hiệu suất của nhà phát triển.
+
+Vì vậy, hãy tìm bộ đổ bóng hoặc đường ống tốn nhiều thời gian nhất.
+
+Để làm điều này, chúng ta sẽ nhóm theo trạng thái đường ống một lần nữa và xem xét cái đắt nhất.
+
+Hãy nhanh chóng xem số liệu thống kê của nó.
+
+Bạn có thể thấy rằng có một số lượng lớn các hướng dẫn ALU so với tổng số, có nghĩa là đây là một bộ đổ bóng nặng về toán học.
+
+Chúng tôi cũng thấy rằng số lượng thanh ghi được sử dụng bởi bộ đổ bóng khá cao.
+
+Số lượng thanh ghi được sử dụng bởi một bộ đổ bóng cụ thể ảnh hưởng trực tiếp đến cách khối lượng công việc của nó sẽ mở rộng quy mô trong quá trình thực hiện.
+
+Con số này càng cao, GPU càng ít công việc có thể được thực hiện song song.
+
+Đôi khi nó chỉ là một bộ đổ bóng phức tạp, chẳng hạn như SSAO trong ví dụ này, đòi hỏi nhiều tính toán và thanh ghi, nhưng đôi khi cài đặt trình biên dịch cũng có thể ảnh hưởng đến các hướng dẫn được tạo và phân bổ thanh ghi.
+
+Chúng ta cũng hãy xem xét các tùy chọn trình biên dịch đổ bóng.
+
+Và hóa ra, bộ đổ bóng này đã được biên soạn với cờ toán học nhanh bị vô hiệu hóa.
+
+Toán học nhanh cho phép trình biên dịch đổ bóng tối ưu hóa các hướng dẫn khác nhau và nó được bật cho trình biên dịch đổ bóng kim loại, theo mặc định.
+
+Tuy nhiên, có thể có một số trường hợp, ví dụ, sử dụng quy trình đổ bóng tùy chỉnh, có thể vô hiệu hóa cờ biên dịch này.
+
+Trong trường hợp này, chúng tôi phát hiện ra rằng lớp dịch, mà 4A Games đang sử dụng để gọi trình biên dịch, có hành vi mặc định được đặt thành không sử dụng toán học nhanh.
+
+Vậy, toán nhanh là gì?
+
+Toán học nhanh là một tập hợp các tối ưu hóa cho số học dấu phẩy động, giao dịch giữa tốc độ và độ chính xác.
+
+Ví dụ, các giả định có thể được đưa ra rằng sẽ không có NAN, vô cực hoặc số không có dấu dưới dạng kết quả hoặc đối số.
+
+Tối ưu hóa toán học nhanh cũng có thể áp dụng các phép biến đổi tương đương đại số, điều này có thể ảnh hưởng đến độ chính xác trong kết quả dấu phẩy động.
+
+Tuy nhiên trong hầu hết các tình huống, toán học nhanh là một lựa chọn tuyệt vời cho các trò chơi.
+
+Điều này có thể cải thiện đáng kể hiệu suất, đặc biệt là trong các trường hợp ràng buộc với ALU.
+
+Đề xuất của chúng tôi dành cho bạn là kiểm tra các tùy chọn trình biên dịch của mình để xác minh rằng bạn đã bật tính năng toán nhanh, nếu trình đổ bóng của bạn không phụ thuộc vào những điều mà chúng tôi vừa đề cập.
+
+Cờ toán học nhanh hoạt động ở cấp độ trình biên dịch front-end và back-end.
+
+Khi bạn đang xây dựng nguồn đổ bóng của mình, trình biên dịch đổ bóng giao diện người dùng sẽ chọn các hàm toán học nhanh, sẽ được sử dụng trong mã trung gian.
+
+Điều này sẽ gợi ý cho trình biên dịch đổ bóng back-end rằng nó có thể tạo ra mã máy GPU tối ưu hơn.
+
+Tại đây, bạn có thể thấy các bộ đếm Hướng dẫn và Đăng ký ở bên trái đã được cải thiện như thế nào trong hộp bên phải sau khi chúng tôi biên dịch lại bộ đổ bóng này.
+
+Vì vậy, sau khi thay đổi hành vi của lớp dịch để cho phép toán nhanh cho tất cả các trình đổ bóng, chúng tôi đã giảm 21% thời gian khung hình trong khối lượng công việc kiểm tra của mình bằng cách sử dụng điểm chuẩn trò chơi tích hợp.
+
+Vì vậy, lĩnh vực tiếp theo tôi muốn nói đến là các ràng buộc dư thừa.
+
+Nếu chúng ta quay lại trang tóm tắt và xem thông tin chi tiết về API, chúng ta có thể thấy có nhiều ràng buộc dư thừa khi hiển thị khung.
+
+Các ràng buộc dự phòng có thể là các tài nguyên như kết cấu, bộ đệm và bộ lấy mẫu; hoặc các trạng thái kết xuất như trạng thái stprint độ sâu, cấu hình khung nhìn, v.v.
+
+Các tài nguyên liên kết lặp đi lặp lại có thể ảnh hưởng tiêu cực đến thời gian mã hóa của bạn, nhưng những thay đổi trạng thái kết xuất dư thừa cũng có thể ảnh hưởng đến thời gian GPU.
+
+Chúng ta hãy xem xét thời gian mã hóa và GPU trong Metal System Trace.
+
+Đối với một khung nhất định, phải mất tám mili giây rưỡi để tất cả các lệnh được mã hóa và khoảng 22 mili giây để GPU hiển thị khung này.
+
+Khi chúng tôi điều tra nguyên nhân của các ràng buộc dư thừa, chúng tôi thấy rằng lớp dịch có thể được sửa đổi để giảm chúng.
+
+Vì vậy, hãy để tôi chỉ cho bạn một ví dụ mã giả cho thấy cách kiểm tra và giảm các ràng buộc dư thừa.
+
+Thay vì liên kết kết cấu trực tiếp với bộ mã hóa, bạn có thể lưu trữ trước chúng và chỉ liên kết chúng nếu chúng thay đổi.
+
+Và để giảm thiểu tương tác với API, bạn có thể đặt tất cả các kết cấu bằng một lần gọi đến phương thức setFragmentTextures thay vì đặt chúng trong một vòng lặp, từng cái một.
+
+Ngoài ra, bạn có thể áp dụng cách tiếp cận tương tự cho các giai đoạn đổ bóng khác và các loại liên kết khác, như bộ đệm và bộ lấy mẫu, cũng như các trạng thái kết xuất.
+
+Vì vậy, hãy xem điều gì đã xảy ra trong Metal System Trace.
+
+4A Games đã có thể giảm thời gian mã hóa từ 30% đến 50%, tùy thuộc vào cảnh, bởi vì lớp dịch không liên tục liên kết cùng một tài nguyên và trạng thái kết xuất.
+
+Tuy nhiên, thời gian GPU cũng giảm tới ba mili giây và nhìn chung, dẫn đến tăng tốc 15% trong điểm chuẩn trong trò chơi của họ.
+
+Nếu bạn có một vài cảnh báo ràng buộc dư thừa, đó không phải là vấn đề, nhưng chúng tôi chắc chắn thấy tác động với hàng trăm hoặc hàng nghìn ràng buộc dư thừa.
+
+Vì vậy, việc tránh các ràng buộc dư thừa đã giúp chúng tôi giảm thêm 15% thời gian khung hình trung bình.
+
+Sau hai cải tiến này, 4A Games đã có thể đạt được các mục tiêu hiệu suất của họ.
+
+Vì vậy, bây giờ, hãy tóm tắt những gì chúng ta đã học được từ việc tối ưu hóa Metro Exodus cho GPU của Apple.
+
+Đầu tiên, nếu bạn đang sử dụng quy trình làm việc tùy chỉnh cho trình đổ bóng, bạn nên kiểm tra cài đặt trình biên dịch của mình để đảm bảo bạn đang sử dụng các tùy chọn tốt nhất cho các ứng dụng Metal của mình.
+
+Và nếu bạn thấy nhiều cảnh báo ràng buộc dư thừa trong Trình gỡ lỗi kim loại, tôi đã chỉ cho bạn một kỹ thuật để giảm chi phí mã hóa và thời gian GPU, bạn có thể áp dụng cho công cụ của mình hoặc lớp dịch mà bạn đang sử dụng.
+
+Và bây giờ, tôi muốn giao nó cho Dustin, người sẽ nói chuyện với bạn về Divinity: Original Sin 2 và giới thiệu các tính năng dòng thời gian GPU Xcode mới.
+
+Cảm ơn, Jonathan.
+
+Xin chào, tên tôi là Dustin, và tôi làm việc trong nhóm Phần mềm GPU tại Apple.
+
+Và hôm nay, tôi rất vui được giới thiệu cho bạn một bản demo thực hành tối ưu hóa bản dựng ban đầu của tiêu đề hit Larian Studios, Divinity: Original Sin 2.
+
+Năm ngoái, Larian đã thông báo rằng họ sẽ mang trò chơi nhập vai Divinity: Original Sin 2 được giới phê bình đánh giá cao lên iPad.
+
+Và trong năm qua, Larian đã làm việc chăm chỉ để tối ưu hóa trò chơi của họ để chạy tốt trên Apple GPU và trò chơi rất thú vị khi chơi.
+
+Larian đã có thể đạt được những kết quả này với sự trợ giúp của một bộ công cụ tuyệt vời trong Metal Debugger và Metal System Trace đang trở nên tốt hơn trong năm nay trong Xcode 13 với việc bổ sung Dòng thời gian GPU mới.
+
+Hãy bắt đầu bằng cách xem khung hình của Divinity: Original Sin 2 mà tôi đã chụp trước đó.
+
+Chúng tôi đang ở đây trên Trang Tóm tắt, nơi chứa tổng quan về khung hình của bạn giúp hướng dẫn bạn trên đường đi khi bạn gỡ lỗi và tối ưu hóa trò chơi của mình.
+
+Từ Trang Tóm tắt, chúng ta có thể nhanh chóng điều hướng đến tất cả các công cụ tuyệt vời được cung cấp bởi Trình gỡ lỗi kim loại, bao gồm Dòng thời gian GPU mới.
+
+Và việc truy cập nó dễ dàng như nhấp vào trang Hiệu suất mới tại đây.
+
+Vì vậy, hãy để tôi tiếp tục và làm điều đó.
+
+Giới thiệu Dòng thời gian GPU mới.
+
+Dòng thời gian đã được thiết kế xung quanh kiến trúc độc đáo của Apple GPU cho phép mỗi giai đoạn đường ống GPU chạy song song.
+
+Để tối đa hóa hiệu suất, chúng ta cần giữ cho tất cả các giai đoạn đường ống bận rộn nhất có thể bằng cách tối đa hóa sự chồng chéo, mà Dòng thời gian cho phép bạn dễ dàng nhìn thấy.
+
+Dòng thời gian bao gồm hai phần.
+
+Ở trên cùng, chúng tôi có phần GPU, bao gồm các bản nhạc riêng biệt cho từng giai đoạn đường ống, giúp bạn thực sự dễ dàng xem giai đoạn nào đang hoạt động và chạy song song.
+
+Bên dưới, chúng tôi có phần Bộ đếm, chứa một bộ bộ đếm quan trọng được sắp xếp, chẳng hạn như công suất sử dụng bộ đổ bóng, băng thông và bộ giới hạn hiệu suất cung cấp cho chúng tôi cái nhìn sâu sắc hơn về cách hiệu suất hệ thống của GPU thay đổi trong quá trình khối lượng công việc của bạn.
+
+Các bộ mã hóa trong các bản nhạc GPU cung cấp cho chúng tôi rất nhiều thông tin hữu ích, thậm chí chỉ với một cú nhấp chuột.
+
+Chọn Bộ mã hóa kết xuất sẽ hiển thị thanh bên của Dòng thời gian, chứa thông tin bổ sung cho mục hiện được chọn.
+
+Trong trường hợp này, thanh bên chứa thông tin vượt qua kết xuất, chẳng hạn như chi tiết kết cấu, hành động tải/lưu trữ và số lượng cuộc gọi vẽ.
+
+Lưu ý rằng vì Render Encoders bao gồm hai giai đoạn đổ bóng, cả giai đoạn đỉnh và đoạn đều được tô sáng.
+
+Thay vào đó, nếu chúng ta chọn bản nhạc Fragment, thanh bên chứa tất cả các bộ mã hóa trong Dòng thời gian, sau đó có thể được sắp xếp dựa trên thời gian.
+
+Nhưng đó không phải là tất cả bởi vì chúng ta có thể mở rộng bản nhạc Fragment để tiết lộ Dòng thời gian Shader, hiển thị tất cả các bộ đổ bóng được sử dụng bởi các bộ mã hóa trong quá trình thực thi của chúng.
+
+Chúng tôi có thể dễ dàng xác định các bộ đổ bóng chạy dài, cũng như các bộ đổ bóng nào đang chạy song song với các bộ đổ bóng khác.
+
+Đối với bản nhạc Fragment, chúng tôi cũng có hai bản nhạc bổ sung cho các hành động tải/lưu trữ.
+
+Điều này rất hữu ích để có thể thấy khi nào GPU đang tải và lưu trữ kết cấu tệp đính kèm giữa bộ nhớ cục bộ và bộ nhớ chính, và là một cân nhắc quan trọng để giảm việc sử dụng băng thông.
+
+Chọn một bộ đổ bóng sẽ làm nổi bật tất cả các khu vực trên dòng thời gian nơi nó đang hoạt động và chúng ta có thể tìm hiểu thêm về nó từ số liệu thống kê trình biên dịch và số liệu hiệu suất thời gian chạy được trình bày trong thanh bên.
+
+Mở rộng dòng thời gian đổ bóng hiển thị từng bộ đổ bóng theo dõi riêng của nó, điều này rất hữu ích để hiểu luồng khối lượng công việc GPU của bạn và thứ tự thực thi bộ đổ bóng.
+
+Bây giờ bạn đã quen thuộc hơn một chút với Dòng thời gian GPU mới và nghĩ về tất cả các cách mà bạn có thể tự mình sử dụng nó, hãy để tôi cho bạn thấy việc tìm thấy các nút thắt hiệu suất dễ dàng như thế nào khi sử dụng Dòng thời gian GPU.
+
+Hiệu suất Shader có thể bị ảnh hưởng do nhiều yếu tố, một trong số đó là áp suất thanh ghi và khi điều này xảy ra, GPU hết bộ nhớ ghi nhanh và phải sử dụng bộ nhớ chính thay thế.
+
+Chỉ riêng bộ giới hạn ALU cao không chỉ ra nút cổ chai hiệu suất.
+
+Có thể chỉ là bộ đổ bóng của bạn nặng về toán học.
+
+Tuy nhiên, khi kết hợp với công suất sử dụng bộ đổ bóng thấp, đây có thể là dấu hiệu cho thấy bộ đổ bóng bị áp lực đăng ký, điều này sẽ khiến bộ đổ bóng của bạn chạy chậm hơn.
+
+Để làm nổi bật điều này tốt hơn cho bản demo hôm nay, hãy để tôi ghim cả bản nhạc ALU và bản nhạc chiếm dụng đổ bóng lên đầu Dòng thời gian bằng cách nhấp vào nút "Thêm" ở đây bên trái.
+
+Khi tôi quét qua hai bản nhạc này, điều đầu tiên tôi nhận thấy là khu vực này ở đây, nơi ALU tăng đột biến và đồng thời, tỷ lệ lấp đầy đổ bóng giảm xuống.
+
+Tôi có thể làm nổi bật một khu vực trên Dòng thời gian để xem mất bao lâu để thực hiện.
+
+Lưu ý khi tôi làm điều này, các bộ đếm trong thanh bên cập nhật động dựa trên khu vực đã chọn.
+
+Khu vực này ở đây mất khoảng 3,7 mili giây để thực hiện.
+
+Hãy phóng to và xem xét kỹ hơn.
+
+Có vẻ như vấn đề của chúng tôi có liên quan đến bốn bộ mã hóa đầu tiên này của thẻ Ambient Occlusion.
+
+Hãy xem những bộ đổ bóng nào đang được sử dụng bằng cách xem dòng thời gian đổ bóng.
+
+Có vẻ như vấn đề của chúng tôi liên quan đến bộ đổ bóng này ở đây, vì nó là vấn đề duy nhất được sử dụng.
+
+Từ các chỉ số hiệu suất thời gian chạy của thanh bên, không chỉ bộ đổ bóng ALU này chuyên sâu mà còn rất nặng, vì vậy chúng ta hãy xem theo dõi Sử dụng Dấu phẩy động.
+
+Lưu ý khi tôi di chuột qua bản nhạc này, bộ đổ bóng này chỉ sử dụng F32.
+
+F16 ở mức 0%.
+
+Từ Dòng thời gian, chúng ta có thể điều hướng trực tiếp đến nguồn đổ bóng bằng cách nhấp chuột phải và mở đổ bóng.
+
+Ở đây trong trình chỉnh sửa nguồn, chúng ta có thể thấy một phiên bản đơn giản của nguồn đổ bóng cho mục đích demo.
+
+Cùng với nguồn, chúng ta cũng có thể xem thông tin chi phí cho mỗi dòng với sự trợ giúp của trình tạo hồ sơ đổ bóng.
+
+Di chuột qua biểu đồ hình tròn hồ sơ đổ bóng cung cấp cho chúng tôi xác nhận rằng chức năng này có khả năng gây ra áp suất đăng ký, vì nó vừa nặng ALU vừa nổi.
+
+Những tình huống như thế này là ứng cử viên cho việc sử dụng F16, điều này giúp chúng tôi tăng gấp đôi số lượng thanh ghi ở những nơi không yêu cầu độ chính xác đầy đủ của F32, điều này sẽ giúp giảm áp lực đăng ký.
+
+Trình gỡ lỗi kim loại giúp việc cập nhật mã nguồn trực tiếp bên trong trình chỉnh sửa nguồn thực sự thuận tiện.
+
+Hãy để tôi thực hiện thay đổi này ở đây sử dụng phiên bản cập nhật của bộ đổ bóng sử dụng hỗn hợp F32 và F16.
+
+Sau khi thực hiện thay đổi này, tôi có thể nhấp vào nút "Tải lại bộ đổ bóng" ở đây ở dưới cùng, nút này sẽ kích hoạt bản cập nhật bộ đổ bóng vừa biên dịch lại vừa cấu hình lại bộ đổ bóng của chúng tôi, cũng như cập nhật chi phí đổ bóng cho mỗi dòng.
+
+Hãy xem sự thay đổi này đã tạo ra hiệu quả gì bằng cách quay lại Dòng thời gian.
+
+Điều đầu tiên tôi muốn làm là xem bốn bộ mã hóa đầu tiên của đường chuyền Ambient Occlusion mất bao lâu.
+
+Có vẻ như khu vực này ở đây mất khoảng 2,6 mili giây để thực hiện.
+
+Sự thay đổi mà chúng tôi vừa thực hiện đã cải thiện thời gian thực hiện đổ bóng của chúng tôi hơn một phần nghìn giây, tương đương 30%, đây là một cải tiến lớn.
+
+Nhìn vào một số quầy từ trước đó, trong khi ALU vẫn còn cao, điều đó được mong đợi cho một bộ đổ bóng nặng về toán học.
+
+Nhưng hãy lưu ý ngay bây giờ, bộ đổ bóng của chúng tôi đang trải qua ít áp lực đăng ký hơn, vì công suất sử dụng bộ đổ bóng của chúng tôi đã được cải thiện gần gấp đôi.
+
+Điều này đã được thực hiện bằng cách sử dụng hỗn hợp F32 và F16, mà chúng ta có thể thấy bằng cách sử dụng rãnh Sử dụng Dấu phẩy động.
+
+Dòng thời gian GPU giúp tôi thực sự dễ dàng xác định vấn đề, điều hướng đến nơi sự cố tồn tại và khắc phục nó.
+
+Dòng thời gian GPU là một công cụ tuyệt vời để xác định không chỉ các vấn đề về hiệu suất đổ bóng mà còn cả băng thông bộ nhớ và nhiều loại vấn đề khác.
+
+Tôi hy vọng bạn thích bản demo này của Dòng thời gian GPU hoàn toàn mới và đã nghĩ đến tất cả các cách mà bạn sẽ sử dụng nó để tối ưu hóa trò chơi của mình để chạy tốt hơn nữa trên GPU Apple.
+
+Cảm ơn bạn, và tận hưởng phần còn lại của WWDC.
+
+Quay lại với Jonathan.
+
+Cảm ơn bạn, Dustin, vì bản demo tuyệt vời đó.
+
+Và cảm ơn bạn đã xem.
+
+Thật tuyệt khi được chia sẻ với bạn cách chúng tôi làm việc với Larian Studios và 4A Games để tận dụng các tính năng trên GPU Apple của chúng tôi.
+
+Chúng cung cấp nhiều cách để cải thiện hiệu suất, từ nén không mất dữ liệu đến khối lượng công việc đổ bóng chồng chéo.
+
+Và các công cụ của chúng tôi, như Metal System Trace và dòng thời gian GPU mới trong Xcode, sẽ thực sự hữu ích cho bạn khi bạn cải thiện trò chơi của mình.
+
+Nếu có một điều tôi có thể để lại cho bạn, việc kiểm tra kỹ lưỡng kết xuất của bạn là điều cần thiết để cung cấp một trò chơi được tối ưu hóa cao và các công cụ của chúng tôi luôn sẵn sàng giúp bạn điều này.
+
+Nếu bạn muốn tìm hiểu thêm, vui lòng tham khảo các phiên liên quan, "Khám phá các công cụ gỡ lỗi, lập hồ sơ và tạo tài sản Metal" trong WWDC năm nay hoặc "Tối ưu hóa các ứng dụng và trò chơi Metal với bộ đếm GPU" từ WWDC20.
+
+Cảm ơn bạn, và tạm biệt!
+
+[Âm nhạc].

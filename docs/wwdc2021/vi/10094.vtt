@@ -1,0 +1,482 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:11.000
+Rui Paulo: Xin chào mọi người, tôi là Rui.
+
+00:00:11.000 --> 00:00:24.000
+Hôm nay, đồng nghiệp Eric của tôi và tôi sẽ nói về cách bạn có thể tăng tốc độ kết nối mạng ứng dụng của mình với HTTP/3 và QUIC - hai giao thức mới có sẵn trong iOS 15 và macOS Monterey.
+
+00:00:24.000 --> 00:00:30.000
+Chúng ta sẽ bắt đầu bằng cách khám phá sự phát triển của HTTP và cách HTTP/3 cải thiện hiệu suất.
+
+00:00:30.000 --> 00:00:36.000
+Chúng ta cũng sẽ nói về QUIC, giao thức vận chuyển mới đằng sau HTTP/3.
+
+00:00:36.000 --> 00:00:47.000
+Sau đó, chúng tôi sẽ giải thích cách bạn có thể sử dụng HTTP/3 trong URLSession và cách bạn nên định cấu hình máy chủ HTTP của mình để hỗ trợ HTTP/3.
+
+00:00:47.000 --> 00:00:56.000
+Cuối cùng, chúng ta sẽ đi sâu vào API để sử dụng QUIC và cách bạn có thể triển khai các giao thức mạng tùy chỉnh của mình trên QUIC.
+
+00:00:56.000 --> 00:01:00.000
+Sau đó hãy bắt đầu với sự phát triển của HTTP.
+
+00:01:00.000 --> 00:01:02.000
+Giả sử chúng ta cần tìm nạp một tài nguyên.
+
+00:01:02.000 --> 00:01:09.000
+Chúng tôi thiết lập kết nối, gửi yêu cầu, đợi máy chủ xử lý và nhận phản hồi.
+
+00:01:09.000 --> 00:01:25.000
+Bây giờ, nếu chúng tôi muốn tìm nạp một tài nguyên khác trước khi tài nguyên đầu tiên kết thúc, chúng tôi đã trải qua quy trình tương tự một lần nữa: thiết lập kết nối, gửi yêu cầu, chờ xử lý và nhận phản hồi, lần này được biểu thị bằng màu xanh đậm.
+
+00:01:25.000 --> 00:01:29.000
+Đây là một ví dụ khác cho tài nguyên thứ ba, màu cam.
+
+00:01:29.000 --> 00:01:34.000
+Như được phác thảo trong sơ đồ, rất nhiều thời gian được dành cho việc thiết lập kết nối.
+
+00:01:34.000 --> 00:01:37.000
+Điều gì sẽ xảy ra nếu chúng ta sử dụng lại một kết nối HTTP/1 duy nhất?
+
+00:01:37.000 --> 00:01:44.000
+Chúng tôi đã lưu thời gian thiết lập kết nối, nhưng yêu cầu chỉ có thể được gửi sau khi phản hồi trước đó kết thúc.
+
+00:01:44.000 --> 00:01:47.000
+Điều này được gọi là chặn đầu dòng.
+
+00:01:47.000 --> 00:01:54.000
+Trong quá khứ, việc triển khai HTTP đã sử dụng nhiều kết nối song song để khắc phục vấn đề này.
+
+00:01:54.000 --> 00:01:59.000
+Số lượng kết nối HTTP song song thậm chí còn có thể được cấu hình bởi ứng dụng.
+
+00:01:59.000 --> 00:02:05.000
+Tuy nhiên, điều này dẫn đến các hành vi kết nối mạng không hiệu quả cho cả máy khách và máy chủ.
+
+00:02:05.000 --> 00:02:12.000
+HTTP/2 giải quyết vấn đề chặn đầu dòng bằng cách ghép kênh nhiều luồng trên một kết nối duy nhất.
+
+00:02:12.000 --> 00:02:18.000
+Các yêu cầu được gửi sớm hơn và dữ liệu từ các luồng khác nhau có thể được xen kẽ.
+
+00:02:18.000 --> 00:02:24.000
+Điều này cho phép sử dụng hiệu quả hơn một kết nối TCP duy nhất, vì thời gian chờ đợi nhàn rỗi giảm đáng kể.
+
+00:02:24.000 --> 00:02:31.000
+Với HTTP/3, thiết lập kết nối nhanh hơn nhiều, vì vậy các yêu cầu có thể được gửi đi sớm hơn.
+
+00:02:31.000 --> 00:02:36.000
+Tuy nhiên, đó không phải là lợi ích duy nhất của HTTP/3.
+
+00:02:36.000 --> 00:02:46.000
+Các luồng HTTP/3 độc lập, khác với HTTP/2, trong đó tất cả các luồng chia sẻ một kết nối TCP duy nhất.
+
+00:02:46.000 --> 00:02:49.000
+Trên hầu hết các mạng, các gói tin bị mất.
+
+00:02:49.000 --> 00:02:56.000
+Đây là một sự kiện bình thường trên mạng không dây và là một phần tự nhiên của việc phát hiện dung lượng của mạng.
+
+00:02:56.000 --> 00:03:05.000
+Trong HTTP/2, mất gói có thể ảnh hưởng đến nhiều luồng vì tất cả các luồng HTTP/2 đều chia sẻ một kết nối TCP duy nhất.
+
+00:03:05.000 --> 00:03:10.000
+Trong HTTP/3, chỉ có luồng HTTP tương ứng bị ảnh hưởng.
+
+00:03:10.000 --> 00:03:14.000
+Dữ liệu thuộc về các luồng khác có thể được phân phối sớm hơn.
+
+00:03:14.000 --> 00:03:22.000
+Chúng tôi vừa chỉ ra cách HTTP/3 có thể thiết lập kết nối sớm hơn và cách nó có thể đối phó tốt hơn với việc mất gói.
+
+00:03:22.000 --> 00:03:28.000
+Những cải tiến này được kích hoạt bởi giao thức vận chuyển cơ bản: QUIC.
+
+00:03:28.000 --> 00:03:34.000
+QUIC là một giao thức vận chuyển đáng tin cậy mới đã được tiêu chuẩn hóa bởi Lực lượng Đặc nhiệm Kỹ thuật Internet.
+
+00:03:34.000 --> 00:03:42.000
+Nó dựa trên các khái niệm tương tự của TCP nhưng cung cấp mã hóa đầu cuối, các luồng ghép kênh và xác thực.
+
+00:03:42.000 --> 00:03:48.000
+Bảo mật của QUIC được xây dựng dựa trên giao thức TLS 1.3 nổi tiếng.
+
+00:03:48.000 --> 00:03:51.000
+Lợi ích chính của QUIC là cải thiện hiệu suất.
+
+00:03:51.000 --> 00:03:56.000
+Hãy cùng khám phá cách QUIC đạt được điều đó.
+
+00:03:56.000 --> 00:04:08.000
+QUIC dựa vào TLS 1.3 để thực hiện bắt tay an toàn và không yêu cầu bắt tay ba chiều TCP quen thuộc, giảm thời gian bắt tay xuống còn một chuyến khứ hồi duy nhất.
+
+00:04:08.000 --> 00:04:14.000
+Các luồng ghép kênh là một khái niệm chính của QUIC, vì vậy nó không bị chặn đầu dòng.
+
+00:04:14.000 --> 00:04:28.000
+Điểm cuối QUIC có thể truyền đạt thông tin phức tạp hơn về các gói mà nó đã nhận được đến điểm cuối khác và không bị cản trở bởi giới hạn của TCP, vì vậy các kết nối QUIC được cải thiện khả năng phục hồi mất mát.
+
+00:04:28.000 --> 00:04:42.000
+Giao thức cũng hỗ trợ di chuyển kết nối cho phép các kết nối di chuyển liền mạch qua các giao diện mạng khác nhau mà không cần thiết lập lại phiên, ví dụ, giữa mạng di động và Wi-Fi.
+
+00:04:42.000 --> 00:04:49.000
+Nếu bạn muốn tìm hiểu thêm về sự chậm trễ của mạng, vui lòng xem phiên "Giảm sự chậm trễ mạng cho ứng dụng của bạn".
+
+00:04:49.000 --> 00:04:54.000
+Hãy nói về cách bạn có thể sử dụng HTTP/3 trong ứng dụng của mình.
+
+00:04:54.000 --> 00:05:04.000
+Nếu bạn đang sử dụng URLSession, bạn không cần phải thay đổi ứng dụng của mình vì iOS 15 và macOS Monterey xuất xưởng với HTTP/3 được bật theo mặc định.
+
+00:05:04.000 --> 00:05:08.000
+Khi bạn bật HTTP/3 trên máy chủ của mình, bạn đã sẵn sàng.
+
+00:05:08.000 --> 00:05:16.000
+Cả phiên bản HTTP/3 RFC sắp tới và phiên bản HTTP/3 Draft 29 trước đó đều được hỗ trợ.
+
+00:05:16.000 --> 00:05:20.000
+Vậy làm thế nào bạn có thể chắc chắn rằng ứng dụng của bạn đang sử dụng HTTP/3?
+
+00:05:20.000 --> 00:05:23.000
+Hãy sử dụng Dụng cụ để tìm hiểu!
+
+00:05:23.000 --> 00:05:31.000
+Trong Xcode 13, chúng tôi đang giới thiệu một công cụ mới trong mẫu hồ sơ mạng để kiểm tra Lưu lượng HTTP.
+
+00:05:31.000 --> 00:05:35.000
+Nó khai thác trực tiếp vào URLSession, vì vậy không cần thiết lập.
+
+00:05:35.000 --> 00:05:43.000
+Chúng tôi có thể sử dụng Công cụ để tìm hiểu xem ứng dụng của chúng tôi đang sử dụng HTTP/3 hay phiên bản HTTP cũ hơn.
+
+00:05:43.000 --> 00:05:48.000
+Chúng tôi sẽ khởi chạy một ứng dụng iOS, khi bắt đầu, sẽ tìm nạp một bộ ảnh chó.
+
+00:05:48.000 --> 00:05:55.000
+Sau đó chúng tôi sẽ kiểm tra các tiêu đề HTTP để tìm hiểu cách máy chủ quảng cáo HTTP/3.
+
+00:05:55.000 --> 00:06:05.000
+Hãy tiếp tục và chọn mẫu hồ sơ mạng.
+
+00:06:05.000 --> 00:06:09.000
+Hãy nhấp vào Ghi lại ở trên cùng bên trái.
+
+00:06:09.000 --> 00:06:15.000
+Một lời nhắc sẽ được hiển thị cho thấy ý nghĩa riêng tư của việc ghi lại Lưu lượng HTTP.
+
+00:06:15.000 --> 00:06:29.000
+Sau khi chúng tôi đồng ý, Instruments sẽ bắt đầu ghi lại các giao dịch HTTP.
+
+00:06:29.000 --> 00:06:35.000
+Tiếp theo, Instruments sẽ hiển thị một biểu đồ với tất cả các giao dịch HTTP trên mỗi ứng dụng và trên mỗi miền.
+
+00:06:35.000 --> 00:06:37.000
+Bây giờ chúng tôi đã thu thập tất cả dữ liệu mà chúng tôi cần.
+
+00:06:37.000 --> 00:06:44.000
+Chúng ta có thể nhấp vào nút Tạm dừng nằm ở trên cùng bên trái.
+
+00:06:44.000 --> 00:06:46.000
+Hãy chọn miền mà chúng tôi đang sử dụng.
+
+00:06:46.000 --> 00:06:56.000
+Chúng ta có thể làm điều đó bằng cách nhấp vào Tùy chọn vào các giao dịch HTTP và sau đó chọn miền.
+
+00:06:56.000 --> 00:07:01.000
+Chúng ta cần cấu hình Công cụ để hiển thị chi tiết của Giao dịch HTTP.
+
+00:07:01.000 --> 00:07:12.000
+Để thực hiện điều đó, hãy đảm bảo menu ở phía bên trái hiển thị Giao dịch HTTP.
+
+00:07:12.000 --> 00:07:16.000
+Hãy chọn yêu cầu đầu tiên.
+
+00:07:16.000 --> 00:07:25.000
+Bằng cách cuộn sang phải, chúng ta có thể tìm thấy cột Phiên bản HTTP xác định phiên bản HTTP mà giao dịch này đã sử dụng.
+
+00:07:25.000 --> 00:07:30.000
+Hừm, chúng tôi vẫn đang sử dụng HTTP/2, nhưng tại sao vậy?
+
+00:07:30.000 --> 00:07:35.000
+Ở phía bên tay phải, chúng ta có thể tìm thấy chế độ xem chi tiết mở rộng có chứa các tiêu đề phản hồi.
+
+00:07:35.000 --> 00:07:47.000
+Điều này cho chúng ta câu trả lời: máy chủ đã sử dụng Dịch vụ Thay thế HTTP để quảng cáo hỗ trợ cho HTTP/3.
+
+00:07:47.000 --> 00:07:51.000
+URLSession sẽ không sử dụng HTTP/3 trừ khi nó được quảng cáo.
+
+00:07:51.000 --> 00:07:57.000
+Trong ví dụ này, HTTP/3 đã được quảng cáo thông qua tiêu đề HTTP Alt-Svc.
+
+00:07:57.000 --> 00:08:04.000
+Các máy chủ HTTP thường quảng cáo hỗ trợ cho HTTP/3, sử dụng tiêu đề này.
+
+00:08:04.000 --> 00:08:10.000
+Thông tin này được ghi nhớ cho các kết nối trong tương lai và chúng tôi gọi đây là "khám phá dịch vụ".
+
+00:08:10.000 --> 00:08:17.000
+Bây giờ hãy ghi lại ứng dụng một lần nữa.
+
+00:08:17.000 --> 00:08:23.000
+Khi Instruments khởi chạy lại ứng dụng, cùng một bộ giao dịch HTTP sẽ diễn ra.
+
+00:08:23.000 --> 00:08:30.000
+Một lần nữa, bây giờ chúng ta có thể tạm dừng Dụng cụ.
+
+00:08:30.000 --> 00:08:34.000
+Hãy phóng to lại và kiểm tra giao dịch đầu tiên.
+
+00:08:34.000 --> 00:08:41.000
+Vì chúng tôi đã nhớ rằng máy chủ hỗ trợ HTTP/3, chúng tôi hiện đang sử dụng HTTP/3.
+
+00:08:41.000 --> 00:08:45.000
+Khám phá dịch vụ HTTP/3 minh bạch cho ứng dụng của bạn.
+
+00:08:45.000 --> 00:08:49.000
+Việc phát hiện hỗ trợ máy chủ HTTP/3 diễn ra theo hai cách.
+
+00:08:49.000 --> 00:08:59.000
+Cách tiếp cận được đề xuất là định cấu hình máy chủ DNS của bạn để quảng cáo hỗ trợ cho HTTP/3 thông qua bản ghi tài nguyên HTTPS.
+
+00:08:59.000 --> 00:09:07.000
+Đơn giản chỉ cần cấu hình giao thức lớp ứng dụng để quảng cáo HTTP/3 bằng cách sử dụng chuỗi h3.
+
+00:09:07.000 --> 00:09:14.000
+Bạn cũng nên định cấu hình máy chủ của mình để thêm tiêu đề mới quảng cáo HTTP/3 bằng các Dịch vụ Thay thế.
+
+00:09:14.000 --> 00:09:19.000
+Máy chủ của bạn nên gửi tiêu đề Alt-Svc quảng cáo HTTP/3.
+
+00:09:19.000 --> 00:09:24.000
+Điều này bao gồm số cổng và độ tuổi tối đa của dịch vụ, tính bằng giây.
+
+00:09:24.000 --> 00:09:37.000
+Ưu điểm của bản ghi DNS là vì thông tin nằm trong DNS, kết nối HTTP/3 có thể được thiết lập ngay lần đầu tiên ứng dụng của bạn cố gắng liên hệ với máy chủ của bạn.
+
+00:09:37.000 --> 00:09:46.000
+Khi bạn biết rằng máy chủ của bạn hỗ trợ HTTP/3 và bạn muốn tăng tốc quá trình khám phá, bạn có thể sử dụng thuộc tính giả định HTTP3Capable.
+
+00:09:46.000 --> 00:09:56.000
+Điều này cho phép ngăn xếp HTTP giả định rằng bạn có một máy chủ HTTP/3 nhưng không đảm bảo rằng HTTP/3 sẽ được sử dụng.
+
+00:09:56.000 --> 00:10:02.000
+Các mạng vẫn có thể chặn HTTP/3 hoặc máy chủ của bạn có thể không thực sự hỗ trợ HTTP/3.
+
+00:10:02.000 --> 00:10:07.000
+Trong trường hợp đó, chúng ta sẽ quay trở lại HTTP/2.
+
+00:10:07.000 --> 00:10:12.000
+HTTP cho phép khách hàng chỉ định các ưu tiên cho từng tài nguyên.
+
+00:10:12.000 --> 00:10:21.000
+Vì các tài nguyên thường có liên quan, các ưu tiên cho phép máy chủ gửi một số tài nguyên sớm hơn các tài nguyên khác, dựa trên nhu cầu của khách hàng.
+
+00:10:21.000 --> 00:10:30.000
+Ví dụ, trải nghiệm người dùng để duyệt web có thể được cải thiện bằng cách ưu tiên các tài nguyên ảnh hưởng đến kết xuất trang web nhiều nhất.
+
+00:10:30.000 --> 00:10:37.000
+Một sơ đồ ưu tiên đã được giới thiệu trong HTTP/2 nhưng nó thường không được tôn trọng do sự phức tạp của nó.
+
+00:10:37.000 --> 00:10:42.000
+Vì lý do đó, mô hình ưu tiên cũ đã bị xóa khỏi HTTP/3.
+
+00:10:42.000 --> 00:10:49.000
+Một mô hình mới, đơn giản hơn, dựa trên các tiêu đề HTTP, được sử dụng bởi ngăn xếp HTTP/3.
+
+00:10:49.000 --> 00:10:57.000
+Trong mô hình này, mức độ ưu tiên được chỉ định với một tham số khẩn cấp - từ 0 đến bảy - và một tham số phân phối gia tăng tùy chọn.
+
+00:10:57.000 --> 00:11:02.000
+Khi sử dụng URLSession, API để hỗ trợ các ưu tiên vẫn giữ nguyên.
+
+00:11:02.000 --> 00:11:11.000
+Bạn vẫn chỉ định mức độ ưu tiên HTTP, sử dụng thuộc tính ưu tiên, được truyền đến máy chủ bằng cách sử dụng mức độ khẩn cấp.
+
+00:11:11.000 --> 00:11:16.000
+Bạn có thể kích hoạt giao hàng gia tăng với thuộc tính prefersIncrementalDelivery.
+
+00:11:16.000 --> 00:11:18.000
+Mức độ ưu tiên mặc định là 3.
+
+00:11:18.000 --> 00:11:28.000
+URLSession suy ra việc phân phối gia tăng tùy thuộc vào việc API tiện lợi - như phương thức dữ liệu không đồng bộ - có được sử dụng hay không.
+
+00:11:28.000 --> 00:11:37.000
+Khi ứng dụng của bạn đang tải xuống nội dung không thể xử lý cho đến khi toàn bộ tài nguyên được tải xuống, bạn nên đặt thuộc tính này thành sai.
+
+00:11:37.000 --> 00:11:44.000
+Tự động thay đổi mức độ ưu tiên của tài nguyên sau khi yêu cầu được gửi cũng được hỗ trợ.
+
+00:11:44.000 --> 00:11:53.000
+Ví dụ: bạn có thể tìm nạp trước ảnh ở mức độ ưu tiên thấp hơn và sau đó tăng mức độ ưu tiên đó khi người dùng điều hướng đến phần đó trong ứng dụng của bạn.
+
+00:11:53.000 --> 00:12:00.000
+Tiếp theo, đồng nghiệp Eric của tôi sẽ giải thích cách bạn có thể thay đổi các giao thức mạng tùy chỉnh của mình để áp dụng QUIC.
+
+00:12:00.000 --> 00:12:02.000
+Cảm ơn bạn.
+
+00:12:02.000 --> 00:12:04.000
+Eric Kinnear: Cảm ơn, Rui!
+
+00:12:04.000 --> 00:12:20.000
+Như chúng ta đã thảo luận trước đó, HTTP/3 được xây dựng trên QUIC, cung cấp các luồng ghép kênh, tương tự như các luồng được tìm thấy trong HTTP/2, nhưng không có vấn đề gì được đưa ra bằng cách chia sẻ một kết nối TCP duy nhất làm phương tiện vận chuyển cơ bản.
+
+00:12:20.000 --> 00:12:29.000
+Kết nối vận chuyển QUIC - hoặc đường hầm QUIC - ghép kênh dữ liệu cho nhiều luồng QUIC một chiều hoặc hai chiều.
+
+00:12:29.000 --> 00:12:42.000
+Các luồng có thể được tạo bởi một trong hai điểm cuối, có thể gửi đồng thời dữ liệu xen kẽ với các luồng khác và có trạng thái tương tự như các luồng truyền thống do TCP cung cấp.
+
+00:12:42.000 --> 00:12:51.000
+Trên hết, QUIC có bảo mật TLS 1.3 được tích hợp sẵn và có thể đáp ứng tốt hơn với các điều kiện mạng thay đổi.
+
+00:12:51.000 --> 00:12:55.000
+Những khả năng này không chỉ hữu ích cho HTTP.
+
+00:12:55.000 --> 00:13:15.000
+Nếu ứng dụng của bạn đang trao đổi dữ liệu không dựa trên yêu cầu/phản hồi, có thể được hưởng lợi từ việc có các luồng ghép kênh chia sẻ ngữ cảnh vận chuyển cơ bản hoặc đang triển khai bất kỳ giao thức tùy chỉnh nào khác - chẳng hạn như giao tiếp ngang hàng hoặc cuộc gọi RPC - hãy cân nhắc sử dụng vận chuyển QUIC cho ứng dụng của bạn.
+
+00:13:15.000 --> 00:13:25.000
+Trong iOS 15 và macOS Monterey, NWProtocolQUIC tham gia các giao thức tích hợp khác do Network.framework cung cấp.
+
+00:13:25.000 --> 00:13:29.000
+Tạo một kết nối sử dụng QUIC rất quen thuộc.
+
+00:13:29.000 --> 00:13:34.000
+Chỉ cần cung cấp điểm cuối của bạn và các tham số QUIC mới có sẵn.
+
+00:13:34.000 --> 00:13:42.000
+Các tham số này chỉ định chuỗi ALPN, giao thức lớp ứng dụng để thương lượng với máy chủ.
+
+00:13:42.000 --> 00:13:50.000
+Đặt trình xử lý cập nhật trạng thái - giống như bình thường - để có thể phản hồi khi kết nối tiến triển và sẵn sàng.
+
+00:13:50.000 --> 00:13:58.000
+Và, cuối cùng, bắt đầu kết nối của bạn trên hàng đợi điều phối mà bạn muốn sử dụng cho các bản cập nhật trạng thái và các cuộc gọi lại khác.
+
+00:13:58.000 --> 00:14:05.000
+Bây giờ bạn đã thiết lập luồng QUIC, bạn có thể gửi và nhận dữ liệu giống như bất kỳ NWConnection nào khác.
+
+00:14:05.000 --> 00:14:14.000
+Sử dụng chức năng gửi để cung cấp dữ liệu bạn muốn gửi đến điểm cuối từ xa và lên lịch gửi tiếp theo khi hoàn tất.
+
+00:14:14.000 --> 00:14:20.000
+Sử dụng nhận để xử lý dữ liệu đến và lên lịch nhận tiếp theo khi hoàn thành.
+
+00:14:20.000 --> 00:14:31.000
+Năm ngoái, chúng tôi đã giới thiệu đối tượng Nhóm Kết nối trong Network.framework để giúp xử lý các tình huống có liên quan hoặc nhóm nhiều kết nối dễ dàng hơn.
+
+00:14:31.000 --> 00:14:45.000
+Các luồng QUIC được ghép kênh trên bối cảnh vận chuyển cơ bản - hoặc đường hầm - được nhóm lại một cách hợp lý dựa trên mối quan hệ đó và có thể được sử dụng với một loại nhóm mới: NWMultiplexGroup.
+
+00:14:45.000 --> 00:14:58.000
+Nhóm kết nối tuân theo vòng đời tương tự như vòng đời của các đối tượng Network.framework khác và cho phép bạn suy luận về trạng thái của đường hầm QUIC cơ bản được chia sẻ bởi các luồng QUIC của bạn.
+
+00:14:58.000 --> 00:15:07.000
+Nó cũng cho phép bạn tạo các luồng đi mới từ một đường hầm QUIC cụ thể cũng như nhận các luồng đến mới được khởi tạo bởi điểm cuối từ xa.
+
+00:15:07.000 --> 00:15:13.000
+Để tạo một nhóm kết nối cho một giao thức ghép kênh, hãy sử dụng bộ mô tả nhóm ghép kênh.
+
+00:15:13.000 --> 00:15:19.000
+Trong trường hợp này, chúng tôi sẽ tạo một bộ mô tả nhóm cho example.com trên cổng 443.
+
+00:15:19.000 --> 00:15:29.000
+Tiếp theo, chúng tôi tạo một NWConnectionGroup với bộ mô tả đó và các tham số QUIC, cung cấp chuỗi ALPN của chúng tôi khi chúng tôi tạo chúng.
+
+00:15:29.000 --> 00:15:40.000
+Cũng giống như với NWConnection, chúng tôi đặt trình xử lý cập nhật trạng thái, nhưng lần này, nó đang theo dõi trạng thái của đường hầm QUIC bên dưới, thay vì trạng thái của một luồng riêng lẻ.
+
+00:15:40.000 --> 00:15:45.000
+Cuối cùng, chúng tôi bắt đầu nhóm kết nối, cung cấp hàng đợi gọi lại của chúng tôi.
+
+00:15:45.000 --> 00:15:55.000
+Các luồng đi mới có thể được tạo bằng cách khởi tạo NWConnection từ nhóm hoặc bằng cách gọi hàm trích xuất trên nhóm.
+
+00:15:55.000 --> 00:16:03.000
+Các luồng đến được khởi tạo bởi điểm cuối từ xa có thể được xử lý bằng cách đặt trình xử lý kết nối mới trên nhóm.
+
+00:16:03.000 --> 00:16:14.000
+Các kết nối này có thể được thiết lập như bình thường với trình xử lý trạng thái - lần này theo dõi trạng thái luồng - và bắt đầu với hàng đợi để sử dụng cho các cuộc gọi lại.
+
+00:16:14.000 --> 00:16:21.000
+Cũng giống như các giao thức khác, bạn có thể sử dụng QUIC.Options để cấu hình khi tạo đối tượng tham số của mình.
+
+00:16:21.000 --> 00:16:38.000
+Đối với QUIC, bạn có thể định cấu hình các tham số vận chuyển được liệt kê trong đặc tả QUIC và bạn cũng có thể tùy chỉnh các thuộc tính của các luồng riêng lẻ khi tạo chúng từ một nhóm kết nối; ví dụ: nếu bạn muốn tạo một luồng một chiều mới.
+
+00:16:38.000 --> 00:16:49.000
+Nếu bạn đang sử dụng NWListener để chạy một máy chủ trong ứng dụng của mình, nó cũng đã được cải tiến để cho phép bạn nhận các đường hầm QUIC mới đến thông qua NewConnectionGroupHandler.
+
+00:16:49.000 --> 00:16:56.000
+Trình xử lý nhóm kết nối mới của bạn sẽ được gọi mỗi khi ai đó thiết lập đường hầm QUIC mới cho máy chủ của bạn.
+
+00:16:56.000 --> 00:17:01.000
+Bên trong trình xử lý đó, bạn có thể thiết lập nhóm như bình thường để nhận các cập nhật trạng thái.
+
+00:17:01.000 --> 00:17:06.000
+Đây cũng là một nơi tốt để thiết lập trình xử lý kết nối mới mà chúng ta vừa thảo luận.
+
+00:17:06.000 --> 00:17:15.000
+Nếu bạn muốn nhận các luồng tiếp theo được mở trên đường hầm này, hãy bắt đầu nhóm với hàng đợi để sử dụng cho các cuộc gọi lại và bạn đã sẵn sàng!
+
+00:17:15.000 --> 00:17:21.000
+Cuối cùng, bạn có thể sử dụng NWProtocolMetadata để truy cập thông tin về các luồng.
+
+00:17:21.000 --> 00:17:26.000
+Ví dụ, bạn có thể muốn kiểm tra ID luồng của luồng mới được tạo.
+
+00:17:26.000 --> 00:17:38.000
+Và khi bạn hoàn thành một luồng, nếu giao thức tùy chỉnh của bạn đã xác định mã applicationError, bạn có thể sử dụng siêu dữ liệu để thông báo bất kỳ lỗi nào đến điểm cuối từ xa trước khi hủy luồng.
+
+00:17:38.000 --> 00:17:52.000
+Vì vậy, chúng tôi vừa khám phá cách chúng tôi có thể sử dụng loại NWMultiplexGroup mới để tạo và quản lý các đường hầm QUIC và từ nhóm đó, tạo các Kết nối NW riêng lẻ cho mỗi luồng QUIC.
+
+00:17:52.000 --> 00:18:00.000
+Chúng ta có thể sử dụng NWListener để lắng nghe các đường hầm đến và sử dụng các nhóm kết nối kết quả để nhận các luồng đến mới.
+
+00:18:00.000 --> 00:18:19.000
+Trên các luồng đó, chúng tôi có thể gửi và nhận dữ liệu giống như trên bất kỳ kết nối nào khác và chúng tôi có thể sử dụng các tùy chọn giao thức QUIC để chỉ định các tham số vận chuyển và định cấu hình luồng, đồng thời sử dụng siêu dữ liệu giao thức QUIC để kiểm tra các luồng và truyền thông tin cụ thể của QUIC đến điểm cuối từ
+
+00:18:19.000 --> 00:18:25.000
+Bây giờ chúng tôi đã cải thiện mạng trong ứng dụng của mình bằng cách áp dụng QUIC, làm cách nào để biết nó có hoạt động hay không?
+
+00:18:25.000 --> 00:18:31.000
+Chúng tôi có thể khởi chạy ứng dụng của mình trong khi gỡ lỗi, với một biến môi trường mới xuất ra các tệp qlog.
+
+00:18:31.000 --> 00:18:45.000
+Qlog là một định dạng ghi nhật ký tiêu chuẩn mới được đề xuất trong IETF, cho phép bạn xuất thông tin phong phú hơn về cách các kết nối QUIC của bạn hoạt động so với hiện diện trong chụp gói truyền thống.
+
+00:18:45.000 --> 00:18:53.000
+Sau khi chạy thử, bạn có thể sử dụng cửa sổ Thiết bị trong Xcode để tải xuống vùng chứa ứng dụng của mình với các tệp qlog để phân tích.
+
+00:18:53.000 --> 00:19:02.000
+Và có một số hình ảnh trực quan hóa nguồn mở khác nhau giúp việc xem xét hành vi của các kết nối QUIC của bạn dễ dàng hơn nhiều.
+
+00:19:02.000 --> 00:19:08.000
+Hôm nay, chúng tôi đã kiểm tra những cải tiến mà HTTP/3 cung cấp cho lưu lượng HTTP của bạn.
+
+00:19:08.000 --> 00:19:22.000
+Trên máy khách, nó đã được bật theo mặc định cho người dùng API mạng hiện đại, vì vậy hãy bật HTTP/3 trên máy chủ của bạn để tận dụng hiệu suất tăng lên và khả năng phục hồi của nó trước các điều kiện mạng thay đổi.
+
+00:19:22.000 --> 00:19:35.000
+Nếu bạn đang sử dụng giao thức mạng tùy chỉnh, không phải HTTP, hãy sử dụng hỗ trợ giao thức ghép kênh mới được tích hợp trong Network.framework để tạo kết nối QUIC với NWConnectionGroup.
+
+00:19:35.000 --> 00:19:43.000
+Và cho dù bạn đang sử dụng giao thức nào, bạn có thể sử dụng các công cụ gỡ lỗi mới để hình dung những lợi ích tuyệt vời của thế hệ giao thức mạng tiếp theo.
+
+00:19:43.000 --> 00:19:44.000
+Cảm ơn vì đã xem.
+
+00:19:44.000 --> 23:59:59.000
+♪
+

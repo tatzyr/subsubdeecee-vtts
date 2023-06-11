@@ -1,0 +1,419 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:15.000
+Adam Sonnanstine: Xin chào! Tên tôi là Adam, và tôi ở đây hôm nay để cho bạn thấy có gì mới trong AVFoundation.
+
+00:00:15.000 --> 00:00:17.000
+Chúng tôi có ba tính năng mới để thảo luận hôm nay.
+
+00:00:17.000 --> 00:00:30.000
+Chúng ta sẽ dành phần lớn thời gian để nói về những gì mới trong thế giới kiểm tra AVAsset, và sau đó chúng ta sẽ giới thiệu nhanh về hai tính năng khác: tổng hợp video với siêu dữ liệu và tác giả tệp chú thích.
+
+00:00:30.000 --> 00:00:37.000
+Vì vậy, không cần quảng cáo thêm, hãy chuyển sang chủ đề đầu tiên của chúng tôi, đó là Kiểm tra không đồng bộ AVAsset.
+
+00:00:37.000 --> 00:00:42.000
+Nhưng trước tiên, một chút nền tảng, bắt đầu với việc bồi dưỡng trên AVAsset.
+
+00:00:42.000 --> 00:00:58.000
+AVAsset là đối tượng mô hình cốt lõi của AVFoundation để đại diện cho những thứ như tệp phim được lưu trữ trên thiết bị của người dùng; tệp phim được lưu trữ ở nơi khác, chẳng hạn như máy chủ từ xa; và các dạng nội dung nghe nhìn khác, chẳng hạn như HTTP Live Streams và các tác phẩm.
+
+00:00:58.000 --> 00:01:05.000
+Và khi bạn có một tài sản, bạn thường muốn chơi nó, nhưng cũng thường xuyên như vậy, bạn sẽ muốn kiểm tra nó.
+
+00:01:05.000 --> 00:01:11.000
+Bạn muốn hỏi nó những câu hỏi như, thời lượng của nó là bao nhiêu hoặc định dạng âm thanh và video mà nó chứa là gì?
+
+00:01:11.000 --> 00:01:16.000
+Và đó là những gì chúng ta thực sự sẽ nói đến trong chủ đề này: kiểm tra tài sản.
+
+00:01:16.000 --> 00:01:22.000
+Và bất cứ khi nào bạn kiểm tra một tài sản, có hai điều quan trọng cần ghi nhớ.
+
+00:01:22.000 --> 00:01:26.000
+Đầu tiên là việc kiểm tra tài sản diễn ra theo yêu cầu.
+
+00:01:26.000 --> 00:01:29.000
+Điều này chủ yếu là do các tệp phim có thể khá lớn.
+
+00:01:29.000 --> 00:01:32.000
+Một bộ phim dài có thể có kích thước vài gigabyte.
+
+00:01:32.000 --> 00:01:38.000
+Bạn sẽ không muốn tài sản háo hức tải xuống toàn bộ tệp, đề phòng trường hợp bạn yêu cầu thời lượng của nó sau này.
+
+00:01:38.000 --> 00:01:47.000
+Thay vào đó, tài sản đợi cho đến khi bạn yêu cầu nó tải giá trị tài sản, sau đó nó chỉ tải xuống thông tin cần thiết để cung cấp cho bạn giá trị đó.
+
+00:01:47.000 --> 00:01:52.000
+Điều thứ hai cần lưu ý là việc kiểm tra tài sản là một quá trình không đồng bộ.
+
+00:01:52.000 --> 00:01:55.000
+Điều này thực sự quan trọng vì I/O mạng có thể mất một chút thời gian.
+
+00:01:55.000 --> 00:02:03.000
+Nếu tài sản được lưu trữ trên mạng, bạn sẽ không muốn luồng chính của ứng dụng bị chặn trong khi AVAsset đưa ra yêu cầu mạng đồng bộ.
+
+00:02:03.000 --> 00:02:08.000
+Thay vào đó, AVAsset sẽ cung cấp kết quả không đồng bộ khi nó sẵn sàng.
+
+00:02:08.000 --> 00:02:16.000
+Với hai điều này trong tâm trí, chúng tôi có một API mới để kiểm tra các thuộc tính tài sản và nó trông hơi giống như thế này.
+
+00:02:16.000 --> 00:02:25.000
+Điều chính cần lưu ý là phương thức tải mới này, có số nhận dạng thuộc tính - trong trường hợp này là .duration - để bạn cho nó biết giá trị thuộc tính nào cần tải.
+
+00:02:25.000 --> 00:02:33.000
+Mỗi định danh thuộc tính được liên kết với một loại kết quả tại thời điểm biên dịch, xác định loại trả về của phương thức tải.
+
+00:02:33.000 --> 00:02:38.000
+Trong trường hợp này, thời lượng là CMTime, vì vậy kết quả là CMTime.
+
+00:02:38.000 --> 00:02:42.000
+Một điều có thể bạn chưa từng thấy trước đây là từ khóa đang chờ đợi này.
+
+00:02:42.000 --> 00:02:48.000
+Đây là một tính năng mới trong Swift và nó được sử dụng để đánh dấu, tại trang web cuộc gọi, rằng phương thức tải không đồng bộ.
+
+00:02:48.000 --> 00:02:58.000
+Để biết tất cả các chi tiết về async/await và nỗ lực đồng thời rộng lớn hơn trong Swift, tôi khuyến khích bạn kiểm tra phiên có tên "Gặp gỡ async/await trong Swift."
+
+00:02:58.000 --> 00:03:07.000
+Hiện tại, như một cách nhanh chóng để hiểu cách sử dụng phương pháp tải thuộc tính mới của chúng tôi, tôi muốn nghĩ về từ khóa await như chia hàm gọi thành hai phần.
+
+00:03:07.000 --> 00:03:11.000
+Đầu tiên, có một phần xảy ra trước khi hoạt động không đồng bộ bắt đầu.
+
+00:03:11.000 --> 00:03:15.000
+Trong trường hợp này, chúng tôi tạo một tài sản và yêu cầu nó tải thời lượng của nó.
+
+00:03:15.000 --> 00:03:22.000
+Tại thời điểm này, tài sản bị tắt và thực hiện I/O và phân tích cú pháp cần thiết để xác định thời hạn của nó và chúng tôi đang chờ kết quả của nó.
+
+00:03:22.000 --> 00:03:30.000
+Trong khi chúng tôi đang chờ đợi, chức năng gọi bị đình chỉ, có nghĩa là mã được viết sau khi chờ đợi không thực thi ngay lập tức.
+
+00:03:30.000 --> 00:03:33.000
+Tuy nhiên, chủ đề chúng tôi đang chạy không bị chặn.
+
+00:03:33.000 --> 00:03:36.000
+Thay vào đó, có thể tự do làm nhiều việc hơn trong khi chúng tôi đang chờ đợi.
+
+00:03:36.000 --> 00:03:42.000
+Khi quá trình tải thời lượng không đồng bộ kết thúc, thì nửa sau của chức năng được lên lịch chạy.
+
+00:03:42.000 --> 00:03:50.000
+Trong trường hợp này, nếu thời lượng tải thành công, chúng tôi lưu trữ thời lượng vào một hằng số cục bộ và gửi nó đến một hàm khác.
+
+00:03:50.000 --> 00:03:56.000
+Hoặc, nếu thao tác không thành công, một lỗi sẽ được ném ra khi chức năng gọi tiếp tục.
+
+00:03:56.000 --> 00:04:00.000
+Vì vậy, đó là những điều cơ bản của việc tải một giá trị thuộc tính không đồng bộ.
+
+00:04:00.000 --> 00:04:08.000
+Bạn cũng có thể tải các giá trị của nhiều thuộc tính cùng một lúc và bạn thực hiện việc này đơn giản bằng cách chuyển nhiều hơn một mã định danh thuộc tính cho phương thức tải.
+
+00:04:08.000 --> 00:04:13.000
+Trong trường hợp này, chúng tôi đang tải cả thời lượng và các bản nhạc cùng một lúc.
+
+00:04:13.000 --> 00:04:16.000
+Điều này không chỉ thuận tiện mà còn có thể hiệu quả hơn.
+
+00:04:16.000 --> 00:04:23.000
+Nếu tài sản biết tất cả các thuộc tính mà bạn quan tâm, nó có thể trộn công việc cần thiết để tải giá trị của chúng.
+
+00:04:23.000 --> 00:04:30.000
+Kết quả của việc tải nhiều giá trị thuộc tính là một bộ, với các giá trị được tải theo cùng thứ tự bạn đã sử dụng cho các số nhận dạng thuộc tính.
+
+00:04:30.000 --> 00:04:34.000
+Cũng giống như tải một giá trị thuộc tính duy nhất, đây là loại an toàn.
+
+00:04:34.000 --> 00:04:42.000
+Trong trường hợp này, phần tử đầu tiên của bộ kết quả là CMTime và phần tử thứ hai là một mảng của AVAssetTracks.
+
+00:04:42.000 --> 00:04:47.000
+Và tất nhiên, giống như với việc tải một giá trị duy nhất, đây là một thao tác không đồng bộ.
+
+00:04:47.000 --> 00:04:58.000
+Ngoài việc tải không đồng bộ các giá trị thuộc tính, bạn cũng có thể kiểm tra trạng thái của một thuộc tính mà không cần đợi giá trị tải bất cứ lúc nào bằng cách sử dụng phương thức trạng thái mới (của:).
+
+00:04:58.000 --> 00:05:04.000
+Bạn chuyển cùng một mã định danh thuộc tính mà bạn sử dụng cho phương thức tải và điều này sẽ trả về một enum với bốn trường hợp có thể xảy ra.
+
+00:05:04.000 --> 00:05:07.000
+Mỗi tài sản bắt đầu dưới dạng .notYetLoaded.
+
+00:05:07.000 --> 00:05:16.000
+Hãy nhớ rằng việc kiểm tra tài sản diễn ra theo yêu cầu, vì vậy cho đến khi bạn yêu cầu tải giá trị tài sản, tài sản sẽ không thực hiện bất kỳ công việc nào để tải nó.
+
+00:05:16.000 --> 00:05:21.000
+Nếu bạn tình cờ kiểm tra trạng thái trong khi quá trình tải đang diễn ra, bạn sẽ nhận được trường hợp .loading.
+
+00:05:21.000 --> 00:05:29.000
+Hoặc, nếu tài sản đã được tải, bạn sẽ nhận được trường hợp .loaded, đi kèm với giá trị đã được tải dưới dạng giá trị liên quan.
+
+00:05:29.000 --> 00:05:38.000
+Cuối cùng, nếu xảy ra lỗi - có lẽ vì mạng bị hỏng - bạn sẽ nhận được trường hợp .failed, đi kèm với lỗi để mô tả những gì đã xảy ra.
+
+00:05:38.000 --> 00:05:46.000
+Lưu ý rằng đây sẽ là lỗi tương tự đã được đưa ra bởi việc gọi phương thức tải đã khởi tạo yêu cầu tải không thành công.
+
+00:05:46.000 --> 00:05:51.000
+Vì vậy, đó là API mới để tải các thuộc tính không đồng bộ và kiểm tra trạng thái của chúng.
+
+00:05:51.000 --> 00:05:56.000
+AVAsset có khá nhiều thuộc tính có giá trị có thể được tải không đồng bộ.
+
+00:05:56.000 --> 00:06:06.000
+Hầu hết những thứ này có giá trị khép kín, nhưng các thuộc tính .tracks và .metadata có các đối tượng phức tạp hơn mà bạn có thể sử dụng để đi xuống cấu trúc phân cấp của tài sản.
+
+00:06:06.000 --> 00:06:10.000
+Trong trường hợp thuộc tính .tracks, bạn sẽ nhận được một mảng AVAssetTracks.
+
+00:06:10.000 --> 00:06:18.000
+AVAssetTrack có tập hợp các thuộc tính riêng có giá trị có thể được tải không đồng bộ bằng cách sử dụng cùng một phương thức tải đó.
+
+00:06:18.000 --> 00:06:29.000
+Tương tự, thuộc tính .metadata cung cấp cho bạn một mảng AVMetadataItems và một số thuộc tính AVMetadataItem cũng có thể được tải không đồng bộ bằng phương thức tải.
+
+00:06:29.000 --> 00:06:37.000
+Bit cuối cùng của API mới trong lĩnh vực này là một tập hợp các phương thức không đồng bộ mà bạn có thể sử dụng để có được các tập hợp con cụ thể của các giá trị thuộc tính nhất định.
+
+00:06:37.000 --> 00:06:46.000
+Vì vậy, thay vì tải tất cả các bản nhạc, ví dụ, bạn có thể sử dụng một trong ba phương pháp đầu tiên này để chỉ tải một số bản nhạc - ví dụ, chỉ các bản âm thanh.
+
+00:06:46.000 --> 00:06:51.000
+Có một số phương pháp mới như thế này trên cả AVAsset và AVAssetTrack.
+
+00:06:51.000 --> 00:06:56.000
+Vì vậy, đó là tất cả API mới mà chúng tôi có để kiểm tra tài sản không đồng bộ.
+
+00:06:56.000 --> 00:07:00.000
+Nhưng tại thời điểm này, tôi có một lời thú nhận nhỏ để thực hiện.
+
+00:07:00.000 --> 00:07:02.000
+Không có chức năng nào trong số này thực sự mới.
+
+00:07:02.000 --> 00:07:09.000
+Các API là mới, nhưng các lớp này luôn có khả năng tải các giá trị thuộc tính của chúng không đồng bộ.
+
+00:07:09.000 --> 00:07:14.000
+Chỉ là, với các API cũ, bạn sẽ phải viết mã giống như thế này.
+
+00:07:14.000 --> 00:07:16.000
+Đó là một quá trình gồm ba bước.
+
+00:07:16.000 --> 00:07:23.000
+Trước tiên, bạn phải gọi phương thức loadValuesAsynchronously, cung cấp cho nó các chuỗi để cho nó biết thuộc tính nào cần tải.
+
+00:07:23.000 --> 00:07:29.000
+Sau đó, bạn cần đảm bảo rằng mỗi thuộc tính thực sự đã tải thành công và không bị lỗi.
+
+00:07:29.000 --> 00:07:38.000
+Sau đó, khi bạn đã đi xa đến mức đó, bạn có thể tìm nạp giá trị đã tải bằng cách truy vấn thuộc tính đồng bộ tương ứng hoặc bằng cách gọi một trong các phương thức lọc đồng bộ.
+
+00:07:38.000 --> 00:07:43.000
+Điều này không chỉ dài dòng và lặp đi lặp lại, nó còn dễ bị lạm dụng.
+
+00:07:43.000 --> 00:07:49.000
+Ví dụ, rất dễ quên thực hiện các bước tải và kiểm tra trạng thái cần thiết này.
+
+00:07:49.000 --> 00:08:00.000
+Những gì bạn còn lại là những thuộc tính và phương thức đồng bộ này có thể được gọi bất cứ lúc nào, nhưng nếu bạn gọi chúng mà không tải các giá trị thuộc tính trước, cuối cùng bạn sẽ chặn I/O.
+
+00:08:00.000 --> 00:08:06.000
+Nếu bạn làm điều này trên chủ đề chính của mình, điều này có nghĩa là ứng dụng của bạn có thể bị treo vào những thời điểm không thể đoán trước.
+
+00:08:06.000 --> 00:08:21.000
+Vì vậy, ngoài thực tế là các API mới đơn giản là dễ sử dụng hơn, thực tế là chúng cũng loại bỏ những lạm dụng phổ biến này có nghĩa là chúng tôi dự định loại bỏ các API đồng bộ cũ cho các máy khách Swift trong bản phát hành trong tương lai.
+
+00:08:21.000 --> 00:08:29.000
+Đây là thời điểm tuyệt vời để chuyển sang các phiên bản không đồng bộ mới của các giao diện này và để giúp bạn làm điều đó, chúng tôi đã chuẩn bị một hướng dẫn di chuyển ngắn.
+
+00:08:29.000 --> 00:08:43.000
+Vì vậy, nếu bạn đang thực hiện bộ ba tải giá trị, kiểm tra trạng thái của nó và sau đó lấy một thuộc tính đồng bộ, bây giờ bạn có thể chỉ cần gọi phương thức tải và thực hiện tất cả điều đó trong một bước không đồng bộ.
+
+00:08:43.000 --> 00:08:55.000
+Tương tự, nếu bạn đang thực hiện quy trình ba bước đó nhưng sử dụng phương thức lọc đồng bộ thay vì thuộc tính, bây giờ bạn có thể gọi tương đương không đồng bộ của phương thức lọc đó và thực hiện điều đó trong một bước.
+
+00:08:55.000 --> 00:09:13.000
+Nếu bạn đang chuyển đổi trạng thái của một thuộc tính bằng cách sử dụng phương thức statusOfValue(forKey: ) cũ và sau đó lấy giá trị thuộc tính đồng bộ khi bạn thấy rằng bạn đang ở trong trường hợp .loaded, bây giờ bạn có thể tận dụng thực tế là trường hợp .loaded của enum trạng thái mới đi kèm với giá trị 
+
+00:09:13.000 --> 00:09:25.000
+Nếu ứng dụng của bạn đang làm điều gì đó thú vị hơn một chút, như tải giá trị của một thuộc tính trong một phần của mã và sau đó tìm nạp giá trị đã tải trong một phần khác của mã, có một vài cách bạn có thể làm điều này với giao diện mới.
+
+00:09:25.000 --> 00:09:28.000
+Tôi khuyên bạn chỉ nên gọi lại phương thức tải.
+
+00:09:28.000 --> 00:09:35.000
+Đây là cách dễ nhất và an toàn nhất để làm điều đó, và nếu tài sản đã được tải, điều này sẽ không sao chép công việc đã được thực hiện.
+
+00:09:35.000 --> 00:09:38.000
+Thay vào đó, nó sẽ chỉ trả về một giá trị được lưu trong bộ nhớ cache.
+
+00:09:38.000 --> 00:09:46.000
+Tuy nhiên, có một cảnh báo cho điều này và đó là, bởi vì phương thức tải là một phương thức không đồng bộ, nó chỉ có thể được gọi từ một ngữ cảnh không đồng bộ.
+
+00:09:46.000 --> 00:09:58.000
+Vì vậy, nếu bạn thực sự cần lấy giá trị của thuộc tính từ bối cảnh đồng bộ thuần túy, bạn có thể làm điều gì đó như lấy trạng thái của thuộc tính và khẳng định rằng nó được tải để lấy giá trị của thuộc tính một cách đồng bộ.
+
+00:09:58.000 --> 00:10:06.000
+Tuy nhiên, bạn phải cẩn thận khi làm điều này, bởi vì một tài sản có thể bị lỗi ngay cả sau khi nó đã được tải.
+
+00:10:06.000 --> 00:10:19.000
+Cuối cùng, nếu bạn bỏ qua các bước tải và kiểm tra trạng thái và chỉ dựa vào hành vi hiện tại của các thuộc tính và phương thức mà chúng chặn cho đến khi có kết quả, tốt, chúng tôi thực sự không cung cấp thay thế cho điều này.
+
+00:10:19.000 --> 00:10:24.000
+Đây chưa bao giờ là cách được đề xuất để sử dụng API, và vì vậy chúng tôi luôn không khuyến khích nó.
+
+00:10:24.000 --> 00:10:35.000
+Chúng tôi đã thiết kế các API tải thuộc tính mới dễ sử dụng như tìm nạp một thuộc tính đơn giản, vì vậy việc di chuyển sang các API mới sẽ đơn giản.
+
+00:10:35.000 --> 00:10:38.000
+Và với điều đó, đó là tất cả cho chủ đề đầu tiên của chúng tôi.
+
+00:10:38.000 --> 00:10:46.000
+Tôi thực sự hào hứng với cách mới của chúng tôi để kiểm tra tài sản, sử dụng các tính năng không đồng bộ mới của Swift và tôi hy vọng bạn sẽ thích sử dụng chúng nhiều như tôi có.
+
+00:10:46.000 --> 00:10:52.000
+Bây giờ hãy chuyển sang chủ đề đầu tiên trong hai chủ đề ngắn hơn của chúng ta: tổng hợp video với siêu dữ liệu.
+
+00:10:52.000 --> 00:11:01.000
+Ở đây chúng ta đang nói về tổng hợp video, đó là quá trình lấy nhiều bản nhạc video và soạn chúng thành một luồng khung hình video duy nhất.
+
+00:11:01.000 --> 00:11:10.000
+Và đặc biệt, chúng tôi có một cải tiến cho các nhà soạn thảo video tùy chỉnh, đó là nơi bạn cung cấp mã thực hiện tổng hợp.
+
+00:11:10.000 --> 00:11:17.000
+Mới trong năm nay, bạn có thể nhận siêu dữ liệu trên mỗi khung hình được gửi cho bạn trong cuộc gọi lại thành phần khung của bộ tổng hợp tùy chỉnh của bạn.
+
+00:11:17.000 --> 00:11:29.000
+Ví dụ, giả sử bạn có một chuỗi dữ liệu GPS và dữ liệu đó được đóng dấu thời gian và đồng bộ hóa với video của bạn và bạn muốn sử dụng dữ liệu GPS đó để ảnh hưởng đến cách các khung hình của bạn được kết hợp với nhau.
+
+00:11:29.000 --> 00:11:36.000
+Bạn có thể làm điều đó ngay bây giờ, và bước đầu tiên là ghi dữ liệu GPS vào một bản nhạc siêu dữ liệu theo thời gian trong phim nguồn của bạn.
+
+00:11:36.000 --> 00:11:43.000
+Để thực hiện việc này với AVAssetWriter, hãy xem lớp hiện có, AVAssetWriter InputMetadataAdaptor.
+
+00:11:43.000 --> 00:11:46.000
+Bây giờ chúng ta hãy xem API mới.
+
+00:11:46.000 --> 00:11:51.000
+Giả sử bạn đang bắt đầu với một bộ phim nguồn có một bộ sưu tập các bản nhạc nhất định.
+
+00:11:51.000 --> 00:11:56.000
+Có lẽ nó có một đoạn âm thanh, hai đoạn video và ba đoạn siêu dữ liệu theo thời gian.
+
+00:11:56.000 --> 00:12:04.000
+Nhưng giả sử rằng bản nhạc bốn và năm chứa siêu dữ liệu hữu ích cho việc tổng hợp video của bạn, nhưng bản nhạc sáu không liên quan.
+
+00:12:04.000 --> 00:12:18.000
+Bạn có hai bước thiết lập để thực hiện và bước đầu tiên là sử dụng thuộc tính SampleDataTrackIDs nguồn mới để cho đối tượng thành phần video của bạn biết ID của tất cả các bản nhạc siêu dữ liệu theo thời gian có liên quan đến toàn bộ thành phần video.
+
+00:12:18.000 --> 00:12:34.000
+Khi bạn đã làm điều đó, bước thứ hai là thực hiện từng hướng dẫn sáng tác video của bạn và làm điều gì đó tương tự, nhưng lần này bạn đặt thuộc tính requiredSourceSampleData TrackIDs để cho nó biết ID theo dõi - hoặc ID - có liên quan đến hướng dẫn cụ thể đó.
+
+00:12:34.000 --> 00:12:41.000
+Điều quan trọng là bạn phải thực hiện cả hai bước thiết lập này hoặc đơn giản là bạn sẽ không nhận được bất kỳ siêu dữ liệu nào trong cuộc gọi lại thành phần của mình.
+
+00:12:41.000 --> 00:12:44.000
+Bây giờ hãy chuyển sang chính cuộc gọi lại.
+
+00:12:44.000 --> 00:12:54.000
+Khi bạn nhận được đối tượng yêu cầu thành phần video không đồng bộ trong cuộc gọi lại của mình, có hai API mới mà bạn sử dụng để lấy siêu dữ liệu cho bố cục video của mình.
+
+00:12:54.000 --> 00:13:02.000
+Đầu tiên là thuộc tính nguồn SampleDataTrackIDs, phát lại ID bản nhạc cho các bản nhạc siêu dữ liệu có liên quan đến yêu cầu đó.
+
+00:13:02.000 --> 00:13:12.000
+Sau đó, đối với mỗi ID theo dõi, bạn có thể sử dụng phương thức sourceTimedMetadata(byTrackID :) để lấy nhóm siêu dữ liệu theo thời gian hiện tại cho bản nhạc đó.
+
+00:13:12.000 --> 00:13:22.000
+Bây giờ, AVTimedMetadataGroup là một biểu diễn cấp cao của siêu dữ liệu, với giá trị được phân tích cú pháp thành một chuỗi, ngày tháng hoặc đối tượng cấp cao khác.
+
+00:13:22.000 --> 00:13:32.000
+Nếu bạn muốn làm việc với các byte thô của siêu dữ liệu, bạn có thể sử dụng phương thức sourceSampleBuffer(byTrackID: ) để lấy CMSampleBuffer thay vì AVTimedMetadataGroup.
+
+00:13:32.000 --> 00:13:42.000
+Khi bạn có siêu dữ liệu trong tay, bạn có thể sử dụng siêu dữ liệu cùng với khung video nguồn của mình để tạo khung video đầu ra và hoàn thành yêu cầu.
+
+00:13:42.000 --> 00:13:52.000
+Vì vậy, đó là tất cả những gì cần thiết để đưa siêu dữ liệu vào cuộc gọi lại trình tổng hợp video tùy chỉnh của bạn để bạn có thể làm những điều thú vị hơn với các tác phẩm video của mình.
+
+00:13:52.000 --> 00:13:57.000
+Bây giờ đến chủ đề cuối cùng của chúng tôi, đó là tác giả tệp chú thích.
+
+00:13:57.000 --> 00:14:02.000
+Mới trong năm nay cho macOS, AVFoundation đang bổ sung hỗ trợ cho hai định dạng tệp.
+
+00:14:02.000 --> 00:14:07.000
+Đầu tiên, chúng ta có iTunes Timed Text, hoặc các tệp .itt, có chứa phụ đề.
+
+00:14:07.000 --> 00:14:14.000
+Định dạng tệp khác là Scenarist Closed Captions - hoặc tệp .scc - chứa phụ đề chi tiết.
+
+00:14:14.000 --> 00:14:26.000
+AVFoundation đang thêm hỗ trợ cho việc tạo hai định dạng tệp này, nhập chú thích từ các loại tệp này và cũng để xem trước chú thích trong thời gian chạy để xem chúng sẽ trông như thế nào trong khi phát lại.
+
+00:14:26.000 --> 00:14:33.000
+Về phía tác giả, chúng tôi có một số API mới, bắt đầu với AVCaption, là đối tượng mô hình đại diện cho một chú thích duy nhất.
+
+00:14:33.000 --> 00:14:40.000
+Nó có các thuộc tính cho những thứ như văn bản, vị trí, kiểu dáng và các thuộc tính khác của một chú thích duy nhất.
+
+00:14:40.000 --> 00:14:49.000
+Bạn có thể tự tạo AVCaptions và sử dụng AVAssetWriterInputCaptionAdaptor để ghi chúng vào một trong hai định dạng tệp này.
+
+00:14:49.000 --> 00:15:00.000
+Ngoài ra, chúng tôi có một dịch vụ xác thực mới trong lớp AVCaptionConversion Validator, giúp bạn đảm bảo chú thích bạn đang viết thực sự tương thích với định dạng tệp bạn đã chọn.
+
+00:15:00.000 --> 00:15:04.000
+Như một ví dụ về lý do tại sao điều này lại quan trọng, hãy xem xét các tệp .scc.
+
+00:15:04.000 --> 00:15:19.000
+Chúng chứa phụ đề CEA-608, đây là một định dạng có những hạn chế rất cụ thể về số lượng chú thích bạn có thể có trong một khoảng thời gian nhất định, cho đến việc có một ngân sách bit cố định cho dữ liệu đại diện cho các ký tự riêng lẻ và kiểu dáng của chúng.
+
+00:15:19.000 --> 00:15:33.000
+Vì vậy, trình xác thực sẽ giúp bạn không chỉ đảm bảo rằng luồng chú thích của bạn tương thích với định dạng tệp, nó còn đề xuất các chỉnh sửa bạn có thể thực hiện cho chú thích của mình, chẳng hạn như điều chỉnh dấu thời gian của chúng, để làm cho chúng tương thích.
+
+00:15:33.000 --> 00:15:43.000
+API mới để nhập chú thích là AVAssetReader OutputCaptionAdaptor cho phép bạn lấy một trong những tệp này và đọc các đối tượng AVCaption từ nó.
+
+00:15:43.000 --> 00:15:56.000
+Cuối cùng, chúng tôi có một lớp AVCaptionRenderer, cho phép bạn lấy một chú thích duy nhất hoặc một nhóm phụ đề và hiển thị chúng thành CGContext để xem trước chúng sẽ trông như thế nào trong quá trình phát lại.
+
+00:15:56.000 --> 00:16:00.000
+Vì vậy, đó chỉ là phần nổi của tảng băng trôi cho các API tác giả tệp chú thích mới của chúng tôi.
+
+00:16:00.000 --> 00:16:10.000
+Nếu bạn quan tâm đến việc áp dụng chúng, chúng tôi khuyến khích bạn liên hệ với chúng tôi - trên diễn đàn hoặc trong phòng thí nghiệm hội nghị - và chúng tôi có thể giúp trả lời bất kỳ câu hỏi nào bạn có.
+
+00:16:10.000 --> 00:16:14.000
+Và đó là chủ đề cuối cùng của chúng tôi, vì vậy hãy kết thúc.
+
+00:16:14.000 --> 00:16:26.000
+Chủ đề lớn của chúng tôi trong ngày là kiểm tra các thuộc tính AVAsset, tầm quan trọng của việc làm như vậy theo yêu cầu và không đồng bộ, các API mới trong lĩnh vực này và một số mẹo để di chuyển từ các API cũ.
+
+00:16:26.000 --> 00:16:32.000
+Sau đó, chúng tôi đã nói về việc sử dụng siêu dữ liệu theo thời gian để tùy chỉnh thêm các tác phẩm video tùy chỉnh của bạn.
+
+00:16:32.000 --> 00:16:38.000
+Cuối cùng, tôi đã giới thiệu ngắn gọn về tác giả tệp chú thích và các API mới trong lĩnh vực đó.
+
+00:16:38.000 --> 00:16:40.000
+Đó là tất cả cho ngày hôm nay.
+
+00:16:40.000 --> 00:16:44.000
+Cảm ơn bạn rất nhiều vì đã xem và thưởng thức WWDC21.
+
+00:16:44.000 --> 23:59:59.000
+♪
+

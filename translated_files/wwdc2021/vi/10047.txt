@@ -1,0 +1,591 @@
+10047
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Brad Ford: Xin chào và chào mừng đến với "Có gì mới trong việc chụp ảnh."
+
+Tôi là Brad Ford từ nhóm Phần mềm Máy ảnh.
+
+Tôi sẽ giới thiệu một loạt các tính năng máy ảnh mới bắt đầu với báo cáo khoảng cách lấy nét tối thiểu; cách quay video HDR 10-bit; khóa học chính, Hiệu ứng video trong Trung tâm điều khiển; và sau đó - thời gian nghỉ ngơi ngắn từ các tính năng mới - Tôi sẽ xem xét các chiến lược để có được hiệu suất tốt nhất từ ứng dụng máy ảnh của bạn
+
+Và cuối cùng, tôi sẽ giới thiệu một thủ thuật hiệu suất hoàn toàn mới cho túi của bạn, nén bề mặt IOS.
+
+Tất cả các tính năng tôi sẽ mô tả hôm nay đều được tìm thấy trong khung AVFoundation - cụ thể là các lớp có tiền tố AVCapture.
+
+Để xem xét ngắn gọn, các đối tượng chính là AVCaptureDevices, đại diện cho máy ảnh hoặc micrô; AVCaptureDeviceInputs, bao bọc các thiết bị, cho phép chúng được cắm vào AVCaptureSession, là đối tượng điều khiển trung tâm của biểu đồ AVCapture.
+
+AVCaptureOutputs hiển thị dữ liệu từ đầu vào theo nhiều cách khác nhau.
+
+MovieFileOutput ghi lại các bộ phim QuickTime.
+
+PhotoOutput chụp ảnh tĩnh chất lượng cao và Ảnh trực tiếp.
+
+Đầu ra dữ liệu, chẳng hạn như VideoDataOutput hoặc AudioDataOutput, cung cấp bộ đệm video hoặc âm thanh từ máy ảnh hoặc micrô đến ứng dụng của bạn.
+
+Có một số loại đầu ra dữ liệu khác, chẳng hạn như Siêu dữ liệu và Độ sâu.
+
+Để xem trước camera trực tiếp, có một loại đầu ra đặc biệt, AVCaptureVideoPreviewLayer, là một lớp con của CALayer.
+
+Luồng dữ liệu từ đầu vào chụp đến đầu ra chụp tương thích thông qua AVCaptureConnections, được biểu thị ở đây bằng các mũi tên này.
+
+Nếu bạn chưa quen với chụp ảnh AVFoundation, tôi mời bạn tìm hiểu thêm tại trang bắt đầu Chụp ảnh và Chụp phương tiện trên developer.apple.com.
+
+Được rồi, hãy đi sâu vào tính năng đầu tiên trong số các tính năng mới của chúng tôi.
+
+Khoảng cách lấy nét tối thiểu là khoảng cách từ ống kính đến điểm gần nhất nơi có thể lấy nét sắc nét.
+
+Đó là một thuộc tính của tất cả các ống kính, có thể là trên máy ảnh DSLR hoặc điện thoại thông minh.
+
+Máy ảnh iPhone cũng có khoảng cách lấy nét tối thiểu, chúng tôi chưa bao giờ xuất bản nó trước đây...
+
+...Cho đến bây giờ, đó là.
+
+Bắt đầu từ iOS 15, khoảng cách lấy nét tối thiểu là một thuộc tính được công bố của máy ảnh lấy nét tự động iPhone.
+
+Đây là một mẫu của những chiếc iPhone gần đây.
+
+Biểu đồ minh họa khoảng cách lấy nét tối thiểu của máy ảnh Wide và tele thay đổi như thế nào giữa các kiểu máy.
+
+Có một sự khác biệt đáng chú ý giữa máy ảnh iPhone 12 Pro và 12 Pro Max Wide, Pro Max lấy nét ở khoảng cách tối thiểu 15 cm so với 12 trên Pro.
+
+Điều này là do công nghệ ổn định dịch chuyển cảm biến trong iPhone 12 Pro Max.
+
+Tương tự như vậy, khoảng cách lấy nét tối thiểu của tele xa hơn trên 12 Pro Max so với 12 Pro.
+
+Điều này là do tầm với dài hơn của ống kính tele.
+
+Nó có zoom 2.5x so với zoom 2x.
+
+Hãy để tôi chỉ cho bạn một bản demo nhanh về lý do tại sao báo cáo khoảng cách lấy nét tối thiểu lại quan trọng.
+
+Đây là một ứng dụng mẫu có tên AVCamBarcode.
+
+Nó giới thiệu các API phát hiện mã vạch AVFoundation của chúng tôi.
+
+Giao diện người dùng hướng dẫn người dùng định vị một đối tượng bên trong hình chữ nhật để quét.
+
+Trong ví dụ này, tôi đã chọn một mã QR khá nhỏ trên một tờ giấy.
+
+Mã vạch chỉ rộng 20 mm.
+
+Bằng cách nhấn vào nút Siêu dữ liệu, tôi thấy danh sách tất cả các loại đối tượng khác nhau được AVCaptureMetadataOutput hỗ trợ.
+
+Có rất nhiều người trong số họ.
+
+Tôi sẽ chọn QRCodes và sau đó định vị máy ảnh iPhone 12 Pro Max của mình để lấp đầy hình chữ nhật bằng QRCode.
+
+Thật không may, nó nhỏ đến mức tôi phải đến rất gần trang để điền vào bản xem trước.
+
+Nó gần hơn khoảng cách lấy nét tối thiểu của máy ảnh.
+
+Mã bị mờ, vì vậy nó không quét.
+
+Để hướng dẫn người dùng lùi lại, tôi cần áp dụng hệ số thu phóng cho bản xem trước máy ảnh...
+
+...Như vậy.
+
+Nhìn thấy hình ảnh được phóng to trên màn hình sẽ nhắc họ di chuyển máy ảnh ra xa giấy hơn.
+
+Tôi có thể làm điều đó với một nút trượt, nhưng sẽ tốt hơn nhiều nếu ứng dụng tự động thu phóng.
+
+Đó là nơi thuộc tính minimumFocusDistance mới của AVCaptureDevice xuất hiện.
+
+Nó mới trong iOS 15.
+
+Với trường nhìn ngang của máy ảnh, kích thước mã vạch tối thiểu bạn muốn quét - ở đây tôi đã đặt nó thành 20 mm - và chiều rộng của cửa sổ xem trước máy ảnh theo tỷ lệ phần trăm, chúng ta có thể thực hiện một phép toán nhỏ để tính toán khoảng cách đối tượng tối thiểu cần thiết để lấp đầy chiều rộng xem trước đó.
+
+Sau đó, sử dụng thuộc tính minimumFocusDistance mới của máy ảnh, chúng ta có thể phát hiện khi máy ảnh của chúng ta không thể lấy nét gần đó và tính toán hệ số thu phóng đủ lớn để hướng dẫn người dùng lùi lại.
+
+Và cuối cùng, chúng tôi áp dụng nó vào máy ảnh bằng cách khóa nó để cấu hình, cài đặt hệ số thu phóng và sau đó mở khóa nó.
+
+Sau khi biên dịch lại ứng dụng demo của chúng tôi, giao diện người dùng hiện tự động áp dụng lượng thu phóng chính xác.
+
+Khi ứng dụng khởi chạy, nó đã được phóng to đến đúng không gian.
+
+Không còn mã vạch mờ nữa!
+
+Và nếu tôi chạm vào nó, chúng ta có thể thấy nó đưa tôi đến đâu.
+
+À! "Nắm bắt chiều sâu trong nhiếp ảnh iPhone" - một người già nhưng một người tốt.
+
+Tôi đánh giá cao phiên đó.
+
+Vui lòng xem mẫu AVCamBarcode mới để biết các phương pháp hay nhất về cách kết hợp khoảng cách lấy nét tối thiểu, cũng như nhiều phương pháp hay nhất khác để quét mã vạch.
+
+Tiếp theo là video HDR 10-bit.
+
+HDR là viết tắt của High Dynamic Range, và nó đã xuất hiện như một công nghệ hình ảnh tĩnh kể từ khi trở lại iOS 4.1.
+
+Việc duy trì Dải động cao thường được thực hiện bằng cách thực hiện nhiều lần phơi sáng của một cảnh và sau đó pha trộn chúng để bảo tồn cả điểm sáng và bóng tối.
+
+Nhưng còn video HDR thì sao?
+
+Đó là một thách thức vì bạn phải cung cấp 30 hoặc 60 khung hình một giây.
+
+Không hẳn là Video HDR - nhưng gần - vào năm 2018, Apple đã giới thiệu EDR, hoặc Dải động mở rộng, cho dòng máy ảnh iPhone XS.
+
+EDR là một giải pháp giống như HDR cho video.
+
+Về cơ bản, nó tăng gấp đôi tốc độ khung hình chụp, xen kẽ giữa phơi sáng tiêu chuẩn và phơi sáng ngắn, nhưng theo thời gian nên hầu như không có khoảng trống dọc giữa các lần chụp.
+
+Khi chụp trên danh nghĩa 30 khung hình mỗi giây, video EDR thực sự đang chạy máy ảnh ở tốc độ 60 khung hình một giây.
+
+Khi cảnh yêu cầu, bản đồ màu sắc từ EV- được áp dụng động cho hình ảnh EV0 để khôi phục các điểm nổi bật được cắt bớt, nhưng không làm mất chi tiết trong bóng tối.
+
+Nó không phải là một giải pháp HDR đầy đủ, vì hiệu quả của nó giảm dần trong điều kiện ánh sáng yếu, nhưng nó cung cấp kết quả đáng kinh ngạc trong điều kiện ánh sáng trung bình đến tốt.
+
+Bây giờ đây là phần khó hiểu.
+
+EDR được trình bày như một bộ thuộc tính AVCaptureDevice dưới biệt danh videoHDR.
+
+Bất cứ nơi nào bạn thấy videoHDRSupported hoặc videoHDREnabled trong AVCapture API, bạn nên thay thế EDR về mặt tinh thần.
+
+Đó là những gì nó là.
+
+AVCaptureDevice cũng có một thuộc tính được gọi là "automaticallyAdjusts VideoHDREnabled", mặc định là true.
+
+Vì vậy EDR được kích hoạt tự động bất cứ khi nào nó có sẵn.
+
+Nếu vì lý do nào đó bạn muốn vô hiệu hóa nó, bạn cần đặt tự độngAdjustsVideo HDREnabled thành false, và sau đó đặt videoHDREnabled thành false.
+
+Bây giờ câu chuyện thậm chí còn tốt hơn.
+
+Tôi cần nói với bạn về EDR để tôi có thể nói với bạn về Video HDR 10-bit.
+
+Video HDR 10-bit thực sự là Dải động cao vì nó có nhiều bit hơn!
+
+Điều đó có nghĩa là tăng khả năng chỉnh sửa.
+
+Nó có EDR để phục hồi điểm nổi bật và nó luôn bật.
+
+Nó sử dụng các đường cong gamma log lai cũng như không gian màu BT.2020, cho phép độ tương phản màu sắc thậm chí còn lớn hơn - độ sáng sáng hơn Rec 709.
+
+Và cho dù bạn sử dụng AVCaptureMovieFileOutput hay AVCaptureVideoDataOutput cộng với AVAssetWriter, chúng tôi sẽ tự động chèn siêu dữ liệu Dolby Vision trên mỗi khung hình vào phim của bạn, làm cho chúng tương thích với màn hình Dolby Vision.
+
+Video HDR 10-bit lần đầu tiên được giới thiệu trên iPhone 12.
+
+Các định dạng video HDR 10-bit có thể được xác định bằng loại định dạng pixel duy nhất của chúng.
+
+Trên các mẫu iPhone cũ hơn, máy ảnh có AVCaptureDeviceFormats luôn đi kèm theo cặp.
+
+Đối với mỗi độ phân giải và phạm vi tốc độ khung hình, có định dạng 420v và 420f.
+
+Đây là các định dạng 8-bit, biplanar, YUV.
+
+V trong 420v là viết tắt của phạm vi video - hoặc 16 đến 235 - và F trong 420f là viết tắt của toàn dải - hoặc 0 đến 255.
+
+Trên các mẫu iPhone 12, một số định dạng có ba định dạng.
+
+Sau các định dạng 420v và 420f xuất hiện định dạng x420 có cùng độ phân giải và phạm vi tốc độ khung hình.
+
+Giống như 420v, x420 là định dạng 420 hai mặt phẳng trong phạm vi video, nhưng x trong x420 là viết tắt của 10 bit thay vì 8.
+
+Để tìm và chọn định dạng video HDR 10-bit trong mã, chỉ cần lặp qua các định dạng AVCaptureDevice cho đến khi bạn tìm thấy định dạng pixel phù hợp với x420 hoặc - hít thở sâu - 420YpCbCr10BiPlanarVideoRange.
+
+Tất nhiên bạn có thể bao gồm các tiêu chí tìm kiếm khác, chẳng hạn như chiều rộng, chiều cao và tốc độ khung hình tối đa.
+
+Chúng tôi đã cập nhật mã mẫu AVCam của mình để hỗ trợ video HDR 10-bit khi có sẵn.
+
+Có một chức năng tiện ích tiện dụng trong đó được gọi là "tenBitVariantOfFormat" có thể tìm thấy biến thể HDR 10-bit của bất kỳ định dạng hoạt động của thiết bị hiện được chọn nào.
+
+Vui lòng xem qua.
+
+Video HDR 10-bit được hỗ trợ ở tất cả các định dạng video phổ biến nhất, bao gồm 720p, 1080p và 4K.
+
+Và chúng tôi cũng bao gồm định dạng 4 x 3 - 1920 x 1440 - hỗ trợ ảnh 12 megapixel, độ phân giải cao.
+
+Mặc dù quay video HDR 10-bit rất đơn giản, nhưng việc chỉnh sửa và phát lại đúng cách rất khó khăn.
+
+Tôi mời bạn xem một phiên đồng hành từ năm 2020 có tựa đề "Chỉnh sửa và phát lại video HDR với AVFoundation."
+
+Được rồi, đó là nó cho video HDR.
+
+Bây giờ đến sự kiện chính: Hiệu ứng video trong Trung tâm điều khiển.
+
+Nói một cách đơn giản, đây là những tính năng máy ảnh cấp hệ thống có sẵn trong ứng dụng của bạn mà không có thay đổi mã.
+
+Và người dùng đang kiểm soát.
+
+Đây là một chút khởi đầu cho chúng tôi.
+
+Theo truyền thống, khi chúng tôi giới thiệu một tính năng máy ảnh mới trong iOS hoặc macOS, các ứng dụng của Apple sẽ áp dụng nó ngay lập tức.
+
+Chúng tôi giới thiệu các API AVCapture mới, bạn tìm hiểu về chúng - giống như bạn đang làm bây giờ - và sau đó bạn áp dụng tính năng này theo tốc độ của riêng mình.
+
+Đây là một cách tiếp cận an toàn và bảo thủ, nhưng thường dẫn đến thời gian chờ lâu, trong đó người dùng bỏ lỡ một tính năng tuyệt vời trong các ứng dụng máy ảnh yêu thích của họ.
+
+Với Hiệu ứng Video trong Trung tâm Điều khiển, chúng tôi đang giới thiệu các tính năng máy ảnh được đóng gói sẵn cấp hệ thống có sẵn cho mọi người ngay lập tức mà không thay đổi mã và người dùng có quyền kiểm soát được.
+
+Chúng tôi tiếp tục giới thiệu các API mới cho các tính năng này, vì vậy bạn có thể điều chỉnh trải nghiệm trong ứng dụng của mình ngay khi lịch phát hành của bạn cho phép.
+
+Hãy cùng xem những hiệu ứng này.
+
+Lần đầu tiên được công bố tại sự kiện Apple tải mùa xuân tháng 5 của chúng tôi và nó được gọi là "Giai đoạn trung tâm".
+
+Nó có sẵn trên các mẫu M1 iPad Pro được phát hành gần đây và nó sử dụng máy ảnh mặt trước Ultra Wide 12 megapixel đáng kinh ngạc của họ.
+
+Center Stage thực sự nâng cao giá trị sản xuất của các cuộc gọi video FaceTime của bạn.
+
+Nó cũng hoạt động tốt ngay lập tức trong mọi ứng dụng hội nghị truyền hình khác.
+
+Đây, để tôi chỉ cho bạn.
+
+Tôi vừa tải xuống Skype từ App Store; đây là phiên bản chứng khoán của ứng dụng.
+
+Khi tôi bắt đầu một cuộc gọi Skype, bạn ngay lập tức thấy Sân khấu Trung tâm bắt đầu hoạt động.
+
+Nó giống như có người điều khiển máy ảnh cá nhân của riêng bạn.
+
+Nó đóng khung bạn khi bạn di chuyển xung quanh khung cảnh để giữ cho bạn được đóng khung hoàn hảo, cho dù bạn đến chặt chẽ hay bạn di chuyển trở lại và thích tăng tốc.
+
+Nó thậm chí có thể theo dõi bạn khi bạn quay mặt ra khỏi máy ảnh.
+
+Đó là bởi vì nó theo dõi cơ thể, không chỉ khuôn mặt.
+
+Là người dùng, tôi có thể điều khiển Giai đoạn Trung tâm bằng cách chỉ cần vuốt xuống Trung tâm Điều khiển, nhấn vào mô-đun Hiệu ứng Video mới và thực hiện lựa chọn của tôi.
+
+Khi tôi tắt Center Stage và quay lại ứng dụng, tôi không còn nhận được hiệu ứng Center Stage nữa.
+
+Không có thay đổi nào trong ứng dụng.
+
+Có một tính năng mới đồng hành mà tất cả các ứng dụng hội nghị truyền hình cũng nhận được và được gọi là "Chân dung".
+
+Chế độ chân dung cung cấp cho tôi hiệu ứng độ sâu trường ảnh nông được hiển thị đẹp mắt.
+
+Nó không chỉ là một sự mờ nhạt riêng tư đơn giản; nó sử dụng Neural Engine của Apple cộng với mạng lưới độ sâu một mắt được đào tạo để ước tính một máy ảnh thực sự với ống kính mở rộng.
+
+Bây giờ cuối cùng chúng ta hãy xem xét các chế độ micrô bằng cách vuốt xuống và chọn mô-đun Chế độ Mic, tôi có thể đưa ra lựa chọn của mình giữa Tiêu chuẩn, Cách ly giọng nói hoặc Phổ rộng.
+
+Các chế độ micrô nâng cao chất lượng âm thanh trong các cuộc trò chuyện video của bạn.
+
+Nhiều hơn về những thứ này trong một phút.
+
+Trong khi các Chế độ Center Stage, Portrait và Mic chia sẻ bất động sản màn hình trong Control Center, chúng có phần khác nhau về cách xử lý API.
+
+Tôi sẽ giới thiệu cho bạn các API Sân khấu Trung tâm trước và sau đó là Chế độ Chân dung và Mic.
+
+Center Stage có sẵn trên tất cả các camera trước của M1 iPad Pros.
+
+Cho dù bạn đang sử dụng máy ảnh Ultra Wide mặt trước mới, máy ảnh Virtual Wide - trình bày trường nhìn thông thường, được cắt xén - hay máy ảnh TrueDepth ảo, Center Stage đều có sẵn.
+
+Máy ảnh TrueDepth đi kèm với một số điều kiện, mà tôi sẽ đề cập trong giây lát.
+
+Mô-đun Hiệu ứng Video Trung tâm Điều khiển trình bày chuyển đổi bật/tắt cho mỗi ứng dụng.
+
+Điều này cho phép bạn mặc định Center Stage được bật trong ứng dụng hội nghị, trong khi mặc định tắt nó trong ứng dụng chụp ảnh chuyên nghiệp, nơi bạn muốn đóng khung ảnh của mình theo cách thủ công.
+
+Có một trạng thái cho mỗi ứng dụng, không phải một trạng thái cho mỗi máy ảnh.
+
+Bởi vì nút chuyển đổi bật/tắt Giai đoạn Trung tâm là trên mỗi ứng dụng, không phải trên mỗi máy ảnh, nó được trình bày trong API dưới dạng một tập hợp các thuộc tính lớp trên AVCaptureDevice.
+
+Chúng có thể đọc được, ghi và có thể quan sát được giá trị khóa.
+
+centerStageEnabled khớp với trạng thái bật/tắt của giao diện người dùng Sân khấu Trung tâm trong Trung tâm điều khiển.
+
+Chế độ điều khiển Giai đoạn Trung tâm ra lệnh ai được phép chuyển đổi trạng thái được bật.
+
+Nhiều hơn về điều đó trong một phút.
+
+Không phải tất cả các máy ảnh hoặc định dạng đều hỗ trợ Sân khấu Trung tâm.
+
+Bạn có thể lặp lại thông qua mảng định dạng của bất kỳ máy ảnh nào để tìm định dạng hỗ trợ tính năng này và đặt nó làm Định dạng hoạt động của bạn.
+
+Ngoài ra, bạn có thể tìm hiểu xem Giai đoạn Trung tâm hiện đang hoạt động cho một máy ảnh cụ thể hay không bằng cách truy vấn hoặc quan sát thuộc tính hoạt động Giai đoạn Trung tâm của nó.
+
+Bạn nên nhận thức được những hạn chế của Sân khấu Trung tâm.
+
+Center Stage sử dụng định dạng 12 megapixel đầy đủ của máy ảnh Ultra Wide, có định dạng 30 khung hình / giây, vì vậy tốc độ khung hình tối đa được giới hạn ở mức 30.
+
+Center Stage tránh nâng cấp để duy trì chất lượng hình ảnh, vì vậy nó bị giới hạn ở độ phân giải đầu ra tối đa là 1920 bởi 1440.
+
+Xoay và thu phóng phải nằm dưới điều khiển Sân khấu Trung tâm, vì vậy hệ số thu phóng video bị khóa tại một.
+
+Hiệu chỉnh biến dạng hình học là không thể thiếu đối với khung người của Center Stage và việc phân phối độ sâu phải được tắt, vì việc tạo độ sâu yêu cầu khớp với toàn bộ trường nhìn của hình ảnh từ RGB và camera hồng ngoại.
+
+Bây giờ chúng ta hãy đi vào khái niệm về các chế độ điều khiển.
+
+Center Stage có ba chế độ được hỗ trợ: người dùng, ứng dụng và hợp tác xã.
+
+Chế độ người dùng là chế độ điều khiển Giai đoạn Trung tâm mặc định cho tất cả các ứng dụng.
+
+Trong chế độ này, chỉ người dùng mới có thể bật và tắt tính năng.
+
+Nếu ứng dụng của bạn cố gắng thay đổi trạng thái bật Giai đoạn Trung tâm theo chương trình, một ngoại lệ sẽ được ném ra.
+
+Tiếp theo là chế độ ứng dụng, trong đó chỉ ứng dụng của bạn mới được phép kiểm soát tính năng này.
+
+Người dùng không thể sử dụng Trung tâm điều khiển vì nút chuyển đổi có màu xám ngoài kia.
+
+Không khuyến khích sử dụng chế độ này.
+
+Bạn chỉ nên sử dụng nó nếu Center Stage không tương thích với ứng dụng của bạn.
+
+Nếu bạn cần chọn không tham gia, bạn có thể đặt chế độ điều khiển thành ứng dụng, sau đó đặt isCenterStageEnabled thành false.
+
+Trải nghiệm người dùng tốt nhất có thể cho Center Stage là chế độ hợp tác, trong đó người dùng có thể kiểm soát tính năng trong Control Center và ứng dụng của bạn có thể điều khiển nó bằng giao diện người dùng của riêng bạn.
+
+Tuy nhiên, bạn cần phải làm thêm một số công việc.
+
+Bạn phải quan sát thuộc tính AVCaptureDevice .isCenterStageEnabled và cập nhật giao diện người dùng của bạn để đảm bảo Center Stage được bật khi người dùng muốn.
+
+Sau khi đặt chế độ điều khiển thành hợp tác, bạn có thể đặt giai đoạn trung tâm được bật thành đúng hoặc sai - ví dụ như dựa trên một nút trong ứng dụng của bạn.
+
+Đứa trẻ áp phích cho chế độ hợp tác là FaceTime.
+
+Trong khi tôi đang thực hiện cuộc gọi FaceTime, tôi có thể sử dụng một nút ngay trong ứng dụng để bật Center Stage để nó theo dõi tôi hoặc tôi có thể sử dụng phương pháp thông thường là vuốt xuống trong Control Center và bật hoặc tắt Center Stage.
+
+FaceTime và Trung tâm điều khiển hợp tác về trạng thái của Giai đoạn Trung tâm để nó luôn phù hợp với ý định của người dùng.
+
+FaceTime cũng đủ thông minh để biết khi nào các tính năng không tương thích lẫn nhau.
+
+Vì vậy, nếu, ví dụ, tôi đã cố gắng bật Animoji, yêu cầu độ sâu...
+
+...Nó biết tắt Center Stage, bởi vì hai tính năng đó không tương thích với nhau.
+
+Nếu tôi nhấn để bật lại Center Stage, FaceTime biết tắt Animoji.
+
+Điều đó kết thúc API Giai đoạn Trung tâm.
+
+Hãy chuyển sang bạn cùng phòng của Center Stage trong Control Center, Portrait.
+
+Nói một cách đơn giản, đó là một hiệu ứng độ sâu trường ảnh nông được hiển thị đẹp mắt, được thiết kế để trông giống như một ống kính khẩu độ rộng.
+
+Trên iOS, Portrait được hỗ trợ trên tất cả các thiết bị với Apple Neural Engine - đó là năm 2018 và các điện thoại và miếng đệm mới hơn.
+
+Chỉ có camera mặt trước được hỗ trợ.
+
+Nó cũng được hỗ trợ trên tất cả các máy Mac M1, cũng chứa Neural Engine của Apple.
+
+Chân dung là một thuật toán phức tạp về mặt tính toán.
+
+Do đó, để giữ cho hiệu suất kết xuất video đáp ứng, nó bị giới hạn ở độ phân giải tối đa 1920 x 1440 và độ phân giải tối đa 30 khung hình mỗi giây.
+
+Giống như Center Stage, hiệu ứng Portrait có trạng thái bật/tắt dính trên mỗi ứng dụng.
+
+API của nó đơn giản hơn Center Stage, người dùng luôn kiểm soát thông qua Control Center và nó chỉ khả dụng theo mặc định trong một số lớp ứng dụng nhất định.
+
+Trên iOS, các ứng dụng sử dụng VoIP UIBackgroundMode sẽ tự động được chọn tham gia - người dùng có thể bật hoặc tắt hiệu ứng trong Trung tâm điều khiển.
+
+Tất cả các ứng dụng iOS khác phải chọn tham gia để tuyên bố đủ điều kiện cho hiệu ứng Chân dung bằng cách thêm khóa mới vào Info.plist của ứng dụng của họ: NSCameraPortraitEffectEnabled.
+
+Trên macOS, tất cả các ứng dụng đều được chọn tham gia tự động và có thể sử dụng hiệu ứng ngay lập tức.
+
+Hiệu ứng Chân dung luôn nằm dưới sự kiểm soát của người dùng chỉ thông qua Trung tâm điều khiển.
+
+Như với Sân khấu Trung tâm, không phải tất cả các máy ảnh hoặc định dạng đều hỗ trợ Chân dung.
+
+Bạn có thể lặp lại thông qua mảng định dạng của bất kỳ máy ảnh nào để tìm định dạng hỗ trợ tính năng này và đặt nó làm định dạng hoạt động của bạn.
+
+Bạn cũng có thể tìm hiểu xem Portrait hiện đang hoạt động cho một máy ảnh cụ thể hay không bằng cách truy vấn hoặc quan sát thuộc tính isPortraitEffectActive của nó.
+
+Mic Mode APIs tương tự như Portrait.
+
+Lựa chọn người dùng gắn bó với mỗi ứng dụng.
+
+Người dùng luôn kiểm soát; ứng dụng của bạn không thể đặt Chế độ Mic trực tiếp.
+
+Một số ứng dụng cần chọn tham gia để sử dụng tính năng này.
+
+Chế độ Mic được trình bày trong giao diện AVCaptureDevice của AVFoundation và có ba hương vị: tiêu chuẩn, sử dụng DSP âm thanh tiêu chuẩn; phổ rộng, giảm thiểu quá trình xử lý để thu tất cả âm thanh xung quanh thiết bị nhưng nó vẫn bao gồm hủy tiếng vang; và cách ly giọng nói, giúp tăng cường lời nói và loại bỏ tiếng
+
+Những hương vị này chỉ có thể được đặt bởi người dùng trong Trung tâm điều khiển, nhưng bạn có thể đọc và quan sát trạng thái của chúng bằng cách sử dụng MicrophoneMode ưa thích của AVCaptureDevice - là chế độ do người dùng chọn - và activeMicrophoneMode - là chế độ hiện đang được sử dụng, có tính đến tuyến âm thanh hiện tại,
+
+Để sử dụng Chế độ Mic, ứng dụng của bạn phải sử dụng đơn vị âm thanh Core Audio AUVoiceIO.
+
+Đây là một giao diện phổ biến trong các ứng dụng hội nghị truyền hình, vì nó thực hiện hủy tiếng vang.
+
+Và xử lý Chế độ Mic chỉ khả dụng trên các thiết bị iOS và macOS 2018 trở lên.
+
+Với Chế độ Chân dung và Mic, người dùng luôn kiểm soát, nhưng bạn có thể nhắc họ tắt hoặc bật tính năng bằng cách gọi phương thức AVCaptureDevice .showSystemUserInterface mới.
+
+Và bạn có thể chuyển nó hoặc videoEffects hoặc microphoneModes.
+
+Gọi API này sẽ mở Trung tâm điều khiển và các liên kết sâu đến mô-đun con thích hợp.
+
+Ở đây, chúng tôi đang đi sâu vào mô-đun Hiệu ứng Video, nơi người dùng có thể chọn tắt Chân dung.
+
+Điều đó kết thúc Chân dung và kết thúc Hiệu ứng Video trong Trung tâm Điều khiển.
+
+Tôi vừa cho bạn xem các ví dụ về các tính năng máy ảnh cấp hệ thống được đưa vào ứng dụng của bạn mà không cần bạn thay đổi một dòng mã - một khái niệm khá mạnh mẽ!
+
+Có một phiên đồng hành với phiên này được gọi là "Chụp ảnh chất lượng cao bằng định dạng video", nơi bạn sẽ tìm hiểu về những cải tiến mà chúng tôi đã thực hiện để giữ chất lượng hình ảnh trong ứng dụng của mình mà không cần bạn thay đổi dòng mã.
+
+Vui lòng kiểm tra nó.
+
+Chúng tôi đã đề cập đến rất nhiều tính năng mới.
+
+Tại thời điểm này trong phiên, tôi muốn nghỉ ngơi và nói về hiệu suất.
+
+Center Stage và Portrait là những tính năng tuyệt vời của người dùng, nhưng chúng có thêm chi phí hiệu suất.
+
+Vì vậy, hãy xem lại các phương pháp hay nhất về hiệu suất để đảm bảo các ứng dụng máy ảnh của bạn đã sẵn sàng cho các tính năng mới như Chân dung và Sân khấu Trung tâm.
+
+Các ứng dụng máy ảnh sử dụng các lớp AVCapture để cung cấp một loạt các tính năng.
+
+Giao diện phổ biến nhất là AVCaptureVideoDataOutput, cho phép bạn lấy khung hình video trực tiếp đến quy trình thao tác, hiển thị, mã hóa, ghi...
+
+Bạn đặt tên cho nó.
+
+Khi sử dụng VideoDataOutput, điều quan trọng là phải đảm bảo rằng ứng dụng của bạn luôn cập nhật thời hạn theo thời gian thực để không bị rơi khung hình.
+
+Theo mặc định, VideoDataOutput ngăn bạn quay lại phía sau bằng cách đặt thuộc tính alwaysDiscardsLateVideoFrames của nó thành true.
+
+Điều này thực thi kích thước hàng đợi bộ đệm ở cuối đường ống xử lý đầu ra dữ liệu video và giúp bạn tránh khỏi quá trình xử lý chậm định kỳ hoặc mãn tính bằng cách luôn cung cấp cho bạn khung hình mới nhất và thả các khung hình mà bạn chưa sẵn sàng xử lý.
+
+Nó không giúp ích gì cho bạn nếu bạn cần ghi lại các khung hình bạn đang nhận được, chẳng hạn như với AVAssetWriter.
+
+Nếu bạn có ý định ghi lại kết quả đã xử lý của mình, bạn nên tắt alwaysDiscardsLateVideoFrames và chú ý đến thời gian xử lý của mình.
+
+VideoDataOutput cho bạn biết khi nào khung hình bị rớt xảy ra bằng cách gọi cuộc gọi lại đại diện captureOutput didDrop sampleBuffer được cung cấp của bạn.
+
+Khi bạn nhận được cuộc gọi lại didDrop, bạn có thể kiểm tra các tệp đính kèm của sampleBuffer để tìm một lý do Khung bị bỏ rơi.
+
+Điều này có thể thông báo phải làm gì để giảm thiểu sự sụt giảm khung hình tiếp theo.
+
+Có ba lý do: FrameWasLate, có nghĩa là quá trình xử lý của bạn mất quá nhiều thời gian; OutOfBuffers, có nghĩa là bạn có thể đang giữ quá nhiều bộ đệm; và Discontinuity, có nghĩa là hệ thống chậm lại hoặc lỗi phần cứng không phải lỗi của bạn.
+
+Bây giờ hãy nói về cách phản ứng với việc rơi khung hình.
+
+Một trong những cách tốt nhất là giảm tốc độ khung hình thiết bị một cách linh hoạt.
+
+Làm như vậy không phát sinh trục trặc trong bản xem trước hoặc đầu ra.
+
+Bạn chỉ cần đặt một activeMinVideoFrameDuration mới trên AVCaptureDevice của mình trong thời gian chạy.
+
+Cách thứ hai là đơn giản hóa khối lượng công việc của bạn để bạn không mất quá nhiều thời gian.
+
+Bây giờ hãy nói về áp lực hệ thống, một chỉ số hiệu suất khác cực kỳ quan trọng đối với trải nghiệm người dùng tốt trong ứng dụng máy ảnh của bạn.
+
+Áp suất hệ thống có nghĩa là, hệ thống có thể bị căng thẳng hoặc áp lực.
+
+AVCaptureDevice có một thuộc tính được gọi là systemPressureState, bao gồm các yếu tố và mức tổng thể.
+
+Các yếu tố đóng góp của SystemPressureState là một chút mặt nạ của ba người đóng góp có thể.
+
+Nhiệt độ hệ thống đề cập đến mức độ nóng của thiết bị.
+
+peakPower là tất cả về sự lão hóa pin và liệu pin có khả năng tăng điện áp đủ nhanh để đáp ứng nhu cầu năng lượng cực đại hay không.
+
+Và depthModuleTemperature, đề cập đến mức độ nóng của cảm biến hồng ngoại của máy ảnh TrueDepth.
+
+Cấp độ của SystemPressureState là một chỉ báo có thể giúp bạn hành động trước khi trải nghiệm người dùng của bạn bị xâm phạm.
+
+Khi nó là danh nghĩa, mọi thứ đều là copacetic.
+
+Công bằng chỉ ra rằng áp suất hệ thống tăng nhẹ.
+
+Điều này có thể xảy ra ngay cả khi bạn đang xử lý rất ít nhưng nhiệt độ môi trường cao.
+
+Ở mức độ nghiêm trọng, áp suất hệ thống tăng cao; hiệu suất chụp có thể bị ảnh hưởng.
+
+Nên điều chỉnh tốc độ khung hình.
+
+Một khi bạn đạt đến mức quan trọng, áp lực hệ thống sẽ tăng lên nghiêm trọng; chất lượng và hiệu suất chụp được ảnh hưởng đáng kể.
+
+Điều chỉnh tốc độ khung hình rất được khuyến khích.
+
+Và bạn không bao giờ muốn để mọi thứ leo thang đến mức tắt máy, nơi mà áp lực hệ thống vượt quá mức quan trọng.
+
+Ở cấp độ này, AVCaptureSession dừng tự động để cứu thiết bị khỏi bẫy nhiệt.
+
+Bạn có thể phản ứng với áp lực tăng cao theo nhiều cách khác nhau.
+
+Giảm tốc độ khung hình chụp; điều này sẽ luôn giúp áp lực hệ thống.
+
+Nếu giảm tốc độ khung hình không phải là một lựa chọn, hãy cân nhắc giảm khối lượng công việc của bạn trên CPU hoặc GPU, chẳng hạn như tắt một số tính năng nhất định.
+
+Bạn cũng có thể giữ các tính năng nhưng làm giảm chất lượng, có lẽ chỉ bằng cách xử lý độ phân giải nhỏ hơn hoặc ít thường xuyên hơn.
+
+AVCaptureSession không bao giờ thay mặt bạn điều chỉnh tốc độ khung hình, vì chúng tôi không biết đó có phải là chiến lược suy giảm chất lượng chấp nhận được cho ứng dụng của bạn hay không.
+
+Điều đó kết thúc các phương pháp hay nhất về hiệu suất.
+
+Bây giờ vào khóa học tráng miệng của chúng tôi, nén bề mặt IOS.
+
+Tôi cẩn thận tránh nói về băng thông bộ nhớ trong phần hiệu suất, vì bạn không thể làm gì nhiều về các yêu cầu băng thông bộ nhớ tổng thể của video chảy qua ISP và cuối cùng là ảnh, phim, bản xem trước hoặc bộ đệm của bạn.
+
+Tuy nhiên, băng thông bộ nhớ có thể là một giới hạn quan trọng trong việc xác định tính năng máy ảnh nào có thể chạy đồng thời.
+
+Khi làm việc với video không nén trên iOS và macOS, có rất nhiều lớp liên quan.
+
+Nó hơi giống một con búp bê làm tổ của Nga.
+
+Ở cấp độ cao nhất là CMSampleBuffer, có thể bao bọc tất cả các loại dữ liệu phương tiện, cũng như thời gian và siêu dữ liệu.
+
+Xuống một cấp độ, có CVPixelBuffer, đặc biệt bọc dữ liệu bộ đệm pixel cùng với các tệp đính kèm siêu dữ liệu.
+
+Cuối cùng, bạn đạt đến mức thấp nhất đó, bề mặt IOS, cho phép bộ nhớ được kết nối với hạt nhân, cũng như cung cấp một giao diện để chia sẻ bộ đệm video lớn giữa các quy trình.
+
+Bề mặt IOS rất lớn.
+
+Chúng giải thích cho các yêu cầu băng thông bộ nhớ tuyệt vời của video không nén.
+
+Rất may, nén bề mặt IOS cung cấp giải pháp cho các vấn đề về băng thông bộ nhớ.
+
+Mới trong iOS 15, chúng tôi đang giới thiệu hỗ trợ cho định dạng nén video trong bộ nhớ không mất dữ liệu.
+
+Đó là một sự tối ưu hóa để giảm tổng băng thông bộ nhớ cho video trực tiếp.
+
+Đó là một định dạng trao đổi được hiểu bởi các khối phần cứng chính trên các thiết bị iOS và Mac.
+
+Nó có sẵn trên tất cả các biến thể iPhone 12, iPad Airs mùa thu 2020 và iPad Pro M1 mùa xuân 2021.
+
+Những khối phần cứng chính nào giao dịch trong các bề mặt IOS nén?
+
+Chà, có rất nhiều.
+
+Tất cả các dịch vụ được liệt kê ở đây đều hiểu cách đọc hoặc ghi các bề mặt IOS nén.
+
+Tại thời điểm này bạn có thể nói, "Tuyệt vời, làm thế nào để tôi đăng ký?"
+
+Chà, tin tốt.
+
+Nếu bạn đang quay video trên phần cứng được hỗ trợ và AVCaptureSession không cần cung cấp bất kỳ bộ đệm nào cho quy trình của bạn, xin chúc mừng, phiên của bạn đã tận dụng khả năng nén bề mặt IOS bất cứ khi nào có thể để giảm băng thông bộ nhớ.
+
+Nếu bạn muốn các bề mặt nén được phân phối đến đầu ra dữ liệu video của mình, bạn cần biết về một vài quy tắc.
+
+Bố cục bộ nhớ vật lý không rõ ràng và có thể thay đổi, vì vậy đừng ghi vào đĩa, đừng giả định bố cục giống nhau trên tất cả các nền tảng, không đọc hoặc ghi bằng CPU.
+
+AVCaptureVideoDataOutput hỗ trợ một số hương vị nén bề mặt IOS.
+
+Trước đó trong cuộc nói chuyện, bạn đã biết rằng máy ảnh iOS tự nhiên hỗ trợ các định dạng YUV 420v và 420f - 8-bit; một video và một phạm vi đầy đủ.
+
+Và sau đó, bạn đã học về x420, một định dạng video HDR 10-bit.
+
+Đầu ra dữ liệu video cũng có thể mở rộng nội bộ thành BGRA 16-bits-per-pixel nếu được yêu cầu.
+
+Mỗi cái trong số này có một bề mặt nén tương đương IOS, bắt đầu từ iOS 15, bạn có thể yêu cầu thông qua AVCaptureVideoDataOutput.
+
+Nếu bạn là một fan hâm mộ của ampersands trong mã bốn ký tự của mình, đây là ngày may mắn của bạn.
+
+Đây là một lần nữa ở định dạng biểu đồ mắt.
+
+Đây là những hằng số thực tế bạn nên sử dụng trong mã của mình.
+
+Hai năm trước, chúng tôi đã phát hành một đoạn mã mẫu có tên là "AVMultiCamPiP".
+
+Trong mẫu này, các camera trước và sau được truyền đồng thời đến VideoDataOutputs bằng cách sử dụng phiên multicam, sau đó được tổng hợp dưới dạng Picture in Picture bằng cách sử dụng bộ đổ bóng Metal, sau đó hiển thị hỗn hợp để xem trước và ghi vào phim bằng AVAssetWriter.
+
+Đây là ứng cử viên hoàn hảo cho việc nén bề mặt IOS vì tất cả các thao tác này được thực hiện trên phần cứng.
+
+Đây là mã thiết lập VideoDataOutput hiện có trong AVMultiCamPiP.
+
+Nó thích làm việc với BGRA, vì vậy nó định cấu hình Cài đặt video của VideoDataOutput để tạo ra loại định dạng pixel đó.
+
+Mã mới chỉ kết hợp một số kiểm tra.
+
+Đầu tiên nó xem liệu phiên bản nén bề mặt IOS của BGRA có khả dụng hay không.
+
+Và nếu vậy, nó chọn điều đó; mệnh đề else chỉ ở đó như một dự phòng.
+
+Và cứ như vậy, chúng ta đã đi đến cuối cùng.
+
+Bạn đã học về báo cáo khoảng cách lấy nét tối thiểu, cách quay video HDR 10-bit, Hiệu ứng video và Chế độ Mic trong Trung tâm điều khiển, các phương pháp hay nhất về hiệu suất và nén bề mặt IOS.
+
+Tôi hy vọng bạn thích nó!
+
+Cảm ơn vì đã xem.
+
+♪

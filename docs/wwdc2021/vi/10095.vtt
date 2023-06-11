@@ -1,0 +1,356 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:11.000
+Guoye Zhang: Xin chào, tôi là Guoye.
+
+00:00:11.000 --> 00:00:16.000
+Đồng nghiệp của tôi Zhenchao và tôi làm việc trên các khung HTTP.
+
+00:00:16.000 --> 00:00:20.000
+Tôi chắc rằng bây giờ bạn đã nghe rất nhiều về Swift concurrency.
+
+00:00:20.000 --> 00:00:24.000
+Nếu bạn chưa có, hãy xem "Gặp gỡ không đồng bộ/chờ đợi trong Swift".
+
+00:00:24.000 --> 00:00:28.000
+Tôi sẽ tìm hiểu cách async/await hoạt động với URLSession.
+
+00:00:28.000 --> 00:00:38.000
+Điều tôi thích nhất về Swift đồng thời là nó làm cho mã của bạn tuyến tính, súc tích và nó hỗ trợ xử lý lỗi Swift gốc.
+
+00:00:38.000 --> 00:00:52.000
+Mạng vốn không đồng bộ, và trong iOS 15 và macOS Monterey, chúng tôi đã giới thiệu một bộ API mới trong URLSession để bạn tận dụng các tính năng đồng thời của Swift.
+
+00:00:52.000 --> 00:00:58.000
+Để cho bạn thấy các API mới của chúng tôi, đây là một ứng dụng mà chúng tôi đang làm việc để áp dụng async/await.
+
+00:00:58.000 --> 00:01:05.000
+Đây là một ứng dụng chia sẻ ảnh chỉ dành cho những người yêu chó và chúng tôi có thể yêu thích những bức ảnh này.
+
+00:01:05.000 --> 00:01:09.000
+Đây là mã hiện có của chúng tôi để tìm kiếm một bức ảnh con chó.
+
+00:01:09.000 --> 00:01:14.000
+Nó đang sử dụng phương pháp tiện lợi dựa trên completionHandler trên URLSession.
+
+00:01:14.000 --> 00:01:17.000
+Mã có vẻ đơn giản, và nó hoạt động trong thử nghiệm giới hạn của tôi.
+
+00:01:17.000 --> 00:01:20.000
+Tuy nhiên, nó có ít nhất ba sai lầm.
+
+00:01:20.000 --> 00:01:23.000
+Hãy đi sâu vào.
+
+00:01:23.000 --> 00:01:26.000
+Đầu tiên, hãy làm theo quy trình kiểm soát.
+
+00:01:26.000 --> 00:01:28.000
+Chúng tôi tạo ra một nhiệm vụ dữ liệu và tiếp tục nó.
+
+00:01:28.000 --> 00:01:38.000
+Sau đó, khi nhiệm vụ hoàn thành, chúng tôi nhảy vào trình xử lý hoàn thành, chúng tôi kiểm tra phản hồi, tạo hình ảnh và đó là nơi luồng điều khiển kết thúc.
+
+00:01:38.000 --> 00:01:41.000
+Hừm, chúng ta đang nhảy qua lại.
+
+00:01:41.000 --> 00:01:43.000
+Còn việc xâu chuỗi thì sao?
+
+00:01:43.000 --> 00:01:47.000
+Nó phức tạp một cách đáng ngạc nhiên đối với đoạn mã nhỏ này.
+
+00:01:47.000 --> 00:01:50.000
+Chúng tôi có tổng cộng ba bối cảnh thực thi khác nhau.
+
+00:01:50.000 --> 00:02:02.000
+Lớp ngoài cùng chạy trên bất kỳ luồng hoặc hàng đợi nào của người gọi, URLSessionTask completionHandler chạy trên hàng đợi đại diện của phiên và trình xử lý hoàn thành cuối cùng chạy trên hàng đợi chính.
+
+00:02:02.000 --> 00:02:11.000
+Vì trình biên dịch không thể giúp chúng tôi ở đây, chúng tôi phải hết sức thận trọng để tránh bất kỳ vấn đề phân luồng nào như các cuộc đua dữ liệu.
+
+00:02:11.000 --> 00:02:13.000
+Bây giờ, tôi nhận thấy có điều gì đó không ổn.
+
+00:02:13.000 --> 00:02:18.000
+Các cuộc gọi đến completionHandler không được gửi một cách nhất quán đến hàng đợi chính.
+
+00:02:18.000 --> 00:02:20.000
+Đây có thể là một lỗi.
+
+00:02:20.000 --> 00:02:23.000
+Ngoài ra, chúng tôi đang bỏ lỡ một sự trở lại sớm ở đây.
+
+00:02:23.000 --> 00:02:27.000
+Trình xử lý hoàn thành có thể được gọi hai lần nếu chúng tôi gặp lỗi.
+
+00:02:27.000 --> 00:02:32.000
+Điều này có thể vi phạm các giả định do người gọi đưa ra.
+
+00:02:32.000 --> 00:02:37.000
+Cuối cùng, điều này có thể không rõ ràng lắm, nhưng việc tạo UIImage có thể thất bại.
+
+00:02:37.000 --> 00:02:48.000
+Nếu dữ liệu ở định dạng không chính xác, trình khởi tạo UIImage này sẽ trả về nil, vì vậy chúng tôi sẽ gọi completionHandler với cả hình ảnh nil và lỗi nil.
+
+00:02:48.000 --> 00:02:51.000
+Điều này có thể không được mong đợi.
+
+00:02:51.000 --> 00:02:54.000
+Bây giờ đây là phiên bản mới sử dụng async/await.
+
+00:02:54.000 --> 00:02:56.000
+Chà, nó đơn giản hơn rất nhiều!
+
+00:02:56.000 --> 00:03:08.000
+Luồng điều khiển là tuyến tính từ trên xuống dưới và chúng tôi biết rằng mọi thứ trong hàm này chạy trong cùng một ngữ cảnh đồng thời, vì vậy chúng tôi không còn cần phải lo lắng về các vấn đề phân luồng nữa.
+
+00:03:08.000 --> 00:03:13.000
+Ở đây, chúng tôi đã sử dụng phương thức dữ liệu không đồng bộ mới trên URLSession.
+
+00:03:13.000 --> 00:03:23.000
+Nó đình chỉ ngữ cảnh thực thi hiện tại mà không bị chặn, và nó trả về dữ liệu và phản hồi khi hoàn thành thành công hoặc gây ra lỗi.
+
+00:03:23.000 --> 00:03:29.000
+Chúng tôi cũng đã sử dụng từ khóa ném để ném lỗi khi phản hồi không mong muốn.
+
+00:03:29.000 --> 00:03:35.000
+Điều này cho phép người gọi bắt và xử lý lỗi bằng cách xử lý lỗi gốc Swift.
+
+00:03:35.000 --> 00:03:46.000
+Cuối cùng, trình biên dịch sẽ sủa nếu chúng ta cố gắng trả về một UIImage tùy chọn từ hàm này, vì vậy về cơ bản nó buộc chúng ta phải xử lý nil một cách chính xác.
+
+00:03:46.000 --> 00:03:51.000
+Đây là chữ ký của các phương pháp chúng tôi vừa sử dụng để lấy dữ liệu từ mạng.
+
+00:03:51.000 --> 00:03:58.000
+Các phương thức URLSession.data chấp nhận URL hoặc URLRequest.
+
+00:03:58.000 --> 00:04:03.000
+Chúng tương đương với các phương pháp thuận tiện nhiệm vụ dữ liệu hiện có.
+
+00:04:03.000 --> 00:04:09.000
+Chúng tôi cũng cung cấp các phương thức tải lên nơi bạn có thể tải lên dữ liệu hoặc tải lên tệp.
+
+00:04:09.000 --> 00:04:13.000
+Chúng tương đương với các phương pháp tiện lợi nhiệm vụ tải lên hiện có.
+
+00:04:13.000 --> 00:04:23.000
+Đảm bảo đặt đúng phương thức HTTP trước khi gửi yêu cầu vì phương thức mặc định GET không hỗ trợ tải lên.
+
+00:04:23.000 --> 00:04:28.000
+Các phương thức tải xuống lưu trữ nội dung phản hồi dưới dạng tệp thay vì trong bộ nhớ.
+
+00:04:28.000 --> 00:04:38.000
+Khác với các phương pháp tiện lợi của tác vụ tải xuống, các phương pháp mới này không tự động xóa tệp, vì vậy đừng quên tự làm như vậy.
+
+00:04:38.000 --> 00:04:44.000
+Trong ví dụ này, chúng tôi đang di chuyển tệp đến một vị trí khác để xử lý thêm.
+
+00:04:44.000 --> 00:04:49.000
+Việc hủy bỏ Swift concurrency hoạt động với các phương thức không đồng bộ URLSession.
+
+00:04:49.000 --> 00:04:53.000
+Một cách để hủy bỏ là sử dụng Task.Handle đồng thời.
+
+00:04:53.000 --> 00:04:59.000
+Ở đây, chúng tôi gọi async để tạo một Nhiệm vụ đồng thời tải từng tài nguyên một.
+
+00:04:59.000 --> 00:05:04.000
+Sau đó, chúng ta có thể sử dụng Task.Handle để hủy hoạt động đang chạy hiện tại của nó.
+
+00:05:04.000 --> 00:05:11.000
+Xin lưu ý rằng Nhiệm vụ đồng thời không liên quan đến URLSessionTask, mặc dù chúng có chung tên "Nhiệm vụ".
+
+00:05:11.000 --> 00:05:19.000
+Các phương pháp chúng ta vừa nói đến - dữ liệu, tải lên, tải xuống - đợi toàn bộ nội dung phản hồi đến trước khi quay lại.
+
+00:05:19.000 --> 00:05:23.000
+Điều gì sẽ xảy ra nếu chúng ta muốn nhận nội dung phản hồi từng bước?
+
+00:05:23.000 --> 00:05:27.000
+Tôi rất vui khi giới thiệu các phương pháp URLSession.bytes.
+
+00:05:27.000 --> 00:05:34.000
+Chúng trả về khi các tiêu đề phản hồi đã được nhận và cung cấp nội dung phản hồi dưới dạng AsyncSequence của các byte.
+
+00:05:34.000 --> 00:05:40.000
+Để cho bạn thấy nó hoạt động như thế nào, đồng nghiệp Zhenchao của tôi sẽ giới thiệu cách anh ấy áp dụng nó trong ứng dụng Chó.
+
+00:05:40.000 --> 00:05:44.000
+Zhenchao Li: Cảm ơn, Guoye! Xin chào, tôi là Zhenchao.
+
+00:05:44.000 --> 00:05:54.000
+Tôi đang làm việc trên một tính năng mới của ứng dụng Chó cho thấy có bao nhiêu người yêu thích một bức ảnh chó.
+
+00:05:54.000 --> 00:06:00.000
+Ngay bây giờ, tôi có thể kéo chế độ xem cuộn xuống để làm mới số lượng yêu thích.
+
+00:06:00.000 --> 00:06:04.000
+Tôi muốn cập nhật những con số yêu thích này trong thời gian thực.
+
+00:06:04.000 --> 00:06:08.000
+Bằng cách đó, ứng dụng cảm thấy tương tác nhiều hơn.
+
+00:06:08.000 --> 00:06:17.000
+Để làm điều đó, các kỹ sư back-end của chúng tôi đã xây dựng một điểm cuối sự kiện theo thời gian thực cung cấp cho chúng tôi các bản cập nhật trực tiếp cho các bức ảnh.
+
+00:06:17.000 --> 00:06:23.000
+Tôi sẽ kiểm tra điểm cuối để kiểm tra phản hồi.
+
+00:06:23.000 --> 00:06:32.000
+Mỗi dòng của nội dung phản hồi là một phần dữ liệu JSON mô tả các bản cập nhật cho một bức ảnh, chẳng hạn như số lượng yêu thích được cập nhật.
+
+00:06:32.000 --> 00:06:42.000
+Hãy sử dụng API trình tự không đồng bộ mới để sử dụng phản hồi của điểm cuối và cập nhật số lượng yêu thích khi các sự kiện thời gian thực được phân tích cú pháp.
+
+00:06:42.000 --> 00:06:50.000
+Chúng ta có thể bắt đầu cập nhật trực tiếp trong chức năng onAppearHandler, đây là một hành động được gọi khi chế độ xem bộ sưu tập ảnh xuất hiện.
+
+00:06:50.000 --> 00:07:06.000
+Trong hàm, tôi sẽ gọi URLSession.bytes API mới để tìm nạp dữ liệu từ điểm cuối mới của chúng tôi.
+
+00:07:06.000 --> 00:07:12.000
+Lưu ý rằng các byte được trả về ở đây có một loại URLSession.AsyncBytes.
+
+00:07:12.000 --> 00:07:17.000
+Điều này cho chúng ta một cách để tiêu thụ từng bước cơ thể phản ứng.
+
+00:07:17.000 --> 00:07:28.000
+Tôi cũng đã thêm kiểm tra lỗi ở đây để đảm bảo rằng chúng tôi đã nhận được phản hồi thành công từ máy chủ.
+
+00:07:28.000 --> 00:07:33.000
+Chúng tôi muốn phân tích cú pháp từng dòng phản hồi dưới dạng một phần dữ liệu JSON.
+
+00:07:33.000 --> 00:07:42.000
+Để làm điều đó, chúng ta có thể sử dụng phương thức dòng trên AsyncBytes.
+
+00:07:42.000 --> 00:07:54.000
+Điều này cho phép chúng tôi tiêu thụ từng dòng phản hồi khi dữ liệu được nhận.
+
+00:07:54.000 --> 00:08:03.000
+Trong vòng lặp, tôi chỉ có thể phân tích dữ liệu JSON và cập nhật giao diện người dùng của mình bằng cách gọi updateFavoriteCount.
+
+00:08:03.000 --> 00:08:18.000
+Lưu ý rằng các cập nhật giao diện người dùng cần phải xảy ra trên tác nhân chính và đó là lý do tại sao tôi đang sử dụng cú pháp await để gọi updateFavoriteCount, đây là một hàm không đồng bộ.
+
+00:08:18.000 --> 00:08:23.000
+Tuyệt vời. Bây giờ những con số yêu thích này được cập nhật theo thời gian thực.
+
+00:08:23.000 --> 00:08:27.000
+Quay lại với bạn, Guoye.
+
+00:08:27.000 --> 00:08:35.000
+Guoye: Zhenchao vừa chỉ cho chúng ta cách sử dụng phép biến đổi tích hợp AsyncSequence - dòng - để phân tích cú pháp từng dòng nội dung phản hồi.
+
+00:08:35.000 --> 00:08:46.000
+AsyncSequence hỗ trợ nhiều chuyển đổi thuận tiện và bạn cũng có thể sử dụng AsyncSequence với các API khung hệ thống khác như FileHandle.
+
+00:08:46.000 --> 00:08:53.000
+Để tìm hiểu thêm về AsyncSequence, tôi khuyến khích bạn xem video "Gặp gỡ AsyncSequence".
+
+00:08:53.000 --> 00:09:02.000
+URLSession được thiết kế xung quanh một mô hình đại diện cung cấp các cuộc gọi lại cho các sự kiện như thử thách xác thực, số liệu và hơn thế nữa.
+
+00:09:02.000 --> 00:09:12.000
+Các phương thức không đồng bộ mới không còn phơi bày nhiệm vụ cơ bản, vậy làm thế nào để chúng ta xử lý các thách thức xác thực cụ thể cho một nhiệm vụ?
+
+00:09:12.000 --> 00:09:27.000
+Có, tất cả các phương pháp đó có thể nhận một đối số bổ sung - một đại diện dành riêng cho nhiệm vụ - cho phép bạn cung cấp một đối tượng để xử lý các tin nhắn đại diện cụ thể cho hoạt động tải lên, tải xuống hoặc byte dữ liệu này.
+
+00:09:27.000 --> 00:09:36.000
+Chúng tôi cũng đang giới thiệu thuộc tính đại diện trên NSURLSessionTask trong Objective-C để bạn tận dụng khả năng tương tự.
+
+00:09:36.000 --> 00:09:42.000
+Đại biểu được giữ vững bởi một nhiệm vụ cho đến khi nó hoàn thành hoặc thất bại.
+
+00:09:42.000 --> 00:09:47.000
+Điều đáng chú ý là đại diện dành riêng cho nhiệm vụ không được hỗ trợ bởi URLSession nền.
+
+00:09:47.000 --> 00:09:57.000
+Nếu một phương thức được triển khai trên cả đại diện phiên và đại diện nhiệm vụ, phương thức đại diện nhiệm vụ sẽ được gọi.
+
+00:09:57.000 --> 00:10:03.000
+Bây giờ, Zhenchao sẽ chỉ cho chúng ta cách sử dụng một đại diện nhiệm vụ cụ thể để xử lý các thách thức xác thực.
+
+00:10:03.000 --> 00:10:05.000
+Zhenchao: Cảm ơn, Guoye!
+
+00:10:05.000 --> 00:10:11.000
+Ứng dụng Dogs của chúng tôi có một lớp tìm nạp dữ liệu đơn giản được viết bằng các API không đồng bộ mới.
+
+00:10:11.000 --> 00:10:23.000
+Đối với một số tác vụ tìm nạp dữ liệu của chúng tôi, chẳng hạn như đánh dấu ảnh là yêu thích hoặc tìm nạp tất cả ảnh yêu thích, người dùng cần được xác thực.
+
+00:10:23.000 --> 00:10:29.000
+Ngay bây giờ, khi tôi nhấn để yêu thích một bức ảnh, tôi gặp lỗi "Không được phép".
+
+00:10:29.000 --> 00:10:36.000
+Hãy xem qua cách chúng ta có thể thêm xác thực người dùng bằng cách sử dụng một đại diện dành riêng cho nhiệm vụ.
+
+00:10:36.000 --> 00:10:40.000
+Đầu tiên, hãy viết một URLSessionTaskDelegate.
+
+00:10:40.000 --> 00:10:44.000
+Hãy gọi nó là AuthenticationDelegate.
+
+00:10:44.000 --> 00:11:00.000
+AuthenticationDelegate phù hợp với giao thức URLSessionTaskDelegate và nó chấp nhận một phiên bản của signInController trong trình khởi tạo của nó.
+
+00:11:00.000 --> 00:11:12.000
+Lớp signInController mà chúng tôi đã triển khai đã chứa một số chức năng trợ giúp tốt mà chúng tôi có thể sử dụng để nhắc người dùng cung cấp thông tin đăng nhập.
+
+00:11:12.000 --> 00:11:20.000
+Tiếp theo, hãy triển khai phương thức đại diện thử thách URLSession didReceive.
+
+00:11:20.000 --> 00:11:30.000
+Trong phương thức đại diện, chúng ta có thể chọn phản hồi các thách thức xác thực cơ bản HTTP bằng cách nhắc người dùng cung cấp thông tin đăng nhập.
+
+00:11:30.000 --> 00:11:35.000
+Tất nhiên, chúng ta không nên quên xử lý lỗi.
+
+00:11:35.000 --> 00:11:41.000
+Bây giờ hãy sử dụng lớp AuthenticationDelegate này làm đại diện nhiệm vụ cụ thể của chúng tôi.
+
+00:11:41.000 --> 00:11:53.000
+Để làm điều đó, tôi chỉ có thể khởi tạo một phiên bản của nó và phân tích cú pháp nó làm tham số đại diện cho phương thức URLSession.data.
+
+00:11:53.000 --> 00:12:03.000
+Lưu ý rằng đối tượng đại diện không phải là một biến thể hiện và nó được nhiệm vụ giữ chặt chẽ cho đến khi nhiệm vụ hoàn thành hoặc thất bại.
+
+00:12:03.000 --> 00:12:21.000
+Điểm mới ở đây là đại diện có thể được sử dụng để xử lý các sự kiện cụ thể cho một phiên bản của tác vụ URLSession, điều này rất hữu ích khi logic bên trong các phương thức đại diện của bạn chỉ áp dụng cho một số tác vụ URLSession nhất định chứ không áp dụng cho các tác vụ khác.
+
+00:12:21.000 --> 00:12:29.000
+Tuyệt vời. Bây giờ khi chúng ta nhấn để yêu thích bức ảnh...
+
+00:12:29.000 --> 00:12:40.000
+...Nó bật lên một biểu mẫu đăng nhập.
+
+00:12:40.000 --> 00:12:53.000
+Khi chúng tôi đăng nhập, ảnh sẽ hiển thị như đã yêu thích và nó đã được thêm vào bộ sưu tập ảnh yêu thích của chúng tôi.
+
+00:12:53.000 --> 00:12:57.000
+Quay lại với bạn, Guoye.
+
+00:12:57.000 --> 00:12:59.000
+Guoye: Cảm ơn bạn, Zhenchao, vì bản demo.
+
+00:12:59.000 --> 00:13:18.000
+Chúng tôi không thể chờ đợi bạn thử async/await với URLSession và chúng tôi khuyến khích bạn áp dụng các khái niệm không đồng bộ tương tự để cải thiện mã của mình, bao gồm thay đổi chức năng, đưa trình xử lý hoàn thành vào các hàm không đồng bộ và thay đổi trình xử lý sự kiện lặp lại thành AsyncSequences.
+
+00:13:18.000 --> 00:13:31.000
+Để tìm hiểu thêm về những tiến bộ trong URLSession, chúng tôi có một video về một công cụ mới thú vị kiểm tra lưu lượng HTTP của ứng dụng của bạn và một video về hỗ trợ HTTP/3 trong URLSession.
+
+00:13:31.000 --> 00:13:34.000
+Cảm ơn bạn và chúc bạn có một WWDC tuyệt vời!
+
+00:13:34.000 --> 23:59:59.000
+♪
+

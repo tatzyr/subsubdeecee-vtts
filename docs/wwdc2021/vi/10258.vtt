@@ -1,0 +1,578 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:15.000
+Xin chào, tên tôi là Anubhav, và tôi là một kỹ sư trong Nhóm Hiệu suất Hệ điều hành.
+
+00:00:15.000 --> 00:00:22.000
+Hôm nay, tôi rất vui được chia sẻ cách bạn có thể hiểu và loại bỏ những điều bị treo khỏi ứng dụng của mình.
+
+00:00:22.000 --> 00:00:29.000
+Chúng ta sẽ chia bài nói chuyện này thành bốn phần, bắt đầu bằng sự hiểu biết, "gợi là gì?"
+
+00:00:29.000 --> 00:00:35.000
+Sau đó chúng ta sẽ nói về các nguyên nhân phổ biến gây ra hangs và những điều cần chú ý khi phát triển.
+
+00:00:35.000 --> 00:00:42.000
+Sau đó, chúng tôi sẽ thảo luận về các công cụ bạn có thể sử dụng để theo dõi và chẩn đoán treo.
+
+00:00:42.000 --> 00:00:50.000
+Cuối cùng, chúng ta sẽ tìm hiểu các chiến lược phổ biến để loại bỏ treo và cách chọn chiến lược nào phù hợp nhất với ứng dụng của bạn.
+
+00:00:50.000 --> 00:00:53.000
+Hãy nhảy ngay vào.
+
+00:00:53.000 --> 00:01:00.000
+Hãy cùng xem ứng dụng công thức mới của tôi, Desserted, một ứng dụng chỉ cho bạn cách làm đồ uống và món tráng miệng yêu thích của tôi.
+
+00:01:00.000 --> 00:01:03.000
+Món sinh tố Mango Tango này trông rất tuyệt.
+
+00:01:03.000 --> 00:01:06.000
+Tôi sẽ nhấn vào nó để xem nó được tạo ra như thế nào.
+
+00:01:06.000 --> 00:01:08.000
+Hừm.
+
+00:01:08.000 --> 00:01:10.000
+Có vẻ như không có gì đang xảy ra.
+
+00:01:10.000 --> 00:01:13.000
+Ồ. Điều đó mất nhiều thời gian hơn dự kiến.
+
+00:01:13.000 --> 00:01:19.000
+Ứng dụng chỉ bị kẹt và sẽ không chấp nhận bất kỳ lần chạm nào của tôi trong vài giây.
+
+00:01:19.000 --> 00:01:24.000
+Trải nghiệm này có thể được mô tả là "chìng", "chậm" hoặc "mắc kẹt".
+
+00:01:24.000 --> 00:01:30.000
+Đây không phải là những từ mà tôi, hoặc bất kỳ ai khác, muốn sử dụng để mô tả ứng dụng của họ.
+
+00:01:30.000 --> 00:01:36.000
+Tại Apple, chúng tôi gọi giai đoạn không phản hồi này là "treo".
+
+00:01:36.000 --> 00:01:45.000
+Để hiểu một sự cố và những gì đang xảy ra trong Desserted, trước tiên chúng ta phải hiểu runloop chính của ứng dụng là gì.
+
+00:01:45.000 --> 00:01:56.000
+Vòng lặp chạy chính là một vòng lặp mà luồng chính của ứng dụng của bạn nhập vào để chạy các trình xử lý sự kiện để đáp ứng với các sự kiện đến, chủ yếu là các tương tác của người dùng.
+
+00:01:56.000 --> 00:02:06.000
+Khi người dùng tương tác với một ứng dụng, runloop sẽ nhận được sự kiện, xử lý nó và sau đó cập nhật giao diện người dùng, nếu được yêu cầu.
+
+00:02:06.000 --> 00:02:11.000
+Tất cả điều này xảy ra trong một lượt của runloop và trên luồng chính.
+
+00:02:11.000 --> 00:02:16.000
+Quá trình này lặp lại cho mỗi đầu vào của người dùng.
+
+00:02:16.000 --> 00:02:23.000
+Đây là cách chủ đề chính sẽ trông như thế nào với một vòng lặp chạy.
+
+00:02:23.000 --> 00:02:33.000
+Nếu quá trình xử lý sự kiện mất nhiều thời gian, sẽ có sự chậm trễ giữa đầu vào của người dùng và bất kỳ bản cập nhật giao diện người dùng nào.
+
+00:02:33.000 --> 00:02:41.000
+Để làm cho vấn đề tồi tệ hơn, các sự kiện được đệm và không thể được xử lý bởi chủ đề chính trong quá trình treo.
+
+00:02:41.000 --> 00:02:52.000
+Nếu tôi tương tác với một ứng dụng trong khi treo, sự kiện đó sẽ không được xử lý cho đến khi việc treo hiện tại kết thúc lần đầu tiên... ...cạnh hợp treo, cái này chồng lên nhau.
+
+00:02:52.000 --> 00:03:02.000
+Nói chung, độ trễ hơn một giây sẽ luôn trông giống như một sự treo cổ, mặc dù độ trễ ngắn hơn có thể được coi là một.
+
+00:03:02.000 --> 00:03:14.000
+Ví dụ, độ trễ nửa giây trong khi cuộn gây chói tai, nhưng độ trễ tương tự ít được chú ý hơn nhiều khi vào chế độ xem.
+
+00:03:14.000 --> 00:03:21.000
+Bằng cách loại bỏ treo, các ứng dụng của bạn sẽ linh hoạt, nhanh chóng và phản hồi nhanh.
+
+00:03:21.000 --> 00:03:29.000
+Bây giờ chúng ta đã biết treo cổ là, chúng ta hãy xem xét những gì thường gây ra chúng.
+
+00:03:29.000 --> 00:03:33.000
+Treo xảy ra khi có quá nhiều công việc đang được thực hiện trên chủ đề chính.
+
+00:03:33.000 --> 00:03:41.000
+Để xác định chính xác công việc đó là gì, chúng ta phải xem luồng chính đang làm gì trong khi xử lý sự kiện.
+
+00:03:41.000 --> 00:03:44.000
+Lần này có thể được chia thành hai trường hợp.
+
+00:03:44.000 --> 00:03:55.000
+Bản thân luồng chính đang bận thực hiện công việc - đây có thể là một nhiệm vụ dài hoặc nhiều nhiệm vụ ngắn - hoặc luồng chính bị chặn bởi một luồng hoặc tài nguyên hệ thống khác.
+
+00:03:55.000 --> 00:04:02.000
+Hãy bắt đầu bằng cách xem xét các nguyên nhân phổ biến khiến chủ đề chính bị bận.
+
+00:04:02.000 --> 00:04:10.000
+Chủ động làm việc là làm nhiều hơn những gì cần thiết để cập nhật giao diện người dùng, giữ cho luồng chính bận rộn lâu hơn.
+
+00:04:10.000 --> 00:04:17.000
+Trong Desserted, Recipe View chỉ hiển thị các ô hình ảnh cho bốn trong số nhiều hình ảnh thành phần.
+
+00:04:17.000 --> 00:04:27.000
+Nếu chủ đề chính tải tất cả các hình ảnh thành phần cùng một lúc, nó sẽ dành thời gian đọc, chuẩn bị và tổng hợp từng hình ảnh.
+
+00:04:27.000 --> 00:04:32.000
+Hầu hết các công việc đang diễn ra thậm chí sẽ không ảnh hưởng đến những gì người dùng nhìn thấy.
+
+00:04:32.000 --> 00:04:40.000
+Chế độ xem chỉ hiển thị bốn hình ảnh và chỉ bốn hình ảnh đó cần được tạo ngay lập tức.
+
+00:04:40.000 --> 00:04:44.000
+Một nguyên nhân khác gây ra việc treo là thực hiện công việc không liên quan trên chủ đề chính.
+
+00:04:44.000 --> 00:04:53.000
+Lưu ý rằng các dịch vụ luồng chính chặn từ hàng đợi điều phối chính, nhưng nó cũng có thể dịch vụ các khối từ các hàng đợi khác thông qua đồng bộ hóa điều phối.
+
+00:04:53.000 --> 00:05:03.000
+Bất cứ khi nào một công văn hàng đợi đồng bộ hóa với một hàng đợi khác, tất cả các khối đang chờ xử lý trên hàng đợi khác phải thực thi trước hàng đợi mới được xếp hàng.
+
+00:05:03.000 --> 00:05:08.000
+Hãy xem xét một ứng dụng có hàng đợi điều phối nối tiếp ưu tiên thấp, có thể là hàng đợi bảo trì.
+
+00:05:08.000 --> 00:05:20.000
+Nếu công văn luồng chính đồng bộ hóa một khối vào maintenanceQueue, nó sẽ phải đợi tất cả các khối đang chờ xử lý trên hàng đợi đó thực thi trước khi khối được xếp hàng chạy.
+
+00:05:20.000 --> 00:05:26.000
+Chỉ một phần nhỏ thời gian được dành cho công việc dành cho chủ đề chính.
+
+00:05:26.000 --> 00:05:35.000
+Tương tự, nếu một khối được gửi đến hàng đợi chính từ một hàng đợi khác, khối đó phải thực thi trên luồng chính.
+
+00:05:35.000 --> 00:05:42.000
+Điều này được giữ ngay cả khi khối được xếp hàng thông qua một công văn không đồng bộ.
+
+00:05:42.000 --> 00:05:46.000
+Một nguyên nhân nữa cho việc treo là sử dụng API dưới mức tối ưu.
+
+00:05:46.000 --> 00:05:48.000
+Có nhiều cách để hoàn thành một nhiệm vụ.
+
+00:05:48.000 --> 00:05:55.000
+Hãy chắc chắn đọc tài liệu API để bạn có thể sử dụng tài liệu tốt nhất cho nhiệm vụ hiện tại.
+
+00:05:55.000 --> 00:06:04.000
+Desserted thêm các góc tròn vào tất cả hình ảnh trong chế độ xem công thức, mặc dù làm như vậy cũng làm tăng độ trễ khi vào chế độ xem này.
+
+00:06:04.000 --> 00:06:17.000
+Để thêm các góc tròn, Desserted sử dụng ngữ cảnh đồ họa dựa trên bitmap để chuyển đổi hình ảnh thành bitmap, áp dụng đường dẫn UIBezier trên bitmap đó, sau đó chuyển đổi bitmap đó trở lại thành hình ảnh.
+
+00:06:17.000 --> 00:06:23.000
+Tập hợp các hoạt động này chuyên sâu về CPU, sử dụng nhiều bộ nhớ và có thể mất nhiều thời gian.
+
+00:06:23.000 --> 00:06:27.000
+Điều này là do phần cứng sai đang được sử dụng cho công việc.
+
+00:06:27.000 --> 00:06:32.000
+Thay vì sử dụng CPU, tôi nên tận dụng GPU.
+
+00:06:32.000 --> 00:06:38.000
+Bằng cách sử dụng các phương pháp CoreAnimation trên một lớp, việc thêm các góc tròn rất dễ dàng và tức thì.
+
+00:06:38.000 --> 00:06:44.000
+Đây chỉ là một ví dụ về việc sử dụng API sai cho công việc hiện tại.
+
+00:06:44.000 --> 00:06:53.000
+Bây giờ chúng ta đã xem xét một số lý do phổ biến khiến luồng chính của ứng dụng có thể bận, hãy điều tra lý do tại sao nó có thể bị chặn.
+
+00:06:53.000 --> 00:07:00.000
+Các API đồng bộ chặn thực thi từ thời điểm chúng được gọi đến khi chúng quay trở lại.
+
+00:07:00.000 --> 00:07:10.000
+Những thứ này không nên được sử dụng trên luồng chính nếu API thực hiện nhiều công việc hoặc có khả năng chặn trong một khoảng thời gian dài.
+
+00:07:10.000 --> 00:07:16.000
+Ngoài sự chậm trễ, những điều này cũng thêm một điểm thất bại bổ sung.
+
+00:07:16.000 --> 00:07:23.000
+Một trường hợp như vậy là nếu luồng chính của một ứng dụng thực hiện các yêu cầu đồng bộ đến mạng.
+
+00:07:23.000 --> 00:07:27.000
+Đối với những người có 5G, có thể không có bất kỳ sự chậm trễ nào.
+
+00:07:27.000 --> 00:07:32.000
+Đối với những người có tốc độ mạng chậm hơn, việc này có thể mất nhiều thời gian hơn.
+
+00:07:32.000 --> 00:07:37.000
+Và đối với những người có tín hiệu rất xấu, điều này có thể treo vô thời hạn.
+
+00:07:37.000 --> 00:07:47.000
+Không có gì đảm bảo về việc điều này có thể mất bao lâu, đó là lý do tại sao nên tránh các hoạt động đồng bộ như vậy trên luồng chính.
+
+00:07:47.000 --> 00:07:54.000
+Một cách khác để chặn luồng chính là trên tài nguyên hệ thống, vì chúng thường bị hạn chế.
+
+00:07:54.000 --> 00:08:00.000
+Tệp I/O là một trong những tài nguyên hệ thống được sử dụng và tranh luận phổ biến nhất.
+
+00:08:00.000 --> 00:08:10.000
+Độ trễ phụ thuộc vào phần cứng, và các lần đọc và ghi khác xảy ra cùng một lúc, những thứ có thể nằm ngoài tầm kiểm soát của ứng dụng.
+
+00:08:10.000 --> 00:08:18.000
+Vì vậy, các ứng dụng cần phải làm những gì có thể để bảo vệ chống lại sự treo cổ bằng cách tránh I/O trên chủ đề chính.
+
+00:08:18.000 --> 00:08:24.000
+Các kho dữ liệu, không hỗ trợ đồng thời, đặc biệt có vấn đề.
+
+00:08:24.000 --> 00:08:38.000
+Nếu chủ đề chính cố gắng đọc từ một trong khi ghi đã xảy ra, việc đọc đó sẽ bị đẩy ra cho đến khi tất cả các nhà văn hoàn thành, điều này có thể không bị giới hạn.
+
+00:08:38.000 --> 00:08:41.000
+Một nguyên nhân khác gây ra sự treo cổ là sự đồng bộ hóa.
+
+00:08:41.000 --> 00:08:53.000
+Theo định nghĩa, các nguyên thủy đồng bộ hóa có thể chặn việc thực thi, vì vậy điều quan trọng là phải hạn chế và thận trọng khi đồng bộ hóa từ luồng chính.
+
+00:08:53.000 --> 00:08:59.000
+Luồng mà nó đồng bộ hóa có thể mất nhiều thời gian để giải phóng một khóa ngầm hoặc rõ ràng.
+
+00:08:59.000 --> 00:09:10.000
+Đây là một số nguyên thủy phổ biến cần chú ý, bao gồm chỉ thị @synchronized, đồng bộ hóa công văn, khóa os không công bằng và khóa posix.
+
+00:09:10.000 --> 00:09:19.000
+Cụ thể, hãy lưu ý về việc sử dụng semaphore, vì chúng không ưu tiên lan truyền và có thể kéo dài thời gian treo do ưu tiên.
+
+00:09:19.000 --> 00:09:27.000
+Một phản mẫu phổ biến là khi cố gắng làm cho API không đồng bộ hoạt động đồng bộ bằng cách chờ trên semaphore.
+
+00:09:27.000 --> 00:09:31.000
+Điều này nên luôn luôn tránh trên chủ đề chính.
+
+00:09:31.000 --> 00:09:44.000
+Một cách nữa để chặn luồng chính là thực hiện công việc, IPC hoặc sử dụng tài nguyên hệ thống để tìm nạp giá trị của thứ gì đó không thay đổi thường xuyên.
+
+00:09:44.000 --> 00:09:52.000
+Trong Desserted, có một biểu tượng cho một tính năng xã hội, chỉ được hiển thị nếu tôi đã thêm một liên hệ với tư cách là một người bạn.
+
+00:09:52.000 --> 00:10:10.000
+Truy vấn tất cả các liên hệ trên mỗi lần nhấn vào chế độ xem này là một cách để kiểm tra, mặc dù nó thêm chi phí và sự chậm trễ không cần thiết, vì các khối luồng chính trên các khung, đang thực hiện các hoạt động tốn kém dưới mui xe.
+
+00:10:10.000 --> 00:10:23.000
+Hơn nữa, giá trị tôi đang tìm nạp không thay đổi thường xuyên, vì vậy việc truy vấn điều này thường xuyên là không cần thiết và làm tăng thêm gánh nặng cho tài nguyên hệ thống.
+
+00:10:23.000 --> 00:10:31.000
+Trạng thái của tài nguyên hệ thống, chẳng hạn như CPU, bộ nhớ và bộ nhớ đóng một vai trò lớn khi bị treo xảy ra.
+
+00:10:31.000 --> 00:10:41.000
+Các điều kiện phần cứng và thiết bị khác nhau trong lĩnh vực này có nghĩa là các kịch bản trong thế giới thực sẽ khác biệt đáng kể so với các kịch bản gặp phải khi thử nghiệm trên bàn làm việc.
+
+00:10:41.000 --> 00:10:51.000
+Điều quan trọng là bạn làm những gì bạn có thể để bảo vệ chống lại những trường hợp này bằng cách có các bài kiểm tra mạnh mẽ và sử dụng phần cứng được hỗ trợ lâu đời nhất làm điểm chuẩn.
+
+00:10:51.000 --> 00:10:59.000
+Nguyên nhân cấp cao gây ra treo cổ là quá nhiều công việc đang được thực hiện trên hoặc thay mặt cho chủ đề chính.
+
+00:10:59.000 --> 00:11:09.000
+Để đảm bảo hiệu suất, điều quan trọng là chủ đề chính của ứng dụng của bạn tập trung vào những gì cần thiết để cập nhật giao diện người dùng.
+
+00:11:09.000 --> 00:11:23.000
+Bây giờ bạn đã biết nguyên nhân phổ biến gây treo cổ, hãy nói về một số công cụ hữu ích mà bạn có thể sử dụng để theo dõi và phân loại treo trong ứng dụng của mình, cả trong quá trình phát triển và sản xuất.
+
+00:11:23.000 --> 00:11:29.000
+Để phân loại treo, bạn sẽ muốn biết ứng dụng của mình đang làm gì trong thời gian đó.
+
+00:11:29.000 --> 00:11:40.000
+Công cụ lập hồ sơ thời gian cho phép bạn làm điều đó bằng cách hiển thị các cuộc gọi của ứng dụng theo thời gian, cho biết chính xác những gì đang thực hiện.
+
+00:11:40.000 --> 00:11:51.000
+Công cụ theo dõi hệ thống bổ sung thêm ngữ cảnh với dữ liệu về các cuộc gọi hệ thống, lỗi VM, I/O, cũng như các tương tác giữa các quy trình và trong quá trình.
+
+00:11:51.000 --> 00:11:58.000
+Để biết thêm thông tin, hãy xem bài nói chuyện "Hệ thống theo dõi chuyên sâu" từ năm 2016.
+
+00:11:58.000 --> 00:12:07.000
+Bây giờ, tôi sẽ sử dụng trình lập hồ sơ thời gian và công cụ theo dõi hệ thống để tìm ra nguyên nhân khiến Desserted bị treo.
+
+00:12:07.000 --> 00:12:13.000
+Sau khi lấy dấu vết của hang, đây là cách nó trông giống như được mở trong Instruments.
+
+00:12:13.000 --> 00:12:26.000
+Trong đầu ra theo dõi hệ thống, đường màu đỏ biểu thị các cuộc gọi hệ thống, biểu đồ màu tím biểu thị lỗi bộ nhớ ảo và thanh màu xanh lam nằm ngang cho biết luồng chính đang bận làm việc.
+
+00:12:26.000 --> 00:12:31.000
+Bước tiếp theo là xem công việc này là gì.
+
+00:12:31.000 --> 00:12:36.000
+Trình lập hồ sơ thời gian cho phép bạn làm điều đó.
+
+00:12:36.000 --> 00:12:45.000
+Nó trình bày một cây cuộc gọi bằng cách tổng hợp các cuộc gọi luồng chính trong suốt thời gian treo 4,7 giây.
+
+00:12:45.000 --> 00:12:55.000
+Phần được đánh dấu của cây minh họa rằng 4,6 giây của lần treo này là do phương thức loadAllMessages trong Chế độ xem công thức.
+
+00:12:55.000 --> 00:12:58.000
+Mẫu này trông quen thuộc.
+
+00:12:58.000 --> 00:13:02.000
+Món tráng miệng có thể đang tải nhiều hình ảnh hơn mức cần thiết.
+
+00:13:02.000 --> 00:13:09.000
+Khi ứng dụng của bạn đã được vận chuyển, bạn có thể sử dụng MetricKit để thu thập cây cuộc gọi cho các hàng treo trên thực địa.
+
+00:13:09.000 --> 00:13:16.000
+Điều này cho phép bạn ưu tiên các bản sửa lỗi dựa trên những vấn đề mà khách hàng thường gặp phải nhất.
+
+00:13:16.000 --> 00:13:23.000
+Để tìm hiểu cách sử dụng MetricKit để treo, hãy xem bài nói chuyện "Có gì mới trong MetricKit" từ năm 2020.
+
+00:13:23.000 --> 00:13:27.000
+Tôi đã vận chuyển món tráng miệng và có một số báo cáo treo từ MetricKit.
+
+00:13:27.000 --> 00:13:34.000
+Hãy nhìn vào một trong số chúng để xem liệu nó có giống với hang mà chúng ta vừa phân loại hay không.
+
+00:13:34.000 --> 00:13:40.000
+MetricKit trả về một cây cuộc gọi bằng cách tổng hợp các cuộc gọi được thực hiện trong quá trình treo.
+
+00:13:40.000 --> 00:13:46.000
+Định dạng cây này tương tự như những gì trình lập hồ sơ thời gian trình bày.
+
+00:13:46.000 --> 00:13:53.000
+Phần được đánh dấu cho thấy phần treo này khác với phần chúng tôi vừa điều tra bằng Dụng cụ.
+
+00:13:53.000 --> 00:14:00.000
+Cái này là do một tính năng xã hội mới mà tôi đã thêm vào, chặn trên hàng đợi điều phối truy vấn danh bạ.
+
+00:14:00.000 --> 00:14:07.000
+Nếu không có MetricKit, tôi có thể không tìm thấy vấn đề này và nó vẫn sẽ tồn tại trong lĩnh vực này.
+
+00:14:07.000 --> 00:14:15.000
+Khi sửa lỗi treo, điều quan trọng là phải cơ sở và định lượng hiệu suất của ứng dụng của bạn.
+
+00:14:15.000 --> 00:14:23.000
+Trình tổ chức Xcode thực hiện điều này bằng cách hiển thị các chỉ số hiệu suất, bao gồm biểu đồ hiển thị tỷ lệ treo trên mỗi phiên bản ứng dụng.
+
+00:14:23.000 --> 00:14:28.000
+Điều này đặc biệt hữu ích khi phân loại hồi quy.
+
+00:14:28.000 --> 00:14:33.000
+Kiểm tra hai cuộc nói chuyện này để biết thêm thông tin về Xcode Organizer.
+
+00:14:33.000 --> 00:14:41.000
+Bây giờ, hãy xem qua một số chiến lược phổ biến mà bạn có thể sử dụng để sửa lỗi treo trong ứng dụng của mình.
+
+00:14:41.000 --> 00:14:46.000
+Mỗi chiến lược này có thể giải quyết nhiều nguyên nhân gây ra treo cổ.
+
+00:14:46.000 --> 00:14:54.000
+Để biết cách khắc phục nào là tốt nhất cho ứng dụng của bạn, bạn sẽ cần xem xét các ảnh hưởng và sự đánh đổi của chúng.
+
+00:14:54.000 --> 00:15:02.000
+Để loại bỏ và bảo vệ chống lại sự treo cổ, hãy giảm số lượng công việc được thực hiện trên chủ đề chính.
+
+00:15:02.000 --> 00:15:05.000
+Điều này có thể được thực hiện theo hai cách.
+
+00:15:05.000 --> 00:15:12.000
+Đầu tiên là tối ưu hóa công việc đã được thực hiện trên luồng chính để giảm thời gian thực hiện.
+
+00:15:12.000 --> 00:15:19.000
+Thứ hai là di chuyển công việc ra khỏi luồng chính theo cách không chặn để giữ cho nó đáp ứng.
+
+00:15:19.000 --> 00:15:26.000
+Hãy bắt đầu bằng cách xem xét các cách để giảm việc thực thi luồng chính, bắt đầu với bộ nhớ đệm.
+
+00:15:26.000 --> 00:15:34.000
+Bộ nhớ đệm là một cách tuyệt vời để nhanh chóng truy cập các tài sản được sử dụng thường xuyên hoặc các giá trị được truy vấn trước đó.
+
+00:15:34.000 --> 00:15:42.000
+Chúng thường là một kho lưu trữ trong bộ nhớ, nhưng có thể được lưu vào đĩa, nếu cần qua nhiều lần gọi ứng dụng.
+
+00:15:42.000 --> 00:15:56.000
+Các tài sản được định dạng có thể cần thiết sau này, như gạch hình ảnh thành phần trong Desserted, là những ứng cử viên tuyệt vời cho bộ nhớ đệm, vì việc tạo các tài sản này mỗi khi chúng cần rất tốn kém.
+
+00:15:56.000 --> 00:16:05.000
+Bằng cách lưu trữ những thứ này trong NSCache, chi phí tạo tài sản được thay thế bằng đọc bộ nhớ nhanh.
+
+00:16:05.000 --> 00:16:11.000
+Điều này sẽ loại bỏ sự treo cổ mà chúng ta đã xem xét trong Dụng cụ.
+
+00:16:11.000 --> 00:16:20.000
+Điều quan trọng là phải có một cơ chế vô hiệu hóa bộ nhớ cache chính xác để đạt được sự cân bằng giữa việc có dữ liệu cũ và liên tục cập nhật bộ nhớ cache.
+
+00:16:20.000 --> 00:16:31.000
+Công việc này nên diễn ra không đồng bộ trên hàng đợi điều phối thứ cấp để giữ cho luồng chính phản hồi nhanh với các sự kiện.
+
+00:16:31.000 --> 00:16:37.000
+Người quan sát thông báo là một cách khác để giảm công việc trên luồng chính.
+
+00:16:37.000 --> 00:16:47.000
+Chúng cho phép ứng dụng của bạn phản ứng với những thay đổi về giá trị hoặc trạng thái mà không cần phải tính toán tốn kém, theo yêu cầu.
+
+00:16:47.000 --> 00:16:52.000
+Bất kỳ lớp học nào cũng có thể đăng thông báo, ngay cả của riêng bạn.
+
+00:16:52.000 --> 00:16:57.000
+Để tìm thông báo từ một lớp cụ thể, hãy kiểm tra tài liệu API của nó.
+
+00:16:57.000 --> 00:17:08.000
+Để tìm tất cả các thông báo hệ thống có thể quan sát được, hãy xem trang tài liệu dành cho nhà phát triển Apple cho NSNotification.Name.
+
+00:17:08.000 --> 00:17:13.000
+Một ứng cử viên tuyệt vời cho điều này là tính năng xã hội trong Desserted.
+
+00:17:13.000 --> 00:17:24.000
+Bằng cách đăng ký một người quan sát cho thông báo abDatabaseChangedExternally, luồng chính không còn phải chờ truy vấn danh bạ nữa.
+
+00:17:24.000 --> 00:17:28.000
+Khi một thông báo đến, người quan sát sẽ được gọi.
+
+00:17:28.000 --> 00:17:34.000
+Trong trường hợp này, nó sẽ cập nhật một giá trị được lưu trong bộ nhớ cache.
+
+00:17:34.000 --> 00:17:44.000
+Để giữ cho luồng chính đáp ứng, các bản cập nhật này phải không đồng bộ, điều này đạt được bằng cách dispatch_asyncing trình xử lý đến một hàng đợi khác.
+
+00:17:44.000 --> 00:17:52.000
+Bây giờ, tôi cung cấp tính năng tương tự như trước đây, nhưng không có sự treo mà chúng tôi đã thấy trong nhật ký MetricKit.
+
+00:17:52.000 --> 00:17:57.000
+Một cách khác để loại bỏ treo là di chuyển công việc ra khỏi chủ đề chính.
+
+00:17:57.000 --> 00:18:02.000
+Đầu tiên, chúng ta cần xác định công việc này nên là gì.
+
+00:18:02.000 --> 00:18:10.000
+Nói chung, các nhiệm vụ quan trọng cung cấp thông tin quan trọng cho giao diện người dùng nên vẫn còn trên chủ đề chính.
+
+00:18:10.000 --> 00:18:18.000
+Hơn nữa, tất cả các chế độ xem và bộ điều khiển chế độ xem phải được tạo, sửa đổi và phá hủy trên chuỗi chính.
+
+00:18:18.000 --> 00:18:31.000
+Tuy nhiên, tính toán cần thiết để cập nhật phần tử giao diện người dùng có thể được giảm tải xuống một luồng khác, với trình xử lý hoàn thành để thực hiện cập nhật thực tế trên luồng chính.
+
+00:18:31.000 --> 00:18:37.000
+Mẫu này rất hữu ích khi việc tính toán được biết là mất nhiều thời gian.
+
+00:18:37.000 --> 00:18:47.000
+Các nhiệm vụ ít quan trọng, bảo trì hoặc không quan trọng về thời gian khác nên được thực hiện không đồng bộ trên một luồng khác.
+
+00:18:47.000 --> 00:18:55.000
+Những thứ này sau đó sẽ chạy ở mức độ ưu tiên lập lịch thấp hơn và có thể mất nhiều thời gian hơn để hoàn thành so với công việc trên chủ đề chính.
+
+00:18:55.000 --> 00:19:03.000
+Đây là cố ý và phản ánh ý tưởng rằng chủ đề chính chỉ nên thực hiện công việc quan trọng.
+
+00:19:03.000 --> 00:19:14.000
+Cách đơn giản nhất để thực hiện các hoạt động không đồng bộ từ luồng chính là sử dụng các đối tác không đồng bộ của các API đồng bộ.
+
+00:19:14.000 --> 00:19:18.000
+Hãy lấy mạng lưới làm ví dụ.
+
+00:19:18.000 --> 00:19:27.000
+Bằng cách sử dụng các đối tác NSURL không đồng bộ cho các API mạng đồng bộ, các ứng dụng sẽ đáp ứng.
+
+00:19:27.000 --> 00:19:38.000
+Các API không đồng bộ thường được biểu thị bằng từ "đồng bộ" hoặc sự hiện diện của trình xử lý hoàn thành trong tên phương thức.
+
+00:19:38.000 --> 00:19:51.000
+Grand Central Dispatch là một cơ chế đa luồng mạnh mẽ, bạn có thể tận dụng trong trường hợp không có các biến thể API không đồng bộ hoặc mã bạn muốn di chuyển ra khỏi luồng chính là của riêng bạn.
+
+00:19:51.000 --> 00:20:02.000
+Grand Central Dispatch cung cấp các cơ chế đơn giản để di chuyển bất kỳ khối công việc nào sang một luồng khác, cả đồng bộ hoặc không đồng bộ.
+
+00:20:02.000 --> 00:20:10.000
+Điều này làm cho GCD cực kỳ hiệu quả trong việc loại bỏ hầu hết các nguyên nhân chung gây treo cổ.
+
+00:20:10.000 --> 00:20:19.000
+Để thực hiện một khối công việc không đồng bộ trên một luồng khác, hãy gửi khối đó không đồng bộ đến một hàng đợi điều phối khác.
+
+00:20:19.000 --> 00:20:28.000
+Trình xử lý hoàn thành có thể được thêm vào trong khối không đồng bộ bằng cách gửi trở lại hàng đợi chính.
+
+00:20:28.000 --> 00:20:33.000
+Grand Central Dispatch cũng cho phép bạn tính toán trước khi làm ấm.
+
+00:20:33.000 --> 00:20:44.000
+Bằng cách gửi một tác vụ không đồng bộ vào hàng đợi, có thể là prefetchQueue, tác vụ sẽ bắt đầu thực hiện trong khi luồng chính vẫn tự do thực hiện các công việc khác.
+
+00:20:44.000 --> 00:20:53.000
+Khi chuỗi chính cần những kết quả này, nó có thể gửi đồng bộ hóa lên prefetchQueue để chờ nhiệm vụ hoàn thành.
+
+00:20:53.000 --> 00:20:57.000
+Chúng tôi vừa chạm vào bề mặt của những gì GCD có thể làm.
+
+00:20:57.000 --> 00:21:05.000
+Để tìm hiểu thêm, hãy xem bài nói chuyện "Hiện đại hóa Grand Central Dispatch" từ năm 2017.
+
+00:21:05.000 --> 00:21:10.000
+Hãy hiểu một số sự đánh đổi với các giải pháp mà chúng ta vừa nói đến.
+
+00:21:10.000 --> 00:21:17.000
+Bộ nhớ đệm sử dụng bộ nhớ, vì vậy bạn nên nhận thức được kích thước của chúng để tránh sự phát triển bộ nhớ lớn.
+
+00:21:17.000 --> 00:21:24.000
+Điều quan trọng là phải đảm bảo có một cơ chế vô hiệu hóa chính xác để các giá trị không bị cũ.
+
+00:21:24.000 --> 00:21:27.000
+Thông báo có thể nói chuyện phiếm.
+
+00:21:27.000 --> 00:21:34.000
+Khi quan sát một cái, điều quan trọng là phải xem xét tần suất mà thông báo đó phát ra.
+
+00:21:34.000 --> 00:21:43.000
+Thêm một bộ lọc trước khi xử lý hoặc kết hợp nhiều thông báo sẽ làm giảm sự gián đoạn CPU.
+
+00:21:43.000 --> 00:22:01.000
+Khi sử dụng các API không đồng bộ, điều quan trọng là phải biết liệu hoạt động được đề cập có nên được đồng bộ hóa hay không, đặc biệt bằng cách kiểm tra trước xem nó có quan trọng đối với việc cập nhật giao diện người dùng hay không, vì hệ điều hành không ưu tiên công việc không đồng bộ.
+
+00:22:01.000 --> 00:22:11.000
+Khi sử dụng Grand Central Dispatch để thực hiện các tác vụ không đồng bộ, bạn đang thay đổi thứ tự các tác vụ trong mã của bạn thực hiện.
+
+00:22:11.000 --> 00:22:19.000
+Điều quan trọng là phải ghi nhớ những nhiệm vụ nào phải được đặt hàng cho người khác để đảm bảo ứng dụng của bạn không bị hỏng.
+
+00:22:19.000 --> 00:22:26.000
+Sử dụng dispatch_sync với hàng đợi nối tiếp là một cách tuyệt vời để đồng bộ hóa các hoạt động khi cần thiết.
+
+00:22:26.000 --> 00:22:35.000
+So với tác động nghiêm trọng đối với trải nghiệm người dùng, những sự đánh đổi này luôn đáng giá.
+
+00:22:35.000 --> 00:22:42.000
+Một số suy nghĩ cần ghi nhớ trong khi loại bỏ treo là sử dụng Khung và API của Apple.
+
+00:22:42.000 --> 00:22:52.000
+Những thứ này đã tương thích với một loạt các thiết bị, có hiệu suất và được cập nhật liên tục để hiệu quả và hiệu quả hơn.
+
+00:22:52.000 --> 00:22:56.000
+Thực hiện các cải tiến lặp đi lặp lại trong mã của bạn.
+
+00:22:56.000 --> 00:23:03.000
+Bằng cách này, bạn sẽ thực hiện các bản sửa lỗi được nhắm mục tiêu và có thể thấy ảnh hưởng của các thay đổi riêng lẻ.
+
+00:23:03.000 --> 00:23:07.000
+Hãy là một người hàng xóm tốt khi sử dụng tài nguyên hệ thống.
+
+00:23:07.000 --> 00:23:16.000
+Sử dụng nhiều tài nguyên hơn mức cần thiết không chỉ làm giảm hiệu suất của ứng dụng của riêng bạn mà còn có thể gây ra các sự chậm lại khác trong hệ thống.
+
+00:23:16.000 --> 00:23:25.000
+Cùng nhau, chúng tôi đã trải nghiệm việc treo cổ chói tai có thể như thế nào và tầm quan trọng của việc bảo vệ chống lại sự treo cổ trong ứng dụng của bạn.
+
+00:23:25.000 --> 00:23:32.000
+Trong tương lai, hãy đặt đường cơ sở hiệu suất của ứng dụng của bạn thông qua trình tổ chức Xcode.
+
+00:23:32.000 --> 00:23:38.000
+Trong quá trình phát triển và đánh giá mã, hãy chú ý đến các mẫu chống có thể gây treo cổ.
+
+00:23:38.000 --> 00:23:42.000
+Chúng tôi đã thảo luận về bảy trong số những cái phổ biến nhất.
+
+00:23:42.000 --> 00:23:55.000
+Chẩn đoán các vấn đề xuất hiện với trình lập hồ sơ thời gian và các công cụ theo dõi hệ thống, sử dụng MetricKit để ưu tiên các vấn đề mà khách hàng thường gặp phải nhất.
+
+00:23:55.000 --> 00:24:08.000
+Loại bỏ bất kỳ sự treo nào bạn tìm thấy bằng cách sử dụng bộ nhớ cache, quan sát thông báo, tìm kiếm các lựa chọn thay thế không đồng bộ hoặc tận dụng Grand Central Dispatch.
+
+00:24:08.000 --> 00:24:17.000
+Bằng cách làm theo các bước này, các ứng dụng của bạn sẽ có hiệu suất tốt hơn để cung cấp trải nghiệm người dùng tốt nhất có thể.
+
+00:24:17.000 --> 00:24:19.000
+Cảm ơn vì đã quanh quẩn.
+
+00:24:19.000 --> 23:59:59.000
+[Âm nhạc].
+

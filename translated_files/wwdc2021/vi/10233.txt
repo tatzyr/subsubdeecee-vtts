@@ -1,0 +1,285 @@
+10233
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Jonathan Hogg: Xin chào, và chào mừng đến với phiên này về Tăng tốc và các khuôn khổ liên quan.
+
+Tôi là Jonathan từ nhóm Vector & Numerics của Apple, và hôm nay tôi sẽ nói chuyện ngắn gọn với bạn về khung Accelerate trước khi cho bạn biết có gì mới trong thư viện máy học của chúng tôi, BNNS.
+
+Sau đó, tôi sẽ đề cập đến các cải tiến đối với simd.h và giới thiệu Apple Archive và các vùng chứa Apple Encrypted Archive mới của chúng tôi.
+
+Vì vậy, hãy bắt đầu với một cái nhìn tổng quan ngắn gọn về khuôn khổ Tăng tốc.
+
+Accelerate cung cấp tính toán số hiệu suất cao trên tất cả các nền tảng của Apple: MacOS, iOS, iPadOS, watchOS và tvOS.
+
+Accelerate cũng cung cấp quyền truy cập vào các bộ tăng tốc học máy trong Apple Silicon Macs và các thiết bị iPhone và iPad gần đây.
+
+Cách duy nhất để tận dụng phần cứng này là gọi Accelerate trực tiếp hoặc thông qua các khuôn khổ cấp cao hơn như Core ML.
+
+Tăng tốc bao gồm một số phần.
+
+vDSP cung cấp các nguyên thủy để xử lý tín hiệu như các quy trình DFT và FFT.
+
+vImage cung cấp các quy trình xử lý hình ảnh như chuyển đổi định dạng và tích chập.
+
+vForce cung cấp các phiên bản vectơ hóa của các hàm siêu việt như sin và cosin.
+
+BLAS và LAPACK cung cấp khả năng cấy ghép hiệu suất cao của các quy trình đại số ma trận dày đặc tiêu chuẩn, trong khi Sparse BLAS và Sparse Solvers của chúng tôi cung cấp chức năng tương tự cho ma trận thưa thớt.
+
+Cuối cùng, BNNS cung cấp hỗ trợ cho việc học máy.
+
+Hôm nay tôi cũng sẽ nói chuyện với bạn về một số khuôn khổ liên quan.
+
+Simd.h cung cấp các vectơ và ma trận nhỏ tính toán, chẳng hạn như những vectơ và ma trận được đề cập trong lập trình đồ họa, trong khi Nén và Apple Archive cung cấp hỗ trợ nén dữ liệu không mất dữ liệu.
+
+Để sử dụng các khuôn khổ này, chỉ cần thêm câu lệnh bao gồm hoặc nhập có liên quan vào mã của bạn và thêm khuôn khổ vào dự án Xcode của bạn.
+
+Bây giờ, hãy để tôi kể cho bạn nghe về BNNS chi tiết hơn.
+
+BNNS là viết tắt của Basic Neural Network Subroutines và cung cấp các nguyên thủy hiệu suất cho việc học máy trên CPU.
+
+Đối với những người bạn không quen thuộc với hệ sinh thái học máy của Apple, sơ đồ này cho thấy vị trí của vùng đất.
+
+Có ba khối phần cứng chính: CPU, bao gồm các bộ tăng tốc học máy mà tôi đã đề cập trước đó; GPU; và công cụ thần kinh riêng biệt.
+
+BNNS cung cấp các nguyên thủy hiệu suất trên CPU giống như cách MPS cung cấp các nguyên thủy hiệu suất trên GPU.
+
+Phía trên lớp này, có một số khung chạy trên một hoặc nhiều phụ trợ này.
+
+Chúng bao gồm các khung học máy cấp cao của Apple - Core ML và Create ML - cũng như các khung chuyên môn như Vision và Natural Language.
+
+BNNS cung cấp hỗ trợ cho cả đào tạo và suy luận trên nhiều loại lớp, cũng như hỗ trợ cho các trình tối ưu hóa được hiển thị ở phía dưới.
+
+Trong bản phát hành này, chúng tôi đã thêm hỗ trợ cho một số loại lớp mới: nhúng, điền ngẫu nhiên và lượng tử hóa; cũng như hỗ trợ cho trình tối ưu hóa AdamW.
+
+Chúng tôi cũng đã cải thiện các lớp hiện có, thêm hai chức năng kích hoạt mới: SiLU và HardSwish, cũng như hỗ trợ các hàm số học mới: chọn bậc ba, cộng nhân, cũng như tối thiểu và tối đa theo phần tử.
+
+Phản ứng tổng hợp lớp cung cấp khả năng tiêu thụ đầu ra của một lớp ngay lập tức làm đầu vào cho lớp tiếp theo, tránh sự cần thiết phải ghi nó vào bộ nhớ và đọc lại.
+
+Chúng tôi đã thêm sự hợp nhất lớp của tích chập và các lớp được kết nối hoàn toàn với lớp lượng tử hóa mới, cũng như sự hợp nhất giữa các lớp số học và chuẩn hóa.
+
+Các cải tiến khác bao gồm hỗ trợ được cải thiện cho việc cắt gradient trong trình tối ưu hóa, cũng có thể được sử dụng như các chức năng độc lập, cũng như hỗ trợ AMSGrad cho các trình tối ưu hóa dựa trên Adam của chúng tôi.
+
+Cùng với nhau, những cải tiến này đã mở rộng phạm vi và kiến trúc mạng mà chúng ta có thể tăng tốc hơn nữa.
+
+Bây giờ, hãy để tôi kể cho bạn nghe về một số cải tiến cho simd.h.
+
+Simd.h cung cấp các nguyên thủy tính toán trên các vectơ và ma trận nhỏ phù hợp với các thanh ghi của CPU, bao gồm hỗ trợ cho các hàm như sin và cosin cũng như các hoạt động hình học hữu ích, bao gồm hỗ trợ cho các quaternion.
+
+Điều tôi thực sự thích ở simd.h là nó cho phép chúng ta nhảy vào và nhận được 90 phần trăm lợi ích của vector hóa với 10 phần trăm nỗ lực.
+
+Đây, để tôi chỉ cho bạn.
+
+Đây là một chức năng kích hoạt mạng thần kinh mà tôi vừa phát minh ra.
+
+Như bạn có thể thấy, nó có ba nhánh khác nhau.
+
+Nếu đầu vào nhỏ hơn trừ pi, tôi chỉ trả về số không.
+
+Nếu nó nằm giữa trừ pi và pi, tôi trả về gấp hai lần số mũ của x, nhân với x cộng với pi trên hai.
+
+Nếu không, nếu nó lớn hơn pi, tôi trả về gấp hai lần số mũ.
+
+Điều đó thật tuyệt, nhưng nếu tôi có một lượng lớn dữ liệu, tôi có thể muốn chạy nó nhanh hơn vòng lặp vô hướng cho phép.
+
+Vậy hãy để tôi chỉ cho bạn cách thực hiện điều đó trong simd.
+
+Tôi đã có một số mẫu sẵn, một phần mở rộng cho phép tôi dễ dàng ghi vectơ vào bộ đệm và một vòng lặp đơn giản lặp lại trên mảng đầu ra của chúng tôi theo gia số của một chiều dài tám vectơ tại một thời điểm.
+
+Phần thú vị là làm thế nào để dịch hàm vô hướng của chúng ta thành một tương đương simd.
+
+Hãy bắt đầu bằng cách xem lại mã vô hướng của chúng tôi.
+
+Tôi thấy nó có một vài nhánh.
+
+Những thứ này không hoạt động tốt cho việc vector hóa.
+
+Thay vào đó, hãy xây dựng cái này từ những phần mà chúng ta có thể hợp nhất dựa trên mặt nạ.
+
+Nhìn kỹ hơn, nếu x nhỏ hơn trừ pi, tôi chỉ trả về số không.
+
+Nếu nó lớn hơn, tôi trả về một biểu thức liên quan đến số mũ gấp hai lần của x.
+
+Hãy kéo nó ra.
+
+Bây giờ, chúng tôi muốn xây dựng một vectơ từ y đó, thay thế bằng 0 ở mọi nơi mà x là phần tử nhỏ hơn trừ pi.
+
+Tiếp theo, chúng ta có thể xem xét một trường hợp lớn hơn.
+
+Ở đây, chúng ta đang nhân với một ở vùng cao, hoặc với x cộng với pi trên hai ở vùng giữa.
+
+Vì vậy, hãy viết điều đó theo cùng một cách.
+
+Chúng tôi lấy x cộng pi của chúng tôi trên hai biểu thức và lần này chúng tôi đang thay thế bằng một biểu thức ở mọi nơi mà x lớn hơn hoặc bằng pi theo phần tử.
+
+Bây giờ tất cả những gì còn lại là nhân hai đại lượng này lại với nhau.
+
+Rõ ràng, nếu một phần tử bằng không, nhân với một trong hai giá trị của b vẫn trả về số không.
+
+Vì vậy, hãy chạy nó và xem nó trông như thế nào.
+
+Bây giờ, tôi có thể thấy - nhìn xuống bảng điều khiển - rằng phiên bản simd mới của tôi nhanh hơn gần ba lần so với mã vô hướng trước đó.
+
+Vậy simd được cải thiện như thế nào trong bản phát hành này?
+
+Chúng tôi đã cải thiện khả năng sử dụng cho các lập trình viên C++ bằng cách sử dụng các mẫu.
+
+Chúng tôi đã thêm các cấu trúc loại và đặc điểm để cho phép bạn di chuyển giữa loại vô hướng cơ bản và chiều dài vectơ và loại simd cụ thể mà không cần cấu trúc mã phức tạp hoặc cần tự mình triển khai các loại tương tự.
+
+Để đơn giản hóa việc sử dụng chúng, chúng tôi cũng đã thêm các bí danh thuận tiện để giảm nhu cầu về mẫu C++.
+
+Đây là một ví dụ về những gì chúng trông giống như khi sử dụng.
+
+Các loại vectơ và ma trận cho phép chúng ta đi từ một loại cơ bản - chẳng hạn như float hoặc int - và chiều dài vectơ sang một loại cụ thể và cũng có các thành viên cung cấp quyền truy cập vào các loại liên quan, chẳng hạn như phiên bản không liên kết và loại mặt nạ do so sánh.
+
+Bí danh Vector_t và Matrix_t cung cấp cú pháp đơn giản hóa để truy cập các định nghĩa giống như chúng ta đã có trước đây.
+
+Cấu trúc get_traits cho phép chúng ta đi theo hướng khác, chuyển từ loại simd cụ thể sang loại chung.
+
+Và một lần nữa, có những bí danh để đơn giản hóa cú pháp cho các trường hợp sử dụng phổ biến.
+
+Chúng tôi cũng đã thêm các phiên bản mẫu của các chức năng tạo và chuyển đổi để cho phép sử dụng chúng trong mã mẫu.
+
+Chúng hoạt động giống như các hàm hiện có, nhưng loại đích của chúng bây giờ là một tham số mẫu chứ không phải là một phần của tên hàm.
+
+Ngoài những cải tiến C++ của chúng tôi, chúng tôi đã thêm một số chức năng mới được hỗ trợ trên tất cả các ngôn ngữ của chúng tôi.
+
+Đây là các hàm phân loại - như isfinite và isinf - cung cấp các phiên bản vectơ của các hàm vô hướng trong libm, cũng như các hàm mới để tính toán hàm gamma, cũng như dấu vết của ma trận simd.
+
+Bây giờ, giới thiệu Kho lưu trữ Apple và các định dạng Kho lưu trữ được mã hóa Apple mới của chúng tôi.
+
+Kho lưu trữ Apple đã cung cấp năng lượng cho các bản cập nhật hệ thống của chúng tôi trong phần tốt hơn của một thập kỷ.
+
+Trong bản phát hành macOS 11, chúng tôi đã cấp cho bạn quyền truy cập vào vùng chứa nén và định dạng lưu trữ.
+
+Mới trong macOS 12, chúng tôi đã thêm API để mã hóa vào hỗ trợ này.
+
+Bản thân định dạng lưu trữ cung cấp một cách tiếp cận mô-đun, hiện đại, cho phép bạn chọn chính xác thuộc tính tệp và siêu dữ liệu nào bạn muốn lưu trữ.
+
+Nó có thể phát trực tuyến, có nghĩa là bạn không phải lo lắng về việc lắp toàn bộ dữ liệu vào bộ nhớ cùng một lúc.
+
+Nó cũng hỗ trợ các tệp kê khai riêng biệt để lập chỉ mục vào các kho lưu trữ lớn như hình ảnh hệ thống tệp.
+
+Kho lưu trữ được mã hóa mới của Apple được xây dựng dựa trên điều này, kết hợp nén, mã hóa được xác thực và chữ ký số vào một gói bảo mật duy nhất.
+
+Nó cung cấp cho bạn mật mã hiện đại được thiết kế và kiểm tra bởi nhóm Bảo mật của chúng tôi, cũng như các chuyên gia bên ngoài.
+
+Bảo mật dữ liệu có nghĩa là dữ liệu của bạn được giữ bí mật.
+
+Tính xác thực của dữ liệu có nghĩa là bạn có thể chắc chắn rằng nó không bị hỏng trong quá trình truyền tải.
+
+Xác thực người gửi có nghĩa là bạn có thể chắc chắn ai đã gửi nó.
+
+Quyền riêng tư của chữ ký có nghĩa là trong bối cảnh khóa công khai, chỉ có bạn và người gửi biết ai đã ký nó.
+
+Chúng tôi cũng làm xáo trộn siêu dữ liệu - chẳng hạn như độ dài tệp - và bao gồm bảo vệ tấn công từ chức.
+
+Cùng với nhau, điều này có nghĩa là bạn có thể tự tin rằng dữ liệu của mình vẫn ở chế độ riêng tư và an toàn.
+
+Để tạo điều kiện thuận lợi cho việc triển khai chính xác, chúng tôi cung cấp một số hồ sơ khác nhau cho các trường hợp sử dụng khác nhau.
+
+Hồ sơ cơ bản là có chữ ký số mà không cần mã hóa.
+
+Điều này có thể được sử dụng cho những thứ như cập nhật phần mềm nơi nội dung không bí mật, nhưng bạn muốn chắc chắn rằng dữ liệu không bị giả mạo.
+
+Tiếp theo, chúng tôi có mã hóa đối xứng, có hoặc không có chữ ký, sử dụng khóa nhị phân được chia sẻ an toàn.
+
+Điều này tương tự như tùy chọn tiếp theo sử dụng mật khẩu thay vì khóa nhị phân.
+
+Cuối cùng, chúng tôi có mã hóa khóa công khai toàn diện, một lần nữa có hoặc không có chữ ký.
+
+Trong tất cả các cấu hình, nén là tùy chọn và dữ liệu luôn được xác thực.
+
+Để làm việc với các định dạng này, chúng tôi cung cấp một số công cụ dòng lệnh.
+
+Để làm việc với phần lưu trữ nén của định dạng, có compression_tool, và đối với kho lưu trữ được mã hóa, có aea.
+
+Công cụ aa xử lý toàn bộ thùng chứa.
+
+Tất nhiên cũng có một API được cung cấp bởi khung Apple Archive trong cả Swift và C.
+
+Nó dựa trên luồng, cho phép truy cập cả tuần tự và ngẫu nhiên.
+
+Việc triển khai nó được đa luồng cho hiệu suất cực nhanh.
+
+Vì vậy, hãy xem API này đang hoạt động.
+
+Ở đây, chúng tôi có một ứng dụng demo đơn giản mà chúng tôi đã kết hợp với nhau.
+
+Phần trên cùng của cửa sổ hoạt động như một mục tiêu kéo và thả cho những thứ chúng ta muốn mã hóa, trong khi phần dưới cùng là một ngăn trạng thái đơn giản.
+
+Giả sử tôi muốn mã hóa thư mục TopSecret này.
+
+Tôi chỉ cần kéo và thả cái này vào ứng dụng.
+
+Và, ồ không! Chúng tôi gặp lỗi.
+
+Chúng tôi vẫn chưa triển khai chức năng này!
+
+Hãy làm điều đó ngay bây giờ.
+
+Vậy, chúng ta cần làm gì để mã hóa điều này với Apple Archive?
+
+Đầu tiên, chúng ta cần một ngữ cảnh mã hóa mô tả thuật toán và hồ sơ để sử dụng, cùng với bí mật mã hóa của chúng ta.
+
+Chúng tôi cũng cần một luồng tệp mà chúng tôi sẽ ghi vào kho lưu trữ.
+
+Chúng tôi kết hợp những thứ này để tạo ra một luồng mã hóa.
+
+Luồng mã hóa sẽ mã hóa một luồng byte, vì vậy chúng tôi cần một bộ điều hợp sẽ dịch thư mục mà chúng tôi muốn mã hóa thành như vậy.
+
+Đây là luồng bộ mã hóa.
+
+Tất nhiên, dữ liệu chảy theo hướng ngược lại với việc tạo đối tượng.
+
+Chúng tôi cung cấp các mục lưu trữ vào luồng bộ mã hóa, chuyển đổi chúng thành byte cho luồng mã hóa, sau đó xuất dữ liệu được mã hóa vào luồng tệp.
+
+Hãy xem nó trông như thế nào trong mã.
+
+Ở đây, chúng tôi xác định rằng chúng tôi đang sử dụng một hồ sơ đối xứng.
+
+Và "không" cho chúng ta biết rằng chúng ta sẽ không sử dụng chữ ký số.
+
+Phần ban đầu của liệt kê chỉ xác định thuật toán cụ thể mà chúng tôi muốn sử dụng.
+
+Ở đây, chúng ta sẽ sử dụng "lzfse" để nén dữ liệu của chúng ta.
+
+Với ngữ cảnh được tạo, chúng ta chỉ cần chỉ định khóa mã hóa đối xứng của mình.
+
+Tiếp theo, chúng tôi tạo ra ba luồng đó.
+
+Đầu tiên, chúng tôi tạo luồng tệp, sau đó chúng tôi kết hợp nó với một ngữ cảnh để tạo luồng mã hóa.
+
+Cuối cùng, chúng tôi rút ra encoderStream.
+
+Bây giờ, điều quan trọng là chúng ta phải nhớ đóng các luồng này theo đúng thứ tự.
+
+Đặc biệt, việc đóng encryptionStream thực hiện rất nhiều công việc đằng sau hậu trường, vì nó ký và niêm phong kho lưu trữ.
+
+Cuối cùng, tất cả những gì còn lại là để chúng tôi đưa các tệp của mình vào encoderStream.
+
+Tôi chỉ định các thuộc tính tệp mà tôi muốn mã hóa và sau đó gọi phương thức writeDirectoryContents.
+
+Tất cả những gì còn lại là in một thông báo trạng thái vào bảng điều khiển bằng khóa mã hóa.
+
+Hãy xem điều đó có hiệu quả không.
+
+Nếu tôi thả thư mục TopSecret của chúng tôi vào ứng dụng, nó sẽ thành công, mã hóa nó và in khóa mã hóa của chúng tôi.
+
+Bây giờ, nếu tôi kéo và thả kho lưu trữ được mã hóa của chúng tôi vào ứng dụng, nó sẽ cố gắng giải mã nó và yêu cầu khóa mã hóa.
+
+Vì vậy, hãy sao chép và dán khóa mã hóa đó và xem có gì bên trong.
+
+Mmm, ngon quá!
+
+Đó là tất cả những gì tôi có cho bạn trên Apple Encrypted Archive, vì vậy hãy kết thúc.
+
+Hôm nay, tôi đã nói chuyện với bạn về những cải tiến đối với khung Accelerate, bao gồm hỗ trợ cho các loại lớp mới trong BNNS, cũng như hỗ trợ C++ mở rộng và các chức năng khác trong simd.h.
+
+Sau đó tôi đã giới thiệu cho bạn về Kho lưu trữ Apple và các định dạng Kho lưu trữ được mã hóa Apple mới và sự hỗ trợ của chúng trong các khuôn khổ.
+
+Cảm ơn bạn và tận hưởng phần còn lại của WWDC.
+
+♪

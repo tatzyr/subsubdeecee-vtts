@@ -1,0 +1,401 @@
+10086
+
+Nihar: Xin chào, và chào mừng đến với "Có gì mới trong CloudKit."
+
+Tên tôi là Nihar Sharma và tôi là một kỹ sư trong nhóm CloudKit, và tôi sẽ được tham gia bởi đồng nghiệp Qian của tôi.
+
+Chúng ta sẽ bắt đầu bằng cách làm nổi bật một số thay đổi đối với CloudKit API tận dụng lợi thế của Swift concurrency.
+
+Sau đó, Qian sẽ hướng dẫn chúng ta cách sử dụng các trường được mã hóa trên hồ sơ.
+
+Cuối cùng, chúng ta sẽ đào sâu hơn vào một tính năng mới cho phép bạn dễ dàng chia sẻ các vùng bản ghi.
+
+Đầu tiên, chúng tôi có CloudKit và Swift đồng thời.
+
+Như một chút nền tảng, CloudKit là một khuôn khổ cung cấp cho ứng dụng của bạn quyền truy cập vào cơ sở dữ liệu trên iCloud.
+
+Điều này được hiển thị trong API dưới dạng CKContainer thông qua đó bạn có thể truy cập nhiều CKDatabases.
+
+Mỗi vùng chứa có một cơ sở dữ liệu công cộng nơi tất cả người dùng có khả năng đọc và ghi các bản ghi.
+
+Nếu thiết bị có tài khoản iCloud đã đăng nhập, thì ứng dụng của bạn cũng có quyền truy cập vào cơ sở dữ liệu riêng tư, chứa dữ liệu của người dùng đó.
+
+Và nếu ứng dụng của bạn hỗ trợ chia sẻ, thì dữ liệu được chia sẻ cho người dùng iCloud hiện tại sẽ có sẵn cho ứng dụng của bạn trong CKDatabase được chia sẻ.
+
+Khi viết mã chống lại CloudKit, có hai lĩnh vực chung của API.
+
+Đầu tiên, các chức năng, có sẵn trên CKContainer và CKDatabase.
+
+API này hữu ích cho những người mới áp dụng CloudKit và có nghĩa là cung cấp một rào cản gia nhập thấp.
+
+Thay vì cung cấp cho bạn tất cả các cấu hình có sẵn, khung chọn một hành vi mặc định, phù hợp nhất cho ứng dụng giao diện người dùng mà người dùng đang tương tác.
+
+Tiếp theo là API Hoạt động, được hiển thị dưới dạng một tập hợp các lớp con NSOperation.
+
+API này cung cấp một số tính năng không có sẵn dưới dạng chức năng CKContainer hoặc CKDatabase.
+
+Điều này bao gồm việc gửi và nhận các lô mục trong một chuyến đi khứ hồi duy nhất đến máy chủ, phân trang thông qua các bộ kết quả lớn bằng cách tìm nạp dần chúng từ máy chủ, yêu cầu thay đổi cơ sở dữ liệu và ghi lại vùng từ máy chủ kể từ một số thời điểm trong quá khứ và cuối cùng, nhóm các hoạt động khác nhau lại với nhau.
+
+Điều này cho phép chúng được đăng nhập như một đơn vị và cho phép bạn thông báo cho hệ thống về kích thước khối lượng công việc kéo dài hoạt động của bạn.
+
+Nhiều nhà phát triển cuối cùng sử dụng API này khi viết mã chất lượng sản xuất.
+
+Tận dụng chức năng đồng thời Swift mới, CloudKit đã thực hiện một số cải tiến.
+
+Đầu tiên, tôi sẽ đề cập đến cách bạn có thể sử dụng tính năng Swift async/await mới cùng với CloudKit APIs.
+
+Sau đó, tôi sẽ nói về API mới giúp làm rõ sự khác biệt giữa lệnh gọi lại cho mỗi mục và mỗi hoạt động và cách CloudKit tận dụng loại Swift.Result để làm rõ vai trò của các tham số đối với các lệnh gọi lại đó.
+
+Và cuối cùng, tôi sẽ xem xét các cải tiến mà chúng tôi đã thực hiện đối với các chức năng cơ sở dữ liệu và vùng chứa của mình, giúp mang lại một số tính năng và khả năng cấu hình trước đây chỉ có sẵn thông qua các API hoạt động.
+
+CloudKit API đang giới thiệu các biến thể không đồng bộ cho các chức năng trên vùng chứa và cơ sở dữ liệu.
+
+Bạn có thể sử dụng các chức năng không đồng bộ để cải thiện mã của mình liên quan đến tính đồng thời.
+
+Nó giúp xử lý lỗi tự nhiên hơn và đơn giản hóa luồng điều khiển trực quan trong mã của bạn.
+
+Để biết thêm chi tiết về các chức năng không đồng bộ, vui lòng tham khảo phiên "Gặp gỡ không đồng bộ/chờ trong Swift".
+
+Hãy xem một ví dụ.
+
+Đoạn mã này được lấy từ mẫu mã PrivateDatabase.
+
+Đây là một trong một số mẫu mã cụ thể của CloudKit mà Apple gần đây đã đăng lên GitHub và chúng có sẵn cho bạn.
+
+Chức năng cụ thể này muốn xóa một bản ghi khỏi máy chủ và thông báo cho người gọi khi nó hoàn tất.
+
+Lưu ý rằng có nhiều tùy chọn và mở gói có điều kiện rắc xung quanh.
+
+Và khi bạn lần đầu tiên cố gắng hiểu chức năng này, luồng điều khiển không rõ ràng ngay lập tức.
+
+Bây giờ, hãy so sánh điều này với mã được cập nhật để sử dụng các chức năng không đồng bộ của CloudKit.
+
+Ở đây, các tùy chọn và mở gói đã bị loại bỏ, và luồng điều khiển là tuyến tính và dễ theo dõi hơn.
+
+Tôi rất vui khi nói rằng mỗi mẫu mã của chúng tôi trên kho lưu trữ GitHub đều có các bản cập nhật chứng minh cách mã có thể được tái cấu trúc tương tự để sử dụng đồng thời Swift.
+
+Hãy nói về các cuộc gọi lại cho mỗi mục.
+
+Ví dụ, đây là CKFetchRecordsOperation gửi bốn CKRecord.ID đến máy chủ, để lý tưởng nhất là lấy lại bốn tải trọng CKRecord.
+
+Thao tác này có thể đi theo một trong ba cách khác nhau.
+
+Trong trường hợp đầu tiên, hoạt động thành công.
+
+Không có lỗi, hồ sơ của bạn được tìm nạp thành công từ máy chủ.
+
+Khả năng thứ hai là bạn gặp lỗi trên toàn hoạt động.
+
+Đây là một lỗi khiến toàn bộ hoạt động thất bại.
+
+Ví dụ, có thể thiết bị thiếu kết nối mạng.
+
+Trong trường hợp đó, toàn bộ hoạt động sẽ thất bại với mã lỗi networkUnavailable.
+
+Đây là lựa chọn thứ ba.
+
+Trong trường hợp này, hoạt động của bạn đã thành công khi chuyển sang máy chủ.
+
+Máy chủ đã trả về thành công ba trong số các bản ghi CK được yêu cầu, cùng với lỗi cho biết bản ghi được yêu cầu thứ tư không tồn tại.
+
+Trong ví dụ này, lỗi trên mỗi mục là Mục không xác định và nó được gộp vào lỗi cho mỗi hoạt động được gọi là partialFailure.
+
+Vậy, điều này được xử lý trong mã như thế nào?
+
+Ở trên cùng, CKFetchRecordsOperation khai báo perRecordCompletionBlock và khối hoàn thành mỗi hoạt động, cùng với việc triển khai mẫu của từng cái ở phía dưới.
+
+Lưu ý sự chồng chéo giữa hai cuộc gọi lại này.
+
+Từ ví dụ bản ghi bị thiếu từ trước đây, mã mong đợi lỗi cho mỗi mục hai lần - một lần là lỗi unknownItem cấp cao nhất trong cuộc gọi lại cho mỗi mục và một lần nữa được đóng gói bên trong lỗi partialFailure trong cuộc gọi lại cho mỗi hoạt động.
+
+Tương tự, nó cũng mong đợi thành công trên mỗi mục ở hai nơi cho các bản ghi được tìm nạp thành công - đầu tiên, như một tham số cấp cao nhất cho cuộc gọi lại cho mỗi mục và một lần nữa, được gói trong từ điển recordsByRecordID về các kết quả thành công trong cuộc gọi lại trên mỗi hoạt động.
+
+Bằng cách tận dụng loại Swift.Result, CloudKit đã thay thế cả hai lệnh gọi lại này để làm cho API rõ ràng hơn.
+
+Lưu ý mức độ phân tách hàng đầu của các tham số khối trong các cuộc gọi lại dựa trên kết quả mới.
+
+perRecordResultBlock có một ID, xác định mục mà CloudKit đang gọi lại.
+
+Và nó có kết quả cho mỗi mục.
+
+Kết quả hiện đã được nhập mạnh, vì vậy bạn biết rằng bạn đang nhận được tải trọng CKRecord được tìm nạp thành công hoặc lỗi cho mỗi mục.
+
+Tương tự, khối hoàn thành phạm vi hoạt động cũng đã được cập nhật thành khối kết quả phạm vi hoạt động không còn sao chép bất kỳ thành công hoặc thất bại nào đã được báo cáo bởi khối kết quả cho mỗi mục.
+
+Vì vậy, CloudKit hiện đã chính thức tách biệt mối quan tâm của họ.
+
+Một khối được sử dụng riêng cho báo cáo cho mỗi mục và một khối khác dành riêng cho báo cáo cho mỗi hoạt động.
+
+Quay trở lại ví dụ hồ sơ còn thiếu của chúng tôi, kỳ vọng là ba lần gọi khối kết quả cho mỗi mục với tải trọng CKRecord được tìm nạp thành công, một lần gọi khối kết quả cho mỗi mục với lỗi Mục không xác định và một lần gọi khối kết quả cho mỗi hoạt động không có lỗi, vì tổng thể thao tác đã thành công.
+
+Một trong những cải tiến mới của CloudKit là hiển thị các cuộc gọi lại riêng biệt cho mỗi mục và mỗi hoạt động ở mọi nơi.
+
+Trước đây, chỉ có các hoạt động được đánh dấu mới có lệnh gọi lại trên mỗi mục xuất hiện lỗi trên mỗi mục.
+
+Tôi vui mừng thông báo rằng tất cả các CKOperations hiện hiển thị các cuộc gọi lại cho mỗi mục vượt qua các lỗi cho mỗi mục khi thích hợp.
+
+Bây giờ, chúng ta hãy xem xét một số cải tiến và mở rộng mà chúng tôi đã thực hiện đối với API vùng chứa và cơ sở dữ liệu của mình.
+
+Các cải tiến có dạng các chức năng mới trên CKContainer và CKDatabase.
+
+Cùng với nhau, các chức năng mới này tạo ra một phần lớn các API CKOperation có sẵn dưới dạng các chức năng trên CKContainer và CKDatabase.
+
+Quan trọng hơn, đây không phải là ánh xạ 1-1 của API hoạt động.
+
+Thay vào đó, chúng tôi đã tận dụng các tham số mặc định và loại Swift.Result để tạo ra một API có thể tiếp cận, mạnh mẽ và hoạt động với async/await.
+
+Đó là, mỗi chức năng mới được hiển thị hai lần - một lần lấy Trình xử lý hoàn thành và một lần nữa dưới dạng chức năng không đồng bộ.
+
+Với API nâng cao này, các chức năng trên vùng chứa và cơ sở dữ liệu hiện hỗ trợ một số tính năng từ API hoạt động, như phân lô nhiều mục, phân trang qua các tập dữ liệu lớn và tìm nạp các thay đổi.
+
+Bạn cũng có thể nhóm các lệnh gọi chức năng lại với nhau để ghi nhật ký và thông báo cho hệ thống về kích thước khối lượng công việc kết hợp.
+
+Các lệnh gọi chức năng bây giờ cũng có thể được cấu hình, chẳng hạn như bằng cách đặt thời gian chờ.
+
+Vậy, cái này hoạt động như thế nào?
+
+Đây, một lần nữa, là mẫu mã GitHub PrivateDatabase mà chúng ta đã thấy trước đó, sử dụng các chức năng không đồng bộ để xóa bản ghi.
+
+Hãy xem mã này có thể được cập nhật như thế nào để tận dụng lợi thế của việc trộn hàng loạt mặt hàng.
+
+Tôi sẽ thay đổi hành vi của hàm này để xóa hai bản ghi nguyên tử bằng cách tận dụng API hàm nâng cao trên cơ sở dữ liệu.
+
+Chú ý sự tách biệt của các mối quan tâm.
+
+Các khu vực được đánh dấu hoạt động ở phạm vi chức năng.
+
+Họ khởi động chức năng và phát hiện bất kỳ lỗi phạm vi chức năng nào được ném ra.
+
+Và nếu chức năng hoàn thành thành công, khu vực được đánh dấu này sẽ kiểm tra những thành công hoặc thất bại cho mỗi mục.
+
+Chúng tôi có các ví dụ tương tự bao gồm từng tính năng này trong kho lưu trữ mẫu mã trên GitHub và các ghi chú cho phiên này sẽ bao gồm các liên kết đến các kho lưu trữ đó.
+
+Chúng tôi hy vọng bạn sẽ thấy chúng hữu ích.
+
+Và với điều đó, tôi muốn chuyển nó cho Qian để hướng dẫn chúng tôi qua các trường được mã hóa.
+
+Cảm ơn, Nihar.
+
+Tôi là Qian, và tôi sẽ nói về một tính năng mới trong CloudKit sẽ giúp bảo vệ quyền riêng tư dữ liệu của người dùng của bạn cực kỳ dễ dàng.
+
+Để làm điều này, trước tiên tôi sẽ đưa ra tổng quan về cách CloudKit bảo vệ dữ liệu người dùng của bạn, sau đó tôi sẽ giới thiệu tính năng mã hóa dữ liệu mới và cuối cùng là một số điều kiện tiên quyết trên tài khoản của người dùng để mã hóa.
+
+Tại Apple, quyền riêng tư là một trong những giá trị cốt lõi mà chúng tôi xây dựng vào tất cả các sản phẩm của mình.
+
+Là khuôn khổ cung cấp năng lượng cho nhiều ứng dụng và dịch vụ của Apple, CloudKit đã liên tục đổi mới các công nghệ bảo mật để cung cấp sự bảo vệ cho bất kỳ dữ liệu nào được lưu trữ và đồng bộ hóa với CloudKit.
+
+Đầu tiên, hãy để tôi xem lại cách CloudKit bảo vệ dữ liệu người dùng của bạn.
+
+Cách tiếp cận của CloudKit bao gồm hai phương pháp bảo vệ dữ liệu chính, bảo vệ dựa trên tài khoản và bảo vệ mật mã.
+
+Bất kỳ dữ liệu nào được lưu trữ với CloudKit đều được bảo vệ theo mặc định bằng xác thực dựa trên tài khoản.
+
+Điều này bao gồm các ứng dụng được hỗ trợ bởi CloudKit của bạn và tất cả các ứng dụng được hỗ trợ bởi Apple CloudKit.
+
+Sau khi lưu trữ và truy xuất, CloudKit sử dụng mã thông báo bảo mật để thực thi rằng chỉ những người dùng được ủy quyền mới có thể truy cập dữ liệu của họ chứ không phải Apple hay bất kỳ bên thứ ba nào.
+
+Xin nhắc lại, chỉ dữ liệu trong cơ sở dữ liệu riêng tư và được chia sẻ mới được bảo vệ dựa trên tài khoản.
+
+Trong các cơ sở dữ liệu đó, dữ liệu thuộc về hoặc được chia sẻ với một tài khoản iCloud cụ thể và quyền truy cập vào dữ liệu được chia sẻ cần được xác thực.
+
+Tuy nhiên, trong cơ sở dữ liệu công cộng, dữ liệu có thể được truy cập bởi tất cả người dùng và do đó, bảo vệ dữ liệu dựa trên tài khoản không được áp dụng theo mặc định.
+
+Bây giờ, chuyển sang công nghệ bảo vệ dữ liệu khác - bảo vệ mật mã.
+
+CloudKit cung cấp bảo vệ mật mã cho dữ liệu nhạy cảm được lưu trữ trong các ứng dụng và dịch vụ thuộc sở hữu của Apple cũng như tất cả dữ liệu người dùng của bạn được lưu trữ dưới dạng CKAsset.
+
+Những dữ liệu này được xử lý trước và mã hóa cục bộ trước khi nó được gửi đến máy chủ CloudKit để lưu trữ và được giải mã cục bộ khi truy xuất.
+
+Chức năng mã hóa này sử dụng tài liệu chính được lưu trữ trong Chuỗi khóa iCloud thuộc tài khoản iCloud đã đăng nhập trên thiết bị.
+
+Nó cũng tương thích với chức năng chia sẻ của CloudKit, đảm bảo rằng chỉ những người dùng trên CKShare mới có thể giải mã các trường được mã hóa có liên quan.
+
+Bảo vệ mật mã thêm một lớp khác lên trên bảo vệ dựa trên tài khoản.
+
+Bởi vì ngay cả khi một bên trái phép bằng cách nào đó bỏ qua ủy quyền, họ không thể giải mã dữ liệu được truy xuất.
+
+Bảo vệ mật mã nên được sử dụng cho dữ liệu nhạy cảm hoặc riêng tư đối với người dùng của bạn.
+
+Nhiều ứng dụng được CloudKit hỗ trợ trong Apple tận dụng chức năng này với Ảnh và Ghi chú làm hai ví dụ.
+
+Cho đến bây giờ, bảo vệ CloudKit cho dữ liệu phi tài sản của người dùng của bạn cung cấp sự bảo vệ dựa trên tài khoản theo mặc định.
+
+CloudKit hiện đang cung cấp khả năng bảo vệ mật mã ngoài việc cứu bạn khỏi tất cả các quy trình dẫn xuất khóa, quản lý và mã hóa/giải mã, và điều này sẽ giúp bạn xây dựng các ứng dụng được CloudKit hỗ trợ với những lời hứa về quyền riêng tư mạnh mẽ hơn bao giờ hết.
+
+Hãy kiểm tra API mới để giúp bạn làm điều đó.
+
+Bạn có thể thêm bất kỳ cặp giá trị khóa nào vào thuộc tính mới encryptedValues trên CKRecords để mã hóa và cùng một thuộc tính chính xác để lấy lại giá trị ban đầu được giải mã.
+
+Tôi sẽ xem xét cách encryptedValues API cho phép bạn đồng bộ hóa dữ liệu được mã hóa qua máy chủ CloudKit.
+
+Ở đây, bạn có hai thiết bị và một máy chủ CloudKit.
+
+Nếu bạn đặt cặp giá trị khóa encryptedValues, CloudKit sẽ tự động mã hóa các giá trị bản ghi cục bộ trong CKModifyRecordsOperation cho máy chủ.
+
+Trên một thiết bị khác, sau khi truy xuất các bản ghi từ máy chủ, bạn có thể gọi cùng một API và CloudKit sẽ tự động mở gói cặp giá trị khóa.
+
+Bạn chỉ cần thay đổi mã tối thiểu để đạt được quá trình này.
+
+Trên thiết bị đầu tiên, sử dụng encryptedValues API, bạn có thể đặt cặp giá trị khóa trên bản ghi.
+
+Trong trường hợp này, khóa là "encryptedStringField" và giá trị là một đối tượng chuỗi.
+
+Sau đó, bạn có thể gọi CKModifyRecordsOperation để lưu các bản ghi mới vào máy chủ.
+
+Trên thiết bị thứ hai, bạn có thể gọi CKFetchRecordsOperation để truy xuất bản ghi được mã hóa và bằng cách sử dụng cùng một thuộc tính encryptedValues, bạn sẽ lấy lại chuỗi.
+
+Thế là xong.
+
+Một thuộc tính đơn giản sẽ xử lý tất cả các quy trình mã hóa và giải mã cho bạn.
+
+Và bạn có thể mã hóa gần như tất cả các loại giá trị CKRecord ngoại trừ CKReference vì chúng cần được hiển thị cho máy chủ.
+
+Lưu ý rằng vì trường CKAsset, như đã đề cập trước đó, đã sử dụng mã hóa theo mặc định, chúng không thể được đặt làm Giá trị được mã hóa.
+
+Bạn có thể hình dung các trường được mã hóa bằng cách truy cập lược đồ cơ sở dữ liệu CloudKit, giống như đối với các trường thông thường.
+
+Có một phiên Bảng điều khiển CloudKit, "Gặp gỡ Bảng điều khiển CloudKit", cho bạn thấy những thay đổi khác được thực hiện đối với Bảng điều khiển và vui lòng kiểm tra nó.
+
+Trong Bảng điều khiển, tất cả các trường được mã hóa sẽ được hiển thị trong danh sách thả xuống cho các loại dữ liệu giá trị bản ghi.
+
+Họ sẽ có tiền tố "được mã hóa" như "Encrypted Double", "Encrypted Timestamp", để giúp bạn phân biệt chúng với những cái không được mã hóa.
+
+Bạn cũng có thể quản lý trực tiếp các trường được mã hóa thông qua Bảng điều khiển CloudKit mà không cần bất kỳ thay đổi mã nào.
+
+Ví dụ, bạn có thể thêm một trường được mã hóa mới vào một loại bản ghi mới trong lược đồ cơ sở dữ liệu phát triển của mình.
+
+Chuyển sang điều kiện tiên quyết về các tài khoản cho các hoạt động liên quan đến mã hóa.
+
+Như bất kỳ hoạt động nào khác trong cơ sở dữ liệu riêng tư và được chia sẻ, chúng yêu cầu một tài khoản đăng nhập hợp lệ.
+
+Bạn cần kiểm tra trạng thái của tài khoản hiện tại trong logic khởi tạo của mình bằng cách gọi CKContainer accountStatus(completionHandler:).
+
+Xin nhắc lại, trạng thái sẽ cần phải "có sẵn" cho các hoạt động trong cơ sở dữ liệu riêng tư và được chia sẻ.
+
+Bất kỳ trạng thái nào khác sẽ dẫn đến lỗi: "CKErrorNotAuthenticated", bao gồm trạng thái mới, tạm thời không khả dụng, được giới thiệu trong năm nay để cho biết rằng tài khoản đã đăng nhập nhưng chưa sẵn sàng và bạn có thể hướng người dùng xác minh thông tin đăng nhập của họ trong ứng dụng Cài đặt.
+
+Nếu tài khoản người dùng của bạn không ở trạng thái "có sẵn", bạn nên nghe thông báo CKAccountChanged, thông báo này sẽ đăng bất cứ khi nào tài khoản thay đổi, để được thông báo khi trạng thái có thể sẵn sàng.
+
+Đó là tất cả những gì bạn cần biết về mã hóa dữ liệu với CloudKit.
+
+Nó sẽ bảo vệ dữ liệu người dùng của bạn và sẽ giúp bạn tiết kiệm mọi thời gian và năng lượng từ việc triển khai giải pháp tùy chỉnh của riêng bạn.
+
+Bây giờ, hãy quay lại với đồng nghiệp tuyệt vời Nihar của tôi để nói về việc chia sẻ khu vực.
+
+Cảm ơn, Qian! Hãy nói về việc chia sẻ CloudKit.
+
+CloudKit là cơ sở dữ liệu iCloud an toàn, có ý thức về quyền riêng tư của bạn trên bầu trời giúp bạn lưu trữ và đồng bộ hóa dữ liệu người dùng trên tất cả các thiết bị của người dùng.
+
+iOS 10 và macOS Sierra đã giới thiệu tính cách chia sẻ CloudKit, một cách để chia sẻ dữ liệu an toàn với những người dùng iCloud khác.
+
+Trước khi đi sâu vào những gì mới trong việc chia sẻ, chúng ta hãy xem xét kỹ hơn cách chia sẻ CloudKit hoạt động ngày nay.
+
+Xin nhắc lại, việc chia sẻ CloudKit được bắt đầu thông qua việc tạo ra một đối tượng CKShare tách biệt dữ liệu được chia sẻ khỏi các chi tiết liên quan đến chia sẻ, như dữ liệu đang được chia sẻ với ai, những người tham gia chia sẻ đó có quyền gì, v.v.
+
+Đằng sau hậu trường, CloudKit thiết lập quyền truy cập mật mã vào dữ liệu được chia sẻ cho những người tham gia, ngoài việc yêu cầu xác thực dựa trên tài khoản cho tất cả các yêu cầu.
+
+Bây giờ, có hai cách chính mà bạn có thể thêm hỗ trợ chia sẻ trong ứng dụng của mình.
+
+Bạn có thể bắt đầu nhanh chóng bằng cách sử dụng giao diện người dùng do hệ thống cung cấp để quản lý chia sẻ, được bán thông qua UICloudSharingController trên iOS và NSSharingService trên macOS.
+
+Hoặc, bạn cũng có thể xây dựng giao diện người dùng tùy chỉnh của riêng mình để cho phép người dùng tương tác với thiết lập chia sẻ bằng cách sử dụng các hoạt động khung này.
+
+Như tôi đã đề cập trước đó, CKShares tách biệt những gì đang được chia sẻ với người mà nó được chia sẻ.
+
+Hôm nay, chúng ta sẽ tập trung vào nửa đầu của phương trình đó và cụ thể hơn, hãy xem xét một vài cách khác nhau mà bạn có thể mô hình hóa dữ liệu của mình và cách điều đó ảnh hưởng đến cách bạn tận dụng API chia sẻ CloudKit.
+
+Hãy bắt đầu với một ví dụ tận dụng chức năng chia sẻ CloudKit hiện có.
+
+Chia sẻ thư mục iCloud Drive được xây dựng trên CloudKit.
+
+Hãy xem làm thế nào bạn có thể xây dựng một cái gì đó tương tự trong các ứng dụng của riêng bạn.
+
+Vì vậy, mô hình dữ liệu ở đây đại diện cho một hệ thống phân cấp tệp, và vì vậy bạn sẽ bắt đầu với các bản ghi thuộc loại "tệp" và "thư mục" và bạn muốn cung cấp cho người dùng khả năng dễ dàng chia sẻ bất kỳ bản ghi thư mục nào cùng với tất cả các bản ghi, tệp hoặc thư mục, được chứa trong
+
+Cách để thể hiện mối quan hệ phân cấp này trong CloudKit và tận dụng nó để chia sẻ là sử dụng CKRecord.parent tham chiếu từ hồ sơ con đến hồ sơ mẹ.
+
+Điều này làm cho CloudKit sẽ xử lý hệ thống phân cấp kết quả như một đơn vị có thể chia sẻ duy nhất và vì vậy bạn sẽ muốn tiếp tục và thêm các tài liệu tham khảo đó vào đây.
+
+Điều này rất quan trọng và điều gì làm cho tài liệu tham khảo của phụ huynh trở nên đặc biệt trong CloudKit.
+
+Lưu ý rằng nếu bạn không có kế hoạch hỗ trợ chia sẻ, bạn không cần sử dụng tài liệu tham khảo mẹ và bất kỳ trường CKReference đơn giản nào trong lược đồ của riêng bạn là đủ.
+
+Với thiết lập đó, việc chia sẻ thư mục giờ đây có thể được hỗ trợ đơn giản bằng cách khởi tạo CKShare, với bản ghi thư mục làm bản ghi gốc của CKShare.
+
+Sử dụng thư mục làm bản ghi gốc có nghĩa là CloudKit sẽ tự động chia sẻ tất cả các bản ghi là một phần của hệ thống phân cấp dựa trên tham chiếu cha mẹ cuối cùng trỏ đến bản ghi thư mục đó.
+
+Điều này cũng có nghĩa là các bản ghi được thêm hoặc xóa khỏi hệ thống phân cấp này tại một thời điểm sau đó sẽ tự động được chia sẻ hoặc không được chia sẻ tương ứng.
+
+Vậy mô hình chia sẻ thư mục đơn giản này được thiết lập trong mã như thế nào?
+
+Tiếp tục ví dụ của chúng tôi, đây là hai bản ghi tệp cùng với bản ghi thư mục được chia sẻ trong vùng tùy chỉnh trong cơ sở dữ liệu riêng tư.
+
+Đầu tiên, các tham chiếu mẹ được đặt trên cả hai bản ghi tệp trỏ đến bản ghi thư mục và các bản ghi tệp sau đó được lưu.
+
+Lưu ý rằng cách tốt nhất là lưu các tài liệu tham khảo mẹ càng sớm càng tốt để giảm thiểu số lượng bản ghi cần được sửa đổi khi thư mục đang được chia sẻ.
+
+Sau đó, cả ba bản ghi được chia sẻ bằng cách khởi tạo CKShare với thư mục của chúng tôi làm bản ghi gốc và lưu CKShare cùng với bản ghi thư mục trong cơ sở dữ liệu riêng tư.
+
+Lưu ý rằng vì các tham chiếu mẹ trước đây đã được lưu vào máy chủ, chỉ cần sửa đổi bản ghi thư mục gốc cùng với chia sẻ tại thời điểm chia sẻ.
+
+Và thế là xong, ứng dụng của bạn hiện đang chia sẻ các bản ghi thư mục cùng với các bản ghi bên dưới chúng.
+
+CloudKit có thể hỗ trợ nhiều CKShares trong cùng một khu vực, miễn là hệ thống phân cấp bản ghi của chúng không trùng lặp.
+
+Bây giờ, giả sử thay vì mô hình chia sẻ thư mục phân cấp, bạn có các bản ghi đại diện cho một vài loại riêng biệt trong khu vực của mình và không có hệ thống phân cấp hợp lý giữa chúng.
+
+Nói cách khác, khu vực này đang được coi là một nhóm hồ sơ và bạn muốn nhanh chóng bắt đầu chia sẻ tất cả các hồ sơ trong đó.
+
+Lý tưởng nhất, bạn chỉ có thể đánh dấu toàn bộ vùng bản ghi là "được chia sẻ" mà không cần thao tác với bất kỳ bản ghi nào trong đó.
+
+Bây giờ, với việc chia sẻ vùng, bạn có thể làm điều đó.
+
+Vì vậy, hãy thiết lập điều này trong mã.
+
+Tất cả những gì bạn cần làm là sử dụng trình khởi tạo mới cho CKShare lấy ID vùng bản ghi cho vùng hiện có trong cơ sở dữ liệu riêng tư.
+
+Khi bản ghi chia sẻ toàn vùng mới này được lưu, tất cả các bản ghi tồn tại trong vùng này trên máy chủ sẽ tự động được chia sẻ và việc chia sẻ các bản ghi mới hoặc hủy chia sẻ bản ghi trong tương lai hoạt động bằng cách thêm hoặc xóa các bản ghi đó khỏi khu vực.
+
+Toàn bộ vùng bản ghi có thể được hủy chia sẻ tại bất kỳ thời điểm nào bằng cách xóa bản ghi chia sẻ trên toàn vùng.
+
+Hãy đi sâu hơn một chút vào các hồ sơ chia sẻ toàn khu vực mới này.
+
+Để thuận tiện, bản ghi chia sẻ toàn vùng luôn có tên bản ghi nổi tiếng, CKRecordNameZoneWideShare, có thể được sử dụng cùng với ID vùng để tạo ID bản ghi chia sẻ đầy đủ.
+
+Các khu vực sử dụng chia sẻ vùng không yêu cầu bất kỳ tham chiếu mẹ nào được thiết lập giữa các bản ghi trong khu vực đó.
+
+Lưu ý rằng vì chia sẻ vùng chỉ cho phép một bản ghi chia sẻ duy nhất trên mỗi vùng, hương vị chia sẻ này không thể cùng tồn tại với các chia sẻ phân cấp trong cùng một vùng.
+
+Vì vậy, bạn có thể có một hoặc nhiều cổ phiếu phân cấp trong một khu vực hoặc một bản ghi chia sẻ trên toàn khu vực.
+
+Bạn có thể lưu các chia sẻ trên toàn vùng trong bất kỳ vùng ghi không mặc định nào và chúng cũng được đánh dấu bằng khả năng vùng mới, CKRecordZoneCapability ZoneWideSharing.
+
+Tất cả các cơ chế chia sẻ CloudKit hiện có sau khi tạo bản ghi CKShare vẫn giữ nguyên và được hỗ trợ đầy đủ cho các chia sẻ trên toàn vùng, với một ngoại lệ.
+
+Vì không còn bất kỳ bản ghi gốc nào khi sử dụng chia sẻ vùng, các thuộc tính liên quan trên CKShareMetadata, như phân cấpRootRecordID và rootRecord, sẽ bằng không khi chấp nhận chia sẻ vùng.
+
+Tương tự, khi sử dụng CKFetchShareMetadataOperation để khởi động luồng chấp nhận chia sẻ tùy chỉnh, các thuộc tính "shouldFetchRootRecord" và "rootRecordDesiredKeys" sẽ bị hệ thống bỏ qua khi tìm nạp siêu dữ liệu chia sẻ cho các chia sẻ trên toàn vùng.
+
+Vì vậy, hiện tại có hai phiên bản chia sẻ CloudKit có sẵn tùy thuộc vào mô hình dữ liệu của bạn.
+
+Nếu lược đồ ứng dụng của bạn hình thành một cách hợp lý các hệ thống phân cấp và cây phân cấp có ý nghĩa như các đơn vị có thể chia sẻ, thì hãy tiếp tục sử dụng các tham chiếu mẹ CKRecord để thể hiện các hệ thống phân cấp đó và sau đó chia sẻ các bản ghi gốc của chúng.
+
+Tại Apple, chúng tôi làm điều này để chia sẻ thư mục Ghi chú, Lời nhắc và iCloud Drive theo cách tương tự như cách được khám phá ngày nay.
+
+Và đối với tất cả các trường hợp khác, giờ đây bạn có thể chia sẻ hiệu quả toàn bộ vùng bản ghi chỉ bằng cách tạo một bản ghi chia sẻ trên toàn vùng duy nhất và tận dụng tối đa việc chia sẻ CloudKit.
+
+Tại Apple, chúng tôi đã tận dụng chia sẻ vùng cho một số tính năng, như chia sẻ video an toàn HomeKit và đa người dùng HomePod.
+
+Vì vậy, hôm nay chúng tôi đã khám phá cách bạn có thể bắt đầu viết mã CloudKit theo một cách mới bằng cách sử dụng async/await trong Swift, bao gồm các cải tiến cho tiến trình cho mỗi mục và API báo cáo lỗi.
+
+Chúng tôi đã nói về cách bạn có thể tận dụng các trường được mã hóa trên hồ sơ của mình cho dữ liệu người dùng nhạy cảm, tận dụng cam kết của Apple đối với quyền riêng tư của người dùng mà không cần sử dụng mật mã của riêng bạn.
+
+Và chúng tôi đã học về một cách nhanh hơn để bắt đầu chia sẻ CloudKit khi mô hình dữ liệu của bạn không được phân cấp với chia sẻ vùng.
+
+Có một số tài liệu mới tuyệt vời về các tính năng này và nhiều tài liệu khác có sẵn cho bạn trên developer.apple.com, vì vậy vui lòng xem qua.
+
+Có rất nhiều phiên liên quan trong bộ sưu tập "Khám phá CloudKit" để bạn kiểm tra, bao gồm một phiên từ Core Data, giới thiệu chức năng chia sẻ được xây dựng trên CloudKit.
+
+Cảm ơn bạn, và hy vọng bạn có một WWDC tuyệt vời.
+
+[Nhạc lạc quan].

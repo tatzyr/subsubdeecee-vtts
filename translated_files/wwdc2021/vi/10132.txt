@@ -1,0 +1,627 @@
+10132
+
+♪ ♪
+
+Xin chào, tôi là Nate, một kỹ sư trong nhóm Swift tại Apple.
+
+Hôm nay đồng nghiệp Robert của tôi và tôi sẽ nói với bạn về async/await trong Swift.
+
+Lập trình không đồng bộ là một hoạt động thường xuyên đối với nhiều bạn.
+
+Vì vậy, bạn biết rằng thật quá dễ dàng để viết mã không đồng bộ dài dòng, phức tạp và thậm chí không chính xác.
+
+Không đồng bộ/chờ đợi trong Swift có thể giúp ích.
+
+Sử dụng nó, bạn có thể viết mã không đồng bộ dễ dàng như bạn viết mã thông thường.
+
+Và khi bạn làm vậy, mã của bạn sẽ phản ánh tốt hơn ý tưởng của bạn.
+
+Nó cũng sẽ an toàn hơn.
+
+Trên hết, SDK có hàng trăm phương pháp có thể chờ đợi có sẵn để bạn sử dụng.
+
+Ví dụ, UIKit cung cấp chức năng tạo thành hình thu nhỏ từ UIImage.
+
+Trên thực tế, nó cung cấp cả chức năng đồng bộ và không đồng bộ để hoàn thành nhiệm vụ đó.
+
+Như một lời nhắc nhở nhanh chóng, khi bạn gọi một hàm đồng bộ - nghĩa là, một hàm cũ thông thường - luồng của bạn bị chặn, chờ hàm đó kết thúc.
+
+Vì vậy, nếu hàm fetchThumbnail của bạn gọi preparingThumbnail-- chức năng đồng bộ UIKit cung cấp-- cho đến khi nó kết thúc, luồng của bạn không thể làm bất cứ điều gì khác.
+
+Ngược lại, nếu bạn gọi prepareThumbnail (of:completionHandler:)-- phiên bản không đồng bộ của hàm đó-- trong khi nó chạy, luồng của bạn có thể tự do thực hiện các công việc khác.
+
+Khi hoàn thành, nó sẽ thông báo cho bạn bằng cách gọi cho trình xử lý hoàn thành của nó.
+
+SDK cung cấp nhiều chức năng không đồng bộ.
+
+Họ cho bạn biết rằng họ đã hoàn thành theo một vài cách khác nhau.
+
+Một số sử dụng trình xử lý hoàn thành như thế này.
+
+Những người khác dựa vào các cuộc gọi lại của đại biểu.
+
+Và nhiều người được đánh dấu là không đồng bộ và chỉ trả về một giá trị.
+
+Điểm chung của tất cả các chức năng không đồng bộ này là: khi bạn gọi một, nó sẽ bỏ chặn luồng của bạn một cách nhanh chóng, sau khi bắt đầu công việc của nó.
+
+Điều đó cho phép chủ đề làm những việc khác trong khi công việc dài hạn đó hoàn thành.
+
+Để thấy sự khác biệt đó, chúng ta hãy xem một ví dụ có thể quen thuộc với nhiều bạn.
+
+Trong ứng dụng mà Robert và tôi đang xây dựng cùng nhau, chúng tôi có một danh sách các mục, mỗi hàng trong số đó hiển thị hình thu nhỏ của một hình ảnh được lưu trữ trên máy chủ.
+
+Khi đến lúc chuẩn bị sẵn hình thu nhỏ để hiển thị trong danh sách đó, trong mô hình xem của chúng tôi, phương thức fetchThumbnail được gọi.
+
+Nó chuyển đổi một chuỗi thành UIImage thông qua một loạt các bước.
+
+Đầu tiên, phương thức thumbnailURLRequest của mô hình xem tạo ra một URLRequest từ chuỗi.
+
+Tiếp theo, phương thức dataTask của URLSession lấy dữ liệu cho yêu cầu đó.
+
+Sau đó, UIImage initWithData tạo ra một hình ảnh từ dữ liệu đó và cuối cùng, phương thức prepareThumbnail của UIImage hiển thị hình thu nhỏ từ hình ảnh gốc.
+
+Mỗi thao tác này phụ thuộc vào kết quả của người trước đó.
+
+Điều đó có nghĩa là chúng phải được thực hiện theo trình tự.
+
+Một số thao tác này trả về các giá trị một cách nhanh chóng - cả việc xây dựng URLRequest từ một chuỗi và UIImage từ dữ liệu đều như thế này - vì vậy bạn có thể chạy chúng trên bất kỳ luồng nào mà hàm tình cờ bật và để chúng là các cuộc gọi đồng bộ.
+
+Tuy nhiên, một số trong số chúng cần có thời gian.
+
+Phải mất một lúc để tải xuống tất cả dữ liệu tạo nên một hình ảnh.
+
+Và việc hiển thị một hình thu nhỏ đẹp mắt từ nó đòi hỏi một thiết bị để thực hiện một số công việc tốn kém.
+
+Đó là lý do tại sao SDK cung cấp các chức năng không đồng bộ để hoàn thành các nhiệm vụ đó.
+
+Vì vậy, những cuộc gọi này phải không đồng bộ.
+
+Trước khi Robert và tôi không đồng bộ/chờ đợi một vòng quay, chúng tôi đã viết hàm bằng cách sử dụng trình xử lý hoàn thành.
+
+Hàm lấy đối số là một chuỗi, đầu vào cho thao tác đầu tiên và trình xử lý hoàn thành, được sử dụng để cung cấp lại đầu ra cho người gọi.
+
+Khi fetchThumbnail được gọi, trước tiên chúng ta gọi thumbnailURLRequest.
+
+Phương pháp này là đồng bộ, vì vậy nó không cần trình xử lý hoàn thành.
+
+Tiếp theo, chúng tôi gọi dataTask trên phiên bản URLSession được chia sẻ, chuyển URLRequest đó và trình xử lý hoàn thành.
+
+Nó đồng bộ tạo ra một URLSessionDataTask phải được tiếp tục để bắt đầu công việc không đồng bộ.
+
+FetchThumbnail sau đó trả về và chuỗi được tự do thực hiện các công việc khác.
+
+Điều đó thực sự quan trọng vì việc tải xuống một hình ảnh cần có thời gian và bạn không muốn chặn một chủ đề đang chờ dữ liệu phát trực tuyến.
+
+Cuối cùng hoặc hình ảnh tải xuống xong hoặc có sự cố xảy ra.
+
+Dù bằng cách nào, yêu cầu hoàn thành và trình xử lý hoàn thành được chuyển đến dataTask được gọi với một số giá trị tùy chọn: dữ liệu, phản hồi và lỗi.
+
+Nếu có sự cố xảy ra, thì chúng ta cần gọi trình xử lý hoàn thành và chuyển lỗi.
+
+Nếu mọi thứ suôn sẻ, thì chúng tôi sẽ tạo một hình ảnh từ dữ liệu bằng cách sử dụng initWithData của UIImage.
+
+Bởi vì nó đồng bộ, chúng ta có thể viết mã đường thẳng bình thường để xử lý kết quả.
+
+Nếu không có hình ảnh nào được tạo ra, chúng tôi đã hoàn thành.
+
+Và nếu một hình ảnh được tạo ra, thì cuối cùng chúng tôi gọi phương thức prepareThumbnail của UIKit trên đó và vượt qua trình xử lý hoàn thành.
+
+Trong khi công việc của nó hoàn thành, chủ đề được bỏ chặn và giải phóng để thực hiện các công việc khác.
+
+Sau khi hình thu nhỏ được chuẩn bị, trình xử lý hoàn thành đó được gọi bằng một hình ảnh nếu chuẩn bị hình thu nhỏ thành công hoặc không.
+
+Nếu nó thành công, thì chúng tôi gọi trình xử lý hoàn thành của mình và chuyển theo hình ảnh.
+
+Nhưng như Robert đã chỉ ra cho tôi, có một vấn đề.
+
+Người gọi của FetchThumbnail mong đợi được thông báo khi fetchThumbnail hoàn thành công việc của nó, ngay cả khi nó không thành công.
+
+Và hiện tại, chúng tôi đang để người gọi trong tình trạng chao đảo.
+
+Tôi đã quá quen với việc viết "guard else return" đến nỗi tôi đã quên gọi trình xử lý hoàn thành hai lần.
+
+Vì vậy, nếu tạo UIImage từ dữ liệu hoặc chuẩn bị hình thu nhỏ không thành công, người gọi fetchThumbnail sẽ không bao giờ được thông báo và hàng sẽ không bao giờ được cập nhật.
+
+Nó sẽ chỉ hiển thị một con quay mãi mãi.
+
+Đó là lý do tại sao điều quan trọng đối với chúng tôi, các tác giả của fetchThumbnail, là thông báo cho người gọi của chúng tôi bất kể điều gì xảy ra.
+
+Vì vậy, mọi đường dẫn thông qua chức năng nên thông báo cho họ.
+
+Để làm điều đó, chúng ta cần gọi trình xử lý hoàn thành của mình nếu xảy ra lỗi và chuyển lỗi.
+
+Một hàm bình thường đưa lỗi trở lại người gọi của nó bằng cách ném nó.
+
+Và Swift đảm bảo rằng bất kể việc thực thi diễn ra như thế nào thông qua hàm, nếu một giá trị không được trả về, một lỗi sẽ được ném ra.
+
+Nhưng chúng tôi không thể sử dụng cơ chế xử lý lỗi thông thường của Swift ở đây.
+
+Chúng tôi không thể ném một lỗi từ bên trong các trình xử lý hoàn thành này nếu chúng tôi gặp sự cố.
+
+Thật không may vì nó có nghĩa là Swift không thể kiểm tra công việc của chúng tôi.
+
+Đối với Swift, một trình xử lý hoàn thành như fetchThumbnails chỉ là một kết thúc.
+
+Mặc dù chúng tôi muốn chắc chắn rằng nó luôn được gọi, nhưng trong Swift không có cách nào để thực thi điều đó.
+
+Đó là lý do tại sao tôi không gặp lỗi biên dịch khi tôi vừa trở về từ hai người bảo vệ đó.
+
+Robert đã chỉ ra rằng có một vấn đề đối với tôi để sửa nó.
+
+Vì vậy, tùy thuộc vào bạn để đảm bảo rằng trình xử lý hoàn thành của bạn cuối cùng được gọi.
+
+Khi hai chúng tôi ngồi xuống để viết hàm này, chúng tôi chỉ muốn thực hiện một vài thao tác nối tiếp theo.
+
+Hai là đồng bộ và hai là không đồng bộ, lấy những người xử lý hoàn thành.
+
+Chúng tôi đã thành công, nhưng chúng tôi đã kết thúc với khoảng 20 dòng mã chứa năm cơ hội cho các lỗi tinh vi xâm nhập.
+
+Những gì chúng tôi muốn là thực hiện bốn thao tác đó theo trình tự, nhưng những gì chúng tôi nhận được rất khó làm theo, khó làm đúng và che khuất ý định của chúng tôi.
+
+Bây giờ, có nhiều cách chúng ta có thể làm cho điều này an toàn hơn một chút.
+
+Ví dụ, chúng tôi có thể đã sử dụng loại kết quả của thư viện tiêu chuẩn.
+
+Và trong khi điều này an toàn hơn một chút, nó cũng thêm nghi lễ, làm cho mã của chúng tôi xấu hơn và dài hơn một chút.
+
+Mọi người cũng đã sử dụng các kỹ thuật như tương lai để cải thiện mã không đồng bộ theo những cách khác.
+
+Nhưng không có cách tiếp cận nào trong số này cung cấp cho chúng tôi mã đơn giản, dễ dàng và an toàn.
+
+Với async/await, chúng ta có thể làm tốt hơn.
+
+Robert và tôi đã viết lại chức năng thực hiện bốn bước đó.
+
+Và lần này, chúng tôi đã sử dụng async/await.
+
+Hàm vẫn lấy một chuỗi làm đối số.
+
+Nhưng trong khi lần trước, một trình xử lý hoàn thành cũng đã được thông qua, thay vào đó, lần này, chức năng không đồng bộ.
+
+Khi bạn đánh dấu một hàm không đồng bộ, từ khóa sẽ đi ngay trước "ném" vào chữ ký hàm, như thế này, hoặc trước mũi tên nếu hàm không ném.
+
+Đánh dấu hàm không đồng bộ cho phép nó và chữ ký của nó đơn giản hơn.
+
+Nếu một hình ảnh được thu nhỏ thành công, hình thu nhỏ đó chỉ đơn giản được trả về.
+
+Và nếu gặp lỗi, nó chỉ bị ném.
+
+Khi fetchThumbnail được gọi, giống như trước đây, nó bắt đầu bằng cách gọi thumbnailURLRequest.
+
+Chức năng này là đồng bộ, vì vậy luồng bị chặn, thực hiện công việc của nó.
+
+Tiếp theo, nó bắt đầu tải xuống dữ liệu bằng cách gọi dữ liệu (cho: yêu cầu) trên URLSession được chia sẻ.
+
+Giống như dataTask, phương pháp này cũng được cung cấp bởi Foundation và cũng không đồng bộ.
+
+Nhưng không giống như dataTask, phương thức dữ liệu có thể chờ đợi được.
+
+Vì vậy, sau khi nó được gọi, nó tự đình chỉ nhanh chóng, bỏ chặn chuỗi.
+
+Chủ đề sau đó được tự do làm công việc khác.
+
+"Thử" ở đây vì phương thức dữ liệu được đánh dấu là "ném". Trong phiên bản trước đó, hãy nhớ cách chúng tôi phải kiểm tra lỗi và sau đó gọi rõ ràng cho trình xử lý hoàn thành của chúng tôi với nó?
+
+Ở đây trong phiên bản có thể chờ đợi, tất cả mã đó được rút gọn thành từ khóa thử.
+
+Cũng giống như "thử" là cần thiết để gọi các hàm được đánh dấu "ném", "chờ" là cần thiết để gọi các hàm được đánh dấu "không đồng bộ". Nếu một biểu thức có nhiều lệnh gọi hàm không đồng bộ trong đó, bạn chỉ cần viết "chờ" một lần, giống như bạn chỉ cần một "thử" cho một biểu thức có nhiều lệnh gọi hàm ném.
+
+Tất cả đã nói, cuộc gọi hàm được đánh dấu "hãy thử chờ đợi." Khi xử lý một biểu thức không đồng bộ ném, bạn sẽ cần phải thử trước khi chờ đợi, như thế này.
+
+Cuối cùng, khi dữ liệu tải xuống xong, phương thức dữ liệu sẽ tiếp tục và quay lại fetchThumbnail.
+
+Tại thời điểm đó, các giá trị mà phương thức dữ liệu trả về hoặc lỗi mà nó ném vào sẽ chảy vào.
+
+Nếu nó ném một lỗi, thì fetchThumbnail sẽ lần lượt ném lỗi đó vào chính nó.
+
+Nếu không, dữ liệu và các biến phản hồi sẽ được xác định.
+
+Điều này tương tự như những gì đã xảy ra trong phiên bản trước của fetchThumbnail khi trình xử lý hoàn thành được chuyển đến phương thức dataTask của URLSession được gọi.
+
+Trong cả hai phiên bản, các giá trị và lỗi được tạo ra bởi phương thức không đồng bộ của URLSession đã chảy vào.
+
+Nhưng phiên bản có thể chờ đợi đơn giản hơn rất nhiều.
+
+Nó nói chính xác những gì chúng tôi muốn nói.
+
+Thực hiện yêu cầu này và gán các giá trị mà chúng tôi nhận lại cho các biến để chúng tôi có thể sử dụng chúng.
+
+Và nếu chúng ta tình cờ gặp phải một vấn đề, hãy ném một lỗi.
+
+Tiếp theo, fetchThumbnail sẽ cố gắng tạo một UIImage từ dữ liệu mà nó đã tải xuống.
+
+Nếu điều đó thành công, thì một hình thu nhỏ sẽ được hiển thị cho hình ảnh đó bằng cách truy cập thuộc tính hình thu nhỏ của nó.
+
+Trong khi hình thu nhỏ được hình thành, luồng có thể tự do làm những việc khác cho đến khi thuộc tính hình thu nhỏ cuối cùng tiếp tục và quay lại fetchThumbnail.
+
+Nếu một hình thu nhỏ được hiển thị, fetchThumbnail sẽ trả về nó.
+
+Nếu không, nó sẽ gây ra lỗi.
+
+Trái ngược với phiên bản trình xử lý hoàn thành, nếu không có hình thu nhỏ nào được hiển thị, Swift đảm bảo rằng chúng tôi ném lỗi vào đây hoặc trả về một giá trị.
+
+Nhưng chúng ta không thể âm thầm thất bại.
+
+Và thế là xong. Đó là tất cả mã chúng tôi cần.
+
+Chức năng thực hiện chính xác những gì phiên bản trình xử lý hoàn thành đã làm trước đây.
+
+Nhưng thay vì 20 dòng mã, nó chỉ có 6.
+
+Và tất cả đều là mã đường thẳng.
+
+Bốn thao tác cần được thực hiện theo trình tự được liệt kê hết thao tác này đến thao tác tiếp theo.
+
+Và Swift đảm bảo rằng chức năng luôn thông báo cho người gọi khi hoàn tất, bằng cách quay lại hoặc bằng cách ném nếu có sự cố xảy ra.
+
+Đây chỉ là một ví dụ về cách sử dụng async/await có thể chuyển đổi mã Swift không đồng bộ của bạn, làm cho nó an toàn hơn, ngắn hơn và làm cho nó phản ánh tốt hơn ý định của bạn.
+
+Hãy cùng tìm hiểu một số chi tiết về cách triển khai fetchThumbnail.
+
+Trên dòng thứ hai đến dòng cuối cùng, mặc dù không có lệnh gọi hàm, biểu thức bắt đầu hiển thị hình thu nhỏ được đánh dấu bằng "chờ đợi". Đó là bởi vì thuộc tính hình thu nhỏ không đồng bộ.
+
+Không chỉ các chức năng có thể không đồng bộ.
+
+Các thuộc tính cũng có thể như vậy, các trình khởi tạo cũng vậy.
+
+Bây giờ, thuộc tính hình thu nhỏ không phải là một phần của SDK.
+
+Nó thực sự là một cái mà Robert đã thêm vào.
+
+Hãy cùng xem nó.
+
+Anh ấy đã xác định thuộc tính này trong một tiện ích mở rộng trên UIImage và việc triển khai nó rất ngắn.
+
+Nó tạo thành một CGSize và chờ kết quả của việc chuyển nó sang byPreparingThumbnail(ofSize).
+
+Nhân tiện, phương pháp này tự nó là phiên bản có thể chờ đợi của phương pháp mà chúng tôi đã sử dụng trước đó.
+
+Có một vài điều cần chú ý.
+
+Đầu tiên, nó có một getter rõ ràng.
+
+Điều này được yêu cầu để đánh dấu một thuộc tính không đồng bộ.
+
+Kể từ Swift 5.5, những người nhận tài sản cũng có thể ném.
+
+Và giống như với chữ ký hàm không đồng bộ, nếu một thuộc tính vừa không đồng bộ vừa ném, từ khóa không đồng bộ sẽ đi ngay trước khi ném.
+
+Thứ hai, tài sản không có setter.
+
+Chỉ các thuộc tính chỉ đọc mới có thể không đồng bộ.
+
+Trong các hàm, thuộc tính và trình khởi tạo, await có thể được sử dụng trên các biểu thức để chỉ ra nơi hàm có thể bỏ chặn luồng.
+
+Có một nơi khác mà await cũng có thể được sử dụng: trong các vòng lặp lặp lại trên các chuỗi không đồng bộ.
+
+Một chuỗi không đồng bộ giống như một chuỗi bình thường ngoại trừ việc nó phân loại các phần tử của nó không đồng bộ.
+
+Vì vậy, việc tìm nạp mục tiếp theo phải được đánh dấu bằng từ khóa đang chờ, cho biết rằng nó không đồng bộ.
+
+Khi hàm lặp đi lặp lại chuỗi không đồng bộ, lặp đi lặp lại, nó có thể bỏ chặn luồng trong khi chờ phần tử tiếp theo và sau đó tiếp tục với phần tử tiếp theo vào phần thân của vòng lặp hoặc, nếu không còn phần tử nào, sau vòng lặp.
+
+Để tìm hiểu thêm về AsyncSequence, hãy xem phiên "Gặp gỡ AsyncSequence".
+
+Và nếu bạn quan tâm đến việc chạy song song nhiều tác vụ không đồng bộ, hãy xem phiên "Có cấu trúc đồng thời trong Swift".
+
+Vì vậy, có rất nhiều nơi mà bạn có thể sử dụng đang chờ đợi.
+
+Từ khóa chỉ ra rằng chức năng không đồng bộ của bạn có thể bị đình chỉ ở đó.
+
+Nó có ý nghĩa gì đối với một chức năng không đồng bộ để tạm dừng?
+
+Để trả lời điều đó, hãy nghĩ về những gì xảy ra khi bạn gọi một hàm.
+
+Khi bạn gọi bất kỳ hàm nào, bạn điều khiển bằng tay luồng mà hàm của bạn đang chạy sang hàm đó.
+
+Nếu đó là một hàm bình thường mà bạn đang gọi, như thumbnailURLRequest ở đây, thì luồng sẽ bị chiếm dụng hoàn toàn khi thực hiện công việc thay mặt cho một hàm đó cho đến khi nó kết thúc.
+
+Công việc đó có thể nằm trong phần thân của chính hàm hoặc trong các hàm khác mà nó gọi.
+
+Cuối cùng, hàm đó sẽ kết thúc, bằng cách trả về một giá trị hoặc ném một lỗi.
+
+Khi nó xảy ra, nó trao quyền kiểm soát trở lại chức năng của bạn.
+
+Đó là cách duy nhất mà một chức năng bình thường có thể từ bỏ quyền kiểm soát một luồng: bằng cách hoàn thiện.
+
+Và chức năng của bạn là chức năng duy nhất mà nó có thể trao quyền kiểm soát.
+
+Nếu đó là một hàm không đồng bộ mà bạn đang gọi, mọi thứ sẽ khác.
+
+Giống như một hàm bình thường, khi nó hoàn thành, nó sẽ hoàn thành và trả lại quyền kiểm soát cho chức năng của bạn.
+
+Nhưng không giống như một chức năng thông thường, nó có thể từ bỏ quyền kiểm soát luồng theo một cách hoàn toàn khác: bằng cách tạm dừng.
+
+Cũng giống như một hàm bình thường, khi bạn gọi một hàm không đồng bộ, bạn trao quyền kiểm soát luồng cho nó.
+
+Một khi nó đang chạy, một chức năng không đồng bộ có thể tạm dừng.
+
+Khi nó xảy ra, nó từ bỏ quyền kiểm soát sợi chỉ.
+
+Nhưng thay vì trao quyền kiểm soát cho chức năng của bạn, thay vào đó nó trao quyền kiểm soát luồng cho hệ thống.
+
+Khi điều đó xảy ra, chức năng của bạn cũng bị đình chỉ.
+
+Đình chỉ là cách chức năng nói với hệ thống, "Tôi biết bạn có rất nhiều việc phải làm.
+
+Bạn quyết định điều gì là quan trọng nhất." Điều đó hợp tác như thế nào?
+
+Vì vậy, một khi chức năng tự tạm dừng, hệ thống có thể tự do sử dụng luồng để thực hiện các công việc khác.
+
+Tại một thời điểm nào đó, hệ thống sẽ quyết định rằng công việc quan trọng nhất cần thực hiện là tiếp tục chạy chức năng không đồng bộ đã tự tạm ngưng trước đó.
+
+Tại thời điểm đó, hệ thống sẽ tiếp tục nó.
+
+Chức năng không đồng bộ đó sau đó được kiểm soát trở lại luồng và có thể tiếp tục công việc của nó.
+
+Và nếu nó muốn, nó có thể tự đình chỉ một lần nữa.
+
+Trên thực tế, nó có thể tự đình chỉ bao nhiêu lần tùy thích.
+
+Mặt khác, nó có thể không cần phải tự đình chỉ chút nào.
+
+Mặc dù một hàm không đồng bộ có thể bị đình chỉ, chỉ vì nó được đánh dấu là không đồng bộ không nhất thiết có nghĩa là nó sẽ tạm dừng.
+
+Và tương tự như vậy, chỉ vì bạn thấy "chờ đợi" không có nghĩa là chức năng chắc chắn sẽ tạm dừng ở đó.
+
+Nhưng cuối cùng, cho dù không bao giờ tạm dừng hoặc sau khi tiếp tục lần cuối, chức năng sẽ kết thúc, trao quyền kiểm soát luồng trở lại chức năng của bạn, cùng với giá trị hoặc lỗi.
+
+Hãy xem lại fetchThumbnail để xem điều gì có thể xảy ra khi nó tạm dừng.
+
+Khi fetchThumbnail gọi phương thức dữ liệu không đồng bộ của URLSession, phương thức dữ liệu sẽ ngừng thực thi trên luồng theo cách đặc biệt mà chỉ các hàm không đồng bộ mới có thể: bằng cách tạm ngưng.
+
+Nó trao quyền kiểm soát luồng cho hệ thống và yêu cầu hệ thống lên lịch làm việc cho phương thức dữ liệu của URLSession.
+
+Nhưng tại thời điểm này, hệ thống đang được kiểm soát và công việc đó có thể không được bắt đầu ngay lập tức.
+
+Thay vào đó, chủ đề có thể được sử dụng cho những thứ khác.
+
+Hãy xem điều đó có thể xảy ra như thế nào.
+
+Giả sử rằng sau khi fetchThumbnail đã được gọi, người dùng nhấn vào một nút sẽ tải lên một số dữ liệu.
+
+Ví dụ, hãy nói rằng họ phản ứng với một bài đăng.
+
+Sau đó, hệ thống được tự do thực hiện công việc để đăng phản ứng của người dùng trước khi công việc được xếp hàng trước đó.
+
+Khi công việc đột phá muộn đó đã hoàn thành, phương thức dữ liệu của URLSession có thể được tiếp tục.
+
+Hoặc thay vào đó hệ thống có thể thực hiện công việc khác.
+
+Cuối cùng, một khi phương thức dữ liệu kết thúc, nó sẽ trở lại fetchThumbnail.
+
+Thực tế là các công việc khác có thể được thực hiện trong khi một hàm bị đình chỉ là lý do tại sao Swift khăng khăng rằng bạn đánh dấu các cuộc gọi không đồng bộ bằng từ khóa await.
+
+Bạn cần lưu ý rằng trạng thái ứng dụng của bạn có thể thay đổi đáng kể khi chức năng của bạn bị đình chỉ.
+
+Bây giờ, điều này cũng đúng khi bạn sử dụng trình xử lý hoàn thành.
+
+Nhưng bởi vì bạn không có tất cả các nghi lễ và thụt lề mà chúng đòi hỏi trong mã không đồng bộ/chờ đợi, từ khóa chờ đợi là cách bạn nhận thấy rằng một khối mã không thực thi như một giao dịch.
+
+Chức năng có thể bị đình chỉ và những điều khác có thể xảy ra trong khi nó bị đình chỉ giữa các dòng của chức năng.
+
+Hơn thế nữa, chức năng có thể tiếp tục vào một chủ đề hoàn toàn khác.
+
+Để tìm hiểu về những vấn đề này, hãy xem phiên "Bảo vệ trạng thái có thể thay đổi với các diễn viên Swift".
+
+Đây là một vài điều quan trọng cần nhớ về async/await.
+
+Đầu tiên, khi bạn đánh dấu một hàm không đồng bộ, bạn đang cho phép nó tạm dừng.
+
+Và khi một hàm tự đình chỉ, nó cũng đình chỉ người gọi của nó.
+
+Vì vậy, những người gọi nó cũng phải không đồng bộ.
+
+Thứ hai, để chỉ ra nơi trong một hàm không đồng bộ, nó có thể tạm dừng một hoặc nhiều lần, từ khóa await được sử dụng.
+
+Thứ ba, trong khi một chức năng không đồng bộ bị đình chỉ, luồng không bị chặn.
+
+Vì vậy, hệ thống có thể tự do lên lịch cho các công việc khác.
+
+Ngay cả công việc được bắt đầu sau đó cũng có thể được thực hiện trước.
+
+Điều đó có nghĩa là trạng thái ứng dụng của bạn có thể thay đổi rất nhiều trong khi chức năng bị đình chỉ.
+
+Cuối cùng, khi một hàm không đồng bộ tiếp tục, kết quả được trả về từ hàm không đồng bộ mà nó gọi là chảy trở lại hàm ban đầu và việc thực thi tiếp tục ngay tại nơi nó đã dừng lại.
+
+Bạn đã thấy cách async/await hoạt động trong Swift.
+
+Bây giờ Robert sẽ chỉ cho bạn cách bắt đầu sử dụng nó trong các dự án của riêng bạn.
+
+Cảm ơn, Nate.
+
+Trước đó, Nate đã cho bạn xem ứng dụng mà chúng tôi đang cùng nhau xây dựng.
+
+Hàm hình thu nhỏ mà anh ấy đã chuyển đổi để áp dụng async/await đã được gọi ở một vài nơi, vì vậy chúng tôi cũng sẽ cần di chuyển chúng để áp dụng đồng thời.
+
+Hãy bắt đầu với một cái gì đó quan trọng đối với sự phát triển phần mềm hiện đại: thử nghiệm.
+
+Chúng tôi muốn thử nghiệm mã không đồng bộ cũng dễ dàng như thử nghiệm mã đồng bộ, vì vậy XCTest hỗ trợ không đồng bộ ngay lập tức.
+
+Những gì từng là một quá trình tẻ nhạt để thiết lập kỳ vọng, gọi API đang được kiểm tra, hoàn thành kỳ vọng và sau đó đảm bảo chờ đợi một khoảng thời gian tùy ý trở nên dễ dàng như thêm từ khóa không đồng bộ vào hàm kiểm tra, loại bỏ kỳ vọng XCTest, sự hoàn thành của nó và chờ đợi rõ ràng, và thay vào đó chờ kết
+
+Bây giờ các bài kiểm tra của chúng tôi đã được giải quyết, hãy phóng to mã ứng dụng.
+
+Đặc biệt, mã SwiftUI đằng sau các chế độ xem hình thu nhỏ trong mỗi hàng của danh sách này.
+
+Một ô hình ảnh được tạo bằng một bài đăng và mỗi bài đăng có một ID mà chúng tôi chuyển đến viewModel để nó có thể truy xuất hình thu nhỏ không đồng bộ.
+
+Bạn đã thấy cách chuyển đổi cuộc gọi này từ mã thử nghiệm, vì vậy hãy thử.
+
+Đầu tiên chúng tôi xóa trình xử lý hoàn thành, sau đó "thử" được thêm vào để xử lý bất kỳ lỗi nào và "chờ" để hoàn thành cuộc gọi đến một hàm không đồng bộ.
+
+Nhưng khi chúng tôi cố gắng xây dựng mã này, có điều gì đó không ổn.
+
+Trình biên dịch Swift đang nói với chúng ta rằng chúng ta không thể gọi các hàm không đồng bộ trong các ngữ cảnh mà bản thân chúng không đồng bộ.
+
+Ở đây, công cụ sửa đổi onAppear đóng cửa đơn giản, không đồng bộ, vì vậy cần có một cách để thu hẹp khoảng cách giữa thế giới đồng bộ và không đồng bộ.
+
+Giải pháp là sử dụng chức năng tác vụ không đồng bộ.
+
+Một tác vụ không đồng bộ đóng gói công việc trong quá trình đóng và gửi nó đến hệ thống để thực hiện ngay lập tức trên chuỗi có sẵn tiếp theo, giống như chức năng không đồng bộ trên hàng đợi điều phối toàn cầu.
+
+Lợi ích chính của nó ở đây là mã không đồng bộ có thể được gọi từ bên trong ngữ cảnh đồng bộ hóa.
+
+Sau một lần xây dựng lại khác, trình biên dịch hài lòng.
+
+Các tác vụ không đồng bộ là một phần của họ API cho phép bạn xây dựng mã Swift đồng thời phong phú theo phong cách quen thuộc và có cấu trúc tự nhiên.
+
+Để tìm hiểu thêm, hãy xem "Khám phá tính đồng thời có cấu trúc trong Swift." Và để tìm hiểu cách bạn có thể tận dụng tối đa mã không đồng bộ trong các ứng dụng SwiftUI, hãy xem "Khám phá tính đồng thời trong SwiftUI." Chúng tôi đã hoàn thành việc di chuyển tất cả những nơi mà chúng tôi gọi là hàm fetchThumbnail.
+
+Nhưng ứng dụng của chúng tôi có nhiều cơ hội hơn để áp dụng async/await.
+
+Để bắt đầu và chạy nhanh chóng, chúng tôi khuyên bạn nên bắt đầu nhỏ với một giải pháp thay thế không đồng bộ cho API hiện có.
+
+SDK cung cấp hàng trăm API xử lý hoàn thành vì chúng hoạt động thay mặt bạn một cách không đồng bộ.
+
+Khi các API này được xếp cạnh nhau, các mẫu bắt đầu xuất hiện.
+
+Mặc dù chúng có thể có tên khác nhau và mục đích khác nhau, tất cả các chức năng này đều có cùng một hợp đồng API thiết yếu.
+
+Bạn gọi cho họ, và họ gọi lại cho bạn với những người xử lý hoàn thành được cung cấp, chuyển kết quả mà họ thu được.
+
+Trước đó, Nate đã cho bạn thấy rằng bạn có thể chờ kết quả của các hàm không đồng bộ để viết mã trông tự nhiên hơn.
+
+Sẽ thật tuyệt vời nếu chúng ta có thể biến các khối gọi lại này thành các chức năng không đồng bộ này?
+
+Kể từ Swift 5.5, đây chính xác là những gì xảy ra.
+
+Trình biên dịch Swift tự động xem mã trình xử lý hoàn thành được nhập từ Objective-C và cung cấp một giải pháp thay thế không đồng bộ.
+
+Nhưng chúng tôi đã không dừng lại ở đó.
+
+Nhiều API đại diện cũng bao gồm các phương thức chuyển trình xử lý hoàn thành cho bạn.
+
+Gọi trình xử lý hợp tác thông báo cho khuôn khổ khi một nhiệm vụ không đồng bộ đã hoàn thành.
+
+Lấy nguồn dữ liệu phức tạp ClockKit này gọi fetchThumbnail để hiển thị mục nhập dòng thời gian cho một bài đăng nhất định.
+
+Cũng như trước đây, chúng tôi phải đảm bảo gọi trình xử lý hoàn thành trên tất cả các con đường và có thêm rất nhiều tiếng ồn ở đây vì việc đóng cửa.
+
+Với async đang chờ đợi, điều này không còn cần phải như vậy nữa.
+
+Phương thức đại diện này có một giải pháp thay thế không đồng bộ mà chúng ta có thể sử dụng thay thế.
+
+Đầu tiên, tên của lựa chọn thay thế không đồng bộ được sử dụng để loại bỏ "get" hàng đầu. Chúng tôi khuyên rằng các hàm không đồng bộ bỏ qua các từ dẫn đầu như "get" giao tiếp khi kết quả của cuộc gọi không được trả về trực tiếp.
+
+Rốt cuộc, vì đây là một hàm thay thế không đồng bộ, nó trả về một mục nhập dòng thời gian trực tiếp.
+
+Bây giờ có một ngữ cảnh không đồng bộ được thiết lập, chúng tôi gọi phiên bản không đồng bộ của fetchThumbnail.
+
+Cuối cùng, chúng tôi trả về một mục nhập dòng thời gian từ phương thức này thay vì gọi khối hoàn thành hiện đã bị xóa.
+
+Các API không đồng bộ mà chúng tôi đã làm nổi bật ở đây hầu như không làm trầy xước bề mặt.
+
+Để tìm hiểu thêm, hãy xem các phiên này đi sâu vào chi tiết hơn nhiều về bản thân các API và cách bạn có thể sử dụng chúng khi áp dụng async/await.
+
+Tất cả những điều này là ví dụ về các tình huống mà Swift sẽ thay mặt bạn tạo ra các lựa chọn thay thế không đồng bộ.
+
+Nhưng chắc chắn sẽ có những nơi trong mã của bạn mà bạn sẽ cần tự tạo một giải pháp thay thế không đồng bộ.
+
+Hãy xem điều này trông như thế nào trong thực tế.
+
+Trong ứng dụng của chúng tôi, chúng tôi sử dụng chức năng getPersistentPosts này để truy xuất bất kỳ bài đăng nào mà chúng tôi vẫn duy trì vào kho Dữ liệu cốt lõi của mình.
+
+Chức năng này được gọi ở nhiều nơi hơn trong ứng dụng của chúng tôi so với chức năng hình thu nhỏ không đồng bộ, vì vậy sẽ là một thay đổi thực sự lớn nếu chỉ sử dụng không đồng bộ ở mọi nơi.
+
+Và vì chúng tôi đang sử dụng NSAsynchronousFetchRequest, có vẻ như chức năng này là một ứng cử viên hoàn hảo cho một giải pháp thay thế không đồng bộ.
+
+Đầu tiên, chúng tôi tạo một hàm không đồng bộ và chuyển đổi giá trị trả về.
+
+Vì chức năng này có thể gây ra lỗi, chúng tôi cũng đánh dấu chức năng này là "ném".
+
+Tiếp theo, chúng tôi gọi phiên bản xử lý hoàn thành của getPersistentPosts và, tốt, bây giờ chúng tôi bị mắc kẹt.
+
+Chúng ta cần trả lại kết quả từ cuộc gọi lại cho những nơi đang chờ cuộc gọi đến hàm persistentPosts không đồng bộ.
+
+Không chỉ vậy, những người gọi đó đang ở trong trạng thái đình chỉ.
+
+Chúng tôi cần đảm bảo tiếp tục chúng vào đúng thời điểm và với dữ liệu phù hợp để chúng có thể tiếp tục với phần còn lại của công việc.
+
+Trước đó, Nate đã chỉ cho bạn cách Swift và hệ thống hợp tác để xử lý việc nối lại mã không đồng bộ cho chúng tôi.
+
+Hãy đi sâu hơn một chút vào cách thức hoạt động của quy trình đình chỉ/tiếp tục này để xem liệu chúng ta có thể đưa ra một giải pháp tương tự cho vấn đề của mình hay không.
+
+Khi phiên bản không đồng bộ của persistentPosts được gọi, nó sẽ gọi vào Core Data.
+
+Vào một thời điểm nào đó sau đó, Core Data gọi trình xử lý hoàn thành và chuyển kết quả của yêu cầu tìm nạp.
+
+Tình huống này trông gần giống với tình huống mà Nate đã chỉ cho bạn trước đó khi chức năng fetchThumbnail của chúng tôi yêu cầu hệ thống, không phải Core Data, tiếp tục cuộc gọi hàm không đồng bộ bị đình chỉ.
+
+Tất cả những gì còn thiếu là một cầu nối để chờ trình xử lý hoàn thành và tiếp tục với kết quả của yêu cầu tìm nạp.
+
+Mô hình này xuất hiện mọi lúc, và nó có một cái tên: một sự tiếp nối.
+
+Trong suốt phiên này, Nate và tôi đã chỉ cho bạn rất nhiều ví dụ về sự tiếp tục: các phương pháp thực hiện các khối hoàn thành.
+
+Người gọi phương thức đang chờ kết quả của lệnh gọi hàm và cung cấp một đóng để chỉ định những việc cần làm tiếp theo.
+
+Khi cuộc gọi hàm hoàn tất, nó sẽ gọi trình xử lý hoàn thành để tiếp tục bất cứ điều gì người gọi muốn làm với kết quả.
+
+Kiểu thực thi hợp tác này chính xác là cách các hàm không đồng bộ trong Swift hoạt động.
+
+Để làm cho điều này rõ ràng, Swift cung cấp một tính năng để bạn có thể tạo, quản lý và tiếp tục tiếp tục theo cách cấp cao và an toàn.
+
+Hãy quay lại ví dụ của chúng tôi để xem cách tiếp tục có thể giúp chúng tôi hoàn thành việc viết giải pháp thay thế không đồng bộ của mình.
+
+Chức năng withCheckedThrowingContinuation nâng các khối hoàn thành với các lỗi lên đến việc ném các hàm Swift không đồng bộ.
+
+Nó có một đối tác được gọi là withCheckedContinuations cho các tình huống mà bạn biết một hàm sẽ không bao giờ gây ra lỗi.
+
+Các chức năng này là cách để có quyền truy cập vào giá trị tiếp tục mà bạn có thể sử dụng để tiếp tục một hàm không đồng bộ bị treo.
+
+Điều này cũng xây dựng phần đầu tiên của cây cầu bằng cách cho phép chúng tôi chờ đợi các cuộc gọi đến getPersistentPosts.
+
+Hãy hoàn thành việc xây dựng cây cầu.
+
+Giá trị tiếp tục cung cấp một chức năng tiếp tục mà chúng tôi đặt kết quả từ trình xử lý hoàn thành.
+
+Không chỉ vậy, sơ yếu lý lịch còn cung cấp liên kết bị thiếu mà chúng tôi cần để hủy tạm ngưng bất kỳ cuộc gọi nào đang chờ kết quả của chức năng persistentPosts.
+
+Và ở đó, trong một gói gọn gàng, là cầu nối đã hoàn thành của chúng tôi từ trình xử lý hoàn thành đến các chức năng không đồng bộ.
+
+Sự tiếp tục cung cấp một cách mạnh mẽ để kiểm soát thủ công việc thực hiện một chức năng không đồng bộ, nhưng có một số điều cần lưu ý.
+
+Tiếp tục có một hợp đồng đơn giản nhưng quan trọng.
+
+Sơ yếu lý lịch phải được gọi chính xác một lần trên mỗi con đường.
+
+Nhưng đừng lo lắng. Swift hỗ trợ bạn ở đây.
+
+Nếu việc tiếp tục bị loại bỏ mà không được gọi tiếp tục, thời gian chạy Swift sẽ ghi lại cảnh báo vì điều này sẽ dẫn đến các cuộc gọi không đồng bộ không bao giờ bị đình chỉ.
+
+Tuy nhiên, nếu việc tiếp tục được nối lại nhiều lần trong cùng một chức năng, đây là một lỗi nghiêm trọng hơn vì nó có thể làm hỏng dữ liệu chương trình.
+
+Để chống lại điều này, thời gian chạy Swift sẽ phát hiện các nỗ lực gọi tiếp tục nhiều lần và sẽ đảm bảo xảy ra lỗi nghiêm trọng tại điểm nối lại thứ hai.
+
+Với suy nghĩ này, hãy làm nổi bật một nơi quan trọng hơn mà bạn có thể sử dụng tiếp tục đã kiểm tra.
+
+Nhiều API được điều khiển bởi sự kiện.
+
+Họ cung cấp các cuộc gọi lại đại biểu để thông báo cho ứng dụng của chúng tôi tại các điểm quan trọng cụ thể và cho phép nó phản hồi một cách thích hợp.
+
+Để áp dụng không đồng bộ/chờ đợi đúng cách, chúng tôi sẽ phải lưu trữ phần tiếp theo và tiếp tục nó sau.
+
+Như trước đây, chúng tôi tạo ra một phần tiếp tục đã được kiểm tra.
+
+Sau đó chúng tôi lưu nó lại và bắt đầu công việc.
+
+Để tôn trọng hợp đồng API của các lần tiếp tục đã được kiểm tra, chúng tôi đảm bảo tiếp tục tiếp tục đang hoạt động và cuối cùng không loại bỏ nó để chúng tôi được bảo vệ khỏi việc gọi nó nhiều lần.
+
+Luôn nhớ rằng: giá trị tiếp tục được kiểm tra ở đây thể hiện khả năng tiếp tục thủ công bất kỳ cuộc gọi không đồng bộ nào đến API này, vì vậy nó phải được gọi trên tất cả các đường dẫn.
+
+Nếu API đại diện của bạn được gọi nhiều lần hoặc hoàn toàn không trong một số trường hợp nhất định, điều quan trọng là phải tiếp tục bất kỳ tiếp tục hoạt động nào chính xác một lần.
+
+Để tìm hiểu thêm về các chi tiết cấp thấp hơn của Swift đồng thời, bao gồm cả phần tiếp tục, hãy xem phiên "Swift concurrency: Behind the scenes".
+
+Đây là một chuyến tham quan không đồng bộ/chờ đợi trong Swift.
+
+Chúng tôi đã chỉ cho bạn cách các từ khóa không đồng bộ và chờ đợi hoạt động trong thời gian chạy và cách bạn có thể áp dụng chúng trong các ứng dụng và khuôn khổ của mình.
+
+Để giúp bạn bắt đầu, chúng tôi đã cung cấp cho bạn một mẫu các API không đồng bộ có sẵn trong SDK và chỉ cho bạn cách kết nối mã hiện có của bạn từ thế giới đồng bộ sang thế giới không đồng bộ.
+
+Async/await là nền tảng của cả một vũ trụ các tính năng đồng thời Swift.
+
+Chúng tôi rất vui khi thấy những gì bạn xây dựng với họ.
+
+Cảm ơn bạn đã xem.

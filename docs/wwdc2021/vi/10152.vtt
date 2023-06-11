@@ -1,0 +1,983 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:11.000
+Xin chào. Tôi là Saharsh Oza.
+
+00:00:11.000 --> 00:00:14.000
+Tôi làm việc với nhóm Kỹ sư Phần mềm GPU tại Apple.
+
+00:00:14.000 --> 00:00:20.000
+Hôm nay đồng nghiệp của tôi, Yuliya Pylypiv, và tôi sẽ nói về những gì mới trong Metal Performance Shaders Graph.
+
+00:00:20.000 --> 00:00:22.000
+Hãy để chúng tôi bắt đầu.
+
+00:00:22.000 --> 00:00:35.000
+MPS là một thư viện các nguyên thủy dựa trên kim loại, hiệu suất cao, tăng tốc GPU cho các lĩnh vực khác nhau như xử lý hình ảnh, đại số tuyến tính, dò tia và học máy.
+
+00:00:35.000 --> 00:00:44.000
+Nhóm MPS tối ưu hóa hạt nhân Metal để mang lại hiệu suất tốt nhất trên từng phần cứng trên các nền tảng khác nhau của Apple.
+
+00:00:44.000 --> 00:00:51.000
+Năm ngoái, chúng tôi đã giới thiệu khung MPSGraph, một biểu đồ tính toán mục đích chung cho GPU.
+
+00:00:51.000 --> 00:01:00.000
+Nó được hỗ trợ trên macOS, iOS, iPadOS và tvOS, giống như khung MPS.
+
+00:01:00.000 --> 00:01:05.000
+Vui lòng xem phiên họp năm ngoái của chúng tôi để biết thêm chi tiết giới thiệu về MPSGraph.
+
+00:01:05.000 --> 00:01:07.000
+Hãy cùng xem chương trình nghị sự.
+
+00:01:07.000 --> 00:01:09.000
+Chúng tôi có rất nhiều thứ để trang trải.
+
+00:01:09.000 --> 00:01:14.000
+Chúng ta sẽ thảo luận về suy luận ML và tăng tốc đào tạo thông qua MPSGraph.
+
+00:01:14.000 --> 00:01:18.000
+Chúng tôi sẽ giới thiệu một số hoạt động MPSGraph mới thú vị.
+
+00:01:18.000 --> 00:01:23.000
+Chúng tôi sẽ giới thiệu những cách mới để bạn kiểm soát việc biên dịch trong MPSGraph.
+
+00:01:23.000 --> 00:01:29.000
+Và cuối cùng, chúng ta sẽ xem xét tất cả các khả năng điều khiển dòng chảy mới của MPSGraph.
+
+00:01:29.000 --> 00:01:36.000
+Tôi muốn giới thiệu đồng nghiệp của tôi, Yuliya, người sẽ chia sẻ một số cập nhật thú vị để suy luận và tăng tốc đào tạo.
+
+00:01:36.000 --> 00:01:37.000
+Cảm ơn, Saharsh.
+
+00:01:37.000 --> 00:01:39.000
+Xin chào. Tôi là Yuliya Pylypiv.
+
+00:01:39.000 --> 00:01:42.000
+Tôi là một phần của nhóm Phần mềm GPU tại Apple.
+
+00:01:42.000 --> 00:01:47.000
+Hôm nay, tôi muốn chia sẻ những cải tiến mà chúng tôi đã thực hiện để tăng hiệu suất đào tạo và suy luận trên GPU.
+
+00:01:47.000 --> 00:01:50.000
+Hãy đi sâu vào nó.
+
+00:01:50.000 --> 00:01:59.000
+Khung MPSGraph đã được áp dụng bởi các khung học máy cấp cao hơn như Core ML và TensorFlow để tăng tốc GPU.
+
+00:01:59.000 --> 00:02:07.000
+Năm nay, chúng tôi đã tối ưu hóa MPSGraph hơn nữa với sự kết hợp giữa cải tiến hạt nhân và áp dụng khâu.
+
+00:02:07.000 --> 00:02:14.000
+Điều này đã chuyển thành mức tăng hiệu suất lớn cho các khuôn khổ học máy sử dụng MPS.
+
+00:02:14.000 --> 00:02:19.000
+Chúng ta hãy xem xét kỹ hơn về Plugin kim loại mới cho TensorFlow.
+
+00:02:19.000 --> 00:02:25.000
+TensorFlow là một nền tảng đào tạo học máy phổ biến và GPU là thiết bị tăng tốc chiếm ưu thế.
+
+00:02:25.000 --> 00:02:34.000
+Năm nay, chúng tôi đã phát triển một Plugin kim loại mới sử dụng Giao diện thiết bị có thể cắm TensorFlow được phát hành trong TensorFlow 2.5.
+
+00:02:34.000 --> 00:02:39.000
+Điều này mang lại sức mạnh của Metal cho TensorFlow bằng MPS và MPSGraph.
+
+00:02:39.000 --> 00:02:46.000
+Điều này cho phép chúng tôi đào tạo bất kỳ mô hình học máy nào trên GPU nền tảng Mac mà không cần sửa đổi.
+
+00:02:46.000 --> 00:02:48.000
+Bây giờ, hãy xem một trong những thứ này đang hoạt động.
+
+00:02:48.000 --> 00:02:52.000
+Đối với bản demo này, tôi sẽ sử dụng môi trường Jupyter.
+
+00:02:52.000 --> 00:02:58.000
+Trên hệ thống M1 của tôi, tôi đã cài đặt TensorFlow mới nhất có sẵn.
+
+00:02:58.000 --> 00:03:06.000
+Khi chúng tôi liệt kê các thiết bị vật lý, bạn có thể thấy chỉ có một thiết bị CPU được đăng ký.
+
+00:03:06.000 --> 00:03:16.000
+Ở đây tôi đang xác định một mô hình học máy phổ biến, ResNet50, được sử dụng rộng rãi để phân loại hình ảnh, học chuyển giao và hơn thế nữa.
+
+00:03:16.000 --> 00:03:25.000
+Mô hình hiện tại sử dụng tập dữ liệu ImageNet tiêu chuẩn với kích thước hình ảnh 224 x 224.
+
+00:03:25.000 --> 00:03:32.000
+Như bạn có thể thấy, ETA hiện tại cho kỷ nguyên đầu tiên chạy trên CPU là khoảng 20 phút.
+
+00:03:32.000 --> 00:03:39.000
+Hãy để tôi cài đặt Plugin TensorFlow Metal mà chúng tôi đã giới thiệu trước đó và xem liệu chúng tôi có thể tăng tốc cho mạng hiện tại hay không.
+
+00:03:39.000 --> 00:03:49.000
+Để làm như vậy, tôi sẽ sử dụng pip install tensorflow-metal...
+
+00:03:49.000 --> 00:03:54.000
+Quay trở lại cùng một mô hình ResNet50 mà chúng tôi đã sử dụng trước đây.
+
+00:03:54.000 --> 00:03:58.000
+Chỉ lần này, bạn mới có thể thấy có một thiết bị GPU mới được đăng ký.
+
+00:03:58.000 --> 00:04:06.000
+Đây là thiết bị GPU mà chúng tôi đã giới thiệu như một phần của nền tảng TensorFlow sử dụng Metal Plugin.
+
+00:04:06.000 --> 00:04:11.000
+Tất cả các cuộc gọi lại và định nghĩa mạng vẫn không thay đổi.
+
+00:04:11.000 --> 00:04:15.000
+Khởi động mạng một lần nữa để chúng ta có thể so sánh ETAs.
+
+00:04:15.000 --> 00:04:24.000
+Bạn có thể thấy rằng phiên bản GPU của cùng một mạng đang đào tạo nhanh hơn khoảng bốn lần bằng cách sử dụng TensorFlow Metal Plugin.
+
+00:04:24.000 --> 00:04:27.000
+Bây giờ chúng ta hãy xem xét kỹ hơn các mạng khác.
+
+00:04:27.000 --> 00:04:33.000
+Ở đây chúng tôi hiển thị hiệu suất trên các tiêu chuẩn đào tạo máy học chính liên quan đến CPU.
+
+00:04:33.000 --> 00:04:42.000
+Như bạn có thể thấy, chúng tôi có tốc độ tốt trên tất cả các điểm chuẩn, nhanh hơn gấp tám lần trên M1 MacBook Pro.
+
+00:04:42.000 --> 00:04:46.000
+Cài đặt Metal Plugin mới cho TensorFlow thật dễ dàng.
+
+00:04:46.000 --> 00:04:55.000
+Sau khi cài đặt TensorFlow cơ sở bằng cách sử dụng pip install tensorflow-macos, bạn có thể cài đặt Metal Plugin bằng cách sử dụng pip install tensorflow-metal.
+
+00:04:55.000 --> 00:05:00.000
+Metal Plugin sẽ có sẵn trên gói Python chính thức repo, pypi.org.
+
+00:05:00.000 --> 00:05:06.000
+Để biết chi tiết về thiết lập và cài đặt môi trường, vui lòng tham khảo Tài nguyên Nhà phát triển Kim loại.
+
+00:05:06.000 --> 00:05:08.000
+Đó là nó cho TensorFlow.
+
+00:05:08.000 --> 00:05:13.000
+Tiếp theo, hãy nói về gia tốc suy luận trong Core ML.
+
+00:05:13.000 --> 00:05:16.000
+Core ML là khung suy luận học máy của Apple.
+
+00:05:16.000 --> 00:05:23.000
+Chúng tôi cũng đã thấy những cải tiến hiệu suất đáng kể trên Core ML với MPSGraph.
+
+00:05:23.000 --> 00:05:28.000
+Chúng tôi chỉ ra ở đây tốc độ suy luận của các lớp chính của mạng học máy trên M1.
+
+00:05:28.000 --> 00:05:35.000
+Chúng tôi tăng tốc gấp 2 lần trên BERT, đây là một mạng máy biến áp chuẩn được sử dụng cho các ứng dụng NLP.
+
+00:05:35.000 --> 00:05:43.000
+ResNet50, trung tâm của các ứng dụng thị giác máy tính, đã được điều chỉnh cho các đường dẫn kết cấu trong các bản phát hành trước đó.
+
+00:05:43.000 --> 00:05:51.000
+Đây là một cải tiến hiệu suất bổ sung 16% với phần phụ trợ bộ đệm mới của chúng tôi thông qua MPSGraph.
+
+00:05:51.000 --> 00:05:59.000
+Những cải tiến hiệu suất này trong Core ML và TensorFlow là do những cải tiến hiệu suất trong các nguyên thủy MPS như Convolution2D.
+
+00:05:59.000 --> 00:06:10.000
+Ở đây, chúng tôi hiển thị tốc độ của Convolution2D trên bố cục dữ liệu NHWC và NCHW được sử dụng để đào tạo và suy luận tương ứng.
+
+00:06:10.000 --> 00:06:13.000
+Đó là nó cho những cải tiến trong suy luận và đào tạo.
+
+00:06:13.000 --> 00:06:18.000
+Tiếp theo, hãy quay lại Saharsh để tìm hiểu thêm về các hoạt động mới trong MPSGraph.
+
+00:06:18.000 --> 00:06:20.000
+Cảm ơn, Yuliya.
+
+00:06:20.000 --> 00:06:25.000
+Bây giờ chúng ta sẽ xem xét tập hợp các hoạt động mới được hỗ trợ bởi MPSGraph.
+
+00:06:25.000 --> 00:06:36.000
+Chúng tôi hỗ trợ rất nhiều thao tác trên MPSGraph, từ nhiều biến thể của tích chập và giảm đến tất cả các hoạt động toán học cơ bản mà bạn có thể cần trong biểu đồ tính toán của mình.
+
+00:06:36.000 --> 00:06:42.000
+Năm nay, chúng tôi đã thêm các hoạt động đặc biệt để cho phép bạn làm được nhiều hơn với MPSGraph.
+
+00:06:42.000 --> 00:06:50.000
+Chúng tôi sẽ giới thiệu ba nguyên thủy mới: kiểm soát phụ thuộc, toán tử stprint và toán tử thu thập.
+
+00:06:50.000 --> 00:06:53.000
+Đầu tiên, chúng ta sẽ xem xét sự phụ thuộc kiểm soát.
+
+00:06:53.000 --> 00:06:58.000
+Kiểm soát sự phụ thuộc là cần thiết để sắp xếp rõ ràng các hoạt động trong biểu đồ.
+
+00:06:58.000 --> 00:07:02.000
+Để hiểu điều này, hãy chính thức xác định một thao tác đồ thị.
+
+00:07:02.000 --> 00:07:20.000
+Các hoạt động trong biểu đồ kết nối với nhau thông qua ba loại cạnh: tenxơ đầu vào, đại diện cho tenxơ nào đóng vai trò là đầu vào dữ liệu cho op, tenxơ đầu ra, được tạo bởi chính op và cuối cùng, một loại cạnh đặc biệt được gọi là phụ thuộc điều khiển.
+
+00:07:20.000 --> 00:07:26.000
+Họ phải thực hiện trước hoạt động hiện tại, ngay cả khi bản thân hoạt động hiện tại không phụ thuộc vào nó.
+
+00:07:26.000 --> 00:07:33.000
+API này cũng cung cấp một cách thuận tiện để ngăn chặn các hoạt động được MPSGraph tối ưu hóa.
+
+00:07:33.000 --> 00:07:38.000
+Điều này là cần thiết để thực hiện các lớp học máy như chuẩn hóa hàng loạt.
+
+00:07:38.000 --> 00:07:41.000
+Hãy xem điều này trong thực tế.
+
+00:07:41.000 --> 00:07:48.000
+Chuẩn hóa hàng loạt là một lớp tiêu chuẩn được sử dụng trong đào tạo ML để làm cho mạng ổn định hơn và hội tụ nhanh hơn.
+
+00:07:48.000 --> 00:07:52.000
+Ở đây chúng ta thấy biểu đồ tính toán cho chuẩn hóa hàng loạt được sử dụng để đào tạo.
+
+00:07:52.000 --> 00:07:56.000
+Bước đầu tiên là tính giá trị trung bình và phương sai.
+
+00:07:56.000 --> 00:08:02.000
+Đến lượt nó, chúng được sử dụng để cập nhật giá trị trung bình chạy và phương sai chạy cần thiết cho suy luận.
+
+00:08:02.000 --> 00:08:10.000
+Tuy nhiên, kết quả biểu đồ đào tạo không yêu cầu các biến này, vì vậy MPSGraph có thể tối ưu hóa chúng đi.
+
+00:08:10.000 --> 00:08:18.000
+Chúng ta có thể giải quyết vấn đề này bằng cách sắp xếp chúng một cách rõ ràng trước toán tử chuẩn hóa cuối cùng bằng cách sử dụng các phụ thuộc điều khiển.
+
+00:08:18.000 --> 00:08:23.000
+Hãy xem xét một ví dụ đơn giản với một số mã cho thấy cách bạn có thể sử dụng API này.
+
+00:08:23.000 --> 00:08:26.000
+Biểu đồ này cho thấy một toán tử số mũ và gán.
+
+00:08:26.000 --> 00:08:30.000
+Toán tử gán không được sử dụng bởi bất kỳ thứ gì khác trong biểu đồ.
+
+00:08:30.000 --> 00:08:32.000
+Vì vậy, nó có thể được tối ưu hóa.
+
+00:08:32.000 --> 00:08:37.000
+Một cách để giải quyết vấn đề này là đặt rõ ràng chỉ định làm targetOperation.
+
+00:08:37.000 --> 00:08:43.000
+Tuy nhiên, điều này đòi hỏi nhà phát triển phải theo dõi sự phụ thuộc trên toàn cầu trên biểu đồ.
+
+00:08:43.000 --> 00:08:51.000
+Thay vào đó, với API phụ thuộc điều khiển mới, bạn có thể làm cho thao tác số mũ phụ thuộc vào bài tập.
+
+00:08:51.000 --> 00:08:58.000
+Điều này loại bỏ nhu cầu có targetOperation và cũng đảm bảo rằng biểu đồ không tối ưu hóa nó đi.
+
+00:08:58.000 --> 00:09:01.000
+Tiếp theo, chúng ta sẽ thấy điều này trong mã.
+
+00:09:01.000 --> 00:09:06.000
+Đầu tiên chúng tôi xác định toán tử mà số mũ phụ thuộc vào.
+
+00:09:06.000 --> 00:09:11.000
+Tiếp theo, chúng tôi tạo ra một dependentBlock xác định toán tử số mũ.
+
+00:09:11.000 --> 00:09:15.000
+Cuối cùng, chúng tôi gọi API chạy trên biểu đồ này.
+
+00:09:15.000 --> 00:09:19.000
+Lưu ý rằng không có hoạt động mục tiêu nào cần được theo dõi trên toàn cầu.
+
+00:09:19.000 --> 00:09:21.000
+Đó là nó cho sự phụ thuộc kiểm soát.
+
+00:09:21.000 --> 00:09:25.000
+Bây giờ hãy nói về những người vận hành giấy nến.
+
+00:09:25.000 --> 00:09:31.000
+Thao tác stprint là sự khái quát hóa của các toán tử cửa sổ trượt như tích chập hình ảnh.
+
+00:09:31.000 --> 00:09:38.000
+Những toán tử này rất cần thiết trong các phương pháp phần tử hữu hạn, học máy và các ứng dụng xử lý hình ảnh.
+
+00:09:38.000 --> 00:09:44.000
+Ở đây, chúng ta thấy một khuôn tô 2D năm điểm thường được sử dụng để thực hiện các hoạt động Laplacian.
+
+00:09:44.000 --> 00:09:52.000
+Toán tử stprint được hiển thị ở đây cũng có thể được áp dụng cho các kích thước cao hơn, như được hiển thị với sơ đồ stprint 3D bảy điểm này.
+
+00:09:52.000 --> 00:09:55.000
+Chúng ta hãy xem xét kỹ hơn về người vận hành.
+
+00:09:55.000 --> 00:10:02.000
+Đối với mỗi giá trị đầu ra, nó tính toán mức giảm có trọng số trên cửa sổ stprint trên tenxơ đầu vào, như được hiển thị.
+
+00:10:02.000 --> 00:10:11.000
+Người vận hành hỗ trợ các chế độ giảm khác nhau bao gồm argmin/argmax và các chế độ đệm khác nhau, bao gồm phản xạ và kẹpToZero.
+
+00:10:11.000 --> 00:10:17.000
+MPSGraph cho phép ghép nối trên các hạt nhân MPS để có hiệu suất tối ưu.
+
+00:10:17.000 --> 00:10:25.000
+Với sự hỗ trợ khâu, toán tử stprint cho phép bạn thể hiện các phép toán phức tạp trong một lần khởi chạy hạt nhân duy nhất.
+
+00:10:25.000 --> 00:10:28.000
+Hãy để chúng tôi xem một ví dụ như vậy đang hoạt động.
+
+00:10:28.000 --> 00:10:34.000
+Chuẩn hóa phản hồi cục bộ là một op pytorch được sử dụng để chuẩn hóa trong kích thước kênh.
+
+00:10:34.000 --> 00:10:38.000
+Rất đơn giản để thực hiện điều này với thao tác stprint mới.
+
+00:10:38.000 --> 00:10:42.000
+Ở đây, chúng ta thấy biểu đồ cho kỹ thuật chuẩn hóa này.
+
+00:10:42.000 --> 00:10:46.000
+Chúng tôi thấy rằng đó chỉ là yếu tố khôn ngoan xung quanh hoạt động của khuôn tô.
+
+00:10:46.000 --> 00:10:50.000
+Nếu không có thao tác mới, sẽ cần nhiều công văn.
+
+00:10:50.000 --> 00:10:57.000
+Bây giờ, vì stencil op hỗ trợ khâu, toàn bộ biểu đồ này có thể được khởi chạy trong một công văn duy nhất.
+
+00:10:57.000 --> 00:11:00.000
+Vì vậy, đó là nó cho người vận hành stprint.
+
+00:11:00.000 --> 00:11:05.000
+Tiếp theo, chúng ta hãy xem xét những cải tiến trong hoạt động thu thập.
+
+00:11:05.000 --> 00:11:09.000
+Năm nay, các hoạt động thu thập mới đã được thêm vào MPSGraph.
+
+00:11:09.000 --> 00:11:16.000
+Những thứ này cho phép sao chép hiệu quả các lát cắt có kích thước tùy ý ở các vị trí bộ nhớ không liền kề.
+
+00:11:16.000 --> 00:11:22.000
+Về mặt khái niệm, chúng tôi đang thu thập các giá trị từ các vị trí được đánh dấu màu xanh lam từ một đoạn bộ nhớ.
+
+00:11:22.000 --> 00:11:29.000
+Các lớp tập hợp này cho phép thực hiện hiệu quả việc nhúng tra cứu và sao chép ma trận động.
+
+00:11:29.000 --> 00:11:32.000
+GatherND là một phần mở rộng mạnh mẽ của hoạt động thu thập.
+
+00:11:32.000 --> 00:11:40.000
+Trong khi tập hợp bình thường hỗ trợ lập chỉ mục tuyến tính, thao tác gatherND cho phép lập chỉ mục N chiều.
+
+00:11:40.000 --> 00:11:45.000
+Điều này cho phép sao chép liền mạch dữ liệu từ mọi nơi trong đầu vào N chiều.
+
+00:11:45.000 --> 00:11:53.000
+Đầu vào cho thao tác này là một vectơ tọa độ và mỗi tọa độ có thể lên đến thứ hạng của tenxơ đầu vào.
+
+00:11:53.000 --> 00:11:59.000
+Bất kỳ kích thước nào không được chỉ định trong tọa độ đều dẫn đến các bản sao lát cắt.
+
+00:11:59.000 --> 00:12:04.000
+Chúng ta có thể bước qua một ví dụ về tập hợp các lát cắt hàng từ một tenxơ 3D.
+
+00:12:04.000 --> 00:12:12.000
+Trong ví dụ này, các chỉ số chỉ định hai tọa độ tương ứng với tọa độ ma trận và hàng.
+
+00:12:12.000 --> 00:12:18.000
+Không có tọa độ thứ ba cho chỉ mục cột, gatherND này sẽ sao chép toàn bộ hàng.
+
+00:12:18.000 --> 00:12:24.000
+Tenxơ kết quả là một ma trận 2D của các hàng được thu thập từ ma trận đầu vào.
+
+00:12:24.000 --> 00:12:29.000
+GatherND có thể đại diện cho gần như bất kỳ hình thức hoạt động thu thập nào và mang lại hiệu suất tuyệt vời.
+
+00:12:29.000 --> 00:12:36.000
+Ví dụ, hãy xem cách chúng ta có thể thực hiện tra cứu nhúng bằng cách sử dụng các hoạt động thu thập.
+
+00:12:36.000 --> 00:12:43.000
+Tra cứu nhúng là một thao tác phổ biến được sử dụng để tìm vectơ nhúng cho một tập hợp các đối tượng đầu vào được cung cấp.
+
+00:12:43.000 --> 00:12:54.000
+Thông thường, lớp này được sử dụng trong các mạng xử lý ngôn ngữ, trong đó một ma trận nhúng được tạo ra liên kết từng từ trong từ vựng với một vectơ nhúng.
+
+00:12:54.000 --> 00:13:03.000
+ID của các từ trong từ vựng có thể được sử dụng làm chỉ số cho hoạt động thu thập và ma trận nhúng là tenxơ đầu vào của chúng tôi.
+
+00:13:03.000 --> 00:13:10.000
+Chúng tôi muốn lấy các hàng tương ứng cho mỗi ID từ, mà chúng tôi có thể thực hiện dễ dàng bằng cách sử dụng một lớp tập hợp.
+
+00:13:10.000 --> 00:13:16.000
+Chúng tôi chỉ định một tọa độ, vì vậy toàn bộ hàng sẽ được sao chép cho mỗi từ đầu vào.
+
+00:13:16.000 --> 00:13:23.000
+Tenxơ kết quả là một ma trận 2D của vectơ nhúng của mỗi từ đầu vào dọc theo các hàng.
+
+00:13:23.000 --> 00:13:27.000
+Đó là nó cho các hoạt động MPSGraph mới mà chúng tôi đã giới thiệu trong năm nay.
+
+00:13:27.000 --> 00:13:30.000
+Bây giờ hãy nói về các API biên dịch.
+
+00:13:30.000 --> 00:13:35.000
+Năm nay, chúng tôi sẽ giới thiệu MPSGraphExecutable API mới.
+
+00:13:35.000 --> 00:13:39.000
+API biên dịch này cải thiện hiệu suất theo hai cách.
+
+00:13:39.000 --> 00:13:44.000
+Đầu tiên, nó cho phép nhà phát triển kiểm soát thời điểm biên dịch biểu đồ.
+
+00:13:44.000 --> 00:13:50.000
+Thứ hai, nó cho phép bạn giảm số lượng cuộc gọi biên dịch thông qua suy luận loại hoãn lại.
+
+00:13:50.000 --> 00:13:53.000
+Bây giờ chúng ta hãy xem xét kỹ hơn từng cái.
+
+00:13:53.000 --> 00:14:00.000
+Năm ngoái, chúng tôi đã cung cấp một API thực sự thuận tiện để xác định và thực thi MPSGraph.
+
+00:14:00.000 --> 00:14:09.000
+Dưới mui xe, lần đầu tiên một đánh giá được yêu cầu, MPSGraph đã gọi trình biên dịch cho các loại đầu vào và tạo nội bộ một tệp thực thi.
+
+00:14:09.000 --> 00:14:18.000
+Đối với bất kỳ lần thực thi tiếp theo nào, MPSGraph đã lưu trữ liền mạch tệp thực thi này để đảm bảo chi phí biên dịch không được thanh toán lại.
+
+00:14:18.000 --> 00:14:25.000
+Người dùng hiện có khả năng gọi biên dịch trước thời hạn để bạn có thể chọn dòng thời gian biên dịch.
+
+00:14:25.000 --> 00:14:31.000
+Với tệp thực thi được biên dịch, bạn có thể gọi chạy trực tiếp trên MPSGraphExecutable.
+
+00:14:31.000 --> 00:14:39.000
+Điều này cho phép người dùng kiểm soát khi biểu đồ được biên dịch và cũng có khả năng lưu trữ tệp thực thi được biên dịch để bạn có thể đạt được hiệu suất cao hơn nữa.
+
+00:14:39.000 --> 00:14:42.000
+Hãy xem cái này trong mã.
+
+00:14:42.000 --> 00:14:45.000
+Ở đây, chúng ta có một biểu đồ đơn giản để thêm hai tenxơ.
+
+00:14:45.000 --> 00:14:51.000
+Bây giờ để biên dịch, chúng tôi cung cấp các loại cho nguồn cấp dữ liệu và tenxơ mục tiêu cùng với các hoạt động.
+
+00:14:51.000 --> 00:14:55.000
+Những gì chúng tôi nhận được là một biểu đồ được biên dịch và một tệp thực thi.
+
+00:14:55.000 --> 00:14:58.000
+Và phương pháp đánh giá cũng đơn giản không kém.
+
+00:14:58.000 --> 00:15:02.000
+Chúng tôi cung cấp một hàng đợi lệnh Metal và dữ liệu tensor đầu vào của chúng tôi.
+
+00:15:02.000 --> 00:15:05.000
+Vì vậy, đó là những điều cơ bản của việc biên soạn biểu đồ MPS.
+
+00:15:05.000 --> 00:15:11.000
+Tiếp theo, hãy nói về cách chúng ta giảm số lượng cuộc gọi biên dịch thông qua suy luận loại hoãn lại.
+
+00:15:11.000 --> 00:15:19.000
+Suy luận kiểu là một đường biên dịch trong đó MPSGraph phải xác định các hình dạng tensor mà chúng không được người dùng chỉ định.
+
+00:15:19.000 --> 00:15:25.000
+Trong biểu đồ này, chúng tôi đang thực hiện phép nhân ma trận của hai tenxơ 2D.
+
+00:15:25.000 --> 00:15:27.000
+Các hình dạng của các tenxơ đầu vào được hiển thị.
+
+00:15:27.000 --> 00:15:32.000
+Tuy nhiên, tenxơ đầu ra có hình dạng không xác định.
+
+00:15:32.000 --> 00:15:39.000
+Khi quá trình suy luận loại hoàn tất, hình dạng tensor đầu ra được xác định dựa trên đầu vào và loại hoạt động.
+
+00:15:39.000 --> 00:15:45.000
+Trong các mạng nơ-ron tiêu chuẩn, các đầu vào của mạng không phải lúc nào cũng có cùng kích thước.
+
+00:15:45.000 --> 00:15:51.000
+Để xử lý ngôn ngữ tự nhiên, các câu hoặc chuỗi có thể có độ dài khác nhau.
+
+00:15:51.000 --> 00:15:56.000
+Đối với CNNs, chúng tôi thấy các hình ảnh có kích thước khác nhau sắp được đánh giá.
+
+00:15:56.000 --> 00:16:05.000
+Trước khi nâng cấp biên dịch của năm nay, đối với mỗi hình ảnh có kích thước mới, một bản biên dịch sẽ được gọi để suy luận kiểu cho toàn bộ biểu đồ.
+
+00:16:05.000 --> 00:16:13.000
+Bây giờ với quyền kiểm soát biên dịch, bạn, nhà phát triển, có thể gọi biên dịch với loại suy luận đã tắt.
+
+00:16:13.000 --> 00:16:21.000
+Điều này có thể tiết kiệm hàng chục hoặc hàng trăm giây thời gian biên dịch trên mỗi lần lặp và có được hiệu suất tốt nhất.
+
+00:16:21.000 --> 00:16:28.000
+Thời gian chạy MPSGraph sẽ suy ra các loại đúng lúc trong quá trình mã hóa và làm cho mọi thứ hoạt động liền mạch.
+
+00:16:28.000 --> 00:16:34.000
+Đó là sự cân bằng giữa việc tiết kiệm thời gian biên dịch so với việc có được biểu đồ tối ưu nhất.
+
+00:16:34.000 --> 00:16:39.000
+Hãy xem điều này có thể được sử dụng như thế nào trong ví dụ mã được chia sẻ trước đây.
+
+00:16:39.000 --> 00:16:45.000
+Có thể đạt được việc vô hiệu hóa đường chuyền suy luận kiểu bằng cách đặt bộ mô tả biên dịch như được hiển thị.
+
+00:16:45.000 --> 00:16:48.000
+Đó là nó cho các API biên dịch.
+
+00:16:48.000 --> 00:16:53.000
+Cuối cùng, hãy nói về các API luồng điều khiển mới của MPSGraph.
+
+00:16:53.000 --> 00:17:00.000
+Các API này cho phép bạn tự động gửi các hoạt động dựa trên các tenxơ được đánh giá trước đó bởi biểu đồ.
+
+00:17:00.000 --> 00:17:07.000
+Điều này phổ biến trong các ứng dụng như chuẩn hóa hàng loạt và mạng nơ-ron tái phát.
+
+00:17:07.000 --> 00:17:14.000
+Chúng ta hãy xem cách "vòng lặp thời gian" có thể được triển khai với MPSGraph ngay hôm nay mà không cần API mới.
+
+00:17:14.000 --> 00:17:19.000
+Đầu tiên, chúng tôi tạo ra một biểu đồ tính toán vị ngữ.
+
+00:17:19.000 --> 00:17:25.000
+Tiếp theo, vị ngữ được đánh giá trên CPU thông qua đồng bộ hóa bộ nhớ rõ ràng.
+
+00:17:25.000 --> 00:17:32.000
+Nếu vị ngữ là đúng, biểu đồ đã tạo trước đó sẽ được thực thi lại với các đầu vào mới.
+
+00:17:32.000 --> 00:17:41.000
+Mặt khác, nếu vị ngữ là sai, vòng lặp sẽ kết thúc và MPSGraph thứ hai được tạo và thực thi để tiêu thụ kết quả.
+
+00:17:41.000 --> 00:17:48.000
+Với API luồng điều khiển mới, tất cả các bước này có thể được khởi chạy như một phần của việc thực thi MPSGraph duy nhất.
+
+00:17:48.000 --> 00:17:55.000
+Điều này thuận tiện hơn để thực hiện vì bạn không cần phải giới thiệu các nguyên thủy đồng bộ hóa bộ nhớ rõ ràng.
+
+00:17:55.000 --> 00:17:59.000
+Bây giờ chúng ta hãy xem làm thế nào điều này có thể có khả năng hiệu quả hơn.
+
+00:17:59.000 --> 00:18:04.000
+Ở đây chúng ta thấy dòng thời gian luồng điều khiển mà không có API mới.
+
+00:18:04.000 --> 00:18:07.000
+Chúng tôi mã hóa hạt nhân đầu tiên trên CPU.
+
+00:18:07.000 --> 00:18:13.000
+Khi hạt nhân hoàn tất, chúng ta phải đồng bộ hóa bộ nhớ để đọc kết quả.
+
+00:18:13.000 --> 00:18:19.000
+Điều này có khả năng không hiệu quả, vì CPU phải đợi GPU hoàn thành việc thực thi.
+
+00:18:19.000 --> 00:18:26.000
+Tương tự, GPU cũng phải đợi quá trình đồng bộ hóa CPU và mã hóa tiếp theo hoàn tất.
+
+00:18:26.000 --> 00:18:29.000
+Điều này xảy ra trong mỗi lần lặp lại.
+
+00:18:29.000 --> 00:18:33.000
+Bây giờ hãy xem những lợi ích của việc sử dụng MPSGraph API mới.
+
+00:18:33.000 --> 00:18:37.000
+Chúng ta chỉ phải thực hiện một cuộc gọi mã hóa CPU.
+
+00:18:37.000 --> 00:18:46.000
+Vì vị ngữ được đánh giá trên dòng thời gian GPU, không phát sinh chi phí đồng bộ hóa và hạt nhân có thể được khởi chạy mà không có bất kỳ bong bóng nào.
+
+00:18:46.000 --> 00:18:52.000
+Bây giờ hãy xem các API mới là gì.
+
+00:18:52.000 --> 00:18:59.000
+Chúng tôi đã thêm ba API luồng điều khiển mới: if/else, for loops, và while loops.
+
+00:18:59.000 --> 00:19:02.000
+Hãy bắt đầu với nguyên thủy if/else.
+
+00:19:02.000 --> 00:19:04.000
+Tất cả chúng ta đều quen thuộc với điều này.
+
+00:19:04.000 --> 00:19:08.000
+Dựa trên một vị ngữ, các đường dẫn mã khác nhau được thực thi.
+
+00:19:08.000 --> 00:19:14.000
+Chúng tôi được cung cấp một vị ngữ Boolean cùng với một khối mã cho các điều kiện "nếu" và "khác".
+
+00:19:14.000 --> 00:19:18.000
+Nếu vị ngữ này là đúng, chúng tôi sẽ thực thi khối mã sau đó.
+
+00:19:18.000 --> 00:19:23.000
+Nếu không, nếu nó sai, nhánh khác sẽ được thực thi.
+
+00:19:23.000 --> 00:19:28.000
+Có hoạt động if/else rất hữu ích trong mạng lưới thần kinh.
+
+00:19:28.000 --> 00:19:35.000
+Một cách sử dụng kinh điển là trong hoạt động Bình thường hóa hàng loạt, có hành vi khác nhau trong đào tạo và suy luận.
+
+00:19:35.000 --> 00:19:42.000
+Với isTraining Boolean, chúng ta có thể có một biểu đồ duy nhất để biểu diễn cả hai biến thể của bộ chuẩn hóa.
+
+00:19:42.000 --> 00:19:45.000
+Hãy xem cách thiết lập một nhánh if/else trong mã.
+
+00:19:45.000 --> 00:19:50.000
+Hãy lấy một ví dụ rất đơn giản về hai tenxơ vô hướng đầu vào.
+
+00:19:50.000 --> 00:19:55.000
+Nếu tenxơ đầu tiên nhỏ hơn tenxơ thứ hai, chúng ta sẽ trả về tổng các phép toán.
+
+00:19:55.000 --> 00:19:58.000
+Nếu không, chúng tôi trả lại sự khác biệt.
+
+00:19:58.000 --> 00:20:03.000
+Đầu tiên, chúng tôi tính toán vị ngữ và chuyển nó cho API.
+
+00:20:03.000 --> 00:20:09.000
+Tiếp theo, khi vị ngữ là đúng, chúng ta tính khối then và thêm các tenxơ.
+
+00:20:09.000 --> 00:20:15.000
+Cuối cùng, khi vị ngữ sai, chúng ta tính khối else và trừ các tenxơ.
+
+00:20:15.000 --> 00:20:19.000
+Tiếp theo, hãy xem cách triển khai vòng lặp for.
+
+00:20:19.000 --> 00:20:24.000
+Vòng lặp nguyên thủy for trên một tập hợp các hoạt động một số lần cố định.
+
+00:20:24.000 --> 00:20:31.000
+Điều này là phổ biến trong các mạng thần kinh tái phát, nơi chúng ta phải lặp lại các chuỗi có độ dài khác nhau trong quá trình đào tạo.
+
+00:20:31.000 --> 00:20:34.000
+Chúng tôi cần cung cấp số lần lặp lại của vòng lặp for.
+
+00:20:34.000 --> 00:20:42.000
+Chỉ số được khởi tạo thành 0 và được so sánh với số lần lặp lại mỗi vòng lặp.
+
+00:20:42.000 --> 00:20:50.000
+Nếu nó nhỏ hơn numberOfIterations, chúng tôi thực hiện phần thân của vòng lặp for và tăng chỉ mục lên 1.
+
+00:20:50.000 --> 00:20:55.000
+Khi chỉ mục bằng hoặc lớn hơn numberOfIterations, chúng tôi kết thúc vòng lặp.
+
+00:20:55.000 --> 00:20:58.000
+Hãy xem cách triển khai điều này trong mã.
+
+00:20:58.000 --> 00:21:02.000
+Giả sử chúng tôi muốn thực hiện một ví dụ thực sự đơn giản.
+
+00:21:02.000 --> 00:21:06.000
+Chúng tôi sẽ khởi tạo biến kết quả thành một số giá trị đầu vào.
+
+00:21:06.000 --> 00:21:13.000
+Sau đó, chúng tôi lặp lại bốn lần, nhân kết quả với một giá trị đầu vào khác mỗi lần.
+
+00:21:13.000 --> 00:21:15.000
+Đầu tiên, chúng tôi tạo ra hai tenxơ đồ thị.
+
+00:21:15.000 --> 00:21:19.000
+Tenxơ đầu ra sẽ được khởi tạo thành input0.
+
+00:21:19.000 --> 00:21:24.000
+Trong mỗi lần lặp lại, tenxơ này sẽ được nhân với input1.
+
+00:21:24.000 --> 00:21:33.000
+Tiếp theo, chúng tôi đặt numberOfIterations thành 4 để chúng tôi có thể thực hiện vòng lặp bốn lần, từ chỉ mục 0 đến chỉ mục 3.
+
+00:21:33.000 --> 00:21:35.000
+Tiếp theo, chúng tôi tạo phần thân của vòng lặp for.
+
+00:21:35.000 --> 00:21:40.000
+Điều này được thực hiện bằng cách tạo ra một đóng cửa đại diện cho một lần lặp lại duy nhất.
+
+00:21:40.000 --> 00:21:47.000
+Mỗi lần lặp lại được thông qua chỉ mục của lần lặp hiện tại, cũng như đầu ra của lần lặp trước đó.
+
+00:21:47.000 --> 00:21:52.000
+Sau đó, chúng tôi sẽ cập nhật kết quả và trả lại nó, để được chuyển sang lần lặp tiếp theo.
+
+00:21:52.000 --> 00:21:57.000
+Cuối cùng, chúng tôi chuyển tất cả các đối số này cho API vòng lặp for trong biểu đồ.
+
+00:21:57.000 --> 00:22:04.000
+Lưu ý rằng các đối số lặp lại của cơ thể được khởi tạo thành tenxơ input0.
+
+00:22:04.000 --> 00:22:06.000
+Đó là nó cho vòng lặp cho.
+
+00:22:06.000 --> 00:22:09.000
+Bây giờ hãy xem xét API vòng lặp while.
+
+00:22:09.000 --> 00:22:14.000
+Nguyên thủy này thực hiện một tập hợp các hoạt động trong khi một điều kiện được đáp ứng.
+
+00:22:14.000 --> 00:22:18.000
+Chúng tôi cần cung cấp hai khối mã để sử dụng API này.
+
+00:22:18.000 --> 00:22:22.000
+Trong khối đầu tiên, tình trạng được kiểm tra bằng một vị ngữ.
+
+00:22:22.000 --> 00:22:27.000
+Khi vị ngữ là đúng, phần thân của vòng lặp while trong khối sau được thực thi.
+
+00:22:27.000 --> 00:22:30.000
+Điều này tính toán lại vị ngữ.
+
+00:22:30.000 --> 00:22:36.000
+MPSGraph sau đó sử dụng vị ngữ này trong lần lặp tiếp theo của khối trước.
+
+00:22:36.000 --> 00:22:40.000
+Nếu điều kiện được đánh giá là sai, nó sẽ thoát khỏi vòng lặp.
+
+00:22:40.000 --> 00:22:48.000
+API cũng cho phép triển khai vòng lặp do-while bằng cách hoán đổi các khối mã đánh giá nội dung và điều kiện.
+
+00:22:48.000 --> 00:22:51.000
+Giả sử chúng tôi muốn thực hiện một ví dụ thực sự đơn giản.
+
+00:22:51.000 --> 00:22:55.000
+Chúng tôi sẽ khởi tạo biến kết quả thành một số giá trị đầu vào.
+
+00:22:55.000 --> 00:23:01.000
+Sau đó, chúng tôi sẽ nhân kết quả với hệ số nhân mỗi lần trong một vòng lặp cho đến khi chúng tôi vượt quá ngưỡng.
+
+00:23:01.000 --> 00:23:08.000
+Đầu tiên, chúng tôi xác định một khối mã sẽ đánh giá vị ngữ bằng cách sử dụng kết quả của lần lặp trước đó.
+
+00:23:08.000 --> 00:23:13.000
+Nó cũng lưu trữ kết quả của lần lặp lại trước đó trong returnTensors NSArray.
+
+00:23:13.000 --> 00:23:22.000
+Mảng này sẽ được sử dụng làm đầu vào cho lần lặp tiếp theo khi vị ngữ là đúng và được sử dụng làm kết quả cuối cùng nếu vị ngữ sai.
+
+00:23:22.000 --> 00:23:27.000
+Tiếp theo, chúng tôi xác định phần thân của vòng lặp while nơi các tenxơ được nhân lên.
+
+00:23:27.000 --> 00:23:31.000
+Sản phẩm được trả lại để khối điều kiện đọc.
+
+00:23:31.000 --> 00:23:36.000
+Cuối cùng, chúng tôi sẽ chuyển tất cả các đối số này đến API vòng lặp while như được hiển thị.
+
+00:23:36.000 --> 00:23:43.000
+Lưu ý rằng đối số initialInputs được sử dụng trong lần lặp đầu tiên của khối trước.
+
+00:23:43.000 --> 00:23:45.000
+Đó là nó cho các vòng lặp trong khi.
+
+00:23:45.000 --> 00:23:48.000
+Tiếp theo, chúng ta sẽ xem điều này có thể được sử dụng như thế nào trong một ứng dụng thực tế.
+
+00:23:48.000 --> 00:23:52.000
+Bố cục hình ảnh là một tiện ích chỉnh sửa hình ảnh phổ biến.
+
+00:23:52.000 --> 00:23:56.000
+Ở đây, một vật thể được cấy vào một hình ảnh mục tiêu.
+
+00:23:56.000 --> 00:24:00.000
+Chúng tôi bắt đầu với một hình ảnh nguồn và một hình nền, như được hiển thị.
+
+00:24:00.000 --> 00:24:03.000
+Tiếp theo, chúng tôi tạo một mặt nạ trên hình ảnh nguồn.
+
+00:24:03.000 --> 00:24:08.000
+Hãy đặt mặt nạ này của hình ảnh nguồn trực tiếp vào nền.
+
+00:24:08.000 --> 00:24:13.000
+Điều đó trông không tuyệt vời, vì chúng ta có thể thấy rõ các cạnh của hình ảnh nguồn.
+
+00:24:13.000 --> 00:24:17.000
+Thông qua bố cục hình ảnh, chúng tôi muốn làm mịn các cạnh này.
+
+00:24:17.000 --> 00:24:23.000
+Ghép nối bộ lọc cạnh Laplacian với bộ giải tuyến tính lặp lại là một cách phổ biến để đạt được điều này.
+
+00:24:23.000 --> 00:24:25.000
+Bây giờ hãy xem chi tiết.
+
+00:24:25.000 --> 00:24:30.000
+Ở đây, chúng tôi thấy đường ống cần thiết để thực hiện bố cục hình ảnh với MPSGraph.
+
+00:24:30.000 --> 00:24:38.000
+Chúng tôi bắt đầu với các tenxơ đầu vào, hình nền, hình ảnh nguồn và mặt nạ của đối tượng.
+
+00:24:38.000 --> 00:24:44.000
+Tiếp theo, chúng tôi sử dụng bộ giải tuyến tính lặp lại kết hợp với máy dò cạnh Laplacian.
+
+00:24:44.000 --> 00:24:49.000
+Đầu ra của tập hợp các thao tác này là một hình ảnh tổng hợp với các cạnh mịn.
+
+00:24:49.000 --> 00:24:53.000
+Hãy cùng xem bộ lọc cạnh Laplacian.
+
+00:24:53.000 --> 00:25:00.000
+Việc triển khai bộ lọc cạnh Laplacian liên quan đến việc giảm cửa sổ trên hình ảnh nguồn với một tập hợp các trọng số.
+
+00:25:00.000 --> 00:25:04.000
+Toán tử stprint được sử dụng để thực hiện điều này như được hiển thị.
+
+00:25:04.000 --> 00:25:08.000
+Sử dụng toán tử này, chúng ta có thể nhìn thấy các cạnh của đối tượng nguồn.
+
+00:25:08.000 --> 00:25:13.000
+Các cạnh được tính toán ở đây sẽ được sử dụng làm đầu vào cho bộ giải tuyến tính.
+
+00:25:13.000 --> 00:25:17.000
+Tiếp theo, chúng ta hãy nhìn vào bộ giải tuyến tính.
+
+00:25:17.000 --> 00:25:22.000
+Chúng tôi bắt đầu với hình nền và đưa nó vào bộ giải tuyến tính.
+
+00:25:22.000 --> 00:25:27.000
+Trình giải cập nhật hình ảnh này và kết quả sau đó được đọc lại.
+
+00:25:27.000 --> 00:25:31.000
+Như chúng ta có thể thấy, đây là một quá trình lặp đi lặp lại.
+
+00:25:31.000 --> 00:25:38.000
+Khi các lần lặp lại tiến triển, hình ảnh giải pháp được cải thiện cho đến khi chúng ta đạt được sự pha trộn hoàn hảo ở các cạnh.
+
+00:25:38.000 --> 00:25:42.000
+Vòng lặp kết thúc khi lỗi nằm dưới dung sai do người dùng xác định.
+
+00:25:42.000 --> 00:25:44.000
+Điều này đòi hỏi một vòng lặp thời gian.
+
+00:25:44.000 --> 00:25:48.000
+Bây giờ bạn có thể sử dụng MPSGraph Control Flow API để triển khai điều này.
+
+00:25:48.000 --> 00:25:51.000
+Bây giờ, hãy xem bản demo.
+
+00:25:51.000 --> 00:25:58.000
+Chúng tôi đã triển khai một tiện ích bố cục hình ảnh bằng cách sử dụng MPSGraph như một ứng dụng iPad Pro.
+
+00:25:58.000 --> 00:26:02.000
+Chúng tôi bắt đầu với một hình ảnh nguồn ở trên cùng và một hình ảnh mục tiêu bên dưới.
+
+00:26:02.000 --> 00:26:06.000
+Chúng tôi sẽ nhân bản các đối tượng từ nguồn đến mục tiêu.
+
+00:26:06.000 --> 00:26:11.000
+Điều đầu tiên chúng ta cần làm là vẽ một chiếc mặt nạ xung quanh con bò mà chúng ta muốn di chuyển.
+
+00:26:11.000 --> 00:26:15.000
+Hãy xem điều này trông như thế nào với một bản sao ngây thơ.
+
+00:26:15.000 --> 00:26:18.000
+Điều đó trông không đẹp lắm, vì chúng ta có thể thấy các cạnh thô.
+
+00:26:18.000 --> 00:26:22.000
+Bây giờ hãy thử kỹ thuật bố cục hình ảnh mà chúng ta vừa mô tả.
+
+00:26:22.000 --> 00:26:26.000
+Chúng tôi sẽ bắt đầu bằng cách thiết lập giải pháp ban đầu cho hình nền.
+
+00:26:26.000 --> 00:26:31.000
+Hãy chạy cái này trong khoảng 50 lần lặp lại.
+
+00:26:31.000 --> 00:26:34.000
+Rõ ràng, hình ảnh giải pháp vẫn chưa hội tụ.
+
+00:26:34.000 --> 00:26:39.000
+Hãy chạy nó thêm khoảng 50 lần lặp nữa.
+
+00:26:39.000 --> 00:26:42.000
+Điều này trông tự nhiên hơn khi các cạnh mịn ra.
+
+00:26:42.000 --> 00:26:48.000
+Sự dễ dàng lập trình với MPSGraph giúp việc thử nghiệm các kỹ thuật khác nhau trở nên đơn giản.
+
+00:26:48.000 --> 00:26:53.000
+Khởi tạo bộ giải với hình ảnh nhân bản thay vì hình nền có thể dẫn đến sự hội tụ nhanh hơn.
+
+00:26:53.000 --> 00:26:58.000
+Chúng ta có thể kích hoạt chế độ khởi tạo này bằng cách chuyển đổi công tắc này.
+
+00:26:58.000 --> 00:27:04.000
+Hãy xem điều này đang hoạt động bằng cách đặt số lần lặp lại thành 50 một lần nữa và đặt lại thành bản sao ngây thơ.
+
+00:27:04.000 --> 00:27:07.000
+Bây giờ hãy chạy lại trình giải.
+
+00:27:07.000 --> 00:27:11.000
+Chúng ta có thể thấy hình ảnh giải pháp sau 50 lần lặp lại trông khá tốt.
+
+00:27:11.000 --> 00:27:16.000
+Vì chúng tôi đã bắt đầu với đối tượng nguồn, chúng tôi cũng quan sát thấy ít chảy máu hơn ở các cạnh.
+
+00:27:16.000 --> 00:27:17.000
+Điều này thật tuyệt.
+
+00:27:17.000 --> 00:27:21.000
+Nhưng những gì chúng tôi thực sự muốn là tự động hóa sự hội tụ dựa trên khả năng chịu lỗi.
+
+00:27:21.000 --> 00:27:26.000
+Điều này sẽ yêu cầu một vòng lặp while mà chúng tôi sẽ kích hoạt bằng cách sử dụng công tắc này.
+
+00:27:26.000 --> 00:27:30.000
+Chúng tôi đã triển khai điều này với MPSGraph API mới.
+
+00:27:30.000 --> 00:27:33.000
+Khả năng chịu lỗi có thể được kiểm soát bằng thanh trượt này.
+
+00:27:33.000 --> 00:27:35.000
+Chúng tôi đã đặt nó thành 0.1, như được hiển thị.
+
+00:27:35.000 --> 00:27:37.000
+Hãy đặt lại cái này trở lại bản sao ngây thơ.
+
+00:27:37.000 --> 00:27:40.000
+Bây giờ chúng ta bắt đầu giải quyết.
+
+00:27:40.000 --> 00:27:48.000
+Với vòng lặp while này, chúng tôi hội tụ đến hình ảnh giải pháp trong khoảng 80 lần lặp mà tôi không cần phải chỉ định bất kỳ số lần lặp nào.
+
+00:27:48.000 --> 00:27:52.000
+Bây giờ chúng ta hãy vui vẻ bằng cách nhân bản các động vật khác vào nền này.
+
+00:27:52.000 --> 00:27:56.000
+Hãy thử chú chó con dễ thương này.
+
+00:27:56.000 --> 00:27:58.000
+Được rồi, truy tìm xong rồi.
+
+00:27:58.000 --> 00:28:03.000
+Tôi nghĩ nó sẽ trông tuyệt vời ở phía dưới bên phải của hình ảnh này.
+
+00:28:03.000 --> 00:28:07.000
+Có lẽ chúng ta có thể thử một con chim tiếp theo.
+
+00:28:07.000 --> 00:28:11.000
+Cái này sẽ trông đẹp ở trên cùng bên phải của nền.
+
+00:28:11.000 --> 00:28:14.000
+Nền mới với tất cả những hình ảnh này trông khá gọn gàng.
+
+00:28:14.000 --> 00:28:17.000
+Đó là nó cho bản demo.
+
+00:28:17.000 --> 00:28:25.000
+Tóm lại, chúng tôi đã chỉ ra cách áp dụng MPSGraph dẫn đến những cải tiến hiệu suất đáng kinh ngạc cho CoreML và TensorFlow.
+
+00:28:25.000 --> 00:28:29.000
+Suy luận bây giờ nhanh gấp đôi.
+
+00:28:29.000 --> 00:28:37.000
+Chúng tôi đã giới thiệu các nguyên thủy tính toán mới hữu ích, bao gồm toán tử stprint sẽ cho phép một loạt các ứng dụng.
+
+00:28:37.000 --> 00:28:41.000
+Chúng tôi đã cho thấy sự linh hoạt biên dịch mới mà MPSGraph cung cấp.
+
+00:28:41.000 --> 00:28:45.000
+Điều này sẽ loại bỏ độ trễ khỏi các mạng suy luận.
+
+00:28:45.000 --> 00:28:50.000
+Và cuối cùng, chúng tôi đã cho thấy tất cả các khả năng điều khiển luồng mới của MPSGraph.
+
+00:28:50.000 --> 00:28:58.000
+API này là chìa khóa để thể hiện một số ứng dụng đại số tuyến tính ngoài mạng học máy.
+
+00:28:58.000 --> 00:29:02.000
+Chúng tôi rất vui khi thấy bạn sẽ tận dụng những tính năng này như thế nào.
+
+00:29:02.000 --> 00:29:06.000
+Cảm ơn bạn, và chúc bạn có một WWDC 2021 tuyệt vời.
+
+00:29:06.000 --> 23:59:59.000
+[Nhạc lạc quan].
+

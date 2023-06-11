@@ -1,0 +1,982 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=2"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=7"
+  },
+  {
+    "text": "Guoye Zhang: Hi, I'm Guoye. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=9"
+  },
+  {
+    "text": "My coworker Zhenchao and I work on HTTP frameworks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=11"
+  },
+  {
+    "text": "I'm sure you've heard a lot about Swift concurrency by now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=16"
+  },
+  {
+    "text": "If you haven't, check out \"Meet async/await in Swift\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=20"
+  },
+  {
+    "text": "I'm going to jump into how async/await works ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=24"
+  },
+  {
+    "text": "with URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=26"
+  },
+  {
+    "text": "What I like most about Swift concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=28"
+  },
+  {
+    "text": "is that it makes your code linear, concise, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=30"
+  },
+  {
+    "text": "and it supports native Swift error handling. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=34"
+  },
+  {
+    "text": "Networking is inherently asynchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=38"
+  },
+  {
+    "text": "and in iOS 15 and macOS Monterey ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=40"
+  },
+  {
+    "text": "we introduced a set of new APIs in URLSession ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=44"
+  },
+  {
+    "text": "for you to take advantage of Swift concurrency features. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=47"
+  },
+  {
+    "text": "To show you our new APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=52"
+  },
+  {
+    "text": "here is an app we are working on to adopt async/await. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=54"
+  },
+  {
+    "text": "It's a photo-sharing app just for dog lovers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=58"
+  },
+  {
+    "text": "and we can favorite these photos. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=61"
+  },
+  {
+    "text": "Here is our existing code that fetches a dog photo. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=65"
+  },
+  {
+    "text": "It's using the completionHandler-based ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=69"
+  },
+  {
+    "text": "convenience method on URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=71"
+  },
+  {
+    "text": "The code seems straightforward, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=74"
+  },
+  {
+    "text": "and it worked in my limited testing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=75"
+  },
+  {
+    "text": "However, it has at least three mistakes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=77"
+  },
+  {
+    "text": "Let's dive in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=80"
+  },
+  {
+    "text": "First, let's follow the control flow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=83"
+  },
+  {
+    "text": "We create a data task and resume it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=86"
+  },
+  {
+    "text": "Then once the task is done, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=88"
+  },
+  {
+    "text": "we jump into the completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=90"
+  },
+  {
+    "text": "we check the response, create an image, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=92"
+  },
+  {
+    "text": "and that's where the control flow ends. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=95"
+  },
+  {
+    "text": "Hm, we are jumping back and forth. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=98"
+  },
+  {
+    "text": "What about threading? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=101"
+  },
+  {
+    "text": "It is surprisingly complex for this small piece of code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=103"
+  },
+  {
+    "text": "We have three different execution contexts in total. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=107"
+  },
+  {
+    "text": "The outmost layer runs on ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=110"
+  },
+  {
+    "text": "whatever thread or queue of the caller, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=112"
+  },
+  {
+    "text": "URLSessionTask completionHandler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=115"
+  },
+  {
+    "text": "runs on session's delegate queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=116"
+  },
+  {
+    "text": "and the final completion handler runs on the main queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=119"
+  },
+  {
+    "text": "Since the compiler cannot help us here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=122"
+  },
+  {
+    "text": "we have to use extreme caution ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=124"
+  },
+  {
+    "text": "to avoid any threading issues such as data races. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=126"
+  },
+  {
+    "text": "Now, I noticed something wrong. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=131"
+  },
+  {
+    "text": "The calls to the completionHandler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=133"
+  },
+  {
+    "text": "are not consistently dispatched to the main queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=135"
+  },
+  {
+    "text": "This could be a bug. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=138"
+  },
+  {
+    "text": "Also, we are missing an early return here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=140"
+  },
+  {
+    "text": "The completionHandler can be called twice if we got an error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=143"
+  },
+  {
+    "text": "This could violate assumptions made by the caller. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=147"
+  },
+  {
+    "text": "Finally, this might not be very obvious, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=152"
+  },
+  {
+    "text": "but UIImage creation can fail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=154"
+  },
+  {
+    "text": "If the data is in an incorrect format, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=157"
+  },
+  {
+    "text": "this UIImage initializer returns nil, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=160"
+  },
+  {
+    "text": "so we would have called the completionHandler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=163"
+  },
+  {
+    "text": "with both nil image and nil error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=165"
+  },
+  {
+    "text": "This is likely not expected. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=168"
+  },
+  {
+    "text": "Now this is the new version using async/await. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=171"
+  },
+  {
+    "text": "Wow, it's so much simpler! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=174"
+  },
+  {
+    "text": "The control flow is linear from top to bottom, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=176"
+  },
+  {
+    "text": "and we know that everything in this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=179"
+  },
+  {
+    "text": "runs in the same concurrency context, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=181"
+  },
+  {
+    "text": "so we no longer need to worry about threading issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=184"
+  },
+  {
+    "text": "Here, we used the new async data method on URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=188"
+  },
+  {
+    "text": "It suspends the current execution context ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=193"
+  },
+  {
+    "text": "without blocking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=195"
+  },
+  {
+    "text": "and it returns data and response on successful completion, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=197"
+  },
+  {
+    "text": "or throws an error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=200"
+  },
+  {
+    "text": "We also used the throw keyword to throw errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=203"
+  },
+  {
+    "text": "when the response is unexpected. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=206"
+  },
+  {
+    "text": "This allows the caller to catch and handle the error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=209"
+  },
+  {
+    "text": "using Swift native error handling. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=212"
+  },
+  {
+    "text": "Lastly, the compiler would bark ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=215"
+  },
+  {
+    "text": "if we try to return an optional UIImage from this function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=217"
+  },
+  {
+    "text": "so it essentially forces us to handle nil correctly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=221"
+  },
+  {
+    "text": "Here are the signatures of the methods we just used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=226"
+  },
+  {
+    "text": "to fetch data from the network. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=229"
+  },
+  {
+    "text": "URLSession.data methods accept either a URL or a URLRequest. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=231"
+  },
+  {
+    "text": "They are equivalent to existing data task convenience methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=238"
+  },
+  {
+    "text": "We also provide upload methods where you can upload data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=243"
+  },
+  {
+    "text": "or upload a file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=247"
+  },
+  {
+    "text": "They are equivalent to existing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=249"
+  },
+  {
+    "text": "upload task convenience methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=250"
+  },
+  {
+    "text": "Be sure to set the correct HTTP method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=253"
+  },
+  {
+    "text": "before sending the request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=255"
+  },
+  {
+    "text": "since the default method GET does not support upload. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=257"
+  },
+  {
+    "text": "Download methods store the response body as a file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=263"
+  },
+  {
+    "text": "rather than in memory. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=266"
+  },
+  {
+    "text": "Different from download task convenience methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=268"
+  },
+  {
+    "text": "these new methods do not automatically delete the file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=271"
+  },
+  {
+    "text": "so don't forget to do so yourself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=274"
+  },
+  {
+    "text": "In this example, we are moving the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=278"
+  },
+  {
+    "text": "to a different location for further processing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=280"
+  },
+  {
+    "text": "Swift concurrency's cancellation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=284"
+  },
+  {
+    "text": "works with URLSession async methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=286"
+  },
+  {
+    "text": "One way to cancel is to use a concurrency Task.Handle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=289"
+  },
+  {
+    "text": "Here, we call async to create a concurrency Task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=293"
+  },
+  {
+    "text": "loading two resources one by one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=296"
+  },
+  {
+    "text": "Later, we can use the Task.Handle ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=299"
+  },
+  {
+    "text": "to cancel its current running operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=301"
+  },
+  {
+    "text": "Please note that concurrency Task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=304"
+  },
+  {
+    "text": "is unrelated to URLSessionTask, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=306"
+  },
+  {
+    "text": "even though they share the name \"Task.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=308"
+  },
+  {
+    "text": "The methods we just talked about -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=311"
+  },
+  {
+    "text": "data, upload, download -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=313"
+  },
+  {
+    "text": "wait for the entire response body to arrive before returning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=315"
+  },
+  {
+    "text": "What if we want to receive the response body incrementally? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=319"
+  },
+  {
+    "text": "I'm happy to introduce URLSession.bytes methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=323"
+  },
+  {
+    "text": "They return when the response headers have been received ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=327"
+  },
+  {
+    "text": "and deliver the response body as an AsyncSequence of bytes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=330"
+  },
+  {
+    "text": "To show you how it works, my colleague Zhenchao ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=334"
+  },
+  {
+    "text": "will demo how he's adopting it in the Dogs app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=337"
+  },
+  {
+    "text": "Zhenchao Li: Thanks, Guoye! Hi, I'm Zhenchao. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=340"
+  },
+  {
+    "text": "I have been working on a new feature of the Dogs app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=344"
+  },
+  {
+    "text": "that shows how many people favorited a dog photo.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=347"
+  },
+  {
+    "text": "Right now, I can pull down the scroll view ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=354"
+  },
+  {
+    "text": "to refresh favorite counts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=356"
+  },
+  {
+    "text": "I would like to update these favorite counts in real time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=360"
+  },
+  {
+    "text": "That way, the app feels much more interactive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=364"
+  },
+  {
+    "text": "To do that, our back-end engineers have built ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=368"
+  },
+  {
+    "text": "a real-time events endpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=371"
+  },
+  {
+    "text": "that gives us live updates to photos. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=373"
+  },
+  {
+    "text": "I'm going to check out the endpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=377"
+  },
+  {
+    "text": "to examine the response. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=378"
+  },
+  {
+    "text": "Each line of the response body is a piece of JSON data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=383"
+  },
+  {
+    "text": "that describes updates to a photo, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=387"
+  },
+  {
+    "text": "such as updated favorite counts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=389"
+  },
+  {
+    "text": "Let's use the new async sequence API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=392"
+  },
+  {
+    "text": "to consume the response of the endpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=395"
+  },
+  {
+    "text": "and update the favorite counts as real-time events are parsed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=398"
+  },
+  {
+    "text": "We can kick off the live updates in the onAppearHandler function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=402"
+  },
+  {
+    "text": "which is an action called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=406"
+  },
+  {
+    "text": "when the photo collection view appears. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=408"
+  },
+  {
+    "text": "Within the function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=410"
+  },
+  {
+    "text": "I'm going to call the new URLSession.bytes API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=412"
+  },
+  {
+    "text": "to fetch data from our new endpoint.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=416"
+  },
+  {
+    "text": "Note that the bytes returned here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=426"
+  },
+  {
+    "text": "have a type of URLSession.AsyncBytes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=428"
+  },
+  {
+    "text": "This gives us a way to incrementally consume ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=432"
+  },
+  {
+    "text": "response body. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=435"
+  },
+  {
+    "text": "I also added error checking here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=437"
+  },
+  {
+    "text": "to make sure that we did get a successful response from server.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=439"
+  },
+  {
+    "text": "We want to parse each line of the response ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=448"
+  },
+  {
+    "text": "as a piece of JSON data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=450"
+  },
+  {
+    "text": "To do that, we can use the lines method on AsyncBytes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=453"
+  },
+  {
+    "text": "This enables us to consume the response line by line ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=462"
+  },
+  {
+    "text": "as data is received.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=466"
+  },
+  {
+    "text": "Within the loop, I can just parse the JSON data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=474"
+  },
+  {
+    "text": "and update my UI by calling updateFavoriteCount. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=478"
+  },
+  {
+    "text": "Note that the UI updates need to happen on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=483"
+  },
+  {
+    "text": "and that's why I'm using await syntax ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=488"
+  },
+  {
+    "text": "to call updateFavoriteCount, which is an async function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=491"
+  },
+  {
+    "text": "Great. Now these favorite counts are updated in real time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=498"
+  },
+  {
+    "text": "Back to you, Guoye.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=503"
+  },
+  {
+    "text": "Guoye: Zhenchao just showed us how to use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=507"
+  },
+  {
+    "text": "an AsyncSequence built-in transformation -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=509"
+  },
+  {
+    "text": "lines -- to parse response body line by line. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=511"
+  },
+  {
+    "text": "AsyncSequence supports many convenience transformations, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=515"
+  },
+  {
+    "text": "and you can also use AsyncSequence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=519"
+  },
+  {
+    "text": "with other system framework APIs such as FileHandle. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=521"
+  },
+  {
+    "text": "To learn more about AsyncSequence, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=526"
+  },
+  {
+    "text": "I encourage you to watch the video \"Meet AsyncSequence\". ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=529"
+  },
+  {
+    "text": "URLSession is designed around a delegate model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=533"
+  },
+  {
+    "text": "which provides callbacks for events such as ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=536"
+  },
+  {
+    "text": "authentication challenges, metrics, and more. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=538"
+  },
+  {
+    "text": "The new async methods no longer expose the underlying task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=542"
+  },
+  {
+    "text": "so how do we handle authentication challenges ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=546"
+  },
+  {
+    "text": "specific to a task? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=549"
+  },
+  {
+    "text": "Yes, all of those methods can take an additional argument -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=552"
+  },
+  {
+    "text": "a task-specific delegate -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=556"
+  },
+  {
+    "text": "allowing you to provide an object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=558"
+  },
+  {
+    "text": "to handle delegate messages specific to this data upload, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=560"
+  },
+  {
+    "text": "download, or bytes operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=564"
+  },
+  {
+    "text": "We are also introducing the delegate property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=567"
+  },
+  {
+    "text": "on NSURLSessionTask in Objective-C ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=569"
+  },
+  {
+    "text": "for you to take advantage of the same capability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=572"
+  },
+  {
+    "text": "The delegate is strongly held by a task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=576"
+  },
+  {
+    "text": "until it completes or fails. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=578"
+  },
+  {
+    "text": "It's worth noting that task-specific delegate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=582"
+  },
+  {
+    "text": "is not supported by background URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=584"
+  },
+  {
+    "text": "If a method is implemented on both session delegate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=587"
+  },
+  {
+    "text": "and task delegate, the one on task delegate will be called. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=590"
+  },
+  {
+    "text": "Now, Zhenchao will show us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=597"
+  },
+  {
+    "text": "how to use a task-specific delegate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=598"
+  },
+  {
+    "text": "to handle authentication challenges. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=600"
+  },
+  {
+    "text": "Zhenchao: Thanks, Guoye! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=603"
+  },
+  {
+    "text": "Our Dogs app has a simple data-fetching layer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=605"
+  },
+  {
+    "text": "written with the new async APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=608"
+  },
+  {
+    "text": "For some of our data-fetching tasks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=611"
+  },
+  {
+    "text": "such as marking a photo as favorite ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=614"
+  },
+  {
+    "text": "or fetching all favorited photos, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=616"
+  },
+  {
+    "text": "the user needs to be authenticated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=619"
+  },
+  {
+    "text": "Right now, when I tap to favorite a photo, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=623"
+  },
+  {
+    "text": "I get an \"Unauthorized\" error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=625"
+  },
+  {
+    "text": "Let's go through how we can add user authentication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=629"
+  },
+  {
+    "text": "by using a task-specific delegate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=632"
+  },
+  {
+    "text": "First, let's write a URLSessionTaskDelegate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=636"
+  },
+  {
+    "text": "Let's call it AuthenticationDelegate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=640"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=644"
+  },
+  {
+    "text": "The AuthenticationDelegate conforms ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=649"
+  },
+  {
+    "text": "to the URLSessionTaskDelegate protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=651"
+  },
+  {
+    "text": "and it accepts an instance of signInController ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=655"
+  },
+  {
+    "text": "in its initializer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=658"
+  },
+  {
+    "text": "The signInController class we implemented already contains ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=660"
+  },
+  {
+    "text": "some nice helper functions that we can use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=664"
+  },
+  {
+    "text": "to prompt the user for credentials. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=667"
+  },
+  {
+    "text": "Next, let's implement the URLSession ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=672"
+  },
+  {
+    "text": "didReceive challenge delegate method.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=675"
+  },
+  {
+    "text": "Within the delegate method, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=680"
+  },
+  {
+    "text": "we can choose to respond to HTTP basic authentication challenges ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=682"
+  },
+  {
+    "text": "by prompting the user for credentials. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=687"
+  },
+  {
+    "text": "Of course, we should not forget about error handling. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=690"
+  },
+  {
+    "text": "Now let's use this AuthenticationDelegate class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=695"
+  },
+  {
+    "text": "as our task-specific delegate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=698"
+  },
+  {
+    "text": "To do that, I can just instantiate an instance of it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=701"
+  },
+  {
+    "text": "and parse it as the delegate parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=706"
+  },
+  {
+    "text": "to the URLSession.data method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=709"
+  },
+  {
+    "text": "Note that the delegate object is not an instance variable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=713"
+  },
+  {
+    "text": "and it's strongly held by the task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=718"
+  },
+  {
+    "text": "until the task completes or fails. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=720"
+  },
+  {
+    "text": "What's new here is that the delegate can be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=723"
+  },
+  {
+    "text": "to handle events that are specific ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=727"
+  },
+  {
+    "text": "to an instance of a URLSession task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=730"
+  },
+  {
+    "text": "which is handy when the logic inside your delegate methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=732"
+  },
+  {
+    "text": "only applies to certain URLSession tasks and not others. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=736"
+  },
+  {
+    "text": "Great. Now when we tap to favorite the photo...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=741"
+  },
+  {
+    "text": "...it pops up a login form.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=749"
+  },
+  {
+    "text": "Once we log in, the photo shows as favorited, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=760"
+  },
+  {
+    "text": "and that it has been added to our favorited-photos collection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=765"
+  },
+  {
+    "text": "Back to you, Guoye. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=773"
+  },
+  {
+    "text": "Guoye: Thank you, Zhenchao, for the demo. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=777"
+  },
+  {
+    "text": "We can't wait for you to try out async/await with URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=779"
+  },
+  {
+    "text": "and we encourage you to apply the same async concepts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=783"
+  },
+  {
+    "text": "to improve your code, including changing functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=786"
+  },
+  {
+    "text": "taking a completion handler to async functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=789"
+  },
+  {
+    "text": "and changing repeated events handlers to AsyncSequences. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=793"
+  },
+  {
+    "text": "To learn more about advancements in URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=798"
+  },
+  {
+    "text": "we have a video about a cool new instrument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=801"
+  },
+  {
+    "text": "inspecting your app's HTTP traffic ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=803"
+  },
+  {
+    "text": "and a video about HTTP/3 support in URLSession. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=806"
+  },
+  {
+    "text": "Thank you and have a great WWDC! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=811"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10095/?time=814"
+  }
+]

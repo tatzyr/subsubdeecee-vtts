@@ -1,0 +1,1530 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=2"
+  },
+  {
+    "text": "Hello. My name is Rini Patel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=9"
+  },
+  {
+    "text": "and I'm from the GPU software engineering team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=12"
+  },
+  {
+    "text": "In this session, I'll be introducing the new ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=15"
+  },
+  {
+    "text": "shader compilation workflows in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=17"
+  },
+  {
+    "text": "The Metal shading language is a C++-based language, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=20"
+  },
+  {
+    "text": "and its compilation model closely resembles the CPU compilation model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=24"
+  },
+  {
+    "text": "As GPU workloads are increasing in complexity, Metal has similarly evolved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=28"
+  },
+  {
+    "text": "to address the flexibility and performance needed to support the modern use cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=33"
+  },
+  {
+    "text": "Some common challenges that you may have already faced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=38"
+  },
+  {
+    "text": "while authoring your shaders can be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=41"
+  },
+  {
+    "text": "sharing utility code across pipelines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=44"
+  },
+  {
+    "text": "modifying shader behavior at runtime without recompilation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=47"
+  },
+  {
+    "text": "or an ability to reuse compiled GPU binaries between application launches. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=51"
+  },
+  {
+    "text": "So, let's walk through a simple shader code and discuss the scenarios.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=57"
+  },
+  {
+    "text": "Here, we have a simple fragment shader that returns the result ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=62"
+  },
+  {
+    "text": "of foo() or bar(), depending on the result of condition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=66"
+  },
+  {
+    "text": "Now, if those functions are called by multiple pipelines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=70"
+  },
+  {
+    "text": "we might want to compile them just once and link them to each pipeline instead.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=73"
+  },
+  {
+    "text": "We might need to link a different implementation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=79"
+  },
+  {
+    "text": "of these functions at the runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=81"
+  },
+  {
+    "text": "or we might need a fragment shader to be extensible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=84"
+  },
+  {
+    "text": "in order to handle a new case statement for baz(). ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=87"
+  },
+  {
+    "text": "We may also want to be able to call a user-provided function bat() ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=91"
+  },
+  {
+    "text": "instead of baz() from our fragment function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=95"
+  },
+  {
+    "text": "As you can see, there are many different requirements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=98"
+  },
+  {
+    "text": "that a shader authoring pipeline may have, and Metal offers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=101"
+  },
+  {
+    "text": "various APIs to support different implementations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=105"
+  },
+  {
+    "text": "Each approach will have a different trade-off between compilation time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=109"
+  },
+  {
+    "text": "and shader performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=112"
+  },
+  {
+    "text": "And today, I'd like to talk about the new compilation workflows that will ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=114"
+  },
+  {
+    "text": "help you find the perfect balance between performance and flexibility. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=118"
+  },
+  {
+    "text": "We are going to start with the new support for dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=123"
+  },
+  {
+    "text": "for render pipelines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=126"
+  },
+  {
+    "text": "as well as function pointers for render pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=128"
+  },
+  {
+    "text": "We'll talk a bit about the additions to binaryArchive API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=131"
+  },
+  {
+    "text": "Then, we will see private linked functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=136"
+  },
+  {
+    "text": "And finally, we'll introduce a brand-new feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=139"
+  },
+  {
+    "text": "for stitching visible functions in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=142"
+  },
+  {
+    "text": "So, let's start with the dynamic library support in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=146"
+  },
+  {
+    "text": "Dynamic libraries are a common tool in software engineering. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=150"
+  },
+  {
+    "text": "They are shared object files that allow you to compartmentalize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=154"
+  },
+  {
+    "text": "utility code into a stand-alone compilation unit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=159"
+  },
+  {
+    "text": "They help reduce the amount of compiled shader code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=163"
+  },
+  {
+    "text": "and reuse it between multiple pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=167"
+  },
+  {
+    "text": "Additionally, they allow you to dynamically link, load, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=171"
+  },
+  {
+    "text": "and share the GPU binary code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=175"
+  },
+  {
+    "text": "Last year, we introduced dynamic languages for compute pipelines, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=179"
+  },
+  {
+    "text": "and to get more of an introduction to dynamic libraries in Metal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=183"
+  },
+  {
+    "text": "I encourage you to check out our previous year's presentation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=188"
+  },
+  {
+    "text": "\"Build GPU Binaries with Metal.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=191"
+  },
+  {
+    "text": "This year, we are bringing dynamic libraries to render and tile pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=194"
+  },
+  {
+    "text": "With this added support, you can now share utility libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=199"
+  },
+  {
+    "text": "across all your compute and render workloads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=202"
+  },
+  {
+    "text": "And now that we know what dynamic libraries are, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=206"
+  },
+  {
+    "text": "it's time to talk about some of the use cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=208"
+  },
+  {
+    "text": "Helper functions are often used across general compute, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=212"
+  },
+  {
+    "text": "vertex, fragment, and tile shaders. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=215"
+  },
+  {
+    "text": "With the addition of dynamic libraries to render pipelines, you can now ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=218"
+  },
+  {
+    "text": "manage large amount of utility code and share it across all of your workloads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=222"
+  },
+  {
+    "text": "You can precompile the libraries that may be used at runtime ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=227"
+  },
+  {
+    "text": "without experiencing the compilation slow down, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=231"
+  },
+  {
+    "text": "and even swap out functions of the runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=235"
+  },
+  {
+    "text": "simply by changing the libraries that are loaded while creating the pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=237"
+  },
+  {
+    "text": "They also help your users to author shader code that you can load ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=241"
+  },
+  {
+    "text": "as part of your pipeline without needing to provide the source. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=246"
+  },
+  {
+    "text": "So, we have talked about when to use dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=250"
+  },
+  {
+    "text": "Let's now look at how to build and work with them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=253"
+  },
+  {
+    "text": "In our example fragment shader, we call functions foo() and bar(), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=256"
+  },
+  {
+    "text": "but we do not provide the implementation for either at compile time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=261"
+  },
+  {
+    "text": "Instead, the implementation for these functions exist in a Metal library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=265"
+  },
+  {
+    "text": "that we later link when creating our render pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=269"
+  },
+  {
+    "text": "And it's also possible to provide separate libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=272"
+  },
+  {
+    "text": "for each of the functions that you may use. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=275"
+  },
+  {
+    "text": "Let's now discuss the tools and flexibilities you have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=278"
+  },
+  {
+    "text": "by building dynamic libraries in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=280"
+  },
+  {
+    "text": "You first need to compile your Metal shader source to AIR, and you can do that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=284"
+  },
+  {
+    "text": "either by using Xcode's Metal toolchain as part of your build process, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=288"
+  },
+  {
+    "text": "or by compiling from source by using newLibraryWithSource API at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=293"
+  },
+  {
+    "text": "With your compiled Metal shader in AIR, you can now create a dynamic library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=299"
+  },
+  {
+    "text": "simply by using the newDynamicLibrary API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=305"
+  },
+  {
+    "text": "This library is ready to be used in its GPU binary format. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=308"
+  },
+  {
+    "text": "But what if you want to reuse it in later runs? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=313"
+  },
+  {
+    "text": "To do that, you can serialize your dynamic library to disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=316"
+  },
+  {
+    "text": "and this can be done using serializeToURL API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=321"
+  },
+  {
+    "text": "And later, you can reuse it by calling the newDynamicLibraryWithURL API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=325"
+  },
+  {
+    "text": "Let's now go through an example which calls functions from ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=332"
+  },
+  {
+    "text": "dynamic library and fragment shader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=334"
+  },
+  {
+    "text": "In this example, we declare functions foo() and bar() using the extern keyword, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=337"
+  },
+  {
+    "text": "but we do not provide definitions for them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=343"
+  },
+  {
+    "text": "To use them, we simply call these functions from our fragment shader. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=346"
+  },
+  {
+    "text": "And you can provide an implementation for the extern functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=350"
+  },
+  {
+    "text": "when building your Metal library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=353"
+  },
+  {
+    "text": "Now, keep in mind that it's also possible to replace those ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=356"
+  },
+  {
+    "text": "implementations with something different at the runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=360"
+  },
+  {
+    "text": "And to do this, you just need to add your dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=364"
+  },
+  {
+    "text": "to the appropriate preloaded libraries array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=367"
+  },
+  {
+    "text": "In our case, it's fragment, but a similar property is available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=371"
+  },
+  {
+    "text": "for each stage and pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=375"
+  },
+  {
+    "text": "And the symbols will be resolved in the same order ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=377"
+  },
+  {
+    "text": "in which the libraries are added to this array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=380"
+  },
+  {
+    "text": "This workflow is well suited for experimenting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=383"
+  },
+  {
+    "text": "with new implementations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=385"
+  },
+  {
+    "text": "And that's it for the dynamic libraries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=387"
+  },
+  {
+    "text": "If you are looking to use Metal dynamic libraries, the support is available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=391"
+  },
+  {
+    "text": "for compute pipelines on Apple GPU family 7 and above in macOS Monterey. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=394"
+  },
+  {
+    "text": "It's also available for other GPUs, as well as most Mac family 2 devices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=401"
+  },
+  {
+    "text": "although you’ll need to call Metal device supports dynamic libraries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=406"
+  },
+  {
+    "text": "On iOS 15, this feature is available on all Apple 6 devices and above. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=410"
+  },
+  {
+    "text": "Render and tile pipeline support is available on all devices ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=416"
+  },
+  {
+    "text": "that support Apple 6 feature set.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=420"
+  },
+  {
+    "text": "Next, let's talk about the improvements to function pointers coming this year.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=423"
+  },
+  {
+    "text": "Function pointer is a simple construct for referring to a code that we can call ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=429"
+  },
+  {
+    "text": "to make your code extensible by allowing you to call functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=434"
+  },
+  {
+    "text": "that we have not seen before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=439"
+  },
+  {
+    "text": "Last year, we introduced compute pipeline function pointers, and for that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=441"
+  },
+  {
+    "text": "I recommend you to check out our previous year's presentation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=446"
+  },
+  {
+    "text": "\"Get to know Metal function pointers.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=449"
+  },
+  {
+    "text": "This year, we are extending function pointer support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=452"
+  },
+  {
+    "text": "to the render and tile pipelines on Apple Silicon. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=455"
+  },
+  {
+    "text": "Similar to dynamic libraries, function pointers allow ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=458"
+  },
+  {
+    "text": "creating customizable pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=462"
+  },
+  {
+    "text": "With function pointers, a GPU pipeline can call code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=465"
+  },
+  {
+    "text": "that has not been seen during the pipeline compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=469"
+  },
+  {
+    "text": "With function pointer tables, code execution behavior ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=473"
+  },
+  {
+    "text": "can change dynamically, either when you bind the different ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=477"
+  },
+  {
+    "text": "function table or when the GPU pipeline indexes into the function pointer table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=480"
+  },
+  {
+    "text": "You can also decide how to balance compilation performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=486"
+  },
+  {
+    "text": "against the runtime performance using function pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=489"
+  },
+  {
+    "text": "For fastest compilation, for example, you can precompile ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=493"
+  },
+  {
+    "text": "function pointers to a GPU binary and quickly deal-in the pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=497"
+  },
+  {
+    "text": "For the best runtime performance, on the other hand, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=501"
+  },
+  {
+    "text": "you can have your pipeline reference AIR representations of functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=504"
+  },
+  {
+    "text": "allowing the compiler to do maximum optimizations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=509"
+  },
+  {
+    "text": "Let's now see how you can set the function pointers in your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=513"
+  },
+  {
+    "text": "There are three basic building blocks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=517"
+  },
+  {
+    "text": "We start by instantiating the function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=520"
+  },
+  {
+    "text": "then configuring a pipeline with these functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=524"
+  },
+  {
+    "text": "and finally, creating function tables. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=527"
+  },
+  {
+    "text": "Once this is done, using a new render loop doesn't involve much code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=531"
+  },
+  {
+    "text": "So let's dive in to the details of each of the steps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=537"
+  },
+  {
+    "text": "To start using function pointers, we first declare the function descriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=541"
+  },
+  {
+    "text": "and instantiate to compile a GPU binary version of the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=546"
+  },
+  {
+    "text": "This will accelerate pipeline creation time, and it's as simple as ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=550"
+  },
+  {
+    "text": "declaring a descriptor and setting the option to compile to binary. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=555"
+  },
+  {
+    "text": "When the Metal function foo is created from library using this descriptor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=559"
+  },
+  {
+    "text": "the function will be compiled by the GPU backend compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=563"
+  },
+  {
+    "text": "Next, we need to configure the render pipeline descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=568"
+  },
+  {
+    "text": "First, we add the functions via the pipeline descriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=573"
+  },
+  {
+    "text": "to the stage where they'll be used, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=576"
+  },
+  {
+    "text": "which can be vertex, fragment, or tile stage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=578"
+  },
+  {
+    "text": "We can choose to add functions in AIR or binary form. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=582"
+  },
+  {
+    "text": "When adding AIR functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=586"
+  },
+  {
+    "text": "the compiler will statically link the visible functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=587"
+  },
+  {
+    "text": "allowing for the backend compilers to optimize the code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=590"
+  },
+  {
+    "text": "Adding binary functions, on the other hand, will inform the driver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=595"
+  },
+  {
+    "text": "which externally-compiled functions are callable from a given pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=599"
+  },
+  {
+    "text": "One additional thing to note here is when you create a pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=604"
+  },
+  {
+    "text": "that uses binary functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=608"
+  },
+  {
+    "text": "and if the code that you are calling has a complex call chain, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=610"
+  },
+  {
+    "text": "as illustrated here, it's important to specify the maximum call stack depth ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=613"
+  },
+  {
+    "text": "necessary, as the compiler cannot do static analysis to determine the depth. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=618"
+  },
+  {
+    "text": "The compiler will default to maximum depth to be run, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=624"
+  },
+  {
+    "text": "and you may get a stack overflow if the depth isn't specified correctly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=628"
+  },
+  {
+    "text": "In contrast, specifying the depth correctly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=632"
+  },
+  {
+    "text": "leads to a better resource conception and optimal performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=635"
+  },
+  {
+    "text": "So once the descriptor is fully set up, you can create your pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=639"
+  },
+  {
+    "text": "that's ready to use function pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=643"
+  },
+  {
+    "text": "After creating your pipeline, the next steps are to create ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=646"
+  },
+  {
+    "text": "visible function tables and populate them with function handles in the API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=650"
+  },
+  {
+    "text": "First, we create a visible function table using a descriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=655"
+  },
+  {
+    "text": "and specify a render stage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=658"
+  },
+  {
+    "text": "Then, we create function handles to reference those functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=661"
+  },
+  {
+    "text": "Both the function handles and table are specific to a given pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=664"
+  },
+  {
+    "text": "and selected stage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=668"
+  },
+  {
+    "text": "You can then insert the handles into the function table using setFunction API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=671"
+  },
+  {
+    "text": "Let's now see how do you use this function tables after we have done all the set up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=676"
+  },
+  {
+    "text": "First, as a part of the command and coding, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=682"
+  },
+  {
+    "text": "we bind the visible function table to a buffer index. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=685"
+  },
+  {
+    "text": "In the shader itself, the visible_function_table is passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=689"
+  },
+  {
+    "text": "as a buffer binding, and we can then call our functions through this table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=693"
+  },
+  {
+    "text": "And that was a simple case of using function pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=699"
+  },
+  {
+    "text": "When using function pointers, it's not uncommon to create a pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=702"
+  },
+  {
+    "text": "just to find out later that you need to access one or more additional functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=707"
+  },
+  {
+    "text": "Now, if you could achieve that by creating the second pipeline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=712"
+  },
+  {
+    "text": "from an identical descriptor, which adds the additional functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=715"
+  },
+  {
+    "text": "but that would trigger a pipeline compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=719"
+  },
+  {
+    "text": "To accelerate this process, Metal lets you specify if ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=723"
+  },
+  {
+    "text": "you plan on extending the original pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=726"
+  },
+  {
+    "text": "This way, a new pipeline can be created faster from an existing pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=729"
+  },
+  {
+    "text": "and it can use all the function pointer tables that were ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=734"
+  },
+  {
+    "text": "initially created for the original pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=736"
+  },
+  {
+    "text": "To do that from code, when creating the original pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=739"
+  },
+  {
+    "text": "set supportAddingBinaryFunctions option to YES, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=744"
+  },
+  {
+    "text": "for all the stages that you wish to extend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=748"
+  },
+  {
+    "text": "Then when you need to create an extended pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=751"
+  },
+  {
+    "text": "create RenderPipelineFunctionDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=754"
+  },
+  {
+    "text": "and include new binary function bat() on the fragment length function list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=757"
+  },
+  {
+    "text": "Finally, call new RenderPipelineState with additional binary functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=763"
+  },
+  {
+    "text": "on renderPipeline1 to create renderPipeline2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=767"
+  },
+  {
+    "text": "which will be identical, but includes the additional function pointer bat. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=772"
+  },
+  {
+    "text": "And that's pretty much it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=776"
+  },
+  {
+    "text": "Now that we have seen how to use function pointers, here is where you can use them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=778"
+  },
+  {
+    "text": "Function pointers in compute pipelines are supported on Apple GPU family 6 and above, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=783"
+  },
+  {
+    "text": "in macOS Big Sur, and iOS 14. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=789"
+  },
+  {
+    "text": "They are also supported on Mac family 2 devices. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=791"
+  },
+  {
+    "text": "And this year, we are extending function pointer support for render ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=795"
+  },
+  {
+    "text": "and tile pipelines on Apple GPU family 6 and above, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=798"
+  },
+  {
+    "text": "in Mac OS Monterey, and iOS 15.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=802"
+  },
+  {
+    "text": "The next topic I'd like to talk about is managing binary function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=807"
+  },
+  {
+    "text": "compilation overhead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=811"
+  },
+  {
+    "text": "Compiling shaders can be extremely time intensive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=813"
+  },
+  {
+    "text": "and you may want to control the overhead it brings to an application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=817"
+  },
+  {
+    "text": "To help with that, we added binaryArchives to Metal last year. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=821"
+  },
+  {
+    "text": "BinaryArchives can collect and store the compiled binary versions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=826"
+  },
+  {
+    "text": "of the pipeline to disk, saving compilation time and subsequent runs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=830"
+  },
+  {
+    "text": "and reducing the memory cost associated with the compilation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=836"
+  },
+  {
+    "text": "This year, we are adding the ability to store visible and intersection function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=840"
+  },
+  {
+    "text": "to binaryArchives, allowing you to significantly reduce the overhead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=845"
+  },
+  {
+    "text": "So, let's take a look at how you store into and load from binaryArchives. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=850"
+  },
+  {
+    "text": "To add a function to BinaryArchive, simply call addFunctionWithDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=855"
+  },
+  {
+    "text": "and pass the function descriptor and source library as arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=861"
+  },
+  {
+    "text": "To load the binary function pointer from BinaryArchive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=866"
+  },
+  {
+    "text": "place the BinaryArchive on the function descriptor's binaryArchives array, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=869"
+  },
+  {
+    "text": "and then call Metal library method newFunctionWithDescriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=874"
+  },
+  {
+    "text": "If any of the archives in the array has the compiled function pointer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=879"
+  },
+  {
+    "text": "it will be returned immediately, without having to recompile. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=883"
+  },
+  {
+    "text": "Here are some of the rules that illustrate how ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=888"
+  },
+  {
+    "text": "newFunctionWithDescriptor will behave with the binaryArchives. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=890"
+  },
+  {
+    "text": "We first search for the binary version of the function in the BinaryArchive list. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=895"
+  },
+  {
+    "text": "If the function is found, it will be returned, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=900"
+  },
+  {
+    "text": "and if it's not found, we'll check the CompileToBinary option ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=903"
+  },
+  {
+    "text": "and return AIR version of the function, if binary compilation wasn't requested. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=908"
+  },
+  {
+    "text": "On the other hand, if the binary compilation was requested, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=913"
+  },
+  {
+    "text": "then depending on the pipeline option, FailOnBinaryArchiveMiss ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=917"
+  },
+  {
+    "text": "will either compile the function binary at runtime or return nil. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=922"
+  },
+  {
+    "text": "When you integrate MTLBinaryArchive into your application, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=929"
+  },
+  {
+    "text": "you can use the same archive to store all your GPU-compiled code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=933"
+  },
+  {
+    "text": "Your render, tile, and compute pipelines, as well as your binary function pointers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=937"
+  },
+  {
+    "text": "And after your archive has been prepopulated with the pipeline state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=944"
+  },
+  {
+    "text": "objects and binary functions, you can serialize it to a disk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=947"
+  },
+  {
+    "text": "Collecting and storing your GPU binaries this way will help ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=952"
+  },
+  {
+    "text": "accelerate shader compilation on to subsequent application runs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=955"
+  },
+  {
+    "text": "When using a pipeline with function pointers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=961"
+  },
+  {
+    "text": "you might want to cache the pipeline state object itself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=964"
+  },
+  {
+    "text": "But why should you cache when you have a pipeline that comes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=969"
+  },
+  {
+    "text": "with different function pointer combinations? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=971"
+  },
+  {
+    "text": "For example, here, there are three pipeline descriptors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=975"
+  },
+  {
+    "text": "which are identical, except for their user function pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=978"
+  },
+  {
+    "text": "So, if you are using AIR function pointers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=983"
+  },
+  {
+    "text": "you need to cache all permutations of the pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=986"
+  },
+  {
+    "text": "However, when using the binary function pointers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=990"
+  },
+  {
+    "text": "it's enough to cache a single variant because the pipeline binary code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=994"
+  },
+  {
+    "text": "doesn't change when a new function pointer is added to it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=998"
+  },
+  {
+    "text": "And you can use that archive to find all other variants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1002"
+  },
+  {
+    "text": "of the pipelines, independent of which binary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1005"
+  },
+  {
+    "text": "function pointers are used in the pipeline descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1008"
+  },
+  {
+    "text": "To wrap it up, you always want to use binaryArchives in Metal, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1011"
+  },
+  {
+    "text": "as it's a great tool to control your pipeline compilation cost. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1015"
+  },
+  {
+    "text": "The support for binaryArchives is available on all devices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1019"
+  },
+  {
+    "text": "but adding function pointers to a BinaryArchive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1024"
+  },
+  {
+    "text": "depends on the function pointer ability. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1026"
+  },
+  {
+    "text": "Now, I'd like to briefly talk about our next addition this year, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1030"
+  },
+  {
+    "text": "which is private linked functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1034"
+  },
+  {
+    "text": "So far, we have discussed how dynamic libraries and function pointers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1037"
+  },
+  {
+    "text": "provide a lot of flexibility to your shader development pipeline, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1042"
+  },
+  {
+    "text": "but sometimes, for performance reasons, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1045"
+  },
+  {
+    "text": "you may want to statically link an external function into your pipeline. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1048"
+  },
+  {
+    "text": "Last year, we added linkedFunctions API with a support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1052"
+  },
+  {
+    "text": "for statically linking AIR functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1056"
+  },
+  {
+    "text": "However, this requires function pointer support, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1059"
+  },
+  {
+    "text": "as these are usable in a function table. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1062"
+  },
+  {
+    "text": "This year, we are introducing privateFunctions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1065"
+  },
+  {
+    "text": "Both functions and privateFunctions are linked statically at the AIR level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1068"
+  },
+  {
+    "text": "but since those are private, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1073"
+  },
+  {
+    "text": "no function handling can be made for a function pointer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1075"
+  },
+  {
+    "text": "and this allows compiler to fully optimize your shader code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1078"
+  },
+  {
+    "text": "So, where are they available? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1082"
+  },
+  {
+    "text": "Because this feature works with code at the AIR level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1084"
+  },
+  {
+    "text": "it is available on all devices in macOS Monterey and iOS 15. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1088"
+  },
+  {
+    "text": "Moving on to the last addition I'd like to discuss today, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1095"
+  },
+  {
+    "text": "function stitching. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1099"
+  },
+  {
+    "text": "Some applications need to generate dynamic content at the runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1101"
+  },
+  {
+    "text": "For example, to implement customizations for the graphic effects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1106"
+  },
+  {
+    "text": "based on user input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1110"
+  },
+  {
+    "text": "Or, say, complex compute kernel based on incoming data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1112"
+  },
+  {
+    "text": "Function stitching is a great tool to solve this.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1117"
+  },
+  {
+    "text": "Prior to function stitching, the only way to do this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1121"
+  },
+  {
+    "text": "was by generating Metal source strings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1124"
+  },
+  {
+    "text": "The string-manipulation technique can be somewhat inefficient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1128"
+  },
+  {
+    "text": "and it also implies that the translation from Metal to AIR ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1132"
+  },
+  {
+    "text": "will happen at runtime, which can be an expensive opration. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1135"
+  },
+  {
+    "text": "So let's take a look at how function stitching works. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1139"
+  },
+  {
+    "text": "Function stitching provides a mechanism to generate functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1143"
+  },
+  {
+    "text": "from computation graphs and precompiled functions at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1146"
+  },
+  {
+    "text": "The computation graph is a Directed Acyclic Graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1151"
+  },
+  {
+    "text": "And in a graph, there are two kind of nodes: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1155"
+  },
+  {
+    "text": "input nodes that represent the arguments of the generated function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1158"
+  },
+  {
+    "text": "and function nodes that represent function calls. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1163"
+  },
+  {
+    "text": "There are also two kind of edges: data edges that represent how data flows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1166"
+  },
+  {
+    "text": "from one node to another, and control edges that represent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1173"
+  },
+  {
+    "text": "the order in which function calls should be executed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1178"
+  },
+  {
+    "text": "We'll see how function stitching uses a computation graph ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1181"
+  },
+  {
+    "text": "to generate a function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1184"
+  },
+  {
+    "text": "We'll start with the notion of stitchable functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1187"
+  },
+  {
+    "text": "The function in a graph must have the stitchable attribute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1191"
+  },
+  {
+    "text": "Such function is a visible function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1194"
+  },
+  {
+    "text": "which can be used with the functionStitching API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1197"
+  },
+  {
+    "text": "The stitchable functions can be part of the Metal library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1200"
+  },
+  {
+    "text": "shipped with your application bundle to avoid Metal to AIR translation cost.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1204"
+  },
+  {
+    "text": "The stitching process generates the functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1210"
+  },
+  {
+    "text": "directly in AIR and completely skipping the Metal frontend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1213"
+  },
+  {
+    "text": "The generated function is a regular stitchable function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1218"
+  },
+  {
+    "text": "so it can be linked into a pipeline, or used directly as function pointer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1221"
+  },
+  {
+    "text": "or it can be used for generating other functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1226"
+  },
+  {
+    "text": "So, consider the previous graph, and let's assume that we have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1230"
+  },
+  {
+    "text": "dual functions A and C from library as described previously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1233"
+  },
+  {
+    "text": "Let's now see what happens when we bind these functions to the graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1239"
+  },
+  {
+    "text": "The stitcher here associates a corresponding function type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1243"
+  },
+  {
+    "text": "to each function node. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1247"
+  },
+  {
+    "text": "N0 and N1 get the type from FunctionA, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1250"
+  },
+  {
+    "text": "and N2 gets the type from FunctionC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1254"
+  },
+  {
+    "text": "After that, the stitcher infers the types for the input nodes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1258"
+  },
+  {
+    "text": "by looking at the parameter types of the functions using them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1262"
+  },
+  {
+    "text": "For example, Input0 is inferred to be the type devised ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1266"
+  },
+  {
+    "text": "in pointer because it's the first argument for N0 and N1.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1271"
+  },
+  {
+    "text": "The stitcher then generates a function equivalent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1277"
+  },
+  {
+    "text": "to the following one described in Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1280"
+  },
+  {
+    "text": "With the functionStitching API, we can generate a library ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1282"
+  },
+  {
+    "text": "containing such functions directly from AIR. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1286"
+  },
+  {
+    "text": "And now that we have fair idea on how stitching works, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1289"
+  },
+  {
+    "text": "here is how you can use it in the API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1293"
+  },
+  {
+    "text": "First, we need to define the stitched function inputs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1296"
+  },
+  {
+    "text": "In this case, we simply make enough input nodes to account for all the arguments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1299"
+  },
+  {
+    "text": "Next, we create function nodes for each function we wish to call in our graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1305"
+  },
+  {
+    "text": "For each function call, we define the name, arguments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1311"
+  },
+  {
+    "text": "and control dependencies if we have any explicit ordering requirements. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1315"
+  },
+  {
+    "text": "And finally, we create the graph with the function name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1320"
+  },
+  {
+    "text": "the function nodes used in a graph, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1324"
+  },
+  {
+    "text": "and any function attribute we want to apply. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1327"
+  },
+  {
+    "text": "You also assign an outputNode, which will return the output value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1330"
+  },
+  {
+    "text": "of the resulting stitched function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1334"
+  },
+  {
+    "text": "So, we have our graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1337"
+  },
+  {
+    "text": "Now, we can create a function using it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1339"
+  },
+  {
+    "text": "The first step is to create a StitchedLibraryDescriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1342"
+  },
+  {
+    "text": "We add our stitchableFunctions and functionGraph to this descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1346"
+  },
+  {
+    "text": "We then create a library using the descriptor, and now, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1352"
+  },
+  {
+    "text": "we can create our stitched function out of this library. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1355"
+  },
+  {
+    "text": "This stitched function is now ready to be used anywhere a stitchable function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1359"
+  },
+  {
+    "text": "is expected, including as a function in another stitching graph. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1363"
+  },
+  {
+    "text": "And that's it for the function stitching. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1368"
+  },
+  {
+    "text": "This API is also available across all devices in macOS Monterey and iOS 15. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1371"
+  },
+  {
+    "text": "So, as a quick recap, today, we looked at dynamic libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1378"
+  },
+  {
+    "text": "and function pointers for render pipelines. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1382"
+  },
+  {
+    "text": "Private linked functions, which can be used to statically link visible functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1385"
+  },
+  {
+    "text": "And how function stitching can save compilation time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1391"
+  },
+  {
+    "text": "when dynamically creating shaders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1394"
+  },
+  {
+    "text": "So, when would you choose one over the other? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1397"
+  },
+  {
+    "text": "Dynamic libraries are an excellent choice to link helper and utility functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1402"
+  },
+  {
+    "text": "And they are best used when you have a fixed set of utility functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1407"
+  },
+  {
+    "text": "and those functions do not change very frequently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1411"
+  },
+  {
+    "text": "Function pointers add the ability for a shader to invoke functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1415"
+  },
+  {
+    "text": "that it knows nothing about, other than their signature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1420"
+  },
+  {
+    "text": "It doesn't need to know how many functions exist, the names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1423"
+  },
+  {
+    "text": "or even what speed-flexibility trade-off ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1426"
+  },
+  {
+    "text": "the developer has made using AIR or binaries. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1429"
+  },
+  {
+    "text": "And this year, you can also cache function pointers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1432"
+  },
+  {
+    "text": "Private functions offer you a way to statically link functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1436"
+  },
+  {
+    "text": "to a pipeline state object by name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1439"
+  },
+  {
+    "text": "They are internal to the pipeline, so they cannot be encoded ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1443"
+  },
+  {
+    "text": "in a visible function table, but they allow the compiler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1446"
+  },
+  {
+    "text": "to do maximum optimization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1450"
+  },
+  {
+    "text": "and they are supported across all GPU families. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1451"
+  },
+  {
+    "text": "And finally, function stitching gives you a way to precompile snippets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1455"
+  },
+  {
+    "text": "of your code directly to AIR and perform function compilation at runtime. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1459"
+  },
+  {
+    "text": "If you are compositing Metal shader strings today ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1465"
+  },
+  {
+    "text": "and have to pay the cost of compiling from source at runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1468"
+  },
+  {
+    "text": "then function stitching would greatly accelerate this workflow. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1471"
+  },
+  {
+    "text": "I hope that you can leverage these compiler features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1475"
+  },
+  {
+    "text": "to develop new experiences using Metal. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1478"
+  },
+  {
+    "text": "Thanks for watching, and enjoy the rest of WWDC 2021. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1481"
+  },
+  {
+    "text": "[music]",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10229/?time=1486"
+  }
+]

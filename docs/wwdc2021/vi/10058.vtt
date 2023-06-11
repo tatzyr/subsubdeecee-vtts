@@ -1,0 +1,407 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:17.000
+Philippe Hausler: Xin chào, tên tôi là Philippe, và tôi thực sự vui mừng được giới thiệu với bạn một tính năng mới thú vị trong Swift, AsyncSequence.
+
+00:00:17.000 --> 00:00:22.000
+Hôm nay chúng ta sẽ xem xét các chuỗi không đồng bộ là gì và các nguyên tắc cơ bản đằng sau chúng.
+
+00:00:22.000 --> 00:00:29.000
+Sau đó, chúng tôi sẽ nói về cách bạn có thể sử dụng chúng trong mã của mình và xem qua một vài API AsyncSequence mới.
+
+00:00:29.000 --> 00:00:34.000
+Và cuối cùng, chúng ta sẽ khám phá cách bạn có thể xây dựng các chuỗi không đồng bộ của riêng mình.
+
+00:00:34.000 --> 00:00:36.000
+Vậy chúng ta hãy đi sâu vào.
+
+00:00:36.000 --> 00:00:42.000
+Đây là một công cụ thực sự đơn giản mà tôi đã viết để minh họa một số thứ mới thú vị mà bạn có thể làm với AsyncSequence.
+
+00:00:42.000 --> 00:00:46.000
+Trong công cụ này, chúng tôi bắt đầu với một URL đến một điểm cuối.
+
+00:00:46.000 --> 00:00:48.000
+Nó liệt kê các trận động đất gần đây.
+
+00:00:48.000 --> 00:00:54.000
+Bây giờ, thông thường việc tải xuống nội dung thực sự là một nhiệm vụ không đồng bộ có thể mất một thời gian.
+
+00:00:54.000 --> 00:01:00.000
+Nhưng trong trường hợp này, chúng tôi không muốn đợi tất cả mọi thứ tải xuống; thay vào đó, chúng tôi muốn hiển thị mọi thứ khi chúng được nhận.
+
+00:01:00.000 --> 00:01:08.000
+Vì vậy, tôi quyết định thay đổi mọi thứ một chút và sử dụng các tính năng không đồng bộ/chờ đợi mới để nhận được phản hồi từ điểm cuối này.
+
+00:01:08.000 --> 00:01:14.000
+Dữ liệu mà chúng tôi đang tìm nạp được định dạng dưới dạng văn bản được phân tách bằng dấu phẩy, vì vậy mỗi dòng là một hàng dữ liệu hoàn chỉnh.
+
+00:01:14.000 --> 00:01:22.000
+Vì chuỗi dòng không đồng bộ đang phát ra từng dòng khi nó nhận được, điều đó có nghĩa là chúng ta có khả năng có một bản tải xuống thực sự lớn trước mắt.
+
+00:01:22.000 --> 00:01:35.000
+Nhưng bằng cách phát ra chúng khi chúng tôi nhận được chúng, đoạn mã cảm thấy thực sự phản hồi và phần tuyệt vời nhất về nó là bạn có thể sử dụng những thứ tương tự mà bạn quen thuộc với việc sử dụng từ các chuỗi thông thường trong bối cảnh không đồng bộ mới này.
+
+00:01:35.000 --> 00:01:48.000
+Điều đó có nghĩa là bạn có thể sử dụng cú pháp for-await-in mới để lặp lại và các hàm như ánh xạ, lọc và giảm; hoặc - như trong mẫu này - hàm dropFirst để thao tác các giá trị đó.
+
+00:01:48.000 --> 00:01:50.000
+Vậy cái này hoạt động như thế nào?
+
+00:01:50.000 --> 00:01:56.000
+Chà, rất nhiều điều mà tôi sẽ nói hôm nay có nền tảng của chúng dựa trên cuộc nói chuyện không đồng bộ/chờ đợi.
+
+00:01:56.000 --> 00:01:59.000
+Nhưng hãy tóm tắt lại một vài điểm chính.
+
+00:01:59.000 --> 00:02:06.000
+Các hàm không đồng bộ cho phép bạn viết mã đồng thời mà không cần gọi lại, bằng cách sử dụng từ khóa await.
+
+00:02:06.000 --> 00:02:12.000
+Việc gọi một hàm không đồng bộ sẽ tạm dừng và sau đó được tiếp tục bất cứ khi nào một giá trị hoặc lỗi được tạo ra.
+
+00:02:12.000 --> 00:02:22.000
+Mặt khác, AsyncSequence sẽ tạm dừng trên mỗi phần tử và tiếp tục khi trình lặp cơ bản tạo ra một giá trị hoặc ném.
+
+00:02:22.000 --> 00:02:29.000
+Về cơ bản, như tên gọi của nó, chúng giống như các chuỗi thông thường nhưng có một vài điểm khác biệt chính.
+
+00:02:29.000 --> 00:02:33.000
+Cụ thể, mỗi phần tử được phân phối không đồng bộ.
+
+00:02:33.000 --> 00:02:39.000
+Nhưng bởi vì chúng là một giao hàng không đồng bộ, điều đó có nghĩa là thất bại chắc chắn là một khả năng.
+
+00:02:39.000 --> 00:02:45.000
+Một số chuỗi không đồng bộ ném, nhưng nếu thất bại không phải là một lựa chọn, những chuỗi khác thì không.
+
+00:02:45.000 --> 00:02:52.000
+Cũng giống như các hàm ném, trình biên dịch sẽ giúp đảm bảo rằng các lỗi được xử lý khi lặp hoặc soạn.
+
+00:02:52.000 --> 00:02:57.000
+Nói chung, các chuỗi không đồng bộ là một mô tả về cách tạo ra các giá trị theo thời gian.
+
+00:02:57.000 --> 00:03:05.000
+Vì vậy, một chuỗi không đồng bộ có thể bằng không hoặc nhiều giá trị hơn và sau đó biểu thị sự hoàn thành bằng cách trả về một số không từ trình lặp của nó, giống như các chuỗi.
+
+00:03:05.000 --> 00:03:17.000
+Khi xảy ra lỗi, đó cũng là điểm mà chuỗi không đồng bộ ở trạng thái đầu cuối và sau khi xảy ra lỗi, họ sẽ trả về nil cho bất kỳ cuộc gọi tiếp theo nào tiếp theo trên trình lặp của họ.
+
+00:03:17.000 --> 00:03:24.000
+Vì vậy, chúng ta hãy đi sâu vào cách thức hoạt động của định nghĩa đó bằng cách trước tiên bắt đầu với sự lặp lại thông thường.
+
+00:03:24.000 --> 00:03:26.000
+Ở đây chúng tôi có một mô hình khá quen thuộc.
+
+00:03:26.000 --> 00:03:28.000
+Đây là một vòng lặp for-in.
+
+00:03:28.000 --> 00:03:35.000
+Trong trường hợp này, nó lặp lại các trận động đất từ một chuỗi và sau đó gọi một hàm khi độ lớn trên một giá trị nhất định.
+
+00:03:35.000 --> 00:03:41.000
+Trình biên dịch có kiến thức về cách hoạt động của lần lặp lại này, nhưng những gì nó làm không phải là phép thuật.
+
+00:03:41.000 --> 00:03:46.000
+Bước biên dịch thực sự chỉ thực hiện một số chuyển đổi đơn giản.
+
+00:03:46.000 --> 00:03:52.000
+Hãy kiểm tra những biến đổi đó để bạn có thể hiểu dạng không đồng bộ của điều này là gì.
+
+00:03:52.000 --> 00:03:56.000
+Đây gần như là những gì trình biên dịch làm khi xây dựng mã trước đó.
+
+00:03:56.000 --> 00:04:04.000
+Đầu tiên, nó bắt đầu bằng cách tạo một biến lặp và sau đó sử dụng vòng lặp while để có được mọi trận động đất do trình lặp tạo ra khi lần lặp tiếp theo được gọi.
+
+00:04:04.000 --> 00:04:10.000
+Để sử dụng chức năng không đồng bộ/chờ đợi mới, có một thay đổi nhỏ có thể được thực hiện.
+
+00:04:10.000 --> 00:04:15.000
+Nó đơn giản như thay đổi chức năng tiếp theo đó thành một chức năng không đồng bộ.
+
+00:04:15.000 --> 00:04:21.000
+Bây giờ chúng ta có thể có sự lặp lại tham gia vào Swift đồng thời bằng cách chờ đợi trận động đất tiếp theo.
+
+00:04:21.000 --> 00:04:28.000
+Hãy tua lại để khám phá điều này sẽ như thế nào nếu vòng lặp nằm trên một chuỗi không đồng bộ.
+
+00:04:28.000 --> 00:04:33.000
+Như đã đề cập trước đó, chúng ta cần đợi từng mục ra khỏi chuỗi không đồng bộ.
+
+00:04:33.000 --> 00:04:37.000
+Điều này được phản ánh trong cú pháp chờ đợi mới.
+
+00:04:37.000 --> 00:04:44.000
+Tất cả điều này có nghĩa là nếu bạn biết cách sử dụng Sequence, bạn đã có một ý tưởng hay về cách sử dụng AsyncSequence.
+
+00:04:44.000 --> 00:04:47.000
+Có một vài cách bạn có thể sử dụng các chuỗi không đồng bộ.
+
+00:04:47.000 --> 00:04:59.000
+Như chúng tôi vừa đề cập, bạn có thể sử dụng cú pháp for-await-in mới; hoặc nếu chuỗi không đồng bộ ném, bạn có thể sử dụng cú pháp for-try-await-in mới.
+
+00:04:59.000 --> 00:05:10.000
+Điều này cho phép bạn dễ dàng lặp lại các giá trị được tạo ra không đồng bộ - mà không cần phải lo lắng về việc đóng cửa - và sử dụng cú pháp mà bạn đã quen thuộc để lặp lại thông qua chúng.
+
+00:05:10.000 --> 00:05:14.000
+Ngay cả những thứ như nghỉ ngơi và tiếp tục chỉ hoạt động.
+
+00:05:14.000 --> 00:05:18.000
+Bây giờ bạn đã có một giới thiệu tốt về lý thuyết về các chuỗi không đồng bộ.
+
+00:05:18.000 --> 00:05:21.000
+Hãy cùng khám phá sự lặp lại đó xa hơn một chút.
+
+00:05:21.000 --> 00:05:28.000
+Cho một nguồn là một chuỗi không đồng bộ, bạn có thể chờ từng giá trị bằng cách sử dụng cú pháp for-await-in.
+
+00:05:28.000 --> 00:05:36.000
+Điều này có nghĩa là nó sẽ chờ đợi từng mặt hàng được sản xuất bởi trình lặp và khi nó chạm vào một thiết bị đầu cuối, nó sẽ hoàn thành vòng lặp.
+
+00:05:36.000 --> 00:05:43.000
+Khi lặp lại các chuỗi không đồng bộ, ngắt rõ ràng là một cách tốt để kết thúc lặp lại sớm từ bên trong vòng lặp.
+
+00:05:43.000 --> 00:05:46.000
+Điều này hoạt động giống như các chuỗi thông thường.
+
+00:05:46.000 --> 00:05:50.000
+Ở đây chúng tôi đang phá vỡ khi dữ liệu vị trí không có mặt cho trận động đất.
+
+00:05:50.000 --> 00:05:55.000
+Hoặc nếu chúng ta có một số giá trị mà chúng ta muốn bỏ qua, chúng ta có thể sử dụng tiếp tục.
+
+00:05:55.000 --> 00:06:04.000
+Trong trường hợp này, nếu độ sâu lớn hơn một số giá trị, chúng tôi sẽ bỏ qua chúng và tiếp tục chờ đợi trận động đất tiếp theo.
+
+00:06:04.000 --> 00:06:12.000
+Lần lặp tiếp theo này từ bản tải xuống hoạt động giống như trước đây, nhưng trong trường hợp này, nguồn mà chúng tôi có có thể gây ra lỗi.
+
+00:06:12.000 --> 00:06:20.000
+Cũng giống như các chức năng ném, cần phải thử xử lý từng phần tử khi AsyncSequence được lặp lại có thể ném.
+
+00:06:20.000 --> 00:06:28.000
+Và cũng giống như ném các chức năng, trình biên dịch sẽ phát hiện khi bạn bỏ lỡ một lần thử và cung cấp cho bạn một Fix-it để sửa lỗi.
+
+00:06:28.000 --> 00:06:37.000
+Điều này có nghĩa là khi một chuỗi không đồng bộ có thể tạo ra lỗi, bạn luôn an toàn, bởi vì ngôn ngữ buộc bạn phải ném lỗi đó hoặc bắt nó.
+
+00:06:37.000 --> 00:06:42.000
+Lần lặp thứ hai này chạy tuần tự sau lần lặp vòng lặp đầu tiên.
+
+00:06:42.000 --> 00:06:46.000
+Chạy mã tuần tự không phải lúc nào cũng như mong muốn.
+
+00:06:46.000 --> 00:06:55.000
+Nếu nó hữu ích để chạy lặp lại đồng thời với những thứ khác đang diễn ra, bạn có thể tạo một tác vụ không đồng bộ mới gói gọn sự lặp lại.
+
+00:06:55.000 --> 00:07:01.000
+Điều này có thể hữu ích khi bạn biết các chuỗi không đồng bộ mà bạn đang sử dụng có thể chạy vô thời hạn.
+
+00:07:01.000 --> 00:07:07.000
+Bây giờ, mặc dù chuỗi đó có khả năng là vô thời hạn, nhưng nó ít xảy ra hơn đáng kể.
+
+00:07:07.000 --> 00:07:15.000
+Nhưng trong thế giới của hành vi không đồng bộ, nó là một cái gì đó phổ biến hơn nhiều và một cái gì đó mà bạn cần xem xét khi sử dụng chúng.
+
+00:07:15.000 --> 00:07:21.000
+Rất may, các cơ sở vật chất đồng thời trong Swift làm cho việc này thực sự dễ dàng và an toàn để thực hiện.
+
+00:07:21.000 --> 00:07:27.000
+Điều này cũng có thể thực sự hữu ích khi bạn muốn có khả năng hủy bỏ lần lặp lại bên ngoài.
+
+00:07:27.000 --> 00:07:32.000
+Ở đây chúng ta có thể chạy đồng thời hai lần lặp và chấm dứt lần lặp sau này.
+
+00:07:32.000 --> 00:07:40.000
+Khá dễ dàng với các nhiệm vụ để xác định phạm vi công việc của một lần lặp có thể là vô thời hạn trong vòng đời của một số vùng chứa.
+
+00:07:40.000 --> 00:07:51.000
+Tiếp theo chúng ta hãy tham quan một số API AsyncSequence có sẵn như macOS Monterey, iOS 15, tvOS 15 và watchOS 8.
+
+00:07:51.000 --> 00:07:55.000
+Có rất nhiều trong số chúng, nhưng tôi sẽ chỉ cho bạn một số điểm nổi bật.
+
+00:07:55.000 --> 00:08:00.000
+Đọc từ các tệp thường là một trường hợp sử dụng chính cho hành vi không đồng bộ.
+
+00:08:00.000 --> 00:08:07.000
+FileHandle hiện có thuộc tính byte mới cho phép truy cập vào một chuỗi byte không đồng bộ từ FileHandle đó.
+
+00:08:07.000 --> 00:08:16.000
+Điều này có thể được sử dụng kết hợp với tiện ích mở rộng mới trên AsyncSequence để chuyển đổi các chuỗi byte không đồng bộ thành các dòng.
+
+00:08:16.000 --> 00:08:24.000
+Nhưng việc xử lý các tệp phổ biến đến mức chúng tôi quyết định rằng URL nên có bộ truy cập cho cả byte và dòng.
+
+00:08:24.000 --> 00:08:28.000
+Đây là cùng một API mà tôi đã sử dụng trong ví dụ ban đầu.
+
+00:08:28.000 --> 00:08:37.000
+Đó là một thuộc tính tiện lợi trên URL để trả về AsyncSequence của các dòng từ nội dung, từ một tệp hoặc từ mạng.
+
+00:08:37.000 --> 00:08:42.000
+Tôi chắc chắn điều này sẽ làm cho một số nhiệm vụ thực sự phức tạp trước đây trở nên dễ dàng và an toàn.
+
+00:08:42.000 --> 00:08:48.000
+Đôi khi việc lấy mọi thứ từ mạng đòi hỏi phải kiểm soát nhiều hơn một chút đối với các phản hồi và xác thực.
+
+00:08:48.000 --> 00:08:57.000
+Vì vậy, URLSession hiện có chức năng byte để tìm nạp một chuỗi byte không đồng bộ được cung cấp URL hoặc URLRequest.
+
+00:08:57.000 --> 00:09:10.000
+Nếu bạn muốn biết thêm, bạn chắc chắn nên xem phiên "Sử dụng async/ await với URLSession" để biết thêm một số chi tiết về điều này và nhiều khả năng không đồng bộ mới hơn với URLSession.
+
+00:09:10.000 --> 00:09:15.000
+Nhưng các tệp và mạng không phải là thứ duy nhất có ý nghĩa đối với AsyncSequence.
+
+00:09:15.000 --> 00:09:20.000
+Thông báo hiện có thể được chờ đợi với API thông báo mới.
+
+00:09:20.000 --> 00:09:25.000
+Và lặp lại không phải là cách duy nhất để tương tác với AsyncSequence.
+
+00:09:25.000 --> 00:09:33.000
+Trong ví dụ này, chúng tôi đang chờ thông báo đầu tiên cho các thay đổi từ xa có UUID cửa hàng khớp.
+
+00:09:33.000 --> 00:09:47.000
+Sử dụng các phương pháp như firstWhere, cùng với chuỗi thông báo không đồng bộ, cho phép một số mẫu thiết kế mới thực sự gọn gàng có thể làm cho mã trước đây thể hiện logic phức tạp giờ đây nhỏ gọn và dễ đọc hơn.
+
+00:09:47.000 --> 00:09:55.000
+Và nếu tất cả những thứ đó không đủ thú vị, có rất nhiều API mới để thao tác không đồng bộ các giá trị từ các chuỗi không đồng bộ.
+
+00:09:55.000 --> 00:10:00.000
+Những thứ này nên khá quen thuộc, bởi vì chúng là một số chức năng tương tự có sẵn trên Sequence.
+
+00:10:00.000 --> 00:10:06.000
+Chúng tôi đã đề cập đến một vài vấn đề cho đến nay, như dropFirst và firstWhere, nhưng có rất nhiều thứ khác ngoài những thứ đó.
+
+00:10:06.000 --> 00:10:14.000
+Khá nhiều thứ bạn có thể nghĩ ra để sử dụng trên Sequence hiện có một đối tác không đồng bộ để làm việc với AsyncSequence.
+
+00:10:14.000 --> 00:10:25.000
+Bây giờ đó là rất nhiều thứ để tiếp thu, và bạn có thể nghĩ, "Này, những API mới đó thực sự rất tuyệt, và cú pháp đó cực kỳ gọn gàng, nhưng làm thế nào tôi có thể tạo các chuỗi không đồng bộ của riêng mình?"
+
+00:10:25.000 --> 00:10:27.000
+Chà, hãy làm chính xác điều đó!
+
+00:10:27.000 --> 00:10:35.000
+Có một vài cách để triển khai một chuỗi không đồng bộ, nhưng tôi sẽ tập trung vào cách điều chỉnh mã hiện có của bạn.
+
+00:10:35.000 --> 00:10:46.000
+Đặc biệt, có một vài mẫu thiết kế hoạt động thực sự tốt với AsyncSequence và chúng tôi có một số cơ sở tuyệt vời để tạo ra những gì bạn đã tương tác với khái niệm mới này.
+
+00:10:46.000 --> 00:10:54.000
+Một số mẫu thiết kế đó giống như đóng cửa được gọi nhiều lần, nhưng một số đại biểu cũng có thể hoạt động tốt.
+
+00:10:54.000 --> 00:11:04.000
+Khá nhiều thứ không cần phản hồi lại và chỉ thông báo về một giá trị mới xảy ra có thể là ứng cử viên chính để tạo ra một chuỗi không đồng bộ.
+
+00:11:04.000 --> 00:11:09.000
+Những mẫu thiết kế này thực sự phổ biến và bạn có thể đã có một vài mẫu trong ứng dụng của mình ngày hôm nay.
+
+00:11:09.000 --> 00:11:12.000
+Đây là một ví dụ về mô hình xử lý phổ biến.
+
+00:11:12.000 --> 00:11:17.000
+Đó là một lớp có thuộc tính xử lý và phương thức bắt đầu và dừng.
+
+00:11:17.000 --> 00:11:21.000
+Nó có vẻ như là một ứng cử viên hoàn hảo cho AsyncSequence.
+
+00:11:21.000 --> 00:11:32.000
+Việc sử dụng hiện tại có thể là một cái gì đó như thế này khi một màn hình được tạo ra và một trình xử lý để nhận các giá trị được chỉ định, và sau đó màn hình được bắt đầu để các trận động đất có thể được gửi đến trình xử lý.
+
+00:11:32.000 --> 00:11:38.000
+Sau đó, màn hình có thể bị dừng lại để hủy bỏ các sự kiện đang được sản xuất.
+
+00:11:38.000 --> 00:11:44.000
+Chúng ta có thể sử dụng cùng một giao diện để điều chỉnh việc sử dụng cho phù hợp với loại AsyncStream mới.
+
+00:11:44.000 --> 00:11:51.000
+Chỉ cần một chút mã để sử dụng nó và cho phép bạn xây dựng một chuỗi không đồng bộ.
+
+00:11:51.000 --> 00:11:57.000
+Khi xây dựng một luồng không đồng bộ, một loại phần tử và đóng công trình được chỉ định.
+
+00:11:57.000 --> 00:12:04.000
+Việc đóng cửa có sự tiếp tục có thể mang lại các giá trị nhiều hơn một lần, kết thúc hoặc xử lý việc chấm dứt.
+
+00:12:04.000 --> 00:12:10.000
+Vì vậy, điều này có nghĩa là, trong trường hợp này, màn hình có thể được tạo ra bên trong việc đóng cửa công trình.
+
+00:12:10.000 --> 00:12:14.000
+Và sau đó người xử lý có thể được chỉ định để tạo ra các trận động đất để tiếp tục.
+
+00:12:14.000 --> 00:12:18.000
+Và sau đó onTermination có thể xử lý việc hủy bỏ và dọn dẹp.
+
+00:12:18.000 --> 00:12:20.000
+Và sau đó chúng ta có thể bắt đầu giám sát.
+
+00:12:20.000 --> 00:12:26.000
+Mã màn hình tương tự mà chúng tôi đã có trước đây có thể dễ dàng được đóng gói trong cấu trúc luồng không đồng bộ.
+
+00:12:26.000 --> 00:12:30.000
+Điều này làm giảm nhu cầu tái tạo cùng một logic trong mọi trang web sử dụng.
+
+00:12:30.000 --> 00:12:34.000
+Và đây là cách sử dụng luồng không đồng bộ này sẽ hoạt động.
+
+00:12:34.000 --> 00:12:40.000
+Bạn có thể sử dụng các chức năng chuyển đổi mạnh mẽ - như bộ lọc - và cú pháp chờ đợi mới.
+
+00:12:40.000 --> 00:12:49.000
+Điều này cho phép bạn tập trung vào mục đích của mã của mình thay vì cần phải lo lắng về việc sao chép sổ sách kế toán, vì mọi thứ được gói gọn thành một nơi.
+
+00:12:49.000 --> 00:12:54.000
+Có rất nhiều sự linh hoạt với AsyncStream để tạo ra các chuỗi không đồng bộ của riêng bạn.
+
+00:12:54.000 --> 00:12:59.000
+Đây thực sự chỉ là một ví dụ và có thể có rất nhiều ví dụ khác mà bạn có thể điều chỉnh trong mã của riêng mình.
+
+00:12:59.000 --> 00:13:05.000
+AsyncStream là một cách tuyệt vời để điều chỉnh mã hiện có của bạn để trở thành một chuỗi không đồng bộ.
+
+00:13:05.000 --> 00:13:14.000
+Nó xử lý tất cả những điều bạn mong đợi từ một chuỗi không đồng bộ, như an toàn, lặp lại và hủy bỏ; nhưng chúng cũng xử lý bộ đệm.
+
+00:13:14.000 --> 00:13:25.000
+AsyncStream là một cách vững chắc để xây dựng các chuỗi không đồng bộ của riêng bạn và một loại trả về phù hợp từ các API của riêng bạn, vì nguồn duy nhất của các phần tử được tạo ra là từ việc xây dựng.
+
+00:13:25.000 --> 00:13:27.000
+Và nếu bạn cần đại diện cho các lỗi được ném?
+
+00:13:27.000 --> 00:13:30.000
+Chà, chúng tôi có một loại cho điều đó!
+
+00:13:30.000 --> 00:13:35.000
+AsyncThrowingStream giống như AsyncStream nhưng có thể xử lý lỗi.
+
+00:13:35.000 --> 00:13:42.000
+Nó cung cấp tính linh hoạt và an toàn giống như AsyncStream nhưng có thể xử lý các lỗi bằng cách ném từ lần lặp lại của nó.
+
+00:13:42.000 --> 00:13:51.000
+AsyncSequence là một công cụ thực sự mạnh mẽ, vừa an toàn vừa quen thuộc để xử lý nhiều hơn một giá trị không đồng bộ.
+
+00:13:51.000 --> 00:13:56.000
+Nếu bạn biết cách sử dụng Sequence, bạn đã biết cách sử dụng AsyncSequence.
+
+00:13:56.000 --> 00:14:02.000
+Chúng tôi đã xem xét các chuỗi không đồng bộ là gì và cách chúng được sử dụng và giới thiệu cho bạn AsyncStream.
+
+00:14:02.000 --> 00:14:11.000
+Chúng tôi đã đi sâu vào lý thuyết và những gì định nghĩa chúng, và một vài chuỗi không đồng bộ mới được giới thiệu, và cuối cùng, làm thế nào để xây dựng của riêng bạn.
+
+00:14:11.000 --> 00:14:14.000
+Tôi háo hức chờ đợi những gì bạn làm với họ tiếp theo.
+
+00:14:14.000 --> 23:59:59.000
+♪
+

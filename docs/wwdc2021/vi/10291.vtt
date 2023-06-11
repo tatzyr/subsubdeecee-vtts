@@ -1,0 +1,188 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:13.000
+Graham Seyffert: Xin chào và chào mừng đến với WWDC 2021.
+
+00:00:13.000 --> 00:00:16.000
+Tên tôi là Graham Seyffert, và tôi là một kỹ sư MusicKit.
+
+00:00:16.000 --> 00:00:24.000
+Trong vài năm qua, chúng tôi đã nâng cao khả năng của các nhà phát triển để tìm nạp dữ liệu mới, phong phú từ danh mục Apple Music.
+
+00:00:24.000 --> 00:00:28.000
+Hôm nay chúng tôi rất vui được giới thiệu một số cải tiến đó cho bạn.
+
+00:00:28.000 --> 00:00:45.000
+Trong bài thuyết trình này, chúng tôi sẽ xem xét các cải tiến đối với chức năng tìm kiếm trong API, cũng như các cách mới để yêu cầu dữ liệu bằng cách liên quan đến tài nguyên, mở rộng thuộc tính và yêu cầu chế độ xem mối quan hệ cho các tài nguyên trong phản hồi của bạn.
+
+00:00:45.000 --> 00:00:49.000
+Cuối cùng, chúng ta sẽ xem xét một số cải tiến mới cho API Biểu đồ.
+
+00:00:49.000 --> 00:00:56.000
+Trước khi xem xét một số cải tiến tìm kiếm, tôi muốn nhanh chóng tóm tắt lại điểm cuối /tìm kiếm/gợi ý hiện tại.
+
+00:00:56.000 --> 00:01:01.000
+Bạn có thể đã sử dụng điểm cuối này ngay hôm nay để tìm nạp danh sách các cụm từ tìm kiếm được đề xuất.
+
+00:01:01.000 --> 00:01:07.000
+Ví dụ, đây là một số kết quả bạn có thể nhận được cho cụm từ tìm kiếm "taylor".
+
+00:01:07.000 --> 00:01:14.000
+Hôm nay, chúng tôi giới thiệu điểm cuối /search/suggestions thay thế điểm cuối /search/hints.
+
+00:01:14.000 --> 00:01:24.000
+Điểm cuối này cung cấp quyền truy cập vào các thuật ngữ tương tự như điểm cuối /search/hints và bạn có thể tiếp tục tìm nạp chúng bằng cách chỉ định kinds=terms theo yêu cầu của mình.
+
+00:01:24.000 --> 00:01:29.000
+Tuy nhiên, bạn có thể thấy rằng phản hồi từ điểm cuối này hơi khác một chút.
+
+00:01:29.000 --> 00:01:35.000
+Các kết quả được đề xuất bây giờ chỉ ra loại của chúng, sẽ khớp với một trong các loại được chỉ định trên yêu cầu.
+
+00:01:35.000 --> 00:01:42.000
+Nó cũng phân biệt thuật ngữ nên được sử dụng cho truy vấn tìm kiếm với thuật ngữ nên được hiển thị cho người dùng.
+
+00:01:42.000 --> 00:01:51.000
+Quan trọng hơn, điểm cuối này hiện cũng cho phép truy cập vào các kết quả tìm kiếm được đề xuất hàng đầu - lý tưởng để cung cấp năng lượng cho các kết quả typeahead.
+
+00:01:51.000 --> 00:02:00.000
+Những thứ này có thể được yêu cầu bằng cách chỉ định types=topResults trên yêu cầu, cũng như một số loại tài nguyên mà bạn quan tâm đến việc tìm nạp kết quả.
+
+00:02:00.000 --> 00:02:05.000
+Tài nguyên cho các loại Kết quả hàng đầu có thể được tìm thấy dưới khóa nội dung.
+
+00:02:05.000 --> 00:02:16.000
+Điều đáng chú ý là kết quả bạn sẽ nhận được từ điểm cuối này có thể khác biệt đáng kể so với kết quả bạn nhận được từ một tìm kiếm thông thường, vì phản hồi này ưu tiên tốc độ hơn chiều rộng.
+
+00:02:16.000 --> 00:02:23.000
+Như vậy, điều này không nhằm mục đích thay thế cho điểm cuối /tìm kiếm thông thường, mà là một sự bổ sung cho nó.
+
+00:02:23.000 --> 00:02:31.000
+Trước khi đi sâu vào cách sửa đổi tài nguyên, tôi muốn giới thiệu lại tài nguyên dành cho những người có thể không quen thuộc.
+
+00:02:31.000 --> 00:02:41.000
+Tất cả các tài nguyên đều có cái mà chúng tôi gọi là "định danh tài nguyên", đó là lượng thông tin tối thiểu bạn cần để tra cứu tài nguyên trong API.
+
+00:02:41.000 --> 00:02:47.000
+Số nhận dạng tài nguyên sẽ bao gồm ID của tài nguyên, loại của nó và href của nó.
+
+00:02:47.000 --> 00:02:58.000
+Biểu diễn đầy đủ của một tài nguyên cũng sẽ bao gồm các thuộc tính của tài nguyên đó, chẳng hạn như tên của nó và các mối quan hệ tiềm năng nếu chúng được yêu cầu bằng cách sử dụng tham số bao gồm.
+
+00:02:58.000 --> 00:03:05.000
+Mối quan hệ là tập hợp các tài nguyên liên quan, chẳng hạn như thể loại bài hát hoặc các bản nhạc của danh sách phát.
+
+00:03:05.000 --> 00:03:11.000
+Với điều đó, bây giờ tôi muốn giới thiệu khái niệm về các nguồn lực liên quan.
+
+00:03:11.000 --> 00:03:23.000
+Các mối quan hệ được yêu cầu liên quan khác với các mối quan hệ được yêu cầu bao gồm ở chỗ chúng chỉ trả về các Mã định danh tài nguyên nói trên cho các tài nguyên trong mối quan hệ đó.
+
+00:03:23.000 --> 00:03:31.000
+Điều này có nghĩa là việc liên kết một mối quan hệ dẫn đến phản hồi nhanh hơn nếu tất cả những gì bạn cần truy cập là tài liệu tham khảo của tài nguyên.
+
+00:03:31.000 --> 00:03:43.000
+Bạn có thể liên kết một mối quan hệ bằng cách sử dụng tham số truy vấn liên quan và phân loại nó với loại tài nguyên bạn đang nhắm mục tiêu, tiếp theo là danh sách các tên mối quan hệ mà bạn muốn lấy lại.
+
+00:03:43.000 --> 00:03:53.000
+Ví dụ: trên điểm cuối /search /suggestions, bạn có thể quyết định rằng khi người dùng chọn kết quả bài hát mà bạn muốn bật ra trang album cho bài hát đó.
+
+00:03:53.000 --> 00:04:04.000
+Trong trường hợp này, tất cả những gì bạn cần là href cho album của bài hát đó để điều hướng đến đó, vì vậy chúng tôi có thể chỉ định relate=albums để lấy dữ liệu đó.
+
+00:04:04.000 --> 00:04:12.000
+Sau khi làm điều đó, chúng ta có thể thấy rằng kết quả bài hát trong phản hồi của chúng ta bây giờ bao gồm số nhận dạng tài nguyên cho các album tương ứng của họ.
+
+00:04:12.000 --> 00:04:22.000
+Vì vậy, liên quan là tuyệt vời để sử dụng khi chúng tôi muốn nhanh chóng tham khảo nội dung liên quan bổ sung, nhưng điều gì sẽ xảy ra nếu chúng tôi muốn tìm hiểu thêm về các tài nguyên mà chúng tôi đã nhận lại trong các câu trả lời của mình?
+
+00:04:22.000 --> 00:04:31.000
+Như đã đề cập trước đây, mọi tài nguyên ngày nay đều có một tập hợp các thuộc tính mặc định - những thứ như tên của nó, tác phẩm nghệ thuật của nó, v.v.
+
+00:04:31.000 --> 00:04:34.000
+Nhưng tài nguyên cũng có thể có các thuộc tính mở rộng.
+
+00:04:34.000 --> 00:04:47.000
+Các thuộc tính mở rộng đắt hơn để tính toán hoặc ít cần thiết hơn, do đó bao gồm chúng theo mặc định có thể làm chậm phản hồi đáng kể hoặc làm phình to mô hình đối tượng.
+
+00:04:47.000 --> 00:05:01.000
+Tương tự như những gì chúng ta vừa thấy với tham số truy vấn liên quan, bạn có thể yêu cầu các thuộc tính mở rộng trên tài nguyên bằng cách sử dụng tham số truy vấn mở rộng, phân loại nó với một loại tài nguyên và theo sau nó với danh sách các tên thuộc tính mà bạn quan tâm.
+
+00:05:01.000 --> 00:05:11.000
+Dựa trên yêu cầu /đề xuất của chúng tôi, chúng tôi có thể quyết định rằng, đối với kết quả bài hát, chúng tôi cũng muốn cho phép người dùng có khả năng liên kết đến trang của nghệ sĩ đó trên Apple Music.
+
+00:05:11.000 --> 00:05:17.000
+Để làm điều này, bạn có thể chỉ cần thêm extend=artistUrl vào yêu cầu của mình.
+
+00:05:17.000 --> 00:05:25.000
+Thật vậy, sau khi làm điều này, chúng ta có thể thấy các tài nguyên bài hát trong phản hồi của chúng ta bây giờ bao gồm thuộc tính artistUrl.
+
+00:05:25.000 --> 00:05:30.000
+Bây giờ tôi muốn giới thiệu khái niệm về quan điểm mối quan hệ.
+
+00:05:30.000 --> 00:05:34.000
+So với các mối quan hệ, các quan điểm được kết hợp lỏng lẻo hơn với tài nguyên của họ.
+
+00:05:34.000 --> 00:05:40.000
+Chúng không nhất thiết đại diện cho một số sự thật cơ bản về một nguồn tài nguyên giống như các mối quan hệ.
+
+00:05:40.000 --> 00:05:46.000
+Điều này làm cho các lượt xem phù hợp lý tưởng để thúc đẩy trải nghiệm trang sản phẩm, chẳng hạn như trang album.
+
+00:05:46.000 --> 00:05:53.000
+So sánh điều này với các mối quan hệ có thể hữu ích để sử dụng, ví dụ, các trang kết quả tìm kiếm.
+
+00:05:53.000 --> 00:05:58.000
+Ngoài ra, các chế độ xem có thể có các thuộc tính - như tiêu đề - cũng như dữ liệu.
+
+00:05:58.000 --> 00:06:01.000
+Lượt xem cũng chỉ được yêu cầu khi tìm nạp tài nguyên trực tiếp.
+
+00:06:01.000 --> 00:06:04.000
+Điều này có nghĩa là có hai cách khác nhau để bạn có thể lấy chúng.
+
+00:06:04.000 --> 00:06:16.000
+Bạn có thể sử dụng tham số truy vấn lượt xem và chỉ định một danh sách hoặc một danh sách duy nhất thông qua /view/{viewName} ngay sau ID của tài nguyên trong đường dẫn yêu cầu.
+
+00:06:16.000 --> 00:06:23.000
+Trong phản hồi này, chúng tôi có một ví dụ về việc bao gồm chế độ xem Bài hát hàng đầu trên tài nguyên nghệ sĩ.
+
+00:06:23.000 --> 00:06:28.000
+Các ví dụ khác bao gồm Top Music Videos hoặc đĩa đơn của một nghệ sĩ.
+
+00:06:28.000 --> 00:06:35.000
+Danh sách đầy đủ các chế độ xem được hỗ trợ cho một loại tài nguyên nhất định tất nhiên có thể được tìm thấy trong tài liệu Apple Music API chính thức.
+
+00:06:35.000 --> 00:06:39.000
+Cuối cùng, chúng ta hãy xem các bản cập nhật cho Charts API.
+
+00:06:39.000 --> 00:06:47.000
+Ngày nay, Apple Music hỗ trợ danh sách phát biểu đồ cho thế giới, mặt tiền cửa hàng và gần đây hơn là các thành phố cụ thể.
+
+00:06:47.000 --> 00:06:52.000
+Người dùng có thể thêm các danh sách phát biểu đồ này vào thư viện của họ, danh sách này sẽ tự động cập nhật.
+
+00:06:52.000 --> 00:07:07.000
+Bây giờ bạn có thể tìm nạp những thứ này trực tiếp từ điểm cuối /charts bằng cách chỉ định types=playlists và sử dụng tham số truy vấn "with" để chỉ ra bộ nào bạn muốn - dailyGlobalTopCharts hoặc cityCharts hoặc cả hai.
+
+00:07:07.000 --> 00:07:12.000
+Và ở đây chúng tôi có một ví dụ về phản hồi của biểu đồ với các tham số truy vấn đó có thể trông như thế nào.
+
+00:07:12.000 --> 00:07:23.000
+Vì vậy, tóm lại, hôm nay chúng tôi đã xem xét các cải tiến đối với các điểm cuối tìm kiếm và biểu đồ và xem xét các cách mới để tìm nạp dữ liệu cho các tài nguyên trong phản hồi của chúng tôi.
+
+00:07:23.000 --> 00:07:40.000
+Nếu bạn muốn tìm hiểu thêm về Apple Music API, tôi thực sự đề xuất phiên năm nay về cách tham khảo chéo nội dung trên Apple Music API hoặc bản trình bày Giới thiệu MusicKit năm 2017, bao gồm một số khái niệm cốt lõi của API thậm chí còn chi tiết hơn.
+
+00:07:40.000 --> 00:07:44.000
+Cảm ơn rất nhiều vì đã xem, và chúng tôi hy vọng bạn sẽ thích WWDC năm nay.
+
+00:07:44.000 --> 23:59:59.000
+♪
+

@@ -1,0 +1,239 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+David Hayward: Chào mừng mọi người.
+
+00:00:09.000 --> 00:00:10.000
+Tên tôi là David Hayward.
+
+00:00:10.000 --> 00:00:22.000
+Tôi là kỹ sư cao cấp trong nhóm Core Image và hôm nay tôi sẽ trình bày ngắn để chỉ cho bạn các phương pháp hay nhất mới nhất khi thêm hạt nhân Metal Core Image tùy chỉnh vào dự án Xcode của bạn.
+
+00:00:22.000 --> 00:00:29.000
+Trong bài thuyết trình này, tôi sẽ thảo luận về những lợi ích chung của việc viết CIKernels tùy chỉnh bằng Kim loại.
+
+00:00:29.000 --> 00:00:35.000
+Tiếp theo, tôi sẽ giới thiệu hai cách được đề xuất mà Metal CIKernels có thể được chế tạo.
+
+00:00:35.000 --> 00:00:40.000
+Và sau đó tôi sẽ trình bày từng bước cách thêm những thứ này vào dự án của bạn.
+
+00:00:40.000 --> 00:00:46.000
+Trước hết, hãy xem lại những lợi ích của việc viết CIKernels tùy chỉnh bằng Metal.
+
+00:00:46.000 --> 00:00:53.000
+Bằng cách viết CIKernels bằng Metal, bạn sẽ có quyền truy cập vào các tính năng Core Image như ốp lát tự động và nối.
+
+00:00:53.000 --> 00:01:02.000
+Nó sẽ cải thiện hiệu suất ứng dụng của bạn bằng cách chuyển một phần thời gian để biên dịch hạt nhân từ thời gian chạy sang khi ứng dụng của bạn được xây dựng.
+
+00:01:02.000 --> 00:01:11.000
+Và làm như vậy sẽ cung cấp cho hạt nhân của bạn quyền truy cập vào các tính năng hiệu suất cao như tập hợp-đọc, viết nhóm và toán học nửa nổi.
+
+00:01:11.000 --> 00:01:20.000
+Cuối cùng nhưng không kém phần quan trọng, nó sẽ giúp cuộc sống của bạn với tư cách là một nhà phát triển dễ dàng hơn bằng cách tô sáng cú pháp khi bạn nhập và kiểm tra lỗi nội tuyến khi bạn xây dựng.
+
+00:01:20.000 --> 00:01:28.000
+Vì vậy, với động lực đó, bây giờ tôi sẽ chỉ cho bạn từng bước cách thêm hạt nhân Metal Core Image vào ứng dụng của bạn.
+
+00:01:28.000 --> 00:01:35.000
+Hiện tại có hai cách được đề xuất để thêm CIKernels vào dự án của bạn và tôi sẽ mô tả chi tiết cả hai phương pháp.
+
+00:01:35.000 --> 00:01:45.000
+Tôi sẽ gọi đây là phương thức bên ngoài vì nó yêu cầu các hàm hạt nhân được chỉ định là bên ngoài "C" và được xây dựng bằng cách sử dụng cờ xây dựng tùy chỉnh.
+
+00:01:45.000 --> 00:01:50.000
+Phương pháp thứ hai là mới trong iOS 15 và macOS 12.
+
+00:01:50.000 --> 00:01:57.000
+Tôi sẽ gọi đây là phương pháp có thể khâu được vì nó yêu cầu các hàm hạt nhân được quy cho là có thể khâu được.
+
+00:01:57.000 --> 00:02:01.000
+Việc triển khai nó sử dụng Thư viện Động Kim loại.
+
+00:02:01.000 --> 00:02:04.000
+Trong cả hai phương pháp, có bốn bước chung cần tuân theo.
+
+00:02:04.000 --> 00:02:08.000
+Đầu tiên, là cấu hình dự án của bạn một cách thích hợp.
+
+00:02:08.000 --> 00:02:13.000
+Thứ hai, là thêm các tệp nguồn Metal CIKernel vào dự án của bạn.
+
+00:02:13.000 --> 00:02:16.000
+Thứ ba, là viết mã Metal CIKernel của bạn.
+
+00:02:16.000 --> 00:02:25.000
+Và thứ tư là viết mã Swift hoặc Objective-C để khởi tạo và áp dụng hạt nhân của bạn để tạo CIImage mới.
+
+00:02:25.000 --> 00:02:32.000
+Đầu tiên, hãy mô tả bốn bước này khi sử dụng CIKernels bên ngoài, bắt đầu với cấu hình dự án.
+
+00:02:32.000 --> 00:02:40.000
+Không giống như các bộ đổ bóng đồ họa và tính toán Metal thông thường, mã Core Image Metal này cần được biên dịch và liên kết với các cờ đặc biệt.
+
+00:02:40.000 --> 00:02:48.000
+Tôi khuyên bạn nên thêm hai quy tắc xây dựng tùy chỉnh vào các mục tiêu dự án của bạn, điều này sẽ giúp việc sử dụng các cờ này trở nên tự động.
+
+00:02:48.000 --> 00:02:56.000
+Đầu tiên, bạn sẽ đi đến cài đặt mục tiêu của dự án và thêm quy tắc xây dựng cho các tệp kết thúc bằng .ci.metal.
+
+00:02:56.000 --> 00:03:06.000
+Đối với các tệp có phần mở rộng này, quy tắc này sẽ chạy một tập lệnh một dòng gọi trình biên dịch Metal với cờ -fcikernel được yêu cầu.
+
+00:03:06.000 --> 00:03:12.000
+Quy tắc xây dựng này sẽ tạo ra một nhị phân đầu ra sẽ kết thúc bằng .ci.air.
+
+00:03:12.000 --> 00:03:18.000
+Tiếp theo, bạn sẽ thêm quy tắc xây dựng thứ hai cho các tệp kết thúc bằng .ci.air.
+
+00:03:18.000 --> 00:03:27.000
+Đối với các tệp có phần mở rộng này, quy tắc này sẽ chạy một tập lệnh một dòng gọi trình liên kết Metal với cờ -cikernel được yêu cầu.
+
+00:03:27.000 --> 00:03:36.000
+Quy tắc xây dựng này sẽ tạo ra một đầu ra trong thư mục Tài nguyên của ứng dụng của bạn sẽ kết thúc bằng .ci.metallib.
+
+00:03:36.000 --> 00:03:43.000
+Bây giờ bạn đã thêm các quy tắc xây dựng tùy chỉnh, tất cả những gì bạn cần làm là thêm các nguồn .ci.metal vào dự án của mình.
+
+00:03:43.000 --> 00:03:54.000
+Để làm điều đó, hãy chọn từ menu Tệp mà bạn muốn thêm tệp Metal mới và sau đó đặt tên cho tệp mới đó bằng .ci.metal.
+
+00:03:54.000 --> 00:03:59.000
+Bước tiếp theo là ghi CIKernel của bạn vào tệp nguồn Metal.
+
+00:03:59.000 --> 00:04:08.000
+Đầu tiên, ở đầu nguồn, bạn sẽ bao gồm tiêu đề CoreImage.h để bạn có quyền truy cập vào tất cả các lớp mà Core Image cung cấp.
+
+00:04:08.000 --> 00:04:14.000
+Hạt nhân phải được chỉ định là "C" bên ngoài để được Core Image nhận dạng.
+
+00:04:14.000 --> 00:04:19.000
+Nội dung triển khai hạt nhân thực tế của bạn tùy thuộc vào trí tưởng tượng của bạn.
+
+00:04:19.000 --> 00:04:31.000
+Đối với một ví dụ về những gì bạn có thể làm, tôi khuyên bạn nên xem bài thuyết trình WWDC 2020 của chúng tôi về "chỉnh sửa và phát lại HDR bằng AVFoundation."
+
+00:04:31.000 --> 00:04:37.000
+Bước cuối cùng là thêm mã Swift để tải hạt nhân của bạn và áp dụng nó để tạo một hình ảnh mới.
+
+00:04:37.000 --> 00:04:46.000
+Hạt nhân thường được sử dụng trong lớp con CIFilter sẽ có các thuộc tính như inputImage và các tham số đầu vào khác.
+
+00:04:46.000 --> 00:04:52.000
+Tôi khuyên bạn nên khởi tạo đối tượng CIKernel của nó thành một thuộc tính tĩnh.
+
+00:04:52.000 --> 00:04:59.000
+Bằng cách này, công việc tải tài nguyên metallib chỉ được thực hiện một lần khi cần thiết lần đầu tiên.
+
+00:04:59.000 --> 00:05:10.000
+Do quy tắc xây dựng tùy chỉnh mà tôi đã mô tả trước đó, bạn sẽ cần chỉ định URL tài nguyên có cùng tên với nguồn của bạn và phần mở rộng của .ci.metallib.
+
+00:05:10.000 --> 00:05:16.000
+Cuối cùng, một lớp con CIFilter phải ghi đè lên thuộc tính outputImage.
+
+00:05:16.000 --> 00:05:26.000
+Trong getter, bạn sẽ lấy hạt nhân từ một thuộc tính tĩnh và sử dụng phương thức áp dụng của nó để tạo một hình ảnh mới dựa trên các thuộc tính đầu vào.
+
+00:05:26.000 --> 00:05:31.000
+Vì vậy, điều đó mô tả đầy đủ quá trình xây dựng bên ngoài CIKernels.
+
+00:05:31.000 --> 00:05:37.000
+Bây giờ chúng ta hãy mô tả quy trình mới của việc xây dựng CIKernels có thể khâu lại.
+
+00:05:37.000 --> 00:05:42.000
+Với phương pháp có thể khâu lại, chỉ cần một thay đổi cài đặt để định cấu hình dự án Xcode của bạn.
+
+00:05:42.000 --> 00:05:47.000
+Cài đặt này sẽ yêu cầu trình liên kết kim loại liên kết với khung Core Image.
+
+00:05:47.000 --> 00:05:56.000
+Để làm điều này, chỉ cần chuyển đến cài đặt mục tiêu của dự án và thêm cài đặt xây dựng cho các Cờ liên kết kim loại khác với giá trị "-framework CoreImage".
+
+00:05:56.000 --> 00:06:05.000
+Bởi vì CIKernels có thể khâu không yêu cầu các quy tắc xây dựng tùy chỉnh, bạn có thể chỉ cần thêm các nguồn .metal vào dự án của mình mà không cần bất kỳ hậu tố đặc biệt nào.
+
+00:06:05.000 --> 00:06:09.000
+Bạn có thể thêm hạt nhân vào một hoặc một số tệp nguồn.
+
+00:06:09.000 --> 00:06:14.000
+Theo mặc định, Xcode sẽ xây dựng tất cả chúng thành một tài nguyên .metallib.
+
+00:06:14.000 --> 00:06:18.000
+Bước tiếp theo là ghi CIKernel của bạn vào tệp nguồn Metal.
+
+00:06:18.000 --> 00:06:25.000
+Như trước đây, bạn sẽ bao gồm tiêu đề CoreImage.h để có quyền truy cập vào các lớp Core Image.
+
+00:06:25.000 --> 00:06:32.000
+Nhưng với phương pháp này, hạt nhân phải được gán là ] để được Core Image nhận dạng.
+
+00:06:32.000 --> 00:06:39.000
+Một lần nữa, bước cuối cùng là thêm mã Swift để tải hạt nhân của bạn và áp dụng nó để tạo một hình ảnh mới.
+
+00:06:39.000 --> 00:06:47.000
+Thay đổi duy nhất với CIKernels có thể khâu là bạn có thể chỉ cần tải tài nguyên với tên tiêu chuẩn là default.metallib.
+
+00:06:47.000 --> 00:06:52.000
+Điều đó kết thúc quá trình xây dựng CIKernels có thể khâu được.
+
+00:06:52.000 --> 00:06:56.000
+Điều đáng nói là một số lợi ích của việc sử dụng phương pháp này.
+
+00:06:56.000 --> 00:07:00.000
+Các hạt nhân có thể khâu có thể liên kết với các thư viện Kim loại khác.
+
+00:07:00.000 --> 00:07:06.000
+Và bây giờ chúng hỗ trợ các tham số đầu vào là các loại vectơ số nguyên và không dấu.
+
+00:07:06.000 --> 00:07:12.000
+Một lợi ích thích hợp khác là các hạt nhân có thể khâu lại có thể được biên dịch từ nguồn trong thời gian chạy.
+
+00:07:12.000 --> 00:07:18.000
+Hầu hết các ứng dụng không nên sử dụng tính năng này vì nó sẽ phải chịu thời gian biên dịch ban đầu lâu hơn.
+
+00:07:18.000 --> 00:07:24.000
+Điều đó nói rằng, có một số loại ứng dụng có thể được hưởng lợi từ sự linh hoạt này.
+
+00:07:24.000 --> 00:07:28.000
+Có một chủ đề cuối cùng cần đề cập trong bài thuyết trình này.
+
+00:07:28.000 --> 00:07:33.000
+Việc triển khai CIKernel có thể khâu phụ thuộc vào hai tính năng quan trọng của Metal.
+
+00:07:33.000 --> 00:07:37.000
+Đầu tiên là Ngôn ngữ đổ bóng kim loại phiên bản 2.4 mới.
+
+00:07:37.000 --> 00:07:48.000
+Trong số những thứ khác, phiên bản này hỗ trợ thuộc tính ] khiến trình biên dịch liên kết siêu dữ liệu bổ sung với mỗi hàm.
+
+00:07:48.000 --> 00:07:56.000
+Thứ hai là tính năng Thư viện Động Kim loại được sử dụng để hạt nhân của bạn có thể liên kết với các lớp Core Image Metal.
+
+00:07:56.000 --> 00:08:03.000
+Để biết thêm chi tiết về các tính năng Metal này, hãy nhớ xem bản trình bày "Khám phá quy trình biên soạn trong Metal".
+
+00:08:03.000 --> 00:08:21.000
+Tuy nhiên, hãy lưu ý rằng Thư viện động kim loại chỉ được hỗ trợ trên một số thiết bị đồ họa, cụ thể là iPhone và iPad với A11 trở lên, tất cả các máy Mac có silicon của Apple và máy Mac Intel với GPU AMD Navi và Vega.
+
+00:08:21.000 --> 00:08:30.000
+Ứng dụng của bạn nên kiểm tra thuộc tính thiết bị Metal hỗ trợ Thư viện Động trước khi sử dụng CIKernels có thể khâu được.
+
+00:08:30.000 --> 00:08:39.000
+Vì vậy, kết thúc mô tả từng bước của tôi về cách sử dụng hai cách được đề xuất để thêm Metal CIKernels vào ứng dụng của bạn.
+
+00:08:39.000 --> 00:08:46.000
+Đối với mỗi phương pháp, tôi đã đề cập đến cách định cấu hình dự án của bạn, viết nguồn hạt nhân và khởi tạo các đối tượng hạt nhân.
+
+00:08:46.000 --> 00:08:51.000
+Tôi hy vọng rằng điều này cho phép bạn thêm các hiệu ứng hình ảnh tuyệt vời vào hình ảnh và video của ứng dụng của bạn.
+
+00:08:51.000 --> 00:08:55.000
+Cảm ơn bạn và tận hưởng phần còn lại của WWDC 2021!
+
+00:08:55.000 --> 23:59:59.000
+♪
+

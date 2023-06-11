@@ -1,0 +1,1606 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=0"
+  },
+  {
+    "text": "Hello. My name is Baek San Chang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=9"
+  },
+  {
+    "text": "and I work on Core Audio. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=10"
+  },
+  {
+    "text": "Today I will discuss a new way to create audio drivers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=12"
+  },
+  {
+    "text": "with DriverKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=15"
+  },
+  {
+    "text": "But first let's review how audio drivers work today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=16"
+  },
+  {
+    "text": "Prior to macOS Big Sur, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=19"
+  },
+  {
+    "text": "an audio server plug-in would need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=21"
+  },
+  {
+    "text": "to communicate with a hardware device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=23"
+  },
+  {
+    "text": "through a user client to a kernel extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=25"
+  },
+  {
+    "text": "In macOS Big Sur, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=29"
+  },
+  {
+    "text": "the CoreAudio HAL provided support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=31"
+  },
+  {
+    "text": "to create an audio server plug-in built ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=33"
+  },
+  {
+    "text": "on top of a DriverKit Extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=35"
+  },
+  {
+    "text": "The layer between the plug-in and the dext was the same ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=38"
+  },
+  {
+    "text": "as with a kext, but security was improved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=40"
+  },
+  {
+    "text": "by moving out of the kernel and into user space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=43"
+  },
+  {
+    "text": "For more information on DriverKit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=47"
+  },
+  {
+    "text": "please check out the previous WWDC DriverKit videos. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=49"
+  },
+  {
+    "text": "While the current solution allows audio driver development ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=53"
+  },
+  {
+    "text": "to move out of the kernel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=56"
+  },
+  {
+    "text": "two separate components are still needed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=57"
+  },
+  {
+    "text": "to implement a functional hardware audio driver: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=59"
+  },
+  {
+    "text": "An audio server plug-in and a driver extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=62"
+  },
+  {
+    "text": "This complicates development, increases resources, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=65"
+  },
+  {
+    "text": "and can increase overhead and latency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=69"
+  },
+  {
+    "text": "Starting in macOS Monterey, you only need a dext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=72"
+  },
+  {
+    "text": "no more plug-in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=75"
+  },
+  {
+    "text": "AudioDriverKit is a new DriverKit framework used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=77"
+  },
+  {
+    "text": "to write audio driver extensions alongside USBDriverKit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=80"
+  },
+  {
+    "text": "or PCIDriverKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=84"
+  },
+  {
+    "text": "This new framework handles all the inter process communication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=86"
+  },
+  {
+    "text": "to the CoreAudio HAL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=89"
+  },
+  {
+    "text": "Since you only have a dext, now you don't need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=92"
+  },
+  {
+    "text": "to communicate between your dext and an audio server plug-in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=94"
+  },
+  {
+    "text": "You can stay focused within DriverKit.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=97"
+  },
+  {
+    "text": "Since AudioDriverKit extensions are bundled inside a Mac app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=101"
+  },
+  {
+    "text": "a separate installer is no longer necessary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=105"
+  },
+  {
+    "text": "And now your driver is loaded immediately, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=110"
+  },
+  {
+    "text": "no reboot required.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=112"
+  },
+  {
+    "text": "Now that you know the benefits of AudioDriverKit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=115"
+  },
+  {
+    "text": "let's dive into making a new audio driver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=117"
+  },
+  {
+    "text": "I will start with a brief overview ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=120"
+  },
+  {
+    "text": "of the components involved in an audio driver, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=121"
+  },
+  {
+    "text": "then cover some things you'll need before writing your dext.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=125"
+  },
+  {
+    "text": "Once we're ready to start writing code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=130"
+  },
+  {
+    "text": "I will walk through how to configure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=131"
+  },
+  {
+    "text": "and initialize your dext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=133"
+  },
+  {
+    "text": "create devices, streams, and other audio objects, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=135"
+  },
+  {
+    "text": "and deal with the IO path and timestamps. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=139"
+  },
+  {
+    "text": "Lastly, I will discuss how to handle configuration changes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=142"
+  },
+  {
+    "text": "and show you a demo of the dext at the end.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=146"
+  },
+  {
+    "text": "So let's start with architecture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=150"
+  },
+  {
+    "text": "The diagram shows how the HAL communicates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=152"
+  },
+  {
+    "text": "with Driver Extensions using ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=155"
+  },
+  {
+    "text": "the AudioDriverKit framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=156"
+  },
+  {
+    "text": "The AudioDriverKit framework will create ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=159"
+  },
+  {
+    "text": "a private user client that will be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=160"
+  },
+  {
+    "text": "for all the communication between CoreAudio ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=163"
+  },
+  {
+    "text": "and your audio dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=165"
+  },
+  {
+    "text": "This user client is not intended to be used directly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=167"
+  },
+  {
+    "text": "and not exposed to your dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=171"
+  },
+  {
+    "text": "Notice that there is no plug-in or custom user client required ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=173"
+  },
+  {
+    "text": "to communicate between your app and dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=177"
+  },
+  {
+    "text": "Optionally, your app can open a custom user client ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=180"
+  },
+  {
+    "text": "to communicate with your dext directly if needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=183"
+  },
+  {
+    "text": "Now let's talk about the entitlements you will need.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=187"
+  },
+  {
+    "text": "All DriverKit driver extensions must have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=190"
+  },
+  {
+    "text": "the DriverKit entitlement.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=192"
+  },
+  {
+    "text": "AudioDriverKit dexts must also have the entitlement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=194"
+  },
+  {
+    "text": "to allow any user client access.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=197"
+  },
+  {
+    "text": "This is available to all developers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=200"
+  },
+  {
+    "text": "who have been approved for any DriverKit entitlements.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=202"
+  },
+  {
+    "text": "Additionally, any transport family entitlements should be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=205"
+  },
+  {
+    "text": "added as necessary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=208"
+  },
+  {
+    "text": "If you have not yet requested a USB ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=210"
+  },
+  {
+    "text": "or PCI transport entitlement, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=213"
+  },
+  {
+    "text": "visit Apple's developer site to submit a request.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=215"
+  },
+  {
+    "text": "Keep in mind that the sample code presented is purely ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=218"
+  },
+  {
+    "text": "for demonstration purposes and creates a virtual audio driver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=221"
+  },
+  {
+    "text": "that is not associated with a hardware device, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=224"
+  },
+  {
+    "text": "and so entitlements will not be granted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=227"
+  },
+  {
+    "text": "for that kind of use case. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=230"
+  },
+  {
+    "text": "If a virtual audio driver or device is all that is needed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=231"
+  },
+  {
+    "text": "the audio server plug-in driver model should continue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=235"
+  },
+  {
+    "text": "to be used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=238"
+  },
+  {
+    "text": "Now let's look at your dext's info.plist. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=239"
+  },
+  {
+    "text": "These settings need to be added ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=241"
+  },
+  {
+    "text": "to the IOKitPersonalities of the dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=243"
+  },
+  {
+    "text": "AudioDriverKit will handle creation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=245"
+  },
+  {
+    "text": "of IOUserAudioDriverUserClient required by the HAL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=247"
+  },
+  {
+    "text": "The HAL has the required entitlements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=251"
+  },
+  {
+    "text": "to connect to the user client connection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=253"
+  },
+  {
+    "text": "Here's an example of a custom user client ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=255"
+  },
+  {
+    "text": "for SimpleAudioDriverUserClient. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=258"
+  },
+  {
+    "text": "See the AudioDriverKitTypes.h header file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=260"
+  },
+  {
+    "text": "for more information. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=262"
+  },
+  {
+    "text": "Next, let's talk about configuration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=264"
+  },
+  {
+    "text": "and initialization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=266"
+  },
+  {
+    "text": "The first step to configuring an audio dext is ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=268"
+  },
+  {
+    "text": "to subclass IOUserAudioDriver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=271"
+  },
+  {
+    "text": "and override the virtual methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=273"
+  },
+  {
+    "text": "IOUserAudioDriver is a subclass of IOService. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=275"
+  },
+  {
+    "text": "Subclass any IOUserAudio objects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=280"
+  },
+  {
+    "text": "that are needed to implement custom behavior. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=282"
+  },
+  {
+    "text": "Then configure and add them to IOUserAudioDriver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=286"
+  },
+  {
+    "text": "The diagram shows an overview of IOUserAudio objects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=290"
+  },
+  {
+    "text": "you will be creating. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=294"
+  },
+  {
+    "text": "SimpleAudioDriver is a subclass of IOUserAudioDriver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=295"
+  },
+  {
+    "text": "and the entry point into the dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=299"
+  },
+  {
+    "text": "SimpleAudioDriver will create a SimpleAudioDevice, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=301"
+  },
+  {
+    "text": "which is a subclass of IOUserAudioDevice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=304"
+  },
+  {
+    "text": "The audio device handles all start-stop IO-related messages, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=307"
+  },
+  {
+    "text": "timestamps, and configuration changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=310"
+  },
+  {
+    "text": "SimpleAudioDevice will create various IOUserAudioObjects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=312"
+  },
+  {
+    "text": "The device object will also create OSTimerDispatchSources, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=316"
+  },
+  {
+    "text": "OSActions, and implement a tone generator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=320"
+  },
+  {
+    "text": "to simulate hardware interrupts and IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=323"
+  },
+  {
+    "text": "IOUserAudioStream is a stream owned by the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=326"
+  },
+  {
+    "text": "The stream will use an IOMemoryDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=329"
+  },
+  {
+    "text": "for audio IO, which will be mapped to the HAL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=332"
+  },
+  {
+    "text": "IOUserAudioVolumeLevelControl is a control object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=335"
+  },
+  {
+    "text": "that takes scalar or dB values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=339"
+  },
+  {
+    "text": "The control value will be used to apply gain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=341"
+  },
+  {
+    "text": "to the input audio buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=343"
+  },
+  {
+    "text": "All IOUserAudioObjects can have IOUserAudioCustomProperties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=345"
+  },
+  {
+    "text": "SimpleAudioDevice will create an example of a custom property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=350"
+  },
+  {
+    "text": "and a string as its qualifier and data value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=353"
+  },
+  {
+    "text": "Let's take a look at the code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=357"
+  },
+  {
+    "text": "SimpleAudioDriver is a subclass of IOUserAudioDriver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=359"
+  },
+  {
+    "text": "Start, Stop, and NewUserClient are virtual methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=363"
+  },
+  {
+    "text": "from the IOService class that the driver needs to override.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=366"
+  },
+  {
+    "text": "StartDevice and StopDevice are IO-related virtual methods ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=370"
+  },
+  {
+    "text": "from IOUserAudioDriver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=374"
+  },
+  {
+    "text": "These will be called when the HAL starts or stops IO ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=376"
+  },
+  {
+    "text": "for an audio device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=379"
+  },
+  {
+    "text": "I will discuss the IO path after going over devices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=381"
+  },
+  {
+    "text": "streams, and other audio objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=384"
+  },
+  {
+    "text": "The example shows how to override NewUserClient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=386"
+  },
+  {
+    "text": "to create user client connections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=389"
+  },
+  {
+    "text": "NewUserClient will be called when a client process wants ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=391"
+  },
+  {
+    "text": "to connect to the dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=395"
+  },
+  {
+    "text": "The AudioDriverKit framework will handle creation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=397"
+  },
+  {
+    "text": "of the user client required by the HAL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=399"
+  },
+  {
+    "text": "by calling NewUserClient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=401"
+  },
+  {
+    "text": "on the IOUserAudioDriver base class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=403"
+  },
+  {
+    "text": "This will create the IOUserAudioDriverUserClient ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=405"
+  },
+  {
+    "text": "that is needed by CoreAudio HAL. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=409"
+  },
+  {
+    "text": "A custom user client can be created as well ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=411"
+  },
+  {
+    "text": "by calling IOService Create, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=414"
+  },
+  {
+    "text": "which will create the user client object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=416"
+  },
+  {
+    "text": "from the driver extensions info.plist entry added earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=418"
+  },
+  {
+    "text": "Let's take a look at how to override Start ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=422"
+  },
+  {
+    "text": "and create a custom IOUserAudioDevice object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=424"
+  },
+  {
+    "text": "First, call Start on the super class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=428"
+  },
+  {
+    "text": "Then allocate the SimpleAudioDevice ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=431"
+  },
+  {
+    "text": "and initialize it with a few required parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=433"
+  },
+  {
+    "text": "The initialized device needs to then be added ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=436"
+  },
+  {
+    "text": "to the audio driver by calling AddObject. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=439"
+  },
+  {
+    "text": "Finally, register the service, and the driver is ready to go.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=442"
+  },
+  {
+    "text": "Now that your driver is initialized, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=446"
+  },
+  {
+    "text": "let's create a device, stream, and a few other audio objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=448"
+  },
+  {
+    "text": "Subclass IOUserAudioDevice to get custom behavior.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=452"
+  },
+  {
+    "text": "Let's create an input stream, volume control, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=457"
+  },
+  {
+    "text": "and a custom property object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=460"
+  },
+  {
+    "text": "The init method for SimpleAudioDevice shows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=462"
+  },
+  {
+    "text": "how to configure the device and create various audio objects. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=465"
+  },
+  {
+    "text": "The sample rate related information of the device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=468"
+  },
+  {
+    "text": "is configured by calling SetAvailableSampleRates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=471"
+  },
+  {
+    "text": "and SetSampleRate on the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=474"
+  },
+  {
+    "text": "Create an IOBufferMemoryDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=476"
+  },
+  {
+    "text": "that will be passed to the IOUserAudioStream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=478"
+  },
+  {
+    "text": "The memory will be mapped to CoreAudio HAL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=481"
+  },
+  {
+    "text": "and used for audio IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=483"
+  },
+  {
+    "text": "The memory should ideally be the same IO memory used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=485"
+  },
+  {
+    "text": "for DMA to hardware. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=489"
+  },
+  {
+    "text": "IOUserAudioStream is created by specifying it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=490"
+  },
+  {
+    "text": "with input stream direction and passing in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=493"
+  },
+  {
+    "text": "the IO memory descriptor that was created above. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=495"
+  },
+  {
+    "text": "A few additional things need to be configured ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=499"
+  },
+  {
+    "text": "on the stream before it is functional. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=501"
+  },
+  {
+    "text": "The stream formats are defined by creating a format list ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=503"
+  },
+  {
+    "text": "of IOUserAudio StreamBasicDescriptions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=506"
+  },
+  {
+    "text": "Specify the sample rate, format ID, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=510"
+  },
+  {
+    "text": "and the other required format properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=512"
+  },
+  {
+    "text": "Set the available formats by passing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=515"
+  },
+  {
+    "text": "in the stream format list declared above. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=517"
+  },
+  {
+    "text": "And then set the current format of the stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=519"
+  },
+  {
+    "text": "Finally, add the configured stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=522"
+  },
+  {
+    "text": "to the device by calling AddStream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=524"
+  },
+  {
+    "text": "Now let's go over creating a volume level control. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=526"
+  },
+  {
+    "text": "To create a volume control object, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=529"
+  },
+  {
+    "text": "call the IOUserAudioLevelControl::Create ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=531"
+  },
+  {
+    "text": "method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=534"
+  },
+  {
+    "text": "The control is a settable volume control ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=536"
+  },
+  {
+    "text": "with initial level set to -6dB and with a range of 96dB. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=538"
+  },
+  {
+    "text": "The element, scope, and class of the control ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=544"
+  },
+  {
+    "text": "also needs to be specified. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=546"
+  },
+  {
+    "text": "Finally, add the control object to the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=548"
+  },
+  {
+    "text": "The volume control gain value will be used in the IO path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=551"
+  },
+  {
+    "text": "by applying the gain to the input stream's IO buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=555"
+  },
+  {
+    "text": "Now let's go over creating a custom property object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=558"
+  },
+  {
+    "text": "for the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=560"
+  },
+  {
+    "text": "A property address needs to be provided ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=561"
+  },
+  {
+    "text": "for every custom property object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=564"
+  },
+  {
+    "text": "Define a custom selector type with a global scope ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=566"
+  },
+  {
+    "text": "and main element. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=569"
+  },
+  {
+    "text": "Next, create the custom property object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=571"
+  },
+  {
+    "text": "by providing the property address defined above. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=573"
+  },
+  {
+    "text": "The custom property is settable, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=576"
+  },
+  {
+    "text": "and the qualifier and data value types are both strings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=578"
+  },
+  {
+    "text": "Now create an OSString for the qualifier and data value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=582"
+  },
+  {
+    "text": "Then set it on the custom property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=585"
+  },
+  {
+    "text": "Finally, add the custom property to the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=587"
+  },
+  {
+    "text": "Now that you have created audio objects, let's talk about IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=591"
+  },
+  {
+    "text": "The GetIOMemoryDescriptor method will return ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=595"
+  },
+  {
+    "text": "the IOMemoryDescriptor used by the IOUserAudioStream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=598"
+  },
+  {
+    "text": "The IOMemoryDescriptor is passed into the init method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=602"
+  },
+  {
+    "text": "when creating a stream, and the stream can be updated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=606"
+  },
+  {
+    "text": "with a new memory descriptor as well. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=609"
+  },
+  {
+    "text": "The memory will be mapped to the HAL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=611"
+  },
+  {
+    "text": "and used for audio IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=613"
+  },
+  {
+    "text": "The same memory descriptor used by the stream should ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=616"
+  },
+  {
+    "text": "ideally be the same one used for DMA to the hardware device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=619"
+  },
+  {
+    "text": "IOUserAudioClockDevice is the base class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=622"
+  },
+  {
+    "text": "of IOUserAudioDevice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=625"
+  },
+  {
+    "text": "UpdateCurrentZeroTimestamp and GetCurrentZeroTimestamp should ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=627"
+  },
+  {
+    "text": "be used to handle timestamps from the hardware device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=631"
+  },
+  {
+    "text": "The timestamps will be handled atomically, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=634"
+  },
+  {
+    "text": "and the HAL will use the sample time-host time pair ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=636"
+  },
+  {
+    "text": "to run and synchronize IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=639"
+  },
+  {
+    "text": "It is vital to track the hardware clock's timestamps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=641"
+  },
+  {
+    "text": "as close as possible. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=644"
+  },
+  {
+    "text": "Let's take a look at the SimpleAudioDevice class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=645"
+  },
+  {
+    "text": "and focus on the IO-related methods. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=648"
+  },
+  {
+    "text": "StartIO and StopIO will be called from the driver ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=651"
+  },
+  {
+    "text": "when the HAL is attempting to run IO. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=655"
+  },
+  {
+    "text": "The private methods are shown ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=658"
+  },
+  {
+    "text": "that use IOTimerDispatchSource ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=659"
+  },
+  {
+    "text": "and OSAction to simulate hardware interrupts, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=662"
+  },
+  {
+    "text": "which will be used to generate zero timestamps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=665"
+  },
+  {
+    "text": "and audio data on the input IO buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=667"
+  },
+  {
+    "text": "Since this example is not running ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=670"
+  },
+  {
+    "text": "against a hardware device, timers and actions are used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=672"
+  },
+  {
+    "text": "in place of hardware interrupts and DMA. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=675"
+  },
+  {
+    "text": "StartIO will be called on the device object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=678"
+  },
+  {
+    "text": "when the HAL is attempting to start IO on the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=680"
+  },
+  {
+    "text": "Any calls necessary to start IO ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=683"
+  },
+  {
+    "text": "on the hardware should be done here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=685"
+  },
+  {
+    "text": "Afterwards, StartIO should be called on the base class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=687"
+  },
+  {
+    "text": "Next, get the input stream's IOMemoryDescriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=691"
+  },
+  {
+    "text": "so an IOMemoryMap can be created by calling CreateMapping. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=694"
+  },
+  {
+    "text": "The buffer address, length, and offset ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=698"
+  },
+  {
+    "text": "will be used in the action occurred handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=701"
+  },
+  {
+    "text": "to generate a tone on the IO buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=703"
+  },
+  {
+    "text": "StartTimers is called to configure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=706"
+  },
+  {
+    "text": "and enable the time sources and actions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=708"
+  },
+  {
+    "text": "to generate timestamps and fill out the input audio buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=710"
+  },
+  {
+    "text": "UpdateCurrentZeroTimestamp is called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=715"
+  },
+  {
+    "text": "to atomically update the sample time-host time pair ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=718"
+  },
+  {
+    "text": "for the IOUserAudioDevice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=721"
+  },
+  {
+    "text": "The timer source is enabled and set with a wake-up time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=723"
+  },
+  {
+    "text": "based on mach_absolute_time and host ticks configured ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=726"
+  },
+  {
+    "text": "from the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=730"
+  },
+  {
+    "text": "The ZtsTimerOccurred action will be called based on the wake time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=731"
+  },
+  {
+    "text": "so that a new timestamp can be updated on the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=735"
+  },
+  {
+    "text": "Not shown here, but the sample code also updates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=738"
+  },
+  {
+    "text": "the tone generation timer and action in a similar way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=742"
+  },
+  {
+    "text": "When the zero timestamp action fires, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=746"
+  },
+  {
+    "text": "the last zero timestamp value is obtained from the device ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=749"
+  },
+  {
+    "text": "by calling GetCurrentZeroTimestamp. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=752"
+  },
+  {
+    "text": "If this is the first timestamp, use the mach_absolute_time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=755"
+  },
+  {
+    "text": "passed into the timer as the anchor time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=758"
+  },
+  {
+    "text": "Otherwise, the timestamps are updated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=760"
+  },
+  {
+    "text": "by the zero timestamp period and host ticks per buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=763"
+  },
+  {
+    "text": "Calling UpdateCurrentZeroTimestamp ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=767"
+  },
+  {
+    "text": "will update the device's timestamps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=770"
+  },
+  {
+    "text": "so that the HAL can use the new values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=772"
+  },
+  {
+    "text": "Set the ZTS timer to wake up in the future ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=775"
+  },
+  {
+    "text": "for the next zero timestamp.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=778"
+  },
+  {
+    "text": "To simulate DMA, audio data will be written ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=782"
+  },
+  {
+    "text": "to the input IO buffer when the timer action runs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=785"
+  },
+  {
+    "text": "First, check if the input memory map ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=788"
+  },
+  {
+    "text": "that was assigned when start IO was called is valid. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=791"
+  },
+  {
+    "text": "Use the memory map buffer length and stream format ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=795"
+  },
+  {
+    "text": "to get the length in samples for the IO buffer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=798"
+  },
+  {
+    "text": "Since the stream only supports signed 16 bit pcm sample format, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=801"
+  },
+  {
+    "text": "get the buffer address and offset, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=805"
+  },
+  {
+    "text": "and assign it as a int16_t buffer pointer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=807"
+  },
+  {
+    "text": "Now the input IO buffer can be filled out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=810"
+  },
+  {
+    "text": "by generating a sine tone. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=812"
+  },
+  {
+    "text": "First, get the input volume control gain as a scalar value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=814"
+  },
+  {
+    "text": "Then loop for the number of samples needed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=818"
+  },
+  {
+    "text": "and generate a sine tone, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=820"
+  },
+  {
+    "text": "applying the volume control gain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=822"
+  },
+  {
+    "text": "Next, loop through the buffer and fill in the sine tone sample ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=823"
+  },
+  {
+    "text": "to the IO buffer based on the channel count, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=827"
+  },
+  {
+    "text": "also accounting for wraparound. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=829"
+  },
+  {
+    "text": "Now that the audio dext is configured and can run IO, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=831"
+  },
+  {
+    "text": "the next step is to handle configuration changes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=835"
+  },
+  {
+    "text": "to update the device and its IO-related state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=837"
+  },
+  {
+    "text": "The device methods shown can be used to request ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=841"
+  },
+  {
+    "text": "and perform configuration changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=844"
+  },
+  {
+    "text": "For changes to an audio device's state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=846"
+  },
+  {
+    "text": "that will affect IO or its structure, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=848"
+  },
+  {
+    "text": "the driver needs to request a config change ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=850"
+  },
+  {
+    "text": "by calling RequestDeviceConfigurationChange ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=853"
+  },
+  {
+    "text": "The HAL will stop any running IO, and ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=856"
+  },
+  {
+    "text": "PerformDeviceConfigurationChange will be called on the driver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=858"
+  },
+  {
+    "text": "Only then can the audio device update its IO-related state. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=862"
+  },
+  {
+    "text": "A common scenario of this would be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=866"
+  },
+  {
+    "text": "updating the audio device's current sample rate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=868"
+  },
+  {
+    "text": "or changing the current stream format ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=871"
+  },
+  {
+    "text": "to correspond with changes to the hardware device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=873"
+  },
+  {
+    "text": "The diagram shows the sequence of events ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=876"
+  },
+  {
+    "text": "for device configuration changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=878"
+  },
+  {
+    "text": "The driver should first request a configuration change. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=881"
+  },
+  {
+    "text": "The HAL will notify any listeners ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=884"
+  },
+  {
+    "text": "that the config change will begin for the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=886"
+  },
+  {
+    "text": "IO will be stopped on the device if it is currently running. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=889"
+  },
+  {
+    "text": "The current state of the device will be captured. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=892"
+  },
+  {
+    "text": "PerformDeviceConfigurationChange will be called on the driver. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=895"
+  },
+  {
+    "text": "This is when the driver is allowed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=899"
+  },
+  {
+    "text": "to change any state on the device and hardware. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=901"
+  },
+  {
+    "text": "Once the config change is performed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=903"
+  },
+  {
+    "text": "the new state of the device will be captured, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=905"
+  },
+  {
+    "text": "and all IO-related state, such as IO buffers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=907"
+  },
+  {
+    "text": "or sample rate, will be updated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=910"
+  },
+  {
+    "text": "Any changes to the device's state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=912"
+  },
+  {
+    "text": "will then be notified to any client listeners. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=914"
+  },
+  {
+    "text": "If IO was previously running prior to the config change, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=916"
+  },
+  {
+    "text": "IO will be restarted on the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=919"
+  },
+  {
+    "text": "Finally, the HAL will notify any listeners ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=923"
+  },
+  {
+    "text": "that the config change has now ended. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=926"
+  },
+  {
+    "text": "To simulate a hardware bottom up config change request, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=928"
+  },
+  {
+    "text": "a custom user client command is used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=932"
+  },
+  {
+    "text": "to trigger a sample rate change on the dext. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=934"
+  },
+  {
+    "text": "RequestDeviceConfigurationChange will notify the HAL ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=936"
+  },
+  {
+    "text": "of a config change request on the audio device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=939"
+  },
+  {
+    "text": "Notice that the change info can be any kind of OSObject. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=943"
+  },
+  {
+    "text": "This example provides a custom config change action ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=946"
+  },
+  {
+    "text": "and the change info as an OSString. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=950"
+  },
+  {
+    "text": "To handle performing the configuration change, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=954"
+  },
+  {
+    "text": "the SimpleAudioDevice class needs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=956"
+  },
+  {
+    "text": "to override the method PerformDeviceConfigurationChange ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=958"
+  },
+  {
+    "text": "In PerformDeviceConfigurationChange ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=962"
+  },
+  {
+    "text": "handle the config change action in the switch statement. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=965"
+  },
+  {
+    "text": "Log the same OSString object that was supplied ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=968"
+  },
+  {
+    "text": "as the change info when the config change was requested. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=971"
+  },
+  {
+    "text": "Next, get the current sample rate, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=974"
+  },
+  {
+    "text": "and set a new rate on the device. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=976"
+  },
+  {
+    "text": "Make sure the audio stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=979"
+  },
+  {
+    "text": "updates its current stream format ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=980"
+  },
+  {
+    "text": "to handle the sample rate change ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=982"
+  },
+  {
+    "text": "by calling DeviceSampleRateChanged ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=984"
+  },
+  {
+    "text": "on the stream object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=986"
+  },
+  {
+    "text": "Other config change actions the device does not ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=988"
+  },
+  {
+    "text": "handle directly can be passed off to the base class. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=990"
+  },
+  {
+    "text": "Let's take a look at this on the Mac. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=994"
+  },
+  {
+    "text": "So SimpleAudio is the sample code application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=996"
+  },
+  {
+    "text": "that bundles the driver extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=999"
+  },
+  {
+    "text": "To install the audio driver extension, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1001"
+  },
+  {
+    "text": "simply press Install Driver, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1003"
+  },
+  {
+    "text": "and that should bring up the security preferences. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1005"
+  },
+  {
+    "text": "So if we press Allow, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1007"
+  },
+  {
+    "text": "that should dynamically load the audio driver extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1009"
+  },
+  {
+    "text": "Previously, this was not possible ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1013"
+  },
+  {
+    "text": "with the kext because a reboot would be required. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1015"
+  },
+  {
+    "text": "So SimpleAudioDevice has the sample rate formats ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1018"
+  },
+  {
+    "text": "available and the tone selection data source. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1022"
+  },
+  {
+    "text": "And the volume control we added in the sample code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1026"
+  },
+  {
+    "text": "Now we can open QuickTime ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1029"
+  },
+  {
+    "text": "and do audio recording on the audio device.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1030"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1035"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1038"
+  },
+  {
+    "text": "And to test the bottom-up config changes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1039"
+  },
+  {
+    "text": "we can directly communicate with the dext ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1043"
+  },
+  {
+    "text": "to toggle the tone frequency or the sample rate, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1045"
+  },
+  {
+    "text": "and the changes should also be reflected ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1048"
+  },
+  {
+    "text": "in Audio MIDI setup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1050"
+  },
+  {
+    "text": "To get rid of the driver extension, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1051"
+  },
+  {
+    "text": "simply delete the application.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1053"
+  },
+  {
+    "text": "And you can see it is no longer available in Audio MIDI setup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1062"
+  },
+  {
+    "text": "To wrap things up, I did a recap of the state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1066"
+  },
+  {
+    "text": "of audio server plug-ins and DriverKit extensions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1069"
+  },
+  {
+    "text": "This will continue to be supported ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1071"
+  },
+  {
+    "text": "and the AudioServerPlugIn driver interface is not deprecated. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1074"
+  },
+  {
+    "text": "I introduced the new AudioDriverKit framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1077"
+  },
+  {
+    "text": "and discussed the benefits of the new driver model.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1079"
+  },
+  {
+    "text": "I went over an in-depth example ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1083"
+  },
+  {
+    "text": "of how to adopt the AudioDriverKit framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1085"
+  },
+  {
+    "text": "and showed sample code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1087"
+  },
+  {
+    "text": "to create an IOUserService based audio dext, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1088"
+  },
+  {
+    "text": "all running in user space. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1091"
+  },
+  {
+    "text": "Download the latest Xcode and DriverKit SDK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1095"
+  },
+  {
+    "text": "Adopt AudioDriverKit for audio devices ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1098"
+  },
+  {
+    "text": "that have DriverKit supported hardware device families. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1101"
+  },
+  {
+    "text": "And please provide any feedback ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1105"
+  },
+  {
+    "text": "about AudioDriverKit through Apple's Feedback Assistant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1107"
+  },
+  {
+    "text": "Thanks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1110"
+  },
+  {
+    "text": "[upbeat music]",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10190/?time=1112"
+  }
+]

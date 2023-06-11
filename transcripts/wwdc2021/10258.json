@@ -1,0 +1,1350 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=2"
+  },
+  {
+    "text": "Hi, my name is Anubhav, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=9"
+  },
+  {
+    "text": "and I'm an engineer on the OS Performance Team. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=11"
+  },
+  {
+    "text": "Today, I'm excited to share how you can understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=15"
+  },
+  {
+    "text": "and eliminate hangs from your application. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=19"
+  },
+  {
+    "text": "We'll break this talk into four sections, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=22"
+  },
+  {
+    "text": "starting with understanding, \"what is a hang?\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=27"
+  },
+  {
+    "text": "We'll then talk about the common causes for hangs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=29"
+  },
+  {
+    "text": "and what to look out for when developing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=32"
+  },
+  {
+    "text": "After that, we'll discuss tools you can use to monitor and diagnose hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=35"
+  },
+  {
+    "text": "Finally, we will learn common strategies to eliminate hangs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=42"
+  },
+  {
+    "text": "and how to choose which ones work best for your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=46"
+  },
+  {
+    "text": "Let's jump right in. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=50"
+  },
+  {
+    "text": "Let's take a look at my new recipe app, Desserted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=53"
+  },
+  {
+    "text": "an application that shows you how to make ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=55"
+  },
+  {
+    "text": "my favorite drinks and desserts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=57"
+  },
+  {
+    "text": "This Mango Tango smoothie looks great. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=60"
+  },
+  {
+    "text": "I'll tap on it to see how it's made. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=63"
+  },
+  {
+    "text": "Hmm. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=66"
+  },
+  {
+    "text": "Looks like nothing is happening. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=68"
+  },
+  {
+    "text": "Wow. That took a lot longer than expected. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=70"
+  },
+  {
+    "text": "The app was just stuck and would not accept any of my touches ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=73"
+  },
+  {
+    "text": "for a few seconds.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=76"
+  },
+  {
+    "text": "This experience can be described as \"laggy,\" \"slow,\" or \"stuck.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=79"
+  },
+  {
+    "text": "These are not words that me, or anyone else, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=84"
+  },
+  {
+    "text": "wants used to describe their app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=88"
+  },
+  {
+    "text": "At Apple, we call this period of unresponsiveness, a \"hang.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=90"
+  },
+  {
+    "text": "To understand a hang, and what was happening in Desserted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=96"
+  },
+  {
+    "text": "we must first understand what an app's main runloop is.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=100"
+  },
+  {
+    "text": "The main runloop is a loop your application's main thread enters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=105"
+  },
+  {
+    "text": "to run event handlers in response to incoming events, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=110"
+  },
+  {
+    "text": "primarily user interactions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=113"
+  },
+  {
+    "text": "When a user interacts with an app, the runloop receives the event, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=116"
+  },
+  {
+    "text": "processes it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=120"
+  },
+  {
+    "text": "and then updates the UI, if required. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=122"
+  },
+  {
+    "text": "This all happens in one turn of the runloop, and on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=126"
+  },
+  {
+    "text": "This process repeats for each user input. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=131"
+  },
+  {
+    "text": "This is how the main thread would look like with one turn of the runloop.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=136"
+  },
+  {
+    "text": "If processing the event takes a long time, there'll be a delay ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=143"
+  },
+  {
+    "text": "between the user input and any UI update. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=148"
+  },
+  {
+    "text": "To make matters worse, events are buffered ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=153"
+  },
+  {
+    "text": "and cannot be handled by the main thread during a hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=156"
+  },
+  {
+    "text": "If I interact with an app during a hang, that event is not handled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=161"
+  },
+  {
+    "text": "until the current hang first terminates… ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=165"
+  },
+  {
+    "text": "…compounding hangs, one on top of another.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=168"
+  },
+  {
+    "text": "In general, a delay of over one second will always look like a hang, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=172"
+  },
+  {
+    "text": "though a shorter delay can be perceived as one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=178"
+  },
+  {
+    "text": "For example, a half-second delay while scrolling is jarring, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=182"
+  },
+  {
+    "text": "but the same delay is far less noticeable when entering a view.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=188"
+  },
+  {
+    "text": "By eliminating hangs, your apps will be snappy, quick, and responsive.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=194"
+  },
+  {
+    "text": "Now that we know a hang is, let's look into what commonly causes them.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=201"
+  },
+  {
+    "text": "A hang occurs when there's too much work being done on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=209"
+  },
+  {
+    "text": "To determine exactly what that work is, we have to look at what the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=213"
+  },
+  {
+    "text": "is doing while processing the event. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=217"
+  },
+  {
+    "text": "This time can be split into two cases. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=221"
+  },
+  {
+    "text": "Either the main thread itself is busy doing work-- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=224"
+  },
+  {
+    "text": "this can be a single long task or many short ones-- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=227"
+  },
+  {
+    "text": "or the main thread is blocked by another thread or system resource. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=230"
+  },
+  {
+    "text": "Let's start by looking at common causes for the main thread being busy. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=235"
+  },
+  {
+    "text": "Proactively doing work is doing more than whats necessary to update UI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=242"
+  },
+  {
+    "text": "keeping the main thread busy for longer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=246"
+  },
+  {
+    "text": "In Desserted, the Recipe View only displays image tiles ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=250"
+  },
+  {
+    "text": "for four out of the many ingredient images. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=254"
+  },
+  {
+    "text": "If the main thread were to load all ingredient images at once, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=257"
+  },
+  {
+    "text": "it would spend time reading, preparing, and compositing each and every image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=261"
+  },
+  {
+    "text": "Most of the work that's happening won't even affect what a user sees.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=267"
+  },
+  {
+    "text": "The view only shows four images, and only those four need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=272"
+  },
+  {
+    "text": "to be immediately generated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=276"
+  },
+  {
+    "text": "Another cause for hangs is performing irrelevant work on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=280"
+  },
+  {
+    "text": "Note that the main thread services blocks from the main dispatch queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=284"
+  },
+  {
+    "text": "but it can also service blocks from other queues via dispatch sync. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=288"
+  },
+  {
+    "text": "Anytime a queue dispatch syncs onto another queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=293"
+  },
+  {
+    "text": "all pending blocks on the other queue have to execute before the newly enqueued one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=296"
+  },
+  {
+    "text": "Consider an app with a low priority serial dispatch queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=303"
+  },
+  {
+    "text": "perhaps a maintenance queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=306"
+  },
+  {
+    "text": "If the main thread dispatch synced a block onto the maintenanceQueue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=308"
+  },
+  {
+    "text": "it would have to wait for all pending blocks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=313"
+  },
+  {
+    "text": "on that queue to execute before the enqueued block runs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=315"
+  },
+  {
+    "text": "Only a fraction of time was spent doing work meant for the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=320"
+  },
+  {
+    "text": "Similarly, if a block is dispatched onto the main queue from another queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=326"
+  },
+  {
+    "text": "that block has to execute on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=330"
+  },
+  {
+    "text": "This holds even if the block is enqueued via a dispatch async.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=335"
+  },
+  {
+    "text": "One more cause for hangs is using suboptimal API. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=342"
+  },
+  {
+    "text": "There are many ways to accomplish a task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=346"
+  },
+  {
+    "text": "Be sure to read API docs so you can use the best one for the task at hand.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=348"
+  },
+  {
+    "text": "Desserted adds rounded corners to all images in the recipe view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=355"
+  },
+  {
+    "text": "though doing so also adds latency when entering this view.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=359"
+  },
+  {
+    "text": "To add rounded corners, Desserted uses a bitmap-based ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=364"
+  },
+  {
+    "text": "graphics context to convert an image to a bitmap, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=368"
+  },
+  {
+    "text": "apply a UIBezier path on that bitmap, then convert that bitmap back to an image. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=371"
+  },
+  {
+    "text": "This set of operations is CPU intensive, uses lots of memory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=377"
+  },
+  {
+    "text": "and can take a long time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=381"
+  },
+  {
+    "text": "This is because the wrong hardware is being used for the job. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=383"
+  },
+  {
+    "text": "Instead of using the CPU, I should leverage the GPU.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=387"
+  },
+  {
+    "text": "By using CoreAnimation methods on a layer, adding rounded corners ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=392"
+  },
+  {
+    "text": "is easy and instant. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=396"
+  },
+  {
+    "text": "This is just one example of using the wrong API for the job at hand.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=398"
+  },
+  {
+    "text": "Now that we've looked into some common reasons the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=404"
+  },
+  {
+    "text": "of an app can be busy, let's investigate why it can be blocked.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=407"
+  },
+  {
+    "text": "Synchronous APIs block execution from the time they're called to the time they return. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=413"
+  },
+  {
+    "text": "These should not be used on the main thread if the API does a lot of work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=420"
+  },
+  {
+    "text": "or has the potential to block for a long period of time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=425"
+  },
+  {
+    "text": "Apart from delays, these also add an additional point of failure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=430"
+  },
+  {
+    "text": "One such case is if the main thread of an app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=436"
+  },
+  {
+    "text": "makes synchronous requests to the network. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=439"
+  },
+  {
+    "text": "For those with 5G, there may not be any delay. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=443"
+  },
+  {
+    "text": "For those with slower network speeds, this may take longer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=447"
+  },
+  {
+    "text": "And for those with very bad signal, this may hang indefinitely. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=452"
+  },
+  {
+    "text": "There's no guarantee on how long this can take, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=457"
+  },
+  {
+    "text": "which is why such synchronous operations should be avoided on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=461"
+  },
+  {
+    "text": "Another way to block the main thread is on a system resource, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=467"
+  },
+  {
+    "text": "as these are often constrained. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=471"
+  },
+  {
+    "text": "File I/O is one of the most commonly used, and contended, system resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=474"
+  },
+  {
+    "text": "Latencies are dependent on hardware, and other reads and writes happening ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=480"
+  },
+  {
+    "text": "at the same time, things that can be beyond the app's control. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=485"
+  },
+  {
+    "text": "So, apps need to do what they can to defend against hangs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=490"
+  },
+  {
+    "text": "by avoiding I/O on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=494"
+  },
+  {
+    "text": "Data stores, which do not support concurrency, are especially problematic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=498"
+  },
+  {
+    "text": "If the main thread attempts to read from one while writes are already occurring, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=504"
+  },
+  {
+    "text": "that read would be pushed out until all writers complete, which may be unbounded.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=509"
+  },
+  {
+    "text": "Another cause for hangs is synchronization. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=518"
+  },
+  {
+    "text": "By definition, synchronization primitives can block execution, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=521"
+  },
+  {
+    "text": "so it is important to limit, and be cautious of, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=526"
+  },
+  {
+    "text": "synchronizing from the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=529"
+  },
+  {
+    "text": "The thread it synchronizes with can take a long time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=533"
+  },
+  {
+    "text": "to release an implicit or explicit lock. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=536"
+  },
+  {
+    "text": "These are some common primitives to look out for, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=539"
+  },
+  {
+    "text": "including the @synchronized directive, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=542"
+  },
+  {
+    "text": "dispatch sync, os unfair lock, and posix locks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=545"
+  },
+  {
+    "text": "Specifically, be aware of semaphore use, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=550"
+  },
+  {
+    "text": "as they do not propagate priority and can lengthen a hang due to preemption. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=554"
+  },
+  {
+    "text": "A common anti-pattern is when trying to make asynchronous API ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=559"
+  },
+  {
+    "text": "act synchronous by waiting on a semaphore. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=563"
+  },
+  {
+    "text": "This should always be avoided on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=567"
+  },
+  {
+    "text": "One more way to block the main thread is by doing work, IPC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=571"
+  },
+  {
+    "text": "or using system resources to fetch the value of something ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=577"
+  },
+  {
+    "text": "which doesn't change often.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=581"
+  },
+  {
+    "text": "In Desserted, there's an icon for a social feature, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=584"
+  },
+  {
+    "text": "which is only shown if I have added a contact as a friend. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=588"
+  },
+  {
+    "text": "Querying all contacts on every tap into this view is one way to check, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=592"
+  },
+  {
+    "text": "though it adds unnecessary overhead and delays, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=599"
+  },
+  {
+    "text": "since the main thread blocks on frameworks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=603"
+  },
+  {
+    "text": "which are performing expensive operations under the hood. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=605"
+  },
+  {
+    "text": "Furthermore, the value I'm fetching does not change often, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=610"
+  },
+  {
+    "text": "so querying this frequently is unnecessary and adds burden on system resources.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=614"
+  },
+  {
+    "text": "The state of system resources, such as CPU, memory, and storage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=623"
+  },
+  {
+    "text": "play a large part in when hangs occur. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=628"
+  },
+  {
+    "text": "Different hardware and device conditions in the field mean real world scenarios ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=631"
+  },
+  {
+    "text": "will be significantly different than those encountered while testing on desk. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=636"
+  },
+  {
+    "text": "It is important you do what you can to defend against these cases ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=641"
+  },
+  {
+    "text": "by having robust tests and using the oldest-supported hardware ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=645"
+  },
+  {
+    "text": "as a benchmark. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=649"
+  },
+  {
+    "text": "The high-level cause for hangs is too much work being done on, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=651"
+  },
+  {
+    "text": "or on behalf of, the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=656"
+  },
+  {
+    "text": "To ensure performance, it's important the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=659"
+  },
+  {
+    "text": "of your application focuses on what's necessary to update UI.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=662"
+  },
+  {
+    "text": "Now that you know common causes for hangs, let's talk about some helpful tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=669"
+  },
+  {
+    "text": "you can use to monitor and triage hangs in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=674"
+  },
+  {
+    "text": "both during development and production.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=679"
+  },
+  {
+    "text": "In order to triage a hang, you would want to know what your app is doing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=683"
+  },
+  {
+    "text": "during that time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=687"
+  },
+  {
+    "text": "The time profiler instrument lets you do that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=689"
+  },
+  {
+    "text": "by showing your application’s callstacks over time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=692"
+  },
+  {
+    "text": "indicating exactly what's executing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=696"
+  },
+  {
+    "text": "The system trace instrument adds more context with data on system calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=700"
+  },
+  {
+    "text": "VM faults, I/O, as well as inter and intra-process interactions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=705"
+  },
+  {
+    "text": "For more information, check out the \"System Trace in Depth\" talk from 2016. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=711"
+  },
+  {
+    "text": "Now, I'll use the time profiler and system trace instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=718"
+  },
+  {
+    "text": "to find what's causing Desserted to hang.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=722"
+  },
+  {
+    "text": "After taking a trace of the hang, here's how it looks like opened in Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=727"
+  },
+  {
+    "text": "In the system trace output, the red line indicates system calls, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=733"
+  },
+  {
+    "text": "the purple graph indicates virtual memory faults, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=737"
+  },
+  {
+    "text": "and the horizontal blue bar indicates the main thread is busy doing work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=740"
+  },
+  {
+    "text": "The next step is to see what this work is. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=746"
+  },
+  {
+    "text": "The time profiler allows you to do just that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=751"
+  },
+  {
+    "text": "It presents a call tree by aggregating main-thread callstacks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=756"
+  },
+  {
+    "text": "for the duration of the 4.7 second hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=760"
+  },
+  {
+    "text": "The highlighted portion of the tree illustrates that 4.6 seconds of this hang ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=765"
+  },
+  {
+    "text": "was due to a loadAllMessages method in the Recipe View. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=770"
+  },
+  {
+    "text": "This pattern looks familiar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=775"
+  },
+  {
+    "text": "Desserted might be loading in more images than needed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=778"
+  },
+  {
+    "text": "Once your application has shipped, you can use MetricKit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=782"
+  },
+  {
+    "text": "to collect call trees for hangs hit in the field. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=786"
+  },
+  {
+    "text": "This enables you to prioritize fixes based on which issues customers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=789"
+  },
+  {
+    "text": "are most commonly hitting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=794"
+  },
+  {
+    "text": "To learn how to use MetricKit for hangs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=796"
+  },
+  {
+    "text": "check out the \"What's new in MetricKit\" talk from 2020. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=798"
+  },
+  {
+    "text": "I've shipped Desserted and have some hang reports from MetricKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=803"
+  },
+  {
+    "text": "Let's look at one of them to see if it's similar to the hang we just triaged.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=807"
+  },
+  {
+    "text": "MetricKit returns a call tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=814"
+  },
+  {
+    "text": "by aggregating callstacks taken during a hang. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=816"
+  },
+  {
+    "text": "This tree format is similar to what the time profiler presents.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=820"
+  },
+  {
+    "text": "The highlighted portion indicates this hang is different ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=826"
+  },
+  {
+    "text": "from the one we just investigated with Instruments. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=829"
+  },
+  {
+    "text": "This one is due to a new social feature I added, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=833"
+  },
+  {
+    "text": "which blocks on a dispatch queue querying contacts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=836"
+  },
+  {
+    "text": "Without MetricKit, I may not have found this issue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=840"
+  },
+  {
+    "text": "and it would still persist in the field. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=843"
+  },
+  {
+    "text": "When fixing hangs, it is important to baseline ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=847"
+  },
+  {
+    "text": "and quantify the performance of your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=851"
+  },
+  {
+    "text": "The Xcode organizer does this by showing performance metrics, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=855"
+  },
+  {
+    "text": "including a chart displaying hang rate per app version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=859"
+  },
+  {
+    "text": "This is especially helpful when triaging regressions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=863"
+  },
+  {
+    "text": "Check out these two talks for more information on the Xcode Organizer.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=868"
+  },
+  {
+    "text": "Now, let's go over some common strategies you can use to fix hangs in your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=873"
+  },
+  {
+    "text": "Each of these strategies can address multiple causes for hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=881"
+  },
+  {
+    "text": "In order to know which fix is best for your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=886"
+  },
+  {
+    "text": "you will need to look at their side affects and tradeoffs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=889"
+  },
+  {
+    "text": "To eliminate and defend against hangs, reduce the amount ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=894"
+  },
+  {
+    "text": "of work done on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=898"
+  },
+  {
+    "text": "This can be done in two ways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=902"
+  },
+  {
+    "text": "The first is to optimize the work already being done ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=905"
+  },
+  {
+    "text": "on the main thread to reduce execution time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=909"
+  },
+  {
+    "text": "The second is to move work off the main thread in a non-blocking manner ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=912"
+  },
+  {
+    "text": "to keep it responsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=917"
+  },
+  {
+    "text": "Let's start by looking at ways to reduce main thread execution, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=919"
+  },
+  {
+    "text": "starting with caching. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=923"
+  },
+  {
+    "text": "Caches are a great way to quickly access frequently used assets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=926"
+  },
+  {
+    "text": "or previously queried values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=931"
+  },
+  {
+    "text": "They're often an in-memory store, but can be persisted to disk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=934"
+  },
+  {
+    "text": "if needed across multiple app invocations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=939"
+  },
+  {
+    "text": "Formatted assets that can be needed later, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=942"
+  },
+  {
+    "text": "like ingredient image tiles in Desserted, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=945"
+  },
+  {
+    "text": "are great candidates for caching, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=948"
+  },
+  {
+    "text": "since it's expensive to create these assets every time they're needed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=950"
+  },
+  {
+    "text": "By caching these in an NSCache, the overhead of generating assets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=956"
+  },
+  {
+    "text": "is replaced by a quick memory read. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=961"
+  },
+  {
+    "text": "This would eliminate the hang we looked at in Instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=965"
+  },
+  {
+    "text": "It is important to have an accurate cache invalidation mechanism to strike a balance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=971"
+  },
+  {
+    "text": "between having stale data and constantly updating a cache. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=976"
+  },
+  {
+    "text": "This work should happen asynchronously on a secondary dispatch queue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=980"
+  },
+  {
+    "text": "to keep the main thread responsive to events.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=986"
+  },
+  {
+    "text": "Notification observers are another way to reduce work on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=991"
+  },
+  {
+    "text": "They allow your app to react to changes in a value or state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=997"
+  },
+  {
+    "text": "without having to do expensive, on-demand computation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1002"
+  },
+  {
+    "text": "Any class can post notifications, even your own. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1007"
+  },
+  {
+    "text": "To find notifications from a specific class, check its API documentation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1012"
+  },
+  {
+    "text": "To find all observable system notifications, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1017"
+  },
+  {
+    "text": "check out the Apple developer documentation page ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1021"
+  },
+  {
+    "text": "for NSNotification.Name. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1024"
+  },
+  {
+    "text": "A great candidate for this is the social feature in Desserted.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1028"
+  },
+  {
+    "text": "By registering an observer for the abDatabaseChangedExternally notification, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1033"
+  },
+  {
+    "text": "the main thread no longer has to wait on querying contacts. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1039"
+  },
+  {
+    "text": "Once a notification comes in, the observer is invoked. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1044"
+  },
+  {
+    "text": "In this case, it'll be updating a cached value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1048"
+  },
+  {
+    "text": "To keep the main thread responsive, these updates should be asynchronous, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1054"
+  },
+  {
+    "text": "which is achieved by dispatch_asyncing the handler to another queue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1058"
+  },
+  {
+    "text": "Now, I provide the same feature as before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1064"
+  },
+  {
+    "text": "but without the hang we saw in the MetricKit log. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1068"
+  },
+  {
+    "text": "Another way to eliminate hangs is by moving work off the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1072"
+  },
+  {
+    "text": "First, we need to determine what this work should be. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1077"
+  },
+  {
+    "text": "In general, important tasks providing critical information for the UI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1082"
+  },
+  {
+    "text": "should remain on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1087"
+  },
+  {
+    "text": "Furthermore, all views and view controllers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1090"
+  },
+  {
+    "text": "have to be created, modified, and destroyed on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1093"
+  },
+  {
+    "text": "However, the computation needed to update a UI element can be ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1098"
+  },
+  {
+    "text": "offloaded to another thread, with a completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1103"
+  },
+  {
+    "text": "to perform the actual update on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1107"
+  },
+  {
+    "text": "This pattern is useful when computation is known to take a long time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1111"
+  },
+  {
+    "text": "Other less important, maintenance, or non-time-critical tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1117"
+  },
+  {
+    "text": "should be performed asynchronously on another thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1122"
+  },
+  {
+    "text": "These would then run at a lower scheduling priority and can take longer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1127"
+  },
+  {
+    "text": "to complete than work that's on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1131"
+  },
+  {
+    "text": "This is intentional and reflects the idea that the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1135"
+  },
+  {
+    "text": "should only perform critical work.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1139"
+  },
+  {
+    "text": "The most straightforward way to perform asynchronous operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1143"
+  },
+  {
+    "text": "from the main thread is to use asynchronous counterparts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1147"
+  },
+  {
+    "text": "of synchronous APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1151"
+  },
+  {
+    "text": "Let's take networking as an example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1154"
+  },
+  {
+    "text": "By using async NSURL counterparts to synchronous networking APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1158"
+  },
+  {
+    "text": "apps will be responsive. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1163"
+  },
+  {
+    "text": "Asynchronous APIs are often indicated by the word \"asynchronously\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1167"
+  },
+  {
+    "text": "or the presence of a completion handler in the method name.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1172"
+  },
+  {
+    "text": "Grand Central Dispatch is a powerful multi-threading mechanism, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1178"
+  },
+  {
+    "text": "which you can leverage in cases where there aren't async API variants, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1182"
+  },
+  {
+    "text": "or the code you want to move off the main thread is your own. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1187"
+  },
+  {
+    "text": "Grand Central Dispatch provides simple mechanisms to move ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1191"
+  },
+  {
+    "text": "any block of work to another thread, both synchronously or asynchronously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1195"
+  },
+  {
+    "text": "This makes GCD incredibly effective at eliminating most general causes for hangs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1202"
+  },
+  {
+    "text": "To perform a block of work asynchronously on another thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1210"
+  },
+  {
+    "text": "dispatch async that block to another dispatch queue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1214"
+  },
+  {
+    "text": "A completion handler can be added within the asynced block ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1219"
+  },
+  {
+    "text": "by dispatching back to the main queue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1223"
+  },
+  {
+    "text": "Grand Central Dispatch also enables you to pre-warm computation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1228"
+  },
+  {
+    "text": "By dispatch asyncing a task onto a queue, perhaps a prefetchQueue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1233"
+  },
+  {
+    "text": "the task will start executing while the main thread stays free to do other work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1238"
+  },
+  {
+    "text": "When these results are needed by the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1244"
+  },
+  {
+    "text": "it can dispatch sync onto the prefetchQueue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1247"
+  },
+  {
+    "text": "to wait for the task to complete. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1249"
+  },
+  {
+    "text": "We've just touched the surface of what GCD can do. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1253"
+  },
+  {
+    "text": "To learn more, check out the \"Modernizing Grand Central Dispatch\" talk from 2017.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1257"
+  },
+  {
+    "text": "Let's understand some tradeoffs with the solutions we just talked about. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1265"
+  },
+  {
+    "text": "Caches use memory, so you should be cognizant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1270"
+  },
+  {
+    "text": "of their size to avoid large memory growth. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1273"
+  },
+  {
+    "text": "It is also important to ensure there's an accurate invalidation mechanism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1277"
+  },
+  {
+    "text": "so values are not stale. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1282"
+  },
+  {
+    "text": "Notifications can be chatty. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1284"
+  },
+  {
+    "text": "When observing one, it is important to consider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1287"
+  },
+  {
+    "text": "the frequency at which that notification fires. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1290"
+  },
+  {
+    "text": "Adding a filter before handling or coalescing multiple notifications ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1294"
+  },
+  {
+    "text": "will reduce CPU churn. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1300"
+  },
+  {
+    "text": "When using asynchronous APIs, it is important to know whether ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1303"
+  },
+  {
+    "text": "the operation in question should be asynced, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1307"
+  },
+  {
+    "text": "particularly by first checking whether it is crucial for a UI update, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1311"
+  },
+  {
+    "text": "as the operating system deprioritizes asynced work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1316"
+  },
+  {
+    "text": "When using Grand Central Dispatch to perform tasks asynchronously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1321"
+  },
+  {
+    "text": "you are changing the order at which tasks in your code execute. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1326"
+  },
+  {
+    "text": "It is important to keep in mind what tasks have to be ordered on others ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1331"
+  },
+  {
+    "text": "to ensure your app does not break. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1336"
+  },
+  {
+    "text": "Using dispatch_sync with serial queues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1339"
+  },
+  {
+    "text": "is a great way to synchronize operations when needed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1342"
+  },
+  {
+    "text": "Compared to the severe impact hangs pose to user experience, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1346"
+  },
+  {
+    "text": "these tradeoffs are always worth it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1351"
+  },
+  {
+    "text": "Some thoughts to keep in mind while eliminating hangs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1355"
+  },
+  {
+    "text": "are use Apple Frameworks and APIs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1359"
+  },
+  {
+    "text": "These are already compatible with a wide set of devices, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1362"
+  },
+  {
+    "text": "are performant, and are constantly updated to be more efficient and effective. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1366"
+  },
+  {
+    "text": "Perform improvements iteratively in your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1372"
+  },
+  {
+    "text": "This way, you'll make targeted fixes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1376"
+  },
+  {
+    "text": "and be able to see the affects of individual changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1378"
+  },
+  {
+    "text": "Be a good neighbor when using system resources. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1383"
+  },
+  {
+    "text": "Using more resources than needed not only reduces the performance of your own app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1387"
+  },
+  {
+    "text": "but can also cause other slowdowns in the system.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1392"
+  },
+  {
+    "text": "Together, we experienced how jarring hangs can be, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1396"
+  },
+  {
+    "text": "and just how important it is to defend against hangs in your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1400"
+  },
+  {
+    "text": "Going forward, set performance baselines of your app via the Xcode organizer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1405"
+  },
+  {
+    "text": "During development and code reviews, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1412"
+  },
+  {
+    "text": "watch out for anti-patterns that can cause hangs. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1414"
+  },
+  {
+    "text": "We discussed seven of the most common ones. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1418"
+  },
+  {
+    "text": "Diagnose issues that come up with the time profiler and system trace instruments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1422"
+  },
+  {
+    "text": "using MetricKit to prioritize issues customers are most frequently hitting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1428"
+  },
+  {
+    "text": "Eliminate any hangs you find by using caches, observing notifications, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1435"
+  },
+  {
+    "text": "looking for asynchronous alternatives, or taking advantage of Grand Central Dispatch. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1441"
+  },
+  {
+    "text": "By following these steps, your apps will have even better performance ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1448"
+  },
+  {
+    "text": "to provide the best possible user experience. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1453"
+  },
+  {
+    "text": "Thanks for hanging around. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1457"
+  },
+  {
+    "text": "[music]",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10258/?time=1459"
+  }
+]

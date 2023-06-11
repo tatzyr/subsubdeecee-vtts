@@ -1,0 +1,177 @@
+10118
+
+Xin chào, tôi là Rusty.
+
+Tôi là một kỹ sư trong nhóm CloudKit và tôi rất vui mừng được giới thiệu một công cụ dành cho nhà phát triển CloudKit mới, cũng như một ngôn ngữ lược đồ CloudKit hoàn toàn mới.
+
+Trong phiên này, tôi sẽ nói về lý do tại sao thử nghiệm tích hợp có thể là thách thức đối với một ứng dụng tích hợp với đám mây.
+
+Sau đó, tôi sẽ trình diễn cktool, công cụ phát triển dòng lệnh mới của chúng tôi cho CloudKit.
+
+Bạn sẽ tìm ra cách cktool có thể được sử dụng bên trong Xcode để tự động hóa thiết lập thử nghiệm.
+
+Bạn sẽ tìm hiểu về ngôn ngữ lược đồ khai báo mới của CloudKit.
+
+Và sau đó, tôi sẽ kết thúc mọi thứ bằng các bước tiếp theo.
+
+Hãy bắt đầu nào.
+
+Khi bạn viết các ứng dụng phụ thuộc vào các dịch vụ đám mây, có các hợp đồng rõ ràng giữa ứng dụng của bạn và các dịch vụ mà bạn phụ thuộc.
+
+Các bài kiểm tra tích hợp có thể giúp bạn xác thực cách bạn tương tác với các dịch vụ này, nhưng việc tự động hóa đúng cách thiết lập các bài kiểm tra tích hợp này có thể là một thách thức vì một vài lý do.
+
+Đầu tiên, không phải lúc nào cũng dễ dàng cập nhật máy chủ với mô hình dữ liệu mà ứng dụng của bạn đang sử dụng.
+
+Khi bạn lặp lại lược đồ của mình trong quá trình phát triển ứng dụng, điều quan trọng là lược đồ trên máy chủ phải khớp chính xác với lược đồ mà ứng dụng của bạn đang sử dụng khi các bài kiểm tra của bạn chạy.
+
+Ngoài ra, có thể khó đảm bảo rằng các bài kiểm tra của bạn đang chạy dựa trên một bộ dữ liệu mẫu nhất quán trên đám mây mỗi khi các bài kiểm tra chạy, đặc biệt nếu các bài kiểm tra của bạn sửa đổi dữ liệu đó như một phần của bài kiểm tra.
+
+Nhóm CloudKit vừa làm cho tất cả những điều này dễ dàng hơn cho bạn.
+
+Với ngôn ngữ lược đồ CloudKit mới mà chúng tôi vừa giới thiệu, bạn có thể khai báo lược đồ CloudKit của mình trong một tệp ngay bên cạnh mã ứng dụng của mình và sau đó kiểm tra nó vào kiểm soát phiên bản để bạn có thể theo dõi các thay đổi cùng với tất cả các thay đổi khác trong dự án của mình và luôn đảm bảo rằng mô hình dữ liệu ứng
+
+Và với công cụ phát triển dòng lệnh cktool mới, bạn có thể dễ dàng tự động hóa quá trình gửi khai báo lược đồ này đến máy chủ CloudKit, đồng thời tạo một bộ dữ liệu mẫu nhất quán trên máy chủ ngay trước khi bạn chạy thử nghiệm.
+
+Hãy để tôi nhảy ngay vào và bắt đầu sử dụng cktool.
+
+Đầu tiên, cktool được cài đặt với Xcode 13.
+
+Khi bạn cài đặt Xcode 13, bạn có thể bắt đầu sử dụng cktool từ Terminal ngay lập tức.
+
+Cktool được gọi với xcrun.
+
+Nó cung cấp một số lệnh.
+
+Ví dụ, nó có thể tạo các bản ghi trên máy chủ CloudKit, truy vấn các bản ghi đã tồn tại trên máy chủ, nhập và xuất các tệp ngôn ngữ lược đồ mới, quản lý ủy quyền cho chính công cụ và hơn thế nữa.
+
+Trước khi sử dụng cktool, có một vài điều cần hiểu về ủy quyền với CloudKit.
+
+Vì cktool giao tiếp trực tiếp với máy chủ CloudKit, trước tiên cần phải ủy quyền công cụ.
+
+Bạn có thể chọn chỉ ủy quyền cho cktool thực hiện các chức năng quản lý vùng chứa như nhập lược đồ hoặc bạn có thể ủy quyền bổ sung cho công cụ truy cập dữ liệu trong vùng chứa của mình.
+
+CloudKit đã giới thiệu hai khái niệm mới cho mục đích này.
+
+Đầu tiên được gọi là "mã thông báo quản lý", được sử dụng bởi cktool để quản lý vùng chứa CloudKit của bạn.
+
+Mã thông báo quản lý được gắn với một tài khoản nhà phát triển duy nhất và có thể được sử dụng giữa các nhóm nhà phát triển nếu nhà phát triển đó là thành viên của nhiều nhóm.
+
+Mã thông báo quản lý chỉ dành cho các trường hợp sử dụng cấu hình, như nhập và xuất lược đồ.
+
+Mã thông báo này không cung cấp bất kỳ quyền truy cập nào vào dữ liệu trong vùng chứa.
+
+Vì vậy, chúng tôi cũng đã giới thiệu mã thông báo người dùng, có thể được sử dụng để ủy quyền cho công cụ ghi dữ liệu vào cơ sở dữ liệu riêng tư của người dùng về vùng chứa ứng dụng hoặc vào cơ sở dữ liệu công khai của vùng chứa ứng dụng.
+
+Tôi có thể nhận được mã thông báo quản lý và mã thông báo người dùng từ Bảng điều khiển CloudKit.
+
+Để biết thêm thông tin về Bảng điều khiển CloudKit, bạn có thể xem "Gặp gỡ Bảng điều khiển CloudKit", một phiên WWDC21 khác.
+
+Bây giờ tôi đã nhận được cả mã thông báo quản lý cho tài khoản nhà phát triển của mình và cả mã thông báo người dùng, tôi có thể thêm chúng vào công cụ, công cụ này sẽ lưu trữ chúng một cách an toàn trong Chuỗi khóa macOS của mình và tôi đã sẵn sàng tiếp tục.
+
+Bây giờ tôi có thể bắt đầu làm một số điều thú vị.
+
+Ví dụ, tôi sẽ yêu cầu danh sách tư cách thành viên nhóm phát triển Apple của mình.
+
+Và tôi lấy lại danh sách các đội mà tôi là thành viên. Tuyệt vời.
+
+Bây giờ giả sử rằng tôi có một lược đồ cơ sở dữ liệu được xác định trong vùng chứa của mình và tôi muốn cam kết nó vào kho lưu trữ mã nguồn của mình trước khi thực hiện thay đổi.
+
+Với cktool, điều đó thật dễ dàng để thực hiện.
+
+Sử dụng lệnh export-schema này, tôi có thể kéo lược đồ phát triển của mình xuống một tệp có tên "schema.ckdb." Tệp này được định dạng bằng ngôn ngữ lược đồ CloudKit mới mà tôi đã đề cập trước đó và chúng ta sẽ khám phá tệp này một cách chi tiết chỉ trong một phút.
+
+Với cktool, tôi cũng có thể thêm dữ liệu vào vùng chứa của mình.
+
+Ở đây, nếu tôi có các giá trị mẫu được biểu thị dưới dạng JSON, như đối với bản ghi Sách mẫu này ở đây, tôi có thể sử dụng JSON đó làm đầu vào cho công cụ, giống như thế này, để tạo bản ghi trong cơ sở dữ liệu công khai của mình.
+
+Được rồi, bây giờ bạn đã có ý thức cơ bản về cách công cụ hoạt động, tôi sẽ tạo một tập lệnh ba bước đơn giản để xóa tất cả dữ liệu khỏi môi trường phát triển của vùng chứa CloudKit của ứng dụng của tôi, sau đó gửi khai báo lược đồ của tôi đến máy chủ và cuối cùng, tải một số dữ liệu thử nghiệm.
+
+Bằng cách đó, tôi có thể chạy tập lệnh này như một phần của hành động thử nghiệm trước trong Xcode và đảm bảo rằng vùng chứa CloudKit của tôi luôn ở trạng thái nhất quán, với lược đồ chính xác mà ứng dụng của tôi đang sử dụng trước mỗi lần tôi chạy các bài kiểm tra của mình.
+
+Vì vậy, ở đây trong Xcode, tôi sẽ chỉnh sửa sơ đồ cho ứng dụng dự án của mình và chọn Pre-actions trong giai đoạn Thử nghiệm.
+
+Bây giờ, tôi có thể thêm một Hành động Kịch bản Chạy Mới.
+
+Tôi sẽ cung cấp cài đặt xây dựng cho mục tiêu ứng dụng của mình, để tập lệnh có đường dẫn đến tệp lược đồ trong dự án của tôi.
+
+Ngay tại đây, tôi sẽ dán một lệnh cktool để đặt lại vùng chứa của mình, và sau đó, một lệnh để nhập lược đồ từ tệp trong dự án ứng dụng của tôi và cuối cùng, một lệnh để tạo bản ghi ví dụ trong cơ sở dữ liệu công khai của vùng chứa của tôi.
+
+Lưu ý rằng vì các lệnh này là đồng bộ, chúng sẽ thực thi hết lệnh này đến lệnh khác và bất kỳ lỗi nào cũng sẽ ngừng thực thi, đề phòng trường hợp có điều gì đó không diễn ra như mong đợi.
+
+Trong trường hợp đó, tôi có thể cẩn thận giải quyết mọi vấn đề trước khi kiểm tra trước khi thực sự chạy các bài kiểm tra của mình.
+
+Thế là xong.
+
+Bây giờ, khi tôi chạy các bài kiểm tra Xcode của mình, cktool sẽ chuẩn bị vùng chứa CloudKit của tôi ngay trước khi chúng chạy.
+
+Hoàn hảo.
+
+Vậy, nếu tôi cần thay đổi mô hình dữ liệu cho ứng dụng của mình thì sao?
+
+Hãy nói nhiều hơn về ngôn ngữ lược đồ CloudKit.
+
+Trên thực tế, hãy kiểm tra tệp schema.ckdb mà tôi đã tải xuống trước đó.
+
+Bên trong tệp là ngôn ngữ lược đồ CloudKit mới, đây là một cách mạnh mẽ để mô tả các loại bản ghi trong lược đồ của tôi.
+
+Thật dễ dàng để đọc và viết, và bao gồm ngay tại đây trong dự án của tôi với mã ứng dụng của tôi.
+
+Ở đây bên trong phần lược đồ, có các loại bản ghi.
+
+Những thứ này phản ánh chính xác các loại bản ghi như được hiển thị cho vùng chứa của tôi trong Bảng điều khiển CloudKit.
+
+Mỗi loại bản ghi có nhiều trường, và mỗi trường có một tên và loại dữ liệu.
+
+Tên trường ba điểm dưới là các trường hệ thống, được tạo bởi CloudKit cho mọi loại bản ghi.
+
+Bên dưới các trường hệ thống này là các trường tùy chỉnh của tôi, đại diện cho dữ liệu ứng dụng tùy chỉnh của tôi cho loại bản ghi này trong CloudKit.
+
+Tôi có thể tạo một chỉ mục cho một trường, như chỉ mục Có thể truy vấn, Có thể tìm kiếm hoặc Có thể sắp xếp, giống như tôi có thể làm trong Bảng điều khiển CloudKit.
+
+Tôi làm điều này trong ngôn ngữ lược đồ CloudKit bằng cách khai báo chỉ mục ngay sau kiểu dữ liệu cho trường, như đối với trường tùy chỉnh "tiêu đề" này trong loại bản ghi Sách của tôi ở đây.
+
+Bên dưới các định nghĩa trường là cài đặt vai trò bảo mật cho loại bản ghi.
+
+Đây là nơi các quyền có thể được cấp cho từng vai trò bảo mật được đặt tên, giống như cho mỗi vai trò trong ba vai trò bảo mật hệ thống tích hợp này ở đây.
+
+"_Người sáng tạo" chỉ bao gồm người dùng đã tạo bản ghi, "_thế giới" bao gồm tất cả người dùng và "_icloud" bao gồm bất kỳ người dùng được xác thực nào.
+
+Lưu ý rằng trong ngôn ngữ lược đồ CloudKit, bạn có thể bao gồm cả nhận xét một dòng và nhiều dòng để làm cho các tệp lược đồ trở nên dễ đọc hơn cho bạn và nhóm của bạn.
+
+Nhận xét sẽ bị máy chủ CloudKit bỏ qua khi tệp được xử lý, vì vậy hãy thoải mái đặt nhận xét ở bất cứ đâu bạn muốn.
+
+Giờ đây, ngôn ngữ lược đồ CloudKit cung cấp cho các nhà phát triển một cách nhanh chóng, linh hoạt để khai báo và sửa đổi lược đồ, điều quan trọng là phải nhớ một vài khái niệm cốt lõi xung quanh quá trình phát triển lược đồ CloudKit.
+
+Đầu tiên, bạn có toàn quyền kiểm soát các loại bản ghi trong môi trường phát triển của vùng chứa của mình.
+
+Bạn có thể thêm và xóa các loại bản ghi đang phát triển, đồng thời thêm và xóa các trường tùy chỉnh bên trong các loại bản ghi đó mà không có giới hạn.
+
+Tất nhiên, các loại bản ghi mới luôn có thể được thúc đẩy vào sản xuất và các trường mới cũng có thể được thêm vào các loại bản ghi hiện có trong sản xuất.
+
+Nhưng một khi các loại bản ghi đã được quảng bá lên môi trường sản xuất của vùng chứa của bạn, chúng không thể bị xóa hoặc đổi tên và các trường tùy chỉnh bên trong các loại bản ghi đã được quảng bá để sản xuất cũng không thể bị xóa hoặc đổi tên.
+
+Lý do cho điều này là để đảm bảo rằng máy chủ CloudKit luôn hiểu các loại bản ghi và trường mà các phiên bản cũ hơn của ứng dụng của bạn có thể vẫn đang sử dụng.
+
+Điều này có nghĩa là trong khi bạn có thể thực hiện các thay đổi phá hoại đối với khai báo lược đồ của mình trong môi trường phát triển của vùng chứa, bạn sẽ không thể thúc đẩy những thay đổi phá hoại này đối với sản xuất.
+
+Lưu ý rằng có thể thêm và xóa các chỉ mục trong sản xuất và cài đặt vai trò bảo mật cũng có thể được sửa đổi.
+
+Tất cả các khái niệm quảng bá lược đồ này không phải là mới đối với CloudKit, nhưng sự linh hoạt mà bạn nhận được từ khai báo lược đồ dựa trên tệp mới này có nghĩa là điều quan trọng là phải xem xét và hiểu chúng.
+
+Bây giờ bạn đã hiểu được cktool có thể làm gì và ngôn ngữ lược đồ CloudKit hoạt động như thế nào, tôi khuyến khích bạn thử cả hai trong các dự án của riêng mình.
+
+Cho phép cktool bằng mã thông báo quản lý và mã thông báo người dùng từ Bảng điều khiển CloudKit và khám phá các lệnh của nó.
+
+Xuất lược đồ CloudKit hiện tại của bạn thành tệp ngôn ngữ lược đồ CloudKit và thêm nó vào dự án của bạn, đảm bảo kiểm tra nó vào kiểm soát phiên bản với phần còn lại của dự án của bạn.
+
+Soạn một số bước thiết lập cho các bài kiểm tra tích hợp của bạn bằng cách sử dụng cktool và thêm tập lệnh làm hành động trước kiểm tra vào sơ đồ Xcode của bạn.
+
+Khả năng quản lý một số yếu tố nhất định của vùng chứa CloudKit của bạn từ dòng lệnh có thể thực sự mạnh mẽ.
+
+Duy trì khai báo lược đồ CloudKit của bạn trong một tệp, ngay bên cạnh tất cả các mã ứng dụng khác của bạn, có thể giúp bạn giữ nó nhất quán với mô hình dữ liệu của mình trong suốt vòng đời phát triển và liên kết tất cả những điều này lại với nhau để tự động hóa thiết lập đám mây cho các bài kiểm tra tích hợp của bạn thậm chí còn tốt
+
+Chúng tôi rất vui khi tìm hiểu xem bạn làm gì với những công cụ mới này.
+
+Cảm ơn vì đã dành thời gian tìm hiểu thêm về CloudKit và bạn đã quan tâm đến WWDC21.
+
+[Âm nhạc].

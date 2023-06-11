@@ -1,0 +1,4062 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=7"
+  },
+  {
+    "text": "Ben Cohen: Hi, I'm Ben from the Swift team, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=9"
+  },
+  {
+    "text": "and in this video, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=11"
+  },
+  {
+    "text": "I'm going to walk through porting an existing application ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=12"
+  },
+  {
+    "text": "over to use Swift's new concurrency features. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=15"
+  },
+  {
+    "text": "We'll see how these new features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=19"
+  },
+  {
+    "text": "help you write clearer asynchronous code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=20"
+  },
+  {
+    "text": "and protect against possible race conditions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=23"
+  },
+  {
+    "text": "as well as look at some techniques ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=26"
+  },
+  {
+    "text": "for gradually moving your code to this new way of operating.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=27"
+  },
+  {
+    "text": "I'm going to be using an app called Coffee Tracker, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=34"
+  },
+  {
+    "text": "and it's based on a talk from WWDC 2020 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=36"
+  },
+  {
+    "text": "about creating and updating watch complications. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=39"
+  },
+  {
+    "text": "This is a simple app that lets you track ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=43"
+  },
+  {
+    "text": "all the coffee you've drunk today, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=45"
+  },
+  {
+    "text": "as well as a complication to show your current caffeine level ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=47"
+  },
+  {
+    "text": "on a watch face. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=49"
+  },
+  {
+    "text": "It's a nice example to use for our purposes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=52"
+  },
+  {
+    "text": "because although it's a small app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=54"
+  },
+  {
+    "text": "it shows lots of different things we want to think about, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=57"
+  },
+  {
+    "text": "including how concurrency works with SwiftUI, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=59"
+  },
+  {
+    "text": "delegate callbacks from the watch SDK, some I/O, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=62"
+  },
+  {
+    "text": "and interfacing with asynchronous APIs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=65"
+  },
+  {
+    "text": "in Apple's SDK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=68"
+  },
+  {
+    "text": "Now let's take a quick tour of the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=70"
+  },
+  {
+    "text": "It's roughly broken up into three layers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=72"
+  },
+  {
+    "text": "First, there's the UI layer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=75"
+  },
+  {
+    "text": "This is mostly SwiftUI views, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=78"
+  },
+  {
+    "text": "but in this we can also consider things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=81"
+  },
+  {
+    "text": "like the complication data source as part of the UI layer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=82"
+  },
+  {
+    "text": "Next there's the model layer ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=87"
+  },
+  {
+    "text": "that comprises a couple of simple value types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=88"
+  },
+  {
+    "text": "to represent caffeine drinks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=90"
+  },
+  {
+    "text": "as well as a model type called \"Coffee model.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=92"
+  },
+  {
+    "text": "Now, this is what you might call the UI Model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=96"
+  },
+  {
+    "text": "That is, the place where you hold data for display ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=99"
+  },
+  {
+    "text": "by the UI layer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=102"
+  },
+  {
+    "text": "It's an observable object that feeds our SwiftUI view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=104"
+  },
+  {
+    "text": "and all of the updates on it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=107"
+  },
+  {
+    "text": "will need to be made on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=109"
+  },
+  {
+    "text": "I'm referring to it as a UI model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=112"
+  },
+  {
+    "text": "because it might not be the full model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=114"
+  },
+  {
+    "text": "of all of your application's data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=116"
+  },
+  {
+    "text": "It might just be a projection of your data model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=119"
+  },
+  {
+    "text": "or a subset of it; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=122"
+  },
+  {
+    "text": "just what you need to display on the UI at this moment. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=123"
+  },
+  {
+    "text": "Finally, we have what you can think of as the back-end layer: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=128"
+  },
+  {
+    "text": "processing that happens -- probably in the background -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=132"
+  },
+  {
+    "text": "to populate your model or talk to the world outside your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=135"
+  },
+  {
+    "text": "In our case, that's represented by this HealthKitController type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=140"
+  },
+  {
+    "text": "that manages communication to HealthKit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=144"
+  },
+  {
+    "text": "to save and load the user's caffeine intake. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=146"
+  },
+  {
+    "text": "Now, before we start looking at code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=151"
+  },
+  {
+    "text": "let's talk about how concurrency is managed in the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=153"
+  },
+  {
+    "text": "This architecture looks fairly clean, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=157"
+  },
+  {
+    "text": "but when we layer on how concurrency is handled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=159"
+  },
+  {
+    "text": "we get a much messier picture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=162"
+  },
+  {
+    "text": "This app is essentially broken up into three concurrent queues ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=166"
+  },
+  {
+    "text": "on which code can be executing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=170"
+  },
+  {
+    "text": "Work in the UI and on the model is done in the main queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=173"
+  },
+  {
+    "text": "The app also has a dispatch queue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=177"
+  },
+  {
+    "text": "for doing work in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=179"
+  },
+  {
+    "text": "And finally, certain callbacks into completion handlers -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=182"
+  },
+  {
+    "text": "like those returning results from HealthKit -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=185"
+  },
+  {
+    "text": "are done on arbitrary queues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=187"
+  },
+  {
+    "text": "This is a pretty common situation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=190"
+  },
+  {
+    "text": "What seems like a simple application architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=193"
+  },
+  {
+    "text": "ignores a lot of the hidden complexity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=195"
+  },
+  {
+    "text": "in how it handles concurrency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=197"
+  },
+  {
+    "text": "Now, for a quick spoiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=201"
+  },
+  {
+    "text": "In adopting Swift concurrency, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=203"
+  },
+  {
+    "text": "we're going to go from this ad hoc concurrency architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=205"
+  },
+  {
+    "text": "to something that will look like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=209"
+  },
+  {
+    "text": "We're going to put our UI views and model on what's called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=212"
+  },
+  {
+    "text": "the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=215"
+  },
+  {
+    "text": "We're going to create new actors to operate in the background, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=217"
+  },
+  {
+    "text": "and these types will pass thread-safe values ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=221"
+  },
+  {
+    "text": "between each other using the async/await feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=223"
+  },
+  {
+    "text": "When we're done, the concurrency architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=227"
+  },
+  {
+    "text": "should be as clear and easy to describe ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=230"
+  },
+  {
+    "text": "as the type architecture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=232"
+  },
+  {
+    "text": "Now we've used a few terms here you might not be familiar with, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=235"
+  },
+  {
+    "text": "like \"async/await\" and \"actors,\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=238"
+  },
+  {
+    "text": "and we'll explain them briefly as we use them in code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=240"
+  },
+  {
+    "text": "But for a more in-depth explanation of these features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=244"
+  },
+  {
+    "text": "there are several other talks available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=247"
+  },
+  {
+    "text": "that go into much more detail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=248"
+  },
+  {
+    "text": "So now we've seen the overall architecture, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=252"
+  },
+  {
+    "text": "let's dive into the code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=255"
+  },
+  {
+    "text": "Here we have the different files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=259"
+  },
+  {
+    "text": "First, of some Swift UI views. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=261"
+  },
+  {
+    "text": "And then we have our watch complication controller's ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=264"
+  },
+  {
+    "text": "extension delegate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=266"
+  },
+  {
+    "text": "We have the simple model type that represents a caffeine drink ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=270"
+  },
+  {
+    "text": "and a CoffeeData UI model that holds an array of these drinks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=274"
+  },
+  {
+    "text": "And finally, we have the HealthKitController. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=279"
+  },
+  {
+    "text": "And it's in this layer I'm going to get started ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=282"
+  },
+  {
+    "text": "introducing some of Swift's new concurrency features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=285"
+  },
+  {
+    "text": "into our app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=288"
+  },
+  {
+    "text": "The HealthKitController contains a few different calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=291"
+  },
+  {
+    "text": "into the HealthKit SDK that take completion handlers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=293"
+  },
+  {
+    "text": "Let's start by looking at this controller's save operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=298"
+  },
+  {
+    "text": "So I just hit Control-6, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=301"
+  },
+  {
+    "text": "and that brings up the list of functions in this file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=302"
+  },
+  {
+    "text": "and we're going to go to the save operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=305"
+  },
+  {
+    "text": "Now, before we even get into the new concurrency features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=309"
+  },
+  {
+    "text": "let's talk a little bit about thread safety in Swift today. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=312"
+  },
+  {
+    "text": "This code accesses some variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=317"
+  },
+  {
+    "text": "isAvailable and store. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=319"
+  },
+  {
+    "text": "Now, it looks like we're only reading these variables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=322"
+  },
+  {
+    "text": "in this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=325"
+  },
+  {
+    "text": "Is that safe? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=326"
+  },
+  {
+    "text": "Well no, not if other code could be writing to them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=328"
+  },
+  {
+    "text": "at the same time. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=331"
+  },
+  {
+    "text": "To know whether or not this code is thread-safe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=332"
+  },
+  {
+    "text": "I need more information than just looking at this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=334"
+  },
+  {
+    "text": "There's no use of dispatch queues or locks in it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=338"
+  },
+  {
+    "text": "so whatever makes this code thread-safe -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=340"
+  },
+  {
+    "text": "assuming it is -- must be elsewhere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=342"
+  },
+  {
+    "text": "Maybe the caller serializes all calls to save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=346"
+  },
+  {
+    "text": "through a queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=348"
+  },
+  {
+    "text": "Or maybe the app is constructed in some way that means it's OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=350"
+  },
+  {
+    "text": "But I can't know this just by looking at this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=353"
+  },
+  {
+    "text": "Being able to do that -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=358"
+  },
+  {
+    "text": "to look at this function and know certain things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=360"
+  },
+  {
+    "text": "without having to go look at other parts of my program -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=362"
+  },
+  {
+    "text": "is what we call local reasoning, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=366"
+  },
+  {
+    "text": "and it's a really important goal for Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=368"
+  },
+  {
+    "text": "For example, Swift's emphasis on value types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=372"
+  },
+  {
+    "text": "is about local reasoning. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=374"
+  },
+  {
+    "text": "Unlike a reference type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=376"
+  },
+  {
+    "text": "you don't have to worry that a value type you've been passed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=378"
+  },
+  {
+    "text": "is being mutated elsewhere in your program. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=381"
+  },
+  {
+    "text": "A lot of the language features ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=384"
+  },
+  {
+    "text": "being introduced for concurrency in Swift 5.5 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=386"
+  },
+  {
+    "text": "are about giving you more opportunity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=390"
+  },
+  {
+    "text": "to reason locally about your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=392"
+  },
+  {
+    "text": "Now, as it happens, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=395"
+  },
+  {
+    "text": "this function is entirely thread-safe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=396"
+  },
+  {
+    "text": "but I figured that out myself; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=398"
+  },
+  {
+    "text": "the compiler isn't helping me spot these issues. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=400"
+  },
+  {
+    "text": "So down here, we have a call to the HealthKit SDK ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=403"
+  },
+  {
+    "text": "to save a caffeineSample into the user's health data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=407"
+  },
+  {
+    "text": "And this takes a completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=411"
+  },
+  {
+    "text": "and that completion handler takes two values: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=412"
+  },
+  {
+    "text": "success or error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=414"
+  },
+  {
+    "text": "If the operation succeeds, there's no error; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=417"
+  },
+  {
+    "text": "the error will be nil. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=420"
+  },
+  {
+    "text": "This means we need to remember to check the status and then, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=421"
+  },
+  {
+    "text": "when appropriate, unwrap the optional error down here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=425"
+  },
+  {
+    "text": "Now, this isn't normally how we handle errors in Swift. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=430"
+  },
+  {
+    "text": "This would be much better ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=433"
+  },
+  {
+    "text": "as a method that can throw on failure. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=435"
+  },
+  {
+    "text": "But that approach doesn't work with completion handlers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=438"
+  },
+  {
+    "text": "But now, with async methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=442"
+  },
+  {
+    "text": "we can have asynchronous functions that can throw.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=444"
+  },
+  {
+    "text": "This HealthKit save method now has an async equivalent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=449"
+  },
+  {
+    "text": "that does exactly that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=454"
+  },
+  {
+    "text": "so let's switch over to using it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=455"
+  },
+  {
+    "text": "To do that, first we remove the completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=458"
+  },
+  {
+    "text": "and we write \"await\" in front of the method call.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=463"
+  },
+  {
+    "text": "This reminds us that it's an async function call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=471"
+  },
+  {
+    "text": "and the code will suspend at this point ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=474"
+  },
+  {
+    "text": "and allow other code to run. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=477"
+  },
+  {
+    "text": "We'll come back to why this is important a little bit later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=479"
+  },
+  {
+    "text": "So if we compile, now that we've done this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=483"
+  },
+  {
+    "text": "we see that the compiler is telling us that we need a \"try.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=487"
+  },
+  {
+    "text": "And this is a big benefit of async functions; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=492"
+  },
+  {
+    "text": "they can throw. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=494"
+  },
+  {
+    "text": "There's no more having to remember ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=496"
+  },
+  {
+    "text": "to check an optional error.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=497"
+  },
+  {
+    "text": "So we can add a \"try\" in front of this method call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=502"
+  },
+  {
+    "text": "and we want to handle the error right away. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=507"
+  },
+  {
+    "text": "So we wrap this call in a do block... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=510"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=513"
+  },
+  {
+    "text": "and then catch the error. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=518"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=519"
+  },
+  {
+    "text": "We can remove this guard. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=525"
+  },
+  {
+    "text": "And now that we're catching the error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=527"
+  },
+  {
+    "text": "it's no longer optional, so we can remove the unwrap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=530"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=534"
+  },
+  {
+    "text": "This also means we can rearrange our code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=537"
+  },
+  {
+    "text": "to keep the happy path at the top ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=542"
+  },
+  {
+    "text": "so we can move the success logging line ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=545"
+  },
+  {
+    "text": "up right underneath the save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=547"
+  },
+  {
+    "text": "and then just handle the error logging in the cache.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=551"
+  },
+  {
+    "text": "Notice that save no longer returns a value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=556"
+  },
+  {
+    "text": "Returning success/failure was really duplicative ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=559"
+  },
+  {
+    "text": "with the error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=562"
+  },
+  {
+    "text": "so our new function only either throws ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=563"
+  },
+  {
+    "text": "or it's succeeded.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=566"
+  },
+  {
+    "text": "Now that we've added the try-catch, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=572"
+  },
+  {
+    "text": "we're getting one more error from the compiler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=574"
+  },
+  {
+    "text": "We're calling an asynchronous function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=577"
+  },
+  {
+    "text": "but we're calling it from within a synchronous function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=580"
+  },
+  {
+    "text": "This does not work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=584"
+  },
+  {
+    "text": "Asynchronous functions have a capability ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=586"
+  },
+  {
+    "text": "that synchronous functions don't have: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=588"
+  },
+  {
+    "text": "the ability to give up control of the thread they're running on ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=590"
+  },
+  {
+    "text": "while they await. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=594"
+  },
+  {
+    "text": "To do this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=597"
+  },
+  {
+    "text": "they have a separate way of handling their stack frame, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=598"
+  },
+  {
+    "text": "and this isn't compatible with synchronous functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=600"
+  },
+  {
+    "text": "So one option is to make this function async instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=604"
+  },
+  {
+    "text": "So we can just add the async keyword ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=612"
+  },
+  {
+    "text": "after the function definition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=615"
+  },
+  {
+    "text": "And now, this file compiles.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=617"
+  },
+  {
+    "text": "But the whole project doesn't compile yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=621"
+  },
+  {
+    "text": "Making this function async has pushed the problem up a level ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=624"
+  },
+  {
+    "text": "to where it's being called.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=628"
+  },
+  {
+    "text": "Here in my data model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=634"
+  },
+  {
+    "text": "I'm now getting that same compiler error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=635"
+  },
+  {
+    "text": "because this function isn't async. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=637"
+  },
+  {
+    "text": "Now I could keep going up the chain, but for now, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=640"
+  },
+  {
+    "text": "let's see another technique to keep the changes localized. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=643"
+  },
+  {
+    "text": "To call my async function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=648"
+  },
+  {
+    "text": "I'm going to spin off a new asynchronous task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=650"
+  },
+  {
+    "text": "which will be allowed to call async functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=654"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=656"
+  },
+  {
+    "text": "This async task is very similar to calling async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=664"
+  },
+  {
+    "text": "on the global dispatch queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=667"
+  },
+  {
+    "text": "You can't return a value back from it to the outer function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=669"
+  },
+  {
+    "text": "because the block executes concurrently. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=673"
+  },
+  {
+    "text": "So whatever you do with the detached closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=676"
+  },
+  {
+    "text": "needs to be self-contained. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=679"
+  },
+  {
+    "text": "In this case, we're just calling save, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=681"
+  },
+  {
+    "text": "which doesn't return a value, so that's fine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=684"
+  },
+  {
+    "text": "You also need to be careful that you're not touching ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=688"
+  },
+  {
+    "text": "global state that might get mutated simultaneously ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=691"
+  },
+  {
+    "text": "from other threads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=694"
+  },
+  {
+    "text": "And this is where it was relevant ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=696"
+  },
+  {
+    "text": "that save was completely thread-safe, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=697"
+  },
+  {
+    "text": "otherwise we might be accidentally introducing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=700"
+  },
+  {
+    "text": "new race conditions by adding this new task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=703"
+  },
+  {
+    "text": "Now that we've put it inside an async task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=710"
+  },
+  {
+    "text": "our awaited function compiles, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=712"
+  },
+  {
+    "text": "and we've finished our first use of async/await in this app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=715"
+  },
+  {
+    "text": "we could run it right now.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=718"
+  },
+  {
+    "text": "Let's do another one of those refactors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=724"
+  },
+  {
+    "text": "and this time, look at some other techniques ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=727"
+  },
+  {
+    "text": "when migrating to async. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=730"
+  },
+  {
+    "text": "So let's have a look at the call to request authorization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=733"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=737"
+  },
+  {
+    "text": "of access to the user's health data. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=739"
+  },
+  {
+    "text": "This similarly calls HealthKit with a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=745"
+  },
+  {
+    "text": "But unlike before, this function takes, itself, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=749"
+  },
+  {
+    "text": "a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=752"
+  },
+  {
+    "text": "What I'm going to do is I'm going to create ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=755"
+  },
+  {
+    "text": "a second version of the function to become async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=757"
+  },
+  {
+    "text": "while keeping the completion handler version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=759"
+  },
+  {
+    "text": "That way other parts of our code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=762"
+  },
+  {
+    "text": "that call it with a completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=764"
+  },
+  {
+    "text": "can keep on working while we refactor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=766"
+  },
+  {
+    "text": "I can do this easily by using the \"Create Async Alternative\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=771"
+  },
+  {
+    "text": "refactoring action. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=774"
+  },
+  {
+    "text": "That's available in the Code Action menu -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=776"
+  },
+  {
+    "text": "which I can bring up with Command-Shift-A -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=778"
+  },
+  {
+    "text": "and choose the option to add the async alternative. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=782"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=785"
+  },
+  {
+    "text": "So this has added a second async version ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=792"
+  },
+  {
+    "text": "of the original call.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=795"
+  },
+  {
+    "text": "And it's replaced the original completion handler code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=800"
+  },
+  {
+    "text": "with code that creates a new async task...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=804"
+  },
+  {
+    "text": "...and then just awaits the async version of the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=810"
+  },
+  {
+    "text": "Notice that the async refactoring ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=817"
+  },
+  {
+    "text": "has added a deprecation warning to the original one. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=820"
+  },
+  {
+    "text": "These are going to help guide me to parts of my code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=825"
+  },
+  {
+    "text": "that could next benefit from refactoring ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=828"
+  },
+  {
+    "text": "to call this new async version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=830"
+  },
+  {
+    "text": "Let's undo and go back for a moment ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=833"
+  },
+  {
+    "text": "to that original completion handler version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=835"
+  },
+  {
+    "text": "Inside this requestAuthorization callback, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=839"
+  },
+  {
+    "text": "this callback can happen on an arbitrary thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=844"
+  },
+  {
+    "text": "So you need to know that the code inside it is thread-safe. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=848"
+  },
+  {
+    "text": "But I don't think it is. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=854"
+  },
+  {
+    "text": "This assignment here might happen simultaneously ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=859"
+  },
+  {
+    "text": "with other code reading this value on other threads. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=863"
+  },
+  {
+    "text": "And there's another example of a lack of local reasoning ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=867"
+  },
+  {
+    "text": "in this code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=869"
+  },
+  {
+    "text": "After that assignment, this completion handler is called, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=871"
+  },
+  {
+    "text": "and I have no idea whether the code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=876"
+  },
+  {
+    "text": "inside that completion handler is thread-safe. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=877"
+  },
+  {
+    "text": "I'd have to go and look ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=881"
+  },
+  {
+    "text": "at all of the call sites to this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=883"
+  },
+  {
+    "text": "to look at how their completion handlers are written ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=885"
+  },
+  {
+    "text": "to know that this is OK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=888"
+  },
+  {
+    "text": "Now, let's redo again and see the refactored version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=892"
+  },
+  {
+    "text": "Now remember, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=898"
+  },
+  {
+    "text": "an async task also runs on an arbitrary thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=901"
+  },
+  {
+    "text": "similar to a dispatch callback. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=904"
+  },
+  {
+    "text": "So this forwarding version has similar problems ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=907"
+  },
+  {
+    "text": "to the completion handler version we had before. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=910"
+  },
+  {
+    "text": "We haven't made our code any safer quite yet. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=914"
+  },
+  {
+    "text": "We'll fix this soon ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=918"
+  },
+  {
+    "text": "by introducing actors into our code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=919"
+  },
+  {
+    "text": "But for now, we should note ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=921"
+  },
+  {
+    "text": "that just because we've converted this function to async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=922"
+  },
+  {
+    "text": "does not mean we're free from race conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=925"
+  },
+  {
+    "text": "In fact, you should be aware of the risk of introducing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=928"
+  },
+  {
+    "text": "new race conditions into your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=930"
+  },
+  {
+    "text": "if you only perform refactoring to introduce async functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=932"
+  },
+  {
+    "text": "Now let's look at this new async function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=936"
+  },
+  {
+    "text": "The refactoring action has already converted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=940"
+  },
+  {
+    "text": "the call with a completion handler here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=943"
+  },
+  {
+    "text": "to call the new async version of this SDK API.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=946"
+  },
+  {
+    "text": "But converting this function to async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=952"
+  },
+  {
+    "text": "has highlighted something interesting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=954"
+  },
+  {
+    "text": "Here, when we were using the completion handler technique, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=958"
+  },
+  {
+    "text": "we had a return without calling the completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=961"
+  },
+  {
+    "text": "And this was probably a bug. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=965"
+  },
+  {
+    "text": "The caller would have been left hanging. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=968"
+  },
+  {
+    "text": "But with async functions, you must return a value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=971"
+  },
+  {
+    "text": "so now we're getting a compilation error, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=975"
+  },
+  {
+    "text": "which we can resolve just by returning false for failure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=979"
+  },
+  {
+    "text": "And just like before, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=986"
+  },
+  {
+    "text": "this new async version of requestAuthorization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=989"
+  },
+  {
+    "text": "doesn't actually return a value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=992"
+  },
+  {
+    "text": "it either succeeds or it throws. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=997"
+  },
+  {
+    "text": "So we just need to delete this return value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1003"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1007"
+  },
+  {
+    "text": "And instead on this path, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1012"
+  },
+  {
+    "text": "we need to assume that it succeeded... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1015"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1017"
+  },
+  {
+    "text": "...and on the failure path, we need to return false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1021"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1025"
+  },
+  {
+    "text": "If I try and compile now, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1031"
+  },
+  {
+    "text": "the project compiles because the old code elsewhere ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1035"
+  },
+  {
+    "text": "can still continue to call the completion handler version ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1040"
+  },
+  {
+    "text": "and we're now seeing these deprecation warnings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1043"
+  },
+  {
+    "text": "when we're doing that, which can lead us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1046"
+  },
+  {
+    "text": "to a next place that we might want to refactor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1047"
+  },
+  {
+    "text": "OK, let's do one more async conversion. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1051"
+  },
+  {
+    "text": "Let's find the function to load data from HealthKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1055"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1058"
+  },
+  {
+    "text": "We'll start -- just like before -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1062"
+  },
+  {
+    "text": "by creating a stub for the old code to call. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1064"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1067"
+  },
+  {
+    "text": "Then moving to the async version, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1104"
+  },
+  {
+    "text": "incidentally, this one takes an optional completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1108"
+  },
+  {
+    "text": "the async equivalent of this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1113"
+  },
+  {
+    "text": "would be to make this function have a discardable result. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1115"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1118"
+  },
+  {
+    "text": "So next, we start moving down, replacing any use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1135"
+  },
+  {
+    "text": "of the completion handler with returns. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1139"
+  },
+  {
+    "text": "So for example, we can delete this completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1142"
+  },
+  {
+    "text": "and just return false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1144"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1146"
+  },
+  {
+    "text": "But once we move a little further, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1148"
+  },
+  {
+    "text": "we start to hit a snag, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1151"
+  },
+  {
+    "text": "and it has to do with how the HealthKit query API is arranged. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1153"
+  },
+  {
+    "text": "Here, there's a completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1159"
+  },
+  {
+    "text": "but it's on this query object; whereas really, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1162"
+  },
+  {
+    "text": "what I want to await is the execution of the query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1168"
+  },
+  {
+    "text": "all the way down here at the bottom of the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1172"
+  },
+  {
+    "text": "Incidentally, this hopping up and down around the function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1176"
+  },
+  {
+    "text": "is another thing that async/await ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1180"
+  },
+  {
+    "text": "is great at helping resolve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1182"
+  },
+  {
+    "text": "So what I want to do is create a single async function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1184"
+  },
+  {
+    "text": "that both creates the query and then executes it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1188"
+  },
+  {
+    "text": "We're going to do that now ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1193"
+  },
+  {
+    "text": "using a technique called a continuation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1195"
+  },
+  {
+    "text": "So I'm to go back up to the top of this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1198"
+  },
+  {
+    "text": "and I'm going to create a helper function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1201"
+  },
+  {
+    "text": "called \"queryHealthKit.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1203"
+  },
+  {
+    "text": "I could do all of this work inside the existing function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1208"
+  },
+  {
+    "text": "but it might get a little bit messy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1212"
+  },
+  {
+    "text": "so I like to keep it separate in a helper function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1214"
+  },
+  {
+    "text": "This function will be async, so we can await it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1217"
+  },
+  {
+    "text": "and it will throw because the query operation can fail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1221"
+  },
+  {
+    "text": "And this function is going to return the useful values here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1226"
+  },
+  {
+    "text": "that are currently being passed into ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1231"
+  },
+  {
+    "text": "the completion handler on the query. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1234"
+  },
+  {
+    "text": "So I'm going to take the logic for performing the query, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1238"
+  },
+  {
+    "text": "cut it, and move it into the helper function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1242"
+  },
+  {
+    "text": "And I'm also going to take the execution of the query ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1247"
+  },
+  {
+    "text": "and move that too. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1250"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1252"
+  },
+  {
+    "text": "Now, I need to somehow invert this code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1256"
+  },
+  {
+    "text": "so that it can await the completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1261"
+  },
+  {
+    "text": "and return these values passed into the completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1265"
+  },
+  {
+    "text": "back from my new asynchronous function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1269"
+  },
+  {
+    "text": "And this is where I use a continuation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1273"
+  },
+  {
+    "text": "So in this function, we're going to return ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1275"
+  },
+  {
+    "text": "the results of trying to await a call to a ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1278"
+  },
+  {
+    "text": "withCheckedThrowingContinuation function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1282"
+  },
+  {
+    "text": "And this takes a block that takes a continuation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1289"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1293"
+  },
+  {
+    "text": "And we're going to move this code inside that block ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1300"
+  },
+  {
+    "text": "and then within the block, we're going to use the continuation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1306"
+  },
+  {
+    "text": "to pass data back out of this function either ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1309"
+  },
+  {
+    "text": "by using the continuation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1312"
+  },
+  {
+    "text": "to resume throwing the error here... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1318"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1321"
+  },
+  {
+    "text": "...or... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1324"
+  },
+  {
+    "text": "...to resume returning the values that we received ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1328"
+  },
+  {
+    "text": "into the completion handler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1332"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1338"
+  },
+  {
+    "text": "Now that we have this awaitable function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1353"
+  },
+  {
+    "text": "we can use it in our original code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1355"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1361"
+  },
+  {
+    "text": "So we assign the results from calling the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1363"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1367"
+  },
+  {
+    "text": "And we need to handle the error that can be thrown. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1381"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1383"
+  },
+  {
+    "text": "In fact, actually, I'm going to go up here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1392"
+  },
+  {
+    "text": "and take this bit of logging and do that in the handler.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1394"
+  },
+  {
+    "text": "And then we just need to move all of this success code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1403"
+  },
+  {
+    "text": "up into the happy path. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1408"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1410"
+  },
+  {
+    "text": "Finally, we need to address this closure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1419"
+  },
+  {
+    "text": "Here, we're using dispatch async back to the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1426"
+  },
+  {
+    "text": "But we've ditched our completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1432"
+  },
+  {
+    "text": "so there's no way of relaying this information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1434"
+  },
+  {
+    "text": "back to the main thread using it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1436"
+  },
+  {
+    "text": "We need a different way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1439"
+  },
+  {
+    "text": "To resolve this, we're going to make our first use of actors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1442"
+  },
+  {
+    "text": "In Swift's concurrency model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1446"
+  },
+  {
+    "text": "there is a global actor called the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1448"
+  },
+  {
+    "text": "that coordinates all of its operations on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1452"
+  },
+  {
+    "text": "We can replace our dispatch main.async call ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1457"
+  },
+  {
+    "text": "with a call to main actor's run function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1463"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1467"
+  },
+  {
+    "text": "And this takes a block of code to run on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1474"
+  },
+  {
+    "text": "run is an async function, so we need to await it. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1480"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1483"
+  },
+  {
+    "text": "Awaiting it is necessary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1488"
+  },
+  {
+    "text": "because this function may need to suspend ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1490"
+  },
+  {
+    "text": "until the main thread is ready to process this operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1493"
+  },
+  {
+    "text": "But because we await it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1497"
+  },
+  {
+    "text": "we can just remove our completion handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1499"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1503"
+  },
+  {
+    "text": "and instead, return a value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1512"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1514"
+  },
+  {
+    "text": "OK, finally, the compiler is now giving me an error ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1527"
+  },
+  {
+    "text": "about a captured variable.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1529"
+  },
+  {
+    "text": "This is a new error that only occurs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1535"
+  },
+  {
+    "text": "inside asynchronous functions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1538"
+  },
+  {
+    "text": "Because closures in Swift capture variables by reference, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1542"
+  },
+  {
+    "text": "when you capture a mutable variable -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1546"
+  },
+  {
+    "text": "in this case, our newDrinks array -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1548"
+  },
+  {
+    "text": "you create the possibility for shared mutable state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1553"
+  },
+  {
+    "text": "and that can be the source of race conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1557"
+  },
+  {
+    "text": "So when doing this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1561"
+  },
+  {
+    "text": "you need to ensure that you're making a copy of this value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1562"
+  },
+  {
+    "text": "One way to do this is to add newDrinks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1567"
+  },
+  {
+    "text": "to the closure's capture list, like this. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1570"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1572"
+  },
+  {
+    "text": "But often it's better to just avoid this problem ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1581"
+  },
+  {
+    "text": "by not having mutable variables in the first place. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1584"
+  },
+  {
+    "text": "Here, we can do this by changing the code above instead. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1589"
+  },
+  {
+    "text": "It's written this way because samples is optional. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1594"
+  },
+  {
+    "text": "But instead what we could do ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1600"
+  },
+  {
+    "text": "is change newDrinks to an immutable value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1604"
+  },
+  {
+    "text": "and either set the value here in the if branch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1608"
+  },
+  {
+    "text": "or an add an \"else\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1613"
+  },
+  {
+    "text": "to set it to the empty array. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1616"
+  },
+  {
+    "text": "We could also have done this with a nil coalescing operator ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1620"
+  },
+  {
+    "text": "if we prefer. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1622"
+  },
+  {
+    "text": "Since this value is now declared with let instead of var, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1624"
+  },
+  {
+    "text": "it's immutable and that resolves the issue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1628"
+  },
+  {
+    "text": "without needing to make an additional capture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1631"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1638"
+  },
+  {
+    "text": "Now let's keep talking about the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1641"
+  },
+  {
+    "text": "by taking a look at this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1644"
+  },
+  {
+    "text": "that needed to be called on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1646"
+  },
+  {
+    "text": "At the top of this function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1652"
+  },
+  {
+    "text": "there's something that's a really great idea: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1654"
+  },
+  {
+    "text": "there's an assert that the function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1658"
+  },
+  {
+    "text": "is correctly running on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1660"
+  },
+  {
+    "text": "If you had ever made a mistake and called this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1665"
+  },
+  {
+    "text": "without wrapping it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1668"
+  },
+  {
+    "text": "in a dispatch async to the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1669"
+  },
+  {
+    "text": "you'd get an error in your debug builds, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1671"
+  },
+  {
+    "text": "and you should definitely adopt this practice ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1673"
+  },
+  {
+    "text": "in some of your existing code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1675"
+  },
+  {
+    "text": "But this approach does have some limitations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1678"
+  },
+  {
+    "text": "You might forget to put an assert ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1681"
+  },
+  {
+    "text": "everywhere it's needed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1683"
+  },
+  {
+    "text": "and you can't assert on access to stored properties, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1685"
+  },
+  {
+    "text": "or at least not without lots of boilerplate. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1688"
+  },
+  {
+    "text": "It's much better if the compiler can enforce ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1691"
+  },
+  {
+    "text": "some of these rules for you, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1693"
+  },
+  {
+    "text": "so you can't make mistakes like this at all. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1695"
+  },
+  {
+    "text": "And that's how we use the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1699"
+  },
+  {
+    "text": "I can annotate functions with \"@MainActor.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1703"
+  },
+  {
+    "text": "And that will require that the caller switch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1711"
+  },
+  {
+    "text": "to the main actor before this function is run.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1714"
+  },
+  {
+    "text": "Now that I've done this, I can remove the assertion ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1722"
+  },
+  {
+    "text": "because the compiler won't let this function be called anywhere ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1725"
+  },
+  {
+    "text": "other than on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1728"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1730"
+  },
+  {
+    "text": "We can prove that this is working ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1736"
+  },
+  {
+    "text": "by going back to the caller ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1738"
+  },
+  {
+    "text": "and moving this call outside of this MainActor.run block. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1744"
+  },
+  {
+    "text": "And you see the compiler tells us, no, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1753"
+  },
+  {
+    "text": "we can't call that from here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1755"
+  },
+  {
+    "text": "because we're not on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1757"
+  },
+  {
+    "text": "Here's a way to think about this feature: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1760"
+  },
+  {
+    "text": "it's a lot like optional values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1762"
+  },
+  {
+    "text": "We used to have values like pointers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1764"
+  },
+  {
+    "text": "and had to remember check for nil, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1767"
+  },
+  {
+    "text": "but it was easy to forget, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1768"
+  },
+  {
+    "text": "and it's much better to let the compiler make sure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1770"
+  },
+  {
+    "text": "this check always happens ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1772"
+  },
+  {
+    "text": "along with some language syntactic sugar ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1774"
+  },
+  {
+    "text": "to make it easier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1776"
+  },
+  {
+    "text": "Here, we're doing a similar thing, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1777"
+  },
+  {
+    "text": "only instead of enforcing nil checks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1779"
+  },
+  {
+    "text": "it's enforcing what actor you're running on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1781"
+  },
+  {
+    "text": "Now that we've put this function on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1787"
+  },
+  {
+    "text": "we don't, strictly speaking, need this MainActor.run anymore. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1790"
+  },
+  {
+    "text": "If you're outside of an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1794"
+  },
+  {
+    "text": "you can always run functions on that actor by awaiting them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1796"
+  },
+  {
+    "text": "And in fact, that's what the compiler is telling us here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1801"
+  },
+  {
+    "text": "It's saying that we need an await keyword ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1803"
+  },
+  {
+    "text": "in order to make the switch over to the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1806"
+  },
+  {
+    "text": "to run this function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1808"
+  },
+  {
+    "text": "So if we add it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1810"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1811"
+  },
+  {
+    "text": "then the code will compile ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1815"
+  },
+  {
+    "text": "even without this call being inside the run block. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1816"
+  },
+  {
+    "text": "Here, we're using await on a synchronous function -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1822"
+  },
+  {
+    "text": "updateModel is synchronous -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1825"
+  },
+  {
+    "text": "but the await indicates that the function we're in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1827"
+  },
+  {
+    "text": "may need to suspend to get itself onto the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1830"
+  },
+  {
+    "text": "Think of this as similar to making ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1835"
+  },
+  {
+    "text": "a DispatchQueue.sync call, except with await, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1836"
+  },
+  {
+    "text": "your function suspends instead of blocking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1840"
+  },
+  {
+    "text": "and then resumes after the call to the main thread is complete.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1843"
+  },
+  {
+    "text": "So, we don't need it here anymore, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1851"
+  },
+  {
+    "text": "but this MainActor.run technique ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1853"
+  },
+  {
+    "text": "is still important for another reason. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1855"
+  },
+  {
+    "text": "At each await, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1859"
+  },
+  {
+    "text": "your function might suspend and other code might run. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1860"
+  },
+  {
+    "text": "That's the point of awaiting: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1865"
+  },
+  {
+    "text": "to let other code run instead of blocking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1866"
+  },
+  {
+    "text": "In this case, we only had one function to await, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1870"
+  },
+  {
+    "text": "so it doesn't really matter, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1874"
+  },
+  {
+    "text": "but sometimes you might want to run multiple calls ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1875"
+  },
+  {
+    "text": "on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1878"
+  },
+  {
+    "text": "For example, if you're working on UI updates, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1881"
+  },
+  {
+    "text": "such as updating entries in a table view, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1884"
+  },
+  {
+    "text": "you might not want the main run loop ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1887"
+  },
+  {
+    "text": "to turn in between the operations you perform. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1889"
+  },
+  {
+    "text": "In that case, you would want to use MainActor.run ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1896"
+  },
+  {
+    "text": "to group together multiple calls to the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1899"
+  },
+  {
+    "text": "to ensure that each ran ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1902"
+  },
+  {
+    "text": "without any possible suspensions in between.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1903"
+  },
+  {
+    "text": "So, we're now using the main actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1918"
+  },
+  {
+    "text": "to protect the code that needs to run on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1920"
+  },
+  {
+    "text": "But what about other code in this class? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1925"
+  },
+  {
+    "text": "In particular, the code that mutates local variables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1930"
+  },
+  {
+    "text": "like the query anchor that we saw assigned to here.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1934"
+  },
+  {
+    "text": "How can we guarantee those are free from race conditions? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1940"
+  },
+  {
+    "text": "Or one way would be to just put everything ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1945"
+  },
+  {
+    "text": "in the HealthKitController on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1948"
+  },
+  {
+    "text": "If I go to the HealthKit controller definition, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1952"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1956"
+  },
+  {
+    "text": "and just write \"@MainActor\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1959"
+  },
+  {
+    "text": "here on the class instead of on individual methods, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1963"
+  },
+  {
+    "text": "that would protect every method on this type, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1966"
+  },
+  {
+    "text": "and every stored property on it would be coordinated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1970"
+  },
+  {
+    "text": "on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1973"
+  },
+  {
+    "text": "And for a simple application like this one, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1977"
+  },
+  {
+    "text": "that would probably be an OK choice. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1979"
+  },
+  {
+    "text": "But that also seems a little bit wrong. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1982"
+  },
+  {
+    "text": "This HealthKitController is really the back end of our app; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1984"
+  },
+  {
+    "text": "it seems unnecessary to be doing all of its work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1988"
+  },
+  {
+    "text": "on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1991"
+  },
+  {
+    "text": "We want to leave that thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1993"
+  },
+  {
+    "text": "free to do UI-focused activities. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1994"
+  },
+  {
+    "text": "So instead, we can change this class ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=1999"
+  },
+  {
+    "text": "to, itself, be an actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2002"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2005"
+  },
+  {
+    "text": "Unlike the main actor, which is a global actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2011"
+  },
+  {
+    "text": "this actor type can be instantiated multiple times. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2015"
+  },
+  {
+    "text": "In my project, I'm still only going to create one of them, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2018"
+  },
+  {
+    "text": "but there are many other uses of actors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2021"
+  },
+  {
+    "text": "where you might instantiate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2023"
+  },
+  {
+    "text": "multiple copies of the same actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2024"
+  },
+  {
+    "text": "For example, you might make each room in a chat server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2027"
+  },
+  {
+    "text": "be its own actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2030"
+  },
+  {
+    "text": "So now that we've made this class into an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2032"
+  },
+  {
+    "text": "let's see what the compiler says. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2035"
+  },
+  {
+    "text": "OK. So we're getting some compilation errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2039"
+  },
+  {
+    "text": "Now let's take a pause here and talk about compiler errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2044"
+  },
+  {
+    "text": "These errors are guiding you towards the places in your code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2048"
+  },
+  {
+    "text": "you need to update when you're migrating code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2052"
+  },
+  {
+    "text": "to the new concurrency model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2054"
+  },
+  {
+    "text": "When you get these errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2058"
+  },
+  {
+    "text": "make sure you understand what they're telling you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2059"
+  },
+  {
+    "text": "Resist the temptation to mash the fix-it button ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2062"
+  },
+  {
+    "text": "when you're not sure how or why it'll fix the issue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2065"
+  },
+  {
+    "text": "One thing to be wary of ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2070"
+  },
+  {
+    "text": "is getting into a cascade of errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2072"
+  },
+  {
+    "text": "Sometimes you'll make a change -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2074"
+  },
+  {
+    "text": "like converting a class to be an actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2076"
+  },
+  {
+    "text": "like we just did, or making a method async -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2078"
+  },
+  {
+    "text": "and it'll generate some compiler errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2080"
+  },
+  {
+    "text": "So you go to the site of those errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2083"
+  },
+  {
+    "text": "and it's tempting to make more changes to fix those errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2085"
+  },
+  {
+    "text": "like making that method async or putting it on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2088"
+  },
+  {
+    "text": "The trouble is that this can lead to even more errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2092"
+  },
+  {
+    "text": "and quickly, you can feel overwhelmed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2094"
+  },
+  {
+    "text": "Instead, use techniques like we're using here ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2098"
+  },
+  {
+    "text": "in this walk-through, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2101"
+  },
+  {
+    "text": "and try and keep the change isolated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2102"
+  },
+  {
+    "text": "and done one step at a time with your project compiling ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2104"
+  },
+  {
+    "text": "and running in between. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2108"
+  },
+  {
+    "text": "Add shims to allow your old code to keep working, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2111"
+  },
+  {
+    "text": "even though you might end up deleting them later. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2114"
+  },
+  {
+    "text": "That way, you can gradually move out from a point, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2117"
+  },
+  {
+    "text": "tidying up the code as you go. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2120"
+  },
+  {
+    "text": "Incidentally, what I did here is first convert ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2123"
+  },
+  {
+    "text": "the HealthKitController's methods to async ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2127"
+  },
+  {
+    "text": "and then make it into an actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2129"
+  },
+  {
+    "text": "And I find it works out easiest if you do it that way around, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2131"
+  },
+  {
+    "text": "rather than starting with the actor conversion. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2135"
+  },
+  {
+    "text": "OK, so let's look at these errors by jumping down to them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2140"
+  },
+  {
+    "text": "They're down here on the function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2145"
+  },
+  {
+    "text": "we put on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2146"
+  },
+  {
+    "text": "And this makes sense, because in this function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2149"
+  },
+  {
+    "text": "we're touching a stored property ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2152"
+  },
+  {
+    "text": "of our new HealthKitController actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2154"
+  },
+  {
+    "text": "the model property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2156"
+  },
+  {
+    "text": "The actor protects its state and won't let functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2158"
+  },
+  {
+    "text": "not on the actor -- such as this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2161"
+  },
+  {
+    "text": "that we've explicitly put on the main actor -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2164"
+  },
+  {
+    "text": "touch its stored properties. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2167"
+  },
+  {
+    "text": "Now looking at this function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2169"
+  },
+  {
+    "text": "it looks like the only state on the actor that it touches ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2170"
+  },
+  {
+    "text": "is the model object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2175"
+  },
+  {
+    "text": "Everything else is passed in as a function argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2178"
+  },
+  {
+    "text": "And to me, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2181"
+  },
+  {
+    "text": "this suggests that this function belongs on the model; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2182"
+  },
+  {
+    "text": "that the model here actually ought to be self. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2187"
+  },
+  {
+    "text": "So let's move it to the model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2190"
+  },
+  {
+    "text": "So we can take this function, cut it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2193"
+  },
+  {
+    "text": "go over to our CoffeeData UI model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2198"
+  },
+  {
+    "text": "and paste it in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2203"
+  },
+  {
+    "text": "It's going to be internal rather than private, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2207"
+  },
+  {
+    "text": "so it can be called from the HealthKitController. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2210"
+  },
+  {
+    "text": "And we just need to go through ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2214"
+  },
+  {
+    "text": "and remove all references to the model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2215"
+  },
+  {
+    "text": "because that's now self. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2217"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2219"
+  },
+  {
+    "text": "Finally, we need to go to where it was being called... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2227"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2231"
+  },
+  {
+    "text": "...and replace self here with a call to the model. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2235"
+  },
+  {
+    "text": "So now, this HealthKitController file compiles, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2240"
+  },
+  {
+    "text": "and I get a new set of errors from other files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2244"
+  },
+  {
+    "text": "Let's look at those errors. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2248"
+  },
+  {
+    "text": "So here we're calling into those completion handler shims ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2250"
+  },
+  {
+    "text": "that we called earlier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2254"
+  },
+  {
+    "text": "to allow us to keep passing in the completion handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2256"
+  },
+  {
+    "text": "even though we've rewritten this function to the async. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2259"
+  },
+  {
+    "text": "These functions are now being protected by the actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2262"
+  },
+  {
+    "text": "so I can't call them directly. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2264"
+  },
+  {
+    "text": "But they don't touch any other part of the actor's state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2268"
+  },
+  {
+    "text": "if we look at them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2271"
+  },
+  {
+    "text": "All they're doing is spinning off a task ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2275"
+  },
+  {
+    "text": "and then awaiting a call to the async version of the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2278"
+  },
+  {
+    "text": "Since they don't touch any part of the actor's internal state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2282"
+  },
+  {
+    "text": "I can mark them as what's called \"nonisolated.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2286"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2290"
+  },
+  {
+    "text": "Do the same down here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2295"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2296"
+  },
+  {
+    "text": "Marking something as nonisolated tells the compiler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2302"
+  },
+  {
+    "text": "that you're not going to touch any of the isolated state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2306"
+  },
+  {
+    "text": "and therefore, this function can be called from anywhere. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2308"
+  },
+  {
+    "text": "The switch over to the actor is actually happening automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2311"
+  },
+  {
+    "text": "when we await the call into the async version of the function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2314"
+  },
+  {
+    "text": "Note that the compiler will check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2321"
+  },
+  {
+    "text": "that this nonisolated claim is true. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2323"
+  },
+  {
+    "text": "If I were to try and access some state of the actor -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2327"
+  },
+  {
+    "text": "such as, for example, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2330"
+  },
+  {
+    "text": "printing out the authorization status -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2333"
+  },
+  {
+    "text": "the compiler will stop me.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2339"
+  },
+  {
+    "text": "So now, I've completed my work ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2350"
+  },
+  {
+    "text": "converting the HealthKitController ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2352"
+  },
+  {
+    "text": "into an actor that protects its internal state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2354"
+  },
+  {
+    "text": "from race conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2356"
+  },
+  {
+    "text": "Next, let's follow those deprecation breadcrumbs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2359"
+  },
+  {
+    "text": "to the next file to work on, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2362"
+  },
+  {
+    "text": "which is our CoffeeData model type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2364"
+  },
+  {
+    "text": "Now this class implements ObservableObject, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2370"
+  },
+  {
+    "text": "and it has a Published property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2374"
+  },
+  {
+    "text": "Any updates to properties that are published to a SwiftUI View ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2379"
+  },
+  {
+    "text": "must be done on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2383"
+  },
+  {
+    "text": "so this class is probably a good candidate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2387"
+  },
+  {
+    "text": "to put on the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2390"
+  },
+  {
+    "text": "But there's also this background DispatchQueue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2396"
+  },
+  {
+    "text": "for doing some work in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2402"
+  },
+  {
+    "text": "Let's have a look at how that's used.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2404"
+  },
+  {
+    "text": "And it's just in two functions: load and save. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2411"
+  },
+  {
+    "text": "That makes sense; you probably don't want ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2415"
+  },
+  {
+    "text": "to do your loading and saving on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2417"
+  },
+  {
+    "text": "When you see a pattern like this -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2423"
+  },
+  {
+    "text": "where a queue is being used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2425"
+  },
+  {
+    "text": "to coordinate some specific activities, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2427"
+  },
+  {
+    "text": "but the rest of the class needs to be on the main thread -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2430"
+  },
+  {
+    "text": "that's a sign that you want to factor that background code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2434"
+  },
+  {
+    "text": "out into a separate actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2437"
+  },
+  {
+    "text": "So let's do that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2441"
+  },
+  {
+    "text": "So let's go to the top of the file and create ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2443"
+  },
+  {
+    "text": "a new private actor... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2447"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2449"
+  },
+  {
+    "text": "...which we'll call \"CoffeeDataStore.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2452"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2454"
+  },
+  {
+    "text": "And let's open CoffeeData in another window. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2460"
+  },
+  {
+    "text": "and start moving code across into our new actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2464"
+  },
+  {
+    "text": "So we can give it its own logger.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2467"
+  },
+  {
+    "text": "And let's tweak the category ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2473"
+  },
+  {
+    "text": "so we can tell when the actor is in use. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2474"
+  },
+  {
+    "text": "And next, instead of this DispatchQueue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2477"
+  },
+  {
+    "text": "we're going to instantiate a copy of our new actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2481"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2485"
+  },
+  {
+    "text": "Next, let's go to the save operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2493"
+  },
+  {
+    "text": "and move that over. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2496"
+  },
+  {
+    "text": "So we can take this function...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2498"
+  },
+  {
+    "text": "...cut it from here, and move it into the actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2502"
+  },
+  {
+    "text": "Let's start by compiling and seeing what issues come up. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2507"
+  },
+  {
+    "text": "So first, there's this currentDrinks property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2512"
+  },
+  {
+    "text": "This was a property of the model type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2516"
+  },
+  {
+    "text": "before we moved this method out of the model into its actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2518"
+  },
+  {
+    "text": "So how can we access it now? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2522"
+  },
+  {
+    "text": "Well, the way actors relay information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2525"
+  },
+  {
+    "text": "is they pass values between each other. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2528"
+  },
+  {
+    "text": "So we should have this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2532"
+  },
+  {
+    "text": "take currentDrinks as an argument. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2534"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2537"
+  },
+  {
+    "text": "This argument to save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2544"
+  },
+  {
+    "text": "receives the list of currentDrinks to save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2545"
+  },
+  {
+    "text": "that's passed in by the model type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2549"
+  },
+  {
+    "text": "So that resolves that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2552"
+  },
+  {
+    "text": "Next, savedDrinks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2555"
+  },
+  {
+    "text": "This is a copy of the values last saved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2558"
+  },
+  {
+    "text": "to avoid saving unnecessarily when nothing has changed. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2561"
+  },
+  {
+    "text": "This value is mutated by both the save ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2566"
+  },
+  {
+    "text": "and the load function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2569"
+  },
+  {
+    "text": "so it definitely needs protecting by the actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2571"
+  },
+  {
+    "text": "So let's find it in our model... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2576"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2578"
+  },
+  {
+    "text": "...and move it over.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2585"
+  },
+  {
+    "text": "OK, what's next? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2589"
+  },
+  {
+    "text": "All right, this property dataURL, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2593"
+  },
+  {
+    "text": "that's actually being used just by the load and save operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2595"
+  },
+  {
+    "text": "so we can just move it over to be a private helper ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2599"
+  },
+  {
+    "text": "on the actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2605"
+  },
+  {
+    "text": "OK, last issues to resolve. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2613"
+  },
+  {
+    "text": "Now, here we're getting errors, and if we look, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2616"
+  },
+  {
+    "text": "it appears that there's a closure ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2620"
+  },
+  {
+    "text": "that's capturing some state from the actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2621"
+  },
+  {
+    "text": "so we need to fix that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2625"
+  },
+  {
+    "text": "So why is there a closure here? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2628"
+  },
+  {
+    "text": "Well, if you look down, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2630"
+  },
+  {
+    "text": "it's because the same piece of code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2633"
+  },
+  {
+    "text": "is getting called in two places. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2636"
+  },
+  {
+    "text": "And it turns out the compiler has flagged ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2641"
+  },
+  {
+    "text": "something really interesting for us. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2643"
+  },
+  {
+    "text": "What this code is doing is checking if the watch extension ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2646"
+  },
+  {
+    "text": "is running in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2650"
+  },
+  {
+    "text": "And the idea is, if it's running in the background already, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2653"
+  },
+  {
+    "text": "then don't go into the background queue; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2657"
+  },
+  {
+    "text": "just stay on the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2660"
+  },
+  {
+    "text": "and perform the task of saving synchronously. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2662"
+  },
+  {
+    "text": "But this doesn't seem right. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2667"
+  },
+  {
+    "text": "You should never block the main thread ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2669"
+  },
+  {
+    "text": "to perform an I/O operation like saving, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2671"
+  },
+  {
+    "text": "even when your app is running in the background. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2674"
+  },
+  {
+    "text": "Why does the app do this? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2679"
+  },
+  {
+    "text": "Well, we can trace it back ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2680"
+  },
+  {
+    "text": "to where the save operation is being called.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2682"
+  },
+  {
+    "text": "It's being called from a didSet ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2692"
+  },
+  {
+    "text": "down here on currentDrinks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2694"
+  },
+  {
+    "text": "And that fires so that whenever the property is assigned, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2698"
+  },
+  {
+    "text": "it saves the new values. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2702"
+  },
+  {
+    "text": "Now, didSets are super convenient, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2706"
+  },
+  {
+    "text": "but they can be a little too tempting. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2708"
+  },
+  {
+    "text": "Let's look at all of the callers of the currentDrinks property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2712"
+  },
+  {
+    "text": "If we drill in all the way down here...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2716"
+  },
+  {
+    "text": "...we find that the save operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2725"
+  },
+  {
+    "text": "is ultimately synchronous ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2727"
+  },
+  {
+    "text": "because of the way it's being called from this function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2729"
+  },
+  {
+    "text": "which is the call to handle background tasks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2733"
+  },
+  {
+    "text": "from the WatchKit extension. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2737"
+  },
+  {
+    "text": "Now this handle API has a contract. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2741"
+  },
+  {
+    "text": "You're supposed to do all of your work, and then, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2745"
+  },
+  {
+    "text": "when all your work is done, call this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2748"
+  },
+  {
+    "text": "setTaskCompletedWithSnapshot method. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2751"
+  },
+  {
+    "text": "And you must guarantee all your work is done ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2757"
+  },
+  {
+    "text": "when you call this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2760"
+  },
+  {
+    "text": "because your watch app will be suspended. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2761"
+  },
+  {
+    "text": "You can't have some I/O operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2764"
+  },
+  {
+    "text": "like our save operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2766"
+  },
+  {
+    "text": "still running when you say that you're done. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2768"
+  },
+  {
+    "text": "This is a perfect example of how asynchrony ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2771"
+  },
+  {
+    "text": "forces global reasoning throughout your code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2774"
+  },
+  {
+    "text": "Let's visualize what's happening here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2778"
+  },
+  {
+    "text": "We start in handle(backgroundTasks:) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2781"
+  },
+  {
+    "text": "which calls the load from HealthKit function. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2784"
+  },
+  {
+    "text": "This takes a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2788"
+  },
+  {
+    "text": "But then we switch to updateModel(), ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2791"
+  },
+  {
+    "text": "which is performed synchronously, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2793"
+  },
+  {
+    "text": "and so synchronously calls didSet, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2796"
+  },
+  {
+    "text": "which synchronously saves. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2799"
+  },
+  {
+    "text": "Once this is done, the completion handler is called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2802"
+  },
+  {
+    "text": "and that notifies WatchKit that it's all done. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2806"
+  },
+  {
+    "text": "It's the synchronous parts that force us to perform ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2810"
+  },
+  {
+    "text": "synchronous I/O on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2813"
+  },
+  {
+    "text": "How can we fix this? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2816"
+  },
+  {
+    "text": "To fix it with completion handlers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2819"
+  },
+  {
+    "text": "you'd have to update each currently synchronous method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2821"
+  },
+  {
+    "text": "to now take a completion handler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2824"
+  },
+  {
+    "text": "But you can't do that with a didSet; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2828"
+  },
+  {
+    "text": "it doesn't take arguments, it just fires automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2830"
+  },
+  {
+    "text": "when you update the property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2833"
+  },
+  {
+    "text": "But the good news is that all our async refactoring ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2836"
+  },
+  {
+    "text": "is going to pay off now, because updating functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2839"
+  },
+  {
+    "text": "from synchronous to be async is way easier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2841"
+  },
+  {
+    "text": "So first, let's go ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2847"
+  },
+  {
+    "text": "to the published property, currentDrinks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2849"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2852"
+  },
+  {
+    "text": "and let's change it to a private(set) ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2856"
+  },
+  {
+    "text": "so that we know all mutation is happening only from this file. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2859"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2862"
+  },
+  {
+    "text": "And then let's take this didSet operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2870"
+  },
+  {
+    "text": "and instead move that logic into a new function... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2875"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2880"
+  },
+  {
+    "text": "...called \"drinksUpdated().\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2881"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2883"
+  },
+  {
+    "text": "We'll make it async, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2886"
+  },
+  {
+    "text": "because it's going to call our save operation on our actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2887"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2891"
+  },
+  {
+    "text": "And that needs to be an await... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2897"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2899"
+  },
+  {
+    "text": "...on the CoffeeData store, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2902"
+  },
+  {
+    "text": "into which we're going to pass the new currentDrinks value. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2904"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2907"
+  },
+  {
+    "text": "Then, we need to go to where currentDrinks is updated ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2914"
+  },
+  {
+    "text": "and ensure we call drinksUpdated afterwards. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2918"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2921"
+  },
+  {
+    "text": "Now in this function, there's one thing to note. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2952"
+  },
+  {
+    "text": "It's important that this operation -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2956"
+  },
+  {
+    "text": "that takes a copy of currentDrinks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2959"
+  },
+  {
+    "text": "mutates it, and then writes it back -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2961"
+  },
+  {
+    "text": "all happens atomically. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2965"
+  },
+  {
+    "text": "And this is why the await keyword is vital; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2969"
+  },
+  {
+    "text": "it indicates that at this point, this operation might suspend, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2972"
+  },
+  {
+    "text": "and other functions -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2977"
+  },
+  {
+    "text": "functions that might also update currentDrinks -- could run. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2978"
+  },
+  {
+    "text": "So we need to make sure that our entire mutation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2983"
+  },
+  {
+    "text": "and writeback happens before any awaits, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2986"
+  },
+  {
+    "text": "otherwise, other functions coming ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2991"
+  },
+  {
+    "text": "and mutating currentDrinks could lead to an inconsistent state.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=2993"
+  },
+  {
+    "text": "So this function needs to be async. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3001"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3004"
+  },
+  {
+    "text": "We can go to our save operation and eliminate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3008"
+  },
+  {
+    "text": "this unnecessary background and foreground branch ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3011"
+  },
+  {
+    "text": "and just do the operation on the actor every time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3017"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3026"
+  },
+  {
+    "text": "OK. Finally, let's look at the load operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3035"
+  },
+  {
+    "text": "Now here, the logic is split ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3039"
+  },
+  {
+    "text": "between code that needs to run in the background ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3042"
+  },
+  {
+    "text": "and code that needs to run on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3047"
+  },
+  {
+    "text": "So let's first take the first half -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3054"
+  },
+  {
+    "text": "the background portion -- and move that into the actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3057"
+  },
+  {
+    "text": "Now doing this, we notice another possible race condition.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3066"
+  },
+  {
+    "text": "savedValues here was being mutated on the main queue, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3074"
+  },
+  {
+    "text": "but if you remember the save operation, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3079"
+  },
+  {
+    "text": "it was both read and written from the background queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3081"
+  },
+  {
+    "text": "Now, as it happens, the way the app was constructed, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3085"
+  },
+  {
+    "text": "the load only ever happened on startup, so this was fine. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3088"
+  },
+  {
+    "text": "But again, that's relying on global reasoning, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3091"
+  },
+  {
+    "text": "and it's the kind of assumption that can break in subtle ways ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3094"
+  },
+  {
+    "text": "when you make future changes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3097"
+  },
+  {
+    "text": "It's much better to let the actor ensure the program ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3100"
+  },
+  {
+    "text": "will always be correct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3102"
+  },
+  {
+    "text": "So we're going to fix that now. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3106"
+  },
+  {
+    "text": "So first, let's remove this queue management...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3107"
+  },
+  {
+    "text": "...reindent the function, remove this other queue management. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3114"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3118"
+  },
+  {
+    "text": "And just like with save, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3121"
+  },
+  {
+    "text": "we need a way to pass back the loaded values, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3123"
+  },
+  {
+    "text": "which we do just by returning a value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3127"
+  },
+  {
+    "text": "from this load function on the actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3129"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3132"
+  },
+  {
+    "text": "So now, let's hop back to the original load.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3141"
+  },
+  {
+    "text": "And we've moved this logic, so we can just delete it...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3147"
+  },
+  {
+    "text": "and replace it with a call to await... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3156"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3160"
+  },
+  {
+    "text": "...loading the drinks from the actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3170"
+  },
+  {
+    "text": "Now, because we're awaiting the actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3179"
+  },
+  {
+    "text": "that means this function needs to be async. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3183"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3186"
+  },
+  {
+    "text": "And while we're here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3192"
+  },
+  {
+    "text": "we can clean up these deprecation warnings. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3196"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3199"
+  },
+  {
+    "text": "And finally, because this load is now async, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3224"
+  },
+  {
+    "text": "we need to await it here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3227"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3230"
+  },
+  {
+    "text": "And because we're awaiting it here, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3235"
+  },
+  {
+    "text": "we need to create a task. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3237"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3239"
+  },
+  {
+    "text": "But at this point, if we just used an async task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3245"
+  },
+  {
+    "text": "we're potentially introducing a new race condition. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3249"
+  },
+  {
+    "text": "Remember, outside of an actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3253"
+  },
+  {
+    "text": "this new task just runs on an arbitrary thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3256"
+  },
+  {
+    "text": "We shouldn't mutate shared state, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3261"
+  },
+  {
+    "text": "like currentDrinks, from an arbitrary thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3263"
+  },
+  {
+    "text": "Now, one way to resolve this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3268"
+  },
+  {
+    "text": "would be to put the load function on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3270"
+  },
+  {
+    "text": "But it's much better to move the entire of model type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3274"
+  },
+  {
+    "text": "to the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3278"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3280"
+  },
+  {
+    "text": "So we go to our CoffeeModel definition ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3293"
+  },
+  {
+    "text": "and add \"MainActor\" to our model type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3295"
+  },
+  {
+    "text": "By putting the model on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3301"
+  },
+  {
+    "text": "we're now guaranteeing that all access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3304"
+  },
+  {
+    "text": "to CoffeeData's properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3306"
+  },
+  {
+    "text": "are going to be made from the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3308"
+  },
+  {
+    "text": "And this is good because, as we noted earlier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3312"
+  },
+  {
+    "text": "it's an observable object and it has a published property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3315"
+  },
+  {
+    "text": "And properties published to SwiftUI ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3323"
+  },
+  {
+    "text": "must only be updated on the main thread. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3325"
+  },
+  {
+    "text": "It also means any calls to async from the actor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3329"
+  },
+  {
+    "text": "will also run on the actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3333"
+  },
+  {
+    "text": "so we can remove any other \"MainActor\" annotations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3336"
+  },
+  {
+    "text": "such as the one we added earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3340"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3342"
+  },
+  {
+    "text": "So now you might notice that when we compile ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3355"
+  },
+  {
+    "text": "we don't hit any compilation errors, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3359"
+  },
+  {
+    "text": "unlike when we moved other things ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3361"
+  },
+  {
+    "text": "into an actor earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3363"
+  },
+  {
+    "text": "And that's because the places we're calling into our model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3366"
+  },
+  {
+    "text": "are things like SwiftUI views.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3369"
+  },
+  {
+    "text": "For example, let's go to DrinkListView. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3375"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3377"
+  },
+  {
+    "text": "Now, this type displays a list of buttons on the screen. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3381"
+  },
+  {
+    "text": "And then it calls addDrink, which is on our model type. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3386"
+  },
+  {
+    "text": "But this DrinkListView is itself also on the main actor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3390"
+  },
+  {
+    "text": "And so its methods...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3395"
+  },
+  {
+    "text": "...can call into the CoffeeData model without an await. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3400"
+  },
+  {
+    "text": "What is it that determines ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3407"
+  },
+  {
+    "text": "that this SwiftUI view is on the main actor? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3408"
+  },
+  {
+    "text": "Well, it's inferred from its use of EnvironmentObject here. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3412"
+  },
+  {
+    "text": "Any SwiftUI view that accesses shared state -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3418"
+  },
+  {
+    "text": "such as environmental objects or an observed object -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3422"
+  },
+  {
+    "text": "will always be on the main actor.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3425"
+  },
+  {
+    "text": "Elsewhere...",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3431"
+  },
+  {
+    "text": "...we're also accessing our model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3435"
+  },
+  {
+    "text": "from this extension delegate call.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3437"
+  },
+  {
+    "text": "Since this extension delegate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3445"
+  },
+  {
+    "text": "is guaranteed to be called on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3448"
+  },
+  {
+    "text": "it's been annotated by WatchKit as running on the main actor, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3451"
+  },
+  {
+    "text": "and so it can also call into our model type directly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3455"
+  },
+  {
+    "text": "Finally, now that we're here, let's refactor this method ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3463"
+  },
+  {
+    "text": "and get rid of this deprecated completion handler usage. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3468"
+  },
+  {
+    "text": "We can instead wrap this section in a new asynchronous task.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3473"
+  },
+  {
+    "text": "Remember, this handler is running on the main thread, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3481"
+  },
+  {
+    "text": "so when we create a task, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3485"
+  },
+  {
+    "text": "that task will also be running on the main thread.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3488"
+  },
+  {
+    "text": "And inside this new task, we can now await... ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3497"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3502"
+  },
+  {
+    "text": "...our call to load new data from HealthKit. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3508"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3511"
+  },
+  {
+    "text": "And a really nice thing about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3521"
+  },
+  {
+    "text": "getting rid of completion handlers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3522"
+  },
+  {
+    "text": "is you can now compose functions together. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3526"
+  },
+  {
+    "text": "So if you wanted, you could just move this await ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3529"
+  },
+  {
+    "text": "directly into the if statement.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3532"
+  },
+  {
+    "text": "Once this function call returns, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3538"
+  },
+  {
+    "text": "we know that all our work is complete because, inside it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3541"
+  },
+  {
+    "text": "we will awaiting the save operation. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3545"
+  },
+  {
+    "text": "And so, we can now confidently call ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3548"
+  },
+  {
+    "text": "background.Task.setTaskCompleted ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3550"
+  },
+  {
+    "text": "knowing that we finished all of our I/O operations. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3554"
+  },
+  {
+    "text": "We now have this nice, structured, top-down approach ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3559"
+  },
+  {
+    "text": "to waiting for an asynchronous operation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3562"
+  },
+  {
+    "text": "before completing any more work. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3564"
+  },
+  {
+    "text": "Incidentally, this structured approach to concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3568"
+  },
+  {
+    "text": "is another really important part of Swift's concurrency feature. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3571"
+  },
+  {
+    "text": "To learn more, watch the associated talk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3575"
+  },
+  {
+    "text": "which covers how you can take advantage of this feature ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3578"
+  },
+  {
+    "text": "to structure more complex examples, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3581"
+  },
+  {
+    "text": "such as waiting on multiple asynchronous operations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3583"
+  },
+  {
+    "text": "to complete before continuing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3586"
+  },
+  {
+    "text": "If, while you watch this talk, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3590"
+  },
+  {
+    "text": "you wondered exactly how some of these new features work, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3592"
+  },
+  {
+    "text": "check out our under-the-hood talk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3595"
+  },
+  {
+    "text": "that explores some of the technology in detail. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3597"
+  },
+  {
+    "text": "So let's recap. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3601"
+  },
+  {
+    "text": "We've taken some code that had sound type architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3603"
+  },
+  {
+    "text": "but complex concurrency architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3607"
+  },
+  {
+    "text": "that had some hidden race conditions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3609"
+  },
+  {
+    "text": "that were really hard to spot. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3611"
+  },
+  {
+    "text": "And with the help of the new concurrency features, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3614"
+  },
+  {
+    "text": "we've rearchitected it so that the concurrency ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3616"
+  },
+  {
+    "text": "and type architecture are nicely aligned. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3619"
+  },
+  {
+    "text": "And the compiler helped us find ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3623"
+  },
+  {
+    "text": "some hidden potential race conditions along the way. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3624"
+  },
+  {
+    "text": "There's a lot more to Swift 5.5 we haven't covered, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3627"
+  },
+  {
+    "text": "like structured concurrency with task groups, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3631"
+  },
+  {
+    "text": "async sequences, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3633"
+  },
+  {
+    "text": "and some great new asynchronous APIs in the SDK. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3635"
+  },
+  {
+    "text": "There's also a few more refactorings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3639"
+  },
+  {
+    "text": "we didn't do in this project ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3642"
+  },
+  {
+    "text": "that you might want to try yourself. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3643"
+  },
+  {
+    "text": "The best way to learn these techniques ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3646"
+  },
+  {
+    "text": "is to try them out in your own apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3648"
+  },
+  {
+    "text": "so have fun and enjoy these cleaner, safer ways to code. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3650"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10194/?time=3653"
+  }
+]

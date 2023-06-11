@@ -1,0 +1,506 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:10.000
+Xin chào mọi người!
+
+00:00:10.000 --> 00:00:13.000
+Tôi là Prashant, một Kỹ sư AVFoundation.
+
+00:00:13.000 --> 00:00:15.000
+Chào mừng đến với WWDC21.
+
+00:00:15.000 --> 00:00:21.000
+Trong những năm gần đây, sự phổ biến của các dịch vụ phát trực tuyến hàng đầu đã tiếp cận với truyền hình tuyến tính.
+
+00:00:21.000 --> 00:00:29.000
+Tùy thuộc vào thị trường mà bạn đang tham gia, người dùng của bạn thực sự có thể thích nội dung hỗ trợ quảng cáo miễn phí hơn nội dung không có quảng cáo mà họ cần phải trả tiền.
+
+00:00:29.000 --> 00:00:35.000
+Vì vậy, nếu bạn quan tâm đến việc bao gồm quảng cáo và các quảng cáo xen kẽ khác trong các luồng HLS của mình, bạn đã điều chỉnh đúng phiên.
+
+00:00:35.000 --> 00:00:41.000
+Trước khi chúng ta đi sâu vào, hãy nhanh chóng xem lại một số cơ chế hiện có để chèn quảng cáo vào các luồng HLS.
+
+00:00:41.000 --> 00:00:45.000
+Bạn có thể thực hiện chèn quảng cáo phía máy chủ bằng cách sử dụng thẻ DISCONTINUITY.
+
+00:00:45.000 --> 00:00:54.000
+Đây là một sơ đồ khá tĩnh ở chỗ các phân đoạn quảng cáo được ghép lại với nhau với các phân đoạn nội dung và việc khâu này phải được thực hiện ngay cả trước khi danh sách phát được bán cho người dùng.
+
+00:00:54.000 --> 00:01:08.000
+Như bạn có thể tưởng tượng, điều này không cho phép ràng buộc muộn nội dung quảng cáo của bạn, nơi bạn muốn quảng cáo được quyết định vì người dùng đang tiếp cận điểm đánh dấu quảng cáo hoặc thậm chí liên kết lại, giả sử, khi người dùng điều hướng đến một phần của video mà họ đã xem, họ sẽ thấy lại cùng một quảng cáo.
+
+00:01:08.000 --> 00:01:15.000
+Vì HLS hoạt động ở độ chi tiết phân khúc, quá trình chuyển đổi đến và từ nhóm quảng cáo cần phải xảy ra ở ranh giới phân khúc.
+
+00:01:15.000 --> 00:01:22.000
+Nếu điểm đánh dấu quảng cáo của bạn tình cờ xuất hiện ở giữa phân đoạn nội dung, bạn sẽ phải chia nhỏ phân đoạn đó để ghép quảng cáo.
+
+00:01:22.000 --> 00:01:28.000
+Thông thường, số lượng cấp chất lượng sẽ khác nhau giữa tài sản chính và tài sản xen kẽ của bạn.
+
+00:01:28.000 --> 00:01:34.000
+Để kết hợp quảng cáo lại với tất cả các cấp chất lượng chính, quảng cáo sẽ cần được điều kiện để phù hợp với mã hóa nội dung.
+
+00:01:34.000 --> 00:01:39.000
+Và bạn cũng muốn đảm bảo rằng quảng cáo sử dụng các codec giống như nội dung chính.
+
+00:01:39.000 --> 00:01:44.000
+Và trong các tình huống phát trực tiếp, người đóng gói của bạn có thể phải làm rất nhiều sổ sách kế toán phụ trợ.
+
+00:01:44.000 --> 00:01:48.000
+Quảng cáo và quảng cáo xen kẽ của bạn chủ yếu sẽ là các luồng video theo yêu cầu.
+
+00:01:48.000 --> 00:01:53.000
+Nhưng người đóng gói sẽ phải cuộn những thứ này ra trên cơ sở mỗi phân đoạn cho toàn bộ thời gian nghỉ quảng cáo.
+
+00:01:53.000 --> 00:01:55.000
+Bạn cũng có thể chèn quảng cáo ở phía khách hàng.
+
+00:01:55.000 --> 00:01:59.000
+Cho đến bây giờ, chúng tôi không có khuyến nghị chính thức về cách thực hiện điều này.
+
+00:01:59.000 --> 00:02:07.000
+Một trong những cách tiếp cận phổ biến hơn là sử dụng sơ đồ hai người chơi trong đó một người chơi sẽ trình bày nội dung chính trong khi người kia sẽ trình bày quảng cáo xen kẽ.
+
+00:02:07.000 --> 00:02:13.000
+Và quá trình chuyển đổi đạt được bằng cách phối hợp phát lại giữa hai người chơi và bằng cách quản lý hệ thống phân cấp chế độ xem của người chơi.
+
+00:02:13.000 --> 00:02:16.000
+Mặc dù điều này hoạt động tốt, nhưng các vấn đề ở đây chủ yếu nằm ở khía cạnh hiệu suất.
+
+00:02:16.000 --> 00:02:25.000
+Nếu bộ đệm không được phối hợp hợp lý giữa hai người chơi, việc tìm nạp trước quảng cáo của bạn sẽ ảnh hưởng đến hiệu suất tốc độ bit thích ứng của luồng nội dung chính.
+
+00:02:25.000 --> 00:02:31.000
+Và các tính năng như Picture in Picture và AirPlay thực sự khó thực hiện tốt với các cách tiếp cận trình phát tùy chỉnh này.
+
+00:02:31.000 --> 00:02:37.000
+Năm nay, chúng tôi đã giải quyết tất cả những mối quan tâm này và nói chung đã cố gắng làm cho việc chèn quảng cáo đơn giản hơn rất nhiều.
+
+00:02:37.000 --> 00:02:44.000
+Chúng tôi đang giới thiệu quảng cáo xen kẽ HLS trong đó quảng cáo được coi là tài sản riêng biệt có thể được lên lịch theo dòng thời gian của chương trình.
+
+00:02:44.000 --> 00:02:47.000
+Quảng cáo không còn được khâu vào với các thẻ DISCONTINUITY.
+
+00:02:47.000 --> 00:02:52.000
+Thay vào đó, chúng vẫn là tài sản khép kín có thể được tham chiếu qua danh sách phát chính của chúng.
+
+00:02:52.000 --> 00:02:58.000
+Như chúng ta sẽ sớm thấy, sơ đồ này rất năng động, cho phép ràng buộc muộn và thậm chí liên kết lại vào khoảng không quảng cáo của bạn.
+
+00:02:58.000 --> 00:03:00.000
+Bạn không còn bị ràng buộc trong việc phân đoạn ranh giới.
+
+00:03:00.000 --> 00:03:04.000
+Bạn có thể tự ý đặt quảng cáo ở bất cứ đâu trên dòng thời gian của chương trình.
+
+00:03:04.000 --> 00:03:12.000
+Quảng cáo xen kẽ HLS kết hợp với AVKit cung cấp hỗ trợ tích hợp cho các hạn chế điều hướng trên tvOS.
+
+00:03:12.000 --> 00:03:15.000
+Chúng tôi cũng có hỗ trợ tích hợp cho AirPlay và Picture in Picture.
+
+00:03:15.000 --> 00:03:20.000
+Tất cả các quảng cáo và quảng cáo xen kẽ đã lên lịch của bạn sẽ được chuyển qua phiên AirPlay.
+
+00:03:20.000 --> 00:03:28.000
+Chúng tôi cũng phối hợp đệm và sử dụng các tài nguyên hệ thống khác giữa người chơi chính và người chơi xen kẽ để đạt được sự chuyển đổi liền mạch.
+
+00:03:28.000 --> 00:03:36.000
+Bây giờ chúng ta hãy xem xét một luồng phát lại điển hình khi chúng ta trình bày một số nội dung video theo yêu cầu cùng với quảng cáo sử dụng quảng cáo xen kẽ HLS.
+
+00:03:36.000 --> 00:03:44.000
+Thanh màu xanh lam trong bức ảnh này đại diện cho nội dung chính của bạn và các thanh màu cam và xanh lá cây là những quảng cáo mà bạn muốn lên lịch trong quá trình phát lại.
+
+00:03:44.000 --> 00:03:50.000
+Bây giờ, quảng cáo chính sẽ phát cho đến khi điểm đánh dấu quảng cáo, tại thời điểm đó nó sẽ tạm dừng và quảng cáo đầu tiên sẽ bắt đầu phát.
+
+00:03:50.000 --> 00:03:54.000
+Khi quảng cáo đầu tiên phát ra, quảng cáo thứ hai sẽ ngay lập tức theo sau.
+
+00:03:54.000 --> 00:03:58.000
+Sau quảng cáo thứ hai, quảng cáo chính sẽ tiếp tục từ nơi nó đã dừng lại.
+
+00:03:58.000 --> 00:04:01.000
+Bây giờ chúng ta hãy nhìn vào chuỗi đệm.
+
+00:04:01.000 --> 00:04:04.000
+Chúng tôi bắt đầu bằng cách đệm chính cho đến thời gian bắt đầu của quảng cáo đầu tiên.
+
+00:04:04.000 --> 00:04:08.000
+Bây giờ chúng tôi sẽ đệm trước quảng cáo đầu tiên, giúp đạt được quá trình chuyển đổi suôn sẻ.
+
+00:04:08.000 --> 00:04:12.000
+Sau khi điều này đã được đệm hoàn toàn, chúng tôi sẽ đệm trước quảng cáo thứ hai.
+
+00:04:12.000 --> 00:04:18.000
+Và sau khi quảng cáo thứ hai đã được đệm hoàn toàn, chúng tôi sẽ bắt đầu đệm lại quảng cáo chính để chúng tôi chuyển trở lại liền mạch.
+
+00:04:18.000 --> 00:04:25.000
+Luồng phát lại cho các kịch bản trực tiếp tương tự nhau, ngoại trừ việc chúng tôi sẽ tham gia lại quy trình chính sau khi chuyển tiếp theo thời lượng quảng cáo.
+
+00:04:25.000 --> 00:04:28.000
+Điều này là để chúng tôi duy trì đồng bộ với cạnh trực tiếp.
+
+00:04:28.000 --> 00:04:33.000
+Và điều này cũng áp dụng một chiến lược đệm tương tự sao cho có thể chuyển đổi liền mạch.
+
+00:04:33.000 --> 00:04:38.000
+Vậy bạn sẽ lên lịch quảng cáo với quảng cáo xen kẽ HLS như thế nào?
+
+00:04:38.000 --> 00:04:41.000
+Bây giờ bạn có thể chèn quảng cáo phía máy chủ bằng cách sử dụng thẻ DATERANGE.
+
+00:04:41.000 --> 00:04:45.000
+Đối với điều này, chúng tôi đang giới thiệu một lớp phạm vi ngày mới với các thuộc tính.
+
+00:04:45.000 --> 00:04:49.000
+Danh sách phát này đang mang thông tin thời gian thông qua thẻ PROGRAM-DATE-TIME.
+
+00:04:49.000 --> 00:04:55.000
+Các thẻ này hiện là bắt buộc vì lịch quảng cáo hiện được chỉ định bằng cách sử dụng ngày tháng.
+
+00:04:55.000 --> 00:05:02.000
+Ở đây chúng ta thấy một quảng cáo được xếp hàng bằng thẻ DATERANGE, với lớp được đặt thành com.apple.hls.interstitial.
+
+00:05:02.000 --> 00:05:05.000
+Thuộc tính ID xác định duy nhất sự kiện.
+
+00:05:05.000 --> 00:05:09.000
+NGÀY BẮT ĐẦU là nơi bạn muốn quảng cáo bắt đầu trong dòng thời gian chính.
+
+00:05:09.000 --> 00:05:12.000
+Ở đây chúng ta thấy rằng quảng cáo được lên lịch phát lại sau 5 giây.
+
+00:05:12.000 --> 00:05:16.000
+Thuộc tính DURATION chỉ định thời lượng của quảng cáo.
+
+00:05:16.000 --> 00:05:21.000
+Thuộc tính X-ASSET-URI chỉ định URI của danh sách phát chính của quảng cáo.
+
+00:05:21.000 --> 00:05:28.000
+Và thuộc tính X-RESUME-OFFSET chỉ định độ lệch từ NGÀY BẮT ĐẦU, nơi bạn muốn phát lại chính tiếp tục.
+
+00:05:28.000 --> 00:05:33.000
+Độ lệch sơ yếu lý lịch là 0 có nghĩa là sơ yếu lý lịch sẽ tiếp tục từ nơi nó đã dừng lại.
+
+00:05:33.000 --> 00:05:38.000
+Nếu không có thuộc tính bù đắp sơ yếu lý lịch, chúng tôi sẽ tham gia lại phần bù chính bằng với thời lượng quảng cáo.
+
+00:05:38.000 --> 00:05:43.000
+Đây có lẽ là những gì bạn muốn làm cho các kịch bản trực tiếp.
+
+00:05:43.000 --> 00:05:46.000
+Đôi khi bạn có thể muốn bỏ qua các quảng cáo trong luồng như được hiển thị ở đây.
+
+00:05:46.000 --> 00:05:51.000
+Đối với điều đó, bạn chỉ cần chỉ định phần bù đắp sơ yếu lý lịch là thời lượng của quảng cáo trong luồng.
+
+00:05:51.000 --> 00:05:54.000
+Bạn có thể lên lịch nhiều quảng cáo bằng cách sử dụng thẻ DATERANGE.
+
+00:05:54.000 --> 00:06:00.000
+Ở đây chúng ta thấy quảng cáo đầu tiên được lên lịch vào lúc 5 giây chính và quảng cáo thứ hai vào lúc 10 giây.
+
+00:06:00.000 --> 00:06:05.000
+Bạn có thể lên lịch quảng cáo liên tục đơn giản bằng cách chỉ định cùng một thời gian bắt đầu cho mỗi quảng cáo.
+
+00:06:05.000 --> 00:06:10.000
+Ở đây chúng ta thấy rằng quảng cáo đầu tiên bắt đầu lúc 5 giây để phát lại, và quảng cáo thứ hai cũng vậy.
+
+00:06:10.000 --> 00:06:13.000
+Các quảng cáo sẽ được hiển thị theo thứ tự chúng xuất hiện trong danh sách phát.
+
+00:06:13.000 --> 00:06:22.000
+Những cách tiếp cận này mà bạn sử dụng thuộc tính X-ASSET-URI để tham chiếu quảng cáo của mình sẽ yêu cầu bạn xác định nhóm quảng cáo của mình khi bạn thêm thẻ DATERANGE vào danh sách phát.
+
+00:06:22.000 --> 00:06:26.000
+Nhưng bạn có thể trì hoãn quyết định đó bằng cách sử dụng thuộc tính X-ASSET-LIST.
+
+00:06:26.000 --> 00:06:32.000
+X-ASSET-LIST trỏ đến một đối tượng JSON có chứa lịch trình sự kiện.
+
+00:06:32.000 --> 00:06:41.000
+Đối tượng có một mảng ASSETS chỉ định danh sách quảng cáo xen kẽ, với mỗi mục nhập chỉ định URI của danh sách phát chính và thời lượng.
+
+00:06:41.000 --> 00:06:48.000
+Lưu ý rằng đối tượng JSON này sẽ chỉ được tìm nạp tại thời điểm đệm, cho phép liên kết muộn với khoảng không quảng cáo của bạn.
+
+00:06:48.000 --> 00:06:50.000
+Thông thường, quảng cáo sẽ diễn ra hoàn toàn đến cùng.
+
+00:06:50.000 --> 00:06:55.000
+Tuy nhiên, bạn có thể chỉ định thời gian kết thúc cho quảng cáo của mình bằng cách sử dụng thuộc tính X-PLAYOUT-LIMIT.
+
+00:06:55.000 --> 00:06:59.000
+Bạn có thể sử dụng thuộc tính này để thực hiện các kịch bản trả lại sớm trong các chương trình phát sóng trực tiếp.
+
+00:06:59.000 --> 00:07:04.000
+Quay trở lại sớm là nơi bạn muốn làm gián đoạn thời gian nghỉ quảng cáo của mình để quay lại nguồn cấp dữ liệu trực tiếp.
+
+00:07:04.000 --> 00:07:10.000
+Điều này có thể là do một kịch bản tin tức nóng hổi, hoặc có thể có một số sự phấn khích đột ngột trên sân thể thao mà bạn không muốn người xem của mình bỏ lỡ.
+
+00:07:10.000 --> 00:07:13.000
+Vậy bạn sẽ sử dụng cái này như thế nào để thực hiện trả lại sớm?
+
+00:07:13.000 --> 00:07:16.000
+Ở đây chúng tôi có một danh sách phát trực tiếp chứa sáu phân đoạn.
+
+00:07:16.000 --> 00:07:18.000
+Cạnh trực tiếp nằm ở cuối phân đoạn sáu.
+
+00:07:18.000 --> 00:07:22.000
+Bây giờ đầu phát thường sẽ là ba khoảng thời gian mục tiêu phía sau cạnh trực tiếp.
+
+00:07:22.000 --> 00:07:25.000
+Trong trường hợp này, nó ở cuối phân đoạn ba.
+
+00:07:25.000 --> 00:07:29.000
+Tại thời điểm này, một vị trí quảng cáo 15 giây được quyết định theo dõi phân đoạn sáu.
+
+00:07:29.000 --> 00:07:35.000
+Vì vậy, bản cập nhật danh sách phát thực sự chứa tất cả sáu phân đoạn cùng với thẻ DATERANGE mang lịch quảng cáo.
+
+00:07:35.000 --> 00:07:42.000
+Trong bản cập nhật tiếp theo, đầu phát sẽ chuyển sang cuối phân đoạn bốn và quảng cáo vẫn được lên kế hoạch theo dõi phân đoạn sáu.
+
+00:07:42.000 --> 00:07:45.000
+Đoạn bảy được tô bóng ở đây chỉ đơn giản là đại diện cho sự ngắt quảng cáo.
+
+00:07:45.000 --> 00:07:52.000
+Trong bản cập nhật tiếp theo, đầu phát đã chuyển đến cuối phân đoạn năm và trong bản cập nhật tiếp theo, chúng tôi đang bắt đầu ngắt quảng cáo.
+
+00:07:52.000 --> 00:07:56.000
+Nếu bạn không làm bất cứ điều gì, quảng cáo sẽ phát ra trong 15 giây.
+
+00:07:56.000 --> 00:08:02.000
+Nhưng nếu bạn muốn lên lịch trở lại sớm, giả sử, sau 12 giây, bạn chỉ cần chỉ định giới hạn chơi là như vậy.
+
+00:08:02.000 --> 00:08:07.000
+Bây giờ quảng cáo của bạn sẽ phát trong 12 giây trước khi quay lại chương trình.
+
+00:08:07.000 --> 00:08:13.000
+Thông thường vì lý do hợp đồng, bạn muốn ngăn người dùng của mình nhảy qua hoặc bỏ qua quảng cáo.
+
+00:08:13.000 --> 00:08:17.000
+Bạn có thể chỉ định các hạn chế điều hướng bằng cách sử dụng thuộc tính X-RESTRICT.
+
+00:08:17.000 --> 00:08:23.000
+X-RESTRICT với bước nhảy giá trị sẽ ngăn người dùng tìm kiếm từ thời gian trước quảng cáo sang thời gian sau quảng cáo.
+
+00:08:23.000 --> 00:08:29.000
+X-RESTRICT với giá trị bỏ qua sẽ ngăn người ta phát quảng cáo với tốc độ khác với tốc độ mong muốn.
+
+00:08:29.000 --> 00:08:32.000
+Lưu ý rằng những hạn chế này được thực thi bởi giao diện người dùng.
+
+00:08:32.000 --> 00:08:34.000
+Trên tvOS, chúng được thực thi bởi AVKit.
+
+00:08:34.000 --> 00:08:39.000
+Và chúng sẽ có sẵn cho bạn nếu bạn sử dụng AVPlayerViewController cho bản trình bày video của mình.
+
+00:08:39.000 --> 00:08:46.000
+Khi bạn đang sử dụng các nền tảng khác hoặc nếu bạn không sử dụng AVKit, tùy thuộc vào ứng dụng của bạn để thực thi các hạn chế này.
+
+00:08:46.000 --> 00:08:53.000
+Bây giờ chúng tôi đã thấy cách bạn có thể lên lịch quảng cáo phía máy chủ bằng cách sử dụng thẻ DATERANGE, hãy xem cách bạn có thể theo dõi tiến trình của họ tại khách hàng.
+
+00:08:53.000 --> 00:09:10.000
+Đối với điều này, chúng tôi đang giới thiệu hai đối tượng AVFoundation mới: AVPlayerInterstitialEventMonitor thông báo cho khách hàng khi quảng cáo xen kẽ được lên lịch hoặc đang phát và đối tượng AVPlayerInterstitialEvent chứa tất cả thông tin cần thiết để đặt quảng cáo trên dòng thời gian của vật phẩm của người chơi.
+
+00:09:10.000 --> 00:09:28.000
+AVPlayerInterstitialEventMonitor có các thuộc tính sau: trình phát chính đang phát nội dung chính của bạn, xử lý trình phát xen kẽ mà bạn có thể sử dụng để theo dõi phát lại quảng cáo, mảng sự kiện là một mảng các đối tượng AVPlayerInterstitialEvent đại diện cho các quảng cáo xen kẽ khác nhau được đặt trên trình phát.
+
+00:09:28.000 --> 00:09:32.000
+Chúng ta sẽ sớm nhận được mô tả về đối tượng AVPlayerInterstitialEvent.
+
+00:09:32.000 --> 00:09:34.000
+Xử lý sự kiện hiện tại.
+
+00:09:34.000 --> 00:09:38.000
+Vì vậy, điều này sẽ hợp lệ khi một quảng cáo xen kẽ đang phát và null nếu không.
+
+00:09:38.000 --> 00:09:50.000
+Và sau đó chúng tôi có eventsDidChangeNotification sẽ kích hoạt khi lịch trình sự kiện thay đổi, và cuối cùng là currentEvent- DidChangeNotification sẽ kích hoạt khi chúng tôi chuyển sang và từ quảng cáo xen kẽ.
+
+00:09:50.000 --> 00:09:58.000
+Đối tượng AVPlayerInterstitialEvent mô tả một sự kiện xen kẽ có các thuộc tính về cơ bản tương tự với các thuộc tính DATERANGE mà chúng ta đã thấy trước đó.
+
+00:09:58.000 --> 00:10:04.000
+Mục chính đại diện cho tài sản chính của bạn trên dòng thời gian mà bạn muốn lên lịch quảng cáo xen kẽ.
+
+00:10:04.000 --> 00:10:09.000
+Mã định danh tương tự như thuộc tính ID và điều này xác định duy nhất sự kiện.
+
+00:10:09.000 --> 00:10:14.000
+Các trường thời gian và ngày chỉ định thời gian bắt đầu của quảng cáo xen kẽ trong thời gian và ngày truyền thông tương ứng.
+
+00:10:14.000 --> 00:10:17.000
+Điều này sẽ giống như thuộc tính START-DATE.
+
+00:10:17.000 --> 00:10:23.000
+Chúng tôi sẽ sử dụng một bản sao của các mục mẫu để tạo các mục trình phát xen kẽ đại diện cho nhóm quảng cáo của bạn.
+
+00:10:23.000 --> 00:10:26.000
+Vì vậy, điều này tương tự như thuộc tính ASSET-LIST mà chúng ta đã thấy trước đó.
+
+00:10:26.000 --> 00:10:31.000
+Thuộc tính hạn chế sẽ chỉ định các hạn chế điều hướng cho quảng cáo xen kẽ của bạn.
+
+00:10:31.000 --> 00:10:37.000
+Sau đó, chúng tôi có các thuộc tính resumptionOffset và playoutLimit tương tự như các đối tác DATERANGE của chúng.
+
+00:10:37.000 --> 00:10:41.000
+Và cuối cùng chúng ta có một từ điển về userDefinedAttributes.
+
+00:10:41.000 --> 00:10:50.000
+Vì vậy, bạn có thể chỉ định các thuộc tính tùy chỉnh trong thẻ DATERANGE và những thuộc tính này sẽ được hiển thị cho ứng dụng khách của bạn thông qua thuộc tính userDefinedAttributes.
+
+00:10:50.000 --> 00:10:57.000
+Ví dụ, bạn có thể bao gồm URL đèn hiệu và các thuộc tính tùy chỉnh khác để báo cáo số liệu phát lại quảng cáo.
+
+00:10:57.000 --> 00:11:03.000
+Đây là một số mã ví dụ cho thấy cách bạn có thể sử dụng các API này để cập nhật giao diện người dùng của mình khi quảng cáo xen kẽ đang phát.
+
+00:11:03.000 --> 00:11:06.000
+Bạn tạo một AVPlayer để phát nội dung chính của mình.
+
+00:11:06.000 --> 00:11:11.000
+Vì vậy, nội dung này có quảng cáo xen kẽ được lên lịch bằng cách sử dụng các thẻ DATERANGE.
+
+00:11:11.000 --> 00:11:15.000
+Và sau đó tạo một AVPlayerInterstitialEventMonitor và đặt nó trên trình phát.
+
+00:11:15.000 --> 00:11:23.000
+Sau đó, bạn đăng ký currentEvent- DidChangeNotification để thông báo cho ứng dụng của bạn khi người chơi chuyển đổi vào và ra khỏi quảng cáo xen kẽ.
+
+00:11:23.000 --> 00:11:27.000
+Và khi thông báo đó kích hoạt, bạn chỉ cần cập nhật giao diện người dùng của mình.
+
+00:11:27.000 --> 00:11:38.000
+Đôi khi bạn có thể muốn lên lịch quảng cáo ở phía khách hàng. Đối với điều đó, chúng tôi đang giới thiệu AVPlayer- InterstitialEventController cho phép bạn lập trình các sự kiện trên AVPlayer.
+
+00:11:38.000 --> 00:11:44.000
+Đối tượng này kế thừa từ AVPlayerInterstitialEventMonitor và do đó có rất nhiều thuộc tính chung.
+
+00:11:44.000 --> 00:11:53.000
+Một điều cần lưu ý là mặc dù thuộc tính sự kiện chỉ đọc ở màn hình, nhưng nó là thuộc tính đọc-ghi ở bộ điều khiển, do đó cho phép bạn lên lịch các sự kiện theo chương trình.
+
+00:11:53.000 --> 00:12:00.000
+Và điều này cũng có API cancelCurrentEvent cho phép bạn hủy quảng cáo xen kẽ hiện đang phát.
+
+00:12:00.000 --> 00:12:05.000
+Trong mẫu này, chúng tôi thấy cách người ta có thể lên lịch một nhóm quảng cáo chứa hai quảng cáo trên AVPlayer.
+
+00:12:05.000 --> 00:12:09.000
+Bạn tạo một AVPlayer để chơi tài sản chính của mình.
+
+00:12:09.000 --> 00:12:14.000
+Sau đó, bạn tạo một AVPlayer- InterstitialEventController và đặt nó trên AVPlayer.
+
+00:12:14.000 --> 00:12:18.000
+Bạn tạo một mảng các mục AVPlayer đại diện cho nhóm quảng cáo của bạn.
+
+00:12:18.000 --> 00:12:33.000
+Sau đó tạo một đối tượng AVPlayerInterstitialEvent nơi bạn chỉ định Mục chính là mục hiện tại của trình phát, vì điều này đại diện cho nội dung phim của bạn, thời gian bắt đầu trong ví dụ này, khoảng 10 giây để phát lại và templateItems là nhóm quảng cáo mà chúng tôi đã tạo trước đó.
+
+00:12:33.000 --> 00:12:38.000
+Và sau khi đối tượng được tạo, bạn chỉ cần đặt nó trên thuộc tính sự kiện của bộ điều khiển.
+
+00:12:38.000 --> 00:12:47.000
+Bạn có thể nhận thấy rằng ngay trước khi chúng tôi đặt trình phát trên AVPlayerViewController, chúng tôi đã đặt thuộc tính currentItem.translates- PlayerInterstitialEvents thành true.
+
+00:12:47.000 --> 00:12:55.000
+Khi điều này được thiết lập, AVKit sẽ đặt các điểm đánh dấu điều hướng trên dòng thời gian và cũng thực thi các hạn chế điều hướng trên tvOS.
+
+00:12:55.000 --> 00:13:02.000
+Bây giờ hãy chuyển sang bản demo nơi chúng ta xem xét tích hợp AVKit với quảng cáo xen kẽ HLS trên tvOS.
+
+00:13:02.000 --> 00:13:06.000
+Ở đây chúng tôi có một quảng cáo được lên lịch để bắt đầu phát lại sau khoảng 40 giây.
+
+00:13:06.000 --> 00:13:10.000
+Và quảng cáo này không có giới hạn điều hướng được đặt.
+
+00:13:10.000 --> 00:13:15.000
+Bạn có thể thấy rằng điểm đánh dấu quảng cáo hiển thị trên dòng thời gian.
+
+00:13:15.000 --> 00:13:20.000
+Khi quảng cáo đang phát, đồng hồ đếm ngược xuất hiện trên đầu phát.
+
+00:13:20.000 --> 00:13:27.000
+Và vì quảng cáo này không có giới hạn nào được đặt, khi tôi lướt tay qua mép của điều khiển từ xa Apple TV, tôi sẽ có một tùy chọn để bỏ qua.
+
+00:13:27.000 --> 00:13:32.000
+Và làm như vậy sẽ khiến chúng tôi bỏ qua quảng cáo và quay lại quảng cáo chính.
+
+00:13:32.000 --> 00:13:40.000
+Bây giờ đối với cái này, chúng tôi có cùng một thiết lập, nhưng quảng cáo có bộ hạn chế bỏ qua.
+
+00:13:40.000 --> 00:13:44.000
+Vì vậy, bây giờ khi quảng cáo phát, bạn sẽ không thấy tùy chọn bỏ qua quảng cáo.
+
+00:13:44.000 --> 00:13:49.000
+Bạn sẽ phải đợi nó diễn ra hoàn toàn trước khi trở lại tiểu học.
+
+00:13:49.000 --> 00:13:51.000
+Tom Hanks trong "Greyhound."
+
+00:13:51.000 --> 00:13:55.000
+Xếp hạng PG-13. Độc quyền trên Apple TV+.
+
+00:13:55.000 --> 00:13:57.000
+Cảm ơn bạn, Josh.
+
+00:13:57.000 --> 00:13:59.000
+Ở đây chúng tôi có hai quảng cáo như chúng tôi thấy trên dòng thời gian này.
+
+00:13:59.000 --> 00:14:04.000
+Lần đầu tiên không có giới hạn điều hướng và lần thứ hai có giới hạn nhảy.
+
+00:14:04.000 --> 00:14:10.000
+Vì vậy, khi chúng tôi cố gắng vượt qua cả hai quảng cáo...
+
+00:14:10.000 --> 00:14:15.000
+Chúng tôi thấy rằng đầu phát chụp vào điểm đánh dấu quảng cáo bị hạn chế trong khi quảng cáo phát.
+
+00:14:15.000 --> 00:14:20.000
+Chúng tôi sẽ hạ địa ngục từ trên cao xuống.
+
+00:14:20.000 --> 00:14:22.000
+Tom Hanks trong "Greyhound."
+
+00:14:22.000 --> 00:14:26.000
+Xếp hạng PG-13. Độc quyền trên Apple TV+.
+
+00:14:26.000 --> 00:14:31.000
+Và sau khi quảng cáo diễn ra, chúng tôi sẽ tiếp tục từ vị trí tìm kiếm.
+
+00:14:31.000 --> 00:14:35.000
+Để kết thúc, bây giờ bạn có thể lên lịch quảng cáo phía máy chủ bằng cách sử dụng thẻ DATERANGE.
+
+00:14:35.000 --> 00:14:42.000
+Bạn muốn chỉ định độ lệch sơ yếu lý lịch là 0 cho các luồng video theo yêu cầu sao cho bạn sẽ tham gia lại chương trình từ nơi bạn đã dừng lại.
+
+00:14:42.000 --> 00:14:46.000
+Và bạn có thể bỏ qua thuộc tính này cho các luồng trực tiếp để chúng tôi tham gia lại ở rìa trực tiếp.
+
+00:14:46.000 --> 00:14:59.000
+Bạn có thể sử dụng thuộc tính X-ASSET-LIST để ràng buộc muộn các tài sản quảng cáo của mình, lên lịch trả lại sớm trong các chương trình phát sóng trực tiếp bằng thuộc tính X-PLAYOUT-LIMIT và chỉ định các hạn chế điều hướng với thuộc tính X-RESTRICT.
+
+00:14:59.000 --> 00:15:04.000
+Để theo dõi việc phát lại quảng cáo ở phía máy khách, bạn sẽ sử dụng AVPlayer- InterstitialEventMonitor.
+
+00:15:04.000 --> 00:15:08.000
+Và bạn có thể lập trình đặt quảng cáo bằng cách sử dụng AVPlayer- InterstitialEventController.
+
+00:15:08.000 --> 23:59:59.000
+Cảm ơn bạn đã xem và tận hưởng phần còn lại của WWDC21.
+

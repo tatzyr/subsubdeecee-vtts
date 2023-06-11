@@ -1,0 +1,291 @@
+10089
+
+Xin chào.
+
+Tên tôi là Annie, và tôi là một kỹ sư phần mềm trong nhóm Health Records.
+
+Hôm nay tôi tham gia cùng đồng nghiệp Cary của tôi để chỉ cho bạn cách bạn có thể trao quyền cho mọi người chia sẻ hồ sơ sức khỏe có thể kiểm chứng của họ bằng HealthKit.
+
+Trước khi chúng tôi đi sâu vào hồ sơ sức khỏe có thể kiểm chứng được, tôi muốn giới thiệu ngắn gọn về tính năng Hồ sơ sức khỏe mà chúng tôi đã ra mắt vào năm 2018 cho iOS 11.3.
+
+Hồ sơ Sức khỏe cho phép người dùng kết nối với các nhà cung cấp của họ và tải hồ sơ lâm sàng của họ xuống ứng dụng Sức khỏe một cách an toàn để dễ dàng lưu trữ và trực quan hóa.
+
+Tất cả đều được xây dựng dựa trên các tiêu chuẩn công nghiệp như Tài nguyên tương tác chăm sóc sức khỏe nhanh của HL7 hoặc FHIR.
+
+Với sự cho phép của người dùng, ứng dụng của bạn có thể truy cập các bản ghi sức khỏe này mà người dùng đã tải xuống bằng HealthKit.
+
+Để biết thêm chi tiết về API Hồ sơ Sức khỏe hiện có, tôi khuyến khích bạn xem video WWDC 2018 của chúng tôi, "Truy cập Hồ sơ Sức khỏe với HealthKit" để tìm hiểu thêm.
+
+Đối với iOS 15, chúng tôi đang tận dụng công việc Hồ sơ Sức khỏe của mình để cho phép tải xuống, lưu trữ và chia sẻ các hồ sơ có thể xác minh được trong ứng dụng Sức khỏe được triển khai dựa trên đặc tả Thẻ Sức khỏe SMART.
+
+Hãy cùng khám phá hồ sơ sức khỏe có thể kiểm chứng là gì và chúng khác với dữ liệu hồ sơ sức khỏe mà bạn hiện có thể truy vấn với HealthKit như thế nào.
+
+Đầu tiên, một hồ sơ sức khỏe có thể kiểm chứng chứa nhiều tài nguyên FHIR, bao gồm tài nguyên bệnh nhân và một hoặc nhiều tài nguyên lâm sàng.
+
+Những tài nguyên này được đóng gói trong cái mà chúng tôi gọi là Thẻ Sức khỏe THÔNG MINH.
+
+Các tổ chức phát hành hoặc các tổ chức tạo hồ sơ sức khỏe có thể xác minh được, chẳng hạn như phòng thí nghiệm hoặc nhà cung cấp dịch vụ chăm sóc sức khỏe, ký bằng mật mã Thẻ Y tế SMART này dưới dạng Chữ ký Web JSON hoặc JWS.
+
+Cuối cùng, các tổ chức phát hành tạo ra các hồ sơ sức khỏe có thể kiểm chứng sao cho chúng chỉ bao gồm thông tin cần thiết về bệnh nhân và dữ liệu lâm sàng của họ.
+
+Để có được bức tranh rõ ràng hơn về những điểm này, hãy xem một ví dụ.
+
+Đối với ví dụ này, hồ sơ chứa hai tài nguyên tiêm chủng FHIR, một cho mỗi liều vắc xin.
+
+Nó cũng bao gồm một nguồn lực bệnh nhân FHIR để xác định ai đã tiêm vắc xin.
+
+Những tài nguyên này sau đó được kết hợp thành Thẻ Y tế THÔNG MINH, ở dạng thô, trông như thế này.
+
+Tải trọng Thẻ Y tế SMART bao gồm thông tin như loại, chứa URL khai báo loại dữ liệu mong đợi trong thẻ y tế và chủ đề thông tin xác thực, bao gồm phiên bản FHIR và tài nguyên Gói chứa tài nguyên tiêm chủng và bệnh nhân.
+
+Thẻ Y tế SMART sau đó được ký dưới dạng JWS, có hai thành phần: Tiêu đề và tải trọng.
+
+Tiêu đề JWS chứa thuật toán được sử dụng để ký JWS; dấu vân tay khóa công khai, chỉ định khóa công khai nào của nhà phát hành được sử dụng để ký; và thuật toán được sử dụng để nén tải trọng.
+
+Tải trọng JWS nén, cùng với chủ đề thông tin xác thực, chứa dữ liệu khiếu nại khác, bao gồm URL của nhà phát hành, nơi đặt khóa công khai của nhà phát hành, ngày phát hành và ngày hết hạn tùy chọn.
+
+Ở dạng thô, đây là Hồ sơ sức khỏe có thể kiểm chứng trông như thế nào.
+
+Để biết thêm thông tin, chúng tôi khuyến khích bạn truy cập thông số kỹ thuật Thẻ Y tế SMART thông qua liên kết được liên kết với phiên này.
+
+Bây giờ chúng tôi đã xem xét hồ sơ sức khỏe có thể xác minh trông như thế nào, hãy để tôi chỉ cho bạn cách bạn có thể nhập những hồ sơ này vào ứng dụng Sức khỏe.
+
+Một lựa chọn là sử dụng tính năng Hồ sơ Sức khỏe hiện có.
+
+Người dùng có thể tải hồ sơ sức khỏe có thể xác minh xuống ứng dụng Sức khỏe bằng cách kết nối với nhà cung cấp hỗ trợ Hồ sơ Sức khỏe.
+
+Lưu ý rằng tùy chọn này chỉ khả dụng khi có tính năng Hồ sơ Sức khỏe, hiện có ở Hoa Kỳ, Vương quốc Anh và Canada.
+
+Người dùng cũng có các tùy chọn tải xuống tệp có phần mở rộng .smart-health-cards hoặc quét mã QR nhúng tệp smart-health-card.
+
+Điều này sẽ hiển thị trang tính sau trong ứng dụng Sức khỏe, nơi người dùng có thể xem chi tiết và chọn có tải xuống các bản ghi này hay không.
+
+Hai lựa chọn này có sẵn trên phạm vi quốc tế.
+
+Cuối cùng, làm thế nào bạn có thể yêu cầu quyền truy cập vào dữ liệu này với HealthKit?
+
+Chúng tôi đang giới thiệu một truy vấn HealthKit mới, HKVerifiableClinicalRecordQuery, và một lớp con HKSample mới, HKVerifiableClinicalRecord cho iOS 15.
+
+Không giống như các lớp con HKQuery khác, để sử dụng truy vấn này, bạn phải yêu cầu quyền truy cập HealthKit cho Hồ sơ sức khỏe có thể xác minh.
+
+Mặc dù bạn vẫn có quyền truy cập vào các tiêu đề công khai trong SDK, trình xử lý kết quả sẽ trả về lỗi bị từ chối ủy quyền mà không có quyền.
+
+Vui lòng tham khảo các liên kết được liên kết với phiên này để biết thông tin về cách bắt đầu.
+
+Trước khi chúng ta đi sâu hơn vào các lớp truy vấn và mẫu, hãy xem xét ủy quyền cho Hồ sơ sức khỏe có thể xác minh, hơi khác so với những gì bạn có thể quen thuộc với Hồ sơ sức khỏe.
+
+Đầu tiên, Hồ sơ sức khỏe có thể xác minh quan sát mẫu ủy quyền cho mỗi mẫu, trong đó người dùng chọn các mẫu riêng lẻ, không phải loại, để chia sẻ với ứng dụng của bạn.
+
+Loại ủy quyền này cung cấp cho người dùng quyền kiểm soát chi tiết hơn đối với dữ liệu của họ và rất quan trọng trong việc bảo vệ quyền riêng tư của họ.
+
+Mẫu ủy quyền HealthKit hiện tại bao gồm hai bước: Đầu tiên yêu cầu ủy quyền người dùng cho các loại để đọc và chia sẻ, sau đó truy vấn các mẫu sau khi ủy quyền được cấp.
+
+Với Hồ sơ Sức khỏe Có thể Xác minh, bước đầu tiên này là không cần thiết.
+
+Thay vào đó, một khi một phiên bản của HKVerifiableClinicalRecordQuery được tạo và thực thi, một bảng ủy quyền sẽ được trình bày, cho phép người dùng chọn các bản ghi riêng lẻ nào để chia sẻ với ứng dụng của bạn.
+
+Sau khi chia sẻ, các bản ghi đã chọn sau đó được trả về trình xử lý kết quả của truy vấn.
+
+Hơn nữa, ủy quyền cho Hồ sơ Sức khỏe Có thể Xác minh chỉ là một lần.
+
+Chia sẻ những hồ sơ này với ứng dụng của bên thứ ba không thiết lập ủy quyền truy cập dài hạn.
+
+Mỗi lần thực hiện HKVerifiableClinicalRecordQuery sẽ dẫn đến việc trình bày bảng ủy quyền sau và trả lại các bản ghi do người dùng chọn cho trình xử lý kết quả.
+
+Bây giờ chúng ta đã xem qua ủy quyền, hãy xem HKVerifiableClinicalRecordQuery chi tiết hơn.
+
+Để khởi tạo HKVerifiableClinicalRecordQuery, trước tiên bạn sẽ phải cung cấp một chuỗi các loại bản ghi, mà chúng tôi đã xác định trước đó là loại dữ liệu có trong bản ghi sức khỏe có thể xác minh được.
+
+Chỉ những bản ghi có tất cả các loại bản ghi được cung cấp hiện diện mới được hiển thị trong bảng ủy quyền.
+
+Giống như các truy vấn HealthKit khác, bạn cũng có tùy chọn thêm vị ngữ để lọc thêm bộ mẫu để ủy quyền.
+
+Chúng tôi đang cung cấp một hàm tạo tiện lợi để tạo vị ngữ cho các bản ghi với các ngày có liên quan trong khoảng thời gian ngày.
+
+Khi truy vấn được thực thi và người dùng nhấn vào "Chia sẻ một lần", HKVerifiableClinicalRecords được ủy quyền sau đó được trả về trong trình xử lý kết quả.
+
+Bản ghi bao gồm thông tin cơ bản về chủ đề và nhà phát hành, và, tất nhiên, thuộc tính JWS, sẽ chứa dữ liệu thô mà bạn sẽ xác minh và giải mã.
+
+Bây giờ chúng ta đã xem qua tính năng Hồ sơ sức khỏe có thể xác minh và API của nó trông như thế nào, tôi sẽ giao nó cho Cary, người sẽ hướng dẫn bạn cách nhập dữ liệu kiểm tra, sử dụng API để yêu cầu hồ sơ và xác minh JWS của bản ghi.
+
+Cảm ơn, Annie.
+
+Xin chào mọi người.
+
+Tên tôi là Cary, và tôi cũng là một kỹ sư trong nhóm Hồ sơ Y tế.
+
+Hôm nay, tôi sẽ hướng dẫn bạn cách làm việc với Hồ sơ sức khỏe có thể xác minh được.
+
+Vì vậy, cách tốt nhất để bắt đầu làm việc với tính năng mới này là tải một số dữ liệu thử nghiệm vào HealthKit.
+
+Như Annie đã đề cập, có ba phương pháp khác nhau mà bạn có thể sử dụng để bắt đầu.
+
+Nếu bạn ở Hoa Kỳ, Canada hoặc Vương quốc Anh, bạn chỉ cần kết nối với nhà cung cấp bằng cách sử dụng tính năng Hồ sơ Sức khỏe hiện có trong Ứng dụng Sức khỏe.
+
+Một cách mới khác mà chúng tôi đã thêm vào là tải xuống tệp .smart-health-card, một ví dụ mà bạn có thể tìm thấy trên trang web đặc tả smarthealth.cards.
+
+Phương pháp thứ ba là quét mã QR.
+
+Vậy chúng ta hãy đi lấy một ít dữ liệu.
+
+Đối với bản demo này, bạn có thể bắt đầu bằng cách thử nhập mã QR mới.
+
+Bạn sẽ bắt đầu với một thiết bị chạy iOS 15 và quét mã QR này.
+
+Ngay sau khi bạn quét nó, bạn sẽ nhận được lời nhắc mở trực tiếp vào ứng dụng sức khỏe.
+
+Khi bạn chuyển sang ứng dụng sức khỏe, nó sẽ ngay lập tức bắt đầu hướng dẫn bạn nhập thẻ sức khỏe này.
+
+Sau khi chọn tùy chọn "Thêm vào Sức khỏe", quá trình nhập sẽ hoàn tất.
+
+Bạn có thể cuộn qua tab duyệt và xem các bản ghi đã nhập trong phần tiêm chủng.
+
+Nếu bạn tiếp tục và nhấn vào danh mục này, bây giờ bạn có thể thấy rằng bạn đã có vắc xin và chữ ký của nó đã được xác minh bởi ứng dụng Sức khỏe.
+
+Bây giờ bạn đã có một số hồ sơ đã ký được nhập vào ứng dụng Sức khỏe, bạn đã sẵn sàng tiếp tục và yêu cầu những hồ sơ này từ ứng dụng của riêng bạn.
+
+Bây giờ, hãy xem xét một ví dụ về cách ứng dụng của bạn có thể truy cập API mới này.
+
+Đầu tiên, bạn sẽ bắt đầu bằng cách nhập HealthKit.
+
+Tiếp theo, bạn sẽ tạo một HealthStore, mà bạn có thể đã quen thuộc nếu bạn đã sử dụng API ủy quyền HealthKit tiêu chuẩn.
+
+Bạn cũng sẽ tạo một danh sách các loại bản ghi để chỉ định loại dữ liệu mà bạn muốn người dùng chia sẻ với bạn.
+
+Khi ủy quyền, bạn sẽ được cung cấp một danh sách dữ liệu để chia sẻ chỉ khớp với các loại bản ghi này.
+
+Tiếp theo, bạn sẽ tạo một vị ngữ chỉ định phạm vi ngày hợp lệ cho các mẫu để chia sẻ.
+
+Trong ví dụ này, bạn có thể thấy các phòng thí nghiệm được tiến hành trong bảy ngày qua đang được yêu cầu.
+
+Sau đó, bạn sẽ tạo một truy vấn bằng cách sử dụng recordTypes và vị ngữ được xây dựng, sử dụng hoàn thành để kiểm tra xem các mẫu được trình bày có được chia sẻ với ứng dụng của bạn hay không.
+
+Cuối cùng, việc thực hiện truy vấn sẽ khiến một bảng ủy quyền được trình bày trong đó kết quả có thể được chọn để chia sẻ với ứng dụng của bạn.
+
+Hộp thoại này sẽ được trình bày mỗi khi phương pháp này được thực thi.
+
+Bây giờ bạn đã truy xuất một phần dữ liệu lâm sàng đã ký, bạn có thể viết một số mã để xác minh chữ ký của nó trong ứng dụng của mình.
+
+Để xem xét, chữ ký số là một cách toán học để xác minh tính xác thực của thông tin kỹ thuật số.
+
+Quá trình này có thể được thực hiện bởi bất kỳ thiết bị nào, chẳng hạn như máy chủ hoặc thiết bị di động khác, nhưng chúng ta hãy tiếp tục và xem cách thực hiện từ bên trong ứng dụng của bạn.
+
+Bạn có thể thực hiện điều này bằng bốn bước chính.
+
+Đầu tiên, bạn sẽ phân tích dữ liệu lâm sàng bằng cách sử dụng Codable.
+
+Thứ hai, bạn sẽ giải nén tải trọng Mã thông báo web JSON đã ký.
+
+Thứ ba, bạn sẽ tải xuống khóa công khai của nhà phát hành từ trang web của họ.
+
+Và cuối cùng, bạn sẽ sử dụng CryptoKit để xác minh chữ ký.
+
+Hãy bắt đầu bằng cách xem cách xác định mô hình dữ liệu cho một bản ghi đã ký, được xác định chính thức trong đặc tả Chữ ký Web JSON.
+
+Cấu trúc này được định nghĩa trong ba phần chính: Tiêu đề, tải trọng và chữ ký.
+
+Bạn có thể sử dụng Swift Codable để phân tích cú pháp cho mình và bạn nên giữ một biểu diễn ban đầu của tiêu đề và tải trọng xung quanh để sử dụng trong quá trình xác minh chữ ký.
+
+Quan trọng nhất, bạn sẽ thêm một trình khởi tạo để phân tích cú pháp JWS từ dạng tuần tự hóa nhỏ gọn của nó.
+
+Tiếp theo, bạn sẽ tạo một cấu trúc được sử dụng để đại diện cho Tiêu đề JWS.
+
+Bạn sẽ cần điều này trong quá trình khởi tạo từ tuần tự hóa nhỏ gọn, cũng như trong quá trình xác minh chữ ký.
+
+Bạn có thể thấy ở đây trong tiêu đề mà bạn có thể mong đợi tìm thấy một thuật toán chữ ký được chỉ định, một trường key-ID được sử dụng để giữ dấu vân tay khóa công khai và một thuật toán nén.
+
+Dấu vân tay khóa công khai được sử dụng để xác định khóa nào của nhà phát hành được sử dụng để ký JWS.
+
+Quá trình này yêu cầu Thuật toán Chữ ký ES256 và thuật toán nén DEF, cả hai đều được hỗ trợ bởi các thư viện Swift của bên thứ nhất.
+
+Bây giờ chúng ta hãy xem mã cần thiết để phân tích cú pháp JWS từ tuần tự hóa nhỏ gọn của nó.
+
+Bạn sẽ bắt đầu bằng cách chia chuỗi được tuần tự hóa thành các phần cấu thành của nó, mỗi phần được mã hóa Base64URL.
+
+Sau khi tạo JSONDecoder và Base64URL giải mã tiêu đề và tải trọng, bạn có thể kiểm tra xem tiêu đề có chỉ ra rằng tải trọng được nén chính xác hay không.
+
+Sau khi kiểm tra việc nén, bạn sẽ sử dụng một phương pháp tiện ích mà bạn có thể tìm thấy trong dự án mẫu được cung cấp để giải nén tải trọng.
+
+Phần tiếp theo bạn sẽ cần là một cấu trúc để mô hình hóa tải trọng thẻ y tế.
+
+Hai phần quan trọng nhất ở đây là trường nhà phát hành, sẽ chứa mã định danh web của nhà phát hành mà bạn có thể sử dụng để tìm nạp khóa của họ và phần còn lại là trường VC, chứa tất cả dữ liệu bệnh nhân.
+
+Để biết thêm thông tin về cách phân tích trường VC và phân tích nội dung của nó, hãy xem bài nói chuyện "Xử lý FHIR mà không bị đốt cháy" từ WWDC 2020.
+
+Bây giờ bạn đã thấy cách phân tích cú pháp JWS, bạn đã sẵn sàng để xác minh tính xác thực của nó.
+
+Hãy xem xét việc tạo một tiện ích mở rộng sẽ thêm phương thức xác minh vào cấu trúc JWS của bạn.
+
+Vì bạn sẽ liên hệ trực tiếp với trang web của nhà phát hành để truy xuất khóa ký của họ, bạn có thể sử dụng Combine để trợ giúp các khía cạnh không đồng bộ của quy trình này và bạn có thể sử dụng CryptoKit để trợ giúp xác minh chữ ký.
+
+Bên trong phương pháp xác minh, bạn sẽ bắt đầu bằng cách lấy ra mã định danh của nhà phát hành, luôn là địa chỉ web của nhà phát hành.
+
+Tại đây, bạn có thể thêm phương pháp của riêng mình để kiểm tra xem URL có phải là URL mà cá nhân bạn tin tưởng hay không và hủy bỏ nếu đó là URL mà bạn không muốn chấp nhận kết quả.
+
+Tiếp theo, bạn sẽ tạo một URL để truy xuất các khóa của nhà phát hành bằng cách thêm đường dẫn URL tiêu chuẩn .wellknown/jwks.json.
+
+Hậu tố đường dẫn này được xác định trong thông số kỹ thuật và phải giống nhau cho tất cả các tổ chức phát hành.
+
+Bây giờ bạn đã xây dựng URL nổi tiếng, bạn có thể kết nối với nhà phát hành, tải xuống khóa của họ và hoàn tất việc xác minh chữ ký.
+
+Bạn sẽ hoàn thành việc viết phương pháp này bằng cách tạo một URLSession dataTaskPublisher sẽ kết nối với điểm cuối jwk nổi tiếng của nhà phát hành.
+
+Sau đó, bạn có thể ánh xạ nó đến dữ liệu, giải mã nó bằng cách sử dụng jsonDecoder đến một tập hợp các JWK và cuối cùng ánh xạ nó đến một boolean, cho biết liệu chữ ký có hợp lệ hay không.
+
+Bên trong khối bản đồ cuối cùng, bạn sẽ chọn khóa của nhà phát hành dựa trên những gì tiêu đề JWS chỉ ra.
+
+Phần cuối cùng liên quan đến việc sử dụng CryptoKit để xác minh chữ ký.
+
+Theo đặc tả của JWS, phần dữ liệu đã ký được hình thành bằng cách nối tiêu đề được mã hóa Base64URL và tải trọng được nối với nhau bằng một khoảng thời gian.
+
+Tiếp theo, bạn sẽ chuyển đổi các khóa JWK đã tải xuống thành các khóa ký CryptoKit P256, sử dụng phương pháp tiện ích mà bạn có thể tìm thấy trong dự án mẫu đi kèm với buổi nói chuyện này.
+
+Cuối cùng, bạn sẽ sử dụng phương pháp isValidSignature của CryptoKit để xác minh chữ ký.
+
+Bây giờ mô hình dữ liệu của bạn và tất cả logic cần thiết để xác minh tính xác thực của nó đã được xác định, bạn có thể kết hợp mọi thứ lại với nhau.
+
+Nhìn vào ví dụ trước đó về cách gọi API mới, bạn có thể thay thế nhận xét này bằng lệnh gọi đến phương thức xác minh mới của mình.
+
+Vì API trả về danh sách tất cả các mẫu đã chọn, bạn có thể chọn mẫu đầu tiên từ danh sách.
+
+Tiếp theo, phân tích cú pháp nó từ dữ liệu thành một Chuỗi.
+
+Sau đó phân tích cú pháp nó bằng cách sử dụng trình khởi tạo tuần tự hóa nhỏ gọn của bạn.
+
+Cuối cùng, hãy gọi phương thức xác minh mới của bạn và lắng nghe kết quả boolean phát ra.
+
+Và cứ như vậy, chúng tôi đã thấy cách lấy một phần dữ liệu lâm sàng đã ký tải xuống các khóa ký của tổ chức phát hành và xác thực chữ ký của các hồ sơ này.
+
+Bây giờ, tôi sẽ trả lại mọi thứ cho Annie để tóm tắt.
+
+Cảm ơn, Cary.
+
+Trước khi chúng ta kết thúc, tôi muốn nói về quyền riêng tư liên quan đến Hồ sơ sức khỏe có thể xác minh được.
+
+Hy vọng rằng, tôi đã nói rõ trong suốt phiên này rằng tính năng Hồ sơ sức khỏe có thể xác minh được xây dựng với sự riêng tư của người dùng.
+
+Trước hết, đặc tả Thẻ Y tế SMART sử dụng hồ sơ dữ liệu để giảm thiểu thông tin mà nhà phát hành nên đưa vào mỗi bản ghi.
+
+Ứng dụng Sức khỏe được thiết kế để bảo vệ dữ liệu sức khỏe nhạy cảm, vì vậy khi điện thoại bị khóa, tất cả dữ liệu sức khỏe và thể lực trong ứng dụng Sức khỏe sẽ được mã hóa, bao gồm các hồ sơ sức khỏe có thể kiểm chứng được.
+
+Quyền truy cập vào hồ sơ sức khỏe có thể kiểm chứng yêu cầu đơn xin quyền lợi đi kèm với các nghĩa vụ bổ sung để đảm bảo rằng dữ liệu sức khỏe nhạy cảm này không bị lạm dụng.
+
+Và cuối cùng, người dùng sẽ có quyền kiểm soát bổ sung đối với cách chia sẻ hồ sơ sức khỏe có thể xác minh của họ với ứng dụng của bạn.
+
+Hãy xem lại những gì chúng ta đã đề cập hôm nay.
+
+Trong iOS 15, dựa trên Hồ sơ Sức khỏe, chúng tôi đang mang đến khả năng nhập các bản ghi có thể xác minh vào ứng dụng Sức khỏe và để các nhà phát triển đọc dữ liệu này bằng API mới.
+
+Để kết thúc, đây là những gì bạn có thể làm tiếp theo.
+
+Đầu tiên, để tìm hiểu thêm về hệ sinh thái dữ liệu sức khỏe có thể kiểm chứng được, hãy xem thông số kỹ thuật Thẻ sức khỏe SMART.
+
+Nhập hồ sơ kiểm tra vào ứng dụng Sức khỏe để tự mình dùng thử.
+
+Tải xuống ứng dụng mẫu, cho thấy cách bạn có thể truy vấn và xác minh các hồ sơ kiểm tra đó.
+
+Và cuối cùng, khi bạn đã sẵn sàng gửi ứng dụng của mình, hãy yêu cầu quyền truy cập HealthKit cho các hồ sơ sức khỏe có thể xác minh được.
+
+Cảm ơn bạn đã xem, và có một WWDC tuyệt vời.
+
+[Âm nhạc].

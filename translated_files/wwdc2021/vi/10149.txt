@@ -1,0 +1,503 @@
+10149
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Juan Rodriguez Cuellar: Xin chào, chào mừng đến với WWDC.
+
+Tên tôi là Juan Rodriguez Cuellar, và tôi là một kỹ sư biên dịch GPU tại Apple.
+
+Trong phiên này, chúng ta sẽ nói về các tính năng hoàn toàn mới mà chúng tôi đã thêm vào trong năm nay để nâng cao API truy tìm tia kim loại của chúng tôi.
+
+Nhưng trước tiên, chúng ta hãy tóm tắt nhanh về truy tìm tia.
+
+Các ứng dụng dò tia dựa trên việc truy tìm các đường đi mà các tia đi theo khi chúng tương tác với một cảnh.
+
+Dò tia được áp dụng trong rất nhiều lĩnh vực như âm thanh, mô phỏng vật lý và AI; nhưng một trong những ứng dụng chính là kết xuất quang học.
+
+Trong các ứng dụng kết xuất, dò tia được sử dụng để mô hình hóa các tia sáng riêng lẻ, cho phép chúng tôi mô phỏng các hiệu ứng như phản xạ, bóng mềm và ánh sáng gián tiếp.
+
+Đó chỉ là một định nghĩa chung về dò tia.
+
+Hãy nói về cách tiếp cận của Metal đối với nó.
+
+Chúng tôi bắt đầu với một hạt nhân tính toán.
+
+Trong hạt nhân của chúng ta, chúng ta tạo ra các tia, được phát ra vào hiện trường.
+
+Sau đó, chúng tôi kiểm tra các tia đó để tìm các giao điểm so với hình học trong cảnh với một liên ngành và cấu trúc gia tốc.
+
+Mỗi điểm giao nhau đại diện cho ánh sáng bật ra khỏi bề mặt; lượng ánh sáng bật lên và theo hướng nào quyết định vật thể trông như thế nào.
+
+Sau đó chúng tôi tính toán một màu cho mỗi giao điểm và cập nhật hình ảnh.
+
+Quá trình này được gọi là đổ bóng và nó cũng có thể tạo ra các tia bổ sung, và những tia đó cũng được kiểm tra giao điểm.
+
+Chúng tôi lặp lại quá trình nhiều lần như chúng tôi muốn mô phỏng ánh sáng nảy xung quanh cảnh.
+
+Năm nay, chúng tôi tập trung các tính năng mới của mình vào ba lĩnh vực chính.
+
+Đầu tiên, tôi sẽ nói về cách chúng tôi đã thêm hỗ trợ dò tia vào đường ống kết xuất của mình, cho phép chúng tôi kết hợp dò tia với kết xuất của mình.
+
+Sau đó, tôi sẽ giới thiệu cho bạn các tính năng mới tập trung vào khả năng sử dụng và tính di động.
+
+Những tính năng này sẽ dễ dàng sử dụng API dò tia kim loại.
+
+Cuối cùng, tôi sẽ đề cập đến các tính năng kết xuất sản xuất mà chúng tôi đã thêm vào trong năm nay sẽ giúp bạn tạo ra nội dung thực tế hơn.
+
+Hãy bắt đầu với việc truy tìm tia từ các đường ống kết xuất.
+
+Hãy xem xét trường hợp cơ bản của một kết xuất có một lần vượt qua kết xuất duy nhất.
+
+Với sự hỗ trợ mới của chúng tôi cho việc truy tìm tia từ các đường ống kết xuất, điều này giúp việc thêm truy tìm tia vào kết xuất trở nên cực kỳ dễ dàng.
+
+Tuy nhiên, nếu không có sự hỗ trợ này, để thêm truy tìm tia vào kết xuất này với API truy tìm tia kim loại năm ngoái, chúng ta cần thêm một thẻ tính toán.
+
+Hãy bắt đầu bằng cách thêm nó sau khi kết xuất để tăng cường hình ảnh được kết xuất.
+
+Thêm thẻ tính toán bổ sung này có nghĩa là ghi thêm đầu ra vào bộ nhớ để thẻ tính toán sử dụng để dò tia.
+
+Bây giờ, điều gì sẽ xảy ra nếu chúng ta muốn sử dụng dấu vết tia ở giữa đường chuyền kết xuất của mình để tính toán một giá trị như đổ bóng trên mỗi điểm ảnh?
+
+Điều này có nghĩa là chúng ta cần chia nhỏ kết xuất của mình và giới thiệu một đường chuyền tính toán.
+
+Suy nghĩ nhiều hơn về ý nghĩa của điều này, chúng ta cần ghi ra các vị trí pixel và chuẩn mực vào bộ nhớ dưới dạng đầu vào để dò tia, sau đó đọc lại kết quả giao nhau - có thể nhiều lần.
+
+Nhưng với sự hỗ trợ mới cho dò tia từ các giai đoạn kết xuất, chúng tôi không bao giờ cần phải vượt qua kết xuất của mình và chúng tôi chỉ cần ghi đầu ra của mình vào bộ nhớ.
+
+Hãy xem cách chúng tôi sử dụng API mới của mình.
+
+Chuẩn bị đường ống kết xuất của chúng tôi để dò tia tương tự như đường ống tính toán.
+
+Bạn bắt đầu bằng cách xây dựng cấu trúc gia tốc của mình và xác định các chức năng giao nhau tùy chỉnh.
+
+Để hỗ trợ giao lộ tùy chỉnh, chúng ta cần một bảng chức năng giao lộ và chúng ta cần lấp đầy nó bằng các hàm giao lộ.
+
+Phần này có một số khác biệt so với API của năm ngoái.
+
+Hãy cùng xem qua cách chúng ta có thể làm điều đó.
+
+Hãy xem xét một số hàm giao nhau đơn giản.
+
+Tôi có một số chức năng ở đây sẽ cho phép chúng ta giao nhau một cách phân tích các đối tượng như hình cầu, hình nón hoặc hình xuyến.
+
+Khi chúng tôi tạo đường ống của mình, chúng tôi thêm các hàm này dưới dạng các hàm được liên kết mà chúng tôi có thể gọi.
+
+Trong trường hợp này, chúng tôi đang thêm chúng vào giai đoạn phân đoạn của đường ống.
+
+Để sử dụng các hàm, chúng ta cần tạo một bảng hàm giao nhau từ trạng thái và giai đoạn đường ống.
+
+Khi chúng ta có bảng, chúng ta có thể tạo các hàm xử lý từ trạng thái và giai đoạn đường ống và điền vào bảng.
+
+Chỉ định các chức năng cho giai đoạn phân đoạn sẽ sử dụng lại đối tượng linkedFunctions mà chúng tôi đã giới thiệu vào năm ngoái.
+
+Mỗi giai đoạn có một bộ các Chức năng được liên kết riêng trên bộ mô tả đường ống kết xuất.
+
+Tạo một bảng hàm giao điểm cũng giống như khi được thực hiện cho đường ống tính toán.
+
+Thay đổi duy nhất là bổ sung lập luận giai đoạn.
+
+Để điền vào bảng, chúng tôi tạo ra hàm xử lý.
+
+Một lần nữa, tay cầm dành riêng cho sân khấu, vì vậy chúng ta cần chỉ định giai đoạn khi yêu cầu tay cầm.
+
+Khi chúng ta có tay cầm chức năng, chúng ta chỉ cần chèn nó vào bảng chức năng.
+
+Và đó là tất cả những gì bạn cần làm để chuẩn bị các bảng chức năng của mình trong đường ống kết xuất.
+
+Bây giờ chúng ta chỉ cần sử dụng mọi thứ chúng ta đã xây dựng cho đến nay để giao nhau.
+
+Việc sử dụng thực tế rất đơn giản.
+
+Cấu trúc gia tốc và bảng hàm giao nhau đều bị ràng buộc với các chỉ số đệm trên bộ mã hóa kết xuất.
+
+Các bộ đổ bóng sau đó có thể sử dụng các tài nguyên này để giao các tia với một liên ngành giống như cách bạn làm trong một hạt nhân tính toán.
+
+Thông tin chi tiết hơn về cách chuẩn bị đường ống dẫn của bạn để dò tia có thể được tìm thấy trong bài thuyết trình năm ngoái.
+
+Trong buổi nói chuyện đó, bạn sẽ học về việc xây dựng các cấu trúc gia tốc, tạo bảng hàm và sử dụng liên ngành trong ngôn ngữ tô bóng.
+
+Với sự hỗ trợ dò tia từ các đường ống kết xuất, chúng tôi đang mở ra cánh cửa cho nhiều cơ hội hơn nữa như thêm truy tìm tia trong một lần kết xuất duy nhất, trộn truy tìm tia với rasterization trong kết xuất lai và tận dụng tối ưu hóa như chức năng lát trên Apple Silicon.
+
+Trên thực tế, chúng tôi sẽ sớm thêm tính năng dò tia vào ứng dụng mẫu mà chúng tôi đã giới thiệu trong phiên "Kết xuất hiện đại bằng kim loại" tại WWDC 2019.
+
+Với dò tia từ đường ống kết xuất, chúng ta có thể cập nhật mã để sử dụng các chức năng gạch để giữ mọi thứ trong bộ nhớ gạch.
+
+Để biết thêm chi tiết về điều này, hãy xem bài thuyết trình "Khám phá kết xuất lai với dò tia kim loại" năm nay.
+
+Tiếp theo, tôi muốn giới thiệu các tính năng mới mà chúng tôi đã thêm vào trong năm nay để cải thiện khả năng sử dụng và tính di động của API dò tia kim loại.
+
+Các tính năng này không chỉ cung cấp việc sử dụng truy tìm tia kim loại đơn giản hơn mà còn cung cấp tính di động từ các API truy tìm tia khác.
+
+Một trong những tính năng mới này là truy vấn giao điểm.
+
+Với truy vấn giao lộ, chúng tôi cho phép bạn kiểm soát nhiều hơn quá trình giao nhau.
+
+Truy vấn giao lộ hướng đến các trường hợp sử dụng đơn giản trong đó liên ngành có thể tạo chi phí.
+
+Đó là một cách mới để vượt qua cấu trúc gia tốc cung cấp cho bạn tùy chọn thực hiện kiểm tra giao lộ tùy chỉnh nội tuyến.
+
+Chúng ta hãy xem cách chúng ta hiện đang xử lý giao lộ tùy chỉnh bằng cách sử dụng liên ngành của năm ngoái.
+
+Quay trở lại ví dụ thử nghiệm alpha từ dò tia năm ngoái với bản trình bày Metal, chúng tôi đã chứng minh cách thử nghiệm alpha được sử dụng để thêm nhiều chi tiết hình học vào cảnh, như bạn thấy ở đây trong chuỗi và lá.
+
+Chúng tôi cũng đã học được cách dễ dàng để thực hiện kiểm tra alpha bằng cách tùy chỉnh một liên ngành bằng cách sử dụng hàm giao điểm tam giác.
+
+Logic bên trong hàm giao nhau tam giác này chịu trách nhiệm chấp nhận hoặc từ chối các giao điểm khi tia đi qua cấu trúc gia tốc.
+
+Trong trường hợp này, logic kiểm tra sẽ từ chối giao điểm đầu tiên, nhưng nó sẽ chấp nhận giao điểm thứ hai vì một bề mặt mờ đục đã được giao nhau.
+
+Hãy xem các hàm giao nhau được sử dụng như thế nào.
+
+Khi sử dụng Intersector, khi bạn gọi intersect(), chúng tôi bắt đầu đi qua cấu trúc gia tốc để tìm một giao điểm và điền vào giao lộ_result của chúng tôi.
+
+Trong liên ngành, hàm giao nhau được gọi mỗi khi tìm thấy giao điểm tiềm năng.
+
+Và các giao điểm sau đó được chấp nhận hoặc từ chối dựa trên logic hàm giao điểm.
+
+Đây là một mô hình lập trình tuyệt vời sử dụng liên ngành vì nó vừa hiệu quả vừa thuận tiện, nhưng nó yêu cầu tạo một hàm giao nhau mới và liên kết nó với đường ống.
+
+Có thể có những trường hợp logic bên trong hàm giao điểm chỉ là một vài dòng mã, vì đó là trường hợp của logic kiểm tra alpha.
+
+Đây là hàm giao nhau chứa logic để thực hiện kiểm tra alpha.
+
+Với truy vấn giao điểm, chúng ta có thể đặt logic này vào dòng mà không cần hàm giao nhau này.
+
+Đây là cách.
+
+Với truy vấn giao điểm, khi bạn bắt đầu quá trình giao nhau, tia của bạn đi qua cấu trúc gia tốc và đối tượng truy vấn chứa trạng thái của quá trình duyệt và kết quả.
+
+Mỗi khi tia giao với một tam giác nguyên thủy tùy chỉnh hoặc một tam giác không mờ đục, điều khiển được trả lại cho bộ đổ bóng để bạn đánh giá các ứng cử viên giao lộ.
+
+Nếu ứng cử viên hiện tại vượt qua logic giao lộ tùy chỉnh của bạn, bạn cam kết nó để cập nhật giao lộ đã cam kết hiện tại và sau đó tiếp tục quá trình giao nhau.
+
+Mặt khác, nếu ứng viên thất bại trong logic giao nhau tùy chỉnh, bạn có thể bỏ qua nó và tiếp tục.
+
+Hãy để tôi chỉ cho bạn mã để thực hiện kiểm tra alpha bằng cách sử dụng truy vấn giao điểm.
+
+Đầu tiên, bạn bắt đầu chuyến đi.
+
+Lưu ý rằng chúng tôi lặp lại bên cạnh để đánh giá tất cả các giao lộ của ứng cử viên.
+
+Thứ hai, bạn đánh giá từng ứng viên bắt đầu bằng cách kiểm tra loại ứng viên.
+
+Đối với ví dụ kiểm tra alpha, bạn quan tâm đến giao điểm của loại tam giác.
+
+Sau khi kiểm tra loại, bạn sẽ muốn truy vấn một số thông tin giao điểm về ứng viên.
+
+Chúng tôi thực hiện ba truy vấn thông tin cần thiết trong logic kiểm tra alpha hiện đã được xếp hàng.
+
+Cuối cùng, nếu giao lộ ứng viên vượt qua bài kiểm tra alpha, bạn sẽ cam kết nó để nó trở thành giao lộ đã cam kết hiện tại.
+
+Cho đến nay, bạn đã đi qua toàn bộ cấu trúc gia tốc đánh giá các giao điểm của ứng cử viên và cam kết các giao điểm đã vượt qua logic kiểm tra alpha.
+
+Bây giờ, bạn cần truy vấn thông tin giao lộ đã cam kết để thực hiện đổ bóng.
+
+Đầu tiên, bạn sẽ truy vấn loại đã cam kết.
+
+Nếu không có giao lộ ứng cử viên nào đáp ứng các điều kiện của bạn để trở thành giao lộ cam kết, loại cam kết sẽ không có, điều đó có nghĩa là tia hiện tại bị bỏ lỡ.
+
+Mặt khác, nếu có một giao lộ đã cam kết, bạn sẽ muốn truy vấn thông tin về giao lộ áp dụng cho loại giao lộ và sau đó sử dụng nó để tô bóng.
+
+Đó là tất cả mã bạn cần để thực hiện kiểm tra alpha bằng cách sử dụng truy vấn giao điểm.
+
+Với việc giới thiệu truy vấn giao điểm và giới thiệu liên ngành để kết xuất đường ống, chúng tôi đang mang đến cho bạn nhiều cơ hội hơn để bắt đầu đưa truy tìm tia kim loại vào ứng dụng của bạn.
+
+Dưới đây là một số điều cần xem xét khi lựa chọn giữa các đối tượng liên ngành và các truy vấn giao điểm.
+
+Bắt đầu bằng cách xem xét nếu bạn có mã hiện có, chẳng hạn như sử dụng liên ngành trong tính toán và kế hoạch chuyển mã đó của bạn.
+
+Nếu bạn có mã truy vấn hiện có từ các API khác, truy vấn giao điểm có thể giúp chuyển mã đó.
+
+Tiếp theo, bạn có sự phức tạp trong việc xử lý giao lộ tùy chỉnh.
+
+Liên ngành yêu cầu các hàm và bảng giao nhau, và có thể dễ dàng hơn để sử dụng truy vấn giao lộ để tự xử lý giao lộ tùy chỉnh.
+
+Câu hỏi cuối cùng là hiệu suất.
+
+Trong những trường hợp đơn giản hơn, truy vấn giao lộ có thể tránh chi phí khi xây dựng đường ống của bạn để dò tia, nhưng xử lý giao lộ tùy chỉnh yêu cầu quay lại mã của bạn trong quá trình đi qua, điều này có thể có tác động đến hiệu suất, tùy thuộc vào trường hợp sử dụng.
+
+Ngoài ra, việc sử dụng nhiều đối tượng truy vấn sẽ yêu cầu nhiều bộ nhớ hơn.
+
+Mặt khác, liên ngành có thể hỗ trợ những trường hợp phức tạp hơn đó bằng cách gói gọn tất cả các công việc giao nhau.
+
+Nếu bạn có cơ hội, chúng tôi khuyên bạn nên so sánh hiệu suất của cả hai giải pháp.
+
+Đó là tất cả về truy vấn giao nhau.
+
+Bây giờ hãy chuyển sang một số tính năng mới khác.
+
+Hai tính năng tiếp theo mà chúng ta sẽ nói đến là ID phiên bản người dùng và chuyển đổi phiên bản.
+
+Những tính năng này sẽ giúp bạn thêm nhiều thông tin hơn vào cấu trúc tăng tốc của mình và truy cập nhiều dữ liệu hơn đã có ở đó.
+
+Đây là lý do tại sao chúng tôi nghĩ rằng đây là những tính năng thực sự hữu ích.
+
+Nếu chúng ta nhìn lại mã mẫu từ bài thuyết trình năm ngoái, chúng ta có nhiều trường hợp của hộp hạt nhân.
+
+Bên dưới điều này, chúng tôi có một cấu trúc tăng tốc phiên bản với một tập hợp các nút phân nhánh cho đến khi bạn đạt được các phiên bản.
+
+Nhìn vào hai trong số các trường hợp này, chúng ở mức thấp nhất của cấu trúc tăng tốc phiên bản.
+
+Hiện tại, khi bạn giao nhau với một trong những trường hợp này, bạn chỉ nhận được ID phiên bản của hệ thống từ kết quả giao lộ.
+
+Với điều này, bạn có thể duy trì mục lục dữ liệu của riêng mình, nhưng có dữ liệu mà chúng tôi có thể hiển thị trong cấu trúc tăng tốc để giúp bạn.
+
+Trước tiên hãy nói về ID phiên bản do người dùng xác định.
+
+Với tính năng này, bạn có thể chỉ định một giá trị 32-bit tùy chỉnh cho mỗi trường hợp và sau đó bạn nhận được giá trị này như một phần của kết quả giao nhau.
+
+Điều này thực sự hữu ích cho bạn để lập chỉ mục vào cấu trúc dữ liệu của riêng bạn, nhưng nó cũng có thể được sử dụng để mã hóa dữ liệu tùy chỉnh.
+
+Ví dụ, ở đây chúng tôi đang sử dụng ID người dùng để mã hóa màu tùy chỉnh cho mỗi trường hợp.
+
+Bạn có thể sử dụng cái này để phản ánh đơn giản hơn mà không cần tra cứu bất kỳ thông tin tài liệu bổ sung nào.
+
+Đây chỉ là một ví dụ, nhưng cơ hội là vô tận.
+
+Tôi có thể thấy cách bạn muốn mã hóa những thứ như ID tài liệu mỗi phiên bản hoặc cờ mỗi phiên bản.
+
+Chúng tôi đã tạo ra một phiên bản mở rộng của loại mô tả phiên bản được sử dụng để chỉ định các ID này.
+
+Đảm bảo rằng bạn chỉ định loại mô tả nào bạn đang sử dụng trên bộ mô tả cấu trúc tăng tốc phiên bản.
+
+Trong ngôn ngữ đổ bóng, giá trị của ID phiên bản người dùng hiện tại có sẵn dưới dạng đầu vào cho các chức năng giao nhau với thẻ instancing.
+
+Để có được các giá trị sau giao điểm, ID phiên bản do người dùng xác định có sẵn từ kết quả giao nhau khi sử dụng đối tượng liên ngành.
+
+Và khi sử dụng đối tượng truy vấn giao điểm, có một truy vấn tương ứng để truy cập ID phiên bản do người dùng xác định cho cả giao điểm ứng cử viên và giao điểm đã cam kết.
+
+Cũng giống như ID phiên bản người dùng, chúng tôi đã thêm hỗ trợ để truy cập ma trận chuyển đổi phiên bản của bạn.
+
+Dữ liệu này đã được chỉ định trong bộ mô tả phiên bản và nó được lưu trữ trong cấu trúc gia tốc.
+
+Năm nay, chúng tôi đã phơi bày những ma trận này từ ngôn ngữ đổ bóng.
+
+Bạn có thể truy cập các biến đổi phiên bản trong các hàm giao điểm khi bạn áp dụng các thẻ instancing và world_space_data.
+
+Tương tự, các biến đổi thể hiện được cung cấp trong kết quả giao nhau khi sử dụng một liên ngành với các thẻ instancing và world_space_data.
+
+Khi sử dụng truy vấn giao điểm với thẻ instancing, có các truy vấn tương ứng để truy cập các biến đổi phiên bản cho cả giao điểm ứng cử viên và giao điểm đã cam kết.
+
+Tóm lại, năm nay chúng tôi đang cải thiện khả năng sử dụng và tính di động của API dò tia kim loại bằng cách giới thiệu ba tính năng mới.
+
+Truy vấn giao điểm đến như một giải pháp thay thế cho liên ngành cung cấp nhiều quyền kiểm soát hơn đối với quá trình giao nhau.
+
+Và với sự ra đời của ID phiên bản người dùng và các tính năng biến đổi phiên bản, chúng tôi đang cung cấp cho bạn khả năng truy cập dữ liệu từ cấu trúc tăng tốc thay vì phải xử lý một số ánh xạ bên ngoài trong mã của bạn.
+
+Ngoài ra, ba tính năng này cung cấp tính di động từ các API dò tia khác, giúp phát triển đa nền tảng dễ dàng hơn.
+
+Cho đến nay trong phiên họp, chúng tôi đã nói về sự hỗ trợ mới của chúng tôi cho dò tia trong đường ống kết xuất và các tính năng khả năng sử dụng và tính di động khác nhau mà chúng tôi đã thêm vào trong năm nay.
+
+Bây giờ, hãy để tôi chỉ cho bạn những tính năng mà chúng tôi đang giới thiệu để nâng cao kết xuất sản xuất.
+
+Kể từ khi Metal ray tracing API được giới thiệu vào năm ngoái, mọi người đã sử dụng nó để hiển thị một số nội dung chất lượng cao tuyệt vời.
+
+Năm nay, chúng tôi đã thêm hai tính năng mới để có thể hiển thị nội dung tốt hơn nữa.
+
+Hãy bắt đầu với các giới hạn mở rộng.
+
+Kể từ khi chúng tôi phát hành API dò tia kim loại, một số người dùng đã bắt đầu đạt đến giới hạn bên trong cấu trúc gia tốc của chúng tôi, đặc biệt là trong các trường hợp sử dụng quy mô sản xuất.
+
+Vì vậy, chúng tôi đang thêm hỗ trợ cho chế độ giới hạn mở rộng để hỗ trợ các cảnh thậm chí còn lớn hơn.
+
+Năm ngoái, chúng tôi đã chọn những giới hạn này để cân bằng kích thước cấu trúc gia tốc nhằm ưu tiên hiệu suất với kích thước cảnh điển hình.
+
+Có một sự đánh đổi hiệu suất tiềm năng để bật tính năng này, vì vậy bạn sẽ cần xác định chế độ nào là tốt nhất cho ứng dụng của mình.
+
+Chế độ giới hạn mở rộng làm tăng giới hạn về số lượng nguyên thủy, hình học, phiên bản, cũng như kích thước của mặt nạ được sử dụng để lọc ra các phiên bản.
+
+Để bật nó lên, trước tiên bạn chỉ định chế độ giới hạn mở rộng khi xây dựng cấu trúc gia tốc của mình.
+
+Sau đó chỉ định thẻ extended_limits trên đối tượng liên ngành trong ngôn ngữ đổ bóng.
+
+Đó là tất cả những gì bạn cần làm để bật giới hạn mở rộng!
+
+Tiếp theo, hãy nói về chuyển động.
+
+Trong đồ họa máy tính, chúng ta thường cho rằng độ phơi sáng của máy ảnh là tức thời.
+
+Tuy nhiên, trong cuộc sống thực, độ phơi sáng của máy ảnh kéo dài trong một khoảng thời gian khác không.
+
+Nếu một vật thể di chuyển so với máy ảnh trong thời gian đó, nó sẽ xuất hiện mờ trong hình ảnh.
+
+Trong ví dụ cực đoan này, người ở trung tâm đã đứng yên trong suốt quá trình tiếp xúc trong khi mọi người khác đang di chuyển, khiến họ bị mờ.
+
+Hiệu ứng này có thể đi một chặng đường dài hướng tới việc làm cho hình ảnh do máy tính tạo ra trông chân thực hơn.
+
+Trong ví dụ này, hình cầu được hoạt hình trên một số khung hình, nhưng mỗi khung hình vẫn là một độ phơi sáng tức thời, dẫn đến một hình ảnh động lộn xộn.
+
+Sử dụng API chuyển động, chúng ta có thể mô phỏng phơi sáng máy ảnh kéo dài trong một khoảng thời gian khác không.
+
+Điều này dẫn đến một hình ảnh động mượt mà và chân thực hơn.
+
+Nếu chúng ta đóng băng video, bạn có thể thấy rằng ranh giới của quả cầu bị mờ theo hướng chuyển động giống như một chiếc máy ảnh thật.
+
+Các ứng dụng thời gian thực như trò chơi thường xấp xỉ hiệu ứng này trong không gian màn hình.
+
+Nhưng dò tia cho phép chúng ta mô phỏng độ mờ chuyển động chính xác về mặt vật lý, thậm chí còn mở rộng đến các hiệu ứng gián tiếp như bóng đổ và phản xạ.
+
+Chúng ta hãy xem phiên bản mờ chuyển động được hiển thị như thế nào.
+
+Chuyển động mờ là một phần mở rộng đơn giản để dò tia.
+
+Hầu hết các ứng dụng dò tia đã lấy mẫu ngẫu nhiên các kích thước vật lý như hướng ánh sáng đến để chiếu sáng gián tiếp.
+
+Để thêm chuyển động mờ, chúng ta cũng có thể chọn một thời gian ngẫu nhiên cho mỗi tia sáng.
+
+Kim loại sẽ giao nhau với cảnh để khớp với thời điểm liên quan đến mỗi tia.
+
+Ví dụ, tia này sẽ nhìn thấy cảnh như thế này.
+
+Một tia khác sẽ nhìn thấy cảnh như thế này.
+
+Khi chúng ta tích lũy ngày càng nhiều mẫu, chúng ta sẽ bắt đầu hội tụ trên một hình ảnh mờ chuyển động.
+
+Bạn thực sự có thể thực hiện điều này ngày hôm nay bằng cách sử dụng các chức năng giao nhau tùy chỉnh.
+
+Bạn có thể tính toán các hộp giới hạn của mỗi nguyên thủy trong toàn bộ phơi sáng và sau đó sử dụng các hộp giới hạn này để xây dựng cấu trúc gia tốc.
+
+Tuy nhiên, điều này sẽ không hiệu quả; các hộp giới hạn có thể lớn đến mức một số tia sẽ cần kiểm tra giao điểm với các nguyên thủy mà chúng sẽ không bao giờ thực sự giao nhau.
+
+Thay vào đó, chúng ta có thể sử dụng hỗ trợ tích hợp của Metal để làm mờ chuyển động được thiết kế để xử lý hiệu quả các trường hợp như thế này.
+
+Điều đầu tiên chúng ta cần làm là liên kết một thời gian ngẫu nhiên với mỗi tia trong mã ngôn ngữ đổ bóng kim loại của chúng ta.
+
+Chúng tôi bắt đầu bằng cách tạo ra một thời gian ngẫu nhiên trong khoảng thời gian phơi sáng, sau đó chúng tôi chỉ chuyển nó cho liên ngành.
+
+Điều tiếp theo chúng ta cần làm là cung cấp hình học hoạt hình của chúng ta cho Metal.
+
+Chúng tôi làm điều này bằng cách sử dụng một phương pháp hoạt hình phổ biến được gọi là hoạt hình khung hình chính.
+
+Hình ảnh động được tạo ra bằng cách mô hình hóa quả bóng tại các điểm chính trong thời gian được gọi là khung hình chính.
+
+Những khung hình chính này được phân phối đồng đều giữa phần bắt đầu và phần cuối của hoạt hình của chúng tôi.
+
+Khi các tia đi qua cấu trúc gia tốc, chúng có thể lấy dữ liệu từ bất kỳ khung hình chính nào dựa trên giá trị thời gian của chúng.
+
+Ví dụ Ray A sẽ nhìn thấy cảnh khi nó được mô phỏng trong Khung hình chính 11 vì thời gian của nó xảy ra để khớp với Khung hình chính 11.
+
+Ngược lại, thời gian của Ray B nằm giữa Khung hình chính 3 và 4.
+
+Do đó, hình học của hai khung hình chính được nội suy cho Ray B.
+
+Chuyển động được hỗ trợ ở cả cấp độ phiên bản và nguyên thủy.
+
+Hoạt hình phiên bản có thể được sử dụng để biến đổi cứng nhắc toàn bộ đối tượng.
+
+Cái này rẻ hơn hoạt hình nguyên thủy nhưng không cho phép các đối tượng biến dạng.
+
+Mặt khác, hoạt hình nguyên thủy đắt hơn, nhưng có thể được sử dụng cho những thứ như hoạt hình nhân vật được lột da.
+
+Lưu ý rằng cả hoạt ảnh phiên bản và nguyên thủy đều dựa trên hoạt ảnh khung hình chính.
+
+Trước tiên hãy nói về chuyển động của trường hợp.
+
+Trong một cấu trúc gia tốc phiên bản, mỗi phiên bản được liên kết với một ma trận chuyển đổi.
+
+Ma trận này mô tả nơi đặt hình học trong cảnh.
+
+Trong ví dụ này, chúng ta có hai cấu trúc gia tốc nguyên thủy: một cho hình cầu và một cho hình học tĩnh.
+
+Mỗi cấu trúc gia tốc nguyên thủy có một ví dụ duy nhất.
+
+Để tạo hiệu ứng động cho hình cầu, chúng tôi sẽ cung cấp hai ma trận biến đổi, đại diện cho điểm bắt đầu và điểm kết thúc của hình ảnh động.
+
+Kim loại sau đó sẽ nội suy hai ma trận này dựa trên tham số thời gian cho mỗi tia.
+
+Hãy nhớ rằng đây là một ví dụ cụ thể sử dụng hai khung hình chính, nhưng Metal hỗ trợ một số khung hình chính tùy ý.
+
+Chúng tôi cung cấp các ma trận này bằng cách sử dụng các mô tả cấu trúc gia tốc.
+
+Mô tả phiên bản Metal tiêu chuẩn chỉ có chỗ cho một ma trận biến đổi duy nhất.
+
+Vì vậy, thay vào đó, chúng tôi sẽ sử dụng mô tả phiên bản chuyển động mới.
+
+Với bộ mô tả này, các ma trận biến đổi được lưu trữ trong một bộ đệm riêng biệt.
+
+Bộ mô tả phiên bản sau đó chứa chỉ mục bắt đầu và số lượng đại diện cho một loạt các ma trận chuyển đổi trong bộ đệm chuyển đổi.
+
+Mỗi ma trận đại diện cho một khung hình chính duy nhất.
+
+Hãy xem cách thiết lập bộ mô tả phiên bản với loại bộ mô tả phiên bản chuyển động mới.
+
+Chúng tôi bắt đầu bằng cách tạo mô tả cấu trúc tăng tốc phiên bản thông thường.
+
+Sau đó, chúng tôi xác định rằng chúng tôi đang sử dụng loại mô tả phiên bản chuyển động mới.
+
+Sau đó, chúng tôi chỉ định instanceDescriptorBuffer có chứa các bộ mô tả phiên bản chuyển động.
+
+Cuối cùng, chúng ta sẽ cần liên kết transformsBuffer chứa bộ đệm đỉnh cho mỗi khung hình chính.
+
+Các thuộc tính còn lại giống như bất kỳ cấu trúc gia tốc phiên bản nào khác và chúng ta cũng có thể xây dựng nó giống như bất kỳ cấu trúc gia tốc nào khác.
+
+Chúng ta chỉ cần thực hiện một thay đổi trong ngôn ngữ đổ bóng, đó là chỉ định thẻ instance_motion.
+
+Điều này cho biết liên ngành mong đợi một cấu trúc gia tốc với chuyển động của trường hợp.
+
+Và đó là tất cả những gì chúng ta cần làm để thiết lập chuyển động phiên bản.
+
+Tiếp theo, hãy nói về chuyển động nguyên thủy.
+
+Với chuyển động nguyên thủy, mỗi nguyên thủy có thể di chuyển riêng biệt, có nghĩa là nó có thể được sử dụng cho những thứ như hoạt hình nhân vật lột da.
+
+Hãy nhớ rằng chúng ta cần cung cấp một mô hình 3D riêng biệt cho mỗi khung hình chính và Metal sau đó sẽ nội suy giữa chúng.
+
+Chúng tôi sẽ cần cung cấp dữ liệu đỉnh cho mỗi khung hình chính.
+
+Hãy xem cách thiết lập cái này.
+
+Chúng ta sẽ bắt đầu bằng cách thu thập bộ đệm đỉnh của mỗi khung hình chính thành một mảng.
+
+Đối tượng MTLMotionKeyframeData cho phép bạn chỉ định bộ đệm và độ lệch.
+
+Chúng tôi sẽ sử dụng nó để chỉ định bộ đệm đỉnh cho mỗi khung hình chính.
+
+Tiếp theo, chúng ta sẽ tạo ra một mô tả hình học tam giác chuyển động.
+
+Điều này giống như tạo ra bất kỳ mô tả hình học nào khác, ngoại trừ việc chúng tôi sử dụng một loại hơi khác.
+
+Và thay vì cung cấp một bộ đệm đỉnh duy nhất, chúng tôi sẽ cung cấp mảng vertexBuffers của mình.
+
+Cuối cùng, chúng ta sẽ tạo ra bộ mô tả cấu trúc gia tốc nguyên thủy thông thường.
+
+Tiếp theo, chúng tôi cung cấp Mô tả hình học của chúng tôi.
+
+Sau đó chúng tôi sẽ chỉ định số lượng khung hình chính.
+
+Tương tự như chuyển động thể hiện, chúng ta sẽ cần thực hiện một thay đổi nhỏ trong ngôn ngữ đổ bóng để chỉ định thẻ primitive_motion.
+
+Và đó là tất cả những gì chúng ta cần làm để thiết lập chuyển động nguyên thủy!
+
+Hãy nhớ rằng bạn thực sự có thể sử dụng cả hai loại hoạt hình cùng một lúc để có những cảnh năng động hơn.
+
+Tiếp theo, chúng ta hãy xem tất cả những điều này đang hoạt động!
+
+Đây là kết xuất theo dõi đường dẫn được tạo bởi nhóm Nội dung Nâng cao của chúng tôi.
+
+Video được kết xuất trên Mac Pro với GPU AMD Radeon Pro Vega II.
+
+Nhân vật ninja được làm hoạt hình bằng cách sử dụng kỹ thuật hoạt hình xương lột da cho phép mỗi nguyên thủy di chuyển riêng biệt.
+
+Mỗi khung hình được kết xuất bằng cách kết hợp 256 mẫu hẹn giờ ngẫu nhiên được lấy bằng API chuyển động nguyên thủy.
+
+Chúng ta có thể làm chậm nó lại để thấy sự khác biệt rõ ràng hơn.
+
+Phiên bản bên trái không bị mờ chuyển động, trong khi phiên bản bên phải thì có.
+
+Và chúng ta có thể tăng thời gian phơi sáng hơn nữa để mô phỏng phơi sáng lâu.
+
+Làm mờ chuyển động có thể tạo ra sự khác biệt lớn trong chủ nghĩa hiện thực và giờ đây thật dễ dàng để thêm vào với API chuyển động mới.
+
+Vì vậy, đó là nó cho chuyển động.
+
+Cảm ơn vì đã xem buổi nói chuyện này.
+
+Chúng tôi đã đặt rất nhiều công việc vào API dò tia kim loại của mình để cung cấp các công cụ bạn cần để nâng cao ứng dụng của mình.
+
+Chúng tôi nóng lòng muốn xem nội dung tuyệt vời mà bạn sẽ tạo ra với nó.
+
+Cảm ơn bạn, và chúc bạn có một WWDC tuyệt vời!
+
+♪

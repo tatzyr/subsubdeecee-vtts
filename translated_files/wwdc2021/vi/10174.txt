@@ -1,0 +1,555 @@
+10174
+
+Xin chào, và chào mừng đến với WWDC.
+
+Tôi là Tori, và tôi rất vui được nói chuyện với bạn về các tính năng mới mà chúng tôi có cho máy chủ của bạn và giúp đặt ra một số hướng dẫn để chạy một máy chủ hiệu quả để theo dõi trạng thái của tất cả các giao dịch mua trong ứng dụng của bạn.
+
+Vì vậy, hãy đi sâu vào.
+
+Phiên này là phần hai của chuỗi ba phiên tập trung vào mua hàng trong ứng dụng.
+
+Nếu bạn chưa xem "Gặp gỡ StoreKit 2" hoặc "Hỗ trợ khách hàng và xử lý hoàn tiền", tôi khuyên bạn nên xem sau phiên này để có thể có được toàn bộ câu chuyện.
+
+Đối với phiên này, chúng tôi sẽ tập trung vào máy chủ và cách bạn có thể xây dựng máy chủ của mình để quản lý các giao dịch mua trong ứng dụng của mình.
+
+Để giúp chúng tôi bắt đầu trong phiên này, trước tiên chúng ta hãy nói về một số lý do hữu ích khi có một máy chủ.
+
+Có một máy chủ rất hữu ích vì nhiều lý do, và, trong trường hợp mua hàng trong ứng dụng, hầu hết chúng đều xoay quanh trạng thái theo dõi.
+
+Khi bạn có máy chủ, chúng tôi có thể thông báo cho bạn trong thời gian thực khi trạng thái của một trong những giao dịch mua trong ứng dụng của bạn thay đổi thông qua thông báo máy chủ App Store và bạn có thể gọi cho chúng tôi theo yêu cầu để kiểm tra trạng thái bất cứ lúc nào bằng API từ máy chủ đến máy chủ.
+
+Có một máy chủ cho phép bạn xác thực quyền truy cập của khách hàng vào nội dung của mình, ngay cả khi thiết bị của họ ngoại tuyến hoặc nếu trạng thái thay đổi bên ngoài ứng dụng, vì vậy bạn biết liệu khách hàng của mình có còn đăng ký sau khi gia hạn hay nếu số tiền họ đã mua trong trò chơi của bạn đã được hoàn lại.
+
+Nếu bạn đã có một máy chủ, bạn có thể đã thiết lập một máy chủ vì một số lý do này.
+
+Nếu bạn không có máy chủ và đang nghĩ đến việc xây dựng một máy chủ, đây là những lý do mạnh mẽ để xem xét, vì chúng giúp bạn kiểm soát nội dung của mình nhiều hơn.
+
+Ngay cả khi bạn có máy chủ, câu chuyện của chúng tôi vẫn bắt đầu trên iPhone, iPad hoặc thiết bị khác khi mua hàng trong ứng dụng.
+
+Khi bạn gửi thông tin về giao dịch mua đó đến máy chủ của mình, bao gồm những thứ như transactionId, originalTransactionId và biên lai, giờ đây bạn có thể theo dõi giao dịch mua đó từ máy chủ của mình bằng cách giao tiếp trực tiếp với máy chủ của chúng tôi.
+
+Ngày nay, điều này liên quan đến việc sử dụng các API như verifyReceipt hoặc các khuôn khổ như thông báo máy chủ App Store.
+
+Chúng tôi chỉ muốn làm cho việc tích hợp với máy chủ của chúng tôi thậm chí còn tốt hơn cho bạn, điều này đưa chúng tôi đến với nội dung ngày nay.
+
+Tôi sẽ xem xét tất cả các thay đổi mà chúng tôi có ở phía máy chủ và cách bạn có thể tích hợp với những thay đổi này để xây dựng một máy chủ tốt hơn, mạnh hơn.
+
+Để bắt đầu, tôi sẽ xem xét xác thực quyền truy cập với Biên lai App Store, theo dõi trạng thái với API Máy chủ App Store, sau đó tôi sẽ đi sâu vào cách bạn có thể theo dõi trạng thái một cách thụ động với thông báo máy chủ App Store.
+
+Tôi cũng sẽ xem xét ý nghĩa của điều này đối với việc quản lý chia sẻ gia đình và cách bạn có thể kiểm tra máy chủ của mình trong hộp cát.
+
+Hãy bắt đầu với việc xác thực trạng thái bằng cách sử dụng biên lai.
+
+Hôm nay, biên lai của chúng tôi ở định dạng biên lai ứng dụng thống nhất.
+
+Để có được phiên bản JSON của biên lai, bạn phải thực hiện xác minh biên lai trên thiết bị trong ứng dụng của mình hoặc, vì chúng ta đang nói về máy chủ, hãy gọi điểm cuối verifyReceipt từ máy chủ đến máy chủ của chúng tôi.
+
+Khi bạn gọi chúng tôi từ máy chủ đến máy chủ, bạn sẽ nhận được biên lai được giải mã này, cộng với bất kỳ giao dịch mới nào trong phần thông tin_nhận_mới nhất, thông tin gia hạn sắp tới trong phần thông tin_gia hạn_đang chờ xử lý và biên lai_mới nhất.
+
+Biên lai này có thể rất lớn và nó chứa giao dịch từ toàn bộ ứng dụng của bạn, cho dù đó là hàng không phải hàng tiêu dùng, hàng tiêu dùng, đăng ký hay đăng ký không gia hạn.
+
+Điều này cung cấp cho bạn rất nhiều thông tin, nhưng chúng tôi tự hỏi liệu nó có thể quá nhiều không.
+
+Ngoài ra, với StoreKit 2, chúng tôi đang giới thiệu các giao dịch đã ký mới trong chữ ký web JWS hoặc JSON, định dạng ở phía máy khách và chúng tôi muốn cung cấp điều tương tự cho bạn trên máy chủ.
+
+Tại sao chúng tôi quyết định giới thiệu các giao dịch đã ký?
+
+Tại Apple, chúng tôi quan tâm đến bảo mật.
+
+Sử dụng JWS để ký các giao dịch này sẽ tăng cường bảo mật thông qua việc ký và xác minh chữ ký.
+
+Ngoài ra, các giao dịch rất dễ giải mã và xác minh, đến nỗi bạn có thể thực hiện điều đó trên máy chủ của mình mà không cần phải gọi cho chúng tôi.
+
+Hãy cùng xem các giao dịch đã ký này ngay bây giờ.
+
+Các giao dịch đã ký của chúng tôi bao gồm ba chuỗi cách nhau bởi một khoảng thời gian.
+
+Chuỗi đầu tiên là tiêu đề JSON được mã hóa base64, sau đó là tải trọng JSON được mã hóa base64, tiếp theo là chữ ký.
+
+Nếu bạn giải mã base64 tiêu đề, nó chứa thuật toán ký mà chúng tôi đã sử dụng, cũng như yêu cầu x5C.
+
+Cái này chứa chuỗi chứng chỉ bạn cần để xác minh chữ ký.
+
+Chúng tôi sẽ quay lại xác minh chữ ký một chút.
+
+Tiếp theo, nếu bạn giải mã tải trọng base64, bạn sẽ thấy biên lai JSON.
+
+Điều đó có nghĩa là tất cả những gì bạn cần làm để giải mã giao dịch là giải mã tải trọng base64, một thao tác đơn giản mà bạn có thể tự thực hiện trên máy chủ của mình.
+
+Chúng ta hãy xem nhanh giao dịch đã được giải mã.
+
+Chỉ cần liếc nhìn nó, bạn có thể nhận thấy rằng một số kiểu dữ liệu đã thay đổi từ chuỗi trong biên lai trước đó sang các kiểu dữ liệu phù hợp hơn, như số hoặc booleans.
+
+Cũng lưu ý rằng chúng tôi đã giảm định dạng ngày xuống chỉ còn một mili giây kể từ kỷ nguyên.
+
+Chúng tôi cũng đã thêm một vài lĩnh vực mới.
+
+Chúng tôi đã thêm một trường gọi là "loại", cho bạn biết loại nội dung mà giao dịch áp dụng.
+
+Chúng tôi cũng đã thêm một trường gọi là "appAccountToken."
+
+Khi bạn cung cấp giá trị này cho StoreKit tại thời điểm mua trong ứng dụng StoreKit 2 của bạn, chúng tôi vẫn duy trì nó trên máy chủ để trả lại nó trong mỗi giao dịch của bạn.
+
+Chúng tôi cũng sẽ trả lại cái này không chỉ trong các giao dịch đã ký mới, mà còn trong biên lai ứng dụng thống nhất hiện có của chúng tôi cho mỗi giao dịch.
+
+Hai lĩnh vực tiếp theo mà tôi muốn gọi ở đây không thực sự mới, mà được đổi tên.
+
+Chúng tôi đã đổi tên ngày_hủy và lý do_hủy thành ngày_thu hồi và lý do_thu hồi để làm rõ hơn rằng sự hiện diện của các trường này chỉ ra rằng dịch vụ nên bị thu hồi, kể từ ngày thu hồi.
+
+Hai lĩnh vực cuối cùng này có thể trông mới nhưng thực sự là sự đơn giản hóa một số thông tin từ biên lai trước của chúng tôi.
+
+Chúng tôi đã kết hợp isTrialPeriod, isIntroOfferPeriod, promotionalOfferIdentifier, và offerCodeRefName thành offerType và offerIdentifier.
+
+offerType cho bạn biết loại ưu đãi mà khách hàng của bạn đã áp dụng cho giai đoạn này, với 1 cho ưu đãi giới thiệu, 2 cho ưu đãi đăng ký và 3 cho mã ưu đãi.
+
+Nếu loại ưu đãi là 2 hoặc 3, bạn cũng sẽ thấy một giá trị trong trường nhận dạng ưu đãi với ID ưu đãi khuyến mại hoặc Tên mã ưu đãi.
+
+Bây giờ, tôi muốn nói về việc xác minh phần chữ ký của thông tin giao dịch đã ký.
+
+Xác minh chữ ký là một lựa chọn để bạn xác nhận rằng giao dịch đến từ Apple và đáng tin cậy.
+
+Nếu bạn chỉ muốn xem nội dung của giao dịch, bước này là không bắt buộc.
+
+Tuy nhiên, để xác minh chữ ký, bạn sẽ cần sử dụng các khiếu nại có sẵn trong phần tiêu đề của thông tin giao dịch đã ký.
+
+Sử dụng yêu cầu alg để biết chúng tôi đã sử dụng thuật toán ký nào và sử dụng chuỗi chứng chỉ trong mảng trong yêu cầu x5c.
+
+Khi bạn có hai thứ này, bạn có thể sử dụng thư viện mật mã yêu thích của mình để xác minh chữ ký của thông tin giao dịch đã ký.
+
+Vì vậy, điều đó bao gồm các thay đổi của chúng tôi đối với Biên lai App Store, hoặc, như chúng tôi gọi chúng bây giờ, các giao dịch đã ký.
+
+Bây giờ, hãy chuyển sang cách bạn có thể kiểm tra trạng thái với API.
+
+Vì vậy, mặc dù bạn không cần API như verifyReceipt hôm nay để xác minh tính hợp lệ của các giao dịch đã ký của bạn hoặc để giải mã các giao dịch, chúng tôi vẫn muốn xây dựng các API sẽ giúp bạn trên máy chủ của mình.
+
+Đó là lý do tại sao chúng tôi giới thiệu một thư viện API Máy chủ App Store hoàn toàn mới trong năm nay tại WWDC sẽ cung cấp cho bạn một số tính năng mới mà trước đây không có sẵn cho bạn trên máy chủ của bạn và cũng sẽ sử dụng các giao dịch đã ký mới của chúng tôi.
+
+Vì vậy, chúng ta sẽ nói về hai API hoàn toàn mới ngay bây giờ: API trạng thái đăng ký và API lịch sử mua hàng trong ứng dụng.
+
+Đầu tiên, tôi muốn nói về API trạng thái đăng ký.
+
+API trạng thái đăng ký cung cấp trạng thái mới nhất của các đăng ký tự động gia hạn của bạn, được biểu thị bằng originalTransactionId từ ứng dụng của bạn.
+
+Với API này, bạn sẽ nhận được câu trả lời nhanh về trạng thái người đăng ký của mình.
+
+Bạn sẽ nhanh chóng biết liệu đăng ký của họ đang hoạt động, hết hạn, trong thời gian ân hạn hay các trạng thái khác, chỉ với một lần kiểm tra đơn giản.
+
+Hãy xem nó ngay bây giờ.
+
+Yêu cầu đến API này rất đơn giản, chỉ yêu cầu một originalTransactionId trong URL.
+
+Phản hồi từ API này chứa trạng thái cho mỗi đăng ký mà khách hàng của bạn được đăng ký trong ứng dụng của bạn, được nhóm theo subscriptionGroupIdentifier.
+
+Đối với mỗi subscriptionGroupIdentifier, chúng tôi cung cấp một danh sách các giao dịch mới nhất, với một mục nhập cho mỗi originalTransactionId trong nhóm đăng ký.
+
+Mỗi mục nhập trong mảng này chứa một trạng thái, originalTransactionId, signedTransactionInfo và signedRenewalInfo, cũng được ký ở định dạng JWS.
+
+Bây giờ chúng ta hãy xem xét kỹ hơn trường trạng thái đó.
+
+Trường trạng thái sẽ cung cấp cho bạn câu trả lời nhanh về trạng thái đăng ký của bạn để bạn có thể biết có nên mở khóa dịch vụ cho người đăng ký của mình hay không.
+
+Chúng tôi đang bắt đầu với năm giá trị có thể có cho trạng thái: 1, có nghĩa là đăng ký đang hoạt động; 2, có nghĩa là đăng ký đã hết hạn; 3, có nghĩa là đăng ký đang trong thời gian thử lại thanh toán; 4, có nghĩa là đăng ký đang trong thời gian gia hạn; và 5, có nghĩa là quyền truy cập đăng ký đã bị
+
+Nhìn vào trường trạng thái cho bạn câu trả lời nhanh về đăng ký của bạn.
+
+Để biết thêm thông tin về trạng thái đó, bạn có thể xem tải trọng của thông tin giao dịch đã ký và tải trọng của thông tin gia hạn đã ký.
+
+Để giải mã signedRenewalInfo, hãy làm theo các bước tương tự như bạn làm cho thông tin giao dịch đã ký bằng cách base64 giải mã phần tải trọng.
+
+Bạn có thể xác minh thêm chữ ký của signedRenewalInfo theo cách tương tự, sử dụng tiêu đề.
+
+Sau khi giải mã, bạn sẽ thấy một cái gì đó như thế này.
+
+Thông tin gia hạn chứa các trường tương tự mà chúng tôi cung cấp trong phần thông tin gia hạn đang chờ xử lý của verifyReceipt hôm nay với một số cập nhật như chỉ bao gồm một định dạng ngày và tạo một số trường booleans hoặc số nếu có.
+
+Chúng tôi cũng sẽ thêm các trường mới của chúng tôi offerType và offerIdentifier vào signedRenewalInfo.
+
+Điều này sẽ cho bạn biết nếu khách hàng có kế hoạch đổi ưu đãi trong lần gia hạn tiếp theo của họ.
+
+Ngoài API trạng thái đăng ký, chúng tôi muốn cung cấp một cách để bạn có được tất cả các giao dịch được liên kết với ứng dụng của mình, giống như chúng tôi cung cấp trong phần_receipt_info mới nhất của verifyReceipt ngay hôm nay.
+
+Vì lý do này, chúng tôi cũng đang thêm API lịch sử mua hàng trong ứng dụng.
+
+API lịch sử mua hàng trong ứng dụng sẽ cung cấp lịch sử của tất cả các giao dịch cho ứng dụng của bạn, giống như bạn nhận được trong phần thông tin_nhận_mới nhất của verifyReceipt hôm nay.
+
+Sự khác biệt chính ở đây là mỗi giao dịch sẽ ở định dạng thông tin giao dịch đã ký mới và API sẽ được phân trang để kiểm soát kích thước phản hồi bạn nhận được từ App Store.
+
+Yêu cầu ban đầu cho việc này, giống như API trạng thái đăng ký, khá đơn giản.
+
+Chúng tôi chỉ yêu cầu một bản gốcTransactionId từ bạn để xử lý yêu cầu của bạn.
+
+Trong phản hồi, bạn sẽ nhận được siêu dữ liệu ứng dụng, như ID Apple và ID gói của ứng dụng và một loạt 20 giao dịch mới nhất cho ứng dụng của bạn ở định dạng thông tin giao dịch đã ký mới của chúng tôi.
+
+Chúng tôi trả lại 20 thông tin giao dịch đã ký cho bạn theo yêu cầu.
+
+Nếu bạn có nhiều giao dịch hơn, hãy xem hasMore và các giá trị sửa đổi trong phản hồi.
+
+hasMore sẽ đúng nếu còn nhiều giao dịch hơn cho ứng dụng của bạn.
+
+Trong trường hợp này, hãy thực hiện một yêu cầu khác, chuyển mã thông báo sửa đổi làm tham số truy vấn, để nhận 20 giao dịch tiếp theo.
+
+Lặp lại điều này cho đến khi hasMore là sai.
+
+Bây giờ hãy xoay vòng và nói về cách tất cả các API Máy chủ App Store sẽ nhất quán với nhau.
+
+Tất cả họ sẽ đứng sau JWT - hoặc mã thông báo web JSON - xác thực, hỗ trợ các giao dịch đã ký mới của chúng tôi và có các định dạng yêu cầu và phản hồi JSON.
+
+Và trên hết, tất cả chúng đều khóa một OriginalTransactionId mà bạn cung cấp trong yêu cầu, thay vì yêu cầu biên lai và bí mật được chia sẻ trong yêu cầu.
+
+Bây giờ, tôi muốn đề cập đến xác thực JWT.
+
+Tất cả các API Máy chủ App Store mới của chúng tôi sẽ sử dụng xác thực JSON Web Token, hoặc JWT.
+
+Chúng tôi đã chọn điều này để tăng tính bảo mật giao tiếp giữa máy chủ của chúng tôi và của bạn.
+
+Để tạo JWT này, bạn sẽ cần tải xuống khóa riêng tư từ App Store Connect.
+
+Quá trình này sẽ tự động đăng ký khóa công khai với máy chủ của chúng tôi.
+
+Sau đó, bạn phải ký mã thông báo bằng thuật toán ES256 trước khi gọi đến máy chủ của chúng tôi.
+
+Để tạo khóa riêng tư của bạn trong App Store Connect, hãy điều hướng đến trang Người dùng và Truy cập và truy cập tab Khóa.
+
+Chọn tùy chọn khóa mua hàng trong ứng dụng và bạn sẽ thấy một trang như thế này.
+
+Thêm một chìa khóa và đặt tên cho nó.
+
+Lưu chìa khóa ở nơi an toàn, vì bạn chỉ có thể tải xuống một lần và lưu ý ID khóa.
+
+Bây giờ, chúng ta hãy xem JWT này thực sự trông như thế nào.
+
+JWT bao gồm ba phần: tiêu đề, tải trọng và chữ ký.
+
+Trong tiêu đề, bạn nên bao gồm ID khóa của khóa riêng tư của bạn và thuật toán được sử dụng để ký.
+
+Chúng tôi yêu cầu chữ ký đường cong elip với hàm băm SHA 256 hoặc ES256.
+
+Bạn cũng sẽ bao gồm loại mã thông báo, trong trường hợp này, luôn là JWT.
+
+Tải trọng nên bao gồm ID nhà phát hành của bạn.
+
+Bạn có thể tìm thấy giá trị này trong App Store Connect.
+
+Bạn sẽ bao gồm thời gian mã thông báo được phát hành và thời gian nó sẽ hết hạn, tính bằng giây kể từ kỷ nguyên.
+
+Sự khác biệt giữa hai lần này không nên quá một giờ.
+
+Bao gồm đối tượng, luôn là appstoreconnect-v1.
+
+Bạn sẽ phải tạo một nonce, hoặc một chuỗi duy nhất một lần.
+
+Cuối cùng, bạn sẽ phải bao gồm mã định danh gói của ứng dụng của mình.
+
+Khi bạn có tất cả thông tin này, bạn phải triển khai ký mã thông báo này bằng thuật toán ES256 hoặc chữ ký đường cong elip với hàm băm SHA 256.
+
+Trước khi tôi tiếp tục, hãy xem lại những điểm rút ra chính của API Máy chủ App Store của chúng tôi.
+
+Đầu tiên, chúng tôi đã tách trạng thái xác định khỏi việc tra cứu lịch sử giao dịch, vì đây là những chức năng riêng biệt.
+
+Tiếp theo, các API này chỉ yêu cầu originalTransactionId trong yêu cầu, có nghĩa là bạn có thể thực hiện các giao dịch đã ký mà bạn nhận được, từ ứng dụng của bạn hoặc từ phản hồi từ máy chủ của chúng tôi, lưu trữ các trường bạn quan tâm, bao gồm originalTransactionId và sau đó loại bỏ thông tin giao dịch đã ký.
+
+Không cần lưu trữ các giao dịch đã ký nữa vì chúng tôi đã hướng dẫn bạn thực hiện với biên lai trong quá khứ.
+
+Vì vậy, điều đó bao gồm cách bạn có thể kiểm tra trạng thái khách hàng của mình với API Máy chủ App Store mới của chúng tôi.
+
+Bây giờ, tôi muốn xem xét cách chúng tôi làm cho thông báo máy chủ App Store của chúng tôi nhất quán và cách bạn có thể theo dõi trạng thái bằng cách sử dụng thông báo.
+
+Trước tiên hãy bắt đầu với việc xem xét nhanh các thông báo của máy chủ App Store.
+
+Chúng tôi đã thảo luận về các thông báo máy chủ App Store trong vài năm nay, vì vậy hãy xem lại lý do tại sao chúng hữu ích.
+
+Với thông báo máy chủ App Store, bạn có thể nhận thông báo khi trạng thái của một trong các giao dịch của bạn thay đổi trực tiếp từ App Store.
+
+Khi bạn nhận được thông báo, bạn có thể cập nhật trạng thái của mình ngay lập tức mà không cần khách hàng phải mở ứng dụng trên điện thoại của họ.
+
+Với thông báo máy chủ App Store, bạn cũng không cần gọi cho chúng tôi để biết trạng thái.
+
+Chúng tôi sẽ chỉ cho bạn biết khi có điều gì đó thay đổi.
+
+Chúng là một trong những công cụ mạnh mẽ nhất mà máy chủ của bạn có thể tận dụng.
+
+Mục tiêu của chúng tôi trong năm nay là làm cho các thông báo của máy chủ App Store trở nên mạnh mẽ hơn bằng cách sử dụng các giao dịch đã ký mới, dễ sử dụng của chúng tôi.
+
+Thêm vào đó, chúng tôi sẽ cập nhật các thông báo để đảm bảo chỉ có một thông báo được gửi cho một hành động của người dùng, chúng tôi sẽ cập nhật tải trọng và toàn bộ tải trọng sẽ được ký bằng JWS để tăng cường bảo mật.
+
+Chúng tôi cũng sẽ cho phép bạn chọn tham gia thông báo v2 khi bạn sẵn sàng và sẽ tiếp tục gửi các thông báo hiện có trong một thời gian.
+
+Đây là thông báo hiện tại của chúng tôi cung cấp cho các thông báo v1.
+
+Có tổng cộng 11 loại, bao gồm mọi thứ từ INITIAL_BUY đến REVOKE.
+
+Với thông báo v2, chúng tôi đang phản đối bốn loại thông báo của mình: INITIAL_BUY, INTERACTIVE_RENEWAL, CANCEL, và PRICE_INCREASE_CONSENT.
+
+Nhưng chúng tôi đang thêm năm loại mới: SUBSCRIBED, OFFER_REDEEMED, EXPIRED, GRACE_PERIOD_EXPIRED, và PRICE_INCREASE.
+
+Ngoài các loại thông báo mới, chúng tôi đang thêm một trường mới gọi là "trạng thái con" vào thông báo.
+
+Điều này sẽ giúp bạn thu hẹp loại thông báo chung hơn thành một hành động cụ thể của người dùng.
+
+Hiện tại, các tiểu bang áp dụng cho sáu loại thông báo v2 của chúng tôi: SUBSCRIBED, DID_CHANGE_RENEWAL_STATUS, DID_CHANGE_RENEWAL_PREFERENCES, OFFER_REDEEMED, EXPIRED, và PRICE_INCREASE.
+
+Chúng ta hãy xem một số ví dụ về cách các tiểu bang áp dụng cho các loại thông báo này.
+
+Đầu tiên, tôi muốn nói về thông báo ĐÃ ĐĂNG KÝ và các tiểu bang của nó.
+
+Khi khách hàng mua hàng lần đầu, bạn sẽ nhận được ĐĂNG KÝ với trạng thái phụ là INITIAL_BUY.
+
+Khi khách hàng đăng ký lại cùng một SKU hoặc một SKU khác, bạn sẽ nhận được ĐĂNG KÝ với trạng thái phụ ĐĂNG KÝ LẠI, miễn là đăng ký nằm trong cùng một nhóm đăng ký.
+
+Một trong những loại thông báo mới của chúng tôi không có loại tương đương trong thông báo máy chủ v1 App Store là thông báo OFFER_REDEEMED.
+
+Vì vậy tôi muốn xem ví dụ này.
+
+ƯU ĐÃI_REDEEMED được nhận bất cứ khi nào khách hàng đổi ưu đãi khuyến mại.
+
+Nếu khách hàng đổi ưu đãi để mua lần đầu, bạn sẽ nhận được OFFER_REDEEMED với trạng thái phụ là INITIAL_BUY.
+
+Nếu khách hàng đổi ưu đãi đăng ký lại cùng một đăng ký không hoạt động, bạn sẽ nhận được OFFER_REDEEMED với trạng thái phụ là ĐĂNG KÝ LẠI.
+
+Nếu khách hàng đổi ưu đãi nâng cấp đăng ký đang hoạt động của họ, bạn sẽ nhận được OFFER_REDEEMED với trạng thái nâng cấp phụ.
+
+Nếu khách hàng đổi ưu đãi để hạ cấp đăng ký đang hoạt động của họ, bạn sẽ nhận được OFFER_REDEEMED với trạng thái phụ là DOWNGRADE.
+
+Ngoài ra, nếu khách hàng đổi ưu đãi đăng ký lại đăng ký đang hoạt động của họ sau khi hủy trong cùng khoảng thời gian, bạn sẽ nhận được OFFER_REDEEMED với trạng thái phụ AUTO_RENEW_ENABLED.
+
+Bây giờ, hãy nhìn vào EXPIRED.
+
+Với loại thông báo EXPIRED mới, bạn sẽ nhận được EXPIRED khi đăng ký hết hạn sau khi khách hàng đã tắt tính năng tự động gia hạn với trạng thái phụ của TÌNH NGUYỆN.
+
+Nếu đăng ký hết hạn vì thời gian thử lại thanh toán đã kết thúc mà không khôi phục thành công, bạn sẽ nhận được EXPIRED với trạng thái phụ của BILLING_RETRY.
+
+Ngoài ra, nếu đăng ký hết hạn vì khách hàng không đồng ý tăng giá, bạn sẽ nhận được EXPIRED với trạng thái phụ của PRICE_INCREASE.
+
+Vì vậy, kết hợp các loại thông báo v2, cộng với các tiểu bang con hiện hành của chúng, chúng tôi hiện bao gồm hơn 20 sự kiện vòng đời khách hàng khác nhau.
+
+Chỉ cần nhìn vào loại thông báo là đủ để có được ý tưởng chung về những gì đã thay đổi trong giao dịch mua của bạn, nhưng nhìn vào tiểu bang sẽ giúp bạn có được trạng thái cụ thể hơn nếu bạn muốn đi vào chi tiết hơn.
+
+Bây giờ chúng ta hãy xem nhanh tải trọng mới.
+
+Đối với các thông báo v2, chúng tôi sẽ luôn bao gồm cùng một bộ trường, bất kể loại thông báo nào.
+
+Loại thông báo, loại phụ, phiên bản thông báo, sẽ là 2 nếu bạn đăng ký thông báo v2, môi trường thông báo áp dụng, một số siêu dữ liệu ứng dụng như ID gói, ID Apple ứng dụng và phiên bản gói, giao dịch mới nhất cho ứng dụng bị ảnh hưởng ở định dạng signedTransactionInfo mới của chúng tôi và thông tin gia hạn mới nhất cho trong
+
+Những thay đổi này sẽ giúp các thông báo dễ phân tích cú pháp hơn và hy vọng dễ áp dụng hơn vì chúng sử dụng các giao dịch đã ký mới của chúng tôi và chỉ chứa thông tin về giao dịch mua trong ứng dụng bị ảnh hưởng.
+
+Như tôi đã đề cập trước đó, toàn bộ tải trọng sẽ được ký để tăng tính bảo mật và độ tin cậy của các thông báo của chúng tôi.
+
+Tải trọng mà chúng tôi vừa thấy không có chữ ký để dễ đọc, nhưng việc ký sẽ tương tự như cách chúng tôi ký các giao dịch và thông tin gia hạn ở định dạng JWS.
+
+Chúng tôi muốn bạn có thể chọn tham gia thông báo v2 khi bạn sẵn sàng.
+
+Vì lý do này, chúng tôi đang thêm một tùy chọn vào URL thông báo trong App Store Connect để cho phép bạn chọn phiên bản thông báo máy chủ App Store của mình.
+
+Để làm điều này, hãy truy cập trang Ứng dụng của bạn và cuộn đến phần Thông báo Máy chủ Cửa hàng Ứng dụng mới.
+
+Nếu bạn chọn URL máy chủ sản xuất, bây giờ bạn có tùy chọn chọn thông báo máy chủ App Store phiên bản 1 hoặc phiên bản 2.
+
+Khi những thay đổi này ra mắt vào cuối năm nay, bạn sẽ có thể chọn tham gia thông báo máy chủ App Store phiên bản 2.
+
+Vì vậy, bây giờ, tôi muốn xem xét một số tình huống ví dụ bằng cách sử dụng thông báo máy chủ App Store mới của chúng tôi, bắt đầu với lần mua đăng ký lần đầu tiên.
+
+Đối với lần mua đăng ký lần đầu tiên trong ứng dụng của bạn, bạn sẽ nhận được thông tin giao dịch đã ký do kết quả của giao dịch mua.
+
+Bạn có thể chọn xác minh điều này trên ứng dụng của mình và gửi originalTransactionId và các trường liên quan khác đến máy chủ của bạn hoặc gửi thông tin giao dịch đã ký đến máy chủ của bạn để xác minh và chọn trường nào sẽ lưu trữ trong cơ sở dữ liệu của bạn tại thời điểm đó.
+
+Cùng khoảng thời gian đó, bạn sẽ nhận được thông báo ĐÃ ĐĂNG KÝ với trạng thái con của INITIAL_BUY.
+
+Bây giờ thông tin giao dịch đã ký trong thông báo chứa mã thông báo tài khoản ứng dụng, bạn có thể liên kết ngay thông báo này với người dùng trong ứng dụng của mình, ngay cả khi mất liên lạc giữa máy chủ và ứng dụng của bạn sau khi mua.
+
+Không cần phải gọi cho máy chủ của chúng tôi để xác minh thông tin giao dịch đã ký.
+
+Bạn có thể gọi cho máy chủ của chúng tôi bất cứ lúc nào nếu bạn muốn kiểm tra trạng thái hoặc API lịch sử mua hàng trong ứng dụng bằng cách gửi cho chúng tôi bản gốcTransactionId.
+
+Bây giờ tôi đã đề cập đến việc mua một đăng ký.
+
+Hãy chuyển sang gia hạn đăng ký.
+
+Bây giờ chúng tôi đã đạt đến việc gia hạn đăng ký này.
+
+Nếu đăng ký này gia hạn thành công, bạn sẽ nhận được loại thông báo DID_RENEW.
+
+Bạn có thể xem thông tin giao dịch đã ký và thông tin gia hạn đã ký trong tải trọng để xác minh ngày gia hạn đăng ký tiếp theo của bạn và tùy chọn gia hạn của khách hàng cho lần gia hạn tiếp theo của họ.
+
+Bạn cũng có thể lên lịch một công việc để gọi API trạng thái đăng ký của chúng tôi để kiểm tra trạng thái đăng ký của bạn tại thời điểm gia hạn như một cơ chế chuyển đổi dự phòng.
+
+Một lần nữa, không cần phải gọi cho chúng tôi để xác minh giao dịch bạn nhận được trong thông báo.
+
+Tất nhiên, tự động gia hạn không phải lúc nào cũng diễn ra theo kế hoạch, đặc biệt nếu có vấn đề về thanh toán.
+
+Vì vậy, bây giờ, tôi muốn trang trải thời gian ân hạn và thử thanh toán lại.
+
+Bây giờ hãy giả sử rằng đăng ký của bạn không gia hạn như mong đợi.
+
+Khi điều này xảy ra, chúng tôi thông báo cho bạn bằng thông báo DID_FAIL_TO_RENEW.
+
+Nếu bạn đã bật thời gian gia hạn và đăng ký thoát khỏi thời gian gia hạn mà không gia hạn thành công, chúng tôi sẽ gửi cho bạn thông báo GRACE_PERIOD_EXPIRED và bạn có thể biết rằng khách hàng của mình đã nhập thời gian thử lại thanh toán.
+
+Nếu đăng ký vẫn chưa được khôi phục trong thời gian thử lại thanh toán, chúng tôi sẽ gửi cho bạn thông báo ĐÃ HẾT HẠN với giai đoạn con của BILLING_RETRY.
+
+Nếu chúng tôi khôi phục thanh toán của đăng ký trong thời gian ân hạn hoặc thời gian thử thanh toán lại, chúng tôi sẽ gửi cho bạn thông báo DID_RECOVER.
+
+Bất kể kết quả gia hạn là gì, chúng tôi thông báo cho bạn về kết quả bằng thông báo v2, chứa thông tin giao dịch đã ký và thông tin gia hạn đã ký.
+
+Bạn có thể gọi trạng thái đăng ký hoặc API lịch sử tại bất kỳ thời điểm nào trong quy trình này để kiểm tra lại trạng thái đăng ký của mình.
+
+Bây giờ, chúng tôi nhận ra đăng ký không phải là thứ duy nhất khách hàng sẽ mua trong ứng dụng của bạn.
+
+Vì vậy, bây giờ chúng ta hãy xoay vòng và đề cập đến những gì mong đợi trong lần đầu tiên mua một vật tư tiêu hao.
+
+Đối với lần mua hàng đầu tiên cho một vật tư tiêu hao trên ứng dụng của bạn, bạn sẽ nhận được thông tin giao dịch đã ký do kết quả của giao dịch mua.
+
+Bạn có thể chọn xác minh điều này trên ứng dụng của mình và gửi originalTransactionId và các trường liên quan khác đến máy chủ của bạn hoặc gửi thông tin giao dịch đã ký đến máy chủ của bạn để xác minh và chọn trường nào sẽ lưu trữ trong cơ sở dữ liệu của bạn tại thời điểm đó.
+
+Luôn lưu ý về bản gốcTransactionId, vì bạn có thể cần nó sau này.
+
+Đối với hàng tiêu dùng và các loại nội dung khác như đăng ký không tiêu dùng và không gia hạn, không có nhiều thay đổi trong vòng đời của giao dịch mua đó trừ khi khách hàng yêu cầu hoàn lại tiền.
+
+Vì vậy, tôi muốn đề cập đến trường hợp đó ngay bây giờ.
+
+Bây giờ, giả sử khách hàng của bạn yêu cầu hoàn lại tiền cho giao dịch mua hàng tiêu hao của họ.
+
+Chúng tôi sẽ gửi cho bạn thông báo HOÀN TIỀN, bao gồm ngày thu hồi và lý do thu hồi trong thông tin giao dịch đã ký.
+
+Bạn có thể biết ngừng cung cấp quyền truy cập vào giao dịch mua tiêu hao sau ngày thu hồi.
+
+Nếu bạn lo lắng về trạng thái giao dịch mua hàng tiêu hao của mình bất cứ lúc nào, bạn có thể gọi API lịch sử trong ứng dụng và tìm kiếm nó trong phản hồi.
+
+Hàng tiêu dùng bị hủy sẽ luôn được bao gồm, vì vậy bạn sẽ biết liệu trạng thái giao dịch có thay đổi hay không.
+
+Bây giờ tôi muốn nói về sự cố mất điện.
+
+Đôi khi, bất chấp những nỗ lực tốt nhất, bạn có thể gặp sự cố ngừng hoạt động trên máy chủ của mình.
+
+Bây giờ tôi sẽ đề cập đến cách bạn có thể giúp máy chủ của mình phục hồi sau khi ngừng hoạt động.
+
+Nếu bạn gặp sự cố ngừng hoạt động trên máy chủ của mình và bạn bỏ lỡ thông báo về máy chủ App Store, bạn sẽ muốn biết điều gì đã thay đổi trong thời gian tạm thời.
+
+API lịch sử trong ứng dụng là giải pháp của bạn ở đây.
+
+Chỉ cần gọi API cho từng khách hàng, cung cấp bất kỳ originalTransactionId nào từ ứng dụng của bạn và bạn sẽ nhận được lịch sử giao dịch mới nhất cho ứng dụng của mình để bạn có thể cập nhật máy chủ của mình.
+
+Sau đó, bạn có thể gọi API trạng thái đăng ký để nhận trạng thái đăng ký mới nhất cho mỗi đăng ký của mình.
+
+Bây giờ tôi muốn đề cập đến một trường hợp cuối cùng - chuyển sang các giao dịch đã ký trên máy chủ của bạn.
+
+Điều này đặc biệt quan trọng nếu bạn sẵn sàng cập nhật máy chủ của mình trước ứng dụng hoặc nếu bạn vẫn nhận được biên lai ứng dụng thống nhất từ các phiên bản ứng dụng cũ hơn của mình.
+
+Di chuyển sang các giao dịch đã ký trên máy chủ của bạn rất dễ dàng, vì nó chỉ yêu cầu một originalTransactionId.
+
+Bạn có thể dễ dàng chuyển đổi biên lai ứng dụng thống nhất mà máy chủ của bạn nhận được từ ứng dụng của bạn sang biên lai JWS để máy chủ của bạn có thể tương thích với API máy chủ App Store và thông báo máy chủ App Store của chúng tôi.
+
+Để làm điều này, trước tiên hãy gọi verifyReceipt với biên lai ứng dụng thống nhất và lấy tất cả các originalTransactionIds duy nhất từ phản hồi.
+
+Gọi API lịch sử mua hàng trong ứng dụng cho một trong những giao dịch gốc này để lấy lịch sử cho ứng dụng của bạn trong các giao dịch đã ký.
+
+Sau đó gọi API trạng thái đăng ký cho đăng ký originalTransactionId để nhận các giao dịch đã ký và signedRenewalInformation cho tất cả các đăng ký khách hàng của bạn.
+
+Ghi lại bất kỳ dữ liệu liên quan nào từ tải trọng của giao dịch đã ký và bạn đã sẵn sàng tiếp tục sử dụng các API này và nhận thông báo về máy chủ v2 App Store.
+
+Vì vậy, bây giờ tôi đã đề cập đến tất cả các thay đổi mà chúng tôi có cho Thông báo Máy chủ App Store và cách bạn có thể sử dụng thông báo để kiểm tra trạng thái khách hàng của mình.
+
+Bây giờ tôi muốn nói về cách chúng tôi đang giúp bạn quản lý chia sẻ gia đình để mua hàng trong ứng dụng từ máy chủ của mình dễ dàng hơn.
+
+Chia sẻ gia đình để mua hàng trong ứng dụng hiện được hỗ trợ cho các đăng ký tự động gia hạn và mua hàng không tiêu thụ, nếu bạn đã bật chia sẻ gia đình cho giao dịch mua trong ứng dụng đó trong App Store Connect.
+
+Ngay bây giờ, chúng tôi cung cấp một trường được gọi là inAppOwnershipType để cho biết liệu một giao dịch có được chia sẻ hoặc mua trong gia đình hay không và chúng tôi hỗ trợ một tập hợp con các thông báo cho các thành viên trong gia đình: REVOKE, DID_RECOVER và DID_FAIL_TO_RENEW.
+
+Trường loại quyền sở hữu trong ứng dụng và các loại thông báo được hỗ trợ hiện có sẽ vẫn còn với các giao dịch đã ký mới của chúng tôi và thông báo máy chủ App Store v2.
+
+Tuy nhiên, vào cuối năm nay, chúng tôi sẽ bổ sung thêm hỗ trợ cho các thông báo máy chủ App Store cho các thành viên trong gia đình.
+
+Đối với các thông báo v1, chúng tôi đang thêm DID_CHANGE_RENEWAL_STATUS, DID_CHANGE_RENEWAL_PREF, DID_RENEW và INTERACTIVE_RENEWAL.
+
+Đối với các thông báo v2, chúng tôi đang bổ sung thêm nhiều hỗ trợ hơn cho các thành viên trong gia đình.
+
+Ngoài DID_CHANGE_RENEWAL_STATUS, DID_CHANGE_RENEWAL_PREF và DID_RENEW, chúng tôi đang thêm hỗ trợ cho SUBSCRIBED, EXPIRED, GRACE_PERIOD_EXPIRED và OFFER_REDEEMED cho người mua cũng như cho các thành viên trong gia đình.
+
+Điều này sẽ giúp bạn dễ dàng theo dõi trạng thái của tất cả khách hàng, cả người mua và thành viên gia đình, thông qua thông báo máy chủ App Store.
+
+Vì vậy, với những thay đổi mà chúng tôi sắp tới để thông báo cho các thành viên trong gia đình trong năm nay, điều này sẽ giúp bạn quản lý chia sẻ gia đình để mua hàng trong ứng dụng trở nên dễ dàng hơn khi kết hợp với chức năng chia sẻ gia đình hiện có của chúng tôi.
+
+Bây giờ tôi muốn kết thúc với một điều nữa: kiểm tra máy chủ của bạn trong hộp cát.
+
+Chúng tôi muốn bạn cảm thấy tự tin vào ứng dụng và máy chủ của mình.
+
+Vì vậy, chúng tôi muốn bạn có thể tích hợp với API Máy chủ App Store mới của chúng tôi và thông báo máy chủ App Store trong hộp cát trước khi sản xuất.
+
+Đối với các API Máy chủ App Store mà chúng ta đã thảo luận hôm nay, điều đó có nghĩa là chúng hoàn toàn có thể kiểm tra được trong hộp cát và hoạt động, bắt đầu từ bây giờ!
+
+Điều này bao gồm API trạng thái đăng ký và API lịch sử mua hàng trong ứng dụng.
+
+Thêm vào đó, chúng tôi đang thêm một vài tính năng mới khác trong hộp cát.
+
+Sắp ra mắt vào cuối năm nay, bạn sẽ có thể thêm URL thông báo dành riêng cho hộp cát trong App Store Connect.
+
+Với sự bổ sung này, bạn có thể giữ cho thông báo sản xuất và hộp cát của mình hoàn toàn riêng biệt.
+
+Ngoài ra, bạn cũng sẽ có thể chọn phiên bản thông báo hộp cát của mình để bạn có thể kiểm tra thông báo v2 trong hộp cát trước khi sản xuất.
+
+Năm ngoái, chúng tôi đã mang đến cho bạn một số cải tiến hộp cát thú vị, như đặt lại tính đủ điều kiện dùng thử và cung cấp trang Quản lý Đăng ký trong hộp cát.
+
+Chúng tôi muốn tiếp tục thử nghiệm trong hộp cát dễ dàng hơn và đang bổ sung một vài cải tiến mới trong năm nay.
+
+Đây là việc xóa lịch sử mua hàng cho ID Apple hộp cát, thay đổi khu vực tài khoản hộp cát và điều chỉnh tỷ lệ gia hạn đăng ký trong hộp cát.
+
+Ngoài ra, như một cải tiến bảo mật, chúng tôi đang trả về lỗi từ verifyReceipt cho biên lai TestFlight khi chúng tôi phát hiện khách hàng không còn là người dùng TestFlight nữa.
+
+Những cải tiến hộp cát mới này sẽ có thể truy cập được từ trang Sandbox Testers trong App Store Connect.
+
+Để xóa lịch sử mua hàng, chọn chỉnh sửa, sau đó chuyển đổi trình kiểm tra và chọn nút xóa lịch sử mua hàng.
+
+Một khi bạn xác nhận xóa lịch sử mua hàng cho người kiểm tra, hành động không thể đảo ngược.
+
+Vì vậy, hãy nhớ những người thử nghiệm mà bạn đã chọn tùy chọn này.
+
+Xóa lịch sử mua hàng là một công cụ kiểm tra mới mạnh mẽ cho phép bạn mua lại thứ gì đó mà không cần tạo tài khoản mới.
+
+Nó cũng cho phép bạn có một biên lai mới, trống để kiểm tra.
+
+Để thay đổi khu vực tài khoản hoặc điều chỉnh tỷ lệ gia hạn đăng ký, hãy điều hướng trở lại trang người kiểm tra và chọn một hàng người kiểm tra.
+
+Trong cài đặt người kiểm tra, bạn sẽ thấy các tùy chọn mới để thay đổi khu vực App Store và điều chỉnh tỷ lệ gia hạn đăng ký.
+
+Bạn có thể thay đổi khu vực tài khoản cho người kiểm tra bằng cách chọn khu vực mong muốn.
+
+Điều này cho phép thử nghiệm ở 175 mặt tiền cửa hàng trong hộp cát, tất cả đều có một tài khoản thử nghiệm.
+
+Tính năng hộp cát mới cuối cùng của chúng tôi là điều chỉnh tỷ lệ gia hạn đăng ký của bạn trong hộp cát.
+
+Để chỉnh sửa điều này, hãy chọn tỷ lệ gia hạn mong muốn của bạn từ danh sách thả xuống.
+
+Ngay bây giờ, một tháng tương quan với 5 phút trong hộp cát.
+
+Chúng tôi sẽ cung cấp cho bạn thêm một số tùy chọn để điều chỉnh tỷ lệ gia hạn cho những người thử nghiệm của bạn.
+
+Điều chỉnh tỷ lệ gia hạn đăng ký giúp bạn có nhiều thời gian hơn để thực hiện những việc như hủy, nâng cấp hoặc hạ cấp đăng ký và nó cho phép bạn nhanh chóng tăng tốc độ gia hạn để mô phỏng khách hàng dài hạn hơn.
+
+Đó là tất cả những gì chúng tôi có trong hộp cát trong năm nay.
+
+Chúng tôi hy vọng bạn thích thử nghiệm với những tính năng mới này.
+
+Vì vậy, chúng tôi đã đề cập đến rất nhiều thông tin mới ngày hôm nay, và bây giờ tôi muốn bạn có thể khám phá tất cả.
+
+Tôi hy vọng bạn dành chút thời gian để cập nhật các ứng dụng và máy chủ của mình để áp dụng biên lai JWS mới của chúng tôi.
+
+Sử dụng các API Máy chủ App Store mới của chúng tôi, đặc biệt là trong hộp cát, nơi chúng đang hoạt động ngay bây giờ.
+
+Và đăng ký thông báo máy chủ App Store nếu bạn chưa có và sẵn sàng cho bản cập nhật v2 vào cuối năm nay.
+
+Những cải tiến hộp cát mới của chúng tôi cũng sẽ ra mắt vào cuối năm nay.
+
+Tận dụng những thứ này để nâng cao trải nghiệm thử nghiệm hộp cát của bạn.
+
+Cuối cùng, hãy xem hai phiên khác từ năm nay trong loạt bài này, "Gặp gỡ StoreKit 2" và "Hỗ trợ khách hàng và xử lý việc hoàn tiền."
+
+Để biết thêm thông tin cơ bản về thông báo máy chủ App Store và cách bạn có thể thiết lập chúng, hãy xem "Có gì mới khi mua hàng trong ứng dụng" từ WWDC 2020 và "Mua hàng trong ứng dụng và sử dụng thông báo từ máy chủ đến máy chủ" từ WWDC 2019.
+
+Biên lai, API và thông báo của chúng tôi là ba công cụ mạnh mẽ mà bạn có để quản lý các giao dịch mua trong ứng dụng từ máy chủ của mình.
+
+Bằng cách tận dụng những điều này, bạn có thể làm cho máy chủ và ứng dụng của mình mạnh mẽ hơn bao giờ hết.
+
+Vui lòng tận dụng tất cả các tính năng mới mà chúng tôi đã xem xét hôm nay và chúng tôi mong nhận được phản hồi của bạn.
+
+Cảm ơn rất nhiều vì đã lắng nghe hôm nay, và tận hưởng phần còn lại của WWDC.
+
+[Nhạc lạc quan].

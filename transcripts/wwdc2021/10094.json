@@ -1,0 +1,1546 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=2"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=7"
+  },
+  {
+    "text": "Rui Paulo: Hello, everyone, I'm Rui. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=9"
+  },
+  {
+    "text": "Today, my colleague Eric and I are going to talk about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=11"
+  },
+  {
+    "text": "how you can speed up your app's networking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=14"
+  },
+  {
+    "text": "with HTTP/3 and QUIC -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=16"
+  },
+  {
+    "text": "two new protocols available in iOS 15 and macOS Monterey. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=18"
+  },
+  {
+    "text": "We'll begin by exploring the evolution of HTTP ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=24"
+  },
+  {
+    "text": "and how HTTP/3 improves performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=27"
+  },
+  {
+    "text": "We'll also talk about QUIC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=30"
+  },
+  {
+    "text": "the new transport protocol behind HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=32"
+  },
+  {
+    "text": "After that, we'll explain how you can use HTTP/3 in URLSession ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=36"
+  },
+  {
+    "text": "and how you should configure your HTTP server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=41"
+  },
+  {
+    "text": "to support HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=44"
+  },
+  {
+    "text": "Finally, we'll take a deep dive into the API for using QUIC ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=47"
+  },
+  {
+    "text": "and how you can implement your custom networking protocols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=51"
+  },
+  {
+    "text": "on top of QUIC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=55"
+  },
+  {
+    "text": "Let's then begin with the evolution of HTTP. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=56"
+  },
+  {
+    "text": "Let's say we need to fetch a resource. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=60"
+  },
+  {
+    "text": "We set up a connection, send the request, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=62"
+  },
+  {
+    "text": "wait for the server to process it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=65"
+  },
+  {
+    "text": "and receive a response. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=67"
+  },
+  {
+    "text": "Now, if we want to fetch another resource ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=69"
+  },
+  {
+    "text": "before the first one finishes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=71"
+  },
+  {
+    "text": "we have go through the same process again: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=73"
+  },
+  {
+    "text": "setting up a connection, sending the request, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=76"
+  },
+  {
+    "text": "waiting for processing, and receiving the response, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=78"
+  },
+  {
+    "text": "this time indicated in dark green. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=81"
+  },
+  {
+    "text": "Here's another example for a third resource, in orange. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=85"
+  },
+  {
+    "text": "As outlined by the diagram, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=89"
+  },
+  {
+    "text": "a lot of time is spent on connection setup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=90"
+  },
+  {
+    "text": "What if we reuse a single HTTP/1 connection? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=94"
+  },
+  {
+    "text": "We saved the connection set up time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=97"
+  },
+  {
+    "text": "but a request can only be sent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=99"
+  },
+  {
+    "text": "after the previous response has ended. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=101"
+  },
+  {
+    "text": "This is known as head-of-line blocking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=104"
+  },
+  {
+    "text": "In the past, HTTP implementations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=107"
+  },
+  {
+    "text": "used many parallel connections to overcome this problem. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=110"
+  },
+  {
+    "text": "The number of parallel HTTP connections ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=114"
+  },
+  {
+    "text": "was even configurable by the app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=116"
+  },
+  {
+    "text": "However, this led to inefficient networking behaviors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=119"
+  },
+  {
+    "text": "for both client and server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=122"
+  },
+  {
+    "text": "HTTP/2 solves head-of-line blocking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=125"
+  },
+  {
+    "text": "by multiplexing multiple streams on a single connection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=129"
+  },
+  {
+    "text": "Requests are sent earlier, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=132"
+  },
+  {
+    "text": "and data from different streams can be interleaved. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=134"
+  },
+  {
+    "text": "This allows more efficient use of a single TCP connection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=138"
+  },
+  {
+    "text": "as idle waiting time is drastically reduced. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=141"
+  },
+  {
+    "text": "With HTTP/3, connection set up is much faster, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=144"
+  },
+  {
+    "text": "so requests can go out sooner. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=149"
+  },
+  {
+    "text": "However, that's not the only benefit of HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=151"
+  },
+  {
+    "text": "HTTP/3 streams are independent, which is different from HTTP/2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=156"
+  },
+  {
+    "text": "where all streams share a single TCP connection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=162"
+  },
+  {
+    "text": "On most networks, packets are lost. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=166"
+  },
+  {
+    "text": "This is a normal event on wireless networks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=169"
+  },
+  {
+    "text": "and a natural part of detecting the capacity of a network. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=172"
+  },
+  {
+    "text": "In HTTP/2, packet loss may affect many streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=176"
+  },
+  {
+    "text": "since all of the HTTP/2 streams share a single TCP connection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=180"
+  },
+  {
+    "text": "In HTTP/3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=185"
+  },
+  {
+    "text": "only the corresponding HTTP stream is affected. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=187"
+  },
+  {
+    "text": "Data that belongs to other streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=190"
+  },
+  {
+    "text": "can be delivered earlier. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=192"
+  },
+  {
+    "text": "We've just shown how HTTP/3 can establish a connection sooner ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=194"
+  },
+  {
+    "text": "and how it can better cope with packet loss. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=199"
+  },
+  {
+    "text": "These improvements are enabled ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=202"
+  },
+  {
+    "text": "by the underlying transport protocol: QUIC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=203"
+  },
+  {
+    "text": "QUIC is a new reliable transport protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=208"
+  },
+  {
+    "text": "that has been standardized ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=210"
+  },
+  {
+    "text": "by the Internet Engineering Task Force. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=211"
+  },
+  {
+    "text": "It's based on the same concepts of TCP ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=214"
+  },
+  {
+    "text": "but provides end-to-end encryption, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=217"
+  },
+  {
+    "text": "multiplexed streams, and authentication. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=219"
+  },
+  {
+    "text": "QUIC's security builds on top of the well-known TLS 1.3 protocol. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=222"
+  },
+  {
+    "text": "The major benefit of QUIC is improved performance. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=228"
+  },
+  {
+    "text": "Let's explore how QUIC achieves just that. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=231"
+  },
+  {
+    "text": "QUIC relies on TLS 1.3 to perform a secure handshake ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=236"
+  },
+  {
+    "text": "and does not require ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=240"
+  },
+  {
+    "text": "the familiar TCP three-way handshake, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=241"
+  },
+  {
+    "text": "reducing the handshake time to a single round trip. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=244"
+  },
+  {
+    "text": "Multiplexed streams are a key concept of QUIC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=248"
+  },
+  {
+    "text": "so it doesn't suffer from head-of-line blocking. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=251"
+  },
+  {
+    "text": "A QUIC endpoint is able to communicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=254"
+  },
+  {
+    "text": "more complex information about packets it has received ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=256"
+  },
+  {
+    "text": "to the other endpoint and is not encumbered by TCP's limits, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=260"
+  },
+  {
+    "text": "so QUIC connections experience improved loss recovery. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=264"
+  },
+  {
+    "text": "The protocol also supports connection migration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=268"
+  },
+  {
+    "text": "which allows connections to move seamlessly ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=271"
+  },
+  {
+    "text": "across different network interfaces ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=273"
+  },
+  {
+    "text": "without reestablishing a session, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=275"
+  },
+  {
+    "text": "for example, between cellular networks and Wi-Fi. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=278"
+  },
+  {
+    "text": "If you would like to learn more about networking delays, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=282"
+  },
+  {
+    "text": "please watch the \"Reduce network delays for your app\" session. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=285"
+  },
+  {
+    "text": "Let's talk about how you can use HTTP/3 in your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=289"
+  },
+  {
+    "text": "If you're using URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=294"
+  },
+  {
+    "text": "you don't need to change your app since iOS 15 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=296"
+  },
+  {
+    "text": "and macOS Monterey ship with HTTP/3 enabled by default. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=299"
+  },
+  {
+    "text": "Once you enable HTTP/3 on your server, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=304"
+  },
+  {
+    "text": "you're good to go. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=306"
+  },
+  {
+    "text": "Both the upcoming HTTP/3 RFC version ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=308"
+  },
+  {
+    "text": "and the earlier HTTP/3 Draft version 29 are supported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=311"
+  },
+  {
+    "text": "So how can you make sure your app is using HTTP/3? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=316"
+  },
+  {
+    "text": "Let's use Instruments to find out! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=320"
+  },
+  {
+    "text": "In Xcode 13, we're introducing a new instrument ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=323"
+  },
+  {
+    "text": "within the networking profiling template ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=326"
+  },
+  {
+    "text": "to inspect HTTP Traffic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=328"
+  },
+  {
+    "text": "It taps into URLSession directly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=331"
+  },
+  {
+    "text": "so there's no setup required. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=333"
+  },
+  {
+    "text": "We can use Instruments to find out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=335"
+  },
+  {
+    "text": "if our app is using HTTP/3 or an earlier HTTP version. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=337"
+  },
+  {
+    "text": "We're going to launch an iOS app that, upon starting, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=343"
+  },
+  {
+    "text": "fetches a set of dog pictures. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=346"
+  },
+  {
+    "text": "We'll then inspect HTTP headers to find out ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=348"
+  },
+  {
+    "text": "how the server is advertising HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=351"
+  },
+  {
+    "text": "Let's go ahead and select the Network profiling template.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=355"
+  },
+  {
+    "text": "Let's click Record on the top left. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=365"
+  },
+  {
+    "text": "A prompt will be displayed indicating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=369"
+  },
+  {
+    "text": "the privacy implications of recording HTTP Traffic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=371"
+  },
+  {
+    "text": "After we agree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=375"
+  },
+  {
+    "text": "Instruments will begin recording HTTP transactions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=376"
+  },
+  {
+    "text": "Next, Instruments will show a plot ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=389"
+  },
+  {
+    "text": "with all HTTP transactions per app and per domain. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=390"
+  },
+  {
+    "text": "We have now captured all the data that we need. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=395"
+  },
+  {
+    "text": "We can click the Pause button located on the top left.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=397"
+  },
+  {
+    "text": "Let's select the domain that we're using. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=404"
+  },
+  {
+    "text": "We can do that by Option-clicking ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=406"
+  },
+  {
+    "text": "on the HTTP transactions and then selecting the domain.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=408"
+  },
+  {
+    "text": "We need to configure Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=416"
+  },
+  {
+    "text": "to show the details of the HTTP Transactions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=418"
+  },
+  {
+    "text": "To accomplish that, make sure the menu on the left side shows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=421"
+  },
+  {
+    "text": "HTTP Transactions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=425"
+  },
+  {
+    "text": "Let's select the first request. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=432"
+  },
+  {
+    "text": "By scrolling right, we can find the HTTP Version column ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=436"
+  },
+  {
+    "text": "which identifies the version of HTTP that this transaction used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=439"
+  },
+  {
+    "text": "Hm, we're still using HTTP/2, but why is that? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=445"
+  },
+  {
+    "text": "On the right-hand side, we can find ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=450"
+  },
+  {
+    "text": "the extended detail view that contains the response headers. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=451"
+  },
+  {
+    "text": "This give us the answer: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=455"
+  },
+  {
+    "text": "the server used HTTP Alternative Services ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=457"
+  },
+  {
+    "text": "to advertise support for HTTP/3.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=460"
+  },
+  {
+    "text": "URLSession won't use HTTP/3 unless it was advertised. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=467"
+  },
+  {
+    "text": "In this example, HTTP/3 was advertised ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=471"
+  },
+  {
+    "text": "through the Alt-Svc HTTP header. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=474"
+  },
+  {
+    "text": "It's common for HTTP servers to advertise support for HTTP/3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=477"
+  },
+  {
+    "text": "using this header. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=482"
+  },
+  {
+    "text": "This information is remembered for future connections, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=484"
+  },
+  {
+    "text": "and we call this \"service discovery.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=487"
+  },
+  {
+    "text": "Now let's record the app again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=490"
+  },
+  {
+    "text": "Once Instruments relaunches the app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=497"
+  },
+  {
+    "text": "the same set of HTTP transactions take place. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=500"
+  },
+  {
+    "text": "Again, we can now pause Instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=503"
+  },
+  {
+    "text": "Let's zoom in again and inspect the first transaction. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=510"
+  },
+  {
+    "text": "Since we've remembered that the server supported HTTP/3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=514"
+  },
+  {
+    "text": "we're now using HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=517"
+  },
+  {
+    "text": "HTTP/3 service discovery is transparent to your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=521"
+  },
+  {
+    "text": "Discovery of HTTP/3 server support happens in two ways. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=525"
+  },
+  {
+    "text": "The recommended approach is to configure your DNS server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=529"
+  },
+  {
+    "text": "to advertise support for HTTP/3 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=532"
+  },
+  {
+    "text": "through the HTTPS resource record. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=535"
+  },
+  {
+    "text": "Simply configure the application layer protocol ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=539"
+  },
+  {
+    "text": "to advertise HTTP/3 using the h3 string. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=542"
+  },
+  {
+    "text": "You should also configure your server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=547"
+  },
+  {
+    "text": "to add a new header that advertises HTTP/3 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=548"
+  },
+  {
+    "text": "using Alternative Services. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=552"
+  },
+  {
+    "text": "Your server should send a Alt-Svc header ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=554"
+  },
+  {
+    "text": "that advertises HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=557"
+  },
+  {
+    "text": "This includes the port number and the max-age of the service, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=559"
+  },
+  {
+    "text": "in seconds. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=563"
+  },
+  {
+    "text": "The advantage of the DNS record is that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=564"
+  },
+  {
+    "text": "since the information is in DNS, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=567"
+  },
+  {
+    "text": "an HTTP/3 connection can be established ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=569"
+  },
+  {
+    "text": "the very first time your app tries to contact to your server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=572"
+  },
+  {
+    "text": "When you know that your server supports HTTP/3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=577"
+  },
+  {
+    "text": "and you would like to speed up the discovery process, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=580"
+  },
+  {
+    "text": "you can use the assumesHTTP3Capable property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=582"
+  },
+  {
+    "text": "This allows the HTTP stack ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=586"
+  },
+  {
+    "text": "to assume that you have an HTTP/3 server ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=589"
+  },
+  {
+    "text": "but does not guarantee that HTTP/3 will be used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=592"
+  },
+  {
+    "text": "Networks may still block HTTP/3, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=596"
+  },
+  {
+    "text": "or your server may not actually support HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=599"
+  },
+  {
+    "text": "In that case, we'll fall back to HTTP/2. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=602"
+  },
+  {
+    "text": "HTTP allows clients to specify priorities for each resource. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=607"
+  },
+  {
+    "text": "Since resources are often related, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=612"
+  },
+  {
+    "text": "priorities allow the server to send some resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=614"
+  },
+  {
+    "text": "earlier than others, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=617"
+  },
+  {
+    "text": "based on the needs of the client. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=618"
+  },
+  {
+    "text": "For example, user experience for web browsing can be improved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=621"
+  },
+  {
+    "text": "by prioritizing resources ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=625"
+  },
+  {
+    "text": "that affect web page rendering the most. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=626"
+  },
+  {
+    "text": "A priority scheme was introduced in HTTP/2 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=630"
+  },
+  {
+    "text": "but it was not often respected due to its complexity. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=633"
+  },
+  {
+    "text": "For that reason, the old priority model ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=637"
+  },
+  {
+    "text": "was removed from HTTP/3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=639"
+  },
+  {
+    "text": "A new, simpler model, which relies on HTTP headers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=642"
+  },
+  {
+    "text": "is used by the HTTP/3 stack. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=646"
+  },
+  {
+    "text": "In this model, priority is specified ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=649"
+  },
+  {
+    "text": "with an urgency parameter -- zero to seven -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=651"
+  },
+  {
+    "text": "and an optional incremental delivery parameter. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=654"
+  },
+  {
+    "text": "When using URLSession, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=657"
+  },
+  {
+    "text": "the API to support priorities remains the same. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=659"
+  },
+  {
+    "text": "You still specify the HTTP priority, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=662"
+  },
+  {
+    "text": "using the priority property, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=665"
+  },
+  {
+    "text": "which is communicated to the server using urgency. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=667"
+  },
+  {
+    "text": "You can enable incremental delivery with ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=671"
+  },
+  {
+    "text": "the prefersIncrementalDelivery property. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=673"
+  },
+  {
+    "text": "The default priority is 3. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=676"
+  },
+  {
+    "text": "URLSession infers incremental delivery ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=678"
+  },
+  {
+    "text": "depending on whether a convenience API -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=681"
+  },
+  {
+    "text": "like the async data method -- is used. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=684"
+  },
+  {
+    "text": "When your app is downloading content that cannot be processed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=688"
+  },
+  {
+    "text": "until the entire resource is downloaded, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=691"
+  },
+  {
+    "text": "you should set this property to false. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=694"
+  },
+  {
+    "text": "Dynamically changing the priority of a resource ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=697"
+  },
+  {
+    "text": "after the request was sent is also supported. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=700"
+  },
+  {
+    "text": "For example, you can prefetch photos at a lower priority ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=704"
+  },
+  {
+    "text": "and then raise that priority ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=708"
+  },
+  {
+    "text": "as the user navigates to that section of your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=710"
+  },
+  {
+    "text": "Next, my colleague Eric is going to explain ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=713"
+  },
+  {
+    "text": "how you can change your custom networking protocols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=716"
+  },
+  {
+    "text": "to adopt QUIC. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=719"
+  },
+  {
+    "text": "Thank you. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=720"
+  },
+  {
+    "text": "Eric Kinnear: Thanks, Rui! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=722"
+  },
+  {
+    "text": "As we discussed earlier, HTTP/3 is built on top of QUIC, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=724"
+  },
+  {
+    "text": "which provides multiplexed streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=728"
+  },
+  {
+    "text": "similar to those found in HTTP/2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=730"
+  },
+  {
+    "text": "but without the problems introduced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=733"
+  },
+  {
+    "text": "by sharing a single TCP connection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=735"
+  },
+  {
+    "text": "as the underlying transport. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=738"
+  },
+  {
+    "text": "A QUIC transport connection -- or QUIC tunnel -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=740"
+  },
+  {
+    "text": "multiplexes data for multiple unidirectional ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=743"
+  },
+  {
+    "text": "or bidirectional QUIC streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=747"
+  },
+  {
+    "text": "Streams can be created by either endpoint, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=749"
+  },
+  {
+    "text": "can concurrently send data interleaved with other streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=753"
+  },
+  {
+    "text": "and have states similar to the traditional streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=757"
+  },
+  {
+    "text": "provided by TCP. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=760"
+  },
+  {
+    "text": "Best of all, QUIC has TLS 1.3 security built right in ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=762"
+  },
+  {
+    "text": "and can better respond to changing network conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=767"
+  },
+  {
+    "text": "These capabilities are useful for more than just HTTP. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=771"
+  },
+  {
+    "text": "If your application is exchanging ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=775"
+  },
+  {
+    "text": "non-request/response based data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=777"
+  },
+  {
+    "text": "could benefit from having multiplexed streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=780"
+  },
+  {
+    "text": "that share an underlying transport context, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=782"
+  },
+  {
+    "text": "or is implementing any other custom protocol -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=785"
+  },
+  {
+    "text": "such as peer-to-peer communication or RPC calls -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=788"
+  },
+  {
+    "text": "consider using QUIC transport for your app. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=792"
+  },
+  {
+    "text": "In iOS 15 and macOS Monterey, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=795"
+  },
+  {
+    "text": "NWProtocolQUIC joins the other built-in protocols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=799"
+  },
+  {
+    "text": "provided by Network.framework. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=802"
+  },
+  {
+    "text": "Creating a connection that uses QUIC is very familiar. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=805"
+  },
+  {
+    "text": "Simply provide your endpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=809"
+  },
+  {
+    "text": "and the newly available QUIC parameters. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=811"
+  },
+  {
+    "text": "These parameters specify the ALPN string, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=814"
+  },
+  {
+    "text": "the application layer protocol to negotiate with the server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=817"
+  },
+  {
+    "text": "Set a state update handler -- just like usual -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=822"
+  },
+  {
+    "text": "to be able to respond as the connection makes progress ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=825"
+  },
+  {
+    "text": "and becomes ready. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=828"
+  },
+  {
+    "text": "And, finally, start your connection on a dispatch queue ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=830"
+  },
+  {
+    "text": "that you'd like to use for those state updates ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=833"
+  },
+  {
+    "text": "and other callbacks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=836"
+  },
+  {
+    "text": "Now that you've got a QUIC stream established, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=838"
+  },
+  {
+    "text": "you can send and receive data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=840"
+  },
+  {
+    "text": "just like any other NWConnection. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=842"
+  },
+  {
+    "text": "Use the send function to provide the data you'd like to send ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=845"
+  },
+  {
+    "text": "to the remote endpoint, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=848"
+  },
+  {
+    "text": "and schedule subsequent sends when complete. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=850"
+  },
+  {
+    "text": "Use receive to handle incoming data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=854"
+  },
+  {
+    "text": "and schedule subsequent receives when it completes. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=856"
+  },
+  {
+    "text": "Last year, we introduced the Connection Group object ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=860"
+  },
+  {
+    "text": "in Network.framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=863"
+  },
+  {
+    "text": "to make it easier to handle situations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=865"
+  },
+  {
+    "text": "where multiple connections are related or grouped. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=867"
+  },
+  {
+    "text": "QUIC streams that are multiplexed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=871"
+  },
+  {
+    "text": "on an underlying transport context -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=874"
+  },
+  {
+    "text": "or tunnel -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=876"
+  },
+  {
+    "text": "are logically grouped based on that relationship ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=877"
+  },
+  {
+    "text": "and can be used with a new group type: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=880"
+  },
+  {
+    "text": "NWMultiplexGroup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=882"
+  },
+  {
+    "text": "A Connection Group follows a lifecycle ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=885"
+  },
+  {
+    "text": "similar to that of the other Network.framework objects ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=887"
+  },
+  {
+    "text": "and allows you to reason about the state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=891"
+  },
+  {
+    "text": "of the underlying QUIC tunnel shared by your QUIC streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=893"
+  },
+  {
+    "text": "It also allows you to create new outgoing streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=898"
+  },
+  {
+    "text": "from a specific QUIC tunnel as well as receive ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=900"
+  },
+  {
+    "text": "new incoming streams initiated by the remote endpoint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=903"
+  },
+  {
+    "text": "To create a connection group for a multiplexing protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=907"
+  },
+  {
+    "text": "use a multiplex group descriptor. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=910"
+  },
+  {
+    "text": "In this case, we'll create a group descriptor ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=913"
+  },
+  {
+    "text": "to example.com on port 443. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=916"
+  },
+  {
+    "text": "Next, we create a NWConnectionGroup ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=919"
+  },
+  {
+    "text": "with that descriptor and QUIC parameters, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=922"
+  },
+  {
+    "text": "providing our ALPN string when we create them. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=925"
+  },
+  {
+    "text": "Just like with an NWConnection, we set a state update handler, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=929"
+  },
+  {
+    "text": "but this time, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=932"
+  },
+  {
+    "text": "it's tracking the state of the underlying QUIC tunnel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=933"
+  },
+  {
+    "text": "rather than the state of an individual stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=936"
+  },
+  {
+    "text": "Finally, we start the connection group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=940"
+  },
+  {
+    "text": "providing our callback queue. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=942"
+  },
+  {
+    "text": "New outgoing streams can be created by initializing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=945"
+  },
+  {
+    "text": "a NWConnection from the group ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=948"
+  },
+  {
+    "text": "or by calling the extract function on the group. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=951"
+  },
+  {
+    "text": "Incoming streams initiated by the remote endpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=955"
+  },
+  {
+    "text": "can be handled by setting the new connection handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=958"
+  },
+  {
+    "text": "on the group. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=961"
+  },
+  {
+    "text": "These connections can be set up as usual with a state handler -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=963"
+  },
+  {
+    "text": "this time tracking the stream state -- ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=967"
+  },
+  {
+    "text": "and started with the queue to use for callbacks. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=970"
+  },
+  {
+    "text": "Just like with other protocols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=974"
+  },
+  {
+    "text": "you can use QUIC.Options for configuration ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=976"
+  },
+  {
+    "text": "when creating your parameter's object. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=979"
+  },
+  {
+    "text": "For QUIC, you can configure the transport parameters ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=981"
+  },
+  {
+    "text": "listed in the QUIC specification, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=984"
+  },
+  {
+    "text": "and you can also customize properties of individual streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=986"
+  },
+  {
+    "text": "when creating them from a connection group; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=990"
+  },
+  {
+    "text": "for example, if you want create a new, unidirectional stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=992"
+  },
+  {
+    "text": "If you're using NWListener to run a server in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=998"
+  },
+  {
+    "text": "it has also been enhanced ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1002"
+  },
+  {
+    "text": "to allow you to receive new incoming QUIC tunnels ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1003"
+  },
+  {
+    "text": "via the newConnectionGroupHandler. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1006"
+  },
+  {
+    "text": "Your newConnectionGroupHandler will be called ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1009"
+  },
+  {
+    "text": "every time someone establishes a new QUIC tunnel ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1011"
+  },
+  {
+    "text": "to your server. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1014"
+  },
+  {
+    "text": "Inside that handler, you can set up the group as usual ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1016"
+  },
+  {
+    "text": "to receive state updates. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1019"
+  },
+  {
+    "text": "This is also a good place to set the new connection handler ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1021"
+  },
+  {
+    "text": "we were just discussing. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1024"
+  },
+  {
+    "text": "If you'd like to receive subsequent streams ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1026"
+  },
+  {
+    "text": "opened on this tunnel, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1028"
+  },
+  {
+    "text": "start the group with the queue to use for callbacks, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1030"
+  },
+  {
+    "text": "and you're all set! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1032"
+  },
+  {
+    "text": "Finally, you can use NWProtocolMetadata ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1035"
+  },
+  {
+    "text": "to access information about streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1038"
+  },
+  {
+    "text": "For example, you might want to check the stream ID ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1041"
+  },
+  {
+    "text": "of a newly created stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1045"
+  },
+  {
+    "text": "And when you're done with a stream, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1046"
+  },
+  {
+    "text": "if your custom protocol has defined applicationError codes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1048"
+  },
+  {
+    "text": "you can use the metadata to communicate any errors ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1051"
+  },
+  {
+    "text": "to the remote endpoint before you cancel the stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1054"
+  },
+  {
+    "text": "So we've just explored how we can use ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1058"
+  },
+  {
+    "text": "the new NWMultiplexGroup type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1060"
+  },
+  {
+    "text": "to create and manage QUIC tunnels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1063"
+  },
+  {
+    "text": "and from that group, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1066"
+  },
+  {
+    "text": "create individual NWConnections for each QUIC stream. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1068"
+  },
+  {
+    "text": "We can use a NWListener to listen for incoming tunnels, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1072"
+  },
+  {
+    "text": "and use the resulting connection groups ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1075"
+  },
+  {
+    "text": "to receive new incoming streams. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1077"
+  },
+  {
+    "text": "On those streams, we can send and receive data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1080"
+  },
+  {
+    "text": "just like on any other connection, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1083"
+  },
+  {
+    "text": "and we can use QUIC protocol options ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1086"
+  },
+  {
+    "text": "to specify transport parameters and configure streams, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1088"
+  },
+  {
+    "text": "while using QUIC protocol metadata ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1091"
+  },
+  {
+    "text": "to inspect the streams and communicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1093"
+  },
+  {
+    "text": "QUIC-specific information to the remote endpoint. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1095"
+  },
+  {
+    "text": "Now that we've improved the networking in our app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1099"
+  },
+  {
+    "text": "by adopting QUIC, how do we tell if it's working? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1102"
+  },
+  {
+    "text": "We can launch our app while debugging, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1105"
+  },
+  {
+    "text": "with a new environment variable that outputs qlog files. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1107"
+  },
+  {
+    "text": "qlog is a new standardized logging format ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1111"
+  },
+  {
+    "text": "proposed in the IETF, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1114"
+  },
+  {
+    "text": "which allows you to export even richer information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1116"
+  },
+  {
+    "text": "about how your QUIC connections are behaving ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1119"
+  },
+  {
+    "text": "than would be present in a traditional packet capture. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1122"
+  },
+  {
+    "text": "After your test run, you can use the Devices window in Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1125"
+  },
+  {
+    "text": "to download your app's container ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1128"
+  },
+  {
+    "text": "with the qlog files for analysis. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1130"
+  },
+  {
+    "text": "And there are a number ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1133"
+  },
+  {
+    "text": "of different open-source visualizations ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1134"
+  },
+  {
+    "text": "that make it much easier ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1136"
+  },
+  {
+    "text": "to introspect the behavior of your QUIC connections. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1138"
+  },
+  {
+    "text": "Today, we've examined the improvements ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1142"
+  },
+  {
+    "text": "that HTTP/3 provides for your HTTP traffic. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1144"
+  },
+  {
+    "text": "On the client, it's already on by default ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1148"
+  },
+  {
+    "text": "for users of the modern networking APIs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1151"
+  },
+  {
+    "text": "so enable HTTP/3 on your server to take advantage ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1154"
+  },
+  {
+    "text": "of its increased performance and resilience ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1158"
+  },
+  {
+    "text": "to changing network conditions. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1160"
+  },
+  {
+    "text": "If you're using a custom, non-HTTP networking protocol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1162"
+  },
+  {
+    "text": "use the new multiplexing protocol support ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1166"
+  },
+  {
+    "text": "built into Network.framework to create QUIC connections ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1169"
+  },
+  {
+    "text": "with NWConnectionGroup. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1172"
+  },
+  {
+    "text": "And whichever protocol you're using, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1175"
+  },
+  {
+    "text": "you can use new debugging tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1177"
+  },
+  {
+    "text": "to visualize the awesome benefits ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1178"
+  },
+  {
+    "text": "of the next generation of networking protocols. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1180"
+  },
+  {
+    "text": "Thanks for watching. ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1183"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10094/?time=1184"
+  }
+]

@@ -1,0 +1,337 @@
+10182
+
+♪ ♪
+
+Xin chào.
+
+Tôi là Johannes Fortmann từ nhóm Nhà cung cấp tệp đám mây và tôi ở đây để chỉ cho bạn các nhà cung cấp tệp trên macOS.
+
+Nếu bạn là nhà cung cấp lưu trữ đám mây đồng bộ hóa các tệp của người dùng với macOS, bạn đã nói đúng.
+
+Sau phần giới thiệu, chúng ta sẽ nói về một số luồng người dùng liên quan đến việc đồng bộ hóa các tệp.
+
+Sau đó, chúng tôi sẽ chạy qua một trong các luồng trong Xcode và thảo luận về thứ tự mà bạn sẽ thực hiện hỗ trợ cho từng luồng.
+
+Chúng tôi sẽ có một cái nhìn tổng quan nhanh về các điểm tích hợp tùy chọn bổ sung và các bước tiếp theo của bạn.
+
+Trước hết, hãy nói về những gì các nhà cung cấp tệp có thể làm cho bạn.
+
+Khung Nhà cung cấp tệp cho phép bạn tích hợp bộ nhớ đám mây của mình vào hệ thống tệp trên macOS.
+
+Nó sử dụng các tính năng APFS mới để cho phép tải xuống theo yêu cầu các tệp và thư mục của người dùng.
+
+API hoàn toàn nằm trong không gian người dùng.
+
+Chúng tôi đang phản đối các phần mở rộng hạt nhân trên macOS, vì vậy đây là một giải pháp thay thế tốt cho bạn nếu bạn đang dựa vào FUSE hoặc KAUTH để chặn các cuộc gọi hệ thống hoặc tải xuống các tệp theo yêu cầu.
+
+Tất cả những gì bạn phải làm là xử lý tải lên, tải xuống và cho chúng tôi biết những gì đã thay đổi từ xa.
+
+Hệ thống sẽ cho bạn biết những gì đã thay đổi cục bộ và xử lý tất cả phần còn lại.
+
+Tất cả các chức năng này được tích hợp tốt với hệ thống và đặc biệt là trong Finder.
+
+Nhà cung cấp của bạn sẽ hiển thị trong thanh bên.
+
+Trạng thái tệp sẽ được hiển thị và theo dõi trong Finder, và có một số điểm tích hợp có thể tùy chỉnh với giao diện người dùng.
+
+Bạn triển khai một tiện ích mở rộng ứng dụng tích hợp với hệ thống.
+
+Vòng đời của nó được thúc đẩy bởi hành động của người dùng.
+
+Ban đầu, bạn tạo một miền đại diện cho cây tệp mà người dùng có thể truy cập trong bộ nhớ đám mây của bạn.
+
+Hệ thống sẽ hiển thị miền đó trong thanh bên Finder và tạo một thư mục gốc cho miền trong hệ thống tệp.
+
+Tại thời điểm này, không có dữ liệu thực tế nào trên thiết bị, nhưng người dùng đã có thể bắt đầu tương tác với root.
+
+Cái này hoạt động như thế nào?
+
+Gốc là cái mà chúng ta gọi là thư mục không dữ liệu.
+
+Đó là một loại đối tượng mới trong APFS và có các API để nhận ra chúng và tương tác với chúng.
+
+Nhưng quan trọng hơn, các đối tượng không có dữ liệu hoàn toàn minh bạch đối với các quy trình xảy ra trên chúng mà không được chuẩn bị.
+
+Đọc kích hoạt tải xuống và các tệp mất thuộc tính không dữ liệu của chúng trước khi các lần đọc được phép tiếp tục.
+
+Trong bài thuyết trình này, chúng ta sẽ xem cách khung Nhà cung cấp tệp cho phép bạn triển khai các cuộc gọi lại được gọi khi các quy trình đọc các tệp không có dữ liệu.
+
+Hãy cùng xem xét một số luồng người dùng để đồng bộ hóa và chạy.
+
+Chúng ta sẽ xem xét bốn luồng chính bao gồm cả đồng bộ hóa xuống và đồng bộ hóa lên.
+
+Trong mỗi luồng, bạn sẽ thấy rằng hệ thống gọi tiện ích mở rộng của bạn bất cứ khi nào nó cần dữ liệu mới.
+
+Chúng tôi sẽ cho bạn thấy rằng bạn có thể nói chuyện với máy chủ đám mây của mình để lấy dữ liệu đó và cuối cùng, gọi cho người xử lý hoàn thành để trả lời.
+
+Đầu tiên, chúng ta sẽ xem xét điều gì sẽ xảy ra khi một tệp không có dữ liệu được đọc.
+
+Khi hạt nhân phát hiện quyền truy cập đọc vào tệp không dữ liệu, cuộc gọi hệ thống đó sẽ bị tạm dừng trong khi tiện ích mở rộng của bạn được gọi để tìm nạp nội dung của tệp.
+
+Phương thức fetchContents của tiện ích mở rộng của bạn được gọi.
+
+Thông thường, bạn sẽ triển khai nó để thực hiện tải xuống.
+
+Khi quá trình tải xuống hoàn tất, nó sẽ gọi trình xử lý hoàn thành.
+
+Nội dung của tệp được chuyển đến hệ thống điền vào tệp không có dữ liệu trước đây mà không làm mất hiệu lực mô tả tệp đang mở.
+
+Hệ thống sau đó tạm dừng truy cập đọc.
+
+Bây giờ tệp không còn không còn dữ liệu nữa, các lần đọc tiếp theo sẽ không phải liên quan đến phần mở rộng của bạn.
+
+Liệt kê một thư mục hoạt động rất giống nhau.
+
+Hạt nhân phát hiện một cuộc gọi readdir và tạm dừng nó.
+
+Nó gọi tiện ích mở rộng của bạn để liệt kê các mục trong thư mục đó.
+
+Bạn lấy siêu dữ liệu cho các mục này từ máy chủ của mình.
+
+Và bạn trả lời với một số mặt hàng.
+
+Việc liệt kê được phân trang.
+
+Bạn có thể trả lại ít hơn bộ mặt hàng đầy đủ và hệ thống sẽ nhận liệt kê từ nơi nó đã dừng lại.
+
+Khi tất cả các trang đã được liệt kê, hệ thống sẽ cho phép cuộc gọi ban đầu được thực hiện.
+
+Giống như trong trường hợp tệp, một khi thư mục đã được liệt kê, các cuộc gọi readdir tiếp theo sẽ sử dụng nội dung từ đĩa và không phải liên quan đến tiện ích mở rộng của bạn.
+
+Nhưng nếu những nội dung đó thay đổi từ xa thì sao?
+
+Chà, bạn sẽ phải thông báo cho hệ thống về sự thay đổi từ xa.
+
+Hãy xem nó hoạt động như thế nào.
+
+Nếu có thay đổi từ xa, máy chủ của bạn có thể gửi thông báo đẩy đến Mac.
+
+Để phản hồi thông báo đẩy đó, bạn báo hiệu cho hệ thống rằng có những thay đổi cần được liệt kê từ một trình liệt kê đặc biệt, .workingSet.
+
+Hệ thống sẽ quay lại và liệt kê các mục đã thay đổi trong .workingSet.
+
+Một mã thông báo tiếp tục được gọi là syncAnchor được sử dụng để chỉ liệt kê những thay đổi mới.
+
+Mã thông báo này được xác định bởi tiện ích mở rộng của bạn.
+
+Hệ thống theo dõi syncAnchor mà nó được liệt kê lần cuối.
+
+Nó sẽ gọi trình liệt kê của bạn với phương thức enumerateChanges(từ syncAnchor:).
+
+Đáp lại, bạn trả lại các mặt hàng đã thay đổi và sau khi hoàn tất, hãy cung cấp cho chúng tôi một syncAnchor mới mà chúng tôi có thể sử dụng lần sau.
+
+Hệ thống sẽ đi và cập nhật không đồng bộ các tệp có thể nhìn thấy của người dùng.
+
+Chúng tôi sử dụng tính năng so sánh và hoán đổi APFS để đảm bảo rằng các thay đổi cục bộ không bị mất trong quá trình này.
+
+Hơn nữa, hệ thống tích hợp với sự phối hợp tệp và các cơ chế khóa tư vấn khác để phối hợp với các ứng dụng.
+
+Với ba cơ chế này, chúng tôi có thể đồng bộ hóa các tệp từ đám mây và giữ chúng đồng bộ trong trường hợp thay đổi từ xa.
+
+Luồng cuối cùng liên quan đến việc đồng bộ hóa các thay đổi cục bộ với đám mây.
+
+Hệ thống phát hiện khi các mục cục bộ đã thay đổi và gọi phương thức modifyItem trên tiện ích mở rộng của bạn, chuyển vào tập hợp chính xác các trường đã thay đổi.
+
+Nó tổng hợp các sự kiện cấp thấp thành các sự kiện có ý nghĩa để đồng bộ hóa.
+
+Ví dụ, hạt nhân phát hiện các bản lưu an toàn và ánh xạ lại số nhận dạng mục của bạn sang ID tệp mới một cách minh bạch.
+
+Hệ thống cũng sẽ nén các tệp gói cho bạn nếu bạn yêu cầu và trình bày cho bạn những thay đổi nhất quán về cấp gói.
+
+Để đáp lại cuộc gọi modifyItem, bạn sẽ cập nhật trạng thái của phía máy chủ mục.
+
+Nếu nội dung của tệp đã thay đổi, hệ thống sẽ cung cấp cho bạn một bản sao của tệp đã thay đổi để bạn có thể tải lên một phiên bản nhất quán ngay cả trong trường hợp có thêm thay đổi.
+
+Khi hoàn tất, bạn gọi một trình xử lý hoàn thành.
+
+Trình xử lý hoàn thành được sử dụng để cập nhật mã định danh phiên bản của mặt hàng và xác nhận việc gửi thay đổi cho tiện ích mở rộng của bạn.
+
+Trình xử lý hoàn thành cũng lấy trạng thái cuối cùng của mục làm tham số.
+
+Cập nhật một mục trên đám mây có thể thay đổi trạng thái của nó, ví dụ, nếu nó xung đột với một thay đổi từ xa.
+
+Kể từ khi bạn vượt qua trạng thái cuối cùng trở lại, hệ thống có thể cập nhật trạng thái cục bộ của vật phẩm để phù hợp với sự thật trên đám mây.
+
+Có một dòng chảy thứ năm: trục xuất.
+
+Hệ thống sẽ tự động loại bỏ các tệp cục bộ và không liên quan đến phần mở rộng nhà cung cấp tệp của bạn khi có nhu cầu khẩn cấp về dung lượng đĩa.
+
+Điều đó có thể xảy ra, ví dụ, khi người dùng đang quay video hoặc tải xuống bản cập nhật phần mềm.
+
+Hệ thống sẽ loại bỏ tập hợp tối thiểu các tệp ít được sử dụng gần đây nhất cần thiết để giải phóng dung lượng đĩa cần thiết để ghi các tệp mới đó.
+
+Hãy xem lại quá trình chuyển đổi.
+
+Trục xuất biến tệp cục bộ thành tệp không dữ liệu và tải xuống biến tệp không dữ liệu thành tệp cục bộ.
+
+Các tệp có thể khởi động không có dữ liệu nếu chúng được tạo từ xa hay không nếu chúng được tạo cục bộ.
+
+Nhưng không phải tất cả các tệp đều có thể bị đuổi.
+
+Hệ thống sẽ chỉ loại bỏ một tệp mà bạn báo cáo là đã tải lên để nó có thể được tải xuống lại.
+
+Vì vậy, thực sự có hai loại tệp cục bộ: tệp đã tải lên và tệp chưa tải lên.
+
+Sau khi chỉnh sửa cục bộ, phiên bản mới của tệp cần được tải lên, vì vậy chúng tôi đã trở lại trạng thái không thể thực hiện được.
+
+Trong bài thuyết trình này cho đến nay, chúng tôi đã thấy cách phần mở rộng nhà cung cấp tệp của bạn được hệ thống gọi để tải xuống tệp khi truy cập và tải lên tệp sau khi chỉnh sửa cục bộ.
+
+Mặc dù bạn không tham gia vào việc trục xuất được kích hoạt áp suất đĩa, nhưng có các phương pháp để kích hoạt hoặc ngăn chặn việc trục xuất khỏi tiện ích mở rộng của bạn.
+
+Đây là rất nhiều lý thuyết.
+
+Chúng ta hãy xem xét một trong những dòng chảy trong thực tế.
+
+Chúng tôi đã viết một ứng dụng chạy một máy chủ tệp cục bộ nhỏ và nhúng một phần mở rộng nhà cung cấp tệp hoạt động trên máy chủ đó.
+
+Nó được gọi là FruitBasket.
+
+Tôi đã đăng nhập vào máy chủ đó, vì vậy có một mục nhập cho thư mục gốc ở đây trong thanh bên.
+
+Tôi cũng đã chọn thư mục gốc khiến hệ thống tạo các mục nhập không có dữ liệu cho các mục trong thư mục đó.
+
+Bạn có thể biết rằng các mục không có dữ liệu từ biểu tượng tải xuống đám mây bên cạnh tên tệp.
+
+Chúng ta sẽ sử dụng 'cat' trên dòng lệnh để đọc một tệp.
+
+Vì tệp không có dữ liệu, điều này sẽ gây ra việc tìm nạp nội dung trong tiện ích mở rộng của chúng tôi.
+
+Tôi đã đính kèm với tiện ích mở rộng trong Xcode và đặt điểm dừng để chặn việc tìm nạp nội dung này.
+
+'Con mèo' đang chạy, và điểm dừng của chúng tôi đã đạt được.
+
+Vì chúng tôi đang chặn việc hoàn thành tìm nạp nội dung, việc đọc trong cửa sổ Terminal của chúng tôi cũng bị chặn.
+
+Lưu ý cách trong cửa sổ Finder, biểu tượng đám mây đã được thay thế bằng một chỉ báo tiến độ.
+
+Hệ thống có một cái nhìn nhất quán về trạng thái tải xuống.
+
+Tất nhiên, vì chúng tôi thực sự bị chặn trong trình gỡ lỗi thay vì bận tải xuống, tiến trình không cập nhật.
+
+Hãy tiếp tục.
+
+Tôi đã đặt điểm dừng thứ hai ngay trước khi chúng tôi gọi người xử lý hoàn thành.
+
+Tại thời điểm này, nhà cung cấp của chúng tôi đã tải nội dung của tệp xuống một URL cục bộ trên đĩa.
+
+Khi chúng tôi gọi trình xử lý hoàn thành, hệ thống sẽ hoán đổi nội dung của tệp hiển thị của người dùng với những gì chúng tôi đã tải xuống.
+
+Hãy bỏ chặn hệ thống bằng cách tiếp tục trong Xcode.
+
+Trạng thái trong Finder cập nhật để hiển thị tệp là cục bộ và đọc rằng quá trình mèo đã bị chặn thành công.
+
+Tôi vẫn đã đặt các điểm dừng, nhưng bây giờ tệp là cục bộ, tôi có thể chạy lại 'cat' mà không cần nhấn vào điểm dừng.
+
+Những lần đọc đó đang đi ngược lại một tệp cục bộ thông thường và không liên quan đến phần mở rộng của chúng tôi.
+
+Tất nhiên, đây chỉ là một phần nhỏ của bộ tính năng của nhà cung cấp tệp mẫu của chúng tôi.
+
+Chúng tôi đã đề cập đến bộ tính năng đầy đủ của API và chúng tôi đang xuất bản mã nguồn như một phần của phiên này.
+
+Hãy nói về cách bạn có thể tiếp cận việc thực hiện các luồng mà chúng ta đã nói đến.
+
+Trước hết, chúng tôi sẽ muốn nói với hệ thống rằng chúng tôi đã sẵn sàng đồng bộ hóa.
+
+Điều này sẽ làm cho một mục nhập hiển thị trong thanh bên trong Finder.
+
+Chúng tôi gọi các tên miền mục nhập này và chúng thường tương ứng với phiên đăng nhập trên máy chủ đám mây của bạn.
+
+Mỗi miền có một mã định danh duy nhất và để làm cho nó hiển thị, bạn tạo một phiên bản mới và thêm nó thông qua đối tượng người quản lý.
+
+Bạn cũng có thể xóa một miền.
+
+Bạn thường làm điều này khi người dùng đăng xuất, nhưng nó cũng sẽ hữu ích trong quá trình phát triển và thử nghiệm ban đầu của bạn.
+
+Với miền hiển thị trong Finder, hệ thống sẽ yêu cầu liệt kê các mục ngay khi bạn điều hướng đến mục nhập.
+
+Vậy hãy thực hiện điều đó tiếp theo.
+
+Bước đầu tiên của chúng tôi ở đây là triển khai một lớp mục.
+
+Các trường hợp của nó đại diện cho các mục riêng lẻ mà chúng tôi sẽ liệt kê.
+
+Sau đó, chúng tôi triển khai một trình liệt kê gọi hệ thống với các mục của chúng tôi khi hệ thống yêu cầu nó.
+
+Tại thời điểm này, chúng ta có thể xem các thư mục bằng cách điều hướng đến mục nhập thanh bên của chúng ta.
+
+Tất nhiên, tất cả các tệp trong các thư mục đó sẽ không có dữ liệu.
+
+Hãy thay đổi điều đó bằng cách triển khai tìm nạp nội dung.
+
+Phương thức fetchContents được hệ thống gọi khi chúng tôi mở một trong các tệp không dữ liệu.
+
+Công việc của chúng tôi là tải nội dung tệp xuống một vị trí trên đĩa, sau đó gọi trình xử lý hoàn thành với URL của vị trí đó.
+
+Hệ thống sẽ sử dụng nội dung để điền vào tệp không dữ liệu và sau đó dọn dẹp chúng cho chúng tôi.
+
+Để cho phép cấu trúc thư mục của chúng tôi được đồng bộ hóa, chúng tôi sẽ triển khai một loại trình liệt kê khác.
+
+Cái này đồng bộ hóa các thay đổi từ xa.
+
+Hệ thống gọi phương thức currentSyncAnchor trước để có được một neo đồng bộ hóa.
+
+Bạn trả về một đối tượng dữ liệu mô tả con trỏ thay đổi cho cơ sở dữ liệu của bạn.
+
+Bất cứ khi nào bạn báo hiệu rằng có điều gì đó đã thay đổi, hệ thống sẽ yêu cầu thay đổi kể từ lần neo cuối cùng bạn cung cấp.
+
+Sau đó bạn có thể trả lại các thay đổi và cuối cùng là một mỏ neo mới.
+
+Bước cuối cùng là cho phép đồng bộ hóa các thay đổi.
+
+Nếu hệ thống phát hiện các thay đổi đối với các tệp cục bộ, nó sẽ gọi một trong ba phương thức để tạo, sửa đổi hoặc xóa một mục hiện có.
+
+Chúng ta sẽ xem xét nhanh phương pháp tạo.
+
+Hệ thống đưa cho bạn mặt hàng mới mà nó yêu cầu bạn tạo.
+
+Đây là một mục hệ thống, mặc dù nó tuân theo giao thức giống như các mục của riêng bạn.
+
+Hệ thống cũng sẽ đưa cho bạn một tập hợp các trường quan tâm đến mặt hàng.
+
+Ví dụ, mục có thể có hoặc không có các thuộc tính mở rộng được đính kèm với nó và có các trường để mô tả điều đó.
+
+Nếu trường nội dung được đặt, hệ thống sẽ chuyển cho bạn một URL tệp với nội dung.
+
+Các mục mô tả thư mục hoặc liên kết tượng trưng sẽ không có nội dung.
+
+Công việc của bạn là tải dữ liệu của mục cục bộ mới lên máy chủ và sau đó gọi trình xử lý hoàn thành với mục từ xa kết quả.
+
+Và thế là xong.
+
+Tại thời điểm này, bạn có một nhà cung cấp tệp chức năng trên macOS cung cấp các tệp theo yêu cầu, truyền bá các thay đổi cục bộ lên đám mây và các thay đổi từ xa sang Mac.
+
+Có rất nhiều API tùy chọn bổ sung trong khuôn khổ Nhà cung cấp tệp, cho phép tích hợp tốt hơn với hệ thống.
+
+Hãy cùng xem nào.
+
+Trang trí biểu tượng có thể được sử dụng để trang trí trực quan các mặt hàng trong Finder.
+
+Bạn có thể gắn huy hiệu biểu tượng tệp, dập nổi một thư mục hoặc cho biết trạng thái chia sẻ.
+
+Bạn cung cấp tác phẩm nghệ thuật tùy chỉnh cho các đồ trang trí thông qua UTType được khai báo trong ứng dụng của bạn.
+
+Các hành động trình đơn theo ngữ cảnh cho phép người dùng thực hiện các hành động tùy chỉnh trên các tệp của bạn thông qua trình đơn theo ngữ cảnh.
+
+Có các biến thể UI và không phải UI.
+
+Bạn có thể xác định những hành động này áp dụng cho tệp nào với NSPredicates được khai báo trong Info.plist của tiện ích mở rộng của bạn.
+
+Cảnh báo trước chuyến bay cho phép bạn cảnh báo người dùng trước khi họ thực hiện một hành động có thể gây ra hậu quả ngoài ý muốn.
+
+Giao diện người dùng cảnh báo và các tiêu chí để kích hoạt cảnh báo cũng được định cấu hình trong Info.plist.
+
+Vậy các bước tiếp theo của bạn là gì?
+
+Chà, trước hết, bạn có thể tải xuống mã mẫu của phiên.
+
+Nó rất toàn diện, và nó sẽ cung cấp cho bạn rất nhiều gợi ý.
+
+Thêm mục tiêu vào ứng dụng hiện tại của bạn cho tiện ích mở rộng mới.
+
+Có một mẫu Xcode sẽ giúp bạn bắt đầu.
+
+Từ đó, tất cả những gì bạn phải làm là triển khai các cuống phương pháp theo thứ tự mà chúng ta đã thảo luận và bạn sẽ bắt đầu và chạy ngay lập tức.
+
+Cảm ơn bạn đã xem phiên này.
+
+Chúng tôi mong muốn được thấy các phần mở rộng nhà cung cấp tệp của bạn trên macOS.

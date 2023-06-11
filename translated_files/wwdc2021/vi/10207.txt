@@ -1,0 +1,205 @@
+10207
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Wil Addario-Turner: Xin chào, chào mừng đến với "Nắm bắt những thất bại dự kiến trong XCTest."
+
+Tên tôi là Wil, và trong phiên này, tôi sẽ thảo luận về các cách cải thiện dữ liệu bạn nhận được khi bạn chạy các bài kiểm tra dự án của mình.
+
+Để bắt đầu, hãy xem xét lý do tại sao chúng tôi kiểm tra mã của mình ngay từ đầu.
+
+Tất nhiên, ở cấp độ cao, đó là cách chúng tôi đảm bảo chất lượng của sản phẩm.
+
+Nhưng nói một cách cụ thể hơn, tôi sẽ nói rằng đó là phát hiện ra lỗi trước khi chúng tôi giao hàng chứ không phải sau đó.
+
+Bây giờ, thử nghiệm là một khoản đầu tư.
+
+Cần có tài nguyên để tạo, chạy và duy trì các bài kiểm tra.
+
+Như với bất kỳ khoản đầu tư nào, chúng tôi muốn tối đa hóa lợi nhuận của mình trong khi giảm thiểu chi phí.
+
+Phiên này tập trung vào các công cụ để giảm chi phí bảo trì.
+
+Bằng cách bảo trì, tôi chủ yếu đề cập đến cách bạn xử lý các lỗi khi chúng xảy ra trong bộ thử nghiệm của bạn.
+
+Khi một bài kiểm tra đã vượt qua bắt đầu thất bại, đó là một thông tin mới có giá trị.
+
+Điều này cho thấy một lỗ hổng trong sản phẩm, một vấn đề trong chính bài kiểm tra hoặc một số vấn đề ở một trong những phụ thuộc - nghĩa là, tất cả các khuôn khổ và hệ thống con mà sản phẩm nằm trên đó.
+
+Bất kể loại vấn đề nào, một khi thất bại đó đã được đăng ký, các báo cáo tiếp theo về cùng một thất bại sẽ ít có giá trị hơn đáng kể, bởi vì chúng đại diện cho thông tin mà bạn đã có.
+
+Lý tưởng nhất, bất kỳ lỗi mới nào cũng được phân loại và khắc phục nhanh chóng.
+
+Tuy nhiên, nhóm của bạn có thể không thể giải quyết vấn đề ngay lập tức, điều đó có nghĩa là thất bại nhanh chóng chuyển từ một phần thông tin mới có giá trị sang một sự phân tâm ồn ào.
+
+Với một thất bại đã biết trong các bài kiểm tra của bạn mà không thể được giải quyết ngay lập tức, những công cụ nào có sẵn để quản lý tiếng ồn?
+
+Hai cách tiếp cận có thể xuất hiện trong đầu là vô hiệu hóa và bỏ qua.
+
+Hãy xem xét sự đánh đổi cho những thứ này và sau đó chúng ta sẽ nói về công cụ tốt nhất - và chủ đề của phiên này - API ExpectedFailures của XCTest.
+
+Xcode cho phép bạn vô hiệu hóa các bài kiểm tra trong kế hoạch hoặc sơ đồ kiểm tra.
+
+Bạn có thể sử dụng điều này cho các lỗi kiểm tra đã biết và một lợi thế là mã kiểm tra của bạn sẽ tiếp tục được biên dịch.
+
+Tuy nhiên, vì mã sẽ không thực thi, bạn sẽ không thấy nó trong báo cáo thử nghiệm.
+
+Khả năng hiển thị giảm này khiến việc theo dõi như một vấn đề cần được giải quyết trở nên khó khăn hơn.
+
+Trường hợp tính năng này - khả năng chọn bài kiểm tra nào được bật hoặc tắt - thực sự tỏa sáng là để quản lý các bộ sưu tập bài kiểm tra cho các mục đích cụ thể.
+
+Nhưng nó hiếm khi là cách tốt nhất để xử lý một thất bại đã biết.
+
+XCTSkip là một cách khác để bạn có thể quản lý bài kiểm tra không thành công.
+
+Với cách tiếp cận này, mã không chỉ tiếp tục được xây dựng với các bài kiểm tra của bạn, nó còn thực thi cho đến khi XCTSkip được gọi.
+
+Điều này có nghĩa là nó được bao gồm trong báo cáo thử nghiệm, giúp bạn có khả năng hiển thị vấn đề tốt hơn nhiều.
+
+Tuy nhiên, nó không thực hiện tất cả các bài kiểm tra của bạn, điều đó có nghĩa là bạn mất đi thông tin hữu ích tiềm ẩn dưới dạng các vấn đề mới và thay đổi đối với vấn đề hiện có.
+
+XCTSkip là một công cụ tuyệt vời để quản lý các giới hạn dựa trên cấu hình trong bài kiểm tra của bạn, chẳng hạn như yêu cầu một phiên bản hệ điều hành hoặc loại thiết bị cụ thể.
+
+Trong ví dụ ở đây, bài kiểm tra sẽ bị bỏ qua nếu nó không chạy trên iPad.
+
+Điều này đưa chúng ta đến XCTExpectFailure, một tập hợp các chức năng trong XCTest được thiết kế đặc biệt để quản lý các lỗi đã biết.
+
+Trong Swift, nó có một số quá tải cho các trường hợp sử dụng khác nhau và Objective-C cung cấp các khả năng tương tự với một số chức năng riêng biệt.
+
+Với API này, bài kiểm tra của bạn thực hiện bình thường, nhưng kết quả được thay đổi như sau: Thất bại trong bài kiểm tra sẽ được báo cáo là thất bại dự kiến.
+
+Thất bại trong bộ kiểm tra chứa bài kiểm tra đó sẽ được báo cáo là vượt qua, tất nhiên trừ khi một số bài kiểm tra khác trong đó không thành công.
+
+Điều này giúp loại bỏ tiếng ồn do lỗi tạo ra, giúp bạn dễ dàng xem liệu có bất kỳ vấn đề nào khác trong các bài kiểm tra của bạn hay không.
+
+Tất nhiên, việc ngăn chặn tiếng ồn không giải quyết được vấn đề tiềm ẩn.
+
+Vì vậy, để giúp bạn theo dõi nó, API có lý do thất bại.
+
+Chuỗi này ghi lại sự cố trong mã của bạn và thậm chí bạn có thể nhúng URL cho hệ thống theo dõi sự cố của mình.
+
+Giao diện người dùng báo cáo thử nghiệm của Xcode hiển thị các lỗi dự kiến giống như các lỗi thông thường hoặc các bài kiểm tra bị bỏ qua.
+
+Khi bạn di chuột, nếu lý do thất bại có chứa URL, một nút theo dõi sự cố sẽ xuất hiện cho phép bạn chuyển ra liên kết.
+
+Vậy hãy xem cái này hoạt động như thế nào!
+
+Tôi có ở đây một dự án đơn giản với một số bài kiểm tra đơn vị cho lớp VendorAccount của tôi.
+
+Tôi sẽ chạy các bài kiểm tra, và khi chúng kết thúc, chúng ta sẽ thấy rằng cái này đang thất bại trong khi cái kia đang vượt qua.
+
+Bạn có thể thấy ba biểu tượng kết quả kiểm tra, một cho mỗi bài kiểm tra.
+
+Một dấu X màu đỏ cho bài kiểm tra thất bại và một dấu kiểm tra màu xanh lá cây cho bài kiểm tra vượt qua, và một cho bộ bài kiểm tra; một dấu X màu đỏ vì một trong những bài kiểm tra trong bộ đã thất bại, vì vậy chúng tôi cho rằng bản thân bộ đã thất bại.
+
+Bây giờ tôi sẽ thêm một cuộc gọi đến XCTExpectFailure khi bắt đầu bài kiểm tra thất bại.
+
+Bạn có thể thấy lý do thất bại bắt đầu bằng một URL tham chiếu đến lỗi tôi đã gửi để theo dõi lỗi này.
+
+Bây giờ tôi sẽ chạy lại các bài kiểm tra và chúng ta sẽ xem điều này ảnh hưởng đến kết quả như thế nào.
+
+Được rồi, vì vậy biểu tượng X màu đỏ cho bài kiểm tra thất bại đã thay đổi thành X màu xám, đây là chỉ báo cho một thất bại dự kiến.
+
+Điều thú vị hơn nữa là biểu tượng bộ kiểm tra đã thay đổi từ dấu X màu đỏ sang dấu gạch ngang màu xanh lá cây.
+
+Biểu tượng này chỉ ra rằng bộ bài kiểm tra đã vượt qua với trạng thái hỗn hợp, có nghĩa là một hoặc nhiều bài kiểm tra của nó không vượt qua, mà là bỏ qua hoặc thất bại dự kiến.
+
+Vì vậy, đó là cách dễ dàng để sử dụng XCTExpectFailure để xử lý một bài kiểm tra thất bại.
+
+Bây giờ chúng ta hãy xem xét kỹ hơn API.
+
+Cân nhắc đầu tiên khi sử dụng XCTExpectFailure là biến thể API nào cần gọi.
+
+Có hai cách tiếp cận: một cách tiếp cận trạng thái trong đó bạn gọi XCTExpectFailure và bất kỳ lỗi tiếp theo nào trong bài kiểm tra đều được xử lý như mong đợi; cách khác, bạn có thể sử dụng cách tiếp cận có phạm vi, trong đó bạn bọc mã không thành công trong một đóng được chuyển đến XCTExpectFailure.
+
+Hãy xem xét một số ví dụ.
+
+Đây là một bài kiểm tra rất đơn giản gọi một số chức năng trong dự án của tôi.
+
+Bài kiểm tra bắt đầu thất bại vì hàm không còn trả về true nữa.
+
+Đây là những gì nó trông giống như để sử dụng cách tiếp cận thất bại dự kiến trạng thái, giống như chúng tôi đã làm trong bản demo.
+
+Ngoài ra, chúng ta có thể sử dụng cách tiếp cận có phạm vi bằng cách gói mã không thành công trong một kết thúc theo sau cuộc gọi đến XCTExpectFailure.
+
+Điều này có nghĩa là bất kỳ lỗi nào trong mã bên ngoài việc đóng cửa sẽ được báo cáo bình thường.
+
+API cũng hỗ trợ lồng nhau.
+
+Nói cách khác, bạn có thể gọi API nhiều lần trong một bài kiểm tra, bao gồm cả bên trong phần đóng từ một cuộc gọi khác.
+
+Đây là một cân nhắc quan trọng khi sử dụng API trong mã thư viện thử nghiệm.
+
+Ví dụ, nếu một chức năng tiện ích chung bắt đầu thất bại, nhiều bài kiểm tra có thể bị ảnh hưởng, một số trong đó có thể đã sử dụng XCTExpectFailure cho các vấn đề khác nhau.
+
+Khi xảy ra lỗi trong ngữ cảnh các cuộc gọi lồng nhau đến XCTExpectFailure, vấn đề sẽ được khớp với trang web cuộc gọi gần nhất trước và nếu bị người đối sánh từ chối, sẽ được chuyển sang cuộc gọi tiếp theo, v.v. với ngữ nghĩa ngăn xếp cho các cuộc gọi đến XCTExpectFailure.
+
+Vì lý do này, với mã được chia sẻ, tốt nhất bạn nên sử dụng API dựa trên đóng để hạn chế ảnh hưởng đến trạng thái thử nghiệm.
+
+Điều tiếp theo cần xem xét là làm thế nào chính xác để phù hợp với vấn đề.
+
+Theo mặc định, bất kỳ lỗi nào trong phạm vi bị ảnh hưởng đều bị phát hiện, nhưng bạn có thể chọn lọc hơn bằng cách chỉ định bộ lọc khớp vấn đề.
+
+Trong ví dụ này, chúng tôi xây dựng một đối tượng thuộc loại XCTExpectedFailure.Options và xác định issueMatcher của nó.
+
+Trình kết hợp được chuyển qua đối tượng XCTIssue với các chi tiết lỗi, vì vậy bạn có toàn quyền truy cập vào thông tin đó để xác định xem có khớp hay không.
+
+Nếu người đối sánh từ chối thất bại, thì nó sẽ không được xử lý như một thất bại dự kiến.
+
+Điều này có thể hữu ích trong việc phát hiện khi các vấn đề mới xuất hiện trong mã đang được kiểm tra.
+
+Đối tượng tùy chọn cũng có một thuộc tính có thể được sử dụng để vô hiệu hóa lỗi dự kiến trong các cấu hình nhất định.
+
+Ví dụ, bài kiểm tra của tôi có thể vượt qua macOS nhưng thất bại trên iOS, vì vậy tôi chỉ muốn mong đợi thất bại trên iOS.
+
+Để đạt được điều đó, tôi vô hiệu hóa lỗi dự kiến thông qua các tùy chọn, nhưng chỉ dành cho các nền tảng mà tôi không cần nó.
+
+Vậy điều gì sẽ xảy ra khi những thất bại dự kiến của bạn ngừng thất bại?
+
+Thông thường điều này có nghĩa là vấn đề cơ bản đã được giải quyết, điều này thật tuyệt.
+
+Nhưng XCTExpectFailure hoạt động như thế nào?
+
+Nếu bạn vẫn đang gọi API và không có lỗi nào xảy ra, nó sẽ tạo ra một lỗi mới và khác biệt.
+
+Chúng tôi gọi đây là "thất bại dự kiến chưa từng có" và đó là một phần của hành vi nghiêm ngặt là mặc định cho XCTExpectFailure.
+
+Hành vi này giúp bạn duy trì mã của mình bằng cách nhắc bạn xóa các cuộc gọi không cần thiết đến API.
+
+Nhưng còn những bài kiểm tra chỉ thất bại một thời gian thì sao?
+
+Có những trường hợp trong đó một bài kiểm tra đôi khi có thể thất bại nhưng không phải những lần khác.
+
+Chúng được chia thành hai loại, loại đầu tiên là xác định và bao gồm các điều kiện môi trường hoặc các điều kiện có thể biết khác như ví dụ trước đó về thử nghiệm chỉ thất bại trên một số nền tảng nhất định.
+
+Mặt khác, một số thất bại vốn đã không xác định.
+
+Những điều này có thể được gây ra bởi các vấn đề về thời gian, sự phụ thuộc đặt hàng không đáng tin cậy hoặc lỗi đồng thời.
+
+Đối với những thất bại không xác định, hành vi nghiêm ngặt không hữu ích; nó chỉ tạo ra tiếng ồn.
+
+Một lần nữa, đối tượng tùy chọn cung cấp một cách để kiểm soát điều này.
+
+Cờ isStrict, mặc định là true, có thể được tắt.
+
+Sau đó, nếu XCTExpectFailure không thất bại, nó vẫn sẽ cho phép bài kiểm tra vượt qua.
+
+Trong Swift, bạn cũng có thể chỉ định hành vi nghiêm ngặt như một tham số trực tiếp đến XCTExpectFailure.
+
+Vô hiệu hóa hành vi nghiêm ngặt là cách tuyệt vời để xử lý các bài kiểm tra không xác định hoặc không xác định trong dự án của bạn.
+
+Ngoài ra, khi bạn cần điều tra một lỗi không xác định, Xcode giúp bạn dễ dàng chạy thử nghiệm nhiều lần, dừng lại khi nó không thành công hoặc một số điều kiện khác được đáp ứng.
+
+Điều này có thể thực sự hữu ích trong việc theo dõi các lỗi trong các bài kiểm tra không ổn định.
+
+Để biết thêm về điều này, hãy xem phiên "Chẩn đoán mã không đáng tin cậy với các lần lặp lại kiểm tra."
+
+Vì vậy, đó là XCTExpectFailure - API trong XCTest để cải thiện tín hiệu thành nhiễu trong kết quả bộ thử nghiệm của bạn.
+
+Điều này giúp bạn xác định các vấn đề mới hiệu quả hơn, dẫn đến mã chất lượng cao hơn.
+
+Cảm ơn vì đã xem!
+
+♪

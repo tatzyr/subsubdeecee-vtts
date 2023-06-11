@@ -1,0 +1,581 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+♪ Nhạc bass đang phát ♪
+
+00:00:05.000 --> 00:00:09.000
+♪
+
+00:00:09.000 --> 00:00:11.000
+Alejandro Segovia Azapian: Chào mừng đến với WWDC!
+
+00:00:11.000 --> 00:00:16.000
+Tên tôi là Ale Segovia Azapian, và tôi là kỹ sư phần mềm GPU tại Apple.
+
+00:00:16.000 --> 00:00:21.000
+Trong phiên này, chúng ta sẽ khám phá kết xuất không ràng buộc trong Metal.
+
+00:00:21.000 --> 00:00:29.000
+Bindless là một mô hình ràng buộc tài nguyên hiện đại cho phép tạo các nhóm tài nguyên có sẵn cho GPU để thực hiện các kỹ thuật kết xuất hiện đại.
+
+00:00:29.000 --> 00:00:33.000
+Đầu tiên, chúng ta sẽ xem xét sự cần thiết của khái niệm đằng sau bindless.
+
+00:00:33.000 --> 00:00:41.000
+Sau đó, chúng tôi sẽ giới thiệu mô hình không ràng buộc và chỉ ra cách nó cung cấp sự linh hoạt cần thiết để giải quyết những thách thức của mô hình ràng buộc truyền thống.
+
+00:00:41.000 --> 00:00:51.000
+Chúng tôi sẽ tóm tắt lại các cơ chế để mã hóa và cung cấp tài nguyên cảnh của bạn cho Metal với bộ đệm đối số và cách điều hướng cấu trúc GPU của bạn từ bộ đổ bóng.
+
+00:00:51.000 --> 00:00:53.000
+Hãy bắt đầu nào!
+
+00:00:53.000 --> 00:01:02.000
+Vì vậy, kết xuất không ràng buộc cho phép làm cho tất cả các tài nguyên cảnh của chúng tôi có sẵn cho các bộ đổ bóng của chúng tôi, mang lại sự linh hoạt đáng kinh ngạc cho các kỹ thuật đồ họa của chúng tôi.
+
+00:01:02.000 --> 00:01:06.000
+Hãy xem xét một ví dụ.
+
+00:01:06.000 --> 00:01:11.000
+Hãy tưởng tượng chúng ta có một hạt nhân dò tia tìm các giao điểm chống lại cấu trúc gia tốc.
+
+00:01:11.000 --> 00:01:18.000
+Đối với một số hiệu ứng ánh sáng, chẳng hạn như bóng dò tia, thuật toán này rất tự nhiên.
+
+00:01:18.000 --> 00:01:23.000
+Chúng tôi muốn tìm bất kỳ vật thể nào giữa điểm giao nhau và ánh sáng.
+
+00:01:23.000 --> 00:01:29.000
+Tất cả những gì chúng ta cần để theo dõi tia bóng là một vị trí và hướng về phía ánh sáng.
+
+00:01:29.000 --> 00:01:39.000
+Không cần thuộc tính đối tượng hoặc tài nguyên kim loại nào ngoài vị trí không gian thế giới của giao điểm, mà chúng ta có thể suy ra từ tia và tham số của giao điểm.
+
+00:01:39.000 --> 00:01:43.000
+Tuy nhiên, đối với các hiệu ứng khác, chẳng hạn như phản ánh, tình hình trở nên phức tạp hơn.
+
+00:01:43.000 --> 00:01:49.000
+Chúng ta hãy xem một bộ đổ bóng phản xạ dò tia trong Ngôn ngữ tạo bóng kim loại.
+
+00:01:49.000 --> 00:01:57.000
+Trong ví dụ mới này, chúng tôi vừa tìm thấy một giao lộ và chúng tôi đang cố gắng vẽ điểm ảnh với màu phản chiếu chính xác.
+
+00:01:57.000 --> 00:02:03.000
+Nếu chúng ta chỉ sơn một màu đồng nhất sau khi chúng ta tìm thấy một giao lộ, sự phản chiếu trên mặt đất sẽ trông không chính xác.
+
+00:02:03.000 --> 00:02:14.000
+Để tạo ra kết quả chính xác, chúng ta cần xác định các thuộc tính của mỗi điểm phản xạ được tìm thấy và tính toán độ bóng chính xác cho điểm ảnh của nó.
+
+00:02:14.000 --> 00:02:22.000
+Vấn đề này cũng xuất hiện đối với các hiệu ứng dò tia khác như chiếu sáng toàn cầu khuếch tán và thậm chí tắc nghẽn môi trường xung quanh trong một số trường hợp.
+
+00:02:22.000 --> 00:02:27.000
+Thách thức là khi chúng ta theo dõi tia, tia của chúng ta có thể va vào bất kỳ vật thể nào trong cấu trúc gia tốc.
+
+00:02:27.000 --> 00:02:39.000
+Điều này có nghĩa là từ bộ đổ bóng dò tia của chúng tôi, chúng tôi có khả năng cần quyền truy cập vào bất kỳ tài nguyên Kim loại nào trong cảnh của mình, bao gồm dữ liệu đỉnh - được liên kết với lưới giao nhau - và vật liệu của nó.
+
+00:02:39.000 --> 00:02:43.000
+Không thể ràng buộc lượng tài nguyên này trực tiếp với đường ống của chúng tôi.
+
+00:02:43.000 --> 00:02:47.000
+Đây là nơi mà mô hình ràng buộc không liên kết xuất hiện.
+
+00:02:47.000 --> 00:02:52.000
+Ý tưởng đằng sau bindless là tổng hợp các nguồn lực của chúng ta và liên kết chúng lại với nhau.
+
+00:02:52.000 --> 00:03:00.000
+Điều này cho phép chúng tôi liên kết một bộ đệm duy nhất với đường ống và cung cấp tất cả các tài nguyên được tham chiếu thông qua điều hướng.
+
+00:03:00.000 --> 00:03:03.000
+Trong Metal, cấu trúc cho phép chúng ta làm điều này là bộ đệm đối số.
+
+00:03:03.000 --> 00:03:08.000
+Đặc biệt, đối với bộ đệm đối số không ràng buộc, bộ đệm đối số Cấp 2 được yêu cầu.
+
+00:03:08.000 --> 00:03:12.000
+Những thứ này có sẵn trên các dòng GPU Apple6 và Mac2.
+
+00:03:12.000 --> 00:03:16.000
+Bộ đệm đối số có thể được sử dụng từ tất cả các loại đổ bóng trong Metal.
+
+00:03:16.000 --> 00:03:20.000
+Điều này có nghĩa là bạn có thể sử dụng chúng cho cả dò tia và rasterization.
+
+00:03:20.000 --> 00:03:27.000
+Như chúng ta đã thấy, đối với một số hiệu ứng dò tia nhất định, việc sử dụng không liên kết là bắt buộc để có được kết quả hình ảnh tốt.
+
+00:03:27.000 --> 00:03:32.000
+Đối với rasterization, việc sử dụng là tùy chọn nhưng cung cấp lợi thế so với mô hình ràng buộc trực tiếp.
+
+00:03:32.000 --> 00:03:46.000
+Đặc biệt, nó hầu như loại bỏ giới hạn vị trí cho số lượng tài nguyên có thể bị ràng buộc cho bất kỳ cuộc gọi rút thăm nhất định nào và nó cũng cung cấp một số cơ hội tối ưu hóa tốt mà chúng ta sẽ khám phá sau trong phiên này.
+
+00:03:46.000 --> 00:03:56.000
+Chúng tôi đã giới thiệu bộ đệm đối số với Metal 2 như một cơ chế cho phép bạn liên kết tất cả dữ liệu và tài nguyên không đổi cùng một lúc trong một lần gọi đến Metal API.
+
+00:03:56.000 --> 00:04:02.000
+Bộ đệm đối số rất linh hoạt và thậm chí có thể tham chiếu đến các bộ đệm khác.
+
+00:04:02.000 --> 00:04:08.000
+Ý tưởng đằng sau mô hình không ràng buộc là tận dụng khả năng này để liên kết tất cả các tài nguyên cảnh của chúng tôi lại với nhau.
+
+00:04:08.000 --> 00:04:13.000
+Điều này sẽ cho phép làm cho chúng có sẵn cho GPU cùng một lúc.
+
+00:04:13.000 --> 00:04:19.000
+Hãy xem xét một ví dụ về cách liên kết tài nguyên cảnh của chúng ta với bộ đệm đối số.
+
+00:04:19.000 --> 00:04:23.000
+Giả sử chúng tôi muốn kết xuất một mô hình như chiếc xe cứu hỏa này.
+
+00:04:23.000 --> 00:04:28.000
+Mô hình bao gồm kết cấu, dữ liệu đỉnh và dữ liệu chỉ mục.
+
+00:04:28.000 --> 00:04:35.000
+Đây là những tài nguyên điển hình mà bạn sẽ liên kết từng tài nguyên một cho mỗi lần gọi rút thăm trong mô hình ràng buộc truyền thống.
+
+00:04:35.000 --> 00:04:45.000
+Tuy nhiên, trong trường hợp của chúng tôi - bởi vì chúng tôi muốn cung cấp tất cả các kết cấu, dữ liệu đỉnh và chỉ mục của cảnh cùng một lúc - chúng tôi cần tổng hợp những thứ này.
+
+00:04:45.000 --> 00:04:47.000
+Đây là một cách tiềm năng để làm điều đó.
+
+00:04:47.000 --> 00:04:55.000
+Trước tiên, chúng ta có thể tạo một bộ đệm đối số mắt lưới để chứa tất cả các mắt lưới hoặc phân đoạn của chúng ta, tùy thuộc vào cách tổ chức tài sản của chúng ta.
+
+00:04:55.000 --> 00:05:01.000
+Bộ đệm đối số này sẽ cho phép tham chiếu các mảng đỉnh và chỉ mục trong cảnh của chúng tôi.
+
+00:05:01.000 --> 00:05:06.000
+Tương tự, chúng ta có thể làm tương tự và mã hóa các tài liệu của mình thành một bộ đệm đối số.
+
+00:05:06.000 --> 00:05:13.000
+Mỗi vật liệu có thể tham chiếu kết cấu của nó cũng như chứa dữ liệu không đổi nội tuyến.
+
+00:05:13.000 --> 00:05:19.000
+Được rồi, nhưng bây giờ chúng ta đã có sẵn tất cả các mắt lưới và vật liệu của mình cho GPU, làm thế nào chúng ta có thể kết hợp chúng lại với nhau?
+
+00:05:19.000 --> 00:05:25.000
+Chà, chúng ta có thể, ví dụ, tạo một đối tượng thể hiện và cũng đặt nó vào bộ đệm đối số.
+
+00:05:25.000 --> 00:05:29.000
+Một ví dụ có thể tham chiếu đến một lưới và một vật liệu liên quan.
+
+00:05:29.000 --> 00:05:34.000
+Đây cũng là một nơi tuyệt vời để lưu trữ ma trận biến đổi mô hình dưới dạng dữ liệu không đổi nội tuyến.
+
+00:05:34.000 --> 00:05:36.000
+Nhưng chúng ta không cần phải dừng lại ở đó.
+
+00:05:36.000 --> 00:05:43.000
+Bây giờ chúng ta có thể lưu trữ một phiên bản, chúng ta có thể tiếp tục điều này và mã hóa tất cả các phiên bản của chúng ta dưới dạng một mảng vào bộ đệm đối số này.
+
+00:05:43.000 --> 00:05:50.000
+Hãy đơn giản hóa sơ đồ này và thêm một vài trường hợp xe tải nữa, mỗi trường hợp có vật liệu riêng.
+
+00:05:50.000 --> 00:05:59.000
+Như chúng ta có thể thấy, với điều này, giờ đây chúng ta có thể có toàn bộ cảnh và tài nguyên của nó được mã hóa và liên kết với bộ đệm đối số.
+
+00:05:59.000 --> 00:06:07.000
+Sau đó, khi chúng tôi muốn tham chiếu bất kỳ tài nguyên nào trong số này từ bộ đổ bóng của mình, chúng tôi chỉ cần một con trỏ đến bộ đệm phiên bản.
+
+00:06:07.000 --> 00:06:15.000
+Chúng ta có thể truyền nó trực tiếp và diễn giải bộ đệm này dưới dạng một mảng hoặc chuyển một con trỏ qua một bộ đệm đối số cảnh khác.
+
+00:06:15.000 --> 00:06:20.000
+Bây giờ, điều quan trọng cần lưu ý là điều gì xảy ra với nơi cư trú của các tài nguyên được truy cập gián tiếp.
+
+00:06:20.000 --> 00:06:30.000
+Vì chúng tôi chỉ chuyển một con trỏ đến cảnh vào đường ống, Metal sẽ biết về tham chiếu bộ đệm này, nhưng không biết về các tài nguyên được truy cập gián tiếp.
+
+00:06:30.000 --> 00:06:36.000
+Ứng dụng chịu trách nhiệm tuyên bố nơi cư trú của tất cả các tài nguyên được truy cập gián tiếp.
+
+00:06:36.000 --> 00:06:43.000
+Tạo một cư dân tài nguyên có nghĩa là báo hiệu cho trình điều khiển để làm cho bộ nhớ của nó có sẵn cho GPU.
+
+00:06:43.000 --> 00:06:48.000
+Điều này là cần thiết để chúng tôi có thể tham khảo chúng từ các bộ đổ bóng của chúng tôi.
+
+00:06:48.000 --> 00:06:57.000
+Chúng ta có thể làm điều này bằng cách gọi useResource:usage: API cho các bộ mã hóa tính toán và useResource:usage:stages: API cho các bộ mã hóa lệnh kết xuất.
+
+00:06:57.000 --> 00:07:02.000
+Truy cập tài nguyên không cư trú là nguyên nhân phổ biến khiến GPU khởi động lại và lỗi bộ đệm lệnh.
+
+00:07:02.000 --> 00:07:07.000
+Điều này là do các trang bộ nhớ của nó có thể không có mặt nếu chúng ta quên gọi API này.
+
+00:07:07.000 --> 00:07:12.000
+Vì vậy, điều rất quan trọng là phải khai báo mọi tài nguyên được truy cập gián tiếp cho Metal.
+
+00:07:12.000 --> 00:07:21.000
+Bây giờ, một lựa chọn khác, để thuận tiện, là các tài nguyên được phân bổ từ MTLHeaps hiện có thể được thực hiện thường trú với một cuộc gọi duy nhất bằng API useHeap.
+
+00:07:21.000 --> 00:07:27.000
+Đây là một lựa chọn tuyệt vời nếu bạn đã phân bổ lại hoặc dự định phân bổ lại tài nguyên từ đống.
+
+00:07:27.000 --> 00:07:35.000
+Giờ đây, đống là một phần tuyệt vời của Metal API và chúng tôi khuyên bạn nên sử dụng chúng để có hiệu suất tạo tài nguyên tốt nhất và các cơ hội tiết kiệm bộ nhớ.
+
+00:07:35.000 --> 00:07:39.000
+Tuy nhiên, có một vài cân nhắc để sử dụng chúng một cách hiệu quả.
+
+00:07:39.000 --> 00:07:44.000
+Điều đầu tiên cần hỏi là, Có phải tất cả các tài nguyên được phân bổ phụ của chúng tôi chỉ được đọc từ?
+
+00:07:44.000 --> 00:07:52.000
+Ví dụ về nơi chúng ta có thể cần viết vào tài nguyên bao gồm lột da lưới từ bộ đổ bóng tính toán và kết cấu động, trong số những thứ khác.
+
+00:07:52.000 --> 00:08:02.000
+Trong những trường hợp này, nếu GPU cần ghi vào bất kỳ tài nguyên nào, chúng cần được khai báo là cư dân riêng lẻ với cờ sử dụng ghi.
+
+00:08:02.000 --> 00:08:10.000
+Ngoài ra, bất kỳ tài nguyên nào có thể đã được sửa đổi mà bây giờ chúng tôi dự định đọc vẫn sẽ cần cuộc gọi useResource của riêng họ.
+
+00:08:10.000 --> 00:08:19.000
+Điều này là để khung Metal có thể xử lý quá trình chuyển đổi tài nguyên cho bạn, xóa bộ nhớ cache GPU và điều chỉnh bố cục bộ nhớ trong.
+
+00:08:19.000 --> 00:08:24.000
+Cân nhắc thứ hai là, đống có theo dõi phân bổ phụ thuộc tài nguyên không?
+
+00:08:24.000 --> 00:08:31.000
+Một lần nữa, điều này đặc biệt quan trọng nếu chúng ta đang đọc và viết vào các tài nguyên đến từ cùng một đống.
+
+00:08:31.000 --> 00:08:42.000
+Metal rất tốt trong việc tránh các vấn đề đồng bộ hóa thông qua theo dõi sự phụ thuộc và kể từ Metal 2.3, các đống có thể được cấu hình để theo dõi các mối nguy hiểm trong việc truy cập vào tài nguyên của chúng.
+
+00:08:42.000 --> 00:08:50.000
+Tuy nhiên, vì đống là một tài nguyên duy nhất đối với Metal, đồng bộ hóa được xử lý ở cấp đống chứ không phải cấp phân bổ phụ.
+
+00:08:50.000 --> 00:08:54.000
+Điều này có thể khiến các tài nguyên được phân bổ lại cho vấn đề chia sẻ sai.
+
+00:08:54.000 --> 00:08:56.000
+Hãy cùng xem nào.
+
+00:08:56.000 --> 00:09:01.000
+Hãy tưởng tượng chúng ta có hai đường dẫn kết xuất - A và B - truy cập tài nguyên từ cùng một đống.
+
+00:09:01.000 --> 00:09:06.000
+Kết xuất vượt qua A là kết xuất thành một kết cấu kết xuất được phân bổ từ một đống được theo dõi.
+
+00:09:06.000 --> 00:09:13.000
+Kết xuất vượt qua B đang đọc từ một bộ đệm không liên quan được phân bổ lại từ cùng một đống.
+
+00:09:13.000 --> 00:09:30.000
+Tùy thuộc vào các điều kiện khác nhau, kết xuất vượt qua A và B có thể đủ điều kiện để được thực hiện song song bởi GPU; tuy nhiên, do nguy cơ tiềm ẩn của việc ghi và đọc từ cùng một tài nguyên - đống - Metal phải tuần tự hóa quyền truy cập để đảm bảo không có điều kiện chủng tộc.
+
+00:09:30.000 --> 00:09:35.000
+Điều này có khả năng làm tăng thời gian thực thi đồng hồ tường của khối lượng công việc của chúng tôi bằng GPU.
+
+00:09:35.000 --> 00:09:41.000
+Tuy nhiên, trong trường hợp của chúng tôi, nếu chúng tôi biết các nguồn lực cá nhân là độc lập, hàng rào này có thể tránh được.
+
+00:09:41.000 --> 00:09:45.000
+Có hai cách để làm điều này.
+
+00:09:45.000 --> 00:09:53.000
+Một lựa chọn là phân bổ lại các tài nguyên có thể cập nhật từ đống riêng biệt sang các tài nguyên được sử dụng cho tài nguyên tĩnh của chúng tôi.
+
+00:09:53.000 --> 00:10:01.000
+Tùy chọn khác, nếu chúng ta muốn kết hợp mọi thứ lại với nhau, là đảm bảo các đống được định cấu hình để không theo dõi các tài nguyên được phân bổ lại của chúng.
+
+00:10:01.000 --> 00:10:09.000
+Đây là hành vi mặc định trong Metal, và nó có nghĩa là chúng tôi với tư cách là lập trình viên tự chịu trách nhiệm đồng bộ hóa các mối nguy hiểm.
+
+00:10:09.000 --> 00:10:14.000
+Bây giờ, trong sơ đồ này, tôi đã đơn giản hóa mọi thứ một chút để minh họa vấn đề chia sẻ sai.
+
+00:10:14.000 --> 00:10:19.000
+Trong thực tế, sự chồng chéo xảy ra ở cấp độ giai đoạn đổ bóng, không phải ở cấp độ vượt qua kết xuất.
+
+00:10:19.000 --> 00:10:24.000
+Kết quả là, Metal cho phép chúng tôi xác định hàng rào của mình ở giai đoạn chi tiết.
+
+00:10:24.000 --> 00:10:40.000
+Điều này thật tuyệt vì nó cho phép chúng tôi vẫn chạy các phần của đường ống của mình - chẳng hạn như giai đoạn đỉnh và rasterizer - đồng thời và chỉ chặn sau đó trong giai đoạn phân mảnh nếu nó xảy ra phụ thuộc vào đầu ra giai đoạn phân đoạn của đường chuyền trước đó.
+
+00:10:40.000 --> 00:10:46.000
+Chúng tôi khuyên bạn nên luôn làm điều này để có hiệu suất tối đa, nếu có thể.
+
+00:10:46.000 --> 00:10:57.000
+Bây giờ, điều này rất nhiều điều cần nhớ, vì vậy nếu bạn chỉ nhận được một điều từ danh sách này, vui lòng nhớ điều này: dữ liệu chỉ đọc, chẳng hạn như kết cấu tĩnh và mắt lưới, là dễ xử lý nhất.
+
+00:10:57.000 --> 00:11:06.000
+Xác định tổng kích thước phân bổ và các yêu cầu căn chỉnh trước và đặt các tài nguyên này vào một đống khi ứng dụng khởi động hoặc trong phần tải trong trò chơi của bạn.
+
+00:11:06.000 --> 00:11:14.000
+Bằng cách này, sau này bạn có thể làm cho nó cư trú trong một cuộc gọi duy nhất, với chi phí tối thiểu trong con đường quan trọng của bạn.
+
+00:11:14.000 --> 00:11:25.000
+Bây giờ chúng ta đã biết về mô hình ràng buộc không ràng buộc, chúng ta hãy xem cách chúng ta có thể mã hóa tài nguyên của mình và đưa điều này vào thực tế và làm cho cảnh hoàn chỉnh của chúng ta có sẵn cho GPU với bộ đệm đối số.
+
+00:11:25.000 --> 00:11:28.000
+Giả sử chúng tôi muốn mã hóa bộ đệm phiên bản của mình.
+
+00:11:28.000 --> 00:11:31.000
+Hãy nhớ rằng, bộ đệm này bao gồm một loạt các trường hợp.
+
+00:11:31.000 --> 00:11:41.000
+Như chúng ta đã thấy, các trường hợp tham chiếu đến một lưới, một vật liệu và chứa một ma trận 4x4 không đổi nội tuyến mô tả sự biến đổi từ không gian cục bộ sang không gian thế giới.
+
+00:11:41.000 --> 00:11:48.000
+Mã hóa được thực hiện thông qua bộ mã hóa bộ đệm đối số và có hai cách riêng biệt để tạo một cách trong Metal.
+
+00:11:48.000 --> 00:11:52.000
+Bạn có thể quen thuộc với mã hóa thông qua phản chiếu.
+
+00:11:52.000 --> 00:12:00.000
+Nếu bộ đệm đối số được truyền dưới dạng tham số trực tiếp đến hàm đổ bóng, chúng ta có thể yêu cầu đối tượng MTLFunction tạo bộ mã hóa cho chúng ta.
+
+00:12:00.000 --> 00:12:06.000
+Cơ chế này hoạt động rất tốt, nhưng khi chúng ta mã hóa toàn bộ cảnh thành bộ đệm đối số, không phải tất cả các bộ mã hóa đều có thể được phản ánh.
+
+00:12:06.000 --> 00:12:13.000
+Đặc biệt, chữ ký MTLFunction không biết về các bộ đệm được tham chiếu gián tiếp.
+
+00:12:13.000 --> 00:12:26.000
+Cũng có thể có những tình huống khác mà việc tạo bộ mã hóa từ MTLFunction không thuận tiện; ví dụ: nếu kiến trúc động cơ của bạn xử lý việc tạo bộ đệm đối số và tải tài nguyên tách biệt với việc tạo trạng thái đường ống.
+
+00:12:26.000 --> 00:12:31.000
+Ngoài ra, chúng ta không thể phản ánh một bộ mã hóa khi hàm dự kiến sẽ được truyền một mảng.
+
+00:12:31.000 --> 00:12:34.000
+Vậy chúng ta có thể làm gì trong những trường hợp này?
+
+00:12:34.000 --> 00:12:40.000
+Đối với những trường hợp này, Metal cung cấp một cơ chế thứ hai thuận tiện để tạo ra một bộ mã hóa thông qua MTLArgumentDescriptor.
+
+00:12:40.000 --> 00:12:47.000
+MTLArgumentDescriptors cho phép mô tả các thành viên cấu trúc thành Metal và sau đó tạo một bộ mã hóa mà không cần MTLFunction.
+
+00:12:47.000 --> 00:12:54.000
+Trước tiên chúng ta phải tạo một bộ mô tả cho mỗi thành viên, chỉ định loại dữ liệu và chỉ mục ràng buộc.
+
+00:12:54.000 --> 00:13:01.000
+Tiếp theo, chúng tôi lấy các mô tả của mình và chuyển chúng trực tiếp đến MTLDevice để tạo bộ mã hóa của chúng tôi.
+
+00:13:01.000 --> 00:13:05.000
+Kết quả là, chúng tôi lấy lại đối tượng bộ mã hóa của mình.
+
+00:13:05.000 --> 00:13:09.000
+Vì vậy, hãy khám phá điều này trông như thế nào trong mã.
+
+00:13:09.000 --> 00:13:34.000
+Đối với mỗi thành viên, chúng tôi cần tạo một MTLArgumentDescriptor; chúng tôi chỉ định chỉ mục ràng buộc, tương ứng với thuộc tính ID cho thành viên trong cấu trúc; chúng tôi chỉ định MTLDataType và có khả năng truy cập; và cuối cùng, sau khi chúng tôi đã khai báo tất cả các thành viên, chúng tôi có thể tạo bộ
+
+00:13:34.000 --> 00:13:39.000
+Khi chúng ta có một bộ mã hóa, thật đơn giản để ghi lại dữ liệu của chúng ta vào bộ đệm.
+
+00:13:39.000 --> 00:13:43.000
+Chúng tôi đặt bộ đệm đối số trên bộ mã hóa, trỏ vào đầu bộ đệm.
+
+00:13:43.000 --> 00:13:47.000
+Sau đó, chúng tôi chỉ cần đặt dữ liệu mà chúng tôi muốn lưu trữ.
+
+00:13:47.000 --> 00:13:50.000
+Mã hóa một mảng cũng rất đơn giản.
+
+00:13:50.000 --> 00:13:58.000
+Tất cả những gì chúng ta phải làm là bù đắp điểm ghi bộ đệm đối số của bộ mã hóa bằng Độ dài được mã hóa, chúng ta có thể truy xuất thuận tiện từ bộ mã hóa.
+
+00:13:58.000 --> 00:14:04.000
+Đối với trường hợp tiếp theo, chúng tôi thêm Độ dài được mã hóa vào phần bù của chúng tôi lần thứ hai.
+
+00:14:04.000 --> 00:14:10.000
+Trên thực tế, độ lệch cho mỗi vị trí chúng ta cần ghi lại sẽ là chỉ mục nhân với Độ dài được mã hóa.
+
+00:14:10.000 --> 00:14:14.000
+Cơ chế này giúp việc mã hóa các mảng cấu trúc trở nên rất dễ dàng.
+
+00:14:14.000 --> 00:14:22.000
+Bây giờ, một điểm quan trọng đáng nói là không cần xử lý đặc biệt từ phía đổ bóng đến chỉ mục vào các mảng này.
+
+00:14:22.000 --> 00:14:27.000
+Bộ đổ bóng không cần biết độ dài của bộ đệm và có thể tự do lập chỉ mục vào bất kỳ vị trí nào trong mảng.
+
+00:14:27.000 --> 00:14:29.000
+Nó chỉ hoạt động!
+
+00:14:29.000 --> 00:14:35.000
+Được rồi, bây giờ chúng ta đã mã hóa cảnh không ràng buộc của mình, chúng ta hãy xem điều hướng.
+
+00:14:35.000 --> 00:14:38.000
+Đối với trường hợp dò tia, điều hướng là rất tự nhiên.
+
+00:14:38.000 --> 00:14:43.000
+Đầu tiên, chúng tôi liên kết bộ đệm chứa gốc của cảnh không ràng buộc của chúng tôi với đường ống dò tia của chúng tôi.
+
+00:14:43.000 --> 00:14:47.000
+Đây là bộ đệm đối số từ nơi chúng ta có thể truy cập tất cả những thứ khác.
+
+00:14:47.000 --> 00:14:52.000
+Tiếp theo, từ hạt nhân của chúng tôi, chúng tôi tiến hành giao điểm dò tia như bình thường.
+
+00:14:52.000 --> 00:14:58.000
+Sau khi chúng tôi phát hiện ra một giao lộ, đối tượng kết quả giao lộ mô tả điều hướng.
+
+00:14:58.000 --> 00:15:03.000
+Chúng ta có thể truy vấn đối tượng này cho ví dụ_id, geometry_id, và primitive_id.
+
+00:15:03.000 --> 00:15:07.000
+Những thành viên này được thiết kế đặc biệt để điều hướng các cấu trúc gia tốc của chúng tôi.
+
+00:15:07.000 --> 00:15:14.000
+Do đó, điều quan trọng là phải xây dựng cảnh không ràng buộc của chúng ta với một cấu trúc phản ánh cấu trúc gia tốc của chúng ta, chẳng hạn như cấu trúc được hiển thị trước đó.
+
+00:15:14.000 --> 00:15:16.000
+Hãy cùng xem lại nó một lần nữa.
+
+00:15:16.000 --> 00:15:23.000
+Hãy nhớ rằng, đây chỉ là một ví dụ về cách sắp xếp cảnh, vì vậy tôi sẽ điều hướng nó theo cách tôi sắp xếp nó.
+
+00:15:23.000 --> 00:15:30.000
+Các chi tiết cụ thể cho cảnh của bạn có thể khác nhau, tùy theo cách bạn quyết định tổ chức bộ đệm đối số của riêng mình.
+
+00:15:30.000 --> 00:15:33.000
+Đầu tiên, chúng ta cần tìm một giao lộ.
+
+00:15:33.000 --> 00:15:45.000
+Một khi chúng tôi có nó, bởi vì chúng tôi đã tổ chức chiến lược cảnh không ràng buộc của mình, với instance_id, bây giờ chúng tôi có thể theo con trỏ đến bộ đệm phiên bản và xác định cái nào chúng tôi đánh.
+
+00:15:45.000 --> 00:15:49.000
+Tiếp theo, như chúng ta đã thấy, ví dụ biết lưới và chất liệu của nó.
+
+00:15:49.000 --> 00:15:56.000
+Vì vậy, chúng ta có thể chỉ cần sử dụng geometry_id để xác định hình học nào chúng ta chạm vào trong bộ đệm được tham chiếu.
+
+00:15:56.000 --> 00:16:03.000
+Cuối cùng, nếu chúng ta chuẩn bị mỗi lưới để biết bộ đệm chỉ mục của nó, chúng ta có thể sử dụng primitive_id để xác định chính xác nguyên thủy mà chúng ta đạt được.
+
+00:16:03.000 --> 00:16:10.000
+Ví dụ, trong trường hợp của một tam giác, chúng ta có thể kéo ba chỉ số từ mảng này và sử dụng chúng để truy xuất dữ liệu đỉnh của nó.
+
+00:16:10.000 --> 00:16:14.000
+Đây là điều hướng này trông như thế nào trong Ngôn ngữ đổ bóng kim loại.
+
+00:16:14.000 --> 00:16:24.000
+Từ đối tượng giao điểm, chúng tôi truy xuất instance_id và sử dụng nó để tự động lập chỉ mục vào mảng phiên bản của chúng tôi và truy xuất phiên bản mà chúng tôi đã truy cập.
+
+00:16:24.000 --> 00:16:32.000
+Tiếp theo, có ví dụ, chúng tôi sử dụng geometry_id để xác định hình học hoặc lưới con nào đã bị tấn công.
+
+00:16:32.000 --> 00:16:38.000
+Khi chúng ta đã xác định được hình học, chúng ta có thể trực tiếp lấy các chỉ số từ bộ đệm chỉ mục.
+
+00:16:38.000 --> 00:16:43.000
+Trong trường hợp của một tam giác, chúng ta kéo ba chỉ số, lần lượt từng chỉ số.
+
+00:16:43.000 --> 00:16:49.000
+Chúng tôi sử dụng các chỉ mục này để truy cập vào mảng dữ liệu đỉnh và truy xuất bất kỳ thuộc tính nào chúng tôi cần cho kỹ thuật của mình.
+
+00:16:49.000 --> 00:16:54.000
+Ví dụ, chúng ta có thể truy xuất các chuẩn tương ứng với mỗi đỉnh.
+
+00:16:54.000 --> 00:17:04.000
+Và cuối cùng, sử dụng tọa độ barycentric của điểm, chúng tôi nội suy thủ công các chuẩn đỉnh để đạt đến chuẩn chính xác tại điểm giao nhau.
+
+00:17:04.000 --> 00:17:15.000
+Với những thay đổi này tại chỗ, đưa nó trở lại ví dụ ấm trà của chúng tôi, bây giờ chúng tôi có cách tính toán bình thường tại điểm giao nhau, chúng tôi có thể tô bóng chính xác phản xạ của mình.
+
+00:17:15.000 --> 00:17:23.000
+Chúng tôi đã cập nhật mã để tìm các thuộc tính chính xác tại điểm giao nhau và bây giờ kết quả chính xác về mặt hình ảnh.
+
+00:17:23.000 --> 00:17:35.000
+Bây giờ chúng ta có thể tiếp tục xây dựng trên khuôn khổ này để tính toán bất kỳ thuộc tính nào khác mà chúng ta muốn, chẳng hạn như tọa độ kết cấu để áp dụng kết cấu hoặc vectơ tiếp tuyến để thực hiện ánh xạ chuẩn.
+
+00:17:35.000 --> 00:17:44.000
+Vì vậy, ở đây chúng tôi đã thấy cách điều hướng cảnh không liên kết của mình để truy xuất dữ liệu đỉnh, nội suy thủ công và cuối cùng, áp dụng nó để tô bóng chính xác tất cả các điểm giao nhau được phát hiện.
+
+00:17:44.000 --> 00:17:52.000
+Để giúp bạn đưa những khái niệm này vào công cụ của riêng mình, chúng tôi sẽ phát hành một mẫu mã đồng hành cho thấy việc triển khai cụ thể tất cả những điều này.
+
+00:17:52.000 --> 00:17:58.000
+Đây là một mẫu kết xuất lai tính toán phản xạ dò tia cho một cảnh được tải bằng khung Model I/O.
+
+00:17:58.000 --> 00:18:13.000
+Mẫu cho thấy cách bạn có thể mã hóa một cảnh không liên kết phù hợp với cấu trúc gia tốc dò tia và nó cũng cho thấy cách tìm giao điểm và tô bóng chính xác các điểm ảnh liên quan của chúng trực tiếp từ bộ đổ bóng dò tia của bạn.
+
+00:18:13.000 --> 00:18:21.000
+Như chúng ta có thể thấy ở đây, mẫu cũng cho phép hình dung trực tiếp đầu ra của bộ đổ bóng theo dõi tia phản xạ ngay tại các điểm mà các tia giao với xe tải.
+
+00:18:21.000 --> 00:18:28.000
+Điều này thật tuyệt vời cho việc thử nghiệm lặp đi lặp lại với thuật toán phản xạ.
+
+00:18:28.000 --> 00:18:34.000
+Bây giờ, chúng tôi đã bao quát rất nhiều nền tảng ở đây và cho đến nay chúng tôi đã tập trung hầu hết các cuộc thảo luận của mình trong bối cảnh dò tia.
+
+00:18:34.000 --> 00:18:40.000
+Nhưng như tôi đã đề cập trước đó, chúng ta có thể áp dụng các nguyên tắc tương tự để tô bóng đúng các điểm ảnh của mình trong bối cảnh rasterization.
+
+00:18:40.000 --> 00:18:44.000
+Kết xuất dựa trên vật lý là một ứng cử viên tuyệt vời cho việc này.
+
+00:18:44.000 --> 00:18:54.000
+Trong PBR, bộ đổ bóng mảnh của chúng tôi cần thông tin đến từ một số kết cấu; ví dụ, suất phản chiếu, độ nhám, kim loại và tắc nghẽn môi trường xung quanh.
+
+00:18:54.000 --> 00:19:01.000
+Trong mô hình ràng buộc trực tiếp, chúng ta cần liên kết từng khe riêng lẻ trước khi phát hành từng cuộc gọi rút thăm của chúng ta.
+
+00:19:01.000 --> 00:19:05.000
+Mô hình không ràng buộc đơn giản hóa điều này rất nhiều.
+
+00:19:05.000 --> 00:19:13.000
+Khi chúng tôi đã mã hóa bộ đệm đối số của mình, chúng tôi có thể liên kết trực tiếp cảnh, điều hướng đến tài liệu tương ứng với cuộc gọi vẽ của chúng tôi và truy cập gián tiếp tất cả các kết cấu.
+
+00:19:13.000 --> 00:19:26.000
+Trên thực tế, vì bây giờ chúng ta chỉ cần liên kết một bộ đệm duy nhất một lần, kiến trúc này cung cấp một cơ hội tuyệt vời để tối ưu hóa các công cụ của chúng ta hơn nữa bằng cách giảm số lượng cuộc gọi vẽ và thay vào đó sử dụng kết xuất phiên bản.
+
+00:19:26.000 --> 00:19:31.000
+Chỉ cần nhớ tạo cho cư dân tất cả các kết cấu mà chúng tôi dự định truy cập.
+
+00:19:31.000 --> 00:19:34.000
+Đây là một ví dụ về bộ đổ bóng PBR điển hình.
+
+00:19:34.000 --> 00:19:40.000
+Trong mô hình truyền thống, mỗi kết cấu được tham chiếu cần được liên kết riêng trước cuộc gọi vẽ này.
+
+00:19:40.000 --> 00:19:48.000
+Nếu cuộc gọi vẽ sau đây yêu cầu một tập hợp các kết cấu khác nhau, tất cả các tài nguyên này cũng cần được ràng buộc từng cái một.
+
+00:19:48.000 --> 00:19:57.000
+Khi sử dụng mô hình không liên kết, bây giờ chúng ta có thể chuyển bộ đệm đối số gốc của mình và truy xuất tài liệu của chúng ta trực tiếp từ các cấu trúc được tham chiếu của nó, giống như trước đây.
+
+00:19:57.000 --> 00:20:12.000
+Đầu tiên chúng tôi truy xuất trường hợp - điều này có thể được xác định trong giai đoạn tô bóng đỉnh - sau đó truy xuất tài liệu của nó và sử dụng kết cấu được tham chiếu và dữ liệu không đổi của nó để tính toán bóng thích hợp.
+
+00:20:12.000 --> 00:20:15.000
+Cuối cùng, chúng tôi chỉ trả lại màu.
+
+00:20:15.000 --> 00:20:16.000
+Được rồi!
+
+00:20:16.000 --> 00:20:20.000
+Và đó là một chuyến tham quan về cách thực hiện hiệu quả kết xuất không ràng buộc trong Metal!
+
+00:20:20.000 --> 00:20:29.000
+Tóm lại, chúng tôi đã khám phá mô hình Metal bindless và thấy nó cực kỳ linh hoạt như thế nào, cho phép bạn thể hiện cảnh của mình theo bất kỳ cách nào bạn muốn.
+
+00:20:29.000 --> 00:20:34.000
+Đề xuất của tôi là thiết kế và xây dựng các cấu trúc giúp dễ dàng điều hướng cho trình kết xuất đã cho của bạn.
+
+00:20:34.000 --> 00:20:42.000
+Bằng cách này, điều hướng trở nên rất tự nhiên và bạn thậm chí có thể sử dụng cùng một bộ đệm cho cả dò tia và rasterization.
+
+00:20:42.000 --> 00:20:48.000
+Bindless thay đổi hoàn toàn trò chơi, cung cấp cho GPU của bạn tất cả dữ liệu bạn cần để thực hiện các kỹ thuật kết xuất hiện đại.
+
+00:20:48.000 --> 00:20:57.000
+Bạn thậm chí có thể tiến xa hơn và sử dụng kiến trúc này để đặt GPU vào ghế lái và áp dụng các đường ống gián tiếp thông qua bộ đệm lệnh gián tiếp và loại bỏ GPU.
+
+00:20:57.000 --> 00:21:03.000
+Chúng tôi nóng lòng muốn xem bạn đưa điều này vào thực tế như thế nào để cung cấp thế hệ ứng dụng và trò chơi đồ họa tiếp theo.
+
+00:21:03.000 --> 00:21:06.000
+Cảm ơn bạn và tận hưởng phần còn lại của WWDC 2021!
+
+00:21:06.000 --> 23:59:59.000
+♪
+

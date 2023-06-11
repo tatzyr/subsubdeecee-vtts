@@ -1,0 +1,457 @@
+10160
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+David Hayward: Xin chào, tên tôi là David Hayward, và tôi là một kỹ sư của nhóm Core Image.
+
+Hôm nay, các đồng nghiệp của tôi Tuomas Viitanen, Matt Dickoff và tôi sẽ trình bày chi tiết cho bạn thấy mọi thứ bạn cần biết về định dạng hình ảnh ProRAW và cách thêm hỗ trợ cho nó vào ứng dụng của bạn.
+
+Đây là những gì chúng ta sẽ thảo luận hôm nay.
+
+Đầu tiên, tôi sẽ mô tả những gì tạo nên một tệp ProRAW.
+
+Tiếp theo, chúng ta sẽ thảo luận về cách chụp các tệp này, cách lưu trữ chúng trong thư viện ảnh và cách chỉnh sửa và hiển thị chúng.
+
+Hãy bắt đầu với, ProRAW là gì?
+
+Trong một thời gian, các thiết bị của Apple đã có thể tận dụng tối đa Bộ xử lý tín hiệu hình ảnh của chúng tôi để chụp những hình ảnh HEIC hoặc JPEG đẹp mắt đã sẵn sàng để hiển thị.
+
+Sau đó bắt đầu từ iOS 10, chúng tôi đã hỗ trợ thu thập dữ liệu cảm biến RAW mẫu Bayer và lưu trữ dữ liệu đó trong tệp DNG.
+
+Sự khác biệt và ưu điểm của hai cách tiếp cận này đã được mô tả rõ ràng trong phiên WWDC 2016 có tiêu đề "Những tiến bộ trong nhiếp ảnh iOS".
+
+Bài thuyết trình đó đã sử dụng một phép loại suy tuyệt vời để mô tả hai định dạng.
+
+HEIC hoặc JPEG đã qua xử lý giống như đi đến một tiệm bánh và đặt một chiếc bánh nhiều lớp.
+
+Trong khi đó, một tệp RAW mẫu Bayer giống như đi đến cửa hàng tạp hóa và lấy nguyên liệu thô để làm bánh.
+
+Ưu điểm của HEIC hoặc JPEG được xử lý là bạn có được hình ảnh cuối cùng do Apple nướng.
+
+Nó hiển thị nhanh và có chất lượng tuyệt vời vì nó được tạo ra bằng cách hợp nhất nhiều khung hình chụp bằng chế độ Smart HDR, Deep Fusion hoặc Night.
+
+Ngoài ra, nó có kích thước tệp nhỏ vì nó sử dụng tính năng nén mất dữ liệu nâng cao.
+
+Ưu điểm của Bayer RAW là bạn có được một hình ảnh có tính linh hoạt cao hơn nhiều để chỉnh sửa.
+
+Nó đã không được lưu bằng cách sử dụng nén mất dữ liệu và nó có độ chính xác cao hơn.
+
+Mục tiêu của chúng tôi với ProRAW là thiết lập một định dạng hình ảnh với các tính năng tốt nhất của cả hai.
+
+Ưu điểm của ProRAW là nó có giao diện tương tự như HEIC nhưng sử dụng nén không mất dữ liệu.
+
+Ngoài ra, tùy thuộc vào cảnh, nó được hợp nhất từ nhiều lần phơi sáng, vì vậy nó có dải động tuyệt vời để chỉnh sửa.
+
+Bởi vì chúng có tiếng ồn thấp và đã bị phá hủy, chúng hiển thị khá nhanh.
+
+Định dạng ProRAW được thiết kế để tối đa hóa ba thuộc tính: khả năng tương thích, chất lượng và giao diện.
+
+Hãy thảo luận chi tiết hơn về từng điều này.
+
+Để đảm bảo khả năng tương thích, các tệp ProRAW được chứa trong tệp Adobe DNG tiêu chuẩn.
+
+Định dạng tệp DNG tuyến tính hóa được hỗ trợ bởi các ứng dụng của Apple như Ảnh, ứng dụng Adobe như Lightroom và nhiều ứng dụng khác.
+
+Nhiều ứng dụng được hỗ trợ tự động thông qua các khung hệ thống, ImageIO và Core Image.
+
+Các phiên bản trước của iOS và macOS cũng có hỗ trợ cơ bản cho định dạng.
+
+Và điều đáng nói là các tệp có thể chứa các bản xem trước được kết xuất trước có độ phân giải đầy đủ, chất lượng JPEG.
+
+Tất cả các ProRAW được chụp bởi ứng dụng Camera sẽ chứa các bản xem trước này sẽ trông giống hệt với hình ảnh nếu nó được chụp mà không bật chế độ ProRAW.
+
+Chất lượng của tệp ProRAW khá ấn tượng.
+
+Các điểm ảnh trong DNG được giới thiệu theo cảnh và có thể tuyến tính hóa, có thể được tạo ra từ nhiều lần phơi sáng bị phá hủy kết hợp với phản ứng tổng hợp hình ảnh, RGB 12 bit được nén không mất dữ liệu; nhưng chúng tôi tạo ra các bit này thông qua một đường cong companding thích ứng để chúng tôi có thể đạt được phạm vi động lên
+
+Kích thước tệp kết quả có thể dao động từ 10 megabyte đến 40 megabyte, nhưng kích thước đó sẽ mở rộng dựa trên cảnh duy nhất của mỗi bức ảnh.
+
+Apple nỗ lực rất nhiều để điều chỉnh chất lượng hình ảnh của chúng tôi.
+
+Hình ảnh ProRAW có giao diện mặc định phù hợp với giao diện của HEIC và JPEG của chúng tôi.
+
+Điều này đạt được bằng cách nhúng các thẻ đặc biệt vào tệp DNG.
+
+Các thẻ này được ghi lại trong thông số kỹ thuật DNG và cung cấp công thức về cách hiển thị giao diện mặc định của mỗi hình ảnh.
+
+Thẻ đầu tiên được áp dụng là LinearizationTable chuyển đổi dữ liệu được lưu trữ 12 bit thành các giá trị cảnh tuyến tính.
+
+Chúng tôi sử dụng thẻ BaselineExposure vì hình ảnh ProRAW thích ứng với dải động của cảnh.
+
+Thẻ BaselineSharpness cho phép chúng tôi chỉ định mức độ sắc nét cạnh để áp dụng theo mặc định.
+
+Thẻ ProfileGainTableMap - mới trong thông số kỹ thuật DNG 1.6 - cho phép chúng tôi mô tả cách điều chỉnh các vùng sáng và bóng tối.
+
+Cuối cùng, là ProfileToneCurve chỉ định đường cong âm toàn cầu đầu ra.
+
+Tất cả các thẻ này là duy nhất cho mỗi hình ảnh.
+
+Bởi vì họ cung cấp công thức chứ không phải bánh, hình ảnh vẫn có khả năng chỉnh sửa cao.
+
+Ví dụ, độ sắc nét mặc định, hoặc đường cong tông màu, có thể được thay đổi bất cứ lúc nào.
+
+Cuối cùng, khi có mặt trong hiện trường, chúng tôi lưu trữ mặt nạ ngữ nghĩa trong ProRAW cho các khu vực như người, da và bầu trời.
+
+Vì vậy, bây giờ chúng ta đã biết điều gì tạo nên ProRAW, tôi muốn giới thiệu Tuomas, người sẽ mô tả cách bắt chúng.
+
+Tuomas Viitanen: Cảm ơn bạn, David.
+
+Tên tôi là Tuomas Viitanen.
+
+Tôi là một kỹ sư trong nhóm Phần mềm Máy ảnh và tôi sẽ hướng dẫn bạn cách bạn có thể chụp Apple ProRAWs bằng ứng dụng của mình.
+
+AVFoundation Capture APIs cung cấp cho bạn quyền truy cập vào máy ảnh trên iOS và MacOS.
+
+Chúng cho phép bạn phát trực tiếp bản xem trước và video, chụp ảnh và quay phim, trong số nhiều thứ khác.
+
+Và như một bổ sung gần đây, chúng tôi đã thêm hỗ trợ để chụp ảnh ở định dạng Apple ProRAW DNG mới.
+
+Một nguồn thông tin tốt về việc sử dụng cơ bản của AVFoundation Capture APIs là những tiến bộ trong cuộc nói chuyện về Nhiếp ảnh iOS từ WWDC 2016 giải thích cách sử dụng đầu ra ảnh AVCapture và mã mẫu AVCam là một ví dụ về ứng dụng chụp ảnh đơn giản.
+
+Tiếp theo, chúng ta sẽ xem xét chi tiết ảnh chụp Apple ProRAW.
+
+Nhưng trước tiên, chúng ta hãy xem nhanh nơi Apple ProRAW được hỗ trợ.
+
+Một điểm khởi đầu tốt cho điều đó là so sánh với hỗ trợ Bayer RAW hiện có.
+
+Bayer RAW đã được giới thiệu trong iOS 10 và được hỗ trợ trên nhiều loại thiết bị.
+
+Apple ProRAW được giới thiệu trong iOS 14.3 và được hỗ trợ trên iPhone 12 Pro và iPhone 12 Pro Max.
+
+Ứng dụng Máy ảnh riêng của Apple hỗ trợ chụp Apple ProRAW với tất cả các chụp hợp nhất, như chế độ Deep Fusion và Night, cũng như với chụp flash.
+
+Apple ProRAW cho phép ưu tiên chất lượng ảnh được đặt thành .balanced và .quality, cho phép bạn nhận được lợi ích của việc hợp nhất hình ảnh Apple vào ảnh RAW của mình.
+
+Trong khi Bayer RAW chỉ được hỗ trợ trên các thiết bị AVCaptureDevices một camera, như rộng và tele.
+
+Apple ProRAW được hỗ trợ trên tất cả các thiết bị, bao gồm các thiết bị kép rộng, kép và ba camera chuyển đổi liền mạch giữa các camera khi phóng to.
+
+Tương tự như Bayer RAW, Apple ProRAW không hỗ trợ phân phối dữ liệu độ sâu cũng như hiệu chỉnh biến dạng nhận biết nội dung.
+
+Chụp ảnh trực tiếp chỉ được hỗ trợ với Bayer RAW nhưng hiệu ứng chân dung mờ và phân đoạn ngữ nghĩa da và bầu trời mờ chỉ được hỗ trợ với ProRAW.
+
+Vì vậy, hãy xem qua cách bạn có thể chụp Apple ProRAWs.
+
+Các mục chúng tôi đề cập là: cách thiết lập thiết bị chụp và phiên chụp của bạn, cách thiết lập đầu ra ảnh của bạn, cách chuẩn bị cài đặt ảnh của bạn để chụp ProRAW và những tùy chọn bạn có sau khi chụp ảnh ProRAW.
+
+Hãy bắt đầu từ việc thiết lập phiên.
+
+Apple ProRAW chỉ được hỗ trợ trên các định dạng hỗ trợ ảnh chất lượng cao nhất.
+
+Bạn sẽ nhận được điều đó bằng cách đặt phiên chụp Cài đặt sẵn thành .photo.
+
+Hoặc nếu bạn muốn chọn định dạng thiết bị theo cách thủ công, bạn có thể tìm thấy các định dạng hỗ trợ ảnh tĩnh chất lượng cao nhất.
+
+Lưu ý rằng điều này khác với ảnh tĩnh chất lượng cao, được hỗ trợ trên một bộ định dạng rộng hơn.
+
+Và sau đó chỉ cần định cấu hình định dạng mong muốn là Định dạng hoạt động của thiết bị.
+
+Trong ví dụ này và sau này, tôi chỉ đơn giản là sử dụng chỉ mục đầu tiên từ danh sách các mục được hỗ trợ, nhưng bạn sẽ muốn thay thế nó bằng một lựa chọn dựa trên các tiêu chí hoạt động tốt nhất cho ứng dụng của bạn.
+
+Bây giờ, hãy xem cách bạn có thể định cấu hình đầu ra ảnh để chụp ProRAW.
+
+Đầu tiên, bạn cần bật ProRAW trên photoOutput.
+
+Hãy chắc chắn làm điều đó trước khi bắt đầu phiên, vì nếu không nó sẽ gây ra việc cấu hình lại đường ống kéo dài.
+
+Đặt thuộc tính này thành true chuẩn bị đường ống chụp để chụp ProRAW và thêm các định dạng pixel ProRAW vào danh sách các loại định dạng pixel ảnh RAW được hỗ trợ.
+
+Nếu bạn thích, bạn cũng có thể chỉ ra cho đường ống chụp cho dù bạn thích tốc độ hay chất lượng với ảnh chụp của mình, hoặc nếu bạn chỉ thích sự cân bằng giữa cả hai.
+
+Thông tin thêm về hiệu quả của việc ưu tiên chất lượng ảnh đối với các bức ảnh đã chụp có thể được tìm thấy từ Chụp ảnh chất lượng cao bằng cách sử dụng các định dạng video thảo luận.
+
+Và tiếp theo, chúng tôi sẽ xem cách bạn có thể chuẩn bị cho việc chụp.
+
+Để có thể tạo cài đặt ảnh cho ảnh chụp ProRAW của bạn, bạn cần chọn định dạng pixel RAW chính xác.
+
+Bạn nhận được các định dạng pixel RAW được hỗ trợ từ cùng một định dạng Pixel RawPhoto có sẵn cung cấp cho bạn các định dạng Bayer RAW được hỗ trợ.
+
+Bạn có thể phân biệt các định dạng ProRAW với các định dạng BayerRAW bằng cách sử dụng phương thức lớp isAppleProRAWPixelFormat mới trên photoOutput.
+
+Một ví dụ về định dạng điểm ảnh ProRAW là l64r đó là định dạng điểm ảnh RGBA toàn dải 16 bit.
+
+Để tham khảo, bạn cũng có thể truy vấn xem định dạng có phải là định dạng Bayer RAW hay không bằng cách sử dụng phương thức lớp isBayerRAWPixelFormat.
+
+Tiếp theo, chúng ta sẽ xem xét một số tùy chọn bạn có để chụp Apple ProRAW và, tùy chọn, một bức ảnh quy trình được hiển thị đầy đủ cùng với nó.
+
+Tùy chọn đầu tiên và đơn giản nhất để chụp ProRAW là chỉ yêu cầu ảnh ProRAW.
+
+Để làm điều đó, bạn chỉ cần chỉ định rawPixelFormatType khi tạo photoSettings.
+
+Điều này cung cấp cho bạn một tài sản duy nhất đơn giản để làm việc và lưu trữ vào thư viện ảnh như Matt sau này sẽ chỉ cho bạn.
+
+Cũng có thể chụp một cặp ảnh đã xử lý và ProRAW tương tự như những gì bạn có thể làm với Bayer RAW bằng cách cung cấp Định dạng đã xử lý cho Cài đặt ảnh.
+
+Nhưng điều này đòi hỏi bạn phải làm việc với nhiều tài sản và cũng khó theo dõi chúng trong thư viện ảnh hơn.
+
+May mắn thay, Apple ProRAW hỗ trợ hình ảnh JPEG có độ phân giải đầy đủ dưới dạng hình thu nhỏ và trong nhiều trường hợp, điều này cung cấp cho bạn hai tùy chọn tốt nhất trước đó.
+
+Để yêu cầu hình thu nhỏ, bạn có thể chọn định dạng mong muốn từ availableRawEmbedded ThumbnailPhotoCodecTypes và chỉ định kích thước hình thu nhỏ mong muốn.
+
+Bây giờ bạn gần như đã sẵn sàng để chụp một bức ảnh ProRAW.
+
+Nhưng trước đó, nếu bạn thích, bạn có thể chỉ định ưu tiên chất lượng ảnh cho bức ảnh này.
+
+Lưu ý rằng giá trị bạn chỉ định ở đây phải nhỏ hơn hoặc bằng maxPhotoQualityPrioritization mà bạn đã chỉ định trước đó trên photoOutput.
+
+Bạn cũng có thể yêu cầu hình ảnh xem trước có kích thước hiển thị nếu bạn muốn có thứ gì đó để hiển thị cho khách hàng một cách nhanh chóng sau khi chụp.
+
+Và sau đó bạn có thể chụp ảnh ProRAW bằng cách sử dụng cùng một phương pháp capturePhoto cũng được sử dụng cho tất cả các ảnh tĩnh khác.
+
+Bây giờ việc chụp ảnh tĩnh đang trên đường đến, hãy xem bạn có thể làm gì khi bức ảnh được yêu cầu đã sẵn sàng.
+
+Khi ảnh được xử lý đầy đủ, đại diện didFinishProcessingPhoto của bạn sẽ được gọi bằng AVCapturePhoto đại diện cho ảnh ProRAW.
+
+Nếu bạn yêu cầu một hình ảnh xem trước để chụp, bây giờ bạn có thể lấy bộ đệm pixel với hình ảnh xem trước không nén hoặc CGImageRepresentation của nó để hiển thị trên màn hình.
+
+Và trong trường hợp bạn yêu cầu một bức ảnh đã được xử lý cùng với ProRAW, đại diện didFinishProcessingPhoto của bạn sẽ được gọi hai lần.
+
+Bạn có thể phân biệt ProRAW với ảnh được xử lý bằng cách sử dụng thuộc tính isRawPhoto trên AVCapturePhoto đã nhận.
+
+Và sau đó bạn có thể chỉ cần yêu cầu fileDataRepresentation cho ProRAW để lưu DNG vào thư viện ảnh.
+
+Hoặc tùy chọn, lấy bộ đệm pixel với dữ liệu pixel RAW nếu bạn muốn làm việc với dữ liệu đó.
+
+Như David đã đề cập trước đó, ProRAW DNG có thể bao gồm các mờ phân đoạn ngữ nghĩa.
+
+Việc bao gồm các mờ này là tự động và phụ thuộc vào cảnh.
+
+Mặc dù các mờ hiện không có sẵn thông qua AVFoundation Capture APIs, bạn có thể truy xuất chúng thông qua Core Image và ImageIO APIs như David sẽ hiển thị cho bạn sau này.
+
+Và cuối cùng, chúng ta sẽ xem xét một số tùy chọn tùy chỉnh mà bạn có với ProRAW DNG.
+
+Bạn có thể tùy chỉnh ProRAW bằng cách triển khai các phương thức đại diện AVCapturePhotoFileData RepresentationCustomizer.
+
+Bằng cách triển khai cài đặt nén AppleProRAW thay thế, bạn có thể thay đổi độ sâu bit nén và chất lượng của ảnh ProRAW.
+
+Apple ProRAW được mã hóa không mất dữ liệu theo mặc định sử dụng 12 bit với đường cong companding.
+
+Bạn có thể thay đổi độ sâu bit của ProRAW được nén không mất dữ liệu bằng cách giữ mức chất lượng ở mức 1 và cung cấp độ sâu bit mong muốn với trình tùy chỉnh.
+
+Điều này tiết kiệm không gian lưu trữ nhưng vẫn giữ được chất lượng cao của ảnh ProRAW.
+
+Trong trường hợp bạn thích nén mất dữ liệu, bạn có thể đặt mức chất lượng xuống dưới 1, trong trường hợp đó ProRAW được nén tự động bằng cách sử dụng nén mất dữ liệu 8 bit.
+
+Điều này cung cấp cho bạn một kích thước tệp nhỏ, nhưng có tác động rõ ràng đến chất lượng của ảnh ProRAW.
+
+Bây giờ bạn đã triển khai trình tùy chỉnh, bạn có thể yêu cầu tùy chỉnh cho ProRAW DNG đã chụp trong đại diện didFinishProcessingPhoto của bạn.
+
+Bằng cách tạo trình tùy chỉnh và cung cấp nó cho fileDataRepresentation, bạn sẽ nhận lại ProRAW tùy chỉnh với các cài đặt nén mà bạn vừa cung cấp.
+
+Đó là phần giới thiệu về việc chụp Apple ProRAW bằng cách sử dụng AVFoundation Capture APIs.
+
+Tôi sẽ giao nó cho Matt, người sẽ cho bạn biết thêm về Apple ProRAW và thư viện ảnh.
+
+Matt?
+
+Matt Dickoff: Cảm ơn, Tuomas! Xin chào!
+
+Tên tôi là Matt Dickoff, và tôi là một kỹ sư trong nhóm Ảnh.
+
+Tôi sẽ hướng dẫn bạn cách trước tiên để lưu tệp ProRAW mà bạn vừa chụp dưới dạng tài sản hoàn chỉnh trong thư viện ảnh.
+
+Sau đó, chúng ta sẽ xem qua cách tìm nạp RAW đã tồn tại trong thư viện ảnh.
+
+PhotoKit là một cặp khung được sử dụng để tương tác với thư viện ảnh trên Nền tảng Apple.
+
+Nó lần đầu tiên được giới thiệu trong các bản phát hành này và đã chứng kiến những cải tiến và bổ sung kể từ đó.
+
+Đáng chú ý, nó có hỗ trợ cho các định dạng hình ảnh RAW như Apple ProRAW.
+
+Hôm nay tôi sẽ chỉ đề cập đến các API cụ thể liên quan đến RAW trong thư viện ảnh.
+
+Nếu bạn vẫn còn thắc mắc về PhotoKit sau bài thuyết trình này, tôi khuyến khích bạn xem tài liệu nhà phát triển trực tuyến.
+
+Để lưu một tài sản mới, chúng ta sẽ cần thực hiện các thay đổi trên PHPhotoLibrary được chia sẻ.
+
+Như với việc lưu bất kỳ tài sản nào, thay đổi chúng tôi sẽ thực hiện là PHAssetCreationRequest và chúng tôi sẽ thêm tệp Apple ProRAW của mình vào tài sản này dưới dạng .photo PHAssetResource chính.
+
+Vậy hãy xem mã cho điều đó trông như thế nào.
+
+Đầu tiên, chúng tôi bắt đầu bằng cách thực hiện các thay đổi trên thư viện ảnh được chia sẻ.
+
+Chúng tôi sẽ chỉ cần tạo một PHAssetCreationRequest và sau đó thêm tệp Apple ProRAW vào đó làm tài nguyên ảnh chính.
+
+Và thế là xong!
+
+Chỉ cần xử lý thành công và lỗi khi ứng dụng của bạn thấy phù hợp.
+
+Bây giờ chúng ta đã biết cách thêm nội dung vào thư viện ảnh, chúng ta hãy xem cách chúng ta có thể lấy lại chúng, bao gồm cả nội dung RAW mà người dùng có thể đã có trong thư viện của họ.
+
+Tôi rất vui khi nói rằng trong iOS 15, chúng tôi đã cung cấp một PHAssetCollectionSubtype mới, .smartAlbumRAW.
+
+Với album thông minh này, bạn có thể dễ dàng có được một bộ sưu tập chứa tất cả các nội dung trong thư viện ảnh có tài nguyên RAW.
+
+Album này là cùng một album RAW mà bạn thấy trong ứng dụng Apple Photos.
+
+Bây giờ chúng ta đã có một số PHAssets với tài nguyên RAW, chúng ta hãy xem những gì nó cần để thực sự có được những tài nguyên đó.
+
+Đầu tiên, chúng tôi sẽ muốn lấy tất cả các PHAssetResources cho một PHAsset.
+
+Tiếp theo, chúng ta sẽ tìm kiếm hai loại tài nguyên khác nhau: .photo mà chúng ta đã nói trước đây và ngoài ra, .alternatePhoto.
+
+Tôi muốn dành một chút thời gian để giải thích .alternatePhoto là gì.
+
+Một số thư viện ảnh sẽ chứa các nội dung tuân theo mô hình lưu trữ RAW cộng với JPEG cũ mà một số máy ảnh DSLR sử dụng.
+
+Điều này yêu cầu lưu trữ RAW và JPEG dưới dạng hai tài nguyên riêng biệt; JPEG là ảnh và RAW làm ảnh thay thế.
+
+Điều này dẫn đến tăng dung lượng tệp trong thư viện ảnh, ít tính di động hơn và thường là trải nghiệm người dùng khó hiểu.
+
+Mô hình này không được khuyến khích cho Apple ProRAW.
+
+Nếu ý định của bạn là lưu tệp ProRAW vào thư viện ảnh, bạn nên sử dụng cài đặt chụp để nhúng bản xem trước JPEG kích thước đầy đủ vào tệp.
+
+Bây giờ, quay lại tài nguyên của chúng tôi.
+
+Chúng tôi sẽ kiểm tra uniformTypeIdentifier của tài nguyên để xem liệu nó có phù hợp với loại RAW mà chúng tôi quan tâm hay không.
+
+Và cuối cùng, khi chúng tôi có tài nguyên RAW, chúng tôi sẽ sử dụng PHAssetResourceManager để truy xuất dữ liệu thực tế.
+
+Bây giờ chúng ta hãy xem xét điều đó trong mã.
+
+Đầu tiên, chúng tôi lặp lại tất cả các PHAssetResources trên một tài sản, tìm kiếm bất kỳ loại .photo hoặc .alternatePhoto nào, kiểm tra xem chúng có phù hợp với UTType hình ảnh RAW hay không và cuối cùng sử dụng PHAssetResourceManager để yêu cầu dữ liệu cho tài nguyên đó.
+
+Và thế là xong!
+
+Bây giờ bạn đã biết cách sử dụng PhotoKit để lưu và truy xuất tài sản với tài nguyên RAW từ thư viện ảnh.
+
+Bây giờ tôi sẽ trả lại nó cho David, người sẽ nói về cách tốt nhất để chỉnh sửa và hiển thị hình ảnh Apple ProRAW.
+
+David: Cảm ơn bạn, Matt.
+
+Phần cuối cùng của bài nói chuyện của chúng ta hôm nay sẽ là về cách sử dụng khung Core Image để chỉnh sửa và hiển thị hình ảnh ProRAW.
+
+Tôi sẽ mô tả cách tạo CIImages từ tệp ProRAW; cách áp dụng các điều chỉnh người dùng phổ biến nhất; cách bạn có thể tắt giao diện mặc định để có được các giá trị tuyến tính, ưu tiên theo cảnh; cách hiển thị các chỉnh sửa cho các định dạng ưu tiên đầu ra như HEIC; và cuối cùng, cách hiển thị ProRAW cho máy
+
+Có thể lấy hình ảnh xem trước từ ProRAW bằng cách sử dụng CGImageSourceCreateWithURL và CGImageSourceCreate ThumbnailAtIndex APIs.
+
+Mới trong iOS 15 và macOS 12, Core Image đã thêm một API tiện lợi mới để truy cập bản xem trước.
+
+Nhận các mờ phân đoạn ngữ nghĩa như người, da và bầu trời được hỗ trợ bằng cách chuyển khóa tùy chọn mong muốn khi khởi tạo CIImage.
+
+Điều này cũng có một API mới và thuận tiện hơn để truy cập các hình ảnh mờ tùy chọn.
+
+Quan trọng nhất, ứng dụng của bạn sẽ muốn có được hình ảnh ProRAW chính.
+
+Nếu ứng dụng của bạn chỉ muốn hiển thị giao diện kết xuất mặc định, tất cả những gì bạn cần làm là tạo một CIImage bất biến từ URL hoặc dữ liệu.
+
+Tuy nhiên, nếu ứng dụng của bạn muốn mở khóa khả năng chỉnh sửa đầy đủ của ProRAWs, thì hãy tạo một CIFilter từ URL.
+
+Nếu bạn chỉ yêu cầu bộ lọc đó cho outputImage của nó, bạn sẽ nhận được CIImage với giao diện mặc định.
+
+Ưu điểm chính của API này là bộ lọc có thể dễ dàng sửa đổi.
+
+RAW CIFilter có một số đầu vào mà ứng dụng của bạn có thể thay đổi để tạo ra hình ảnh đầu ra mới.
+
+Mẫu mã cơ bản là đặt một đối tượng giá trị cho một trong các chuỗi khóa được ghi lại.
+
+Tuy nhiên, setValue forKey API này đã đến hạn cập nhật.
+
+Vì vậy, mới trong iOS 15 và macOS 12, chúng tôi đã tạo ra một API dễ khám phá hơn và thân thiện với Swift.
+
+Để sử dụng API mới, hãy tạo một phiên bản CIRAWFilter và sau đó chỉ cần đặt thuộc tính mong muốn thành một giá trị mới.
+
+Tiếp theo, hãy thảo luận về những thuộc tính mà bạn có thể muốn thay đổi.
+
+Với dải động của hình ảnh ProRAW, một trong những điều khiển quan trọng nhất cần cung cấp là độ phơi sáng.
+
+Bạn có thể đặt giá trị này thành bất kỳ float nào.
+
+Ví dụ, đặt nó thành dương 1 để làm cho hình ảnh sáng gấp đôi hoặc âm 1 để làm cho nó sáng bằng một nửa.
+
+Bởi vì ProRAWs được chỉnh sửa trong một không gian giới thiệu cảnh tuyến tính, việc điều chỉnh cân bằng trắng hình ảnh sẽ hiệu quả hơn.
+
+Cảnh trung tính có thể được chỉ định là nhiệt độ tính bằng độ kelvin hoặc dưới dạng tọa độ màu x/y.
+
+Độ sắc nét mặc định của giao diện ProRAW có thể được điều chỉnh thành bất kỳ giá trị nào từ 0 đến 1.
+
+Và sức mạnh của bản đồ âm cục bộ ProRAW có thể được điều chỉnh thành bất kỳ giá trị nào từ 0 đến 1.
+
+Bản đồ tông màu cục bộ cho phép mỗi vùng của hình ảnh có đường cong tông màu được tối ưu hóa riêng.
+
+Đây là một ví dụ về hình ảnh ProRAW với cường độ bản đồ tông màu cục bộ bị tắt hoàn toàn...
+
+Và với một nửa sức mạnh...
+
+Và hoàn toàn bật.
+
+Trong hình ảnh này, các đường cong tông màu cục bộ làm nổi bật các vùng tối hơn và làm giảm các vùng sáng hơn để hiển thị kết quả tốt nhất có thể trên màn hình Dải động Tiêu chuẩn.
+
+Tiếp theo, hãy thảo luận về cách ứng dụng của bạn có thể truy cập trực tiếp vào 14 điểm dừng của dữ liệu giới thiệu cảnh tuyến tính.
+
+Hầu hết người dùng sẽ thích các điều chỉnh phổ biến mà tôi đã mô tả trước đó, nhưng quyền truy cập vào dữ liệu tuyến tính có thể rất hữu ích cho một số trường hợp ứng dụng nhất định.
+
+Để có được một hình ảnh tuyến tính, bạn chỉ cần tắt các đầu vào bộ lọc áp dụng giao diện mặc định cho hình ảnh.
+
+Đặt baselineExposure, exposureBias, boost, và localToneMapAmount thành 0, và tắt ánh xạ gam màu trước khi nhận outputImage.
+
+Khi bạn có linearRAWImage, bạn có thể sử dụng nó làm đầu vào cho các bộ lọc Core Image khác để thực hiện các phép tính được giới thiệu theo cảnh.
+
+Ví dụ, bạn có thể sử dụng bộ lọc biểu đồ Core Image tích hợp để tính toán số liệu thống kê.
+
+Hoặc bạn có thể muốn hiển thị hình ảnh tuyến tính để lấy dữ liệu điểm ảnh của nó.
+
+Để làm điều này, chỉ cần tạo CIRenderDestination cho dữ liệu có thể thay đổi nửa nổi RGBA, yêu cầu đích kết xuất sử dụng colorSpace tuyến tính mà bạn chọn và sau đó CIContext bắt đầu tác vụ hiển thị hình ảnh đầu ra của rawFilter.
+
+Đây là một ví dụ về ProRAW với giao diện mặc định so với hình ảnh được giới thiệu theo cảnh tuyến tính được chụp.
+
+Hình ảnh tuyến tính sẽ trông phẳng và thiếu sáng, nhưng nó vẫn chứa 14 điểm dừng dữ liệu đầy đủ và không bị cắt từ cảnh.
+
+Cặp hình ảnh này cũng cung cấp một minh họa tốt về sự khác biệt giữa hình ảnh được giới thiệu đầu ra và hình ảnh được giới thiệu theo cảnh.
+
+Trong giao diện mặc định được giới thiệu đầu ra, khu vực của hình ảnh có độ sáng tối đa nằm ở hoàng hôn bên trái.
+
+Nhưng khu vực bầu trời bên phải này có độ sáng bằng 80% so với mặt trời lặn.
+
+Mặc dù hình ảnh mặc định trông rất tuyệt, nhưng các giá trị độ sáng không đại diện cho thực tế của cảnh.
+
+Đối với hình ảnh được giới thiệu theo cảnh tuyến tính, bầu trời ở bên phải của hình ảnh có độ rạng rỡ tối đa chỉ bằng 12 phần trăm độ rạng rỡ của hoàng hôn, điều này hợp lý hơn về mặt vật lý.
+
+Đây là lý do tại sao hình ảnh được giới thiệu theo cảnh tuyến tính rất quan trọng đối với việc xử lý và phân tích hình ảnh.
+
+Sau khi ứng dụng của bạn đã thay đổi các thuộc tính ProRAW CIFilter, bạn có thể muốn lưu hình ảnh vào định dạng ưu tiên đầu ra như HEIC hoặc JPEG.
+
+Đây là một ví dụ về cách lưu hình ảnh đầu ra rawFilter vào tệp HEIC sâu 8 bit.
+
+Với API này, bạn có thể chỉ định colorSpace đầu ra để sử dụng, mặc dù chúng tôi khuyên bạn nên hiển thị P3.
+
+Cũng có thể sử dụng từ điển tùy chọn để lưu mặt nạ ngữ nghĩa vào HEIC.
+
+Ngoài ra, vì ProRAWs có độ chính xác cao hơn, bạn có thể cân nhắc sử dụng Core Image API mới này để lưu vào các tệp HEIC sâu 10 bit.
+
+Cho đến nay, tất cả các điều chỉnh mà tôi đã mô tả tạo ra một hình ảnh đầu ra được ánh xạ tông màu và ánh xạ gam màu theo Dải động tiêu chuẩn.
+
+Điều này thường được viết tắt là "SDR".
+
+Chủ đề tiếp theo tôi muốn thảo luận là cách bạn có thể trình bày dải động của hình ảnh ProRAW trong vinh quang trọn vẹn trên màn hình Dải động mở rộng.
+
+Nhiều màn hình Mac - từ MacBook Pro đến iMac đến Pro Display XDR - có thể hiển thị nội dung EDR bằng Chế độ xem MetalKit.
+
+Để hiển thị ProRAW CIImage, chúng tôi khuyên bạn nên sử dụng lớp con MetalKit View để có hiệu suất tốt nhất.
+
+Lớp con MetalKit View của bạn nên tạo CIContext và MTLCommandQueue cho chế độ xem.
+
+Để biết chi tiết quan trọng về cách đạt được hiệu suất tốt nhất với Core Image trong Chế độ xem MetalKit, vui lòng xem lại bài thuyết trình của chúng tôi từ năm ngoái về chủ đề này.
+
+Nếu màn hình Mac của bạn hỗ trợ EDR, thì bạn có thể đặt colorPixelFormat của chế độ xem thành rgba16Float và đặt wantsExtendedDynamic RangeContent thành true.
+
+Sau đó, khi đến lúc lớp con chế độ xem của bạn vẽ, hãy đặt rawFilter.extended DynamicRangeAmount thành 1 và yêu cầu bối cảnh Core Image bắt đầu tác vụ hiển thị outputImage.
+
+Nhìn vào hình ảnh ProRAW trên màn hình EDR thực sự là điều mà người ta cần xem trực tiếp để đánh giá đầy đủ.
+
+Nhưng hãy để tôi cố gắng ước tính xem nó trông như thế nào.
+
+Ở đây, hình ảnh SDR được hiển thị, trong khi điều này cho thấy cùng một tệp ProRAW sẽ cảm thấy như thế nào trong EDR.
+
+Các vùng sáng và các điểm nổi bật gương không còn bị hạn chế bởi ánh xạ tông màu, vì vậy chúng sẽ được nhìn thấy trong vinh quang trọn vẹn.
+
+Điều này kết thúc bài thuyết trình của chúng tôi trên Apple ProRAW.
+
+Hôm nay chúng tôi đã mô tả chi tiết thiết kế và nội dung của định dạng tệp cũng như cách bạn có thể chụp, lưu trữ và chỉnh sửa những hình ảnh này.
+
+Tôi mong muốn được xem các ứng dụng của bạn có thể mở khóa toàn bộ tiềm năng của những hình ảnh này như thế nào.
+
+♪

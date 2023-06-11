@@ -1,0 +1,950 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:11.000
+Chào mừng! Tên tôi là Kacper.
+
+00:00:11.000 --> 00:00:22.000
+Tôi là Kỹ sư Công cụ Hiệu suất tại Apple, và hôm nay, cùng với Sergio, chúng ta sẽ nói về Công cụ Lưu lượng HTTP mới có sẵn trong Công cụ 13.
+
+00:00:22.000 --> 00:00:32.000
+Công cụ này, có trong mẫu Mạng, cho phép bạn kiểm tra lưu lượng HTTP đến từ ứng dụng của mình thông qua ngăn xếp Mạng Apple.
+
+00:00:32.000 --> 00:00:35.000
+Cách tiếp cận này đi kèm với nhiều lợi ích.
+
+00:00:35.000 --> 00:00:38.000
+Nó chỉ hoạt động trên tất cả các thiết bị của Apple.
+
+00:00:38.000 --> 00:00:48.000
+Toàn bộ lưu lượng truy cập đi qua hệ thống tải URL bị lộ, ngay cả những lưu lượng được gửi bằng giao thức HTTP/3 mới hoặc qua VPN.
+
+00:00:48.000 --> 00:01:00.000
+Do tích hợp hệ thống, nó quy lưu lượng truy cập cho các quy trình đang chạy trên nó và vì nó thiết bị các khung Mạng của Apple, nó thậm chí còn tiết lộ các yêu cầu đánh vào bộ nhớ cache trên đĩa hoặc lỗi mạng.
+
+00:01:00.000 --> 00:01:10.000
+Tất cả những điều này được phơi bày trong bối cảnh các khái niệm API cấp cao hơn mà bạn quen thuộc, chẳng hạn như URLSessions và URLSessionTasks.
+
+00:01:10.000 --> 00:01:17.000
+Công cụ này sẽ giúp bạn hiểu cách sử dụng API của bạn chuyển thành vòng đời của các yêu cầu mạng.
+
+00:01:17.000 --> 00:01:25.000
+Trong phiên thực hành này, trước tiên chúng tôi sẽ giúp bạn làm quen với cách Giao diện người dùng Công cụ phản ánh các khái niệm API bạn đang sử dụng.
+
+00:01:25.000 --> 00:01:35.000
+Sau phần giới thiệu nhanh này, chúng tôi sẽ chuyển sang bốn bản trình diễn minh họa cách bạn có thể sử dụng công cụ để phát hiện cả vấn đề về hiệu suất và độ chính xác.
+
+00:01:35.000 --> 00:01:45.000
+Và ngay cả khi ứng dụng của bạn có vẻ hoạt động hoàn hảo, bạn sẽ học cách xác minh rằng nó thực hiện những gì bạn nghĩ bằng cách kiểm tra lưu lượng truy cập đến từ nó.
+
+00:01:45.000 --> 00:01:50.000
+Hãy bắt đầu với cách API Mạng ánh xạ đến trực quan hóa Công cụ.
+
+00:01:50.000 --> 00:01:58.000
+Đây là cách dấu vết HTTP Traffic được hiển thị trong Instruments khi tôi ghi lại lưu lượng truy cập hệ thống của mình bằng cách sử dụng mẫu Mạng.
+
+00:01:58.000 --> 00:02:04.000
+Điều hướng được cấu trúc xung quanh hệ thống phân cấp theo dõi và đó là những gì chúng tôi sẽ đề cập chi tiết đầu tiên.
+
+00:02:04.000 --> 00:02:19.000
+Công cụ lưu lượng HTTP nằm ở cấp cao nhất hiển thị cho bạn tổng quan về số lượng tác vụ URLSession đang chạy trong dấu vết của bạn tại bất kỳ thời điểm nào, lý tưởng để phát hiện các điểm có hoạt động Lưu lượng HTTP tăng lên trong vòng đời ứng dụng của bạn.
+
+00:02:19.000 --> 00:02:24.000
+Cấp độ phân cấp tiếp theo cho thấy sự phân tích hoạt động theo quy trình.
+
+00:02:24.000 --> 00:02:31.000
+Ngoài lưu lượng truy cập từ tất cả các quy trình có thể gỡ lỗi, nó cho phép bạn kiểm tra lưu lượng truy cập nền do chúng khởi tạo.
+
+00:02:31.000 --> 00:02:35.000
+Chứa bên dưới mỗi quy trình là tất cả các URLSessions được sử dụng bởi nó.
+
+00:02:35.000 --> 00:02:40.000
+Và những thứ này tương ứng với các đối tượng URLSession mà bạn tạo trong mã.
+
+00:02:40.000 --> 00:02:46.000
+Biểu đồ ở cấp độ này cho phép bạn kiểm tra tất cả các khoảng nhiệm vụ riêng lẻ.
+
+00:02:46.000 --> 00:02:57.000
+Để có được ánh xạ tốt hơn giữa các đối tượng phiên của bạn và trực quan hóa, bạn có thể đặt tên chúng trong mã bằng cách đặt thuộc tính sessionDescription trên một phiên bản phiên.
+
+00:02:57.000 --> 00:03:02.000
+Ở cấp độ cuối cùng, lưu lượng truy cập được chia nhỏ theo các miền được yêu cầu.
+
+00:03:02.000 --> 00:03:12.000
+Đồ thị ở cấp độ này hiển thị thêm chi tiết về các nhiệm vụ, bao gồm các giao dịch riêng lẻ tạo nên các nhiệm vụ và trạng thái của chúng.
+
+00:03:12.000 --> 00:03:21.000
+Để hiểu rõ hơn về các nhiệm vụ và giao dịch là gì, hãy phân tích một ví dụ.
+
+00:03:21.000 --> 00:03:25.000
+Đây là một vài nhiệm vụ đang tải dữ liệu từ miền đã chọn.
+
+00:03:25.000 --> 00:03:32.000
+Hãy tập trung vào một trong số chúng để phân tích cấu trúc của một nhiệm vụ.
+
+00:03:32.000 --> 00:03:35.000
+Khoảng thời gian nhiệm vụ duy nhất này có rất nhiều thông tin.
+
+00:03:35.000 --> 00:03:45.000
+Chúng tôi có thể trình bày điều này một cách trừu tượng hơn để hiểu cách các công cụ trực quan hóa ánh xạ đến API đang được sử dụng.
+
+00:03:45.000 --> 00:03:49.000
+Ở cấp cao nhất, chúng ta có một đối tượng nhiệm vụ.
+
+00:03:49.000 --> 00:03:54.000
+Một nhiệm vụ được tạo thành từ một hoặc nhiều giao dịch.
+
+00:03:54.000 --> 00:04:02.000
+Giao dịch là một cặp yêu cầu HTTP và phản hồi tương ứng.
+
+00:04:02.000 --> 00:04:08.000
+Cấp độ nhiệm vụ là đại diện cho cách mã của bạn tương tác với API của Hệ thống tải URL.
+
+00:04:08.000 --> 00:04:14.000
+Khi bạn tạo một nhiệm vụ và gọi sơ yếu lý lịch trên đó, khoảng thời gian nhiệm vụ sẽ bắt đầu.
+
+00:04:14.000 --> 00:04:20.000
+Và nó kết thúc ngay trước khi khối hoàn thành của bạn được gọi.
+
+00:04:20.000 --> 00:04:30.000
+Mỗi nhiệm vụ có thể được đặt tên ngữ nghĩa bằng cách sử dụng thuộc tính taskDescription, sẽ được sử dụng để gắn nhãn khoảng thời gian trong Instruments.
+
+00:04:30.000 --> 00:04:35.000
+Chúng tôi cũng hiển thị mã định danh nhiệm vụ như một phần của nhãn nhiệm vụ.
+
+00:04:35.000 --> 00:04:39.000
+Bạn có thể sử dụng nó để tham chiếu chéo nhiệm vụ với các dữ liệu khác.
+
+00:04:39.000 --> 00:04:47.000
+Nếu nhiệm vụ của bạn kết thúc với một lỗi, mô tả của nó sẽ được trình bày trên nhãn khoảng thời gian để gỡ lỗi dễ dàng hơn.
+
+00:04:47.000 --> 00:04:52.000
+Như chúng tôi đã đề cập trước đây, một nhiệm vụ có thể được tạo thành từ nhiều giao dịch.
+
+00:04:52.000 --> 00:04:54.000
+Hãy nói về những thứ này ngay bây giờ.
+
+00:04:54.000 --> 00:04:59.000
+Ở đây chúng tôi có nhiệm vụ tải trang bắt đầu của apple.com.
+
+00:04:59.000 --> 00:05:03.000
+Tuy nhiên, URL này không phải là URL chuẩn.
+
+00:05:03.000 --> 00:05:10.000
+Nhiệm vụ yêu cầu apple.com, nhưng miền ưa thích là www.apple.com.
+
+00:05:10.000 --> 00:05:17.000
+Khi chúng tôi tạo tác vụ này, hệ thống tải URL ban đầu tạo một yêu cầu đến apple.com.
+
+00:05:17.000 --> 00:05:27.000
+Ngay sau đó, nó nhận được phản hồi chuyển hướng từ máy chủ, nói rằng URL ưa thích thực sự là www.apple.com.
+
+00:05:27.000 --> 00:05:38.000
+Theo mặc định, chúng tôi làm theo các chuyển hướng, vì vậy thay vì trả về phản hồi 301, hệ thống tải URL sẽ tạo một giao dịch mới để bây giờ tải URL ưa thích.
+
+00:05:38.000 --> 00:05:46.000
+Phản hồi từ giao dịch thứ hai, thành công này là những gì được trả lại cho nhiệm vụ.
+
+00:05:46.000 --> 00:05:53.000
+Như đã đề cập trước đây, một giao dịch đại diện cho sự kết hợp giữa yêu cầu và phản hồi HTTP.
+
+00:05:53.000 --> 00:06:08.000
+Nó phù hợp với những gì URLSession thực hiện dưới mui xe để xử lý nhiệm vụ của bạn và chứa tất cả thông tin của lớp HTTP, như URL được yêu cầu, thông tin về dữ liệu được truyền và hơn thế nữa.
+
+00:06:08.000 --> 00:06:14.000
+Cũng giống như nhiệm vụ, nhãn giao dịch cung cấp cho bạn cái nhìn tổng quan về giao dịch.
+
+00:06:14.000 --> 00:06:20.000
+Chủ yếu, bạn nhận được thông tin về yêu cầu và phản hồi.
+
+00:06:20.000 --> 00:06:28.000
+Hệ thống phân cấp theo dõi cho bạn biết miền được yêu cầu, trong khi bạn có thể tìm thấy đường dẫn và truy vấn trên chính nhãn.
+
+00:06:28.000 --> 00:06:41.000
+Thêm vào đó, nhãn khoảng thời gian hiển thị phiên bản HTTP, Phương thức HTTP và liệu yêu cầu đã gửi Ủy quyền hay tiêu đề Cookie.
+
+00:06:41.000 --> 00:06:47.000
+Những thứ này thường hữu ích để hiểu các luồng xác thực trong nháy mắt.
+
+00:06:47.000 --> 00:06:57.000
+Đối với phản hồi, bạn nhận được mã trạng thái, liệu phản hồi có chứa cookie hay không và loại nội dung của phản hồi.
+
+00:06:57.000 --> 00:07:08.000
+Yêu cầu và phản hồi mất bao lâu, cũng như thông tin thời gian chi tiết hơn về công việc khác là một phần của giao dịch được các trạng thái giao dịch nắm bắt.
+
+00:07:08.000 --> 00:07:12.000
+Hãy phân tích chúng trong bối cảnh của một nhiệm vụ chứa đựng.
+
+00:07:12.000 --> 00:07:21.000
+Bắt đầu giao dịch là thời điểm mà Hệ thống Tải URL tạo giao dịch để thực hiện yêu cầu này.
+
+00:07:21.000 --> 00:07:25.000
+Đầu tiên, nó kiểm tra xem chúng tôi đã có phản hồi được lưu trong bộ nhớ cache hợp lệ chưa.
+
+00:07:25.000 --> 00:07:32.000
+Và nếu không phải như vậy, nó sẽ cố gắng lên lịch yêu cầu trên một kết nối.
+
+00:07:32.000 --> 00:07:40.000
+Tiếp theo, giao dịch có thể phải đợi một chút ở trạng thái Bị chặn, chờ kết nối khả dụng.
+
+00:07:40.000 --> 00:07:46.000
+Trạng thái Yêu cầu Gửi bắt đầu khi giao dịch cuối cùng được xử lý bởi một kết nối.
+
+00:07:46.000 --> 00:07:51.000
+Nó kết thúc khi chúng tôi gửi byte cuối cùng của yêu cầu lên mạng.
+
+00:07:51.000 --> 00:08:04.000
+Tiếp theo, giao dịch chuyển sang trạng thái Chờ Phản hồi nhàn rỗi, tiếp theo là Nhận Phản hồi, sẽ theo dõi khoảng thời gian từ byte đầu tiên đến byte cuối cùng nhận được từ máy chủ.
+
+00:08:04.000 --> 00:08:14.000
+Toàn bộ giao dịch sẽ hoàn tất ngay sau khi nhận được byte cuối cùng, một khi hệ thống Tải URL đã xác định liệu đây có phải là phản hồi thành công hay không.
+
+00:08:14.000 --> 00:08:25.000
+Trong thực tế, tra cứu bộ nhớ cache và trạng thái gửi cho yêu cầu GET thường ngắn hơn nhiều, vì vậy nó có nhiều khả năng xuất hiện như thế này.
+
+00:08:25.000 --> 00:08:30.000
+Để chỉ cho bạn một số ví dụ thực tế, tôi muốn giao cho đồng nghiệp của tôi, Sergio.
+
+00:08:30.000 --> 00:08:40.000
+Anh ấy sẽ hướng dẫn bạn qua một ứng dụng mà gần đây anh ấy đã bắt đầu phát triển để minh họa cách Công cụ HTTP có thể giúp bạn khắc phục các vấn đề về hiệu suất và độ chính xác.
+
+00:08:40.000 --> 00:08:42.000
+Cảm ơn, Kacper. Xin chào mọi người.
+
+00:08:42.000 --> 00:08:46.000
+Tên tôi là Sergio Lopez, và tôi đang làm việc trên ứng dụng này cho những người yêu chó.
+
+00:08:46.000 --> 00:08:50.000
+Hãy nghĩ về nó giống như một nền tảng truyền thông xã hội nhưng đối với hình ảnh chó...
+
+00:08:50.000 --> 00:08:51.000
+Chỉ!
+
+00:08:51.000 --> 00:08:55.000
+Mọi người có thể đăng hình ảnh của những chú chó và bạn sẽ nhận được một luồng tải lên gần đây nhất!
+
+00:08:55.000 --> 00:09:05.000
+Vì vậy, khi tôi mở ứng dụng, nó tải một số hình ảnh con chó mới, nhưng tôi nhận thấy rằng phải mất khá nhiều thời gian để chúng tải xong.
+
+00:09:05.000 --> 00:09:12.000
+Hãy lập hồ sơ ứng dụng với công cụ HTTP Traffic mới để giúp chúng tôi cải thiện tình hình này.
+
+00:09:12.000 --> 00:09:19.000
+Trong menu "Sản phẩm", tôi sẽ chọn tùy chọn "Hồ sơ" để lập hồ sơ ứng dụng của mình trong Công cụ.
+
+00:09:19.000 --> 00:09:29.000
+Điều này sẽ xây dựng ứng dụng của tôi trong cấu hình phát hành, để đảm bảo tôi đang lập hồ sơ ứng dụng của mình vì nó sẽ chạy cho người dùng của tôi, với tất cả các tối ưu hóa được bật.
+
+00:09:29.000 --> 00:09:32.000
+Sau khi xây dựng xong, Instruments sẽ tự động khởi chạy.
+
+00:09:32.000 --> 00:09:39.000
+Khi bắt đầu, bộ chọn mẫu tiêu chuẩn của Nhạc cụ được hiển thị.
+
+00:09:39.000 --> 00:09:58.000
+Trong trường hợp của chúng tôi, tôi muốn chọn mẫu Mạng ở phía dưới bên trái, mẫu này cung cấp cho chúng tôi thêm thông tin về các kết nối mạng chung mà ứng dụng của tôi tạo ra, nhưng cũng chứa chức năng Theo dõi HTTP mới.
+
+00:09:58.000 --> 00:10:03.000
+Khu vực bản nhạc hiện chứa hai bản nhạc, một cho mỗi nhạc cụ.
+
+00:10:03.000 --> 00:10:10.000
+Bản nhạc dưới cùng là công cụ Kết nối Mạng hiện có và bản nhạc trên cùng là công cụ Lưu lượng HTTP mới.
+
+00:10:10.000 --> 00:10:13.000
+Hôm nay chúng ta sẽ tập trung vào nhạc cụ mới này.
+
+00:10:13.000 --> 00:10:15.000
+Tất cả những gì tôi cần làm bây giờ là nhấn "ghi âm".
+
+00:10:15.000 --> 00:10:21.000
+Các nhạc cụ sau đó sẽ khởi động ứng dụng của tôi và bắt đầu ghi âm.
+
+00:10:21.000 --> 00:10:27.000
+Trước khi bạn có thể sử dụng công cụ này, bạn cần xác nhận rằng bạn hiểu ý nghĩa của việc nắm bắt lưu lượng mạng.
+
+00:10:27.000 --> 00:10:31.000
+Nó rất mạnh mẽ, đặc biệt nếu bạn ghi lại tất cả các quy trình.
+
+00:10:31.000 --> 00:10:38.000
+Dữ liệu được thu thập bao gồm mọi thứ được gửi, có thể là thông tin cá nhân và nhạy cảm, thậm chí tùy thuộc vào thông tin đăng nhập của người dùng.
+
+00:10:38.000 --> 00:10:42.000
+Vì vậy, bạn nên rất cẩn thận với các tệp theo dõi kết quả và chúng tôi muốn bạn biết.
+
+00:10:42.000 --> 00:10:47.000
+Vậy hãy để tôi xác nhận điều này.
+
+00:10:47.000 --> 00:10:53.000
+Ứng dụng đã được khởi chạy và hình ảnh tải chậm.
+
+00:10:53.000 --> 00:10:58.000
+Bây giờ tôi sẽ dừng ghi âm.
+
+00:10:58.000 --> 00:11:08.000
+Hãy phóng to dữ liệu chúng tôi đã ghi lại bằng cách sử dụng Option-click và kéo qua khu vực bao phủ lưu lượng HTTP của chúng tôi.
+
+00:11:08.000 --> 00:11:20.000
+Nhấp vào chỉ báo tiết lộ trong bản nhạc "HTTP Traffic" ở trên cùng bên trái sẽ hiển thị hệ thống phân cấp bản nhạc đầy đủ mà Kacper đã mô tả trước đó.
+
+00:11:20.000 --> 00:11:32.000
+Tôi cũng sẽ tăng chiều cao đường đua để hiển thị tất cả các khoảng thời gian.
+
+00:11:32.000 --> 00:11:41.000
+Ở trên cùng, có nhiệm vụ đầu tiên truy vấn máy chủ cho danh sách hình ảnh, xuất hiện trên phần "Mới nhất" của ứng dụng.
+
+00:11:41.000 --> 00:11:49.000
+Khi nhiệm vụ này hoàn thành, chúng tôi tạo một nhiệm vụ mới để tải hình thu nhỏ cho mọi hình ảnh trong danh sách mà chúng tôi nhận được.
+
+00:11:49.000 --> 00:12:04.000
+Bây giờ tôi sẽ nhấp-kéo qua khu vực bao gồm khung thời gian cần thiết để tìm nạp danh sách các hình ảnh, tiếp theo là nhiều yêu cầu truy xuất từng hình ảnh riêng lẻ.
+
+00:12:04.000 --> 00:12:10.000
+Bằng cách nhấp chuột qua khu vực này, một mẹo công cụ sẽ được hiển thị, hiển thị thời lượng của phạm vi thời gian đã chọn.
+
+00:12:10.000 --> 00:12:16.000
+Nhìn chung, phải mất hơn 7 giây để tải xong màn hình ban đầu.
+
+00:12:16.000 --> 00:12:18.000
+Một vài hình ảnh đầu tiên tải khá nhanh.
+
+00:12:18.000 --> 00:12:26.000
+Nhưng khi tôi cuộn xuống, các nhiệm vụ được bắt đầu sau đó mất nhiều thời gian hơn để hoàn thành, như được ghi nhận bởi các trạng thái bị chặn ngày càng tăng màu tím.
+
+00:12:26.000 --> 00:12:30.000
+Có vẻ như là một vấn đề tắc nghẽn, nơi chúng tôi có quá nhiều yêu cầu song song.
+
+00:12:30.000 --> 00:12:37.000
+Hãy điều tra một trong những nhiệm vụ sau này.
+
+00:12:37.000 --> 00:12:44.000
+Bằng cách di chuột qua nhiệm vụ, mẹo công cụ cho chúng ta thấy thời lượng của nhiệm vụ và bất kỳ khoảng thời gian con nào mà chúng ta đang di chuột qua.
+
+00:12:44.000 --> 00:12:49.000
+Nhiệm vụ này đã bị chặn phần lớn thời gian.
+
+00:12:49.000 --> 00:12:58.000
+Để hiểu tại sao nó bị chặn, hãy chuyển màn hình theo dõi sang chế độ xem "Giao dịch HTTP theo kết nối".
+
+00:12:58.000 --> 00:13:07.000
+Trong thanh bên theo dõi ở bên trái, bên dưới tên miền, có một mũi tên hướng xuống mà chúng ta có thể nhấp để chuyển đổi màn hình theo dõi.
+
+00:13:07.000 --> 00:13:10.000
+Hiện tại, chúng tôi đang vẽ "Nhiệm vụ".
+
+00:13:10.000 --> 00:13:18.000
+Hãy chuyển sang hiển thị "Giao dịch HTTP theo kết nối."
+
+00:13:18.000 --> 00:13:28.000
+Chế độ xem này sẽ chỉ hiển thị các giao dịch và thay vì nhóm chúng theo nhiệm vụ, giờ đây chúng ta có thể tìm ra kết nối mà chúng đã được lên lịch.
+
+00:13:28.000 --> 00:13:32.000
+Các giao dịch được nhóm theo kết nối mà họ đã sử dụng.
+
+00:13:32.000 --> 00:13:37.000
+Nhìn chung, có sáu kết nối có sẵn để xử lý các giao dịch này.
+
+00:13:37.000 --> 00:13:45.000
+Hãy phân tích các giao dịch được phát hành trên Kết nối 1 và điều tra thêm một số giao dịch tải hình thu nhỏ.
+
+00:13:45.000 --> 00:13:49.000
+Từ trên xuống, điều đáng chú ý là mỗi giao dịch mất nhiều thời gian hơn để hoàn thành.
+
+00:13:49.000 --> 00:13:54.000
+Trạng thái bị chặn màu tím cho mỗi giao dịch liên tiếp đang tăng lên.
+
+00:13:54.000 --> 00:13:59.000
+Trên thực tế, có một mô hình cầu thang khá rõ ràng ở đây.
+
+00:13:59.000 --> 00:14:05.000
+Mỗi giao dịch bị chặn, cho đến khi giao dịch trước đó trên cùng một kết nối kết thúc.
+
+00:14:05.000 --> 00:14:07.000
+Chỉ khi đó nó mới có thể gửi yêu cầu của mình.
+
+00:14:07.000 --> 00:14:11.000
+Mô hình này lặp lại cho mỗi giao dịch tiếp theo.
+
+00:14:11.000 --> 00:14:18.000
+Đây được gọi là "Head of Line Blocking" và là một trong những vấn đề của việc sử dụng HTTP/1.
+
+00:14:18.000 --> 00:14:23.000
+Phần bực bội là những giao dịch này không làm được gì trong phần lớn thời gian.
+
+00:14:23.000 --> 00:14:28.000
+Thay vào đó, họ dành phần lớn thời gian bị chặn hoặc chờ phản hồi từ máy chủ.
+
+00:14:28.000 --> 00:14:39.000
+Chúng tôi có thể gửi một yêu cầu khác cho giao dịch tiếp theo xếp hàng trong khi chờ phản hồi của giao dịch trước đó trên cùng một kết nối, nhưng điều đó không được HTTP/1 hỗ trợ.
+
+00:14:39.000 --> 00:14:54.000
+Chặn đầu dòng là một trong những hạn chế chính của HTTP/1 và một trong những cải tiến chính của HTTP/2 là tránh hiệu ứng đó bằng cách ghép kênh một số yêu cầu đến cùng một máy chủ vào một kết nối duy nhất.
+
+00:14:54.000 --> 00:15:00.000
+Trong HTTP/2, chúng ta thực sự có thể bắt đầu gửi yêu cầu thứ hai trong khi yêu cầu đầu tiên đang chờ phản hồi của nó.
+
+00:15:00.000 --> 00:15:03.000
+Ứng dụng của bạn không cần phải làm bất cứ điều gì để hỗ trợ nó.
+
+00:15:03.000 --> 00:15:13.000
+Tất cả các nền tảng của Apple đều hỗ trợ HTTP/2 và bắt đầu từ iOS 15 và macOS Monterey, HTTP/3 cũng được hỗ trợ.
+
+00:15:13.000 --> 00:15:17.000
+Khách hàng sẽ chọn phiên bản HTTP hiện đại nhất mà máy chủ hỗ trợ.
+
+00:15:17.000 --> 00:15:33.000
+Nếu bạn muốn tìm hiểu thêm về sự khác biệt giữa HTTP/1 và HTTP/2 và các lợi ích bổ sung mà HTTP/3 cung cấp, vui lòng xem phiên "Tăng tốc mạng với HTTP/3 và QUIC".
+
+00:15:33.000 --> 00:15:40.000
+Tôi đã lấy dấu vết này, cho những người máy chủ của chúng tôi xem và thuyết phục được họ rằng chúng tôi thực sự nên hỗ trợ HTTP/2.
+
+00:15:40.000 --> 00:15:45.000
+Bây giờ, hãy chạy ứng dụng của tôi với các cải tiến máy chủ mới.
+
+00:15:45.000 --> 00:15:48.000
+Chà, cái này đã cảm thấy nhanh hơn rồi!
+
+00:15:48.000 --> 00:15:50.000
+Hãy xác nhận điều này với Instruments.
+
+00:15:50.000 --> 00:15:55.000
+Vì vậy, đây là dấu vết tôi đã ghi lại sau khi chúng tôi bật hỗ trợ máy chủ cho HTTP/2.
+
+00:15:55.000 --> 00:16:01.000
+Trong bản nhạc dành riêng cho miền, không có tác vụ tải hình thu nhỏ nào của chúng tôi dường như bị chặn nữa trong một khoảng thời gian dài.
+
+00:16:01.000 --> 00:16:02.000
+Điều đó thật tốt!
+
+00:16:02.000 --> 00:16:15.000
+Hãy chuyển sang chế độ xem "Giao dịch HTTP bằng kết nối" một lần nữa.
+
+00:16:15.000 --> 00:16:18.000
+Điều đầu tiên chúng tôi nhận thấy là chỉ có một kết nối.
+
+00:16:18.000 --> 00:16:29.000
+Điều này là do chúng tôi không còn cần nhiều kết nối để gửi các yêu cầu đồng thời, điều đó cũng có nghĩa là chúng tôi chỉ cần thanh toán chi phí thiết lập kết nối một lần.
+
+00:16:29.000 --> 00:16:35.000
+Tập trung vào các giao dịch tải hình thu nhỏ riêng lẻ, chúng tôi nhận thấy rằng về cơ bản họ không dành thời gian ở trạng thái "bị chặn".
+
+00:16:35.000 --> 00:16:40.000
+Trên thực tế, lượng thời gian quá nhỏ nên không thể nhìn thấy ở mức thu phóng này.
+
+00:16:40.000 --> 00:16:47.000
+Cuối cùng, tất cả các giao dịch kết thúc việc gửi yêu cầu của họ và bị bỏ lại chờ phản hồi.
+
+00:16:47.000 --> 00:16:54.000
+Khi tôi cuộn xuống, chúng ta có thể nhận thấy rằng các phản hồi đang tiến triển cùng một lúc.
+
+00:16:54.000 --> 00:17:00.000
+Nói chung, chúng tôi đã hoàn thành tất cả các yêu cầu trong vòng chưa đầy 3 giây.
+
+00:17:00.000 --> 00:17:02.000
+Cái này nhanh gấp đôi so với trước đây.
+
+00:17:02.000 --> 00:17:10.000
+Bây giờ tôi đã nói chuyện với những người máy chủ và chuyển từ HTTP/1.1 sang HTTP/2, hình ảnh của chúng tôi đang tải nhanh hơn nhiều.
+
+00:17:10.000 --> 00:17:14.000
+Hãy để tôi khởi chạy lại ứng dụng và cho bạn thấy chúng ta có thể làm gì khác.
+
+00:17:14.000 --> 00:17:21.000
+Khi tôi nhấn vào một hình ảnh, ứng dụng sẽ tải ảnh có độ phân giải đầy đủ và hiển thị ảnh này được chụp từ tôi bao xa.
+
+00:17:21.000 --> 00:17:26.000
+Ngoài ra còn có một biểu tượng trái tim ở trên cùng bên phải cho phép bạn yêu thích bức ảnh cụ thể đó.
+
+00:17:26.000 --> 00:17:28.000
+Để làm như vậy, tôi cần một tài khoản.
+
+00:17:28.000 --> 00:17:38.000
+Tôi cho phép mọi người sử dụng ứng dụng và duyệt ảnh mà không cần tài khoản, nhưng để lưu ảnh yêu thích, đồng bộ hóa chúng giữa các thiết bị và để tải lên ảnh mới, bạn cần có tài khoản.
+
+00:17:38.000 --> 00:17:44.000
+Vậy hãy để tôi đăng nhập ở đây.
+
+00:17:44.000 --> 00:17:47.000
+Tuyệt vời. Hãy để tôi yêu thích một bức ảnh khác.
+
+00:17:47.000 --> 00:17:50.000
+Ồ, con chó này trông thật dễ thương! Hãy để tôi thêm nó vào mục yêu thích của tôi.
+
+00:17:50.000 --> 00:17:53.000
+Chờ đã, tại sao tôi phải đăng nhập lại nếu tôi vừa đăng nhập?
+
+00:17:53.000 --> 00:17:54.000
+Điều này không đúng.
+
+00:17:54.000 --> 00:17:56.000
+Ứng dụng của tôi nên nhớ đăng nhập của tôi.
+
+00:17:56.000 --> 00:17:57.000
+Điều này đã hoạt động trước đây.
+
+00:17:57.000 --> 00:18:03.000
+Tôi sẽ bỏ qua màn hình đăng nhập, vì tôi không muốn đăng nhập lại.
+
+00:18:03.000 --> 00:18:07.000
+Trước đây tôi đã ghi lại một tệp theo dõi sau khi sao chép vấn đề.
+
+00:18:07.000 --> 00:18:09.000
+Hãy để tôi mở nó bằng các nhạc cụ để phân tích bản ghi âm.
+
+00:18:09.000 --> 00:18:16.000
+Ở bên trái, có nhiệm vụ tương ứng với khi tôi nhấn nút yêu thích lần đầu tiên.
+
+00:18:16.000 --> 00:18:24.000
+Ở bên phải của nó, có nhiệm vụ được phát hành sau khi tôi quay lại tab mới nhất và luồng hình ảnh đã được làm mới.
+
+00:18:24.000 --> 00:18:31.000
+Sau đó, có nhiệm vụ tải hình ảnh có độ phân giải đầy đủ sau khi tôi nhấn vào một bức ảnh con chó khác.
+
+00:18:31.000 --> 00:18:37.000
+Và ở ngoài cùng bên phải, có nhiệm vụ tương ứng với lần thứ hai tôi nhấn vào nút yêu thích.
+
+00:18:37.000 --> 00:18:47.000
+Khoảng nhiệm vụ đầu tiên thực sự chứa hai giao dịch.
+
+00:18:47.000 --> 00:18:50.000
+Giao dịch đầu tiên nhận được mã trạng thái 401.
+
+00:18:50.000 --> 00:18:53.000
+Điều này đã được mong đợi vì chúng tôi chưa đăng nhập.
+
+00:18:53.000 --> 00:19:02.000
+Giao dịch được vẽ bằng màu cam để chỉ ra rằng đây không phải là một thành công ở cấp độ HTTP.
+
+00:19:02.000 --> 00:19:15.000
+Sau đó, có một khu vực rộng, trống trong nhiệm vụ, đại diện cho thời gian tôi đã nhập tên người dùng và mật khẩu.
+
+00:19:15.000 --> 00:19:20.000
+Ngay sau khi tôi nhập xong các thông tin đăng nhập này, chúng tôi sẽ thử lại giao dịch.
+
+00:19:20.000 --> 00:19:25.000
+Màu xanh lá cây của khoảng thời gian và mã trạng thái 201 cho biết lần này nó đã thành công.
+
+00:19:25.000 --> 00:19:41.000
+Sự tương tác của một thử thách xác thực, nhập mật khẩu và thử lại giao dịch là một trường hợp khác mà hệ thống Tải URL xử lý cho chúng tôi, vì vậy hai giao dịch này thuộc cùng một đối tượng tác vụ.
+
+00:19:41.000 --> 00:19:46.000
+Thu nhỏ, chúng tôi tìm thấy nỗ lực thứ hai để yêu thích một hình ảnh ở bên phải.
+
+00:19:46.000 --> 00:19:55.000
+Đối tượng tác vụ được hiển thị bằng màu xám, vì việc tôi loại bỏ màn hình đăng nhập khiến tác vụ bị hủy, điều này cũng hiển thị trong nhãn của nó.
+
+00:19:55.000 --> 00:20:01.000
+Khoảng thời gian giao dịch được hiển thị bằng màu cam, vì chúng tôi nhận được phản hồi 401 từ máy chủ một lần nữa.
+
+00:20:01.000 --> 00:20:08.000
+Nhiệm vụ này xảy ra sau khi tôi cố gắng thích một bức ảnh con chó khác và được nhắc đăng nhập lần thứ hai.
+
+00:20:08.000 --> 00:20:21.000
+Chúng tôi sử dụng một hệ thống đăng nhập rất cơ bản, nơi người dùng gửi thông tin đăng nhập của họ lần đầu tiên, nhưng một khi máy chủ xác minh thông tin đăng nhập của người dùng, nó sẽ đặt cookie, xác định người dùng, sao cho không cần cung cấp thông tin đăng nhập cho các yêu cầu sau.
+
+00:20:21.000 --> 00:20:26.000
+Vì vậy, tôi đã mong đợi nhiệm vụ này đã gửi cookie thích hợp.
+
+00:20:26.000 --> 00:20:27.000
+Hãy xác định xem điều đó có xảy ra hay không.
+
+00:20:27.000 --> 00:20:36.000
+Như Kacper đã giải thích trước đó, nên có một biểu tượng cookie nhỏ ở đây bên cạnh phương thức HTTP, nếu giao dịch này đã gửi một tiêu đề Cookie.
+
+00:20:36.000 --> 00:20:40.000
+Nhưng không có biểu tượng nào như vậy ở đây, có nghĩa là không có cookie nào được gửi đi.
+
+00:20:40.000 --> 00:20:41.000
+Vậy là phần đó không hoạt động.
+
+00:20:41.000 --> 00:20:47.000
+Bây giờ câu hỏi là, máy chủ đã không cung cấp cho chúng tôi một cookie, hay khách hàng không gửi một cái, mặc dù nó đã nhận được một cái?
+
+00:20:47.000 --> 00:20:53.000
+Để tìm hiểu, chúng ta cần điều tra giao dịch trước đó và kiểm tra xem chúng ta có nhận được cookie từ máy chủ hay không.
+
+00:20:53.000 --> 00:20:58.000
+Đây là giao dịch trước đó, giao dịch thành công từ yêu cầu đăng nhập đầu tiên.
+
+00:20:58.000 --> 00:21:05.000
+Cái này có biểu tượng cookie trong phần phản hồi của nhãn giao dịch, vì vậy máy chủ đã gửi cookie.
+
+00:21:05.000 --> 00:21:07.000
+Điều đó thật thú vị.
+
+00:21:07.000 --> 00:21:10.000
+Vậy tại sao chúng ta không gửi cookie trong giao dịch tiếp theo?
+
+00:21:10.000 --> 00:21:25.000
+Để có thêm thông tin về giao dịch này và điều tra chi tiết cookie, tôi sẽ chuyển sang danh sách "Giao dịch" trong chế độ xem chi tiết ở dưới cùng.
+
+00:21:25.000 --> 00:21:32.000
+Giao dịch đã được chọn ở đây, vì con trỏ thời gian được đặt bên trong nó trong chế độ xem theo dõi.
+
+00:21:32.000 --> 00:21:40.000
+Chế độ xem chi tiết mở rộng ở phía dưới bên phải hiển thị tất cả các tiêu đề yêu cầu và phản hồi của giao dịch hiện được chọn.
+
+00:21:40.000 --> 00:21:43.000
+Và đây là tiêu đề Set-Cookie mà chúng tôi mong đợi.
+
+00:21:43.000 --> 00:21:47.000
+Thoạt nhìn, cái bánh quy này có vẻ ổn.
+
+00:21:47.000 --> 00:21:49.000
+Nhưng ồ, đợi đã, bạn có thấy ngày hết hạn không?
+
+00:21:49.000 --> 00:21:52.000
+Bây giờ là tháng Ba năm 2020. Đó là quá khứ!
+
+00:21:52.000 --> 00:21:56.000
+Vì vậy, máy chủ đã gửi một cookie, nhưng đó là một cookie đã hết hạn.
+
+00:21:56.000 --> 00:21:59.000
+Không ai thích bánh quy hết hạn!
+
+00:21:59.000 --> 00:22:05.000
+Điều này sẽ khiến URLSession không gửi cookie, vì nó sẽ chỉ gửi cookie vẫn còn hiệu lực.
+
+00:22:05.000 --> 00:22:07.000
+Đây là một lỗi phía máy chủ.
+
+00:22:07.000 --> 00:22:12.000
+Tôi có thể gửi tệp theo dõi đến những người phục vụ của chúng tôi để họ điều tra vấn đề và giải quyết nó.
+
+00:22:12.000 --> 00:22:18.000
+Bây giờ chúng tôi đã khắc phục sự cố cookie, tôi có thể yêu thích thêm một vài bức ảnh mà không bị nhắc đăng nhập.
+
+00:22:18.000 --> 00:22:25.000
+Ngoài tab "Mới nhất", còn có tab "Yêu thích", nơi chúng tôi hiển thị danh sách tất cả các hình ảnh con chó mà người dùng đã yêu thích.
+
+00:22:25.000 --> 00:22:28.000
+Hãy chuyển sang tab đó.
+
+00:22:28.000 --> 00:22:34.000
+Tuyệt vời, có một vài mục yêu thích ở đây mà tôi đã thêm vào ngày hôm qua, nhưng vì một số lý do, mục yêu thích gần đây của tôi không hiển thị.
+
+00:22:34.000 --> 00:22:36.000
+Hãy thử lại lần nữa.
+
+00:22:36.000 --> 00:22:40.000
+Hãy chọn con chó này, nó dường như đang tắm, và để tôi yêu thích nó.
+
+00:22:40.000 --> 00:22:45.000
+Hãy quay lại mục yêu thích của tôi và kiểm tra xem nó có xuất hiện không.
+
+00:22:45.000 --> 00:22:46.000
+Hừm, nó vẫn không có ở đó.
+
+00:22:46.000 --> 00:22:50.000
+Hãy sử dụng Dụng cụ một lần nữa để tìm hiểu chuyện gì đang xảy ra.
+
+00:22:50.000 --> 00:22:52.000
+Tôi đã chuẩn bị một tệp theo dõi cho việc này rồi.
+
+00:22:52.000 --> 00:22:59.000
+Tôi mong đợi tìm thấy một nhiệm vụ tải danh sách các mục yêu thích trong chế độ xem bản nhạc, nhưng nó không hiển thị ngay từ cái nhìn đầu tiên.
+
+00:22:59.000 --> 00:23:06.000
+Hãy để tôi chọn bản nhạc cho miền máy chủ của mình, để chỉ hiển thị các yêu cầu được phát hành cho miền đó.
+
+00:23:06.000 --> 00:23:12.000
+Sau đó, chúng ta có thể đi đến chế độ xem chi tiết ở dưới cùng, trong đó có danh sách tất cả các nhiệm vụ cho miền này.
+
+00:23:12.000 --> 00:23:14.000
+Có khá nhiều yêu cầu ở đây.
+
+00:23:14.000 --> 00:23:27.000
+Hãy để tôi sử dụng bộ lọc chi tiết ở phía dưới bên trái để tìm kiếm tất cả các yêu cầu liên quan đến "Yêu thích", để tôi có thể xác minh xem chúng tôi có thực hiện yêu cầu hay không.
+
+00:23:27.000 --> 00:23:32.000
+Sau khi lọc, kết quả cho thấy chúng tôi đã gửi một số yêu cầu để tải danh sách yêu thích ở đây.
+
+00:23:32.000 --> 00:23:36.000
+Hãy tập trung vào chế độ xem bản nhạc.
+
+00:23:36.000 --> 00:23:45.000
+Con trỏ được định vị khi bắt đầu nhiệm vụ mà tôi đã chọn trong chế độ xem chi tiết, vì vậy điều đó giúp bạn dễ dàng tìm thấy nó trong chế độ xem bản nhạc ở trên.
+
+00:23:45.000 --> 00:23:55.000
+Hãy phóng to để kiểm tra lại.
+
+00:23:55.000 --> 00:23:59.000
+Vì vậy, đây là lần đầu tiên chúng tôi tải danh sách yêu thích khi ra mắt ứng dụng ban đầu.
+
+00:23:59.000 --> 00:24:06.000
+Điều này ổn.
+
+00:24:06.000 --> 00:24:15.000
+Ở đây, tôi đã yêu thích một hình ảnh mới, và sau đó, chúng tôi đã tải lại các mục yêu thích.
+
+00:24:15.000 --> 00:24:25.000
+Chà, có một khoảng nhiệm vụ ở đây, nhưng nó rất ngắn.
+
+00:24:25.000 --> 00:24:27.000
+Vâng, yêu cầu GET này chỉ mất vài mili giây.
+
+00:24:27.000 --> 00:24:30.000
+Quá nhanh để nhận được phản hồi của máy chủ.
+
+00:24:30.000 --> 00:24:40.000
+Hãy chuyển sang chế độ xem "giao dịch HTTP theo kết nối" một lần nữa để biết thêm chi tiết.
+
+00:24:40.000 --> 00:24:45.000
+Điều đầu tiên chúng tôi nhận thấy là giao dịch này không được thực hiện trên Kết nối, mà trên "Bộ nhớ đệm cục bộ".
+
+00:24:45.000 --> 00:24:51.000
+Điều này cho chúng ta thấy rằng yêu cầu chưa bao giờ được gửi trên mạng, mà được tải từ bộ nhớ cache cục bộ.
+
+00:24:51.000 --> 00:24:59.000
+Điều này cũng giải thích tại sao không có trạng thái "Đang chờ phản hồi", vì giao dịch không chờ máy chủ.
+
+00:24:59.000 --> 00:25:05.000
+Vì vậy, đó là vấn đề: yêu cầu của chúng tôi được lưu trong bộ nhớ cache, vì vậy chúng tôi không thực sự yêu cầu máy chủ và luôn nhận lại phản hồi được lưu trong bộ nhớ cache.
+
+00:25:05.000 --> 00:25:10.000
+Một cách để khắc phục điều này là yêu cầu máy chủ đặt tiêu đề kiểm soát bộ nhớ cache, không bao giờ lưu trữ phản hồi này.
+
+00:25:10.000 --> 00:25:17.000
+Những gì chúng tôi muốn là tải lại hình ảnh mỗi khi người dùng vào tab yêu thích và hình ảnh mới đã được thêm vào.
+
+00:25:17.000 --> 00:25:22.000
+Điều chúng tôi không muốn là tải toàn bộ danh sách hình ảnh nếu không có thay đổi như vậy.
+
+00:25:22.000 --> 00:25:27.000
+Một sự đánh đổi tốt sẽ là nếu chúng ta có thể hỏi người phục vụ, "Này, có gì thay đổi không?
+
+00:25:27.000 --> 00:25:30.000
+Nếu vậy, vui lòng cho tôi biết."
+
+00:25:30.000 --> 00:25:35.000
+Đó thực sự là điều chúng ta có thể làm bằng cách thiết lập chính sách bộ nhớ cache theo yêu cầu.
+
+00:25:35.000 --> 00:25:48.000
+Để cập nhật mã, hãy để tôi quay lại chế độ xem nhiệm vụ và chọn nhiệm vụ được đề cập.
+
+00:25:48.000 --> 00:25:54.000
+Đối với mỗi Nhiệm vụ Phiên URL được thực hiện ở đây...
+
+00:25:54.000 --> 00:26:01.000
+Chúng tôi hiển thị dấu vết ngược ở bên phải, nơi "sơ yếu việc" được gọi cho nhiệm vụ.
+
+00:26:01.000 --> 00:26:04.000
+Nó đã được nối lại trong phương thức đồng bộ hóa, trong loại ImageCollection.
+
+00:26:04.000 --> 00:26:09.000
+Hãy để tôi mở cái này trong Xcode để thực hiện thay đổi ở đây.
+
+00:26:09.000 --> 00:26:15.000
+Ở đây, tôi có URLRequest của mình và bây giờ tôi muốn thiết lập chính sách bộ nhớ cache của mình.
+
+00:26:15.000 --> 00:26:25.000
+Chính sách bộ nhớ đệm mà tôi muốn là reloadRevalidatingCacheData, có nghĩa là chúng tôi bỏ qua bộ nhớ cache cục bộ và sẽ yêu cầu máy chủ kiểm tra xem bộ nhớ cache của chúng tôi có còn hợp lệ hay không.
+
+00:26:25.000 --> 00:26:31.000
+Nếu vậy, máy chủ sẽ gửi mã phản hồi 304 để cho chúng tôi biết sử dụng bộ nhớ cache cục bộ.
+
+00:26:31.000 --> 00:26:34.000
+Nếu không, nó sẽ gửi lại dữ liệu mới.
+
+00:26:34.000 --> 00:26:47.000
+Hãy thử xem nào.
+
+00:26:47.000 --> 00:26:51.000
+Vì vậy, đây là những hình ảnh yêu thích hiện tại của tôi, và con chó đang tắm đã được thêm vào.
+
+00:26:51.000 --> 00:26:55.000
+Hãy thêm một cái khác.
+
+00:26:55.000 --> 00:26:58.000
+Bây giờ, hãy kiểm tra tab "Yêu thích".
+
+00:26:58.000 --> 00:27:01.000
+Hình ảnh tôi vừa yêu thích bây giờ xuất hiện đúng.
+
+00:27:01.000 --> 00:27:04.000
+Được rồi, tuyệt vời! Điều đó cũng đã được sửa ngay bây giờ.
+
+00:27:04.000 --> 00:27:09.000
+Quay lại với đồng nghiệp Kacper của tôi để kiểm tra xem ứng dụng và các phụ thuộc của bạn có hoạt động như bạn mong đợi không.
+
+00:27:09.000 --> 00:27:17.000
+Giống như Sergio đã trình bày trước đây, khi tôi nhấp vào tab "Yêu thích" mà không đăng nhập, chế độ xem đăng nhập sẽ được hiển thị.
+
+00:27:17.000 --> 00:27:22.000
+Chúng tôi đã thêm Đăng nhập bằng Apple để làm cho trải nghiệm đăng nhập liền mạch.
+
+00:27:22.000 --> 00:27:33.000
+Tuy nhiên, công ty chúng tôi có một số ứng dụng theo chủ đề thú cưng và một nhóm khác đang làm việc trên SDK đăng nhập được chia sẻ để cho phép người dùng sử dụng lại tài khoản của họ giữa các ứng dụng.
+
+00:27:33.000 --> 00:27:41.000
+SDK này hiện đang được phát triển và nhóm khác đã hỏi chúng tôi liệu nó có thể thay thế màn hình đăng nhập cổ điển của chúng tôi hay không.
+
+00:27:41.000 --> 00:27:51.000
+Tôi có tệp nhị phân SDK, được gọi là Thú cưng, được phân phối dưới dạng xcframework để nó có thể được sử dụng trên tất cả các nền tảng.
+
+00:27:51.000 --> 00:27:58.000
+Tích hợp nó vào dự án Xcode của tôi dễ dàng như kéo và thả nó vào phần khung được nhúng.
+
+00:27:58.000 --> 00:28:03.000
+Bây giờ, tất cả những gì còn lại là thêm một nút vào chế độ xem hiện tại của chúng tôi.
+
+00:28:03.000 --> 00:28:09.000
+Tôi sẽ điều hướng đến mã nguồn của Log-inView của chúng tôi.
+
+00:28:09.000 --> 00:28:20.000
+Đầu tiên tôi sẽ nhập khung, và sau đó thêm nút vào SwiftUI VStack của chúng tôi, ngay bên dưới Đăng nhập bằng Apple.
+
+00:28:20.000 --> 00:28:25.000
+Hãy làm mới bản xem trước giao diện người dùng Swift của chúng tôi.
+
+00:28:25.000 --> 00:28:26.000
+Đây rồi.
+
+00:28:26.000 --> 00:28:31.000
+Nút "Đăng nhập bằng Thú cưng" xuất hiện trên bản xem trước, chính xác là nơi tôi muốn.
+
+00:28:31.000 --> 00:28:34.000
+Đó thực sự là một sự tích hợp thực sự dễ dàng.
+
+00:28:34.000 --> 00:28:37.000
+Tôi tò mò muốn kiểm tra xem phương pháp đăng nhập mới này sẽ nhanh như thế nào.
+
+00:28:37.000 --> 00:28:50.000
+Và để đo lường điều này, tôi sẽ lập hồ sơ ứng dụng của mình với Công cụ bằng cách sử dụng Hành động Hồ sơ Sản phẩm.
+
+00:28:50.000 --> 00:28:53.000
+Tôi đang chọn mẫu Mạng.
+
+00:28:53.000 --> 00:29:03.000
+Và nhấp vào nút "ghi âm" trên thanh công cụ để khởi chạy ứng dụng.
+
+00:29:03.000 --> 00:29:05.000
+Ứng dụng của tôi hiện đã khởi chạy.
+
+00:29:05.000 --> 00:29:08.000
+Bây giờ tôi có thể chuyển sang Chế độ xem Đăng nhập.
+
+00:29:08.000 --> 00:29:13.000
+Các công cụ đang hiển thị tất cả lưu lượng mạng xảy ra trong thời gian chờ đợi.
+
+00:29:13.000 --> 00:29:19.000
+Tôi sẽ mở rộng nó để kiểm tra phiên URL của ứng dụng của tôi.
+
+00:29:19.000 --> 00:29:20.000
+Đây rồi.
+
+00:29:20.000 --> 00:29:22.000
+Nhưng chờ đã.
+
+00:29:22.000 --> 00:29:33.000
+Tôi chỉ mong đợi ứng dụng chính URLSession của mình ở đây, nhưng có vẻ như khung Thú cưng mà chúng tôi vừa tích hợp đang đưa ra yêu cầu từ phiên riêng của nó, mà tôi thậm chí không cần nhấp vào nút đăng nhập.
+
+00:29:33.000 --> 00:29:35.000
+Điều đó thật bất ngờ.
+
+00:29:35.000 --> 00:29:42.000
+Hãy dừng ghi âm ngay bây giờ để điều tra thêm.
+
+00:29:42.000 --> 00:29:50.000
+Tôi sẽ phóng to một vài yêu cầu đầu tiên, sử dụng tùy chọn nhấp và kéo.
+
+00:29:50.000 --> 00:30:03.000
+Có rất nhiều yêu cầu đối với một số điểm cuối phân tích và để biết thêm chi tiết, tôi có thể nhấp vào phiên "Mạng đăng nhập thú cưng" này và liệt kê tất cả chúng trong chế độ xem chi tiết.
+
+00:30:03.000 --> 00:30:16.000
+Tất cả chúng đều là yêu cầu POST và khi tôi nhấp vào một yêu cầu, tôi có thể thấy dấu vết ngược ở bên phải cho chúng tôi biết yêu cầu bắt nguồn từ phần nào của mã.
+
+00:30:16.000 --> 00:30:22.000
+Vì vậy, có vẻ như yêu cầu đó đang thông qua CFNetwork, được gọi bởi Pets, đúng như mong đợi.
+
+00:30:22.000 --> 00:30:27.000
+Nhưng khi chúng ta điều hướng sâu hơn, có vẻ như CoreLocation đang được tham gia.
+
+00:30:27.000 --> 00:30:33.000
+Điều đó thực sự đáng ngờ, đặc biệt là vì tôi đã không thực hiện bất kỳ hành động nào để kích hoạt nó.
+
+00:30:33.000 --> 00:30:42.000
+Tôi tự hỏi liệu vị trí của tôi có được gửi lại máy chủ hay không và đó là lý do tại sao CoreLocation và CFNetwork nằm trong cùng một backtrace.
+
+00:30:42.000 --> 00:30:48.000
+Tôi sẽ xác minh điều đó bằng cách kiểm tra các giao dịch HTTP tương ứng cho các tác vụ này.
+
+00:30:48.000 --> 00:30:54.000
+Để làm điều này, tôi sẽ chuyển chi tiết từ danh sách nhiệm vụ sang danh sách giao dịch.
+
+00:30:54.000 --> 00:30:58.000
+Và chọn một trong số chúng.
+
+00:30:58.000 --> 00:31:06.000
+Trong chi tiết mở rộng ở phía dưới bên phải, có thể thấy yêu cầu này chứa một số tiêu đề khá chuẩn, không có gì phải lo lắng.
+
+00:31:06.000 --> 00:31:09.000
+Nhưng chờ đã, hãy nhìn vào nội dung yêu cầu.
+
+00:31:09.000 --> 00:31:13.000
+Nó bao gồm tọa độ vị trí của tôi, và điều đó thực sự tồi tệ.
+
+00:31:13.000 --> 00:31:17.000
+Gửi thông tin này vi phạm quyền riêng tư của người dùng.
+
+00:31:17.000 --> 00:31:22.000
+Chúng tôi không muốn thu thập vị trí của họ mà không có sự đồng ý của họ và không có lý do chính đáng.
+
+00:31:22.000 --> 00:31:29.000
+Cho đến nay, ứng dụng của chúng tôi chỉ yêu cầu quyền này cho các mục đích hợp pháp giúp trải nghiệm người dùng tốt hơn.
+
+00:31:29.000 --> 00:31:34.000
+Tại thời điểm này, tôi sẽ không đi xa hơn với sự tích hợp SDK này.
+
+00:31:34.000 --> 00:31:41.000
+Thay vào đó, tôi sẽ nộp báo cáo lỗi cho nhóm khác để thông báo cho họ về hành vi không thể chấp nhận được này mà tôi đã phát hiện.
+
+00:31:41.000 --> 00:31:47.000
+Và tôi thậm chí có thể sử dụng dấu vết Công cụ này để tạo thông tin cần thiết cho báo cáo lỗi.
+
+00:31:47.000 --> 00:31:51.000
+Hãy lưu nó trên màn hình của tôi trước.
+
+00:31:51.000 --> 00:31:58.000
+Tôi sẽ đặt tên nó là "PrivacyViolation" và nhấn "save".
+
+00:31:58.000 --> 00:32:11.000
+Xctrace, công cụ dòng lệnh đi kèm với Công cụ, có thể được sử dụng để xuất dấu vết này sang định dạng Lưu trữ HTTP, đây là một tiêu chuẩn công nghiệp để trao đổi thông tin về Lưu lượng HTTP.
+
+00:32:11.000 --> 00:32:20.000
+Để làm điều này, tôi có thể chỉ cần chạy lệnh xuất xctrace, với đầu vào dấu vết của tôi và cờ xuất HAR.
+
+00:32:20.000 --> 00:32:24.000
+Hãy chạy nó ngay bây giờ.
+
+00:32:24.000 --> 00:32:28.000
+Lệnh này tạo ra một tệp mà bây giờ tôi có thể đính kèm trong báo cáo lỗi.
+
+00:32:28.000 --> 00:32:38.000
+Ai đó nhận được nó có thể kiểm tra thông tin được ghi lại trong bất kỳ công cụ nào hỗ trợ HAR, ngay cả khi họ không cài đặt Dụng cụ trên máy của mình.
+
+00:32:38.000 --> 00:32:46.000
+Bản thân HAR là một định dạng dựa trên JSON, vì vậy nó cũng có thể được mở trong trình soạn thảo văn bản hoặc dễ dàng xử lý bằng cách sử dụng các tập lệnh.
+
+00:32:46.000 --> 00:32:58.000
+Và mặc dù nó không chứa các chi tiết cụ thể về công cụ, như URLSessions hoặc backtraces, nhưng điều đó vẫn đủ để nhóm khác điều tra vấn đề này.
+
+00:32:58.000 --> 00:33:10.000
+Và đó là cách bạn có thể sử dụng Công cụ lưu lượng HTTP để chẩn đoán nguồn và nội dung lưu lượng truy cập đến từ ứng dụng của mình để đảm bảo rằng bạn kiểm soát được những gì ứng dụng của mình làm trong thời gian chạy.
+
+00:33:10.000 --> 00:33:21.000
+Bây giờ bạn đã quen với việc sử dụng Công cụ lưu lượng HTTP mới, hãy tiếp tục và nhắm mục tiêu các ứng dụng của bạn để phát hiện các vấn đề giống như những vấn đề mà chúng tôi đã chỉ cho bạn hôm nay.
+
+00:33:21.000 --> 00:33:29.000
+Để gỡ lỗi dễ dàng hơn và có nhiều ngữ cảnh hơn trong khi làm như vậy, hãy đặt tên cho URLSession và các đối tượng tác vụ của bạn.
+
+00:33:29.000 --> 00:33:33.000
+Luôn hướng đến việc áp dụng các giao thức mạng mới nhất.
+
+00:33:33.000 --> 00:33:44.000
+Và ngay cả khi bạn không tìm thấy bất kỳ vấn đề nào về hiệu suất hoặc độ chính xác với ứng dụng của mình, hãy tiếp tục và xác minh bằng lượng dữ liệu bạn đang gửi để loại bỏ bất kỳ lưu lượng truy cập không cần thiết nào.
+
+00:33:44.000 --> 00:33:50.000
+Cảm ơn bạn đã xem hôm nay và chúng tôi hy vọng bạn có khoảng thời gian tuyệt vời để theo dõi lưu lượng truy cập HTTP của ứng dụng của mình.
+
+00:33:50.000 --> 23:59:59.000
+[Nhạc lạc quan].
+

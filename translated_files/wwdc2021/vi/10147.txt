@@ -1,0 +1,403 @@
+10147
+
+Xin chào, tên tôi là Kyle Sanner, từ nhóm Kỹ thuật Phần mềm GPU.
+
+Cùng với đồng nghiệp Alex Li của tôi, chúng ta sẽ nói về cách để có được nhịp độ khung hình tối ưu trong các ứng dụng của bạn trên màn hình tốc độ làm mới thay đổi.
+
+Chúng tôi sẽ tập trung vào một số công nghệ hiển thị mới đến với macOS, Adaptive-Sync và cách thúc đẩy bản vẽ tùy chỉnh mượt mà trên iPad Pro trong mọi điều kiện.
+
+Chúng ta sẽ bắt đầu với tổng quan nhanh về các loại màn hình hiện được hỗ trợ trên Nền tảng Apple.
+
+Chúng tôi sẽ giới thiệu cho bạn màn hình Adaptive-Sync trên Mac và các công cụ mới trong macOS Monterey mà bạn có thể sử dụng để cung cấp tốc độ khung hình mượt mà trong các ứng dụng và trò chơi toàn màn hình trên các màn hình này.
+
+Sau đó, chúng ta sẽ đi sâu vào ProMotion trên iPad Pro và xem xét một số phương pháp hay nhất của CADisplayLink giúp ứng dụng của bạn duy trì nhịp độ khung hình chính xác ở các tốc độ khung hình khác nhau.
+
+Trước tiên chúng ta hãy xem lại các loại màn hình mà các thiết bị của Apple có thể hỗ trợ.
+
+Hầu hết các màn hình trên hệ thống Apple hoạt động ở tốc độ làm mới cố định.
+
+Đó là, họ làm mới bản thân với tốc độ ổn định bất cứ khi nào họ được bật nguồn.
+
+Ngoại lệ là màn hình ProMotion của chúng tôi trên iPad, và bây giờ với màn hình Adaptive-Sync trên macOS.
+
+Hãy bắt đầu tìm hiểu những gì mới với màn hình Adaptive-Sync trên Mac.
+
+Chúng ta sẽ bắt đầu với màn hình Adaptive-Sync là gì và cách chúng hoạt động trên Mac.
+
+Nhưng trước tiên, trước tiên chúng ta hãy xem nhanh cách hoạt động của màn hình tốc độ cố định.
+
+Đây là một sơ đồ cho thấy các khung hình được chuyển đến màn hình 60Hz.
+
+Mỗi khung hình được trình bày cho màn hình, nơi nó ở trong 16ms trước khi màn hình được làm mới.
+
+Nếu có một khung mới được vẽ bởi máy Mac của bạn đã sẵn sàng trong Framebuffer, thì khung mới đó sẽ được trình bày.
+
+Nếu không, khung trước đó sẽ được hiển thị lại.
+
+Nhìn vào màn hình 120Hz, bạn thấy rằng mặc dù chúng tôi đã tăng gấp đôi tốc độ làm mới và do đó giảm một nửa khoảng thời gian mỗi khung hình có thể xuất hiện trên màn hình, nhưng nó hoạt động theo cùng một cách, chỉ nhanh hơn.
+
+Mặt khác, hãy xem màn hình Adaptive-Sync này.
+
+Thay vì một khoảng thời gian tĩnh, mỗi khung hình có một khoảng thời gian mà nó có thể ở trên màn hình.
+
+Cửa sổ này thay đổi tùy thuộc vào màn hình đính kèm.
+
+Màn hình này có thể hoạt động trong khoảng từ 40 đến 120Hz, có nghĩa là một khung hình có thể ở bất cứ đâu trong khoảng từ 8 đến 25ms.
+
+Lưu ý rằng khi thời gian tối đa đã trôi qua, hệ thống phải làm mới bảng điều khiển và màn hình sẽ không có sẵn trong thời gian ngắn để cập nhật mới trong một thời gian ngắn.
+
+Được rồi, vậy các trò chơi và ứng dụng của bạn có thể nhận được những lợi ích gì trên Màn hình đồng bộ hóa thích ứng?
+
+Đối với các ứng dụng chủ yếu chạy ở tốc độ làm mới tối đa của màn hình, màn hình Adaptive-Sync cung cấp một lợi ích tuyệt vời miễn phí.
+
+Trước tiên chúng ta hãy xem xét kịch bản này, nơi ứng dụng của bạn chủ yếu có thể tạo ra các khung hình mới dưới 8ms, vì vậy bạn đang chạy khá đáng tin cậy ở 120Hz.
+
+Nhưng do sự gia tăng nhất thời về độ phức tạp của cảnh, khung hình đã hoàn thành nằm trong Bộ đệm Khung 9ms sau khi khung hình trước đó được hiển thị lần đầu tiên.
+
+Trên màn hình hiển thị tốc độ khung hình cố định, khung hình trước đó được hiển thị 16ms, thay vì 8ms mà bạn dự định.
+
+Điều này dẫn đến một trở ngại có thể cảm nhận được trong ứng dụng của bạn.
+
+Trên màn hình Adaptive-Sync, khung của bạn được hiển thị lên màn hình ngay sau khi hoàn tất, vì vậy ứng dụng của bạn chỉ bị phạt 1ms.
+
+Những cú quá giang nhỏ này thường không thể cảm nhận được đối với người dùng.
+
+Đối với khối lượng công việc không thể đạt đến tốc độ khung hình tối đa của màn hình, bạn có thể cung cấp các khung hình mượt mà, đồng đều bằng cách thực hiện một số thay đổi nhỏ đối với cách ứng dụng của bạn trình bày các bản vẽ của nó.
+
+Hãy xem xét kịch bản này: một trò chơi chạy một cảnh phức tạp có thể tạo ra các bản cập nhật ở khoảng 90Hz.
+
+Tuy nhiên, một hiệu ứng không liên tục gây ra một bước nhảy lớn về độ phức tạp, nhưng làm như vậy không nhất quán, gây ra sự tăng đột biến đột ngột xuống 66Hz.
+
+Bằng cách theo dõi hoạt động GPU của ứng dụng của bạn, bạn có thể phản ứng với sự phức tạp tăng đột biến này bằng cách cố tình trình bày các khung hình của bạn sau này cho đến khi độ phức tạp của cảnh của bạn luôn thấp hơn.
+
+Bây giờ, hãy nói về một số phương pháp hay nhất của Adaptive-Sync.
+
+Trên màn hình tốc độ cố định, khi GPU của ứng dụng của bạn hoạt động liên tục vượt quá khoảng thời gian trên kính của màn hình, trước đây chúng tôi đã khuyên bạn nên làm chậm quá trình hiển thị của mình để đạt được yếu tố tiếp theo của tốc độ làm mới nhanh nhất của màn hình.
+
+Thông thường, điều đó có nghĩa là hạ thấp khung hình mục tiêu mỗi giây xuống 30 từ 60, như trong ví dụ này ở đây.
+
+Tuy nhiên, khi trình bày cho màn hình Adaptive-Sync, chúng tôi đang thay đổi hướng dẫn đó.
+
+Thay vào đó, bạn nên cố gắng trình bày các khung hình với tốc độ cao nhất mà ứng dụng của bạn có thể làm như vậy một cách đồng đều.
+
+Ngoài việc trình bày khung hình đồng đều, hãy nhớ rằng nếu khung hình của bạn được trình bày ở mức thấp hơn tốc độ tối thiểu mà màn hình hỗ trợ, màn hình có thể không khả dụng cho các khung hình mới, điều này có thể gây ra sự thay thế trong ứng dụng của bạn.
+
+Nhưng miễn là bạn ở trong phạm vi được hỗ trợ, bạn có thể tự do chọn bất kỳ tỷ lệ nào phù hợp nhất với ứng dụng của mình.
+
+Bây giờ bạn đã hiểu rõ về hỗ trợ hiển thị mới đến với Mac trong năm nay, hãy nói về cách bật Đồng bộ hóa thích ứng trong các trò chơi của bạn.
+
+Đầu tiên, bạn sẽ cần một máy Mac được hỗ trợ.
+
+Bất kỳ máy Mac nào có GPU Apple Silicon sẽ hoạt động tốt và chúng tôi cũng hỗ trợ nhiều máy Mac dựa trên Intel gần đây nhất của chúng tôi.
+
+Thứ hai, bạn sẽ cần một màn hình Adaptive-Sync được hỗ trợ và để bật chế độ Adaptive-Sync.
+
+Điều này có thể được thực hiện bằng cách chọn tốc độ làm mới biến mới có sẵn trong Tùy chọn hệ thống hiển thị.
+
+Và cuối cùng, ứng dụng của bạn cần phải chạy ở chế độ toàn màn hình.
+
+Hãy xem bạn có thể gọi API nào trong ứng dụng của mình để phát hiện xem nó có nên cố gắng lập lịch Adaptive-Sync hay không.
+
+Trước tiên, bạn sẽ cần xác định xem màn hình bạn đang chạy có khả năng lên lịch Adaptive-Sync hay không.
+
+Đối với điều đó, có một số thuộc tính mới trong năm nay trên NSScreen, minimumRefreshInterval và maximumRefreshInterval.
+
+Những giá trị này cho bạn biết phạm vi thời gian hợp lệ trên màn hình cho một khung hình được trình bày cho màn hình này.
+
+Trên màn hình khung cố định, các giá trị này sẽ giống nhau, vì vậy một so sánh đơn giản không bằng nhau sẽ cho bạn biết liệu màn hình này có ở chế độ Đồng bộ hóa thích ứng hay không.
+
+Tiếp theo, bạn sẽ cần biết liệu cửa sổ của bạn hiện có toàn màn hình hay không.
+
+Bạn có thể xác định điều đó bằng cách kiểm tra styleMask của cửa sổ.
+
+Và hãy nhớ rằng, bạn sẽ cần kết hợp cả hai kiểm tra này để đảm bảo ứng dụng của bạn có thể tận dụng lợi thế của lịch trình Adaptive-Sync.
+
+Được rồi, tuyệt vời. Vì vậy, bây giờ bạn đã xử lý màn hình Adaptive-Sync và các API mới mà macOS cung cấp để phát hiện chúng, hãy xem cách chúng ta có thể điều chỉnh một số kỹ thuật trình bày kim loại hiện có để trình bày đồng đều trên màn hình Adaptive-Sync.
+
+Bạn có thể sử dụng các API MetalDrawable của chúng tôi có nhiệt độ khung tích hợp, chẳng hạn như presentAfterMinimumDuration hoặc presentAtTime, để có hiệu quả tuyệt vời với màn hình Adaptive-Sync.
+
+Hoặc, bạn có thể tung ra giải pháp của riêng mình với một cuộc gọi quà ngay bây giờ và bộ hẹn giờ tùy chỉnh của riêng bạn.
+
+Hãy cùng xem một vài triển khai khác nhau sẽ hoạt động như thế nào.
+
+Chúng ta sẽ bắt đầu với một ví dụ đơn giản.
+
+Ở đây, chúng tôi sẽ có được một Drawable, thiết lập công việc GPU của chúng tôi và trình bày nó trên màn hình.
+
+Chúng tôi đang dựa vào áp lực ngược của Drawable có sẵn để đặt tốc độ khung hình cho chúng tôi.
+
+Trên màn hình tốc độ cố định, chúng tôi biết rằng đây không phải là ý tưởng tốt nhất, vì không có gì đảm bảo rằng công việc GPU của bạn sẽ phù hợp với tốc độ làm mới của màn hình.
+
+Nhưng như bạn có thể thấy từ việc chụp các nhạc cụ này được chụp trên màn hình Đồng bộ hóa Thích ứng, khi cảnh của chúng tôi nhất quán, điều này có vẻ ổn.
+
+Vấn đề ở đây là cảnh này đang gặp phải những trở ngại định kỳ.
+
+Những trở ngại này sẽ chuyển thành nói lắp có thể nhìn thấy cho người dùng.
+
+Hãy cố gắng khắc phục điều đó bằng cách trình bày với tỷ lệ cố định, chẵn.
+
+Kỹ thuật này cũng có thể được sử dụng nếu bạn muốn triển khai thanh trượt FPS có thể điều chỉnh cho người dùng trong trò chơi của mình.
+
+Ở đây, chúng tôi đã đặt tần số chúng tôi muốn thành 78Hz.
+
+Và thay vì một cuộc gọi hiện tại đơn giản, chúng tôi sẽ sử dụng hiện tại sau Thời lượng tối thiểu cho Drawable này và chỉ định khoảng thời gian mà chúng tôi đã xác định ở trên.
+
+Và ở đây, bạn có thể thấy các khung được trình bày trơn tru với tốc độ mà chúng tôi yêu cầu.
+
+Chúng tôi không trình bày nhanh như ví dụ trước, nhưng người dùng của bạn ít có khả năng gặp phải tình thế nói lắp hơn và ứng dụng của bạn sẽ sử dụng ít thời gian CPU và GPU hơn.
+
+Được rồi, vậy đây là nơi mọi thứ trở nên thú vị hơn một chút.
+
+Hãy thử một cách tiếp cận sẽ tạo ra các khung hình có nhịp độ đồng đều mà không cần phải đặt một tỷ lệ cố định nào.
+
+Một cách để làm điều này là tính trung bình luân phiên của công việc GPU cần thiết để tạo ra từng khung hình và đưa thời gian đó vào cuộc gọi Drawable hiện tại của chúng tôi.
+
+Đối với khung hình đầu tiên, chúng ta cần tải thời gian GPU trung bình của mình với giá trị bắt đầu.
+
+Tôi sẽ chọn lạc quan và nhắm mục tiêu tốc độ nhanh nhất mà màn hình có thể hỗ trợ ở đây.
+
+Đây sẽ chỉ là điểm khởi đầu cho mức trung bình của chúng tôi, vì vậy bất kỳ dự đoán hợp lý nào chúng tôi đưa ra đều ổn.
+
+Bây giờ, hãy đính kèm trình xử lý hoàn thành CommandBuffer để đo lượng thời gian GPU dành để hiển thị khung hình này và kết hợp thời gian đó vào mức trung bình của chúng tôi.
+
+Đầu tiên, chúng ta có thể có được thời gian GPU cần thiết để hoàn thành công việc của mình.
+
+Sau đó, chúng tôi sẽ kết hợp thời gian mới đó vào trung bình lăn của chúng tôi sẽ được sử dụng khi chúng tôi trình bày khung hình tiếp theo.
+
+Và đây là kết quả.
+
+Như bạn có thể thấy, chúng tôi đang trình bày với tốc độ tương tự như ví dụ trước, nhưng giới hạn này được xác định bởi các khung hình trước đó mà chúng tôi đã tạo và sẽ tạo ra tốc độ khung hình chẵn trên một loạt các GPU Mac.
+
+Ở đây, chúng ta có thể thấy cùng một chương trình chạy trơn tru ở 48Hz trên một máy Mac kém mạnh hơn, mà không cần bất kỳ thay đổi mã bổ sung nào.
+
+Được rồi, Bây giờ bạn đã có một số công cụ và kỹ thuật mới mà bạn có thể sử dụng để tối ưu hóa ứng dụng của mình cho màn hình Adaptive-Sync.
+
+Nếu bạn muốn tìm hiểu thêm về màn hình Adaptive-Sync trên macOS, hãy xem dự án mẫu Metal mới trên trang web Nhà phát triển Apple.
+
+Để tìm hiểu thêm về việc cung cấp trải nghiệm hiệu suất trong Metal, hãy xem các cuộc nói chuyện WWDC này từ những năm trước.
+
+Và bây giờ, tôi sẽ giao bạn cho Alex, nơi bạn sẽ tìm hiểu thêm về nhịp độ khung hình trên iPad Pro.
+
+Cảm ơn bạn, Kyle.
+
+Tiếp theo, hãy nói về ProMotion.
+
+Kể từ năm 2017, mọi iPad Pro đều được trang bị màn hình ProMotion mang lại tốc độ làm mới lên đến 120Hz.
+
+Tuy nhiên, 120Hz có thể không khả dụng trong một số tình huống, bao gồm cả khi người dùng đã bật Chế độ năng lượng thấp, chế độ này đã được đưa lên iPad trong năm nay với iPadOS 15.
+
+Nhịp độ khung hình thích hợp sẽ cho phép ứng dụng của bạn trình bày nội dung chuyển động một cách chính xác và trơn tru, bất kể đặc điểm hiển thị, sở thích của người dùng và trạng thái hệ thống.
+
+Chúng ta sẽ xem xét sự khác biệt giữa ProMotion và màn hình tỷ lệ cố định, cũng như các tình huống trong đó một số tốc độ khung hình có thể không khả dụng.
+
+Tiếp theo, chúng ta sẽ thảo luận về liên kết hiển thị là gì và cách ứng dụng của bạn có thể sử dụng nó để thúc đẩy bản vẽ tùy chỉnh.
+
+Và cuối cùng, chúng tôi sẽ cung cấp một số phương pháp hay nhất về liên kết hiển thị.
+
+Hãy đi sâu vào.
+
+Như Kyle đã trình bày ngắn gọn trước đó, một màn hình 60Hz cố định làm mới sau mỗi 16ms, một nhịp cố định.
+
+Nó hỗ trợ trình bày mượt mà các nội dung có tốc độ khung hình là hệ số 60.
+
+Ví dụ, 60Hz, 30Hz, 20Hz, vân vân.
+
+Tuy nhiên, khi nội dung chậm hơn tốc độ làm mới màn hình, chẳng hạn như 30Hz, bản thân màn hình vẫn phải được làm mới ở cùng một nhịp, do đó, mọi khung hình khác đều lặp lại so với khung hình trước đó và điều này tiêu thụ một số năng lượng.
+
+Mặt khác, ProMotion cung cấp khả năng phản hồi tuyệt vời với tốc độ làm mới lên đến 120Hz.
+
+Nó cũng thích ứng với nội dung trên màn hình và do đó giảm mức tiêu thụ điện năng của nó.
+
+Hãy xem nó hoạt động như thế nào.
+
+Tất nhiên, ở tốc độ làm mới tối đa 120Hz, màn hình làm mới sau mỗi 8ms.
+
+Vì 120 là bội số của 60, ProMotion hỗ trợ tất cả các tốc độ khung hình hiện có.
+
+Nó không chỉ cung cấp 120Hz, mà còn cung cấp một số tốc độ khung hình trung gian cho các ứng dụng của bạn.
+
+Hơn nữa, ProMotion có thể tự động điều chỉnh tốc độ làm mới của nó, vì vậy với nội dung 60Hz mượt mà, nó chỉ có thể làm mới sau mỗi 16ms mà không cần lặp lại, nếu không sẽ được yêu cầu trên màn hình 120Hz cố định.
+
+Điều này đúng với 24Hz.
+
+Bây giờ, những tốc độ khung hình này có thể không phải lúc nào cũng có sẵn.
+
+Người dùng có thể bật chuyển đổi Tốc độ khung hình giới hạn trong cài đặt Trợ năng giới hạn tốc độ khung hình tối đa thành 60Hz.
+
+Ngoài ra, khi thiết bị nóng lên, hệ thống có thể áp dụng các hạn chế về tính khả dụng của 120Hz.
+
+Với iPadOS 15, chúng tôi cũng sẽ thực thi nắp 60Hz ở Chế độ Năng lượng Thấp.
+
+Vậy, những tình huống này ảnh hưởng đến ứng dụng của bạn như thế nào?
+
+Tin tốt là hầu hết các ứng dụng sẽ hoạt động mà không có bất kỳ thay đổi nào.
+
+Nhưng nếu ứng dụng của bạn thực hiện vẽ tùy chỉnh từng khung hình, thì bạn sẽ cần chú ý đến những thay đổi tốc độ khung hình này và chúng tôi sẽ chỉ cho bạn cách thực hiện điều đó.
+
+Công cụ được đề xuất để thúc đẩy bản vẽ tùy chỉnh là liên kết hiển thị, về cơ bản là bộ hẹn giờ được đồng bộ hóa với tốc độ làm mới màn hình.
+
+Nó giúp ứng dụng của bạn điều khiển bất kỳ hoạt ảnh tùy chỉnh hoặc vòng lặp kết xuất tùy chỉnh nào.
+
+Có hai liên kết hiển thị.
+
+Một là CVDisplayLink, được cung cấp bởi CoreVideo trên macOS, và cái còn lại là CADisplayLink, được cung cấp bởi CoreAnimation trên các nền tảng khác của chúng tôi, cũng như Catalyst trên macOS, mỗi nền tảng có các đặc điểm và hành vi hơi khác nhau.
+
+Hôm nay, chúng ta sẽ chỉ thảo luận về CADisplayLink, nhưng ở cấp độ cao, những khái niệm này sẽ áp dụng cho cả hai.
+
+CADisplayLink thức dậy ở mỗi vsync và gọi cuộc gọi lại.
+
+Điều này cung cấp cho ứng dụng toàn bộ 8ms để hoàn thành công việc của nó.
+
+Bộ hẹn giờ thông thường, chẳng hạn như NSTimer, rất khó có thể đồng bộ hoàn hảo với màn hình.
+
+Nó có thể bị lệch pha hoặc trôi dạt, vì vậy đôi khi ứng dụng có thể không có đủ thời gian để hoàn thành công việc của mình và nó dẫn đến việc giảm khung hình.
+
+Bây giờ bạn đã thấy cách CADisplayLink cung cấp thời gian nhất quán, đây là một số lợi ích bổ sung của nó.
+
+Nó có thể chạy với tốc độ chậm hơn tốc độ làm mới màn hình và để làm như vậy, ứng dụng của bạn cung cấp gợi ý thông qua khung hình ưu tiên PerSecond và chúng tôi sẽ chọn tốc độ khung hình có sẵn gần nhất cho bạn.
+
+Khi tính khả dụng của tốc độ khung hình thay đổi, như chúng ta đã thảo luận trước đó, CADisplayLink sẽ tự động điều chỉnh tốc độ của nó dưới mui xe.
+
+Tất nhiên, nó cũng cung cấp cho ứng dụng của bạn thông tin thời gian cần thiết để bản vẽ tùy chỉnh của bạn có thể nhận thức được những thay đổi này.
+
+Chúng tôi sẽ không đi sâu vào cách viết hoạt ảnh tùy chỉnh hoặc vòng lặp kết xuất tùy chỉnh, nhưng chúng tôi sẽ cung cấp cho bạn bốn phương pháp hay nhất để giúp bản vẽ tùy chỉnh của bạn đồng bộ với thời gian hiển thị và tránh một số cạm bẫy phổ biến.
+
+Đầu tiên, điều quan trọng là phải truy vấn tốc độ làm mới màn hình trong thời gian chạy thay vì mã hóa cứng nó.
+
+Thứ hai, thường thì bạn nên sử dụng tốc độ khung hình của chính CADisplayLink.
+
+Tiếp theo, sử dụng targetTimestamp để chuẩn bị bản vẽ sẽ giúp giảm trở ngại.
+
+Cuối cùng, luôn luôn là một ý tưởng tốt để chuẩn bị cho những điều bất ngờ bằng cách tính toán động đồng bằng thời gian.
+
+Hãy xem qua từng cái một.
+
+Tốc độ làm mới màn hình tối đa có thể được truy vấn thông qua UIScreen, sẽ luôn trả về 120Hz trên màn hình ProMotion, ngay cả trong các tình huống như khi bật Chế độ nguồn điện thấp.
+
+Mặt khác, CADisplayLink sẽ thực sự cung cấp khoảng thời gian ngắn nhất giữa các khung hình thông qua thuộc tính thời lượng và nó sẽ tự động cập nhật dựa trên trạng thái thiết bị hiện tại.
+
+Nhưng hầu như luôn luôn, bạn nên sử dụng thông tin khung hình thực tế trực tiếp từ CADisplayLink vì liên kết hiển thị có thể chạy chậm hơn tốc độ làm mới màn hình tối đa.
+
+Ngoài ra, tính khả dụng của tốc độ khung hình phụ thuộc vào phần cứng và tốc độ khung hình thực tế có thể được thay đổi động bởi chính liên kết hiển thị để đáp ứng với những thay đổi trạng thái hệ thống.
+
+Hãy xem xét một ví dụ.
+
+Giả sử chúng tôi yêu cầu một liên kết hiển thị 40Hz.
+
+Như bạn thấy, trên màn hình ProMotion, 40Hz được hỗ trợ.
+
+Tuy nhiên, trên màn hình 60Hz hoặc khi ProMotion được giới hạn ở 60Hz, liên kết màn hình sẽ tự động điều chỉnh thành 30Hz.
+
+Điều này đảm bảo một nhịp tốt trong đó mỗi lần đánh thức nằm trên một vsync có thể cố gắng cung cấp lượng thời gian bằng nhau cho mỗi khung hình.
+
+Nếu chúng tôi sử dụng NSTimer 40Hz đơn giản, không nhận thức được tốc độ khung hình, quá trình đánh thức của nó có thể ở ngay giữa khoảng thời gian vsync và tất nhiên, chúng tôi không thể trình bày khung ở đó, vì vậy bạn có thể sẽ quan sát thấy các trở ngại trong bản vẽ tùy chỉnh của mình.
+
+Vậy, nó trông như thế nào trong mã?
+
+Chà, đây là cách bạn thường thiết lập một liên kết hiển thị.
+
+Đầu tiên, bạn phải cung cấp một mục tiêu và một bộ chọn, đó là cuộc gọi lại được gọi.
+
+Tiếp theo, gợi ý tốc độ khung hình ưa thích là 40Hz thông qua khung hình ưu tiênPerSecond.
+
+Sau đó, bạn thêm liên kết hiển thị vào vòng lặp chạy hiện tại, từ đó cuộc gọi lại sẽ được gọi.
+
+Vì vậy, trong cuộc gọi lại, bạn có thể nhận được khoảng thời gian dự kiến giữa các lần đánh thức liên kết hiển thị bằng cách trừ dấu thời gian khỏi targetTimestamp.
+
+Khoảng thời gian này không nhất thiết phải luôn là 1 trên 40 vì bản thân liên kết hiển thị có thể đang chạy ở một tần số khác.
+
+Tiếp theo, hãy nói về những dấu thời gian này.
+
+Chủ yếu có hai dấu thời gian trên CADisplayLink, Dấu thời gian, biểu thị khi cuộc gọi lại được lên lịch gọi và dấu thời gian mục tiêu, đó là khi khung tiếp theo sẽ được CoreAnimation tổng hợp.
+
+Chúng tôi sẽ xem qua một ví dụ minh họa lý do tại sao bạn nên sử dụng targetTimestamp để chuẩn bị bản vẽ của mình.
+
+Đây là một hình ảnh động trong miền thời gian chuẩn hóa của nó từ 0 đến 1.
+
+Giả sử chúng ta đang nhắm mục tiêu tốc độ khung hình cao nhất có thể và hiện tại là 120Hz.
+
+CADisplayLink thức dậy và nếu chúng tôi chuẩn bị bản trình bày khung của mình bằng dấu thời gian, chúng tôi sẽ lấy mẫu trực tiếp tại đây, được trình bày trong vsync tiếp theo và đây là.
+
+Quá trình tương tự vẫn tiếp tục và chúng tôi thấy rằng nó có nhịp tốt trong đó với mỗi khung hình 120Hz, tiến trình hoạt hình của chúng tôi tăng 0,05.
+
+Bây giờ, giả sử trạng thái nhiệt thay đổi và 120Hz không còn khả dụng nữa.
+
+Bây giờ liên kết hiển thị thức dậy một lần nữa và ứng dụng chuẩn bị hoạt ảnh ở tiến trình 0.4, được trình bày trong vsync tiếp theo ngay tại đây.
+
+Và mô hình tương tự vẫn tiếp tục.
+
+Có điều gì đó không hoàn toàn đúng trong quá trình chuyển đổi ở đây.
+
+Chúng tôi thấy rằng tiến độ tăng 0,05, nhưng một cái trên 8ms và cái còn lại trên 16ms.
+
+Rất rõ ràng nếu chúng ta vẽ biểu đồ tiến độ so với thời gian, chúng ta sẽ thấy một trục trặc ngay khi chuyển đổi và điều này sẽ phản ánh như một trở ngại có thể cảm nhận được của người dùng và điều đó không mong muốn.
+
+Bây giờ, hãy thử targetTimestamp.
+
+CADisplayLink thức dậy ở đây.
+
+Tiến trình được lấy mẫu tại targetTimestamp, cho 0,15.
+
+Mô hình tương tự vẫn tiếp tục, và một lần nữa, chúng ta thấy một nhịp tốt.
+
+Tại điểm chuyển đổi tốc độ khung hình này, liên kết hiển thị thức dậy, các mẫu tại targetTimestamp và chúng tôi nhận được 0,50.
+
+Và nó tiếp tục theo cùng một cách.
+
+Nếu chúng ta vẽ cùng một biểu đồ tiến độ so với thời gian, bạn sẽ thấy rằng đó là một đường thẳng và do đó nó cung cấp nội dung mượt mà ngay cả khi tốc độ khung hình thay đổi.
+
+Vì vậy, targetTimestamp nên được sử dụng thay vì dấu thời gian để chuẩn bị bản vẽ của bạn.
+
+Trong mã của bạn, nó thường đơn giản như thay thế bất kỳ việc sử dụng dấu thời gian nào bằng targetTimestamp.
+
+Cuối cùng, hãy nói về tính toán động đồng bằng thời gian.
+
+Sự khác biệt giữa targetTimestamp và dấu thời gian cung cấp cho bạn khoảng thời gian dự kiến giữa các cuộc gọi lại liên kết hiển thị, nhưng khoảng thời gian thực tế không được đảm bảo.
+
+Một luồng ưu tiên cao hơn có thể được lên lịch trên CPU hoặc runloop đang bận với một thứ khác.
+
+Trong trường hợp cực đoan, các cuộc gọi lại có thể bị bỏ qua hoàn toàn, vì vậy trong những tình huống này, điều đặc biệt quan trọng là vẫn duy trì thời gian chính xác trong bản vẽ tùy chỉnh của bạn để có trải nghiệm người dùng tốt nhất.
+
+Khi cuộc gọi lại CADisplayLink được gọi, ứng dụng sẽ thực hiện công việc của mình để chuẩn bị các bản cập nhật hoặc kết xuất cần thiết cho khung tiếp theo.
+
+Thông thường, cuộc gọi lại sẽ được gọi ngay tại thời gian thức dậy theo lịch trình, nhưng nó không tránh được trường hợp này.
+
+Chúng tôi hy vọng cuộc gọi lại tiếp theo sẽ được gọi ở đây.
+
+Tuy nhiên, liên kết hiển thị không có cơ hội chạy cho đến vài mili giây trong khoảng thời gian vsync.
+
+Và do đó, bạn có thể không nhận được đầy đủ 8ms.
+
+Trong trường hợp này, bạn có thể truy vấn CACurrentMediaTime và so sánh với targetTimestamp để biết có bao nhiêu thời gian có sẵn.
+
+Bây giờ, giả sử công việc mất quá nhiều thời gian trong khung này.
+
+Cuộc gọi lại tiếp theo sẽ không được gọi cho đến khi runloop trống trở lại.
+
+Bởi vì cái này bị trì hoãn, cuộc gọi lại sau đây sẽ bị bỏ qua, vì vậy khi bạn đang chuẩn bị tiến hành bản vẽ tùy chỉnh của mình trong cuộc gọi lại này, hãy lưu ý rằng thời gian delta mà bạn nên sử dụng không phải là 8ms, mà là 16ms, nếu bạn theo dõi dấu thời gian trước đó mà trạng thái bản vẽ tùy chỉnh của
+
+Do đó, nếu ứng dụng của bạn sử dụng đồng bằng thời gian để nâng cao trạng thái bản vẽ tùy chỉnh của bạn, điều này sẽ làm chậm bản vẽ tùy chỉnh của bạn xuống một khung mỗi khi bỏ qua một bản calback.
+
+Thay vào đó, bạn có thể theo dõi Dấu thời gian mục tiêu trước đó để bạn có thể nâng cấp trạng thái một cách chính xác.
+
+Và nếu bản vẽ tùy chỉnh của bạn có khối lượng công việc cao, bạn có thể xem targetTimestamp để có khả năng giảm khối lượng công việc để đáp ứng thời hạn khi cần thiết.
+
+Để tóm tắt lại các phương pháp hay nhất, đừng đoán tốc độ làm mới màn hình.
+
+Luôn truy vấn nó trong thời gian chạy.
+
+Bản vẽ tùy chỉnh của bạn phải linh hoạt ở tốc độ khung hình được hỗ trợ và phải sẵn sàng thích ứng với tốc độ khác.
+
+Sử dụng targetTimestamp để đảm bảo chuyển đổi tốc độ khung hình không gặp trở ngại và đề phòng mọi tình huống bất ngờ, chẳng hạn như gọi lại liên kết hiển thị bị bỏ lỡ.
+
+Vì vậy, hãy kết thúc.
+
+Trong nửa đầu của phiên này, chúng tôi đã thảo luận về cách tối ưu hóa tốc độ khung hình của ứng dụng của bạn khi chạy trên màn hình Adaptive-Sync trên macOS.
+
+Trong nửa sau, chúng tôi đã mô tả các phương pháp hay nhất để ứng dụng của bạn thúc đẩy bản vẽ tùy chỉnh và duy trì nhịp độ khung hình mượt mà trong mọi điều kiện trên màn hình ProMotion trên iPad Pro.
+
+Khi các công nghệ hiển thị tiếp tục phát triển, chúng tôi hy vọng phiên này đã cung cấp cho bạn không chỉ thông tin chi tiết mà còn cả các công cụ và phương pháp hay nhất để hỗ trợ thời gian ngày càng năng động của màn hình.
+
+Cảm ơn bạn rất nhiều vì đã tham gia cùng chúng tôi, và tận hưởng phần còn lại của WWDC 2021.
+
+[Âm nhạc].

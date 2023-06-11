@@ -1,0 +1,841 @@
+10194
+
+♪ Nhạc bass đang phát ♪
+
+♪
+
+Ben Cohen: Xin chào, tôi là Ben từ nhóm Swift, và trong video này, tôi sẽ chuyển một ứng dụng hiện có sang sử dụng các tính năng đồng thời mới của Swift.
+
+Chúng tôi sẽ xem các tính năng mới này giúp bạn viết mã không đồng bộ rõ ràng hơn như thế nào và bảo vệ chống lại các điều kiện chủng tộc có thể xảy ra, cũng như xem xét một số kỹ thuật để dần dần chuyển mã của bạn sang cách vận hành mới này.
+
+Tôi sẽ sử dụng một ứng dụng có tên Coffee Tracker, và nó dựa trên một cuộc nói chuyện từ WWDC 2020 về việc tạo và cập nhật các biến chứng của đồng hồ.
+
+Đây là một ứng dụng đơn giản cho phép bạn theo dõi tất cả cà phê bạn đã uống hôm nay, cũng như một biến chứng để hiển thị mức caffeine hiện tại của bạn trên mặt đồng hồ.
+
+Đó là một ví dụ hay để sử dụng cho mục đích của chúng tôi bởi vì mặc dù nó là một ứng dụng nhỏ, nó hiển thị rất nhiều điều khác nhau mà chúng tôi muốn suy nghĩ, bao gồm cách hoạt động đồng thời với SwiftUI, ủy quyền gọi lại từ SDK đồng hồ, một số I/O và giao tiếp với các API không đồng bộ trong SDK của Apple.
+
+Bây giờ chúng ta hãy tham quan nhanh ứng dụng.
+
+Nó gần như được chia thành ba lớp.
+
+Đầu tiên, có lớp giao diện người dùng.
+
+Đây chủ yếu là chế độ xem SwiftUI, nhưng trong đó chúng ta cũng có thể xem xét những thứ như nguồn dữ liệu phức tạp như một phần của lớp giao diện người dùng.
+
+Tiếp theo là lớp mô hình bao gồm một vài loại giá trị đơn giản để đại diện cho đồ uống chứa caffeine, cũng như một loại mô hình được gọi là "Mô hình cà phê".
+
+Bây giờ, đây là cái mà bạn có thể gọi là Mô hình giao diện người dùng.
+
+Đó là, nơi bạn giữ dữ liệu để hiển thị bởi lớp giao diện người dùng.
+
+Đó là một đối tượng có thể quan sát được cung cấp cho chế độ xem SwiftUI của chúng tôi và tất cả các cập nhật trên đó sẽ cần được thực hiện trên luồng chính.
+
+Tôi đang đề cập đến nó như một mô hình giao diện người dùng vì nó có thể không phải là mô hình đầy đủ của tất cả dữ liệu ứng dụng của bạn.
+
+Nó có thể chỉ là một phép chiếu của mô hình dữ liệu của bạn hoặc một tập hợp con của nó; chỉ là những gì bạn cần hiển thị trên giao diện người dùng tại thời điểm này.
+
+Cuối cùng, chúng tôi có những gì bạn có thể nghĩ là lớp phụ trợ: quá trình xử lý xảy ra - có thể là trong nền - để điền mô hình của bạn hoặc nói chuyện với thế giới bên ngoài ứng dụng của bạn.
+
+Trong trường hợp của chúng tôi, điều đó được thể hiện bằng loại HealthKitController này quản lý giao tiếp với HealthKit để lưu và tải lượng caffeine của người dùng.
+
+Bây giờ, trước khi chúng ta bắt đầu xem xét mã, hãy nói về cách quản lý đồng thời trong ứng dụng.
+
+Kiến trúc này trông khá sạch sẽ, nhưng khi chúng ta phân lớp về cách xử lý đồng thời, chúng ta sẽ có được một bức tranh lộn xộn hơn nhiều.
+
+Ứng dụng này về cơ bản được chia thành ba hàng đợi đồng thời mà mã có thể được thực thi.
+
+Công việc trong giao diện người dùng và trên mô hình được thực hiện trong hàng đợi chính.
+
+Ứng dụng cũng có một hàng đợi điều phối để thực hiện công việc trong nền.
+
+Và cuối cùng, một số cuộc gọi lại nhất định vào trình xử lý hoàn thành - như những kết quả trả về từ HealthKit - được thực hiện trên các hàng đợi tùy ý.
+
+Đây là một tình huống khá phổ biến.
+
+Những gì có vẻ giống như một kiến trúc ứng dụng đơn giản bỏ qua rất nhiều sự phức tạp tiềm ẩn trong cách nó xử lý đồng thời.
+
+Bây giờ, để tiết lộ nhanh chóng.
+
+Khi áp dụng đồng thời Swift, chúng ta sẽ đi từ kiến trúc đồng thời đặc biệt này sang một cái gì đó sẽ trông như thế này.
+
+Chúng tôi sẽ đặt chế độ xem và mô hình giao diện người dùng của mình lên cái được gọi là diễn viên chính.
+
+Chúng tôi sẽ tạo ra các diễn viên mới để hoạt động trong nền và các loại này sẽ chuyển các giá trị an toàn luồng giữa nhau bằng cách sử dụng tính năng không đồng bộ/chờ đợi.
+
+Khi chúng ta hoàn thành, kiến trúc đồng thời phải rõ ràng và dễ mô tả như kiến trúc kiểu.
+
+Bây giờ chúng tôi đã sử dụng một vài thuật ngữ ở đây mà bạn có thể không quen thuộc, như "async/await" và "actors", và chúng tôi sẽ giải thích chúng một cách ngắn gọn khi chúng tôi sử dụng chúng trong mã.
+
+Nhưng để được giải thích sâu hơn về các tính năng này, có một số cuộc nói chuyện khác có sẵn đi vào chi tiết hơn nhiều.
+
+Vì vậy, bây giờ chúng ta đã thấy kiến trúc tổng thể, hãy đi sâu vào mã.
+
+Ở đây chúng tôi có các tệp khác nhau.
+
+Đầu tiên, của một số chế độ xem giao diện người dùng Swift.
+
+Và sau đó chúng tôi có đại diện mở rộng của bộ điều khiển biến chứng đồng hồ của chúng tôi.
+
+Chúng tôi có loại mô hình đơn giản đại diện cho đồ uống chứa caffeine và mô hình CoffeeData UI chứa một loạt các loại đồ uống này.
+
+Và cuối cùng, chúng ta có HealthKitController.
+
+Và trong lớp này, tôi sẽ bắt đầu giới thiệu một số tính năng đồng thời mới của Swift vào ứng dụng của chúng tôi.
+
+HealthKitController chứa một vài cuộc gọi khác nhau vào HealthKit SDK để xử lý hoàn thành.
+
+Hãy bắt đầu bằng cách xem xét thao tác lưu của bộ điều khiển này.
+
+Vì vậy, tôi vừa nhấn Control-6, và điều đó sẽ hiển thị danh sách các chức năng trong tệp này và chúng ta sẽ chuyển sang thao tác lưu.
+
+Bây giờ, trước khi chúng ta đi vào các tính năng đồng thời mới, hãy nói một chút về an toàn luồng trong Swift ngay hôm nay.
+
+Mã này truy cập một số biến, isAvailable và lưu trữ.
+
+Bây giờ, có vẻ như chúng ta chỉ đang đọc các biến này trong hàm này.
+
+Điều đó có an toàn không?
+
+Chà không, không phải nếu mã khác có thể được viết cho họ cùng một lúc.
+
+Để biết liệu mã này có an toàn với luồng hay không, tôi cần nhiều thông tin hơn là chỉ nhìn vào chức năng này.
+
+Không sử dụng hàng đợi hoặc khóa điều phối trong đó, vì vậy bất cứ điều gì làm cho chuỗi mã này an toàn - giả sử là như vậy - phải ở nơi khác.
+
+Có thể người gọi tuần tự hóa tất cả các cuộc gọi để lưu qua một hàng đợi.
+
+Hoặc có thể ứng dụng được xây dựng theo một cách nào đó có nghĩa là nó ổn.
+
+Nhưng tôi không thể biết điều này chỉ bằng cách nhìn vào chức năng này.
+
+Có thể làm điều đó - xem xét chức năng này và biết một số điều nhất định mà không cần phải xem các phần khác trong chương trình của tôi - là những gì chúng tôi gọi là lý luận cục bộ và đó là một mục tiêu thực sự quan trọng đối với Swift.
+
+Ví dụ, sự nhấn mạnh của Swift vào các loại giá trị là về lý luận cục bộ.
+
+Không giống như loại tham chiếu, bạn không phải lo lắng rằng loại giá trị bạn đã được chuyển đang bị đột biến ở những nơi khác trong chương trình của bạn.
+
+Rất nhiều tính năng ngôn ngữ được giới thiệu đồng thời trong Swift 5.5 là để cung cấp cho bạn nhiều cơ hội hơn để lý luận cục bộ về mã của bạn.
+
+Bây giờ, khi nó xảy ra, chức năng này hoàn toàn an toàn với luồng, nhưng tôi đã tự mình tìm ra điều đó; trình biên dịch không giúp tôi phát hiện ra những vấn đề này.
+
+Vì vậy, ở dưới đây, chúng tôi có một cuộc gọi đến HealthKit SDK để lưu một caffeineSample vào dữ liệu sức khỏe của người dùng.
+
+Và điều này cần một trình xử lý hoàn thành, và trình xử lý hoàn thành đó có hai giá trị: thành công hay sai.
+
+Nếu thao tác thành công, không có lỗi; lỗi sẽ là số không.
+
+Điều này có nghĩa là chúng ta cần nhớ kiểm tra trạng thái và sau đó, khi thích hợp, hãy mở gói lỗi tùy chọn ở đây.
+
+Bây giờ, đây không phải là cách chúng tôi xử lý lỗi thông thường trong Swift.
+
+Điều này sẽ tốt hơn nhiều như một phương pháp có thể gây ra thất bại.
+
+Nhưng cách tiếp cận đó không hiệu quả với những người xử lý hoàn thành.
+
+Nhưng bây giờ, với các phương thức không đồng bộ, chúng ta có thể có các hàm không đồng bộ có thể ném.
+
+Phương pháp lưu HealthKit này hiện có một phương pháp tương đương không đồng bộ thực hiện chính xác điều đó, vì vậy hãy chuyển sang sử dụng nó.
+
+Để làm điều đó, trước tiên chúng tôi xóa trình xử lý hoàn thành và chúng tôi viết "chờ" trước cuộc gọi phương thức.
+
+Điều này nhắc nhở chúng ta rằng đó là một cuộc gọi hàm không đồng bộ và mã sẽ tạm dừng tại thời điểm này và cho phép các mã khác chạy.
+
+Chúng ta sẽ quay lại lý do tại sao điều này lại quan trọng một lát sau.
+
+Vì vậy, nếu chúng tôi biên dịch, bây giờ chúng tôi đã làm điều này, chúng tôi thấy rằng trình biên dịch đang nói với chúng tôi rằng chúng tôi cần một "thử".
+
+Và đây là một lợi ích lớn của các chức năng không đồng bộ; chúng có thể ném.
+
+Không còn phải nhớ kiểm tra lỗi tùy chọn nữa.
+
+Vì vậy, chúng tôi có thể thêm "thử" trước cuộc gọi phương thức này và chúng tôi muốn xử lý lỗi ngay lập tức.
+
+Vì vậy, chúng tôi kết thúc cuộc gọi này trong một khối làm...
+
+Và sau đó bắt lỗi.
+
+Chúng ta có thể loại bỏ bộ phận bảo vệ này.
+
+Và bây giờ chúng tôi đang bắt gặp lỗi, nó không còn là tùy chọn nữa, vì vậy chúng tôi có thể xóa phần mở gói.
+
+Điều này cũng có nghĩa là chúng ta có thể sắp xếp lại mã của mình để giữ đường dẫn hạnh phúc ở trên cùng để chúng ta có thể di chuyển dòng nhật ký thành công lên ngay bên dưới bản lưu và sau đó chỉ cần xử lý lỗi đăng nhập vào bộ nhớ cache.
+
+Lưu ý rằng lưu không còn trả về một giá trị nữa.
+
+Trả về thành công/thất bại thực sự trùng lặp với lỗi, vì vậy chức năng mới của chúng tôi chỉ ném hoặc thành công.
+
+Bây giờ chúng tôi đã thêm tính năng bắt thử, chúng tôi đang gặp thêm một lỗi nữa từ trình biên dịch.
+
+Chúng tôi đang gọi một hàm không đồng bộ, nhưng chúng tôi đang gọi nó từ bên trong một hàm đồng bộ.
+
+Cái này không hoạt động.
+
+Các chức năng không đồng bộ có khả năng mà các chức năng đồng bộ không có: khả năng từ bỏ quyền kiểm soát luồng mà chúng đang chạy trong khi chờ đợi.
+
+Để làm điều này, họ có một cách riêng để xử lý khung ngăn xếp của họ và điều này không tương thích với các chức năng đồng bộ.
+
+Vì vậy, một lựa chọn là làm cho chức năng này không đồng bộ thay thế.
+
+Vì vậy, chúng ta chỉ có thể thêm từ khóa không đồng bộ sau định nghĩa hàm.
+
+Và bây giờ, tệp này biên dịch.
+
+Nhưng toàn bộ dự án vẫn chưa được biên soạn.
+
+Làm cho chức năng này không đồng bộ đã đẩy vấn đề lên một cấp độ đến nơi nó được gọi.
+
+Ở đây trong mô hình dữ liệu của tôi, bây giờ tôi đang gặp lỗi trình biên dịch tương tự vì chức năng này không đồng bộ.
+
+Bây giờ tôi có thể tiếp tục đi lên chuỗi, nhưng bây giờ, hãy xem một kỹ thuật khác để giữ cho các thay đổi được bản địa hóa.
+
+Để gọi hàm không đồng bộ của tôi, tôi sẽ tách ra một tác vụ không đồng bộ mới sẽ được phép gọi các hàm không đồng bộ.
+
+Nhiệm vụ không đồng bộ này rất giống với việc gọi async trên hàng đợi điều phối toàn cầu.
+
+Bạn không thể trả lại một giá trị từ nó cho hàm bên ngoài vì khối thực thi đồng thời.
+
+Vì vậy, bất cứ điều gì bạn làm với việc đóng cửa tách rời cần phải khép kín.
+
+Trong trường hợp này, chúng tôi chỉ gọi lưu, không trả về giá trị, vì vậy không sao cả.
+
+Bạn cũng cần cẩn thận rằng bạn không chạm vào trạng thái toàn cầu có thể bị đột biến đồng thời từ các luồng khác.
+
+Và đây là nơi có liên quan rằng lưu hoàn toàn an toàn với luồng, nếu không chúng tôi có thể vô tình giới thiệu các điều kiện cuộc đua mới bằng cách thêm nhiệm vụ mới này.
+
+Bây giờ chúng tôi đã đặt nó bên trong một tác vụ không đồng bộ, hàm đang chờ của chúng tôi được biên dịch và chúng tôi đã hoàn thành lần đầu tiên sử dụng async/await trong ứng dụng này, chúng tôi có thể chạy nó ngay bây giờ.
+
+Hãy thực hiện một trong những tái cấu trúc khác và lần này, hãy xem xét một số kỹ thuật khác khi chuyển sang không đồng bộ.
+
+Vì vậy, chúng ta hãy xem cuộc gọi yêu cầu ủy quyền truy cập vào dữ liệu sức khỏe của người dùng.
+
+Điều này tương tự gọi HealthKit với trình xử lý hoàn thành.
+
+Nhưng không giống như trước đây, bản thân chức năng này cần một trình xử lý hoàn thành.
+
+Những gì tôi sẽ làm là tôi sẽ tạo phiên bản thứ hai của hàm để trở thành không đồng bộ trong khi vẫn giữ phiên bản trình xử lý hoàn thành.
+
+Bằng cách đó, các phần khác trong mã của chúng tôi gọi nó với trình xử lý hoàn thành có thể tiếp tục hoạt động trong khi chúng tôi tái cấu trúc.
+
+Tôi có thể làm điều này một cách dễ dàng bằng cách sử dụng hành động tái cấu trúc "Tạo thay thế không đồng bộ".
+
+Điều đó có sẵn trong menu Code Action - mà tôi có thể đưa ra với Command-Shift-A - và chọn tùy chọn để thêm giải pháp thay thế không đồng bộ.
+
+Vì vậy, điều này đã thêm phiên bản không đồng bộ thứ hai của cuộc gọi ban đầu.
+
+Và nó đã thay thế mã xử lý hoàn thành ban đầu bằng mã tạo ra một tác vụ không đồng bộ mới...
+
+...Và sau đó chỉ chờ phiên bản không đồng bộ của chức năng.
+
+Lưu ý rằng việc tái cấu trúc không đồng bộ đã thêm cảnh báo ngừng sử dụng vào cảnh báo ban đầu.
+
+Những điều này sẽ giúp hướng dẫn tôi đến các phần mã của mình có thể được hưởng lợi tiếp theo từ việc tái cấu trúc để gọi phiên bản không đồng bộ mới này.
+
+Hãy hoàn tác và quay lại phiên bản xử lý hoàn thành ban đầu đó trong giây lát.
+
+Bên trong yêu cầu này Ủy quyền gọi lại, cuộc gọi lại này có thể xảy ra trên một chuỗi tùy ý.
+
+Vì vậy, bạn cần biết rằng mã bên trong nó an toàn với luồng.
+
+Nhưng tôi không nghĩ là như vậy.
+
+Bài tập này ở đây có thể xảy ra đồng thời với mã khác đọc giá trị này trên các luồng khác.
+
+Và có một ví dụ khác về việc thiếu lý luận cục bộ trong mã này.
+
+Sau bài tập đó, trình xử lý hoàn thành này được gọi và tôi không biết liệu mã bên trong trình xử lý hoàn thành đó có an toàn cho luồng hay không.
+
+Tôi sẽ phải đi và xem xét tất cả các trang web cuộc gọi cho chức năng này để xem cách trình xử lý hoàn thành của họ được viết để biết rằng điều này ổn.
+
+Bây giờ, hãy làm lại lần nữa và xem phiên bản được tái cấu trúc.
+
+Bây giờ hãy nhớ rằng, một tác vụ không đồng bộ cũng chạy trên một chuỗi tùy ý tương tự như một cuộc gọi lại công văn.
+
+Vì vậy, phiên bản chuyển tiếp này có các vấn đề tương tự như phiên bản trình xử lý hoàn thành mà chúng tôi đã gặp phải trước đây.
+
+Chúng tôi vẫn chưa làm cho mã của mình an toàn hơn.
+
+Chúng tôi sẽ sớm khắc phục điều này bằng cách giới thiệu các diễn viên vào mã của chúng tôi.
+
+Nhưng hiện tại, chúng ta nên lưu ý rằng chỉ vì chúng ta đã chuyển đổi chức năng này thành không đồng bộ không có nghĩa là chúng ta không có điều kiện chủng tộc.
+
+Trên thực tế, bạn nên nhận thức được rủi ro khi đưa các điều kiện chủng tộc mới vào mã của mình nếu bạn chỉ thực hiện tái cấu trúc để giới thiệu các chức năng không đồng bộ.
+
+Bây giờ hãy xem xét chức năng không đồng bộ mới này.
+
+Hành động tái cấu trúc đã chuyển đổi cuộc gọi với trình xử lý hoàn thành ở đây để gọi phiên bản không đồng bộ mới của API SDK này.
+
+Nhưng việc chuyển đổi chức năng này thành không đồng bộ đã làm nổi bật điều gì đó thú vị.
+
+Ở đây, khi chúng tôi đang sử dụng kỹ thuật xử lý hoàn thành, chúng tôi đã trả lại mà không gọi trình xử lý hoàn thành.
+
+Và đây có lẽ là một lỗi.
+
+Người gọi sẽ bị treo cổ.
+
+Nhưng với các hàm không đồng bộ, bạn phải trả về một giá trị, vì vậy bây giờ chúng tôi đang gặp lỗi biên dịch, mà chúng tôi có thể giải quyết chỉ bằng cách trả về false cho thất bại.
+
+Và giống như trước đây, phiên bản không đồng bộ mới này của requestAuthorization không thực sự trả về một giá trị, nó thành công hoặc nó ném.
+
+Vì vậy, chúng ta chỉ cần xóa giá trị trả về này.
+
+Và thay vào đó trên con đường này, chúng ta cần giả định rằng nó đã thành công...
+
+...Và trên con đường thất bại, chúng ta cần trả về sai.
+
+Nếu tôi thử và biên dịch ngay bây giờ, dự án sẽ biên dịch vì mã cũ ở nơi khác vẫn có thể tiếp tục gọi phiên bản trình xử lý hoàn thành và bây giờ chúng tôi đang thấy những cảnh báo ngừng sử dụng này khi chúng tôi làm điều đó, điều này có thể dẫn chúng tôi đến một nơi tiếp theo mà chúng tôi có thể muốn tái cấu trúc.
+
+Được rồi, hãy thực hiện thêm một chuyển đổi không đồng bộ.
+
+Hãy tìm chức năng tải dữ liệu từ HealthKit.
+
+Chúng ta sẽ bắt đầu - giống như trước đây - bằng cách tạo một sơ khai cho mã cũ để gọi.
+
+Sau đó chuyển sang phiên bản không đồng bộ, tình cờ, phiên bản này nhận một trình xử lý hoàn thành tùy chọn, tương đương không đồng bộ của điều này sẽ là làm cho chức năng này có kết quả có thể loại bỏ.
+
+Vì vậy, tiếp theo, chúng tôi bắt đầu di chuyển xuống, thay thế bất kỳ việc sử dụng trình xử lý hoàn thành nào bằng lợi nhuận.
+
+Vì vậy, ví dụ, chúng ta có thể xóa trình xử lý hoàn thành này và chỉ trả về false.
+
+Nhưng một khi chúng tôi tiến xa hơn một chút, chúng tôi bắt đầu gặp khó khăn và nó liên quan đến cách API truy vấn HealthKit được sắp xếp.
+
+Ở đây, có một trình xử lý hoàn thành nhưng nó nằm trên đối tượng truy vấn này; trong khi thực sự, những gì tôi muốn chờ đợi là việc thực hiện truy vấn ở dưới cùng của hàm.
+
+Ngẫu nhiên, việc nhảy lên nhảy xuống xung quanh chức năng là một điều khác mà async/await rất tốt trong việc giúp giải quyết.
+
+Vì vậy, những gì tôi muốn làm là tạo một hàm không đồng bộ duy nhất vừa tạo truy vấn vừa thực thi nó.
+
+Chúng ta sẽ làm điều đó ngay bây giờ bằng cách sử dụng một kỹ thuật gọi là tiếp tục.
+
+Vì vậy, tôi sẽ quay trở lại đầu chức năng này và tôi sẽ tạo một chức năng trợ giúp được gọi là "queryHealthKit".
+
+Tôi có thể thực hiện tất cả công việc này bên trong chức năng hiện có nhưng nó có thể hơi lộn xộn, vì vậy tôi muốn giữ nó riêng biệt trong chức năng trợ giúp.
+
+Chức năng này sẽ không đồng bộ, vì vậy chúng ta có thể chờ đợi nó, và nó sẽ ném vì thao tác truy vấn có thể thất bại.
+
+Và hàm này sẽ trả về các giá trị hữu ích ở đây hiện đang được chuyển vào trình xử lý hoàn thành trên truy vấn.
+
+Vì vậy, tôi sẽ lấy logic để thực hiện truy vấn, cắt nó và chuyển nó vào hàm trợ giúp.
+
+Và tôi cũng sẽ thực hiện truy vấn và di chuyển nó.
+
+Bây giờ, bằng cách nào đó tôi cần đảo ngược mã này để nó có thể chờ trình xử lý hoàn thành và trả về các giá trị này được chuyển vào trình xử lý hoàn thành trở lại từ hàm không đồng bộ mới của tôi.
+
+Và đây là nơi tôi sử dụng phần tiếp theo.
+
+Vì vậy, trong hàm này, chúng tôi sẽ trả về kết quả của việc cố gắng chờ đợi một cuộc gọi đến hàm withCheckedThrowingContinuation.
+
+Và điều này cần một khối cần tiếp tục.
+
+Và chúng ta sẽ di chuyển mã này vào bên trong khối đó và sau đó trong khối, chúng ta sẽ sử dụng tiếp tục để truyền dữ liệu trở lại chức năng này bằng cách sử dụng tiếp tục để tiếp tục ném lỗi ở đây...
+
+...Hoặc...
+
+...Để tiếp tục trả lại các giá trị mà chúng tôi đã nhận được vào trình xử lý hoàn thành.
+
+Bây giờ chúng ta đã có chức năng chờ đợi này, chúng ta có thể sử dụng nó trong mã gốc của mình.
+
+Vì vậy, chúng tôi chỉ định kết quả từ việc gọi hàm.
+
+Và chúng ta cần xử lý lỗi có thể xảy ra.
+
+Trên thực tế, thực ra, tôi sẽ lên đây và ghi nhật ký một chút này và làm điều đó trong trình xử lý.
+
+Và sau đó chúng ta chỉ cần chuyển tất cả mã thành công này lên con đường hạnh phúc.
+
+Cuối cùng, chúng ta cần giải quyết việc đóng cửa này.
+
+Ở đây, chúng tôi đang sử dụng công văn không đồng bộ trở lại chuỗi chính.
+
+Nhưng chúng tôi đã bỏ trình xử lý hoàn thành của mình, vì vậy không có cách nào để chuyển thông tin này trở lại luồng chính bằng cách sử dụng nó.
+
+Chúng ta cần một cách khác.
+
+Để giải quyết vấn đề này, chúng tôi sẽ sử dụng diễn viên lần đầu tiên.
+
+Trong mô hình đồng thời của Swift, có một diễn viên toàn cầu được gọi là diễn viên chính điều phối tất cả các hoạt động của nó trên luồng chính.
+
+Chúng ta có thể thay thế cuộc gọi dispatch main.async của mình bằng một cuộc gọi đến chức năng chạy của diễn viên chính.
+
+Và điều này cần một khối mã để chạy trên diễn viên chính.
+
+Run là một chức năng không đồng bộ, vì vậy chúng ta cần chờ đợi nó.
+
+Chờ đợi nó là cần thiết bởi vì chức năng này có thể cần phải tạm dừng cho đến khi luồng chính sẵn sàng để xử lý hoạt động này.
+
+Nhưng vì chúng tôi đang chờ đợi nó, chúng tôi chỉ có thể xóa trình xử lý hoàn thành của mình và thay vào đó, trả về một giá trị.
+
+Được rồi, cuối cùng, trình biên dịch hiện đang cho tôi một lỗi về một biến bị bắt.
+
+Đây là một lỗi mới chỉ xảy ra bên trong các hàm không đồng bộ.
+
+Bởi vì việc đóng cửa trong Swift chụp các biến bằng cách tham chiếu, khi bạn chụp một biến có thể thay đổi - trong trường hợp này là mảng NewDrinks của chúng tôi - bạn tạo ra khả năng cho trạng thái có thể thay đổi được chia sẻ và đó có thể là nguồn gốc của các điều kiện chủng tộc.
+
+Vì vậy, khi làm điều này, bạn cần đảm bảo rằng bạn đang tạo một bản sao của giá trị này.
+
+Một cách để làm điều này là thêm newDrinks vào danh sách chụp của việc đóng cửa, như thế này.
+
+Nhưng thường thì tốt hơn hết là tránh vấn đề này bằng cách không có các biến có thể thay đổi ngay từ đầu.
+
+Ở đây, thay vào đó, chúng ta có thể làm điều này bằng cách thay đổi mã ở trên.
+
+Nó được viết theo cách này bởi vì các mẫu là tùy chọn.
+
+Nhưng thay vào đó, những gì chúng ta có thể làm là thay đổi newDrinks thành một giá trị bất biến và đặt giá trị ở đây trong nhánh if hoặc thêm một "else" để đặt nó thành mảng trống.
+
+Chúng tôi cũng có thể đã làm điều này với một nhà điều hành kết hợp không nếu chúng tôi thích.
+
+Vì giá trị này hiện được khai báo bằng let thay vì var, nó bất biến và giải quyết vấn đề mà không cần thực hiện chụp bổ sung.
+
+Bây giờ chúng ta hãy tiếp tục nói về diễn viên chính bằng cách xem chức năng này cần được gọi trên chuỗi chính.
+
+Ở đầu hàm này, có một cái gì đó thực sự tuyệt vời: có một khẳng định rằng hàm đang chạy chính xác trên luồng chính.
+
+Nếu bạn đã từng mắc lỗi và gọi hàm này mà không gói nó trong một công văn không đồng bộ với luồng chính, bạn sẽ gặp lỗi trong các bản dựng gỡ lỗi của mình và bạn chắc chắn nên áp dụng phương pháp này trong một số mã hiện có của mình.
+
+Nhưng cách tiếp cận này có một số hạn chế.
+
+Bạn có thể quên đặt một khẳng định ở mọi nơi cần thiết và bạn không thể khẳng định quyền truy cập vào các thuộc tính được lưu trữ, hoặc ít nhất là không phải không có nhiều bản mẫu.
+
+Sẽ tốt hơn nhiều nếu trình biên dịch có thể thực thi một số quy tắc này cho bạn, vì vậy bạn hoàn toàn không thể mắc phải những sai lầm như thế này.
+
+Và đó là cách chúng tôi sử dụng diễn viên chính.
+
+Tôi có thể chú thích các chức năng với "@MainActor."
+
+Và điều đó sẽ yêu cầu người gọi chuyển sang diễn viên chính trước khi chức năng này được chạy.
+
+Bây giờ tôi đã làm điều này, tôi có thể xóa xác nhận vì trình biên dịch sẽ không cho phép hàm này được gọi ở bất kỳ nơi nào khác ngoài luồng chính.
+
+Chúng tôi có thể chứng minh rằng điều này đang hoạt động bằng cách quay lại người gọi và di chuyển cuộc gọi này ra ngoài khối MainActor.run này.
+
+Và bạn thấy trình biên dịch nói với chúng tôi, không, chúng tôi không thể gọi điều đó từ đây bởi vì chúng tôi không ở trên diễn viên chính.
+
+Đây là một cách để suy nghĩ về tính năng này: nó rất giống các giá trị tùy chọn.
+
+Chúng tôi đã từng có các giá trị như con trỏ và phải nhớ kiểm tra số không, nhưng rất dễ quên và tốt hơn hết là để trình biên dịch đảm bảo kiểm tra này luôn xảy ra cùng với một số đường cú pháp ngôn ngữ để làm cho nó dễ dàng hơn.
+
+Ở đây, chúng tôi đang làm một điều tương tự, chỉ thay vì thực thi kiểm tra số không, nó đang thực thi diễn viên mà bạn đang chạy.
+
+Bây giờ chúng tôi đã đặt chức năng này trên diễn viên chính, nói đúng ra, chúng tôi không cần MainActor.run này nữa.
+
+Nếu bạn ở bên ngoài một diễn viên, bạn luôn có thể chạy các chức năng trên diễn viên đó bằng cách chờ họ.
+
+Và trên thực tế, đó là những gì trình biên dịch đang nói với chúng tôi ở đây.
+
+Nó nói rằng chúng ta cần một từ khóa đang chờ để chuyển sang diễn viên chính để chạy chức năng này.
+
+Vì vậy, nếu chúng ta thêm nó, thì mã sẽ biên dịch ngay cả khi không có cuộc gọi này nằm trong khối chạy.
+
+Ở đây, chúng tôi đang sử dụng await trên một hàm đồng bộ - updateModel là đồng bộ - nhưng await chỉ ra rằng hàm chúng tôi đang ở có thể cần phải tạm dừng để có được chính nó vào tác nhân chính.
+
+Hãy nghĩ về điều này tương tự như thực hiện cuộc gọi DispatchQueue.sync, ngoại trừ với await, chức năng của bạn bị đình chỉ thay vì chặn và sau đó tiếp tục sau khi cuộc gọi đến luồng chính hoàn tất.
+
+Vì vậy, chúng tôi không cần nó ở đây nữa, nhưng kỹ thuật MainActor.run này vẫn quan trọng vì một lý do khác.
+
+Tại mỗi lần chờ đợi, chức năng của bạn có thể bị đình chỉ và các mã khác có thể chạy.
+
+Đó là mục đích của việc chờ đợi: để mã khác chạy thay vì chặn.
+
+Trong trường hợp này, chúng tôi chỉ có một chức năng để chờ đợi, vì vậy nó không thực sự quan trọng, nhưng đôi khi bạn có thể muốn chạy nhiều cuộc gọi trên luồng chính.
+
+Ví dụ: nếu bạn đang làm việc trên các bản cập nhật giao diện người dùng, chẳng hạn như cập nhật các mục nhập trong chế độ xem bảng, bạn có thể không muốn vòng lặp chạy chính chuyển sang giữa các thao tác bạn thực hiện.
+
+Trong trường hợp đó, bạn sẽ muốn sử dụng MainActor.run để nhóm nhiều cuộc gọi lại với nhau cho diễn viên chính để đảm bảo rằng mỗi cuộc gọi chạy mà không có bất kỳ sự đình chỉ nào có thể xảy ra ở giữa.
+
+Vì vậy, chúng tôi hiện đang sử dụng diễn viên chính để bảo vệ mã cần chạy trên luồng chính.
+
+Nhưng còn mã khác trong lớp này thì sao?
+
+Đặc biệt, mã biến đổi các biến cục bộ, như neo truy vấn mà chúng ta đã thấy được gán ở đây.
+
+Làm thế nào chúng ta có thể đảm bảo những thứ đó không có điều kiện chủng tộc?
+
+Hoặc một cách sẽ là chỉ đặt mọi thứ vào HealthKitController trên diễn viên chính.
+
+Nếu tôi đi đến định nghĩa bộ điều khiển HealthKit và chỉ viết "@MainActor" ở đây trên lớp thay vì trên các phương thức riêng lẻ, điều đó sẽ bảo vệ mọi phương thức trên loại này và mọi thuộc tính được lưu trữ trên đó sẽ được phối hợp trên luồng chính.
+
+Và đối với một ứng dụng đơn giản như thế này, đó có lẽ sẽ là một lựa chọn OK.
+
+Nhưng điều đó cũng có vẻ hơi sai.
+
+HealthKitController này thực sự là phần cuối của ứng dụng của chúng tôi; có vẻ như không cần thiết phải thực hiện tất cả công việc của nó trên luồng chính.
+
+Chúng tôi muốn để chủ đề đó tự do thực hiện các hoạt động tập trung vào giao diện người dùng.
+
+Vì vậy, thay vào đó, chúng ta có thể thay đổi lớp học này để, chính nó, trở thành một diễn viên.
+
+Không giống như diễn viên chính, là diễn viên toàn cầu, loại diễn viên này có thể được khởi tạo nhiều lần.
+
+Trong dự án của tôi, tôi vẫn sẽ chỉ tạo ra một trong số chúng, nhưng có nhiều cách sử dụng khác của các diễn viên mà bạn có thể khởi tạo nhiều bản sao của cùng một diễn viên.
+
+Ví dụ, bạn có thể biến mỗi phòng trong máy chủ trò chuyện thành diễn viên riêng của nó.
+
+Vì vậy, bây giờ chúng ta đã biến lớp này thành một diễn viên, hãy xem trình biên dịch nói gì.
+
+OK. Vì vậy, chúng tôi đang gặp một số lỗi biên dịch.
+
+Bây giờ chúng ta hãy tạm dừng ở đây và nói về lỗi trình biên dịch.
+
+Những lỗi này đang hướng dẫn bạn đến những vị trí trong mã mà bạn cần cập nhật khi bạn di chuyển mã sang mô hình đồng thời mới.
+
+Khi bạn gặp những lỗi này, hãy chắc chắn rằng bạn hiểu những gì họ đang nói với bạn.
+
+Chống lại sự cám dỗ để nghiền nút sửa nó khi bạn không chắc chắn làm thế nào hoặc tại sao nó sẽ khắc phục sự cố.
+
+Một điều cần cảnh giác là rơi vào một loạt các lỗi.
+
+Đôi khi bạn sẽ thực hiện thay đổi - như chuyển đổi một lớp thành một diễn viên như chúng tôi vừa làm hoặc tạo một phương thức không đồng bộ - và nó sẽ tạo ra một số lỗi trình biên dịch.
+
+Vì vậy, bạn truy cập trang web của những lỗi đó và thật hấp dẫn khi thực hiện nhiều thay đổi hơn để sửa những lỗi đó, như làm cho phương thức đó không đồng bộ hoặc đưa nó vào diễn viên chính.
+
+Vấn đề là điều này có thể dẫn đến nhiều lỗi hơn nữa, và nhanh chóng, bạn có thể cảm thấy choáng ngợp.
+
+Thay vào đó, hãy sử dụng các kỹ thuật như chúng tôi đang sử dụng ở đây trong hướng dẫn này và cố gắng giữ cho thay đổi riêng biệt và thực hiện từng bước một với dự án của bạn biên dịch và chạy ở giữa.
+
+Thêm miếng chêm để cho phép mã cũ của bạn tiếp tục hoạt động, mặc dù bạn có thể sẽ xóa chúng sau này.
+
+Bằng cách đó, bạn có thể dần dần di chuyển ra khỏi một điểm, dọn dẹp mã khi bạn đi.
+
+Ngẫu nhiên, những gì tôi đã làm ở đây trước tiên là chuyển đổi các phương thức của HealthKitController thành không đồng bộ và sau đó biến nó thành một diễn viên.
+
+Và tôi thấy nó sẽ dễ dàng nhất nếu bạn làm theo cách đó, thay vì bắt đầu với việc chuyển đổi diễn viên.
+
+Được rồi, vậy hãy xem xét những lỗi này bằng cách nhảy xuống chúng.
+
+Họ đang ở dưới đây về chức năng mà chúng tôi đưa vào diễn viên chính.
+
+Và điều này có ý nghĩa, bởi vì trong chức năng này, chúng tôi đang chạm vào một thuộc tính được lưu trữ của tác nhân HealthKitController mới của chúng tôi, thuộc tính mô hình.
+
+Diễn viên bảo vệ trạng thái của nó và sẽ không cho phép các chức năng, không phải trên diễn viên - chẳng hạn như chức năng này mà chúng tôi đã đặt rõ ràng trên diễn viên chính - chạm vào các thuộc tính được lưu trữ của nó.
+
+Bây giờ nhìn vào chức năng này, có vẻ như trạng thái duy nhất trên diễn viên mà nó chạm vào là đối tượng mô hình.
+
+Mọi thứ khác được truyền vào như một đối số hàm.
+
+Và với tôi, điều này gợi ý rằng chức năng này thuộc về mô hình; rằng mô hình ở đây thực sự phải là bản thân.
+
+Vậy hãy chuyển nó sang mô hình.
+
+Vì vậy, chúng tôi có thể thực hiện chức năng này, cắt nó, chuyển sang mô hình giao diện người dùng CoffeeData của chúng tôi và dán nó vào.
+
+Nó sẽ là nội bộ hơn là riêng tư, vì vậy nó có thể được gọi từ HealthKitController.
+
+Và chúng ta chỉ cần xem qua và loại bỏ tất cả các tham chiếu đến mô hình bởi vì bây giờ đó là bản thân.
+
+Cuối cùng, chúng ta cần đến nơi nó được gọi là...
+
+...Và thay thế bản thân ở đây bằng một cuộc gọi đến người mẫu.
+
+Vì vậy, bây giờ, tệp HealthKitController này được biên dịch và tôi nhận được một bộ lỗi mới từ các tệp khác.
+
+Hãy nhìn vào những lỗi đó.
+
+Vì vậy, ở đây chúng tôi đang gọi vào các miếng chêm trình xử lý hoàn thành mà chúng tôi đã gọi trước đó để cho phép chúng tôi tiếp tục chuyển trình xử lý hoàn thành mặc dù chúng tôi đã viết lại chức năng này thành không đồng bộ.
+
+Các chức năng này hiện đang được bảo vệ bởi diễn viên nên tôi không thể gọi chúng trực tiếp.
+
+Nhưng họ không chạm vào bất kỳ phần nào khác trong trạng thái của diễn viên nếu chúng ta nhìn vào họ.
+
+Tất cả những gì họ đang làm là quay một nhiệm vụ và sau đó chờ một cuộc gọi đến phiên bản không đồng bộ của hàm.
+
+Vì họ không chạm vào bất kỳ phần nào trong trạng thái bên trong của diễn viên, tôi có thể đánh dấu họ là cái được gọi là "không cô lập".
+
+Làm tương tự ở dưới đây.
+
+Đánh dấu một cái gì đó là không cô lập cho trình biên dịch biết rằng bạn sẽ không chạm vào bất kỳ trạng thái bị cô lập nào, và do đó, hàm này có thể được gọi từ bất cứ đâu.
+
+Việc chuyển sang diễn viên thực sự đang diễn ra tự động khi chúng tôi chờ cuộc gọi vào phiên bản không đồng bộ của hàm.
+
+Lưu ý rằng trình biên dịch sẽ kiểm tra xem yêu cầu không bị cô lập này có đúng không.
+
+Nếu tôi thử và truy cập một số trạng thái của diễn viên - chẳng hạn như, ví dụ, in ra trạng thái ủy quyền - trình biên dịch sẽ ngăn tôi lại.
+
+Vì vậy, bây giờ, tôi đã hoàn thành công việc của mình để chuyển đổi HealthKitController thành một tác nhân bảo vệ trạng thái bên trong của nó khỏi các điều kiện chủng tộc.
+
+Tiếp theo, hãy làm theo những mẩu bánh mì không dùng nữa đó đến tệp tiếp theo để làm việc, đó là loại mô hình CoffeeData của chúng tôi.
+
+Bây giờ lớp này triển khai ObservableObject, và nó có một thuộc tính Published.
+
+Bất kỳ cập nhật nào cho các thuộc tính được xuất bản cho Chế độ xem SwiftUI phải được thực hiện trên luồng chính, vì vậy lớp này có lẽ là một ứng cử viên tốt để đưa vào diễn viên chính.
+
+Nhưng cũng có nền DispatchQueue này để thực hiện một số công việc trong nền.
+
+Hãy xem nó được sử dụng như thế nào.
+
+Và nó chỉ có hai chức năng: tải và lưu.
+
+Điều đó có ý nghĩa; bạn có thể không muốn tải và lưu trên chủ đề chính.
+
+Khi bạn thấy một mẫu như thế này - trong đó một hàng đợi đang được sử dụng để điều phối một số hoạt động cụ thể, nhưng phần còn lại của lớp cần phải nằm trên chuỗi chính - đó là dấu hiệu cho thấy bạn muốn đưa mã nền đó vào một diễn viên riêng biệt.
+
+Vậy hãy làm điều đó.
+
+Vì vậy, hãy đi đến đầu tệp và tạo một diễn viên riêng mới...
+
+...Mà chúng ta sẽ gọi là "CoffeeDataStore."
+
+Và hãy mở CoffeeData trong một cửa sổ khác.
+
+Và bắt đầu chuyển mã qua diễn viên mới của chúng tôi.
+
+Vì vậy, chúng tôi có thể cung cấp cho nó logger của riêng nó.
+
+Và hãy điều chỉnh danh mục để chúng ta có thể biết khi nào diễn viên được sử dụng.
+
+Và tiếp theo, thay vì DispatchQueue này, chúng tôi sẽ khởi tạo một bản sao của diễn viên mới của chúng tôi.
+
+Tiếp theo, chúng ta hãy chuyển sang thao tác lưu và chuyển nó qua.
+
+Vì vậy chúng ta có thể thực hiện chức năng này...
+
+...Cắt nó từ đây, và chuyển nó vào diễn viên.
+
+Hãy bắt đầu bằng cách biên soạn và xem những vấn đề nào xuất hiện.
+
+Vì vậy, trước tiên, có tài sản Đồ uống hiện tại này.
+
+Đây là một thuộc tính của kiểu mô hình trước khi chúng tôi chuyển phương pháp này ra khỏi mô hình thành tác nhân của nó.
+
+Vậy làm thế nào chúng ta có thể truy cập nó bây giờ?
+
+Chà, cách các diễn viên chuyển tiếp thông tin là họ truyền các giá trị giữa nhau.
+
+Vì vậy, chúng ta nên để hàm này lấy currentDrinks làm đối số.
+
+Đối số để lưu này nhận danh sách các Đồ uống hiện tại để lưu được truyền bởi loại mô hình.
+
+Vì vậy, điều đó giải quyết được điều đó.
+
+Tiếp theo, Đồ uống đã lưu.
+
+Đây là bản sao của các giá trị được lưu lần cuối để tránh lưu không cần thiết khi không có gì thay đổi.
+
+Giá trị này bị đột biến bởi cả chức năng lưu và tải, vì vậy nó chắc chắn cần được bảo vệ bởi diễn viên.
+
+Vậy hãy tìm nó trong mô hình của chúng ta...
+
+...Và di chuyển nó qua.
+
+Được rồi, tiếp theo là gì?
+
+Được rồi, thuộc tính dataURL này, thực sự đang được sử dụng chỉ bởi hoạt động tải và lưu, vì vậy chúng ta có thể chuyển nó sang để trở thành người trợ giúp riêng cho diễn viên.
+
+Được rồi, những vấn đề cuối cùng cần giải quyết.
+
+Bây giờ, ở đây chúng ta đang gặp lỗi và nếu chúng ta nhìn, có vẻ như có một sự đóng cửa đang thu giữ một số trạng thái từ diễn viên, vì vậy chúng ta cần khắc phục điều đó.
+
+Vậy tại sao lại đóng cửa ở đây?
+
+Chà, nếu bạn nhìn xuống, đó là vì cùng một đoạn mã đang được gọi ở hai nơi.
+
+Và hóa ra trình biên dịch đã gắn cờ một cái gì đó thực sự thú vị đối với chúng tôi.
+
+Những gì mã này đang làm là kiểm tra xem tiện ích mở rộng đồng hồ có đang chạy trong nền hay không.
+
+Và ý tưởng là, nếu nó đã chạy ở chế độ nền, thì đừng vào hàng đợi nền; chỉ cần ở trên luồng chính và thực hiện nhiệm vụ lưu đồng bộ.
+
+Nhưng điều này có vẻ không đúng.
+
+Bạn không bao giờ nên chặn luồng chính để thực hiện thao tác I/O như lưu, ngay cả khi ứng dụng của bạn đang chạy ở chế độ nền.
+
+Tại sao ứng dụng làm điều này?
+
+Chà, chúng ta có thể theo dõi nó trở lại nơi hoạt động lưu đang được gọi.
+
+Nó đang được gọi từ một didSet xuống đây trên currentDrinks.
+
+Và điều đó kích hoạt để bất cứ khi nào tài sản được chỉ định, nó sẽ lưu các giá trị mới.
+
+Bây giờ, didSets cực kỳ tiện lợi, nhưng chúng có thể hơi quá hấp dẫn.
+
+Hãy xem xét tất cả những người gọi thuộc tính currentDrinks.
+
+Nếu chúng ta khoan hết con đường xuống đây...
+
+...Chúng tôi thấy rằng thao tác lưu cuối cùng là đồng bộ vì cách nó được gọi từ hàm này, đó là cuộc gọi để xử lý các tác vụ nền từ tiện ích mở rộng WatchKit.
+
+Bây giờ API xử lý này có một hợp đồng.
+
+Bạn phải làm tất cả công việc của mình, và sau đó, khi tất cả công việc của bạn hoàn thành, hãy gọi phương thức setTaskCompletedWithSnapshot này.
+
+Và bạn phải đảm bảo tất cả công việc của bạn đã hoàn thành khi bạn gọi cái này vì ứng dụng đồng hồ của bạn sẽ bị tạm ngưng.
+
+Bạn không thể có một số thao tác I/O, như thao tác lưu của chúng tôi, vẫn đang chạy khi bạn nói rằng bạn đã hoàn tất.
+
+Đây là một ví dụ hoàn hảo về cách không đồng bộ buộc lý luận toàn cầu trong suốt mã của bạn.
+
+Hãy hình dung những gì đang xảy ra ở đây.
+
+Chúng tôi bắt đầu trong xử lý (backgroundTasks:) gọi tải từ hàm HealthKit.
+
+Điều này cần một trình xử lý hoàn thành.
+
+Nhưng sau đó chúng tôi chuyển sang updateModel(), được thực hiện đồng bộ, và do đó đồng bộ gọi didSet, lưu đồng bộ.
+
+Sau khi hoàn tất, trình xử lý hoàn thành được gọi và thông báo cho WatchKit rằng tất cả đã hoàn tất.
+
+Đó là các bộ phận đồng bộ buộc chúng ta phải thực hiện I/O đồng bộ trên luồng chính.
+
+Làm thế nào chúng ta có thể khắc phục điều này?
+
+Để khắc phục nó với trình xử lý hoàn thành, bạn phải cập nhật từng phương thức đồng bộ hiện tại để bây giờ thực hiện trình xử lý hoàn thành.
+
+Nhưng bạn không thể làm điều đó với didSet; nó không nhận đối số, nó chỉ tự động kích hoạt khi bạn cập nhật tài sản.
+
+Nhưng tin tốt là tất cả việc tái cấu trúc không đồng bộ của chúng tôi sẽ được đền đáp ngay bây giờ, bởi vì việc cập nhật các chức năng từ đồng bộ sang không đồng bộ dễ dàng hơn nhiều.
+
+Vì vậy, trước tiên, hãy đi đến thuộc tính đã xuất bản, currentDrinks và thay đổi nó thành (bộ) riêng tư để chúng ta biết tất cả các đột biến chỉ xảy ra từ tệp này.
+
+Và sau đó hãy thực hiện thao tác didSet này và thay vào đó chuyển logic đó vào một hàm mới...
+
+...Được gọi là "đồ uống đã cập nhật()."
+
+Chúng tôi sẽ làm cho nó không đồng bộ, bởi vì nó sẽ gọi hoạt động lưu của chúng tôi trên diễn viên của chúng tôi.
+
+Và đó cần phải là một sự chờ đợi...
+
+...Trên cửa hàng CoffeeData, nơi chúng tôi sẽ chuyển giá trị Đồ uống hiện tại mới.
+
+Sau đó, chúng ta cần đến nơi currentDrinks được cập nhật và đảm bảo chúng ta gọi đồ uống được cập nhật sau đó.
+
+Bây giờ trong chức năng này, có một điều cần lưu ý.
+
+Điều quan trọng là thao tác này - lấy một bản sao của currentDrinks, biến đổi nó và sau đó ghi lại - tất cả đều xảy ra theo nguyên tử.
+
+Và đây là lý do tại sao từ khóa await rất quan trọng; nó chỉ ra rằng tại thời điểm này, thao tác này có thể bị đình chỉ và các chức năng khác - các chức năng cũng có thể cập nhật currentDrinks - có thể chạy.
+
+Vì vậy, chúng tôi cần đảm bảo rằng toàn bộ đột biến và ghi lại của chúng tôi xảy ra trước khi bất kỳ sự chờ đợi nào, nếu không, các chức năng khác đến và đột biến CurrentDrinks có thể dẫn đến trạng thái không nhất quán.
+
+Vì vậy chức năng này cần phải không đồng bộ.
+
+Chúng ta có thể đi đến hoạt động lưu của mình và loại bỏ nhánh nền và tiền cảnh không cần thiết này và chỉ thực hiện thao tác trên diễn viên mỗi lần.
+
+OK. Cuối cùng, hãy xem xét hoạt động tải.
+
+Bây giờ ở đây, logic được phân chia giữa mã cần chạy trong nền và mã cần chạy trên luồng chính.
+
+Vì vậy, trước tiên chúng ta hãy lấy nửa đầu - phần nền - và chuyển nó vào diễn viên.
+
+Bây giờ làm điều này, chúng tôi nhận thấy một điều kiện chủng tộc có thể xảy ra khác.
+
+savedValues ở đây đã bị đột biến trên hàng đợi chính, nhưng nếu bạn nhớ thao tác lưu, nó vừa được đọc vừa được ghi từ hàng đợi nền.
+
+Bây giờ, khi nó xảy ra, cách ứng dụng được xây dựng, tải chỉ xảy ra khi khởi động, vì vậy điều này ổn.
+
+Nhưng một lần nữa, đó là dựa vào lý luận toàn cầu, và đó là loại giả định có thể phá vỡ theo những cách tinh tế khi bạn thực hiện những thay đổi trong tương lai.
+
+Sẽ tốt hơn nhiều nếu để diễn viên đảm bảo chương trình sẽ luôn chính xác.
+
+Vì vậy chúng ta sẽ sửa nó ngay bây giờ.
+
+Vì vậy, trước tiên, hãy loại bỏ quản lý hàng đợi này...
+
+...Tái thụt lề chức năng, xóa quản lý hàng đợi khác này.
+
+Và cũng giống như với lưu, chúng ta cần một cách để truyền lại các giá trị đã tải, điều mà chúng ta thực hiện chỉ bằng cách trả về một giá trị từ hàm tải này trên diễn viên.
+
+Vì vậy, bây giờ, hãy quay trở lại tải ban đầu.
+
+Và chúng tôi đã di chuyển logic này, vì vậy chúng tôi có thể xóa nó...
+
+Và thay thế nó bằng một cuộc gọi để chờ đợi...
+
+...Nạp đồ uống từ diễn viên.
+
+Bây giờ, bởi vì chúng tôi đang chờ diễn viên, điều đó có nghĩa là chức năng này cần phải không đồng bộ.
+
+Và trong khi chúng ta ở đây, chúng ta có thể dọn dẹp những cảnh báo không dùng nữa.
+
+Và cuối cùng, bởi vì tải này hiện không đồng bộ, chúng ta cần đợi nó ở đây.
+
+Và bởi vì chúng ta đang chờ đợi nó ở đây, chúng ta cần tạo ra một nhiệm vụ.
+
+Nhưng tại thời điểm này, nếu chúng tôi chỉ sử dụng một nhiệm vụ không đồng bộ, chúng tôi có khả năng giới thiệu một điều kiện cuộc đua mới.
+
+Hãy nhớ rằng, bên ngoài một diễn viên, nhiệm vụ mới này chỉ chạy trên một chuỗi tùy ý.
+
+Chúng ta không nên đột biến trạng thái được chia sẻ, như currentDrinks, từ một chuỗi tùy ý.
+
+Bây giờ, một cách để giải quyết điều này là đặt hàm tải trên diễn viên chính, Nhưng tốt hơn hết là di chuyển toàn bộ loại mô hình sang diễn viên chính.
+
+Vì vậy, chúng tôi đi đến định nghĩa CoffeeModel của chúng tôi và thêm "MainActor" vào loại mô hình của chúng tôi.
+
+Bằng cách đặt mô hình trên tác nhân chính, chúng tôi hiện đang đảm bảo rằng tất cả quyền truy cập vào các thuộc tính của CoffeeData sẽ được thực hiện từ chuỗi chính.
+
+Và điều này là tốt bởi vì, như chúng tôi đã lưu ý trước đó, nó là một đối tượng có thể quan sát được và nó có một thuộc tính được xuất bản.
+
+Và các thuộc tính được xuất bản lên SwiftUI chỉ được cập nhật trên chủ đề chính.
+
+Nó cũng có nghĩa là bất kỳ cuộc gọi nào đến không đồng bộ từ diễn viên cũng sẽ chạy trên diễn viên.
+
+Vì vậy chúng tôi có thể xóa bất kỳ chú thích "MainActor" nào khác như chú thích mà chúng tôi đã thêm trước đó.
+
+Vì vậy, bây giờ bạn có thể nhận thấy rằng khi chúng tôi biên dịch, chúng tôi không gặp bất kỳ lỗi biên dịch nào, không giống như khi chúng tôi chuyển những thứ khác thành một diễn viên trước đó.
+
+Và đó là bởi vì những nơi chúng tôi đang gọi vào mô hình của mình là những thứ như chế độ xem SwiftUI.
+
+Ví dụ, chúng ta hãy vào DrinkListView.
+
+Bây giờ, loại này hiển thị danh sách các nút trên màn hình.
+
+Và sau đó nó gọi addDrink, thuộc loại mô hình của chúng tôi.
+
+Nhưng bản thân DrinkListView này cũng là diễn viên chính.
+
+Và vì vậy các phương pháp của nó...
+
+...Có thể gọi vào mô hình CoffeeData mà không cần chờ đợi.
+
+Điều gì quyết định rằng chế độ xem SwiftUI này nằm trên diễn viên chính?
+
+Chà, nó được suy ra từ việc sử dụng EnvironmentObject ở đây.
+
+Bất kỳ chế độ xem SwiftUI nào truy cập trạng thái được chia sẻ - chẳng hạn như các đối tượng môi trường hoặc đối tượng quan sát được - sẽ luôn nằm trên tác nhân chính.
+
+Ở những nơi khác...
+
+...Chúng tôi cũng đang truy cập mô hình của mình từ cuộc gọi đại diện tiện ích mở rộng này.
+
+Vì đại diện tiện ích mở rộng này được đảm bảo được gọi trên luồng chính, nó đã được WatchKit chú thích là đang chạy trên diễn viên chính và vì vậy nó cũng có thể gọi trực tiếp vào loại mô hình của chúng tôi.
+
+Cuối cùng, bây giờ chúng ta đã ở đây, hãy cấu trúc lại phương pháp này và loại bỏ việc sử dụng trình xử lý hoàn thành không được chấp nhận này.
+
+Thay vào đó, chúng ta có thể gói phần này trong một nhiệm vụ không đồng bộ mới.
+
+Hãy nhớ rằng, trình xử lý này đang chạy trên luồng chính, vì vậy khi chúng ta tạo một tác vụ, tác vụ đó cũng sẽ chạy trên luồng chính.
+
+Và bên trong nhiệm vụ mới này, bây giờ chúng ta có thể chờ đợi...
+
+...Cuộc gọi của chúng tôi để tải dữ liệu mới từ HealthKit.
+
+Và một điều thực sự tuyệt vời về việc loại bỏ các trình xử lý hoàn thành là bây giờ bạn có thể soạn các chức năng cùng nhau.
+
+Vì vậy, nếu bạn muốn, bạn có thể chuyển câu lệnh chờ đợi này trực tiếp vào câu lệnh if.
+
+Khi cuộc gọi hàm này trả về, chúng tôi biết rằng tất cả công việc của chúng tôi đã hoàn tất bởi vì, bên trong nó, chúng tôi sẽ chờ thao tác lưu.
+
+Và vì vậy, bây giờ chúng ta có thể tự tin gọi background.Task.setTaskCompleted khi biết rằng chúng tôi đã hoàn thành tất cả các hoạt động I/O của mình.
+
+Bây giờ chúng tôi có cách tiếp cận từ trên xuống, có cấu trúc, tốt đẹp này để chờ đợi một hoạt động không đồng bộ trước khi hoàn thành thêm bất kỳ công việc nào.
+
+Ngẫu nhiên, cách tiếp cận có cấu trúc này đối với đồng thời là một phần thực sự quan trọng khác trong tính năng đồng thời của Swift.
+
+Để tìm hiểu thêm, hãy xem bài nói chuyện liên quan, bao gồm cách bạn có thể tận dụng tính năng này để cấu trúc các ví dụ phức tạp hơn, chẳng hạn như chờ nhiều thao tác không đồng bộ hoàn thành trước khi tiếp tục.
+
+Nếu, trong khi bạn xem bài nói chuyện này, bạn tự hỏi chính xác một số tính năng mới này hoạt động như thế nào, hãy xem bài nói chuyện dưới mui xe của chúng tôi khám phá một số công nghệ một cách chi tiết.
+
+Vậy hãy tóm tắt lại.
+
+Chúng tôi đã lấy một số mã có kiến trúc loại âm thanh nhưng kiến trúc đồng thời phức tạp có một số điều kiện chủng tộc ẩn thực sự khó phát hiện.
+
+Và với sự trợ giúp của các tính năng đồng thời mới, chúng tôi đã bảo vệ lại nó để kiến trúc đồng thời và kiểu được căn chỉnh độc đáo.
+
+Và trình biên dịch đã giúp chúng tôi tìm thấy một số điều kiện chủng tộc tiềm ẩn trên đường đi.
+
+Có rất nhiều thứ khác cho Swift 5.5 mà chúng tôi chưa đề cập đến, như tính đồng thời có cấu trúc với các nhóm tác vụ, chuỗi không đồng bộ và một số API không đồng bộ mới tuyệt vời trong SDK.
+
+Ngoài ra còn có một vài tái cấu trúc nữa mà chúng tôi đã không thực hiện trong dự án này mà bạn có thể muốn tự mình thử.
+
+Cách tốt nhất để học các kỹ thuật này là dùng thử chúng trong các ứng dụng của riêng bạn, vì vậy hãy vui vẻ và tận hưởng những cách viết mã sạch hơn, an toàn hơn này.
+
+♪

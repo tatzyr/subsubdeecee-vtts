@@ -1,0 +1,3314 @@
+[
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=0"
+  },
+  {
+    "text": "♪ Bass music playing ♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2"
+  },
+  {
+    "text": " ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=5"
+  },
+  {
+    "text": "♪ ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=7"
+  },
+  {
+    "text": "Alejandro Lucena: Hello, everyone.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=9"
+  },
+  {
+    "text": "Thank you for attending this session on symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=10"
+  },
+  {
+    "text": "While symbolication may seem like a vague term, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=13"
+  },
+  {
+    "text": "we'll see the instrumental role it plays in helping you ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=15"
+  },
+  {
+    "text": "to quickly identify the root causes of bugs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=17"
+  },
+  {
+    "text": "crashes, and performance bottlenecks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=19"
+  },
+  {
+    "text": "We'll gain a deeper intuition as to how symbolication works ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=22"
+  },
+  {
+    "text": "and cover several tools that you have at your disposal ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=25"
+  },
+  {
+    "text": "to follow along firsthand.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=28"
+  },
+  {
+    "text": "Along the way, we'll discuss ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=30"
+  },
+  {
+    "text": "the various sources of debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=32"
+  },
+  {
+    "text": "that are necessary for a rich symbolication experience ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=34"
+  },
+  {
+    "text": "and how you can configure your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=37"
+  },
+  {
+    "text": "to best utilize this information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=39"
+  },
+  {
+    "text": "Let's get started by familiarizing ourselves ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=43"
+  },
+  {
+    "text": "with a concrete definition and example of symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=45"
+  },
+  {
+    "text": "Fundamentally, symbolication is a mechanism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=49"
+  },
+  {
+    "text": "to convert or translate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=51"
+  },
+  {
+    "text": "how our devices see our apps at runtime — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=53"
+  },
+  {
+    "text": "which is in terms of memory addresses and instructions — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=55"
+  },
+  {
+    "text": "back to how we as developers see our apps — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=58"
+  },
+  {
+    "text": "which is in terms of functions, names, and files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=60"
+  },
+  {
+    "text": "Without this bridging layer, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=63"
+  },
+  {
+    "text": "it vastly complicates diagnosing a bug ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=65"
+  },
+  {
+    "text": "even for a few lines of code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=67"
+  },
+  {
+    "text": "As an example, let's consider this Swift code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=71"
+  },
+  {
+    "text": "Here I have a function, `generateMagicNumber()`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=73"
+  },
+  {
+    "text": "that selects a particular number ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=76"
+  },
+  {
+    "text": "from a list of candidate numbers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=78"
+  },
+  {
+    "text": "To do this, we first call into `numberChoices()` ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=80"
+  },
+  {
+    "text": "that returns an array of 10 randomly generated numbers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=83"
+  },
+  {
+    "text": "Then, we pass that array into `selectMagicNumber(choices:)`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=87"
+  },
+  {
+    "text": "which returns the number at a particular index.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=90"
+  },
+  {
+    "text": "This seems like a reasonable program, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=93"
+  },
+  {
+    "text": "but I encounter a crash when I first run it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=95"
+  },
+  {
+    "text": "My first recourse is to check the crash log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=97"
+  },
+  {
+    "text": "which is rather unfruitful.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=100"
+  },
+  {
+    "text": "All I can tell from the thread backtrace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=102"
+  },
+  {
+    "text": "is that my MagicNumbers app crashed somewhere.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=104"
+  },
+  {
+    "text": "Thanks, but I already knew that.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=107"
+  },
+  {
+    "text": "I have no idea ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=109"
+  },
+  {
+    "text": "what any of the registers are referring to either.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=110"
+  },
+  {
+    "text": "I can try to step through the app with the debugger ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=114"
+  },
+  {
+    "text": "and identify the crash, but what if this only happens ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=116"
+  },
+  {
+    "text": "in particular circumstances that I can't reproduce? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=118"
+  },
+  {
+    "text": "Using the debugger won't necessarily pinpoint ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=122"
+  },
+  {
+    "text": "the problem for me in that case.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=124"
+  },
+  {
+    "text": "Or I can try to look at the disassembly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=127"
+  },
+  {
+    "text": "but it's much more difficult to keep track of things.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=130"
+  },
+  {
+    "text": "This clearly isn't a viable way to diagnose the problem, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=133"
+  },
+  {
+    "text": "and more importantly, with the help of symbolication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=136"
+  },
+  {
+    "text": "we don't have to debug from this starting point.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=138"
+  },
+  {
+    "text": "The Xcode Organizer tells me I can download the dSYM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=142"
+  },
+  {
+    "text": "for this app, which will reprocess the crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=145"
+  },
+  {
+    "text": "In doing so, Xcode applies the concepts of symbolication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=148"
+  },
+  {
+    "text": "so that I can diagnose the issue with a much nicer crash log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=151"
+  },
+  {
+    "text": "where I can not only see all of my functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=155"
+  },
+  {
+    "text": "actually being called, but I can also determine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=157"
+  },
+  {
+    "text": "the file and line number to refer back to in my code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=160"
+  },
+  {
+    "text": "This updated crash log also tells me that we tried ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=164"
+  },
+  {
+    "text": "to access an index out of range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=166"
+  },
+  {
+    "text": "Alternatively, If I already have the dSYM, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=169"
+  },
+  {
+    "text": "I can use the `atos` command to get the same information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=172"
+  },
+  {
+    "text": "Looking back at my code, I come to realize ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=176"
+  },
+  {
+    "text": "that `MAGIC_CHOICE` is far outside the bounds ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=179"
+  },
+  {
+    "text": "of our 10-element array.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=181"
+  },
+  {
+    "text": "Oops.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=183"
+  },
+  {
+    "text": "In another instance, I'm interested in profiling my app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=184"
+  },
+  {
+    "text": "to deliver the fastest user experience.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=187"
+  },
+  {
+    "text": "Here, Instruments shows me that the app cycles through ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=190"
+  },
+  {
+    "text": "periods of high utilization and low utilization.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=193"
+  },
+  {
+    "text": "If we focus on a period of low utilization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=196"
+  },
+  {
+    "text": "Instruments tells us that the app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=198"
+  },
+  {
+    "text": "was writing some content to a file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=200"
+  },
+  {
+    "text": "However, when I inspect a period of high utilization, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=202"
+  },
+  {
+    "text": "I get the same exact backtrace.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=205"
+  },
+  {
+    "text": "How is this possible? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=208"
+  },
+  {
+    "text": "Isn't this executing the same exact code? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=209"
+  },
+  {
+    "text": "As we'll see, this Instruments trace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=212"
+  },
+  {
+    "text": "is only partially symbolicated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=214"
+  },
+  {
+    "text": "For instance, I don't see any file names ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=216"
+  },
+  {
+    "text": "or line numbers in the backtrace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=218"
+  },
+  {
+    "text": "as I did with the updated crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=219"
+  },
+  {
+    "text": "As a result, it's missing some information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=222"
+  },
+  {
+    "text": "With that in mind, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=225"
+  },
+  {
+    "text": "I can similarly locate my dSYM in Instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=226"
+  },
+  {
+    "text": "After doing this, my new Instruments trace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=229"
+  },
+  {
+    "text": "shows that the high-utilization regions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=231"
+  },
+  {
+    "text": "were indeed writing to a file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=234"
+  },
+  {
+    "text": "but they were specifically within a debug code path ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=235"
+  },
+  {
+    "text": "that I left in the program.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=238"
+  },
+  {
+    "text": "The low-utilization areas avoid this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=240"
+  },
+  {
+    "text": "and represent how my app behaves in production.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=242"
+  },
+  {
+    "text": "Just as Xcode utilized the dSYM to symbolicate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=245"
+  },
+  {
+    "text": "a rather uninformative crash log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=248"
+  },
+  {
+    "text": "Instruments also used the dSYM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=251"
+  },
+  {
+    "text": "to enrich a partially symbolicated trace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=253"
+  },
+  {
+    "text": "and tell me the exact cause of the performance issue.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=255"
+  },
+  {
+    "text": "Now, while it's great that these tools leverage symbolication ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=259"
+  },
+  {
+    "text": "to pinpoint problem areas in my code, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=262"
+  },
+  {
+    "text": "it naturally begs a few questions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=264"
+  },
+  {
+    "text": "How does this all work? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=266"
+  },
+  {
+    "text": "Where else can I apply this? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=268"
+  },
+  {
+    "text": "And is this all about dSYMs? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=269"
+  },
+  {
+    "text": "To answer these questions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=272"
+  },
+  {
+    "text": "and unlock symbolication's capabilities, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=273"
+  },
+  {
+    "text": "we'll need to take a deeper dive into the details.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=275"
+  },
+  {
+    "text": "This may seem a little overwhelming, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=278"
+  },
+  {
+    "text": "but these are important concepts to understand.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=280"
+  },
+  {
+    "text": "There are many tools to aid in debugging and profiling ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=283"
+  },
+  {
+    "text": "that build upon symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=285"
+  },
+  {
+    "text": "`atos` alone already gave us the exact root cause of a crash, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=288"
+  },
+  {
+    "text": "and there are many more tools built into Xcode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=291"
+  },
+  {
+    "text": "Further, we specified flags like `o`, `l`, and `i` to `atos`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=294"
+  },
+  {
+    "text": "but what do they mean? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=299"
+  },
+  {
+    "text": "Do we always use the same set of flags? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=300"
+  },
+  {
+    "text": "What if we don't have one of the values available? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=302"
+  },
+  {
+    "text": "You'll also gain a good foundation ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=305"
+  },
+  {
+    "text": "in understanding when and why your backtraces ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=306"
+  },
+  {
+    "text": "may not be fully symbolicated and how to fix that, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=309"
+  },
+  {
+    "text": "as we saw in the Instruments case.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=312"
+  },
+  {
+    "text": "Lastly, there are a number of build settings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=315"
+  },
+  {
+    "text": "that you're in control of ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=317"
+  },
+  {
+    "text": "that influence the richness of symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=318"
+  },
+  {
+    "text": "We'll go through these build settings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=321"
+  },
+  {
+    "text": "so you have a solid intuition about how they're utilized.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=323"
+  },
+  {
+    "text": "To that end, I'd like to introduce ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=326"
+  },
+  {
+    "text": "the two-step process for symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=328"
+  },
+  {
+    "text": "Step number one is going back to the file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=330"
+  },
+  {
+    "text": "and step number two is to consult debug information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=332"
+  },
+  {
+    "text": "As we'll see, going back to the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=336"
+  },
+  {
+    "text": "is all about converting or translating ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=338"
+  },
+  {
+    "text": "runtime memory addresses into a more stable, usable form.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=340"
+  },
+  {
+    "text": "This allows us to communicate with our debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=344"
+  },
+  {
+    "text": "to make a meaningful connection ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=347"
+  },
+  {
+    "text": "between a raw memory address and the source code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=348"
+  },
+  {
+    "text": "Let's start off by discussing step number one, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=352"
+  },
+  {
+    "text": "going back to the file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=354"
+  },
+  {
+    "text": "The ultimate goal in this step is to translate ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=357"
+  },
+  {
+    "text": "a runtime memory address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=359"
+  },
+  {
+    "text": "such as those we saw in the original crash log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=361"
+  },
+  {
+    "text": "to a corresponding address in your binary on disk.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=364"
+  },
+  {
+    "text": "Just like we have runtime addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=367"
+  },
+  {
+    "text": "your apps and frameworks ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=369"
+  },
+  {
+    "text": "have an address space on disk, too! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=371"
+  },
+  {
+    "text": "The on disk address space differs from the address space ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=373"
+  },
+  {
+    "text": "that your app occupies at runtime, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=376"
+  },
+  {
+    "text": "and we need a mechanism to figure out those differences.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=379"
+  },
+  {
+    "text": "First, we should understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=383"
+  },
+  {
+    "text": "exactly what the on disk addresses are.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=384"
+  },
+  {
+    "text": "These addresses are assigned by the linker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=387"
+  },
+  {
+    "text": "when you build your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=389"
+  },
+  {
+    "text": "Specifically, the linker groups your binary into segments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=391"
+  },
+  {
+    "text": "Each segment contains related data and has properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=394"
+  },
+  {
+    "text": "such as a name, a size, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=398"
+  },
+  {
+    "text": "and their assigned addresses.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=399"
+  },
+  {
+    "text": "For example, the `__TEXT` segment of your binary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=401"
+  },
+  {
+    "text": "contains all of the functions and methods you've written, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=404"
+  },
+  {
+    "text": "and the `__DATA` segment contains program-wide state ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=407"
+  },
+  {
+    "text": "such as global variables.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=409"
+  },
+  {
+    "text": "Each of these segments gets assigned a different address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=412"
+  },
+  {
+    "text": "such that they don't overlap.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=414"
+  },
+  {
+    "text": "The linker records this information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=417"
+  },
+  {
+    "text": "at the very beginning of your executables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=418"
+  },
+  {
+    "text": "as part of the Mach-O header.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=421"
+  },
+  {
+    "text": "Mach-O is the format used for all executable binaries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=423"
+  },
+  {
+    "text": "and libraries, and the system knows that ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=425"
+  },
+  {
+    "text": "it needs to read this header to run your apps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=427"
+  },
+  {
+    "text": "Looking a little more closely, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=430"
+  },
+  {
+    "text": "the Mach-O header contains a number of load commands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=432"
+  },
+  {
+    "text": "that hold the segment properties.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=434"
+  },
+  {
+    "text": "The system uses these load commands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=437"
+  },
+  {
+    "text": "to load the segments into memory.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=439"
+  },
+  {
+    "text": "Note that if your apps are Universal 2, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=441"
+  },
+  {
+    "text": "then the app will have one header ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=443"
+  },
+  {
+    "text": "and a set of segments for each architecture.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=445"
+  },
+  {
+    "text": "We can see for ourselves by using the `otool -l` command, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=448"
+  },
+  {
+    "text": "which prints the load commands for a specified file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=452"
+  },
+  {
+    "text": "Here, we're looking a segment load command ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=455"
+  },
+  {
+    "text": "identified with `LC_SEGMENT_64`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=458"
+  },
+  {
+    "text": "This load commands says that the `__TEXT` segment ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=461"
+  },
+  {
+    "text": "starts at the address in `vmaddr` and is `vmsize` bytes long.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=463"
+  },
+  {
+    "text": "So if the kernel follows these load commands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=468"
+  },
+  {
+    "text": "to load the segments into memory, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=471"
+  },
+  {
+    "text": "what exactly is the difference ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=473"
+  },
+  {
+    "text": "between the runtime and the linker addresses? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=474"
+  },
+  {
+    "text": "Well, before the kernel actually loads the segments, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=477"
+  },
+  {
+    "text": "it initializes a random value known as the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=480"
+  },
+  {
+    "text": "The kernel then adds the ASLR slide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=484"
+  },
+  {
+    "text": "to the addresses in the load commands.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=486"
+  },
+  {
+    "text": "So rather than loading the `__TEXT` segment at address A ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=489"
+  },
+  {
+    "text": "and the `__DATA` segment at address B, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=491"
+  },
+  {
+    "text": "the kernel instead loads them to A+S and B+S, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=494"
+  },
+  {
+    "text": "where S is the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=498"
+  },
+  {
+    "text": "Since A+S and B+S are the true addresses that the system uses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=501"
+  },
+  {
+    "text": "they're also known as load addresses.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=505"
+  },
+  {
+    "text": "With that in mind, we now know that the difference between ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=508"
+  },
+  {
+    "text": "a runtime address and the linker address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=511"
+  },
+  {
+    "text": "is the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=513"
+  },
+  {
+    "text": "We can calculate the ASLR slide with the following equation: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=516"
+  },
+  {
+    "text": "S = L-A, where S is the ASLR slide, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=519"
+  },
+  {
+    "text": "L is the load address, and A is the linker address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=524"
+  },
+  {
+    "text": "We'll see examples of this equation shortly, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=528"
+  },
+  {
+    "text": "but the key point is that we can always go back ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=530"
+  },
+  {
+    "text": "to the file address space once we know the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=533"
+  },
+  {
+    "text": "The ASLR slide equation required two addresses — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=537"
+  },
+  {
+    "text": "the load address and the linker address — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=540"
+  },
+  {
+    "text": "so where do we get them from? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=542"
+  },
+  {
+    "text": "We already saw how we can query the load commands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=544"
+  },
+  {
+    "text": "to know the linker address using `otool`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=547"
+  },
+  {
+    "text": "To know the runtime address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=551"
+  },
+  {
+    "text": "the system queries your app either at the point of a crash ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=553"
+  },
+  {
+    "text": "or as its being profiled by Instruments ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=556"
+  },
+  {
+    "text": "for its runtime address space.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=558"
+  },
+  {
+    "text": "This information is reflected ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=561"
+  },
+  {
+    "text": "in the Binary Images list in your crash logs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=562"
+  },
+  {
+    "text": "You can also see the load addresses interactively ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=567"
+  },
+  {
+    "text": "with the `vmmap` tool, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=569"
+  },
+  {
+    "text": "which enumerates the active memory regions in your program.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=571"
+  },
+  {
+    "text": "Let's compute the ASLR slide value ourselves ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=575"
+  },
+  {
+    "text": "from the original crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=577"
+  },
+  {
+    "text": "In the Binary Images list, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=580"
+  },
+  {
+    "text": "I have the load address of the `__TEXT` segment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=581"
+  },
+  {
+    "text": "I also have the linker address for the binary on disk ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=584"
+  },
+  {
+    "text": "when I looked at the load commands.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=586"
+  },
+  {
+    "text": "Subtracting these two yields an ASLR slide value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=589"
+  },
+  {
+    "text": "of 0x45c000.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=592"
+  },
+  {
+    "text": "This means that every address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=594"
+  },
+  {
+    "text": "in my program's runtime `__TEXT` segment ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=596"
+  },
+  {
+    "text": "is 0x45c000 bytes away from the linker `__TEXT` segment address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=599"
+  },
+  {
+    "text": "So to see what a backtrace address from the crash log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=604"
+  },
+  {
+    "text": "corresponds to in the file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=608"
+  },
+  {
+    "text": "I can subtract 0x45c000 from it ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=610"
+  },
+  {
+    "text": "to get the address on disk.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=613"
+  },
+  {
+    "text": "Since this address is now part of the on-disk address space, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=615"
+  },
+  {
+    "text": "I can inspect my app to see what resides there.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=618"
+  },
+  {
+    "text": "The crash log tells me that a thread crashed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=621"
+  },
+  {
+    "text": "while executing whatever is at this address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=624"
+  },
+  {
+    "text": "so we can use `otool` again to see the problematic instruction.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=627"
+  },
+  {
+    "text": "This time, I specified the `-tV` flags to `otool`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=631"
+  },
+  {
+    "text": "which will print the disassembly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=635"
+  },
+  {
+    "text": "Notice that I'm also specifying the architecture as arm64.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=637"
+  },
+  {
+    "text": "This is so that otool knows ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=641"
+  },
+  {
+    "text": "which Mach-O header and segments to consider ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=643"
+  },
+  {
+    "text": "since the app is built as Universal 2.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=645"
+  },
+  {
+    "text": "The output of `otool` reveals a `brk` instruction ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=648"
+  },
+  {
+    "text": "at the address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=651"
+  },
+  {
+    "text": "`brk` signals an exception or a problem in the app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=652"
+  },
+  {
+    "text": "Tools such as `atos` also calculate the ASLR slide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=656"
+  },
+  {
+    "text": "using the same technique we went through together.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=660"
+  },
+  {
+    "text": "`atos` will read the load commands for the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=663"
+  },
+  {
+    "text": "indicated by the `-o` flag, and we tell it about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=665"
+  },
+  {
+    "text": "the load address with the `-l` flag.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=668"
+  },
+  {
+    "text": "As I mentioned, `vmmap` can also tell us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=671"
+  },
+  {
+    "text": "about the load addresses of a running app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=674"
+  },
+  {
+    "text": "Let's try this calculation again, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=676"
+  },
+  {
+    "text": "but this time we'll use `vmmap` instead of the binary image list ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=678"
+  },
+  {
+    "text": "to determine the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=682"
+  },
+  {
+    "text": "I ran the MagicNumbers program again ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=684"
+  },
+  {
+    "text": "and got the `__TEXT` segment load address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=686"
+  },
+  {
+    "text": "before the program crashed.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=688"
+  },
+  {
+    "text": "Using the previous formula, I can determine that this time ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=691"
+  },
+  {
+    "text": "the ASLR slide value was 0x104d14000.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=695"
+  },
+  {
+    "text": "Again, to go back to the file, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=698"
+  },
+  {
+    "text": "I need to subtract the ASLR slide value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=701"
+  },
+  {
+    "text": "If I subtract 0x104d14000 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=703"
+  },
+  {
+    "text": "from the topmost entry in the new crash log, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=706"
+  },
+  {
+    "text": "I get the same exact file address as before.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=709"
+  },
+  {
+    "text": "And this is no coincidence; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=712"
+  },
+  {
+    "text": "the kernel just picked a different ASLR value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=714"
+  },
+  {
+    "text": "so our load addresses changed between the crash logs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=717"
+  },
+  {
+    "text": "However, we can still determine the file address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=720"
+  },
+  {
+    "text": "that was responsible for the crash.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=723"
+  },
+  {
+    "text": "The important takeaway here is that we have a mechanism ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=726"
+  },
+  {
+    "text": "to understand exactly what our app was doing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=729"
+  },
+  {
+    "text": "down to the instruction level, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=731"
+  },
+  {
+    "text": "regardless of its runtime address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=733"
+  },
+  {
+    "text": "And with that mapping, we can then consult ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=736"
+  },
+  {
+    "text": "our debug information for the source code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=739"
+  },
+  {
+    "text": "that was compiled to those instructions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=741"
+  },
+  {
+    "text": "Before we move on, I want to present a summary ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=744"
+  },
+  {
+    "text": "of what we covered and the tools we used.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=747"
+  },
+  {
+    "text": "App binaries and frameworks are Mach-O files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=750"
+  },
+  {
+    "text": "This means that they have related content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=753"
+  },
+  {
+    "text": "in their different segments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=755"
+  },
+  {
+    "text": "These segments are created by the linker.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=757"
+  },
+  {
+    "text": "The Mach-O header load commands ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=760"
+  },
+  {
+    "text": "describe the properties of those segments, including an address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=761"
+  },
+  {
+    "text": "We used `otool` with the `-l` flag to print out the load commands.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=765"
+  },
+  {
+    "text": "Next, we learned that the kernel adds a random value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=770"
+  },
+  {
+    "text": "known as the ASLR slide, to the linker addresses.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=773"
+  },
+  {
+    "text": "The addition of the ASLR slide and the linker address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=777"
+  },
+  {
+    "text": "is known as a load address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=780"
+  },
+  {
+    "text": "We can check the binary image list in a crash log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=782"
+  },
+  {
+    "text": "to see the load addresses in the event of a crash, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=785"
+  },
+  {
+    "text": "or we can use `vmmap` to see the load addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=788"
+  },
+  {
+    "text": "for a running app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=791"
+  },
+  {
+    "text": "Finally, we walked through some examples ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=792"
+  },
+  {
+    "text": "of calculating the ASLR slide ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=795"
+  },
+  {
+    "text": "to get back to the file address space.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=797"
+  },
+  {
+    "text": "Now we can discuss debug information, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=799"
+  },
+  {
+    "text": "which contains the crucial links ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=801"
+  },
+  {
+    "text": "between the file addresses and the source code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=803"
+  },
+  {
+    "text": "Xcode creates the debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=806"
+  },
+  {
+    "text": "when you build your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=808"
+  },
+  {
+    "text": "and will either embed it directly into your app binaries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=809"
+  },
+  {
+    "text": "or store it as a separate file, such as a dSYM.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=812"
+  },
+  {
+    "text": "There are a few categories or types of debug info.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=815"
+  },
+  {
+    "text": "Each one offers a different level of detail ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=819"
+  },
+  {
+    "text": "for a given file address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=821"
+  },
+  {
+    "text": "We'll look at three different types of debug info today.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=823"
+  },
+  {
+    "text": "First, we'll cover the function starts, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=827"
+  },
+  {
+    "text": "which by itself doesn't add too much value, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=829"
+  },
+  {
+    "text": "but it is a common starting point.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=832"
+  },
+  {
+    "text": "Next we'll see the nlist symbol tables, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=834"
+  },
+  {
+    "text": "which add function and method names.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=836"
+  },
+  {
+    "text": "Lastly, we'll look at DWARF, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=838"
+  },
+  {
+    "text": "which comes from dSYMs and static libraries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=840"
+  },
+  {
+    "text": "DWARF adds the most detail, including file names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=843"
+  },
+  {
+    "text": "line numbers, and optimization records.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=846"
+  },
+  {
+    "text": "Since DWARF offers the most detail, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=849"
+  },
+  {
+    "text": "we really want to strive to have this type of debug info ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=851"
+  },
+  {
+    "text": "whenever possible.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=854"
+  },
+  {
+    "text": "We'll learn about each of these and how they can be used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=856"
+  },
+  {
+    "text": "to build up the fully symbolicated crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=858"
+  },
+  {
+    "text": "Let's begin with function starts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=861"
+  },
+  {
+    "text": "As we saw in the table, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=864"
+  },
+  {
+    "text": "function starts offers the least source code detail.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=865"
+  },
+  {
+    "text": "Also keeping true to its name, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=869"
+  },
+  {
+    "text": "this type of debug information only tells us about ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=871"
+  },
+  {
+    "text": "the first address — or the literal start — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=874"
+  },
+  {
+    "text": "of our functions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=876"
+  },
+  {
+    "text": "For example, this would tell us that a function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=878"
+  },
+  {
+    "text": "begins and exists at a certain address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=881"
+  },
+  {
+    "text": "However, it doesn't tell us which functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=884"
+  },
+  {
+    "text": "begin at those addresses, only that they exist.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=887"
+  },
+  {
+    "text": "The function starts debug info does this by encoding ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=891"
+  },
+  {
+    "text": "the list of addresses in your app's `__LINKEDIT` segment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=894"
+  },
+  {
+    "text": "Since this is embedded directly in your app, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=897"
+  },
+  {
+    "text": "the Mach-O header also has a load command ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=900"
+  },
+  {
+    "text": "to inform us where we can find it, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=902"
+  },
+  {
+    "text": "which is `LC_FUNCTION_STARTS`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=904"
+  },
+  {
+    "text": "You can see these for yourself with the `symbols` command ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=907"
+  },
+  {
+    "text": "and the `-onlyFuncStartsData` flag.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=910"
+  },
+  {
+    "text": "Here we get back a list of addresses and null placeholders.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=913"
+  },
+  {
+    "text": "These placeholders would ideally have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=917"
+  },
+  {
+    "text": "function and method names instead of null, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=919"
+  },
+  {
+    "text": "but the function starts data doesn't provide names.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=921"
+  },
+  {
+    "text": "Again, this isn't the most descriptive data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=924"
+  },
+  {
+    "text": "However, it does allow for a slight update to the crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=928"
+  },
+  {
+    "text": "We can now view the file addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=932"
+  },
+  {
+    "text": "as offsets from a function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=933"
+  },
+  {
+    "text": "For example, first we go back to the file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=935"
+  },
+  {
+    "text": "by subtracting the ASLR slide value.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=939"
+  },
+  {
+    "text": "Then we find the function starts value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=943"
+  },
+  {
+    "text": "that could contain the file address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=946"
+  },
+  {
+    "text": "In this case, only the first value ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=948"
+  },
+  {
+    "text": "could contain the address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=950"
+  },
+  {
+    "text": "because all of the other values are larger than the address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=952"
+  },
+  {
+    "text": "Finally we can claim that our file address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=956"
+  },
+  {
+    "text": "is actually 264 bytes into this function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=959"
+  },
+  {
+    "text": "This is primarily useful for debuggers, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=964"
+  },
+  {
+    "text": "since they can understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=966"
+  },
+  {
+    "text": "the details of how this function was set up ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=967"
+  },
+  {
+    "text": "and which registers were modified.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=970"
+  },
+  {
+    "text": "What this means for you, however, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=971"
+  },
+  {
+    "text": "is that if you ever encounter a crash log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=974"
+  },
+  {
+    "text": "that lacks function names, you're probably dealing with ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=976"
+  },
+  {
+    "text": "this lowest level of debug information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=979"
+  },
+  {
+    "text": "This is good news because it means there are ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=981"
+  },
+  {
+    "text": "plenty of opportunities to enrich the crash log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=984"
+  },
+  {
+    "text": "with better debug information.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=987"
+  },
+  {
+    "text": "Naturally, the next level of detail we'd like to see ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=989"
+  },
+  {
+    "text": "are function names.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=992"
+  },
+  {
+    "text": "This gives us our first real opportunity ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=994"
+  },
+  {
+    "text": "to take a crash log or an Instruments trace ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=996"
+  },
+  {
+    "text": "and use it to track down an issue in our source code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=999"
+  },
+  {
+    "text": "This leads us to nlist symbol tables.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1003"
+  },
+  {
+    "text": "The symbol tables build on the idea of function starts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1006"
+  },
+  {
+    "text": "and also encode a list of information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1009"
+  },
+  {
+    "text": "in the `__LINKEDIT` segment, and has its own load command too.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1011"
+  },
+  {
+    "text": "However, rather than just encoding addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1015"
+  },
+  {
+    "text": "they encode C structs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1018"
+  },
+  {
+    "text": "This lets us add more details for any given entry ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1020"
+  },
+  {
+    "text": "compared to function starts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1023"
+  },
+  {
+    "text": "Specifically, they encode the `nlist_64` struct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1026"
+  },
+  {
+    "text": "Here we have the definition of that struct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1030"
+  },
+  {
+    "text": "A cursory glance shows that we have access ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1033"
+  },
+  {
+    "text": "to a name and several properties.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1036"
+  },
+  {
+    "text": "The values of these struct fields ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1038"
+  },
+  {
+    "text": "are determined by the nlist's `n_type`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1041"
+  },
+  {
+    "text": "There are three primary n_types that we're interested in, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1044"
+  },
+  {
+    "text": "but for now we'll only focus on two.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1047"
+  },
+  {
+    "text": "The first is known as a direct symbol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1050"
+  },
+  {
+    "text": "These are functions and methods that you have fully defined ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1053"
+  },
+  {
+    "text": "within your apps and frameworks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1056"
+  },
+  {
+    "text": "Direct symbols have a name and an address ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1058"
+  },
+  {
+    "text": "in the `nlist_64` struct.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1061"
+  },
+  {
+    "text": "Additionally, they're represented ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1063"
+  },
+  {
+    "text": "by a particular bit pattern in the `n_type` field.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1065"
+  },
+  {
+    "text": "Specifically, `n_type` will have the second, third, and fourth ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1069"
+  },
+  {
+    "text": "least significant bits set.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1073"
+  },
+  {
+    "text": "These bits are also known as `N_SECT`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1075"
+  },
+  {
+    "text": "We can see these with `nm` and specifying ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1079"
+  },
+  {
+    "text": "the `-defined-only` and `--numeric-sort` flags.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1081"
+  },
+  {
+    "text": "Here, `nm` walked through the defined symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1085"
+  },
+  {
+    "text": "of the MagicNumbers program ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1088"
+  },
+  {
+    "text": "and listed them in address order.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1090"
+  },
+  {
+    "text": "The names we get back appear cryptic.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1093"
+  },
+  {
+    "text": "That's because the names that are actually stored ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1096"
+  },
+  {
+    "text": "in the symbol tables are mangled names.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1098"
+  },
+  {
+    "text": "These mangled names help the compiler and linker ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1100"
+  },
+  {
+    "text": "to uniquely identify a function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1103"
+  },
+  {
+    "text": "but they aren't easy to understand ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1105"
+  },
+  {
+    "text": "unless they're demangled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1107"
+  },
+  {
+    "text": "To get a friendlier version of these names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1109"
+  },
+  {
+    "text": "I passed the output to `swift-demangle`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1111"
+  },
+  {
+    "text": "Now we get some familiar names, such as `main` and `numberChoices`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1114"
+  },
+  {
+    "text": "because they're directly defined in my app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1118"
+  },
+  {
+    "text": "Similarly, the `symbols` tool has an option ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1121"
+  },
+  {
+    "text": "to show the nlist data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1124"
+  },
+  {
+    "text": "and it also demangles the names automatically.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1126"
+  },
+  {
+    "text": "Now that we can associate a function name to an address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1129"
+  },
+  {
+    "text": "this lets us update the crash log once again.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1132"
+  },
+  {
+    "text": "Here we can observe that our offset expression ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1135"
+  },
+  {
+    "text": "that we got from the function starts data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1138"
+  },
+  {
+    "text": "also matches an entry from the direct symbols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1140"
+  },
+  {
+    "text": "and that entry has a name.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1142"
+  },
+  {
+    "text": "Putting these two together, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1145"
+  },
+  {
+    "text": "we can now say that our crash happened ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1146"
+  },
+  {
+    "text": "at 264 bytes into main.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1148"
+  },
+  {
+    "text": "This still leaves some details to be desired, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1151"
+  },
+  {
+    "text": "since we know for a fact ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1154"
+  },
+  {
+    "text": "that main isn't the only function involved.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1155"
+  },
+  {
+    "text": "And it would also help to have an exact line number too.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1158"
+  },
+  {
+    "text": "We encountered something similar to this ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1161"
+  },
+  {
+    "text": "in the Instruments trace example — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1163"
+  },
+  {
+    "text": "we had some function names available, but it missed others.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1165"
+  },
+  {
+    "text": "One reason for this is that the symbol table ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1169"
+  },
+  {
+    "text": "only has direct symbol entries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1171"
+  },
+  {
+    "text": "for functions that are involved in linking.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1174"
+  },
+  {
+    "text": "These are functions that you use across modules ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1176"
+  },
+  {
+    "text": "or functions that you export from your frameworks.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1179"
+  },
+  {
+    "text": "This makes it useful for identifying API boundaries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1182"
+  },
+  {
+    "text": "And it also means that it has the necessary data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1186"
+  },
+  {
+    "text": "to power dynamic loading ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1188"
+  },
+  {
+    "text": "with functions such as `dlsym()` and `dladdr()`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1190"
+  },
+  {
+    "text": "One downside though is that local or static functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1194"
+  },
+  {
+    "text": "aren't represented in the symbol table ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1197"
+  },
+  {
+    "text": "since they aren't referenced outside of their module.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1199"
+  },
+  {
+    "text": "This ends up omitting implementation functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1203"
+  },
+  {
+    "text": "where we may have a significant portion of the app logic.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1205"
+  },
+  {
+    "text": "Further, it's common for binaries built in Release mode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1209"
+  },
+  {
+    "text": "to have their symbol table stripped.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1212"
+  },
+  {
+    "text": "This means that unnecessary entries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1214"
+  },
+  {
+    "text": "are removed from the symbol table, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1216"
+  },
+  {
+    "text": "which helps reduce the size of your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1218"
+  },
+  {
+    "text": "If we think about it, it's rather uncommon ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1221"
+  },
+  {
+    "text": "for our app's primary driver to export functionality anywhere, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1223"
+  },
+  {
+    "text": "so we'd be wasting space ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1227"
+  },
+  {
+    "text": "keeping those symbol table entries around.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1229"
+  },
+  {
+    "text": "For our frameworks and libraries, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1232"
+  },
+  {
+    "text": "we definitely have exported functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1233"
+  },
+  {
+    "text": "that clients should use, but there's no need ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1235"
+  },
+  {
+    "text": "to keep around the locally shared functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1238"
+  },
+  {
+    "text": "since they can't be used anywhere else.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1240"
+  },
+  {
+    "text": "Stripping our primary app executables will almost always ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1244"
+  },
+  {
+    "text": "leave the symbol table practically empty.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1247"
+  },
+  {
+    "text": "Stripping our frameworks and libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1250"
+  },
+  {
+    "text": "leaves only the exported functions.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1252"
+  },
+  {
+    "text": "You may have come across build settings in Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1254"
+  },
+  {
+    "text": "such as Strip Linked Product, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1257"
+  },
+  {
+    "text": "Strip Style, and Strip Swift Symbols.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1259"
+  },
+  {
+    "text": "These build settings control how your app is stripped ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1262"
+  },
+  {
+    "text": "during the build.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1264"
+  },
+  {
+    "text": "If Strip Linked Product is enabled, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1266"
+  },
+  {
+    "text": "then the binary is stripped according to Strip Style.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1269"
+  },
+  {
+    "text": "For example, All Symbols will perform ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1272"
+  },
+  {
+    "text": "the most invasive removal ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1275"
+  },
+  {
+    "text": "and leave behind only the bare essentials.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1276"
+  },
+  {
+    "text": "Non Globals removes direct symbols ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1279"
+  },
+  {
+    "text": "that are used within different modules of your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1282"
+  },
+  {
+    "text": "but are not exported for use in other apps.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1284"
+  },
+  {
+    "text": "Debugging Symbols removes the third type of nlist type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1288"
+  },
+  {
+    "text": "that we'll discuss later when we get to DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1291"
+  },
+  {
+    "text": "However, this strip style does preserve the direct symbols.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1295"
+  },
+  {
+    "text": "For example, here I have a framework ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1299"
+  },
+  {
+    "text": "that defines two public interfaces ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1301"
+  },
+  {
+    "text": "and one internal shared implementation function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1303"
+  },
+  {
+    "text": "Since all of these functions play a role in linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1306"
+  },
+  {
+    "text": "they all have direct symbol entries.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1309"
+  },
+  {
+    "text": "If I strip non globals, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1312"
+  },
+  {
+    "text": "then I'm only left with my interfaces.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1313"
+  },
+  {
+    "text": "The shared implementation function was only used ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1316"
+  },
+  {
+    "text": "within my framework, so it isn't considered global.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1319"
+  },
+  {
+    "text": "Similarly, stripping all symbols still leaves the interface ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1322"
+  },
+  {
+    "text": "since these are required for other apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1326"
+  },
+  {
+    "text": "to use the framework.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1328"
+  },
+  {
+    "text": "You can also notice in the `symbols --onlyNListData` output ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1330"
+  },
+  {
+    "text": "that there are function starts addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1335"
+  },
+  {
+    "text": "interspersed between the direct symbols.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1336"
+  },
+  {
+    "text": "These addresses represent functions that were either ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1339"
+  },
+  {
+    "text": "never in the direct symbols, or were stripped.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1341"
+  },
+  {
+    "text": "You can tailor these strip settings ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1345"
+  },
+  {
+    "text": "to your desired level of symbol table visibility.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1346"
+  },
+  {
+    "text": "With this information, we can determine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1350"
+  },
+  {
+    "text": "when we're working with direct symbols.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1352"
+  },
+  {
+    "text": "Some telltale signs of this are having function names ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1354"
+  },
+  {
+    "text": "but no line numbers or file names; ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1357"
+  },
+  {
+    "text": "or having a mix of function names ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1360"
+  },
+  {
+    "text": "and function starts addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1362"
+  },
+  {
+    "text": "as we have here with the framework example.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1364"
+  },
+  {
+    "text": "The second type of nlist struct we'll analyze ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1366"
+  },
+  {
+    "text": "is known as an indirect symbol, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1369"
+  },
+  {
+    "text": "as opposed to direct symbol.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1371"
+  },
+  {
+    "text": "This is when the `n_type` matches only the `N_EXT` bit pattern.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1374"
+  },
+  {
+    "text": "These are functions and methods that you're using ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1379"
+  },
+  {
+    "text": "from other frameworks or libraries, such as `print()`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1382"
+  },
+  {
+    "text": "You can see these with `nm`, only this time we'll specify ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1385"
+  },
+  {
+    "text": "`--undefined-only` instead of `--defined-only`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1388"
+  },
+  {
+    "text": "We'll also add the `-m` flag, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1392"
+  },
+  {
+    "text": "which will show you which frameworks or libraries ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1394"
+  },
+  {
+    "text": "the functions should be found in.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1396"
+  },
+  {
+    "text": "For example, the MagicNumbers app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1399"
+  },
+  {
+    "text": "depends on a variety of Swift functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1401"
+  },
+  {
+    "text": "that are defined in libswiftCore.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1404"
+  },
+  {
+    "text": "Now that we've covered two of the three ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1407"
+  },
+  {
+    "text": "debug information categories, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1409"
+  },
+  {
+    "text": "let's make sure we understand their properties.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1411"
+  },
+  {
+    "text": "Function starts are a list of addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1414"
+  },
+  {
+    "text": "so they lack names, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1416"
+  },
+  {
+    "text": "but do allow us to determine offsets.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1418"
+  },
+  {
+    "text": "nlist symbol tables encode entire structs of information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1421"
+  },
+  {
+    "text": "and can associate a name to an address.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1424"
+  },
+  {
+    "text": "They describe direct symbols — which are defined in your app — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1428"
+  },
+  {
+    "text": "and indirect symbols, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1431"
+  },
+  {
+    "text": "which are provided by dependencies.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1432"
+  },
+  {
+    "text": "Direct symbols are generally reserved ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1435"
+  },
+  {
+    "text": "for functions involved in linking, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1437"
+  },
+  {
+    "text": "and the strip build settings influence ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1439"
+  },
+  {
+    "text": "which direct symbols are available.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1441"
+  },
+  {
+    "text": "Finally, both the function starts ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1443"
+  },
+  {
+    "text": "and the nlist symbol tables are embedded directly in your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1446"
+  },
+  {
+    "text": "What we haven't seen yet is the richer levels of detail, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1450"
+  },
+  {
+    "text": "such as file names and line numbers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1454"
+  },
+  {
+    "text": "This is provided to us by DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1456"
+  },
+  {
+    "text": "DWARF takes the concepts of nlist symbol tables ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1458"
+  },
+  {
+    "text": "to a completely different level.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1461"
+  },
+  {
+    "text": "Rather than keeping only a subset of functions, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1463"
+  },
+  {
+    "text": "DWARF strives to describe everything.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1466"
+  },
+  {
+    "text": "We saw that nlist symbol tables added vastly more information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1469"
+  },
+  {
+    "text": "versus the function starts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1473"
+  },
+  {
+    "text": "It accomplished that by adding a dimension.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1475"
+  },
+  {
+    "text": "Remember, we started with just a single dimension, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1477"
+  },
+  {
+    "text": "which were the addresses, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1481"
+  },
+  {
+    "text": "when we looked at function starts.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1482"
+  },
+  {
+    "text": "Then we upgraded to two dimensions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1484"
+  },
+  {
+    "text": "by encoding a struct full of information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1486"
+  },
+  {
+    "text": "in the nlist symbol table.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1488"
+  },
+  {
+    "text": "DWARF adds a third dimension, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1491"
+  },
+  {
+    "text": "which is about relationships.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1492"
+  },
+  {
+    "text": "DWARF recognizes that functions aren't isolated.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1494"
+  },
+  {
+    "text": "They call other functions, they have parameters, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1498"
+  },
+  {
+    "text": "return meaningful data, and are defined in a particular file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1500"
+  },
+  {
+    "text": "Encoding these relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1505"
+  },
+  {
+    "text": "unlocks the most powerful aspects of symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1506"
+  },
+  {
+    "text": "When we're analyzing DWARF, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1510"
+  },
+  {
+    "text": "we're primarily referring to a dSYM bundle.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1512"
+  },
+  {
+    "text": "In addition to other metadata such as plists, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1515"
+  },
+  {
+    "text": "the dSYM bundle contains a binary with DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1518"
+  },
+  {
+    "text": "What makes this binary so special? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1522"
+  },
+  {
+    "text": "The binary contains its data in a special `__DWARF` segment.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1524"
+  },
+  {
+    "text": "The DWARF specification mentions three streams of data ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1529"
+  },
+  {
+    "text": "within the segment that we'll focus on.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1532"
+  },
+  {
+    "text": "`debug_info` contains the raw data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1535"
+  },
+  {
+    "text": "`debug_abbrev` assigns structure to the data, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1538"
+  },
+  {
+    "text": "and `debug_line` contains the file names and line numbers.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1541"
+  },
+  {
+    "text": "DWARF also defines two vocabulary types ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1545"
+  },
+  {
+    "text": "that we'll study first: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1547"
+  },
+  {
+    "text": "the compile unit and the subprogram.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1549"
+  },
+  {
+    "text": "We'll introduce a third one later.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1551"
+  },
+  {
+    "text": "A compile unit represents a single source file ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1554"
+  },
+  {
+    "text": "that went into building the product.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1557"
+  },
+  {
+    "text": "For example, we can expect to have one compile unit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1560"
+  },
+  {
+    "text": "for each Swift file in our project.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1563"
+  },
+  {
+    "text": "DWARF assigns properties to a compile unit, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1566"
+  },
+  {
+    "text": "such as the name of the file, the SDKs, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1568"
+  },
+  {
+    "text": "the portion of the `__TEXT` segment its functions occupy, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1571"
+  },
+  {
+    "text": "and much more.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1574"
+  },
+  {
+    "text": "The main.swift compile unit contains these properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1576"
+  },
+  {
+    "text": "in the `debug_info` stream on the left, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1579"
+  },
+  {
+    "text": "and it has a corresponding entry in the `debug _abbrev` stream ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1582"
+  },
+  {
+    "text": "on the right which tells us what the values represent.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1585"
+  },
+  {
+    "text": "Here we see the file name, the language it's written in, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1589"
+  },
+  {
+    "text": "and a low/high pair representing the `__TEXT` segment range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1592"
+  },
+  {
+    "text": "A subprogram represents a defined function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1597"
+  },
+  {
+    "text": "We saw defined functions in the nlist symbol table already, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1600"
+  },
+  {
+    "text": "but the subprogram can describe static and local functions too.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1604"
+  },
+  {
+    "text": "A subprogram also has a name ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1608"
+  },
+  {
+    "text": "and its `__TEXT` segment address range.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1611"
+  },
+  {
+    "text": "One fundamental relationship ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1613"
+  },
+  {
+    "text": "between compile units and subprograms ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1615"
+  },
+  {
+    "text": "is that subprograms are defined in a compile unit.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1618"
+  },
+  {
+    "text": "DWARF represents this with a tree.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1622"
+  },
+  {
+    "text": "The compile unit is at the root of the tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1625"
+  },
+  {
+    "text": "and it has subprogram entries as children.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1627"
+  },
+  {
+    "text": "The children are searchable by following their address ranges.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1631"
+  },
+  {
+    "text": "We can examine these in more detail ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1635"
+  },
+  {
+    "text": "with the `dwarfdump` command.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1637"
+  },
+  {
+    "text": "First we'll look at a compile unit.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1639"
+  },
+  {
+    "text": "This matches some of the properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1641"
+  },
+  {
+    "text": "of a compile unit I mentioned earlier.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1643"
+  },
+  {
+    "text": "`dwarfdump` helpfully combines ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1645"
+  },
+  {
+    "text": "the `debug_ info` and `debug _abbrev` contents ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1647"
+  },
+  {
+    "text": "to show you the structure and content ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1650"
+  },
+  {
+    "text": "of the data in your dSYMs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1652"
+  },
+  {
+    "text": "And if we scroll down the output, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1655"
+  },
+  {
+    "text": "we'll encounter one subprogram child.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1657"
+  },
+  {
+    "text": "The address range it occupies ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1660"
+  },
+  {
+    "text": "is within the bounds of the compile unit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1662"
+  },
+  {
+    "text": "and we can also see the name of the function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1664"
+  },
+  {
+    "text": "I mentioned that DWARF describes its data in extreme detail.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1667"
+  },
+  {
+    "text": "While we won't spend much time on all of these details, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1670"
+  },
+  {
+    "text": "I think it's fun to see details such as function parameters.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1673"
+  },
+  {
+    "text": "They have their own vocabulary type ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1676"
+  },
+  {
+    "text": "that describes the name and type of the parameter.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1678"
+  },
+  {
+    "text": "Following the tree model, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1682"
+  },
+  {
+    "text": "a parameter is a child of a subprogram.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1683"
+  },
+  {
+    "text": "Here we come across the entry for the choices parameter ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1687"
+  },
+  {
+    "text": "that we supply to a function.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1690"
+  },
+  {
+    "text": "Next, file names and line numbers ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1692"
+  },
+  {
+    "text": "come from the `debug_line` stream.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1694"
+  },
+  {
+    "text": "This stream doesn't have a tree structure.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1697"
+  },
+  {
+    "text": "Instead, it defines a line table program ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1699"
+  },
+  {
+    "text": "where the individual file addresses ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1702"
+  },
+  {
+    "text": "can be mapped back to an exact line of code.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1704"
+  },
+  {
+    "text": "This ends up generating a list of source code details ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1707"
+  },
+  {
+    "text": "which we can search to find the file and line.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1710"
+  },
+  {
+    "text": "If we parse the `debug_info` tree ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1713"
+  },
+  {
+    "text": "and generate the `debug_line` list, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1716"
+  },
+  {
+    "text": "we end up with a structure like the following.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1718"
+  },
+  {
+    "text": "So if want to match a file address, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1721"
+  },
+  {
+    "text": "we can traverse the tree.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1723"
+  },
+  {
+    "text": "First, we'll start at the compile unit ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1725"
+  },
+  {
+    "text": "and follow the branches.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1727"
+  },
+  {
+    "text": "Then we'll pick up any of the `debug_line` entries that matched.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1729"
+  },
+  {
+    "text": "We can automate this again with `atos`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1733"
+  },
+  {
+    "text": "only this time I'm specifically leaving out the `-i` flag.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1736"
+  },
+  {
+    "text": "Notice anything slightly odd here? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1741"
+  },
+  {
+    "text": "Yes, we have the function name and line number, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1743"
+  },
+  {
+    "text": "so we're definitely using DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1746"
+  },
+  {
+    "text": "Other than that though, this isn't all too different ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1748"
+  },
+  {
+    "text": "from the nlist symbol table update.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1751"
+  },
+  {
+    "text": "In fact, when we compare it to the first time we used `atos`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1753"
+  },
+  {
+    "text": "it still looks like we're missing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1758"
+  },
+  {
+    "text": "so many valuable functions and details! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1759"
+  },
+  {
+    "text": "What happened here? ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1762"
+  },
+  {
+    "text": "The only thing that changed was that we didn't specify ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1764"
+  },
+  {
+    "text": "the `-i` to `atos` this time.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1767"
+  },
+  {
+    "text": "That flag stands for \"inlined functions.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1770"
+  },
+  {
+    "text": "Inlining is a routine optimization ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1774"
+  },
+  {
+    "text": "that compilers perform.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1776"
+  },
+  {
+    "text": "This involves substituting a function call ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1778"
+  },
+  {
+    "text": "with the body of the function directly.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1781"
+  },
+  {
+    "text": "One cool effect that it has is making code seemingly disappear.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1783"
+  },
+  {
+    "text": "We can think of it as, rather than calling `numberChoices()`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1787"
+  },
+  {
+    "text": "the entirety of the code for `numberChoices()` ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1790"
+  },
+  {
+    "text": "was dropped in place.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1793"
+  },
+  {
+    "text": "Suddenly there's no function call to `numberChoices()` anymore! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1795"
+  },
+  {
+    "text": "DWARF represents this with an inlined subroutine.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1800"
+  },
+  {
+    "text": "This is the third and final vocabulary type for DWARF ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1803"
+  },
+  {
+    "text": "that we'll discuss today.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1805"
+  },
+  {
+    "text": "An inlined subroutine is a subprogram — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1807"
+  },
+  {
+    "text": "so it's a function — ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1810"
+  },
+  {
+    "text": "that was inlined into another subprogram.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1811"
+  },
+  {
+    "text": "Since an inlined function is completely engulfed ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1815"
+  },
+  {
+    "text": "by another node in the relationship tree, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1818"
+  },
+  {
+    "text": "the inlined subroutine is a child of that node.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1820"
+  },
+  {
+    "text": "This definition applies recursively too, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1824"
+  },
+  {
+    "text": "meaning that an inlined subroutine ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1826"
+  },
+  {
+    "text": "can have other inlined children.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1828"
+  },
+  {
+    "text": "Again, with `dwarfdump`, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1832"
+  },
+  {
+    "text": "we can look for inlined subroutines.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1833"
+  },
+  {
+    "text": "They're listed as children of other nodes ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1836"
+  },
+  {
+    "text": "and have similar properties to subprograms, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1838"
+  },
+  {
+    "text": "such as names and addresses.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1840"
+  },
+  {
+    "text": "However, in DWARF, these properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1842"
+  },
+  {
+    "text": "are frequently accessed through a common node, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1845"
+  },
+  {
+    "text": "known as the abstract origin.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1848"
+  },
+  {
+    "text": "If there are many inlined copies of a particular function, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1850"
+  },
+  {
+    "text": "then their common, shared properties ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1854"
+  },
+  {
+    "text": "are kept in the abstract origin ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1855"
+  },
+  {
+    "text": "so that they aren't duplicated everywhere.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1857"
+  },
+  {
+    "text": "One unique property that inlined subroutines have is a call site.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1860"
+  },
+  {
+    "text": "This is the location in our source code ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1865"
+  },
+  {
+    "text": "where we wrote the actual function call, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1867"
+  },
+  {
+    "text": "but the optimizer replaced it.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1869"
+  },
+  {
+    "text": "Here for instance, we made the call to `generateANumber` ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1872"
+  },
+  {
+    "text": "on line 36 of the main.swift file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1875"
+  },
+  {
+    "text": "This lets us update our tree with new child nodes.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1878"
+  },
+  {
+    "text": "And now this is looking like ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1882"
+  },
+  {
+    "text": "a much more comprehensive view of our program.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1884"
+  },
+  {
+    "text": "The optimization details for inlined functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1887"
+  },
+  {
+    "text": "were the key details in getting us ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1890"
+  },
+  {
+    "text": "to the fully symbolicated crash log.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1892"
+  },
+  {
+    "text": "The `-i` flag for `atos` instructs the tool ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1895"
+  },
+  {
+    "text": "to consider them during symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1898"
+  },
+  {
+    "text": "They were also the missing details ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1901"
+  },
+  {
+    "text": "from our Instruments trace.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1903"
+  },
+  {
+    "text": "The reason why we needed a dSYM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1904"
+  },
+  {
+    "text": "both for Instruments and for the crash log ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1907"
+  },
+  {
+    "text": "was precisely so that we could extract all of this content.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1909"
+  },
+  {
+    "text": "There is another source where you'll find DWARF, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1914"
+  },
+  {
+    "text": "and that is from static libraries and object files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1916"
+  },
+  {
+    "text": "In the absence of a dSYM, you can still gather DWARF ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1920"
+  },
+  {
+    "text": "for functions that you linked ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1923"
+  },
+  {
+    "text": "from a static library or object file.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1924"
+  },
+  {
+    "text": "In those cases, you'll find the Debugging Symbols nlist types.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1927"
+  },
+  {
+    "text": "These were one of the symbol types that could be stripped.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1932"
+  },
+  {
+    "text": "They don't hold the DWARF themselves though.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1935"
+  },
+  {
+    "text": "Rather, they associate a function ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1938"
+  },
+  {
+    "text": "back to the file they came from.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1940"
+  },
+  {
+    "text": "If the library was built with debug information, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1942"
+  },
+  {
+    "text": "then the nlist entry can point us to that DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1945"
+  },
+  {
+    "text": "These types of nlist entries can be seen verbosely ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1948"
+  },
+  {
+    "text": "with `dsymutil -dump-debug-map`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1951"
+  },
+  {
+    "text": "Here we have the list of different functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1955"
+  },
+  {
+    "text": "and where they were pulled from.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1956"
+  },
+  {
+    "text": "Those locations can be scanned and processed for DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1959"
+  },
+  {
+    "text": "To summarize, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1962"
+  },
+  {
+    "text": "DWARF is a vital source of in-depth symbolication data.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1963"
+  },
+  {
+    "text": "DWARF exposes important relationships ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1967"
+  },
+  {
+    "text": "between functions and files.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1969"
+  },
+  {
+    "text": "Optimizations such as function inlining ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1972"
+  },
+  {
+    "text": "have an enormous impact on the quality of symbolication, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1974"
+  },
+  {
+    "text": "and DWARF can express it very well.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1977"
+  },
+  {
+    "text": "We also saw that dSYMs and static libraries contain DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1980"
+  },
+  {
+    "text": "However, please prefer dSYMs as you can easily transfer them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1984"
+  },
+  {
+    "text": "to others and have built-in support from several tools.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1988"
+  },
+  {
+    "text": "Finally, I want to share different tools and tips ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1992"
+  },
+  {
+    "text": "you can use to facilitate symbolication.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1995"
+  },
+  {
+    "text": "For local development builds, you'll generally have ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=1998"
+  },
+  {
+    "text": "a great deal of debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2001"
+  },
+  {
+    "text": "if you build in debug mode.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2003"
+  },
+  {
+    "text": "For release mode, you can ensure that Xcode generates a dSYM by ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2005"
+  },
+  {
+    "text": "checking the Debug Information Format build setting.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2008"
+  },
+  {
+    "text": "Make sure Release is set to DWARF with dSYM File.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2012"
+  },
+  {
+    "text": "For apps that were submitted to the App Store, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2016"
+  },
+  {
+    "text": "you can download your dSYMs through App Store Connect.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2018"
+  },
+  {
+    "text": "This also includes any apps with bitcode enabled.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2021"
+  },
+  {
+    "text": "If you want to check that a certain dSYM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2025"
+  },
+  {
+    "text": "is already on your device, you can use the `mdfind` command.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2027"
+  },
+  {
+    "text": "The alphanumeric string here is your binary's UUID, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2031"
+  },
+  {
+    "text": "which is a unique identifier defined in a load command.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2034"
+  },
+  {
+    "text": "You can see the UUID for your dSYMs with `symbols -uuid`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2038"
+  },
+  {
+    "text": "Sometimes, a toolchain could generate invalid DWARF.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2043"
+  },
+  {
+    "text": "You can check this with `dwarfdump -verify`.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2047"
+  },
+  {
+    "text": "If you see any reported errors, please file a bug! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2049"
+  },
+  {
+    "text": "DWARF data also has a cap of four gigabytes per binary.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2053"
+  },
+  {
+    "text": "If you're running into issues with your dSYMs ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2057"
+  },
+  {
+    "text": "and see that they're exceeding four gigabytes, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2059"
+  },
+  {
+    "text": "consider splitting the project into separate components ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2061"
+  },
+  {
+    "text": "so that each one has its own smaller dSYM.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2064"
+  },
+  {
+    "text": "You can make sure that the dSYM you're using ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2068"
+  },
+  {
+    "text": "matches the specific build of your app ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2071"
+  },
+  {
+    "text": "that you're interested in by comparing UUIDs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2073"
+  },
+  {
+    "text": "The app's UUID is in the Binary Images list ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2076"
+  },
+  {
+    "text": "section of crash reports ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2079"
+  },
+  {
+    "text": "and you can also see it with the `symbols` command.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2080"
+  },
+  {
+    "text": "You should ensure that both your app and your dSYM ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2083"
+  },
+  {
+    "text": "have the same UUIDs.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2086"
+  },
+  {
+    "text": "The `symbols` tool also lets you check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2089"
+  },
+  {
+    "text": "the types of debug information your app has available.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2091"
+  },
+  {
+    "text": "We've already seen examples of this, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2095"
+  },
+  {
+    "text": "but it's a helpful reminder that these tags in square brackets ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2096"
+  },
+  {
+    "text": "tell you the information source.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2100"
+  },
+  {
+    "text": "It's useful if you aren't sure which debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2102"
+  },
+  {
+    "text": "you might be dealing with.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2105"
+  },
+  {
+    "text": "If you're certain that you have dSYMs available ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2107"
+  },
+  {
+    "text": "but still aren't getting names for your functions ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2110"
+  },
+  {
+    "text": "in Instruments traces, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2112"
+  },
+  {
+    "text": "please check your entitlements and code signing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2114"
+  },
+  {
+    "text": "Specifically, with the `codesign` command, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2116"
+  },
+  {
+    "text": "you can verify that you have a proper code signature.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2119"
+  },
+  {
+    "text": "You should also verify that locally built apps ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2123"
+  },
+  {
+    "text": "for development have the `get-task-allow` entitlement.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2125"
+  },
+  {
+    "text": "This entitlement grants permissions to tools ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2128"
+  },
+  {
+    "text": "such as Instruments to symbolicate your app.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2131"
+  },
+  {
+    "text": "Xcode should set this entitlement automatically ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2134"
+  },
+  {
+    "text": "with the Profile action, but it's helpful to verify.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2136"
+  },
+  {
+    "text": "If you don't have the `get-task-allow` entitlement ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2141"
+  },
+  {
+    "text": "enabled, you should check ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2143"
+  },
+  {
+    "text": "your Code Signing Inject Base Entitlements build setting ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2145"
+  },
+  {
+    "text": "and make sure that it's enabled as you're developing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2149"
+  },
+  {
+    "text": "Lastly, for Universal 2 apps, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2152"
+  },
+  {
+    "text": "you should specify the architecture ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2155"
+  },
+  {
+    "text": "that you're interested in to the tools.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2157"
+  },
+  {
+    "text": "`symbols`, `otool`, and `dwarfdump` all have an `-arch` flag ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2160"
+  },
+  {
+    "text": "to only operate on a particular architecture slice.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2164"
+  },
+  {
+    "text": "This concludes \"Symbolication: Beyond the basics.\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2167"
+  },
+  {
+    "text": "If nothing else, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2171"
+  },
+  {
+    "text": "I want to really emphasize a few key points.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2172"
+  },
+  {
+    "text": "UUIDs and file addresses are a consistent ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2175"
+  },
+  {
+    "text": "and reliable way to identify what your app was doing ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2178"
+  },
+  {
+    "text": "since they're independent of the ASLR slide.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2181"
+  },
+  {
+    "text": "They're also our key to querying the debug info.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2185"
+  },
+  {
+    "text": "You should also use dSYMs whenever possible.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2188"
+  },
+  {
+    "text": "dSYMs contain the richest debug information ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2191"
+  },
+  {
+    "text": "in the form of DWARF and are supported ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2194"
+  },
+  {
+    "text": "by Xcode and Instruments.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2196"
+  },
+  {
+    "text": "Lastly, we covered several tools.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2198"
+  },
+  {
+    "text": "These tools are readily available to you in Xcode ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2202"
+  },
+  {
+    "text": "and they offer powerful diagnostics and insights.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2204"
+  },
+  {
+    "text": "You should strive to incorporate them ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2207"
+  },
+  {
+    "text": "into your workflows for debugging and optimizing.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2209"
+  },
+  {
+    "text": "If you're interested in learning more, ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2214"
+  },
+  {
+    "text": "I recommend these two sessions from WWDC18 ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2216"
+  },
+  {
+    "text": "to learn how your apps spring to life upon launch: ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2219"
+  },
+  {
+    "text": "\"Optimizing app startup time\" ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2222"
+  },
+  {
+    "text": "and \"App startup time: Past, present, and future\".",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2224"
+  },
+  {
+    "text": "Thank you all very much for joining me ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2228"
+  },
+  {
+    "text": "to learn about symbolication! ",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2230"
+  },
+  {
+    "text": "Have a wonderful rest of the week.",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2231"
+  },
+  {
+    "text": "♪",
+    "link": "https://developer.apple.com/videos/play/wwdc2021/10211/?time=2233"
+  }
+]

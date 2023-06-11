@@ -1,0 +1,512 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:09.000
+♪ ♪
+
+00:00:09.000 --> 00:00:10.000
+Xin chào.
+
+00:00:10.000 --> 00:00:14.000
+Tên tôi là Peikang, và tôi đến từ Video Coding và nhóm Xử lý.
+
+00:00:14.000 --> 00:00:27.000
+Chào mừng bạn đến với "Khám phá mã hóa video có độ trễ thấp với Hộp công cụ video." Mã hóa độ trễ thấp rất quan trọng đối với nhiều ứng dụng video, đặc biệt là các ứng dụng giao tiếp video thời gian thực.
+
+00:00:27.000 --> 00:00:35.000
+Trong buổi nói chuyện này, tôi sẽ giới thiệu một chế độ mã hóa mới trong Hộp công cụ video để đạt được mã hóa độ trễ thấp.
+
+00:00:35.000 --> 00:00:42.000
+Mục tiêu của chế độ mới này là tối ưu hóa đường ống mã hóa hiện có cho các ứng dụng thời gian thực.
+
+00:00:42.000 --> 00:00:47.000
+Vậy ứng dụng video thời gian thực yêu cầu gì?
+
+00:00:47.000 --> 00:00:54.000
+Chúng ta cần giảm thiểu độ trễ đầu cuối trong giao tiếp để mọi người không nói chuyện với nhau.
+
+00:00:54.000 --> 00:01:01.000
+Chúng ta cần nâng cao khả năng tương tác bằng cách để các ứng dụng video có khả năng giao tiếp với nhiều thiết bị hơn.
+
+00:01:01.000 --> 00:01:08.000
+Đường ống mã hóa sẽ hiệu quả khi có nhiều hơn một người nhận trong cuộc gọi.
+
+00:01:08.000 --> 00:01:13.000
+Ứng dụng cần trình bày video với chất lượng hình ảnh tốt nhất.
+
+00:01:13.000 --> 00:01:20.000
+Chúng ta cần một cơ chế đáng tin cậy để khôi phục giao tiếp từ các lỗi do mất mạng gây ra.
+
+00:01:20.000 --> 00:01:27.000
+Mã hóa video có độ trễ thấp mà tôi sẽ nói đến hôm nay sẽ tối ưu hóa ở tất cả các khía cạnh này.
+
+00:01:27.000 --> 00:01:33.000
+Với chế độ này, ứng dụng thời gian thực của bạn có thể đạt được mức hiệu suất mới.
+
+00:01:33.000 --> 00:01:39.000
+Trong buổi nói chuyện này, trước tiên tôi sẽ đưa ra một cái nhìn tổng quan về mã hóa video có độ trễ thấp.
+
+00:01:39.000 --> 00:01:45.000
+Chúng ta có thể có ý tưởng cơ bản về cách chúng ta đạt được độ trễ thấp trong đường ống.
+
+00:01:45.000 --> 00:01:54.000
+Sau đó, tôi sẽ chỉ ra cách sử dụng VTCompressionSession APIs để xây dựng đường ống và mã hóa với chế độ độ trễ thấp.
+
+00:01:54.000 --> 00:02:00.000
+Cuối cùng, tôi sẽ nói về nhiều tính năng mà chúng tôi đang giới thiệu ở chế độ độ trễ thấp.
+
+00:02:00.000 --> 00:02:05.000
+Trước tiên hãy để tôi đưa ra một cái nhìn tổng quan về mã hóa video có độ trễ thấp.
+
+00:02:05.000 --> 00:02:10.000
+Đây là sơ đồ ngắn gọn về đường ống mã hóa video trên nền tảng của Apple.
+
+00:02:10.000 --> 00:02:15.000
+Hộp công cụ Video lấy CVImagebuffer làm hình ảnh đầu vào.
+
+00:02:15.000 --> 00:02:24.000
+Nó yêu cầu bộ mã hóa video thực hiện các thuật toán nén như H.264 để giảm kích thước của dữ liệu thô.
+
+00:02:24.000 --> 00:02:33.000
+Dữ liệu nén đầu ra được gói trong CMSampleBuffer và nó có thể được truyền qua mạng để liên lạc video.
+
+00:02:33.000 --> 00:02:44.000
+Như chúng ta có thể nhận thấy từ sơ đồ trước, độ trễ đầu cuối có thể bị ảnh hưởng bởi hai yếu tố: thời gian xử lý và thời gian truyền mạng.
+
+00:02:44.000 --> 00:02:50.000
+Để giảm thiểu thời gian xử lý, chế độ độ trễ thấp giúp loại bỏ việc sắp xếp lại khung hình.
+
+00:02:50.000 --> 00:02:54.000
+Một mẫu mã hóa một trong, một ra được tuân theo.
+
+00:02:54.000 --> 00:03:06.000
+Ngoài ra, bộ điều khiển tốc độ trong chế độ này có khả dụng thích ứng nhanh hơn để đáp ứng với sự thay đổi mạng, vì vậy độ trễ do tắc nghẽn mạng cũng được giảm thiểu.
+
+00:03:06.000 --> 00:03:14.000
+Với hai tối ưu hóa này, chúng ta đã có thể thấy những cải tiến hiệu suất rõ ràng so với chế độ mặc định.
+
+00:03:14.000 --> 00:03:21.000
+Mã hóa độ trễ thấp có thể giảm độ trễ lên đến 100 mili giây cho video 720p 30fps.
+
+00:03:21.000 --> 00:03:26.000
+Việc tiết kiệm như vậy có thể rất quan trọng đối với hội nghị truyền hình.
+
+00:03:26.000 --> 00:03:37.000
+Khi chúng ta giảm độ trễ, chúng ta có thể đạt được một quy trình mã hóa hiệu quả hơn cho các giao tiếp thời gian thực như hội nghị truyền hình và phát sóng trực tiếp.
+
+00:03:37.000 --> 00:03:45.000
+Ngoài ra, chế độ độ trễ thấp luôn sử dụng bộ mã hóa video tăng tốc phần cứng để tiết kiệm năng lượng.
+
+00:03:45.000 --> 00:03:56.000
+Lưu ý, loại codec video được hỗ trợ ở chế độ này là H.264 và chúng tôi đang mang tính năng này trên cả iOS và macOS.
+
+00:03:56.000 --> 00:04:02.000
+Tiếp theo, tôi muốn nói về cách sử dụng chế độ độ trễ thấp với Hộp công cụ Video.
+
+00:04:02.000 --> 00:04:11.000
+Trước tiên tôi sẽ tóm tắt lại việc sử dụng VTCompressionSession và sau đó chỉ cho bạn bước chúng ta cần để kích hoạt mã hóa độ trễ thấp.
+
+00:04:11.000 --> 00:04:21.000
+Khi chúng tôi sử dụng VTCompressionSession, điều đầu tiên là tạo phiên với VTCompressionSessionCreate API.
+
+00:04:21.000 --> 00:04:28.000
+Chúng tôi có thể tùy chọn cấu hình phiên, chẳng hạn như tốc độ bit mục tiêu, thông qua VTSessionSetProperty API.
+
+00:04:28.000 --> 00:04:35.000
+Nếu cấu hình không được cung cấp, bộ mã hóa sẽ hoạt động với hành vi mặc định.
+
+00:04:35.000 --> 00:04:46.000
+Sau khi phiên được tạo và cấu hình đúng, chúng ta có thể chuyển CVImageBuffer đến phiên bằng lệnh gọi VTCompressionSessionEncodeFrame.
+
+00:04:46.000 --> 00:04:53.000
+Kết quả được mã hóa có thể được truy xuất từ trình xử lý đầu ra được cung cấp trong quá trình tạo phiên.
+
+00:04:53.000 --> 00:04:58.000
+Cho phép mã hóa độ trễ thấp trong phiên nén rất dễ dàng.
+
+00:04:58.000 --> 00:05:02.000
+Thay đổi duy nhất chúng tôi cần là trong việc tạo phiên.
+
+00:05:02.000 --> 00:05:06.000
+Đây là một đoạn mã chỉ ra cách thực hiện điều đó.
+
+00:05:06.000 --> 00:05:11.000
+Đầu tiên chúng ta cần một CFMutableDictionary cho mã hóaSpecification.
+
+00:05:11.000 --> 00:05:18.000
+Thông số kỹ thuật của bộ mã hóa được sử dụng để chỉ định một bộ mã hóa video cụ thể mà phiên phải sử dụng.
+
+00:05:18.000 --> 00:05:25.000
+Và sau đó chúng ta cần đặt cờ EnableLowLatencyRateControl trong encoderSpecification.
+
+00:05:25.000 --> 00:05:36.000
+Cuối cùng, chúng tôi cần cung cấp thông số kỹ thuật bộ mã hóa này cho VTCompressionSessionCreate và phiên nén sẽ hoạt động ở chế độ độ trễ thấp.
+
+00:05:36.000 --> 00:05:39.000
+Bước cấu hình giống như bình thường.
+
+00:05:39.000 --> 00:05:45.000
+Ví dụ, chúng ta có thể đặt tốc độ bit mục tiêu với thuộc tính AverageBitRate.
+
+00:05:45.000 --> 00:05:51.000
+Được rồi, chúng tôi đã đề cập đến những điều cơ bản của chế độ độ trễ thấp với Hộp công cụ video.
+
+00:05:51.000 --> 00:05:59.000
+Tôi muốn chuyển sang các tính năng mới trong chế độ này có thể giúp bạn phát triển hơn nữa ứng dụng video thời gian thực.
+
+00:05:59.000 --> 00:06:04.000
+Cho đến nay, chúng ta đã nói về lợi ích độ trễ bằng cách sử dụng chế độ độ trễ thấp.
+
+00:06:04.000 --> 00:06:10.000
+Những lợi ích còn lại có thể đạt được bằng các tính năng mà tôi sẽ giới thiệu.
+
+00:06:10.000 --> 00:06:13.000
+Tính năng đầu tiên là hồ sơ mới.
+
+00:06:13.000 --> 00:06:20.000
+Chúng tôi đã tăng cường khả năng tương tác bằng cách thêm hai cấu hình mới vào đường ống.
+
+00:06:20.000 --> 00:06:24.000
+Và chúng tôi cũng rất hào hứng khi nói về khả năng mở rộng theo thời gian.
+
+00:06:24.000 --> 00:06:28.000
+Tính năng này có thể rất hữu ích trong hội nghị truyền hình.
+
+00:06:28.000 --> 00:06:35.000
+Bây giờ bạn có thể kiểm soát chi tiết chất lượng hình ảnh với tham số lượng tử hóa khung hình tối đa.
+
+00:06:35.000 --> 00:06:42.000
+Cuối cùng, chúng tôi muốn cải thiện khả năng phục hồi lỗi bằng cách thêm hỗ trợ tham chiếu dài hạn.
+
+00:06:42.000 --> 00:06:45.000
+Hãy nói về sự hỗ trợ hồ sơ mới.
+
+00:06:45.000 --> 00:06:51.000
+Hồ sơ xác định một nhóm các thuật toán mã hóa mà bộ giải mã có khả năng hỗ trợ.
+
+00:06:51.000 --> 00:07:00.000
+Để giao tiếp với phía người nhận, luồng bit được mã hóa phải tuân thủ cấu hình cụ thể mà bộ giải mã hỗ trợ.
+
+00:07:00.000 --> 00:07:09.000
+Ở đây trong Hộp công cụ Video, chúng tôi hỗ trợ một loạt các hồ sơ, chẳng hạn như hồ sơ cơ bản, hồ sơ chính và hồ sơ cao.
+
+00:07:09.000 --> 00:07:19.000
+Hôm nay chúng tôi đã thêm hai hồ sơ mới vào gia đình: hồ sơ cơ sở hạn chế, CBP và hồ sơ cao bị hạn chế, CHP.
+
+00:07:19.000 --> 00:07:29.000
+CBP chủ yếu được sử dụng cho các ứng dụng chi phí thấp và mặt khác, CHP có các thuật toán tiên tiến hơn để có tỷ lệ nén tốt hơn.
+
+00:07:29.000 --> 00:07:35.000
+Bạn nên kiểm tra khả năng giải mã để biết nên sử dụng hồ sơ nào.
+
+00:07:35.000 --> 00:07:43.000
+Để yêu cầu CBP, chỉ cần đặt thuộc tính phiên ProfileLevel thành ContrainedBaseLine_AutoLevel.
+
+00:07:43.000 --> 00:07:50.000
+Tương tự, chúng ta có thể đặt cấp độ hồ sơ thành ContrainedHigh_AutoLevel để sử dụng CHP.
+
+00:07:50.000 --> 00:07:54.000
+Bây giờ hãy nói về khả năng mở rộng thời gian.
+
+00:07:54.000 --> 00:08:01.000
+Chúng ta có thể sử dụng khả năng mở rộng theo thời gian để nâng cao hiệu quả cho các cuộc gọi video đa bên.
+
+00:08:01.000 --> 00:08:05.000
+Hãy để chúng tôi xem xét một kịch bản hội nghị truyền hình ba bên đơn giản.
+
+00:08:05.000 --> 00:08:16.000
+Trong mô hình này, bộ thu "A" có băng thông thấp hơn 600kbps và bộ thu B có băng thông cao hơn 1.000kbps.
+
+00:08:16.000 --> 00:08:28.000
+Thông thường, người gửi cần mã hóa hai bộ luồng bit để đáp ứng băng thông đường xuống của mỗi bên máy thu. Điều này có thể không tối ưu.
+
+00:08:28.000 --> 00:08:40.000
+Mô hình có thể hiệu quả hơn với khả năng mở rộng theo thời gian, trong đó người gửi chỉ cần mã hóa một luồng bit duy nhất nhưng sau đó có thể được chia thành hai lớp.
+
+00:08:40.000 --> 00:08:44.000
+Hãy để tôi chỉ cho bạn quá trình này hoạt động như thế nào.
+
+00:08:44.000 --> 00:08:54.000
+Đây là một chuỗi các khung hình video được mã hóa trong đó mỗi khung hình sử dụng khung hình trước đó làm tài liệu tham khảo dự đoán.
+
+00:08:54.000 --> 00:09:05.000
+Chúng ta có thể kéo một nửa số khung hình thành một lớp khác và chúng ta có thể thay đổi tham chiếu để chỉ các khung trong lớp ban đầu được sử dụng để dự đoán.
+
+00:09:05.000 --> 00:09:13.000
+Lớp ban đầu được gọi là lớp cơ sở, và lớp được xây dựng mới được gọi là lớp nâng cao.
+
+00:09:13.000 --> 00:09:20.000
+Lớp nâng cao có thể được sử dụng như một phần bổ sung của lớp cơ sở để cải thiện tốc độ khung hình.
+
+00:09:20.000 --> 00:09:27.000
+Đối với người nhận "A", chúng tôi có thể gửi khung lớp cơ sở vì bản thân lớp cơ sở đã có thể giải mã được.
+
+00:09:27.000 --> 00:09:37.000
+Và quan trọng hơn, vì lớp cơ sở chỉ chứa một nửa số khung hình, tốc độ dữ liệu được truyền sẽ thấp.
+
+00:09:37.000 --> 00:09:48.000
+Mặt khác, người nhận B có thể thưởng thức video mượt mà hơn vì nó có đủ băng thông để nhận các khung lớp cơ sở và các khung lớp nâng cao.
+
+00:09:48.000 --> 00:09:53.000
+Hãy để tôi cho bạn xem các video được mã hóa bằng cách sử dụng khả năng mở rộng thời gian.
+
+00:09:53.000 --> 00:10:02.000
+Tôi sẽ phát hai video, một từ lớp cơ sở và một từ lớp cơ sở cùng với lớp nâng cao.
+
+00:10:02.000 --> 00:10:11.000
+Bản thân lớp cơ sở có thể được phát bình thường, nhưng đồng thời, chúng ta có thể nhận thấy video không hoàn toàn mượt mà.
+
+00:10:11.000 --> 00:10:16.000
+Chúng ta có thể thấy ngay sự khác biệt nếu chúng ta phát video thứ hai.
+
+00:10:16.000 --> 00:10:24.000
+Video bên phải có tốc độ khung hình cao hơn so với video bên trái vì nó chứa cả lớp nền và lớp nâng cao.
+
+00:10:24.000 --> 00:10:31.000
+Video bên trái có 50% tốc độ khung hình đầu vào và nó sử dụng 60% tốc độ bit mục tiêu.
+
+00:10:31.000 --> 00:10:37.000
+Hai video này chỉ yêu cầu bộ mã hóa mã hóa một luồng bit duy nhất cùng một lúc.
+
+00:10:37.000 --> 00:10:44.000
+Điều này sẽ tiết kiệm năng lượng hơn nhiều khi chúng tôi thực hiện hội nghị truyền hình nhiều bên.
+
+00:10:44.000 --> 00:10:48.000
+Một lợi ích khác của khả năng mở rộng thời gian là khả năng phục hồi lỗi.
+
+00:10:48.000 --> 00:10:58.000
+Như chúng ta có thể thấy, các khung trong lớp nâng cao không được sử dụng để dự đoán, vì vậy không có sự phụ thuộc vào các khung này.
+
+00:10:58.000 --> 00:11:07.000
+Điều này có nghĩa là nếu một hoặc nhiều khung lớp nâng cao bị loại bỏ trong quá trình truyền mạng, các khung khác sẽ không bị ảnh hưởng.
+
+00:11:07.000 --> 00:11:11.000
+Điều này làm cho toàn bộ phiên mạnh mẽ hơn.
+
+00:11:11.000 --> 00:11:15.000
+Cách để kích hoạt khả năng mở rộng thời gian khá đơn giản.
+
+00:11:15.000 --> 00:11:22.000
+Chúng tôi đã tạo một thuộc tính phiên mới ở chế độ độ trễ thấp được gọi là BaseLayerFrameRateFraction.
+
+00:11:22.000 --> 00:11:34.000
+Đơn giản chỉ cần đặt thuộc tính này thành 0.5, có nghĩa là một nửa số khung đầu vào được gán cho lớp cơ sở và phần còn lại được gán cho lớp nâng cao.
+
+00:11:34.000 --> 00:11:38.000
+Bạn có thể kiểm tra thông tin lớp từ tệp đính kèm bộ đệm mẫu.
+
+00:11:38.000 --> 00:11:49.000
+Đối với các khung lớp cơ sở, CMSampleAttachmentKey_ IsDependedOnByOthers sẽ đúng, và nếu không nó sẽ sai.
+
+00:11:49.000 --> 00:11:54.000
+Chúng tôi cũng có tùy chọn để đặt tốc độ bit mục tiêu cho mỗi lớp.
+
+00:11:54.000 --> 00:12:01.000
+Hãy nhớ rằng chúng tôi sử dụng thuộc tính phiên AverageBitRate để định cấu hình tốc độ bit mục tiêu.
+
+00:12:01.000 --> 00:12:12.000
+Sau khi tốc độ bit mục tiêu được định cấu hình, chúng ta có thể đặt thuộc tính BaseLayerBitRateFraction mới để kiểm soát tỷ lệ phần trăm tốc độ bit mục tiêu cần thiết cho lớp cơ sở.
+
+00:12:12.000 --> 00:12:18.000
+Nếu thuộc tính này không được đặt, giá trị mặc định là 0,6 sẽ được sử dụng.
+
+00:12:18.000 --> 00:12:26.000
+Và chúng tôi khuyến nghị phân số tốc độ bit lớp cơ sở nên nằm trong khoảng từ 0,6 đến 0,8.
+
+00:12:26.000 --> 00:12:33.000
+Bây giờ, hãy chuyển sang tham số lượng tử hóa khung tối đa hoặc QP khung tối đa.
+
+00:12:33.000 --> 00:12:39.000
+Khung QP được sử dụng để điều chỉnh chất lượng hình ảnh và tốc độ dữ liệu.
+
+00:12:39.000 --> 00:12:43.000
+Chúng ta có thể sử dụng QP khung thấp để tạo ra một hình ảnh chất lượng cao.
+
+00:12:43.000 --> 00:12:47.000
+Kích thước hình ảnh sẽ lớn trong trường hợp này.
+
+00:12:47.000 --> 00:12:56.000
+Mặt khác, chúng ta có thể sử dụng QP khung hình cao để tạo ra một hình ảnh với chất lượng thấp nhưng với kích thước nhỏ hơn.
+
+00:12:56.000 --> 00:13:10.000
+Ở chế độ độ trễ thấp, bộ mã hóa điều chỉnh khung QP bằng cách sử dụng các yếu tố như độ phức tạp của hình ảnh, tốc độ khung hình đầu vào, chuyển động video để tạo ra chất lượng hình ảnh tốt nhất dưới ràng buộc tốc độ bit mục tiêu hiện tại.
+
+00:13:10.000 --> 00:13:17.000
+Vì vậy, chúng tôi khuyến khích dựa vào hành vi mặc định của bộ mã hóa để điều chỉnh khung QP.
+
+00:13:17.000 --> 00:13:29.000
+Nhưng trong một số trường hợp khách hàng có yêu cầu cụ thể về chất lượng video, giờ đây chúng tôi cho phép bạn kiểm soát QP khung hình tối đa mà bộ mã hóa được phép sử dụng.
+
+00:13:29.000 --> 00:13:42.000
+Với khung hình tối đa QP, bộ mã hóa sẽ luôn chọn khung QP nhỏ hơn giới hạn này, vì vậy khách hàng có thể kiểm soát chi tiết chất lượng hình ảnh.
+
+00:13:42.000 --> 00:13:49.000
+Điều đáng nói là điều khiển tốc độ thông thường vẫn hoạt động ngay cả với khung hình tối đa QP được chỉ định.
+
+00:13:49.000 --> 00:14:01.000
+Nếu bộ mã hóa đạt đến giới hạn QP khung hình tối đa nhưng sắp hết ngân sách tốc độ bit, nó sẽ bắt đầu giảm khung hình để duy trì tốc độ bit mục tiêu.
+
+00:14:01.000 --> 00:14:08.000
+Một ví dụ về việc sử dụng tính năng này là truyền video nội dung màn hình qua mạng kém.
+
+00:14:08.000 --> 00:14:15.000
+Bạn có thể đánh đổi bằng cách hy sinh tốc độ khung hình để gửi hình ảnh nội dung màn hình sắc nét.
+
+00:14:15.000 --> 00:14:20.000
+Cài đặt khung tối đa QP có thể đáp ứng yêu cầu này.
+
+00:14:20.000 --> 00:14:22.000
+Hãy nhìn vào giao diện.
+
+00:14:22.000 --> 00:14:29.000
+Bạn có thể vượt qua QP khung tối đa với thuộc tính phiên mới MaxAllowedFrameQP.
+
+00:14:29.000 --> 00:14:38.000
+Hãy nhớ rằng giá trị của khung tối đa QP phải nằm trong khoảng từ 1 đến 51 theo tiêu chuẩn.
+
+00:14:38.000 --> 00:14:45.000
+Hãy nói về tính năng cuối cùng mà chúng tôi đã phát triển ở chế độ độ trễ thấp, tham khảo dài hạn.
+
+00:14:45.000 --> 00:14:50.000
+Tham chiếu dài hạn hoặc LTR có thể được sử dụng để chống lại lỗi.
+
+00:14:50.000 --> 00:14:58.000
+Hãy xem sơ đồ này cho thấy bộ mã hóa, máy khách người gửi và máy khách người nhận trong đường ống.
+
+00:14:58.000 --> 00:15:03.000
+Giả sử giao tiếp video đi qua một mạng có kết nối kém.
+
+00:15:03.000 --> 00:15:07.000
+Mất khung hình có thể xảy ra do lỗi truyền.
+
+00:15:07.000 --> 00:15:16.000
+Khi máy khách nhận phát hiện mất khung hình, nó có thể yêu cầu khung làm mới để đặt lại phiên.
+
+00:15:16.000 --> 00:15:23.000
+Nếu bộ mã hóa nhận được yêu cầu, thông thường nó sẽ mã hóa một khung khóa cho mục đích làm mới.
+
+00:15:23.000 --> 00:15:26.000
+Nhưng khung chìa khóa thường khá lớn.
+
+00:15:26.000 --> 00:15:30.000
+Một khung chìa khóa lớn mất nhiều thời gian hơn để đến máy thu.
+
+00:15:30.000 --> 00:15:38.000
+Vì tình trạng mạng đã kém, một khung lớn có thể làm phức tạp thêm vấn đề tắc nghẽn mạng.
+
+00:15:38.000 --> 00:15:43.000
+Vì vậy, chúng ta có thể sử dụng khung dự đoán thay vì khung chính để làm mới không?
+
+00:15:43.000 --> 00:15:48.000
+Câu trả lời là có, nếu chúng ta có sự thừa nhận khung.
+
+00:15:48.000 --> 00:15:51.000
+Để tôi chỉ cho bạn cách nó hoạt động.
+
+00:15:51.000 --> 00:15:55.000
+Đầu tiên, chúng ta cần quyết định các khung yêu cầu xác nhận.
+
+00:15:55.000 --> 00:16:00.000
+Chúng tôi gọi những khung này là tham chiếu dài hạn, hoặc LTR.
+
+00:16:00.000 --> 00:16:03.000
+Đây là quyết định từ bộ mã hóa.
+
+00:16:03.000 --> 00:16:12.000
+Khi khách hàng của người gửi truyền một khung LTR, nó cũng cần yêu cầu xác nhận từ khách hàng người nhận.
+
+00:16:12.000 --> 00:16:19.000
+Nếu khung LTR được nhận thành công, một xác nhận cần được gửi lại.
+
+00:16:19.000 --> 00:16:30.000
+Khi khách hàng của người gửi nhận được xác nhận và chuyển thông tin đó cho bộ mã hóa, bộ mã hóa sẽ biết khung LTR nào đã được phía bên kia nhận.
+
+00:16:30.000 --> 00:16:34.000
+Hãy nhìn lại tình hình mạng tồi tệ một lần nữa.
+
+00:16:34.000 --> 00:16:47.000
+Khi bộ mã hóa nhận được yêu cầu làm mới, kể từ lần này, bộ mã hóa có một loạt các LTR được xác nhận, nó có thể mã hóa một khung được dự đoán từ một trong những LTR được xác nhận này.
+
+00:16:47.000 --> 00:16:53.000
+Một khung được mã hóa theo cách này được gọi là LTR-P.
+
+00:16:53.000 --> 00:17:02.000
+Thông thường LTR-P nhỏ hơn nhiều về kích thước khung được mã hóa so với khung chính, vì vậy nó dễ truyền hơn.
+
+00:17:02.000 --> 00:17:07.000
+Bây giờ, hãy nói về các API cho LTR.
+
+00:17:07.000 --> 00:17:12.000
+Lưu ý rằng việc xác nhận khung cần được xử lý bởi lớp ứng dụng.
+
+00:17:12.000 --> 00:17:20.000
+Nó có thể được thực hiện với các cơ chế như thông báo RPSI trong Giao thức điều khiển RTP.
+
+00:17:20.000 --> 00:17:28.000
+Ở đây chúng tôi sẽ chỉ tập trung vào cách bộ mã hóa và khách hàng người gửi giao tiếp trong quá trình này.
+
+00:17:28.000 --> 00:17:37.000
+Khi bạn đã bật mã hóa độ trễ thấp, bạn có thể bật tính năng này bằng cách đặt thuộc tính phiên EnableLTR.
+
+00:17:37.000 --> 00:17:48.000
+Khi một khung LTR được mã hóa, bộ mã hóa sẽ báo hiệu một mã thông báo khung duy nhất trong tệp đính kèm mẫu RequireLTRAcknowledgementToken.
+
+00:17:48.000 --> 00:17:57.000
+Khách hàng của người gửi có trách nhiệm báo cáo các khung LTR đã được xác nhận cho bộ mã hóa thông qua thuộc tính khung AcknowledgedLTRTokens.
+
+00:17:57.000 --> 00:18:06.000
+Vì nhiều hơn một xác nhận có thể đến cùng một lúc, chúng ta cần sử dụng một mảng để lưu trữ các mã thông báo khung này.
+
+00:18:06.000 --> 00:18:12.000
+Bạn có thể yêu cầu một khung làm mới bất cứ lúc nào thông qua thuộc tính khung ForceLTRRefresh.
+
+00:18:12.000 --> 00:18:18.000
+Khi bộ mã hóa nhận được yêu cầu này, một LTR-P sẽ được mã hóa.
+
+00:18:18.000 --> 00:18:26.000
+Nếu không có sẵn LTR được xác nhận, bộ mã hóa sẽ tạo ra một khung khóa trong trường hợp này.
+
+00:18:26.000 --> 00:18:27.000
+Được rồi.
+
+00:18:27.000 --> 00:18:30.000
+Bây giờ chúng tôi đã đề cập đến các tính năng mới ở chế độ độ trễ thấp.
+
+00:18:30.000 --> 00:18:34.000
+Chúng ta có thể nói về việc sử dụng các tính năng này cùng nhau.
+
+00:18:34.000 --> 00:18:42.000
+Ví dụ, chúng ta có thể sử dụng khả năng mở rộng thời gian và tham số lượng tử hóa khung tối đa cho ứng dụng chia sẻ màn hình nhóm.
+
+00:18:42.000 --> 00:18:55.000
+Khả năng mở rộng thời gian có thể tạo video đầu ra một cách hiệu quả cho mỗi người nhận và chúng ta có thể giảm QP khung hình tối đa để có giao diện người dùng và văn bản sắc nét hơn trong nội dung màn hình.
+
+00:18:55.000 --> 00:19:05.000
+Nếu giao tiếp đi qua một mạng kém và cần một khung làm mới để phục hồi sau lỗi, tham chiếu dài hạn có thể được sử dụng.
+
+00:19:05.000 --> 00:19:15.000
+Và nếu người nhận chỉ có thể giải mã các cấu hình bị hạn chế, chúng ta có thể mã hóa bằng cấu hình cơ sở bị hạn chế hoặc cấu hình cao bị hạn chế.
+
+00:19:15.000 --> 00:19:16.000
+Được rồi.
+
+00:19:16.000 --> 00:19:19.000
+Chúng tôi đã đề cập đến một vài chủ đề ở đây.
+
+00:19:19.000 --> 00:19:24.000
+Chúng tôi đã giới thiệu chế độ mã hóa độ trễ thấp trong Hộp công cụ video.
+
+00:19:24.000 --> 00:19:31.000
+Chúng tôi đã nói về cách sử dụng VTCompressionSession APIs để mã hóa video ở chế độ độ trễ thấp.
+
+00:19:31.000 --> 00:19:40.000
+Bên cạnh lợi ích độ trễ, chúng tôi cũng đã phát triển một loạt các tính năng mới để giải quyết các yêu cầu đối với ứng dụng video thời gian thực.
+
+00:19:40.000 --> 00:19:46.000
+Với tất cả những cải tiến này, tôi hy vọng chế độ độ trễ thấp có thể làm cho ứng dụng video của bạn trở nên tuyệt vời hơn.
+
+00:19:46.000 --> 00:19:50.000
+Cảm ơn vì đã xem và có một WWDC 2021 tuyệt vời.
+
+00:19:50.000 --> 23:59:59.000
+[Nhạc lạc quan].
+

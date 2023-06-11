@@ -1,0 +1,159 @@
+10159
+
+♪ Nhạc bass đang phát ♪
+
+David Hayward: Chào mừng mọi người.
+
+Tên tôi là David Hayward.
+
+Tôi là kỹ sư cao cấp trong nhóm Core Image và hôm nay tôi sẽ trình bày ngắn để chỉ cho bạn các phương pháp hay nhất mới nhất khi thêm hạt nhân Metal Core Image tùy chỉnh vào dự án Xcode của bạn.
+
+Trong bài thuyết trình này, tôi sẽ thảo luận về những lợi ích chung của việc viết CIKernels tùy chỉnh bằng Kim loại.
+
+Tiếp theo, tôi sẽ giới thiệu hai cách được đề xuất mà Metal CIKernels có thể được chế tạo.
+
+Và sau đó tôi sẽ trình bày từng bước cách thêm những thứ này vào dự án của bạn.
+
+Trước hết, hãy xem lại những lợi ích của việc viết CIKernels tùy chỉnh bằng Metal.
+
+Bằng cách viết CIKernels bằng Metal, bạn sẽ có quyền truy cập vào các tính năng Core Image như ốp lát tự động và nối.
+
+Nó sẽ cải thiện hiệu suất ứng dụng của bạn bằng cách chuyển một phần thời gian để biên dịch hạt nhân từ thời gian chạy sang khi ứng dụng của bạn được xây dựng.
+
+Và làm như vậy sẽ cung cấp cho hạt nhân của bạn quyền truy cập vào các tính năng hiệu suất cao như tập hợp-đọc, viết nhóm và toán học nửa nổi.
+
+Cuối cùng nhưng không kém phần quan trọng, nó sẽ giúp cuộc sống của bạn với tư cách là một nhà phát triển dễ dàng hơn bằng cách tô sáng cú pháp khi bạn nhập và kiểm tra lỗi nội tuyến khi bạn xây dựng.
+
+Vì vậy, với động lực đó, bây giờ tôi sẽ chỉ cho bạn từng bước cách thêm hạt nhân Metal Core Image vào ứng dụng của bạn.
+
+Hiện tại có hai cách được đề xuất để thêm CIKernels vào dự án của bạn và tôi sẽ mô tả chi tiết cả hai phương pháp.
+
+Tôi sẽ gọi đây là phương thức bên ngoài vì nó yêu cầu các hàm hạt nhân được chỉ định là bên ngoài "C" và được xây dựng bằng cách sử dụng cờ xây dựng tùy chỉnh.
+
+Phương pháp thứ hai là mới trong iOS 15 và macOS 12.
+
+Tôi sẽ gọi đây là phương pháp có thể khâu được vì nó yêu cầu các hàm hạt nhân được quy cho là có thể khâu được.
+
+Việc triển khai nó sử dụng Thư viện Động Kim loại.
+
+Trong cả hai phương pháp, có bốn bước chung cần tuân theo.
+
+Đầu tiên, là cấu hình dự án của bạn một cách thích hợp.
+
+Thứ hai, là thêm các tệp nguồn Metal CIKernel vào dự án của bạn.
+
+Thứ ba, là viết mã Metal CIKernel của bạn.
+
+Và thứ tư là viết mã Swift hoặc Objective-C để khởi tạo và áp dụng hạt nhân của bạn để tạo CIImage mới.
+
+Đầu tiên, hãy mô tả bốn bước này khi sử dụng CIKernels bên ngoài, bắt đầu với cấu hình dự án.
+
+Không giống như các bộ đổ bóng đồ họa và tính toán Metal thông thường, mã Core Image Metal này cần được biên dịch và liên kết với các cờ đặc biệt.
+
+Tôi khuyên bạn nên thêm hai quy tắc xây dựng tùy chỉnh vào các mục tiêu dự án của bạn, điều này sẽ giúp việc sử dụng các cờ này trở nên tự động.
+
+Đầu tiên, bạn sẽ đi đến cài đặt mục tiêu của dự án và thêm quy tắc xây dựng cho các tệp kết thúc bằng .ci.metal.
+
+Đối với các tệp có phần mở rộng này, quy tắc này sẽ chạy một tập lệnh một dòng gọi trình biên dịch Metal với cờ -fcikernel được yêu cầu.
+
+Quy tắc xây dựng này sẽ tạo ra một nhị phân đầu ra sẽ kết thúc bằng .ci.air.
+
+Tiếp theo, bạn sẽ thêm quy tắc xây dựng thứ hai cho các tệp kết thúc bằng .ci.air.
+
+Đối với các tệp có phần mở rộng này, quy tắc này sẽ chạy một tập lệnh một dòng gọi trình liên kết Metal với cờ -cikernel được yêu cầu.
+
+Quy tắc xây dựng này sẽ tạo ra một đầu ra trong thư mục Tài nguyên của ứng dụng của bạn sẽ kết thúc bằng .ci.metallib.
+
+Bây giờ bạn đã thêm các quy tắc xây dựng tùy chỉnh, tất cả những gì bạn cần làm là thêm các nguồn .ci.metal vào dự án của mình.
+
+Để làm điều đó, hãy chọn từ menu Tệp mà bạn muốn thêm tệp Metal mới và sau đó đặt tên cho tệp mới đó bằng .ci.metal.
+
+Bước tiếp theo là ghi CIKernel của bạn vào tệp nguồn Metal.
+
+Đầu tiên, ở đầu nguồn, bạn sẽ bao gồm tiêu đề CoreImage.h để bạn có quyền truy cập vào tất cả các lớp mà Core Image cung cấp.
+
+Hạt nhân phải được chỉ định là "C" bên ngoài để được Core Image nhận dạng.
+
+Nội dung triển khai hạt nhân thực tế của bạn tùy thuộc vào trí tưởng tượng của bạn.
+
+Đối với một ví dụ về những gì bạn có thể làm, tôi khuyên bạn nên xem bài thuyết trình WWDC 2020 của chúng tôi về "chỉnh sửa và phát lại HDR bằng AVFoundation."
+
+Bước cuối cùng là thêm mã Swift để tải hạt nhân của bạn và áp dụng nó để tạo một hình ảnh mới.
+
+Hạt nhân thường được sử dụng trong lớp con CIFilter sẽ có các thuộc tính như inputImage và các tham số đầu vào khác.
+
+Tôi khuyên bạn nên khởi tạo đối tượng CIKernel của nó thành một thuộc tính tĩnh.
+
+Bằng cách này, công việc tải tài nguyên metallib chỉ được thực hiện một lần khi cần thiết lần đầu tiên.
+
+Do quy tắc xây dựng tùy chỉnh mà tôi đã mô tả trước đó, bạn sẽ cần chỉ định URL tài nguyên có cùng tên với nguồn của bạn và phần mở rộng của .ci.metallib.
+
+Cuối cùng, một lớp con CIFilter phải ghi đè lên thuộc tính outputImage.
+
+Trong getter, bạn sẽ lấy hạt nhân từ một thuộc tính tĩnh và sử dụng phương thức áp dụng của nó để tạo một hình ảnh mới dựa trên các thuộc tính đầu vào.
+
+Vì vậy, điều đó mô tả đầy đủ quá trình xây dựng bên ngoài CIKernels.
+
+Bây giờ chúng ta hãy mô tả quy trình mới của việc xây dựng CIKernels có thể khâu lại.
+
+Với phương pháp có thể khâu lại, chỉ cần một thay đổi cài đặt để định cấu hình dự án Xcode của bạn.
+
+Cài đặt này sẽ yêu cầu trình liên kết kim loại liên kết với khung Core Image.
+
+Để làm điều này, chỉ cần chuyển đến cài đặt mục tiêu của dự án và thêm cài đặt xây dựng cho các Cờ liên kết kim loại khác với giá trị "-framework CoreImage".
+
+Bởi vì CIKernels có thể khâu không yêu cầu các quy tắc xây dựng tùy chỉnh, bạn có thể chỉ cần thêm các nguồn .metal vào dự án của mình mà không cần bất kỳ hậu tố đặc biệt nào.
+
+Bạn có thể thêm hạt nhân vào một hoặc một số tệp nguồn.
+
+Theo mặc định, Xcode sẽ xây dựng tất cả chúng thành một tài nguyên .metallib.
+
+Bước tiếp theo là ghi CIKernel của bạn vào tệp nguồn Metal.
+
+Như trước đây, bạn sẽ bao gồm tiêu đề CoreImage.h để có quyền truy cập vào các lớp Core Image.
+
+Nhưng với phương pháp này, hạt nhân phải được gán là ] để được Core Image nhận dạng.
+
+Một lần nữa, bước cuối cùng là thêm mã Swift để tải hạt nhân của bạn và áp dụng nó để tạo một hình ảnh mới.
+
+Thay đổi duy nhất với CIKernels có thể khâu là bạn có thể chỉ cần tải tài nguyên với tên tiêu chuẩn là default.metallib.
+
+Điều đó kết thúc quá trình xây dựng CIKernels có thể khâu được.
+
+Điều đáng nói là một số lợi ích của việc sử dụng phương pháp này.
+
+Các hạt nhân có thể khâu có thể liên kết với các thư viện Kim loại khác.
+
+Và bây giờ chúng hỗ trợ các tham số đầu vào là các loại vectơ số nguyên và không dấu.
+
+Một lợi ích thích hợp khác là các hạt nhân có thể khâu lại có thể được biên dịch từ nguồn trong thời gian chạy.
+
+Hầu hết các ứng dụng không nên sử dụng tính năng này vì nó sẽ phải chịu thời gian biên dịch ban đầu lâu hơn.
+
+Điều đó nói rằng, có một số loại ứng dụng có thể được hưởng lợi từ sự linh hoạt này.
+
+Có một chủ đề cuối cùng cần đề cập trong bài thuyết trình này.
+
+Việc triển khai CIKernel có thể khâu phụ thuộc vào hai tính năng quan trọng của Metal.
+
+Đầu tiên là Ngôn ngữ đổ bóng kim loại phiên bản 2.4 mới.
+
+Trong số những thứ khác, phiên bản này hỗ trợ thuộc tính ] khiến trình biên dịch liên kết siêu dữ liệu bổ sung với mỗi hàm.
+
+Thứ hai là tính năng Thư viện Động Kim loại được sử dụng để hạt nhân của bạn có thể liên kết với các lớp Core Image Metal.
+
+Để biết thêm chi tiết về các tính năng Metal này, hãy nhớ xem bản trình bày "Khám phá quy trình biên soạn trong Metal".
+
+Tuy nhiên, hãy lưu ý rằng Thư viện động kim loại chỉ được hỗ trợ trên một số thiết bị đồ họa, cụ thể là iPhone và iPad với A11 trở lên, tất cả các máy Mac có silicon của Apple và máy Mac Intel với GPU AMD Navi và Vega.
+
+Ứng dụng của bạn nên kiểm tra thuộc tính thiết bị Metal hỗ trợ Thư viện Động trước khi sử dụng CIKernels có thể khâu được.
+
+Vì vậy, kết thúc mô tả từng bước của tôi về cách sử dụng hai cách được đề xuất để thêm Metal CIKernels vào ứng dụng của bạn.
+
+Đối với mỗi phương pháp, tôi đã đề cập đến cách định cấu hình dự án của bạn, viết nguồn hạt nhân và khởi tạo các đối tượng hạt nhân.
+
+Tôi hy vọng rằng điều này cho phép bạn thêm các hiệu ứng hình ảnh tuyệt vời vào hình ảnh và video của ứng dụng của bạn.
+
+Cảm ơn bạn và tận hưởng phần còn lại của WWDC 2021!
+
+♪

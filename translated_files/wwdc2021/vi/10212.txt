@@ -1,0 +1,633 @@
+10212
+
+Chào mừng! Tên tôi là Kacper.
+
+Tôi là Kỹ sư Công cụ Hiệu suất tại Apple, và hôm nay, cùng với Sergio, chúng ta sẽ nói về Công cụ Lưu lượng HTTP mới có sẵn trong Công cụ 13.
+
+Công cụ này, có trong mẫu Mạng, cho phép bạn kiểm tra lưu lượng HTTP đến từ ứng dụng của mình thông qua ngăn xếp Mạng Apple.
+
+Cách tiếp cận này đi kèm với nhiều lợi ích.
+
+Nó chỉ hoạt động trên tất cả các thiết bị của Apple.
+
+Toàn bộ lưu lượng truy cập đi qua hệ thống tải URL bị lộ, ngay cả những lưu lượng được gửi bằng giao thức HTTP/3 mới hoặc qua VPN.
+
+Do tích hợp hệ thống, nó quy lưu lượng truy cập cho các quy trình đang chạy trên nó và vì nó thiết bị các khung Mạng của Apple, nó thậm chí còn tiết lộ các yêu cầu đánh vào bộ nhớ cache trên đĩa hoặc lỗi mạng.
+
+Tất cả những điều này được phơi bày trong bối cảnh các khái niệm API cấp cao hơn mà bạn quen thuộc, chẳng hạn như URLSessions và URLSessionTasks.
+
+Công cụ này sẽ giúp bạn hiểu cách sử dụng API của bạn chuyển thành vòng đời của các yêu cầu mạng.
+
+Trong phiên thực hành này, trước tiên chúng tôi sẽ giúp bạn làm quen với cách Giao diện người dùng Công cụ phản ánh các khái niệm API bạn đang sử dụng.
+
+Sau phần giới thiệu nhanh này, chúng tôi sẽ chuyển sang bốn bản trình diễn minh họa cách bạn có thể sử dụng công cụ để phát hiện cả vấn đề về hiệu suất và độ chính xác.
+
+Và ngay cả khi ứng dụng của bạn có vẻ hoạt động hoàn hảo, bạn sẽ học cách xác minh rằng nó thực hiện những gì bạn nghĩ bằng cách kiểm tra lưu lượng truy cập đến từ nó.
+
+Hãy bắt đầu với cách API Mạng ánh xạ đến trực quan hóa Công cụ.
+
+Đây là cách dấu vết HTTP Traffic được hiển thị trong Instruments khi tôi ghi lại lưu lượng truy cập hệ thống của mình bằng cách sử dụng mẫu Mạng.
+
+Điều hướng được cấu trúc xung quanh hệ thống phân cấp theo dõi và đó là những gì chúng tôi sẽ đề cập chi tiết đầu tiên.
+
+Công cụ lưu lượng HTTP nằm ở cấp cao nhất hiển thị cho bạn tổng quan về số lượng tác vụ URLSession đang chạy trong dấu vết của bạn tại bất kỳ thời điểm nào, lý tưởng để phát hiện các điểm có hoạt động Lưu lượng HTTP tăng lên trong vòng đời ứng dụng của bạn.
+
+Cấp độ phân cấp tiếp theo cho thấy sự phân tích hoạt động theo quy trình.
+
+Ngoài lưu lượng truy cập từ tất cả các quy trình có thể gỡ lỗi, nó cho phép bạn kiểm tra lưu lượng truy cập nền do chúng khởi tạo.
+
+Chứa bên dưới mỗi quy trình là tất cả các URLSessions được sử dụng bởi nó.
+
+Và những thứ này tương ứng với các đối tượng URLSession mà bạn tạo trong mã.
+
+Biểu đồ ở cấp độ này cho phép bạn kiểm tra tất cả các khoảng nhiệm vụ riêng lẻ.
+
+Để có được ánh xạ tốt hơn giữa các đối tượng phiên của bạn và trực quan hóa, bạn có thể đặt tên chúng trong mã bằng cách đặt thuộc tính sessionDescription trên một phiên bản phiên.
+
+Ở cấp độ cuối cùng, lưu lượng truy cập được chia nhỏ theo các miền được yêu cầu.
+
+Đồ thị ở cấp độ này hiển thị thêm chi tiết về các nhiệm vụ, bao gồm các giao dịch riêng lẻ tạo nên các nhiệm vụ và trạng thái của chúng.
+
+Để hiểu rõ hơn về các nhiệm vụ và giao dịch là gì, hãy phân tích một ví dụ.
+
+Đây là một vài nhiệm vụ đang tải dữ liệu từ miền đã chọn.
+
+Hãy tập trung vào một trong số chúng để phân tích cấu trúc của một nhiệm vụ.
+
+Khoảng thời gian nhiệm vụ duy nhất này có rất nhiều thông tin.
+
+Chúng tôi có thể trình bày điều này một cách trừu tượng hơn để hiểu cách các công cụ trực quan hóa ánh xạ đến API đang được sử dụng.
+
+Ở cấp cao nhất, chúng ta có một đối tượng nhiệm vụ.
+
+Một nhiệm vụ được tạo thành từ một hoặc nhiều giao dịch.
+
+Giao dịch là một cặp yêu cầu HTTP và phản hồi tương ứng.
+
+Cấp độ nhiệm vụ là đại diện cho cách mã của bạn tương tác với API của Hệ thống tải URL.
+
+Khi bạn tạo một nhiệm vụ và gọi sơ yếu lý lịch trên đó, khoảng thời gian nhiệm vụ sẽ bắt đầu.
+
+Và nó kết thúc ngay trước khi khối hoàn thành của bạn được gọi.
+
+Mỗi nhiệm vụ có thể được đặt tên ngữ nghĩa bằng cách sử dụng thuộc tính taskDescription, sẽ được sử dụng để gắn nhãn khoảng thời gian trong Instruments.
+
+Chúng tôi cũng hiển thị mã định danh nhiệm vụ như một phần của nhãn nhiệm vụ.
+
+Bạn có thể sử dụng nó để tham chiếu chéo nhiệm vụ với các dữ liệu khác.
+
+Nếu nhiệm vụ của bạn kết thúc với một lỗi, mô tả của nó sẽ được trình bày trên nhãn khoảng thời gian để gỡ lỗi dễ dàng hơn.
+
+Như chúng tôi đã đề cập trước đây, một nhiệm vụ có thể được tạo thành từ nhiều giao dịch.
+
+Hãy nói về những thứ này ngay bây giờ.
+
+Ở đây chúng tôi có nhiệm vụ tải trang bắt đầu của apple.com.
+
+Tuy nhiên, URL này không phải là URL chuẩn.
+
+Nhiệm vụ yêu cầu apple.com, nhưng miền ưa thích là www.apple.com.
+
+Khi chúng tôi tạo tác vụ này, hệ thống tải URL ban đầu tạo một yêu cầu đến apple.com.
+
+Ngay sau đó, nó nhận được phản hồi chuyển hướng từ máy chủ, nói rằng URL ưa thích thực sự là www.apple.com.
+
+Theo mặc định, chúng tôi làm theo các chuyển hướng, vì vậy thay vì trả về phản hồi 301, hệ thống tải URL sẽ tạo một giao dịch mới để bây giờ tải URL ưa thích.
+
+Phản hồi từ giao dịch thứ hai, thành công này là những gì được trả lại cho nhiệm vụ.
+
+Như đã đề cập trước đây, một giao dịch đại diện cho sự kết hợp giữa yêu cầu và phản hồi HTTP.
+
+Nó phù hợp với những gì URLSession thực hiện dưới mui xe để xử lý nhiệm vụ của bạn và chứa tất cả thông tin của lớp HTTP, như URL được yêu cầu, thông tin về dữ liệu được truyền và hơn thế nữa.
+
+Cũng giống như nhiệm vụ, nhãn giao dịch cung cấp cho bạn cái nhìn tổng quan về giao dịch.
+
+Chủ yếu, bạn nhận được thông tin về yêu cầu và phản hồi.
+
+Hệ thống phân cấp theo dõi cho bạn biết miền được yêu cầu, trong khi bạn có thể tìm thấy đường dẫn và truy vấn trên chính nhãn.
+
+Thêm vào đó, nhãn khoảng thời gian hiển thị phiên bản HTTP, Phương thức HTTP và liệu yêu cầu đã gửi Ủy quyền hay tiêu đề Cookie.
+
+Những thứ này thường hữu ích để hiểu các luồng xác thực trong nháy mắt.
+
+Đối với phản hồi, bạn nhận được mã trạng thái, liệu phản hồi có chứa cookie hay không và loại nội dung của phản hồi.
+
+Yêu cầu và phản hồi mất bao lâu, cũng như thông tin thời gian chi tiết hơn về công việc khác là một phần của giao dịch được các trạng thái giao dịch nắm bắt.
+
+Hãy phân tích chúng trong bối cảnh của một nhiệm vụ chứa đựng.
+
+Bắt đầu giao dịch là thời điểm mà Hệ thống Tải URL tạo giao dịch để thực hiện yêu cầu này.
+
+Đầu tiên, nó kiểm tra xem chúng tôi đã có phản hồi được lưu trong bộ nhớ cache hợp lệ chưa.
+
+Và nếu không phải như vậy, nó sẽ cố gắng lên lịch yêu cầu trên một kết nối.
+
+Tiếp theo, giao dịch có thể phải đợi một chút ở trạng thái Bị chặn, chờ kết nối khả dụng.
+
+Trạng thái Yêu cầu Gửi bắt đầu khi giao dịch cuối cùng được xử lý bởi một kết nối.
+
+Nó kết thúc khi chúng tôi gửi byte cuối cùng của yêu cầu lên mạng.
+
+Tiếp theo, giao dịch chuyển sang trạng thái Chờ Phản hồi nhàn rỗi, tiếp theo là Nhận Phản hồi, sẽ theo dõi khoảng thời gian từ byte đầu tiên đến byte cuối cùng nhận được từ máy chủ.
+
+Toàn bộ giao dịch sẽ hoàn tất ngay sau khi nhận được byte cuối cùng, một khi hệ thống Tải URL đã xác định liệu đây có phải là phản hồi thành công hay không.
+
+Trong thực tế, tra cứu bộ nhớ cache và trạng thái gửi cho yêu cầu GET thường ngắn hơn nhiều, vì vậy nó có nhiều khả năng xuất hiện như thế này.
+
+Để chỉ cho bạn một số ví dụ thực tế, tôi muốn giao cho đồng nghiệp của tôi, Sergio.
+
+Anh ấy sẽ hướng dẫn bạn qua một ứng dụng mà gần đây anh ấy đã bắt đầu phát triển để minh họa cách Công cụ HTTP có thể giúp bạn khắc phục các vấn đề về hiệu suất và độ chính xác.
+
+Cảm ơn, Kacper. Xin chào mọi người.
+
+Tên tôi là Sergio Lopez, và tôi đang làm việc trên ứng dụng này cho những người yêu chó.
+
+Hãy nghĩ về nó giống như một nền tảng truyền thông xã hội nhưng đối với hình ảnh chó...
+
+Chỉ!
+
+Mọi người có thể đăng hình ảnh của những chú chó và bạn sẽ nhận được một luồng tải lên gần đây nhất!
+
+Vì vậy, khi tôi mở ứng dụng, nó tải một số hình ảnh con chó mới, nhưng tôi nhận thấy rằng phải mất khá nhiều thời gian để chúng tải xong.
+
+Hãy lập hồ sơ ứng dụng với công cụ HTTP Traffic mới để giúp chúng tôi cải thiện tình hình này.
+
+Trong menu "Sản phẩm", tôi sẽ chọn tùy chọn "Hồ sơ" để lập hồ sơ ứng dụng của mình trong Công cụ.
+
+Điều này sẽ xây dựng ứng dụng của tôi trong cấu hình phát hành, để đảm bảo tôi đang lập hồ sơ ứng dụng của mình vì nó sẽ chạy cho người dùng của tôi, với tất cả các tối ưu hóa được bật.
+
+Sau khi xây dựng xong, Instruments sẽ tự động khởi chạy.
+
+Khi bắt đầu, bộ chọn mẫu tiêu chuẩn của Nhạc cụ được hiển thị.
+
+Trong trường hợp của chúng tôi, tôi muốn chọn mẫu Mạng ở phía dưới bên trái, mẫu này cung cấp cho chúng tôi thêm thông tin về các kết nối mạng chung mà ứng dụng của tôi tạo ra, nhưng cũng chứa chức năng Theo dõi HTTP mới.
+
+Khu vực bản nhạc hiện chứa hai bản nhạc, một cho mỗi nhạc cụ.
+
+Bản nhạc dưới cùng là công cụ Kết nối Mạng hiện có và bản nhạc trên cùng là công cụ Lưu lượng HTTP mới.
+
+Hôm nay chúng ta sẽ tập trung vào nhạc cụ mới này.
+
+Tất cả những gì tôi cần làm bây giờ là nhấn "ghi âm".
+
+Các nhạc cụ sau đó sẽ khởi động ứng dụng của tôi và bắt đầu ghi âm.
+
+Trước khi bạn có thể sử dụng công cụ này, bạn cần xác nhận rằng bạn hiểu ý nghĩa của việc nắm bắt lưu lượng mạng.
+
+Nó rất mạnh mẽ, đặc biệt nếu bạn ghi lại tất cả các quy trình.
+
+Dữ liệu được thu thập bao gồm mọi thứ được gửi, có thể là thông tin cá nhân và nhạy cảm, thậm chí tùy thuộc vào thông tin đăng nhập của người dùng.
+
+Vì vậy, bạn nên rất cẩn thận với các tệp theo dõi kết quả và chúng tôi muốn bạn biết.
+
+Vậy hãy để tôi xác nhận điều này.
+
+Ứng dụng đã được khởi chạy và hình ảnh tải chậm.
+
+Bây giờ tôi sẽ dừng ghi âm.
+
+Hãy phóng to dữ liệu chúng tôi đã ghi lại bằng cách sử dụng Option-click và kéo qua khu vực bao phủ lưu lượng HTTP của chúng tôi.
+
+Nhấp vào chỉ báo tiết lộ trong bản nhạc "HTTP Traffic" ở trên cùng bên trái sẽ hiển thị hệ thống phân cấp bản nhạc đầy đủ mà Kacper đã mô tả trước đó.
+
+Tôi cũng sẽ tăng chiều cao đường đua để hiển thị tất cả các khoảng thời gian.
+
+Ở trên cùng, có nhiệm vụ đầu tiên truy vấn máy chủ cho danh sách hình ảnh, xuất hiện trên phần "Mới nhất" của ứng dụng.
+
+Khi nhiệm vụ này hoàn thành, chúng tôi tạo một nhiệm vụ mới để tải hình thu nhỏ cho mọi hình ảnh trong danh sách mà chúng tôi nhận được.
+
+Bây giờ tôi sẽ nhấp-kéo qua khu vực bao gồm khung thời gian cần thiết để tìm nạp danh sách các hình ảnh, tiếp theo là nhiều yêu cầu truy xuất từng hình ảnh riêng lẻ.
+
+Bằng cách nhấp chuột qua khu vực này, một mẹo công cụ sẽ được hiển thị, hiển thị thời lượng của phạm vi thời gian đã chọn.
+
+Nhìn chung, phải mất hơn 7 giây để tải xong màn hình ban đầu.
+
+Một vài hình ảnh đầu tiên tải khá nhanh.
+
+Nhưng khi tôi cuộn xuống, các nhiệm vụ được bắt đầu sau đó mất nhiều thời gian hơn để hoàn thành, như được ghi nhận bởi các trạng thái bị chặn ngày càng tăng màu tím.
+
+Có vẻ như là một vấn đề tắc nghẽn, nơi chúng tôi có quá nhiều yêu cầu song song.
+
+Hãy điều tra một trong những nhiệm vụ sau này.
+
+Bằng cách di chuột qua nhiệm vụ, mẹo công cụ cho chúng ta thấy thời lượng của nhiệm vụ và bất kỳ khoảng thời gian con nào mà chúng ta đang di chuột qua.
+
+Nhiệm vụ này đã bị chặn phần lớn thời gian.
+
+Để hiểu tại sao nó bị chặn, hãy chuyển màn hình theo dõi sang chế độ xem "Giao dịch HTTP theo kết nối".
+
+Trong thanh bên theo dõi ở bên trái, bên dưới tên miền, có một mũi tên hướng xuống mà chúng ta có thể nhấp để chuyển đổi màn hình theo dõi.
+
+Hiện tại, chúng tôi đang vẽ "Nhiệm vụ".
+
+Hãy chuyển sang hiển thị "Giao dịch HTTP theo kết nối."
+
+Chế độ xem này sẽ chỉ hiển thị các giao dịch và thay vì nhóm chúng theo nhiệm vụ, giờ đây chúng ta có thể tìm ra kết nối mà chúng đã được lên lịch.
+
+Các giao dịch được nhóm theo kết nối mà họ đã sử dụng.
+
+Nhìn chung, có sáu kết nối có sẵn để xử lý các giao dịch này.
+
+Hãy phân tích các giao dịch được phát hành trên Kết nối 1 và điều tra thêm một số giao dịch tải hình thu nhỏ.
+
+Từ trên xuống, điều đáng chú ý là mỗi giao dịch mất nhiều thời gian hơn để hoàn thành.
+
+Trạng thái bị chặn màu tím cho mỗi giao dịch liên tiếp đang tăng lên.
+
+Trên thực tế, có một mô hình cầu thang khá rõ ràng ở đây.
+
+Mỗi giao dịch bị chặn, cho đến khi giao dịch trước đó trên cùng một kết nối kết thúc.
+
+Chỉ khi đó nó mới có thể gửi yêu cầu của mình.
+
+Mô hình này lặp lại cho mỗi giao dịch tiếp theo.
+
+Đây được gọi là "Head of Line Blocking" và là một trong những vấn đề của việc sử dụng HTTP/1.
+
+Phần bực bội là những giao dịch này không làm được gì trong phần lớn thời gian.
+
+Thay vào đó, họ dành phần lớn thời gian bị chặn hoặc chờ phản hồi từ máy chủ.
+
+Chúng tôi có thể gửi một yêu cầu khác cho giao dịch tiếp theo xếp hàng trong khi chờ phản hồi của giao dịch trước đó trên cùng một kết nối, nhưng điều đó không được HTTP/1 hỗ trợ.
+
+Chặn đầu dòng là một trong những hạn chế chính của HTTP/1 và một trong những cải tiến chính của HTTP/2 là tránh hiệu ứng đó bằng cách ghép kênh một số yêu cầu đến cùng một máy chủ vào một kết nối duy nhất.
+
+Trong HTTP/2, chúng ta thực sự có thể bắt đầu gửi yêu cầu thứ hai trong khi yêu cầu đầu tiên đang chờ phản hồi của nó.
+
+Ứng dụng của bạn không cần phải làm bất cứ điều gì để hỗ trợ nó.
+
+Tất cả các nền tảng của Apple đều hỗ trợ HTTP/2 và bắt đầu từ iOS 15 và macOS Monterey, HTTP/3 cũng được hỗ trợ.
+
+Khách hàng sẽ chọn phiên bản HTTP hiện đại nhất mà máy chủ hỗ trợ.
+
+Nếu bạn muốn tìm hiểu thêm về sự khác biệt giữa HTTP/1 và HTTP/2 và các lợi ích bổ sung mà HTTP/3 cung cấp, vui lòng xem phiên "Tăng tốc mạng với HTTP/3 và QUIC".
+
+Tôi đã lấy dấu vết này, cho những người máy chủ của chúng tôi xem và thuyết phục được họ rằng chúng tôi thực sự nên hỗ trợ HTTP/2.
+
+Bây giờ, hãy chạy ứng dụng của tôi với các cải tiến máy chủ mới.
+
+Chà, cái này đã cảm thấy nhanh hơn rồi!
+
+Hãy xác nhận điều này với Instruments.
+
+Vì vậy, đây là dấu vết tôi đã ghi lại sau khi chúng tôi bật hỗ trợ máy chủ cho HTTP/2.
+
+Trong bản nhạc dành riêng cho miền, không có tác vụ tải hình thu nhỏ nào của chúng tôi dường như bị chặn nữa trong một khoảng thời gian dài.
+
+Điều đó thật tốt!
+
+Hãy chuyển sang chế độ xem "Giao dịch HTTP bằng kết nối" một lần nữa.
+
+Điều đầu tiên chúng tôi nhận thấy là chỉ có một kết nối.
+
+Điều này là do chúng tôi không còn cần nhiều kết nối để gửi các yêu cầu đồng thời, điều đó cũng có nghĩa là chúng tôi chỉ cần thanh toán chi phí thiết lập kết nối một lần.
+
+Tập trung vào các giao dịch tải hình thu nhỏ riêng lẻ, chúng tôi nhận thấy rằng về cơ bản họ không dành thời gian ở trạng thái "bị chặn".
+
+Trên thực tế, lượng thời gian quá nhỏ nên không thể nhìn thấy ở mức thu phóng này.
+
+Cuối cùng, tất cả các giao dịch kết thúc việc gửi yêu cầu của họ và bị bỏ lại chờ phản hồi.
+
+Khi tôi cuộn xuống, chúng ta có thể nhận thấy rằng các phản hồi đang tiến triển cùng một lúc.
+
+Nói chung, chúng tôi đã hoàn thành tất cả các yêu cầu trong vòng chưa đầy 3 giây.
+
+Cái này nhanh gấp đôi so với trước đây.
+
+Bây giờ tôi đã nói chuyện với những người máy chủ và chuyển từ HTTP/1.1 sang HTTP/2, hình ảnh của chúng tôi đang tải nhanh hơn nhiều.
+
+Hãy để tôi khởi chạy lại ứng dụng và cho bạn thấy chúng ta có thể làm gì khác.
+
+Khi tôi nhấn vào một hình ảnh, ứng dụng sẽ tải ảnh có độ phân giải đầy đủ và hiển thị ảnh này được chụp từ tôi bao xa.
+
+Ngoài ra còn có một biểu tượng trái tim ở trên cùng bên phải cho phép bạn yêu thích bức ảnh cụ thể đó.
+
+Để làm như vậy, tôi cần một tài khoản.
+
+Tôi cho phép mọi người sử dụng ứng dụng và duyệt ảnh mà không cần tài khoản, nhưng để lưu ảnh yêu thích, đồng bộ hóa chúng giữa các thiết bị và để tải lên ảnh mới, bạn cần có tài khoản.
+
+Vậy hãy để tôi đăng nhập ở đây.
+
+Tuyệt vời. Hãy để tôi yêu thích một bức ảnh khác.
+
+Ồ, con chó này trông thật dễ thương! Hãy để tôi thêm nó vào mục yêu thích của tôi.
+
+Chờ đã, tại sao tôi phải đăng nhập lại nếu tôi vừa đăng nhập?
+
+Điều này không đúng.
+
+Ứng dụng của tôi nên nhớ đăng nhập của tôi.
+
+Điều này đã hoạt động trước đây.
+
+Tôi sẽ bỏ qua màn hình đăng nhập, vì tôi không muốn đăng nhập lại.
+
+Trước đây tôi đã ghi lại một tệp theo dõi sau khi sao chép vấn đề.
+
+Hãy để tôi mở nó bằng các nhạc cụ để phân tích bản ghi âm.
+
+Ở bên trái, có nhiệm vụ tương ứng với khi tôi nhấn nút yêu thích lần đầu tiên.
+
+Ở bên phải của nó, có nhiệm vụ được phát hành sau khi tôi quay lại tab mới nhất và luồng hình ảnh đã được làm mới.
+
+Sau đó, có nhiệm vụ tải hình ảnh có độ phân giải đầy đủ sau khi tôi nhấn vào một bức ảnh con chó khác.
+
+Và ở ngoài cùng bên phải, có nhiệm vụ tương ứng với lần thứ hai tôi nhấn vào nút yêu thích.
+
+Khoảng nhiệm vụ đầu tiên thực sự chứa hai giao dịch.
+
+Giao dịch đầu tiên nhận được mã trạng thái 401.
+
+Điều này đã được mong đợi vì chúng tôi chưa đăng nhập.
+
+Giao dịch được vẽ bằng màu cam để chỉ ra rằng đây không phải là một thành công ở cấp độ HTTP.
+
+Sau đó, có một khu vực rộng, trống trong nhiệm vụ, đại diện cho thời gian tôi đã nhập tên người dùng và mật khẩu.
+
+Ngay sau khi tôi nhập xong các thông tin đăng nhập này, chúng tôi sẽ thử lại giao dịch.
+
+Màu xanh lá cây của khoảng thời gian và mã trạng thái 201 cho biết lần này nó đã thành công.
+
+Sự tương tác của một thử thách xác thực, nhập mật khẩu và thử lại giao dịch là một trường hợp khác mà hệ thống Tải URL xử lý cho chúng tôi, vì vậy hai giao dịch này thuộc cùng một đối tượng tác vụ.
+
+Thu nhỏ, chúng tôi tìm thấy nỗ lực thứ hai để yêu thích một hình ảnh ở bên phải.
+
+Đối tượng tác vụ được hiển thị bằng màu xám, vì việc tôi loại bỏ màn hình đăng nhập khiến tác vụ bị hủy, điều này cũng hiển thị trong nhãn của nó.
+
+Khoảng thời gian giao dịch được hiển thị bằng màu cam, vì chúng tôi nhận được phản hồi 401 từ máy chủ một lần nữa.
+
+Nhiệm vụ này xảy ra sau khi tôi cố gắng thích một bức ảnh con chó khác và được nhắc đăng nhập lần thứ hai.
+
+Chúng tôi sử dụng một hệ thống đăng nhập rất cơ bản, nơi người dùng gửi thông tin đăng nhập của họ lần đầu tiên, nhưng một khi máy chủ xác minh thông tin đăng nhập của người dùng, nó sẽ đặt cookie, xác định người dùng, sao cho không cần cung cấp thông tin đăng nhập cho các yêu cầu sau.
+
+Vì vậy, tôi đã mong đợi nhiệm vụ này đã gửi cookie thích hợp.
+
+Hãy xác định xem điều đó có xảy ra hay không.
+
+Như Kacper đã giải thích trước đó, nên có một biểu tượng cookie nhỏ ở đây bên cạnh phương thức HTTP, nếu giao dịch này đã gửi một tiêu đề Cookie.
+
+Nhưng không có biểu tượng nào như vậy ở đây, có nghĩa là không có cookie nào được gửi đi.
+
+Vậy là phần đó không hoạt động.
+
+Bây giờ câu hỏi là, máy chủ đã không cung cấp cho chúng tôi một cookie, hay khách hàng không gửi một cái, mặc dù nó đã nhận được một cái?
+
+Để tìm hiểu, chúng ta cần điều tra giao dịch trước đó và kiểm tra xem chúng ta có nhận được cookie từ máy chủ hay không.
+
+Đây là giao dịch trước đó, giao dịch thành công từ yêu cầu đăng nhập đầu tiên.
+
+Cái này có biểu tượng cookie trong phần phản hồi của nhãn giao dịch, vì vậy máy chủ đã gửi cookie.
+
+Điều đó thật thú vị.
+
+Vậy tại sao chúng ta không gửi cookie trong giao dịch tiếp theo?
+
+Để có thêm thông tin về giao dịch này và điều tra chi tiết cookie, tôi sẽ chuyển sang danh sách "Giao dịch" trong chế độ xem chi tiết ở dưới cùng.
+
+Giao dịch đã được chọn ở đây, vì con trỏ thời gian được đặt bên trong nó trong chế độ xem theo dõi.
+
+Chế độ xem chi tiết mở rộng ở phía dưới bên phải hiển thị tất cả các tiêu đề yêu cầu và phản hồi của giao dịch hiện được chọn.
+
+Và đây là tiêu đề Set-Cookie mà chúng tôi mong đợi.
+
+Thoạt nhìn, cái bánh quy này có vẻ ổn.
+
+Nhưng ồ, đợi đã, bạn có thấy ngày hết hạn không?
+
+Bây giờ là tháng Ba năm 2020. Đó là quá khứ!
+
+Vì vậy, máy chủ đã gửi một cookie, nhưng đó là một cookie đã hết hạn.
+
+Không ai thích bánh quy hết hạn!
+
+Điều này sẽ khiến URLSession không gửi cookie, vì nó sẽ chỉ gửi cookie vẫn còn hiệu lực.
+
+Đây là một lỗi phía máy chủ.
+
+Tôi có thể gửi tệp theo dõi đến những người phục vụ của chúng tôi để họ điều tra vấn đề và giải quyết nó.
+
+Bây giờ chúng tôi đã khắc phục sự cố cookie, tôi có thể yêu thích thêm một vài bức ảnh mà không bị nhắc đăng nhập.
+
+Ngoài tab "Mới nhất", còn có tab "Yêu thích", nơi chúng tôi hiển thị danh sách tất cả các hình ảnh con chó mà người dùng đã yêu thích.
+
+Hãy chuyển sang tab đó.
+
+Tuyệt vời, có một vài mục yêu thích ở đây mà tôi đã thêm vào ngày hôm qua, nhưng vì một số lý do, mục yêu thích gần đây của tôi không hiển thị.
+
+Hãy thử lại lần nữa.
+
+Hãy chọn con chó này, nó dường như đang tắm, và để tôi yêu thích nó.
+
+Hãy quay lại mục yêu thích của tôi và kiểm tra xem nó có xuất hiện không.
+
+Hừm, nó vẫn không có ở đó.
+
+Hãy sử dụng Dụng cụ một lần nữa để tìm hiểu chuyện gì đang xảy ra.
+
+Tôi đã chuẩn bị một tệp theo dõi cho việc này rồi.
+
+Tôi mong đợi tìm thấy một nhiệm vụ tải danh sách các mục yêu thích trong chế độ xem bản nhạc, nhưng nó không hiển thị ngay từ cái nhìn đầu tiên.
+
+Hãy để tôi chọn bản nhạc cho miền máy chủ của mình, để chỉ hiển thị các yêu cầu được phát hành cho miền đó.
+
+Sau đó, chúng ta có thể đi đến chế độ xem chi tiết ở dưới cùng, trong đó có danh sách tất cả các nhiệm vụ cho miền này.
+
+Có khá nhiều yêu cầu ở đây.
+
+Hãy để tôi sử dụng bộ lọc chi tiết ở phía dưới bên trái để tìm kiếm tất cả các yêu cầu liên quan đến "Yêu thích", để tôi có thể xác minh xem chúng tôi có thực hiện yêu cầu hay không.
+
+Sau khi lọc, kết quả cho thấy chúng tôi đã gửi một số yêu cầu để tải danh sách yêu thích ở đây.
+
+Hãy tập trung vào chế độ xem bản nhạc.
+
+Con trỏ được định vị khi bắt đầu nhiệm vụ mà tôi đã chọn trong chế độ xem chi tiết, vì vậy điều đó giúp bạn dễ dàng tìm thấy nó trong chế độ xem bản nhạc ở trên.
+
+Hãy phóng to để kiểm tra lại.
+
+Vì vậy, đây là lần đầu tiên chúng tôi tải danh sách yêu thích khi ra mắt ứng dụng ban đầu.
+
+Điều này ổn.
+
+Ở đây, tôi đã yêu thích một hình ảnh mới, và sau đó, chúng tôi đã tải lại các mục yêu thích.
+
+Chà, có một khoảng nhiệm vụ ở đây, nhưng nó rất ngắn.
+
+Vâng, yêu cầu GET này chỉ mất vài mili giây.
+
+Quá nhanh để nhận được phản hồi của máy chủ.
+
+Hãy chuyển sang chế độ xem "giao dịch HTTP theo kết nối" một lần nữa để biết thêm chi tiết.
+
+Điều đầu tiên chúng tôi nhận thấy là giao dịch này không được thực hiện trên Kết nối, mà trên "Bộ nhớ đệm cục bộ".
+
+Điều này cho chúng ta thấy rằng yêu cầu chưa bao giờ được gửi trên mạng, mà được tải từ bộ nhớ cache cục bộ.
+
+Điều này cũng giải thích tại sao không có trạng thái "Đang chờ phản hồi", vì giao dịch không chờ máy chủ.
+
+Vì vậy, đó là vấn đề: yêu cầu của chúng tôi được lưu trong bộ nhớ cache, vì vậy chúng tôi không thực sự yêu cầu máy chủ và luôn nhận lại phản hồi được lưu trong bộ nhớ cache.
+
+Một cách để khắc phục điều này là yêu cầu máy chủ đặt tiêu đề kiểm soát bộ nhớ cache, không bao giờ lưu trữ phản hồi này.
+
+Những gì chúng tôi muốn là tải lại hình ảnh mỗi khi người dùng vào tab yêu thích và hình ảnh mới đã được thêm vào.
+
+Điều chúng tôi không muốn là tải toàn bộ danh sách hình ảnh nếu không có thay đổi như vậy.
+
+Một sự đánh đổi tốt sẽ là nếu chúng ta có thể hỏi người phục vụ, "Này, có gì thay đổi không?
+
+Nếu vậy, vui lòng cho tôi biết."
+
+Đó thực sự là điều chúng ta có thể làm bằng cách thiết lập chính sách bộ nhớ cache theo yêu cầu.
+
+Để cập nhật mã, hãy để tôi quay lại chế độ xem nhiệm vụ và chọn nhiệm vụ được đề cập.
+
+Đối với mỗi Nhiệm vụ Phiên URL được thực hiện ở đây...
+
+Chúng tôi hiển thị dấu vết ngược ở bên phải, nơi "sơ yếu việc" được gọi cho nhiệm vụ.
+
+Nó đã được nối lại trong phương thức đồng bộ hóa, trong loại ImageCollection.
+
+Hãy để tôi mở cái này trong Xcode để thực hiện thay đổi ở đây.
+
+Ở đây, tôi có URLRequest của mình và bây giờ tôi muốn thiết lập chính sách bộ nhớ cache của mình.
+
+Chính sách bộ nhớ đệm mà tôi muốn là reloadRevalidatingCacheData, có nghĩa là chúng tôi bỏ qua bộ nhớ cache cục bộ và sẽ yêu cầu máy chủ kiểm tra xem bộ nhớ cache của chúng tôi có còn hợp lệ hay không.
+
+Nếu vậy, máy chủ sẽ gửi mã phản hồi 304 để cho chúng tôi biết sử dụng bộ nhớ cache cục bộ.
+
+Nếu không, nó sẽ gửi lại dữ liệu mới.
+
+Hãy thử xem nào.
+
+Vì vậy, đây là những hình ảnh yêu thích hiện tại của tôi, và con chó đang tắm đã được thêm vào.
+
+Hãy thêm một cái khác.
+
+Bây giờ, hãy kiểm tra tab "Yêu thích".
+
+Hình ảnh tôi vừa yêu thích bây giờ xuất hiện đúng.
+
+Được rồi, tuyệt vời! Điều đó cũng đã được sửa ngay bây giờ.
+
+Quay lại với đồng nghiệp Kacper của tôi để kiểm tra xem ứng dụng và các phụ thuộc của bạn có hoạt động như bạn mong đợi không.
+
+Giống như Sergio đã trình bày trước đây, khi tôi nhấp vào tab "Yêu thích" mà không đăng nhập, chế độ xem đăng nhập sẽ được hiển thị.
+
+Chúng tôi đã thêm Đăng nhập bằng Apple để làm cho trải nghiệm đăng nhập liền mạch.
+
+Tuy nhiên, công ty chúng tôi có một số ứng dụng theo chủ đề thú cưng và một nhóm khác đang làm việc trên SDK đăng nhập được chia sẻ để cho phép người dùng sử dụng lại tài khoản của họ giữa các ứng dụng.
+
+SDK này hiện đang được phát triển và nhóm khác đã hỏi chúng tôi liệu nó có thể thay thế màn hình đăng nhập cổ điển của chúng tôi hay không.
+
+Tôi có tệp nhị phân SDK, được gọi là Thú cưng, được phân phối dưới dạng xcframework để nó có thể được sử dụng trên tất cả các nền tảng.
+
+Tích hợp nó vào dự án Xcode của tôi dễ dàng như kéo và thả nó vào phần khung được nhúng.
+
+Bây giờ, tất cả những gì còn lại là thêm một nút vào chế độ xem hiện tại của chúng tôi.
+
+Tôi sẽ điều hướng đến mã nguồn của Log-inView của chúng tôi.
+
+Đầu tiên tôi sẽ nhập khung, và sau đó thêm nút vào SwiftUI VStack của chúng tôi, ngay bên dưới Đăng nhập bằng Apple.
+
+Hãy làm mới bản xem trước giao diện người dùng Swift của chúng tôi.
+
+Đây rồi.
+
+Nút "Đăng nhập bằng Thú cưng" xuất hiện trên bản xem trước, chính xác là nơi tôi muốn.
+
+Đó thực sự là một sự tích hợp thực sự dễ dàng.
+
+Tôi tò mò muốn kiểm tra xem phương pháp đăng nhập mới này sẽ nhanh như thế nào.
+
+Và để đo lường điều này, tôi sẽ lập hồ sơ ứng dụng của mình với Công cụ bằng cách sử dụng Hành động Hồ sơ Sản phẩm.
+
+Tôi đang chọn mẫu Mạng.
+
+Và nhấp vào nút "ghi âm" trên thanh công cụ để khởi chạy ứng dụng.
+
+Ứng dụng của tôi hiện đã khởi chạy.
+
+Bây giờ tôi có thể chuyển sang Chế độ xem Đăng nhập.
+
+Các công cụ đang hiển thị tất cả lưu lượng mạng xảy ra trong thời gian chờ đợi.
+
+Tôi sẽ mở rộng nó để kiểm tra phiên URL của ứng dụng của tôi.
+
+Đây rồi.
+
+Nhưng chờ đã.
+
+Tôi chỉ mong đợi ứng dụng chính URLSession của mình ở đây, nhưng có vẻ như khung Thú cưng mà chúng tôi vừa tích hợp đang đưa ra yêu cầu từ phiên riêng của nó, mà tôi thậm chí không cần nhấp vào nút đăng nhập.
+
+Điều đó thật bất ngờ.
+
+Hãy dừng ghi âm ngay bây giờ để điều tra thêm.
+
+Tôi sẽ phóng to một vài yêu cầu đầu tiên, sử dụng tùy chọn nhấp và kéo.
+
+Có rất nhiều yêu cầu đối với một số điểm cuối phân tích và để biết thêm chi tiết, tôi có thể nhấp vào phiên "Mạng đăng nhập thú cưng" này và liệt kê tất cả chúng trong chế độ xem chi tiết.
+
+Tất cả chúng đều là yêu cầu POST và khi tôi nhấp vào một yêu cầu, tôi có thể thấy dấu vết ngược ở bên phải cho chúng tôi biết yêu cầu bắt nguồn từ phần nào của mã.
+
+Vì vậy, có vẻ như yêu cầu đó đang thông qua CFNetwork, được gọi bởi Pets, đúng như mong đợi.
+
+Nhưng khi chúng ta điều hướng sâu hơn, có vẻ như CoreLocation đang được tham gia.
+
+Điều đó thực sự đáng ngờ, đặc biệt là vì tôi đã không thực hiện bất kỳ hành động nào để kích hoạt nó.
+
+Tôi tự hỏi liệu vị trí của tôi có được gửi lại máy chủ hay không và đó là lý do tại sao CoreLocation và CFNetwork nằm trong cùng một backtrace.
+
+Tôi sẽ xác minh điều đó bằng cách kiểm tra các giao dịch HTTP tương ứng cho các tác vụ này.
+
+Để làm điều này, tôi sẽ chuyển chi tiết từ danh sách nhiệm vụ sang danh sách giao dịch.
+
+Và chọn một trong số chúng.
+
+Trong chi tiết mở rộng ở phía dưới bên phải, có thể thấy yêu cầu này chứa một số tiêu đề khá chuẩn, không có gì phải lo lắng.
+
+Nhưng chờ đã, hãy nhìn vào nội dung yêu cầu.
+
+Nó bao gồm tọa độ vị trí của tôi, và điều đó thực sự tồi tệ.
+
+Gửi thông tin này vi phạm quyền riêng tư của người dùng.
+
+Chúng tôi không muốn thu thập vị trí của họ mà không có sự đồng ý của họ và không có lý do chính đáng.
+
+Cho đến nay, ứng dụng của chúng tôi chỉ yêu cầu quyền này cho các mục đích hợp pháp giúp trải nghiệm người dùng tốt hơn.
+
+Tại thời điểm này, tôi sẽ không đi xa hơn với sự tích hợp SDK này.
+
+Thay vào đó, tôi sẽ nộp báo cáo lỗi cho nhóm khác để thông báo cho họ về hành vi không thể chấp nhận được này mà tôi đã phát hiện.
+
+Và tôi thậm chí có thể sử dụng dấu vết Công cụ này để tạo thông tin cần thiết cho báo cáo lỗi.
+
+Hãy lưu nó trên màn hình của tôi trước.
+
+Tôi sẽ đặt tên nó là "PrivacyViolation" và nhấn "save".
+
+Xctrace, công cụ dòng lệnh đi kèm với Công cụ, có thể được sử dụng để xuất dấu vết này sang định dạng Lưu trữ HTTP, đây là một tiêu chuẩn công nghiệp để trao đổi thông tin về Lưu lượng HTTP.
+
+Để làm điều này, tôi có thể chỉ cần chạy lệnh xuất xctrace, với đầu vào dấu vết của tôi và cờ xuất HAR.
+
+Hãy chạy nó ngay bây giờ.
+
+Lệnh này tạo ra một tệp mà bây giờ tôi có thể đính kèm trong báo cáo lỗi.
+
+Ai đó nhận được nó có thể kiểm tra thông tin được ghi lại trong bất kỳ công cụ nào hỗ trợ HAR, ngay cả khi họ không cài đặt Dụng cụ trên máy của mình.
+
+Bản thân HAR là một định dạng dựa trên JSON, vì vậy nó cũng có thể được mở trong trình soạn thảo văn bản hoặc dễ dàng xử lý bằng cách sử dụng các tập lệnh.
+
+Và mặc dù nó không chứa các chi tiết cụ thể về công cụ, như URLSessions hoặc backtraces, nhưng điều đó vẫn đủ để nhóm khác điều tra vấn đề này.
+
+Và đó là cách bạn có thể sử dụng Công cụ lưu lượng HTTP để chẩn đoán nguồn và nội dung lưu lượng truy cập đến từ ứng dụng của mình để đảm bảo rằng bạn kiểm soát được những gì ứng dụng của mình làm trong thời gian chạy.
+
+Bây giờ bạn đã quen với việc sử dụng Công cụ lưu lượng HTTP mới, hãy tiếp tục và nhắm mục tiêu các ứng dụng của bạn để phát hiện các vấn đề giống như những vấn đề mà chúng tôi đã chỉ cho bạn hôm nay.
+
+Để gỡ lỗi dễ dàng hơn và có nhiều ngữ cảnh hơn trong khi làm như vậy, hãy đặt tên cho URLSession và các đối tượng tác vụ của bạn.
+
+Luôn hướng đến việc áp dụng các giao thức mạng mới nhất.
+
+Và ngay cả khi bạn không tìm thấy bất kỳ vấn đề nào về hiệu suất hoặc độ chính xác với ứng dụng của mình, hãy tiếp tục và xác minh bằng lượng dữ liệu bạn đang gửi để loại bỏ bất kỳ lưu lượng truy cập không cần thiết nào.
+
+Cảm ơn bạn đã xem hôm nay và chúng tôi hy vọng bạn có khoảng thời gian tuyệt vời để theo dõi lưu lượng truy cập HTTP của ứng dụng của mình.
+
+[Nhạc lạc quan].

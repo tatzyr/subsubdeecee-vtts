@@ -1,0 +1,218 @@
+WEBVTT
+
+00:00:02.000 --> 00:00:13.000
+Xin chào và chào mừng đến với WWDC 2021.
+
+00:00:13.000 --> 00:00:17.000
+Tôi là Suzy, và tôi làm việc trên XCTest trong Xcode.
+
+00:00:17.000 --> 00:00:27.000
+Trong phần này, chúng ta sẽ tìm hiểu về cách chẩn đoán mã không đáng tin cậy với các lần lặp lại kiểm tra, một công cụ để lặp lại các bài kiểm tra của bạn.
+
+00:00:27.000 --> 00:00:35.000
+Trong quá trình chạy các bài kiểm tra thực hiện ứng dụng của bạn, các bài kiểm tra của bạn đôi khi có thể thất bại khi chạy mã không đáng tin cậy.
+
+00:00:35.000 --> 00:00:45.000
+Bạn có thể gặp phải loại mâu thuẫn này khi xử lý các điều kiện chủng tộc, giả định môi trường, trạng thái toàn cầu hoặc giao tiếp với các dịch vụ bên ngoài.
+
+00:00:45.000 --> 00:00:51.000
+Đây là những lỗi khó theo dõi vì chúng rất khó tái tạo.
+
+00:00:51.000 --> 00:00:56.000
+Một cách để chẩn đoán những loại thất bại này là chạy các bài kiểm tra của bạn nhiều lần.
+
+00:00:56.000 --> 00:01:06.000
+Lặp lại bài kiểm tra, được thêm vào trong Xcode 13, cho phép bạn lặp lại một bài kiểm tra lên đến một số lần lặp được chỉ định với điều kiện dừng.
+
+00:01:06.000 --> 00:01:10.000
+Xcode hỗ trợ ba chế độ lặp lại bài kiểm tra.
+
+00:01:10.000 --> 00:01:13.000
+Chế độ đầu tiên là Sửa lỗi lặp lại.
+
+00:01:13.000 --> 00:01:19.000
+Các lần lặp lại cố định sẽ lặp lại các bài kiểm tra của bạn một số lần cố định bất kể trạng thái.
+
+00:01:19.000 --> 00:01:28.000
+Các lần lặp lại cố định rất tốt để hiểu độ tin cậy của bộ kiểm tra của bạn và giúp giữ cho nó đáng tin cậy khi các thử nghiệm mới được giới thiệu theo thời gian.
+
+00:01:28.000 --> 00:01:30.000
+Thứ hai là Cho đến khi thất bại.
+
+00:01:30.000 --> 00:01:34.000
+Cho đến khi thất bại sẽ tiếp tục lặp lại một bài kiểm tra cho đến khi nó thất bại.
+
+00:01:34.000 --> 00:01:41.000
+Tôi thích sử dụng công cụ này để tái tạo một lỗi kiểm tra không xác định để bắt nó trong trình gỡ lỗi.
+
+00:01:41.000 --> 00:01:44.000
+Cuối cùng là Thử lại khi thất bại.
+
+00:01:44.000 --> 00:01:50.000
+Thử lại khi thất bại sẽ thử lại bài kiểm tra của bạn cho đến khi nó thành công đến mức tối đa được chỉ định.
+
+00:01:50.000 --> 00:01:57.000
+Điều này rất hữu ích để xác định các bài kiểm tra không đáng tin cậy ban đầu thất bại nhưng cuối cùng thành công khi cố gắng lại.
+
+00:01:57.000 --> 00:02:07.000
+Nếu một bài kiểm tra trong CI thể hiện hành vi này, bạn có thể tạm thời bật Thử lại khi thất bại trong kế hoạch kiểm tra của mình và thu thập dữ liệu bổ sung để khắc phục sự cố.
+
+00:02:07.000 --> 00:02:13.000
+Điều quan trọng cần nhớ là thử lại thất bại có thể che giấu sự cố trong sản phẩm thực tế.
+
+00:02:13.000 --> 00:02:22.000
+Một số chức năng ban đầu thất bại trước khi cuối cùng thành công, vì vậy tốt nhất bạn nên sử dụng chế độ này tạm thời để chẩn đoán lỗi.
+
+00:02:22.000 --> 00:02:26.000
+Hãy hiểu rõ hơn về cách thức hoạt động của điều này trong thực tế.
+
+00:02:26.000 --> 00:02:32.000
+Tôi đã tạo một ứng dụng có tên IceCreamTruckCountdown cho tôi biết bao lâu cho đến khi xe bán kem chạy ngang qua nhà tôi.
+
+00:02:32.000 --> 00:02:40.000
+Tôi thích khi xe tải có bánh quy và kem, và vì vậy tôi đã viết một bài kiểm tra gọi là testFlavors để đảm bảo rằng chiếc xe tải có tất cả các hương vị.
+
+00:02:40.000 --> 00:02:46.000
+testFlavors có một chiếc xe tải mà tôi nhận được từ truckDepot.
+
+00:02:46.000 --> 00:02:53.000
+Tôi gọi prepareFlavors và cuối cùng, khẳng định rằng chiếc xe tải có tất cả 33 hương vị.
+
+00:02:53.000 --> 00:03:00.000
+Gần đây, tôi nhận thấy testFlavors đôi khi thất bại trên nhánh chính trong Xcode Cloud.
+
+00:03:00.000 --> 00:03:09.000
+Để thu thập thêm thông tin, tôi đã tạm thời định cấu hình kế hoạch kiểm tra của mình, cho phép Chế độ lặp lại kiểm tra để thử lại khi thất bại.
+
+00:03:09.000 --> 00:03:17.000
+Hãy xem trình điều hướng báo cáo và kiểm tra các báo cáo đám mây của chúng tôi.
+
+00:03:17.000 --> 00:03:28.000
+Các bài kiểm tra của tôi không nhất quán thất bại, vì vậy hãy kiểm tra bài kiểm tra bài kiểm tra cuối cùng này để biết thêm thông tin.
+
+00:03:28.000 --> 00:03:38.000
+Nếu tôi mở rộng thiết bị đầu tiên mở, có một nhãn lặp ở đây cho chúng tôi biết đó là lần lặp đầu tiên của bài kiểm tra này.
+
+00:03:38.000 --> 00:03:46.000
+Huh. Và khi tôi mở rộng tất cả các hàng khác, các lỗi xác nhận đều giống nhau và bài kiểm tra cuối cùng này đã vượt qua.
+
+00:03:46.000 --> 00:03:52.000
+Tôi mong đợi tất cả các bài kiểm tra sẽ vượt qua một cách nhất quán, không chỉ trên một thiết bị.
+
+00:03:52.000 --> 00:03:55.000
+Tôi sẽ cố gắng tái tạo thất bại này cục bộ.
+
+00:03:55.000 --> 00:03:59.000
+Hãy đi đến tệp của chúng tôi có testFlavors.
+
+00:03:59.000 --> 00:04:03.000
+Tôi sẽ Control-nhấp vào viên kim cương thử nghiệm cho bài kiểm tra của chúng tôi.
+
+00:04:03.000 --> 00:04:11.000
+Trong menu, tôi sẽ chọn Chạy "testFlavors()" Nhiều lần... để hiển thị hộp thoại lặp lại bài kiểm tra.
+
+00:04:11.000 --> 00:04:19.000
+Tại đây bạn có thể chọn điều kiện dừng của các lần lặp lại của mình, đặt Lặp lại Tối đa và các tùy chọn khác như Tạm dừng khi Thất bại.
+
+00:04:19.000 --> 00:04:30.000
+Tôi muốn cố gắng tái tạo vấn đề đã xảy ra trong báo cáo đám mây của chúng tôi, vì vậy tôi đang đặt điều kiện dừng của mình để trải qua các lần lặp lại tối đa và giữ nó ở mức 100.
+
+00:04:30.000 --> 00:04:36.000
+Bây giờ tôi sẽ chạy bài kiểm tra của mình.
+
+00:04:36.000 --> 00:04:39.000
+Ồ, vâng! Bài kiểm tra thất bại tại địa phương.
+
+00:04:39.000 --> 00:04:47.000
+Khi tôi nhấp vào chú thích lỗi, nó sẽ hiển thị cùng một lỗi đã xảy ra trong Xcode Cloud và nó đã thất bại 4 trên 100 lần.
+
+00:04:47.000 --> 00:04:51.000
+Tuyệt vời! Bây giờ tôi có thể gỡ lỗi vấn đề này.
+
+00:04:51.000 --> 00:05:03.000
+Tôi sẽ Control-nhấp lại vào viên kim cương thử nghiệm cho testFlavors, chọn Chạy "testFlavors()" Nhiều lần... nhưng lần này, tôi sẽ sử dụng dừng khi thất bại để tôi có thể gỡ lỗi sự cố khi nó xảy ra.
+
+00:05:03.000 --> 00:05:12.000
+Rất may, Xcode tự động chọn Tạm dừng khi thất bại cho tôi, vì vậy tôi có thể bắt lỗi trong trình gỡ lỗi.
+
+00:05:12.000 --> 00:05:16.000
+Được rồi, chúng tôi đã nắm bắt được vấn đề.
+
+00:05:16.000 --> 00:05:30.000
+Và tôi biết chúng tôi đang xem xét sự không nhất quán với hương vị trên xe tải, vì vậy tôi sẽ xem xét đối tượng xe tải của chúng tôi trong trình gỡ lỗi.
+
+00:05:30.000 --> 00:05:37.000
+Có vẻ lạ khi hương vị là 0 trong khi nó phải là 33 vì chúng tôi đã gọi prepareFlavors.
+
+00:05:37.000 --> 00:05:41.000
+Tôi tự hỏi liệu chúng ta đã làm được nó bên trong Trình xử lý hoàn thành này chưa.
+
+00:05:41.000 --> 00:05:48.000
+Tôi sẽ thêm một điểm dừng và nhấp vào Tiếp tục.
+
+00:05:48.000 --> 00:05:54.000
+Hừm, điều đó có vẻ sai.
+
+00:05:54.000 --> 00:06:05.000
+Ồ, sự hoàn thành được gọi trong Người xử lý hoàn thành bên ngoài chứ không phải Người xử lý hoàn thành chuẩn bị bên trong Người xử lý hoàn thành hương vị.
+
+00:06:05.000 --> 00:06:15.000
+Đây là một lỗi khá đơn giản gây ra bởi các sự kiện không đồng bộ với nhiều Trình xử lý hoàn thành và kỳ vọng không được thực hiện ở đúng nơi.
+
+00:06:15.000 --> 00:06:22.000
+Sự hỗ trợ của XCTest cho async/await của Swift 5.5 cho phép tôi đơn giản hóa bài kiểm tra này để nó không xảy ra lần nữa.
+
+00:06:22.000 --> 00:06:40.000
+Để chuyển đổi bài kiểm tra này thành sử dụng async/await, tôi sẽ thêm "async throws" vào tiêu đề phương thức.
+
+00:06:40.000 --> 00:06:58.000
+Tôi sẽ sử dụng phiên bản "chờ đợi" để lấy iceCreamTruck từ truckDepot.
+
+00:06:58.000 --> 00:07:07.000
+Tôi sẽ sử dụng phiên bản "chờ đợi" của prepareFlavors.
+
+00:07:07.000 --> 00:07:14.000
+Tôi sẽ giữ nguyên khẳng định, nhưng chiếc xe tải không còn là tùy chọn nữa.
+
+00:07:14.000 --> 00:07:18.000
+Hãy chạy bài kiểm tra này một lần nữa để đảm bảo rằng nó đã được sửa.
+
+00:07:18.000 --> 00:07:36.000
+Tôi sẽ Control-nhấp chuột và chọn Chạy "testFlavors()" Nhiều lần... và một lần nữa chọn Lặp lại Tối đa làm điều kiện dừng.
+
+00:07:36.000 --> 00:07:39.000
+Yay! Bài kiểm tra đã vượt qua 100 lần.
+
+00:07:39.000 --> 00:07:46.000
+Bây giờ tôi tự tin rằng điều này đã được khắc phục và tôi sẵn sàng xóa Thử lại khi thất bại khỏi kế hoạch kiểm tra và cam kết thay đổi của mình.
+
+00:07:46.000 --> 00:07:55.000
+Vì vậy, chúng tôi đã hiểu rõ hơn về cách sử dụng cái này tại bàn làm việc và một cách để chạy thử nghiệm của bạn nhiều lần trong CI bằng cách định cấu hình nó trong kế hoạch kiểm tra của bạn.
+
+00:07:55.000 --> 00:08:01.000
+Hãy nói về một cách khác để chạy các bài kiểm tra của bạn với sự lặp lại, như trong bản demo, sử dụng CLI.
+
+00:08:01.000 --> 00:08:08.000
+Khi chạy trực tiếp xcodebuild, bạn có thể thêm cờ xcodebuild ghi đè lên bất kỳ cài đặt kế hoạch thử nghiệm nào.
+
+00:08:08.000 --> 00:08:22.000
+Vượt qua -test-iterations với một số để chạy một bài kiểm tra một số lần cố định hoặc kết hợp nó với -retry-tests-on-failure hoặc -run-tests-until-failure để sử dụng nó với một trong các điều kiện dừng khác.
+
+00:08:22.000 --> 00:08:35.000
+Để chạy thử nghiệm của bạn giống như trong bản demo với xcodebuild, bạn bắt đầu với lệnh xcodebuild cơ sở được sử dụng để chạy thử nghiệm của mình và thêm cờ -test-iterations được đặt thành 100 và -run-tests-until-failure.
+
+00:08:35.000 --> 00:08:42.000
+Tóm lại, sử dụng các lần lặp lại kiểm tra như một công cụ để giúp chẩn đoán mã không đáng tin cậy.
+
+00:08:42.000 --> 00:08:48.000
+Để biết thêm thông tin về việc xử lý các bài kiểm tra không nhất quán, hãy xem "Nắm bắt những thất bại dự kiến trong XCTest."
+
+00:08:48.000 --> 00:08:53.000
+Để tìm hiểu thêm về Swift async, hãy xem "Gặp gỡ không đồng bộ/chờ đợi trong Swift."
+
+00:08:53.000 --> 00:08:54.000
+Cảm ơn vì đã xem.
+
+00:08:54.000 --> 23:59:59.000
+[Nhạc gõ].
+

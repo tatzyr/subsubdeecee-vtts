@@ -1,0 +1,577 @@
+10180
+
+Xin chào, tên tôi là Tanuja, và tôi là một kỹ sư trong nhóm Hiệu suất Hệ điều hành.
+
+Hôm nay Stefan và tôi sẽ nói về cách phát hiện và chẩn đoán các vấn đề về bộ nhớ trong các ứng dụng của bạn.
+
+Chúng ta sẽ bắt đầu với việc xem xét tác động của dấu chân bộ nhớ của ứng dụng.
+
+Sau đó chúng ta sẽ nói về các công cụ để lập hồ sơ mức sử dụng bộ nhớ của bạn và các loại vấn đề về bộ nhớ mà bạn có thể gặp phải.
+
+Hãy nhảy ngay vào.
+
+Một câu hỏi bạn có thể hỏi ngay lập tức là, tại sao tôi nên quan tâm đến dấu chân bộ nhớ của ứng dụng của mình?
+
+Lý do chính là nó cải thiện trải nghiệm người dùng ứng dụng của bạn rất nhiều.
+
+Có một lượng bộ nhớ hữu hạn trên hệ thống và việc giám sát việc sử dụng bộ nhớ của ứng dụng của bạn có thể ngăn hệ thống chấm dứt ứng dụng của bạn để lấy lại bộ nhớ đó.
+
+Điều này có nghĩa là ứng dụng của bạn có thể duy trì trạng thái của nó khi ở chế độ nền, điều này thật tuyệt, bởi vì việc tải vào bộ nhớ cần có thời gian và giữ cho dấu chân bộ nhớ của bạn nhỏ gọn làm tăng cơ hội ứng dụng của bạn còn lại trong bộ nhớ, dẫn đến kích hoạt ứng dụng nhanh hơn.
+
+Giảm sử dụng bộ nhớ của bạn cũng dẫn đến trải nghiệm năng động, đáp ứng, đó chính xác là những gì người dùng của bạn muốn khi họ khám phá các tính năng mới của bạn.
+
+Bằng cách có chiến lược về những gì ứng dụng của bạn đã tải vào bộ nhớ, ứng dụng của bạn có thể tránh được chi phí chờ đợi để lấy lại bộ nhớ khi người dùng tương tác với ứng dụng của bạn.
+
+Chiến lược về việc sử dụng bộ nhớ của bạn cũng mở ra cánh cửa cho một loạt các tính năng hơn mà bạn có thể thêm vào ứng dụng của mình, chẳng hạn như tải video, bao gồm cả hoạt ảnh và hơn thế nữa.
+
+Cuối cùng, các thiết bị của chúng tôi không ngừng phát triển theo thời gian và các thiết bị mới hơn của chúng tôi có nhiều bộ nhớ vật lý hơn trước.
+
+Bằng cách giảm dung lượng bộ nhớ của bạn, ứng dụng của bạn sẽ hoạt động tốt trên các thiết bị cũ hơn, tăng lượng khán giả có thể thưởng thức ứng dụng của bạn.
+
+Bằng cách theo dõi dấu chân bộ nhớ của ứng dụng, ứng dụng của bạn sẽ kích hoạt nhanh hơn, phản hồi nhanh hơn, xử lý các tính năng phức tạp và hoạt động trên nhiều loại thiết bị hơn.
+
+Bây giờ chúng ta hãy xem điều gì tạo nên dấu chân trí nhớ của bạn.
+
+Có ba loại chúng tôi sử dụng để chia nhỏ hồ sơ bộ nhớ ứng dụng của bạn: bộ nhớ bẩn, nén và sạch.
+
+Chúng ta hãy xem nhanh mỗi thứ này bao gồm những gì.
+
+Bộ nhớ bẩn bao gồm bộ nhớ được viết bởi ứng dụng của bạn.
+
+Nó cũng bao gồm tất cả các phân bổ đống như khi bạn sử dụng malloc, bộ đệm hình ảnh được giải mã và các khuôn khổ.
+
+Bộ nhớ nén đề cập đến bất kỳ trang bẩn nào chưa được truy cập gần đây mà máy nén bộ nhớ đã nén.
+
+Những trang này sẽ được giải nén khi truy cập.
+
+Lưu ý rằng chúng tôi không có khái niệm hoán đổi trên iOS, điều này dành riêng cho macOS.
+
+Và cuối cùng, chúng ta có trí nhớ trong sạch.
+
+Bộ nhớ sạch là bộ nhớ chưa được ghi vào hoặc dữ liệu có thể được phân trang.
+
+Ví dụ, đây có thể là các tệp được ánh xạ bộ nhớ như hình ảnh trên đĩa nhưng được tải vào bộ nhớ.
+
+Hoặc chúng có thể là khuôn khổ.
+
+Khi chúng tôi tham khảo dấu chân bộ nhớ của ứng dụng của bạn, chúng tôi thực sự đang nói về bộ nhớ bẩn và bộ nhớ nén của ứng dụng của bạn với nhau.
+
+Bộ nhớ sạch không được tính ở đây.
+
+Đây là một sự hiểu biết cấp cao về dấu chân bộ nhớ của bạn.
+
+Để có lời giải thích chi tiết, chuyên sâu hơn, chúng tôi khuyên bạn nên xem bài nói chuyện sâu về bộ nhớ iOS từ WWDC 2018.
+
+Bây giờ chúng ta hãy xem các công cụ bạn có thể sử dụng để lập hồ sơ dấu chân bộ nhớ của mình.
+
+Xcode cung cấp một bộ công cụ để giúp giám sát hiệu suất bộ nhớ của ứng dụng của bạn trong suốt cả quy trình phát triển và sản xuất.
+
+Khung XCTest giúp bạn giám sát dấu chân bộ nhớ của mình trực tiếp trong các bài kiểm tra đơn vị và giao diện người dùng của dự án, trong khi MetricKit và Xcode Organizer cho phép bạn theo dõi các chỉ số bộ nhớ trong quá trình sản xuất từ khách hàng của mình.
+
+Sự tiếp nối của cuộc nói chuyện này sẽ nằm trong bối cảnh sử dụng XCTests hiệu suất.
+
+Nhưng lưu ý rằng những kỹ thuật này vẫn áp dụng cho việc phân loại và điều tra trí nhớ chung.
+
+Sử dụng XCTests hiệu suất, bạn có thể đo lường các tài nguyên hệ thống như sử dụng bộ nhớ, sử dụng CPU, ghi đĩa và hơn thế nữa.
+
+Chúng ta hãy cùng nhau xem xét một bài kiểm tra ví dụ.
+
+Giả sử tôi là nhà phát triển ứng dụng tại Meal Planner, một ứng dụng giúp bạn sắp xếp những gì bạn sẽ ăn trong một tuần và tôi muốn đo lường mức sử dụng bộ nhớ của tính năng lưu bữa ăn mới này mà tôi đã thêm vào cho phép người dùng tải công thức xuống thiết bị của họ.
+
+Trong bài kiểm tra hiệu suất của mình, tôi đang sử dụng API đo lường (số liệu: tùy chọn: khối:) và tôi chỉ định rằng tôi muốn đo lường việc sử dụng bộ nhớ của ứng dụng được nhắm mục tiêu của mình.
+
+Trong phần thân của khối đo lường, tôi đang khởi chạy ứng dụng, yêu cầu API đo lường theo cách thủ công để bắt đầu đo lường, sau đó nhấn vào nút lưu bữa ăn.
+
+Tôi đợi tối đa 30 giây để tải xuống công thức hoàn tất bằng cách kiểm tra bản cập nhật trong giao diện người dùng.
+
+Bây giờ tôi có thể chạy bài kiểm tra này trực tiếp trong giao diện người dùng của Xcode để xem các phép đo của tôi.
+
+Tôi có thể truy cập số đo của mình bằng cách nhấp vào viên kim cương màu xám bên cạnh bài kiểm tra của mình.
+
+Giao diện người dùng bật lên kết quả có một trình đơn thả xuống cho tôi biết số liệu nào đã được đo.
+
+Biểu đồ thanh ở phía dưới cho tôi thấy các phép đo cho từng lần lặp riêng lẻ.
+
+Trung bình của tất cả năm lần lặp được tính toán và hiển thị.
+
+Bây giờ tôi có thể quyết định xem tôi có muốn đặt mức trung bình của lần chạy này làm cơ sở cho các bài kiểm tra trong tương lai được so sánh hay không.
+
+Một lần chạy thử nghiệm trong tương lai bây giờ sẽ thất bại nếu mức trung bình của nó lớn hơn đường cơ sở đã đặt.
+
+Chúng tôi gọi độ lệch này so với đường cơ sở đã đặt là hồi quy.
+
+Hồi quy chỉ ra rằng chúng ta nên dừng lại, điều tra và sửa mã của mình để đảm bảo rằng bài kiểm tra vượt qua.
+
+Chúng tôi rất vui mừng được chia sẻ rằng trong Xcode 13, chúng tôi đã thêm vào một tính năng mới để thu thập các chẩn đoán nhằm giúp phân loại các hồi quy kiểm tra này.
+
+Có hai chẩn đoán mà chúng tôi thấy có giá trị: tệp ktrace và biểu đồ bộ nhớ.
+
+Các tệp Ktrace rất mạnh mẽ và linh hoạt.
+
+Chúng có thể được sử dụng để điều tra hệ thống chung hoặc chúng có thể tập trung vào các vấn đề cụ thể, chẳng hạn như đi sâu vào đường ống kết xuất khi điều tra các trở ngại hoặc xem xét lý do tại sao luồng chính của bạn có thể bị chặn, dẫn đến treo.
+
+Các tệp ktrace này có thể được mở và phân tích trong Công cụ bằng quy trình làm việc thông thường của bạn.
+
+Chẩn đoán thứ hai là một biểu đồ bộ nhớ rất tốt cho các cuộc điều tra cụ thể về bộ nhớ.
+
+Biểu đồ bộ nhớ có thể được sử dụng với trình gỡ lỗi trực quan của Xcode cũng như nhiều công cụ dòng lệnh, một số trong đó chúng ta sẽ đề cập sau trong buổi nói chuyện này.
+
+Biểu đồ bộ nhớ về cơ bản là ảnh chụp nhanh không gian địa chỉ quy trình của bạn tại một phiên bản kịp thời.
+
+Memgraphs ghi lại địa chỉ và kích thước của từng vùng bộ nhớ ảo và từng khối malloc được phân bổ, cũng như các con trỏ giữa các vùng và khối đó.
+
+Điều này cho phép bạn kiểm tra các đối tượng riêng lẻ trên đống, xem các vùng dữ liệu được liên kết với các khung được liên kết và hơn thế nữa.
+
+XCTest tự động cho phép ghi nhật ký ngăn xếp malloc, ghi lại dấu vết ngược cho các đối tượng mới được phân bổ.
+
+Để cho phép thu thập chẩn đoán, hãy sử dụng công cụ dòng lệnh xcodebuild kết hợp với cờ enablePerformanceTestsDiagnostics.
+
+Cờ này sẽ cho phép thu thập ktrace cho các số liệu không phải bộ nhớ và đồ thị cho các số liệu bộ nhớ.
+
+Khi bài kiểm tra hiệu suất bằng văn bản trước đây của chúng tôi đã chạy xong, chúng tôi sẽ thấy phần sau được in vào bảng điều khiển của chúng tôi.
+
+Điều này khá nhiều, nhưng có một vài điều quan trọng cần tìm kiếm.
+
+Điều đầu tiên cần tìm là nếu bài kiểm tra thất bại hoặc vượt qua.
+
+Trong trường hợp này, bài kiểm tra đã thất bại.
+
+Đầu ra cũng cho biết rằng bài kiểm tra đã thất bại cụ thể do hồi quy.
+
+Mức trung bình mới của chúng tôi kém hơn 12% so với đường cơ sở của chúng tôi.
+
+Cuối cùng, chúng ta có thể tìm thấy đường dẫn đến gói xcresult của mình.
+
+Khi chúng tôi mở gói xcresult trong Xcode, chúng tôi sẽ thấy các phép đo bộ nhớ ở trên cùng bên cạnh tên bài kiểm tra.
+
+Sau đó, chúng tôi có thể mở rộng nhật ký kiểm tra và về phía dưới cùng, chúng tôi có thể tìm thấy các biểu đồ đính kèm của mình.
+
+Sau khi tải xuống và giải nén, chúng tôi tìm thấy 2 memgraphs.
+
+Điều này là do chúng tôi thêm một lần lặp lại bổ sung vào bài kiểm tra của bạn để cho phép ghi nhật ký ngăn xếp malloc.
+
+Chúng tôi thu thập một memgraph ban đầu, có tiền tố pre, ở đầu lần lặp đo được, và chúng tôi thu thập một memgraph thứ hai, có tiền tố post, ở cuối lần lặp.
+
+Điều này cho phép bạn phân tích sự phát triển bộ nhớ trong khoảng thời gian của một lần lặp lại nếu cần.
+
+Bây giờ với các tệp ktrace và biểu đồ bộ nhớ với tính năng ghi nhật ký ngăn xếp malloc được bật, bạn sẵn sàng không chỉ trả lời nếu hồi quy xảy ra mà còn tại sao hồi quy lại xảy ra?
+
+Bây giờ tôi sẽ giao nó cho đồng nghiệp của tôi, Stefan, để nói về các loại vấn đề về trí nhớ mà bạn có thể gặp phải khi xem xét các chẩn đoán memgraph đã thu thập được của mình.
+
+Cảm ơn, Tanuja. Xin chào mọi người.
+
+Tôi là Stefan, một kỹ sư trong Nhóm Hiệu suất Hệ điều hành.
+
+Tôi sẽ xem xét một số vấn đề bộ nhớ phổ biến mà bạn có thể tìm thấy trong ứng dụng của mình cũng như cách bạn có thể chẩn đoán, khắc phục và ngăn chặn chúng.
+
+Tôi sẽ xem xét hai loại vấn đề bộ nhớ: rò rỉ và vấn đề đống, có thể được chia thành hồi quy phân bổ đống và vấn đề phân mảnh.
+
+Đây không phải là một danh sách đầy đủ, nhưng nó bao gồm một số vấn đề phổ biến nhất.
+
+Tôi cũng sẽ đề cập đến một số quy trình làm việc dòng lệnh có thể được sử dụng để chẩn đoán những vấn đề này.
+
+Để có bản tóm tắt chuyên sâu hơn về các công cụ dòng lệnh, hãy xem cuộc nói chuyện sâu về bộ nhớ iOS từ WWDC 2018.
+
+Hãy bắt đầu bằng cách thảo luận về rò rỉ bộ nhớ.
+
+Rò rỉ xảy ra khi quá trình phân bổ một đối tượng và mất tất cả các tham chiếu đến nó mà không bao giờ phân bổ nó.
+
+Ở đây tôi có một biểu đồ đối tượng ví dụ, trong đó các mũi tên màu xám biểu thị các tham chiếu giữa các đối tượng.
+
+Lưu ý rằng mọi đối tượng đều có ít nhất một tham chiếu đến nó.
+
+Chú ý tham chiếu đường chấm từ đối tượng A đến đối tượng B.
+
+Giả sử tôi đặt tham chiếu này thành nil, loại bỏ nó.
+
+Với tham chiếu đó biến mất, đối tượng B đã bị rò rỉ.
+
+Không có tài liệu tham khảo nào về nó cả.
+
+Nó vẫn bẩn, nhưng quá trình này không có cách nào để tham khảo nó và không có cách nào để giải phóng nó cho đến khi nó thoát ra.
+
+Vì lý do này, bạn nên luôn luôn sửa chữa rò rỉ.
+
+Một cách phổ biến mà các đối tượng bị rò rỉ trong Swift là thông qua các chu kỳ giữ lại.
+
+Trong sơ đồ này, các đối tượng A và B đang trong một chu kỳ giữ lại.
+
+Họ tham chiếu lẫn nhau, nhưng không có tham chiếu bên ngoài nào cho một trong hai người họ.
+
+Điều này có nghĩa là quá trình không thể truy cập hoặc giải phóng một trong hai chúng, vì vậy chúng được coi là bị rò rỉ.
+
+May mắn thay, hầu hết các đối tượng trong Swift được quản lý bởi hệ thống đếm tham chiếu tự động của Swift, hoặc ARC, ngăn chặn rất nhiều rò rỉ.
+
+Nếu bạn đang làm việc với các đối tượng không được ARC quản lý, chẳng hạn như con trỏ không an toàn, hãy đảm bảo rằng bạn phân bổ chúng trước khi mất tài liệu tham khảo về chúng.
+
+Ngay cả các đối tượng được quản lý ARC cũng dễ bị trở thành một phần của chu kỳ lưu giữ.
+
+Vì vậy, tránh tạo các tham chiếu vòng tròn mạnh mẽ trong mã của bạn.
+
+Nếu một tham chiếu tròn là hoàn toàn cần thiết, thay vào đó hãy xem xét một tham chiếu yếu, bởi vì các tham chiếu yếu sẽ không ngăn các đối tượng được phân bổ.
+
+Hãy xem một ví dụ từ ứng dụng Meal Planner.
+
+Tanuja đã gửi cho tôi một số bản ghi nhớ trước và sau từ XCTest thất bại.
+
+Ngay lập tức, tôi muốn kiểm tra rò rỉ trong biểu đồ bài đăng.
+
+Để làm điều này, tôi chạy rò rỉ trên memgraph.
+
+Điều này cho tôi thấy một số thông tin hữu ích về bất kỳ rò rỉ nào tôi có.
+
+Đầu ra cho thấy tôi có 4 rò rỉ với tổng số 240 byte bị rò rỉ.
+
+Xa hơn nữa, đầu ra bao gồm một cái nhìn chi tiết về biểu đồ đối tượng cho mỗi rò rỉ, điều này cung cấp cho tôi một số manh mối về những gì có thể bị rò rỉ.
+
+Phần trên cùng của biểu đồ đối tượng cho biết ROOT CYCLE, có nghĩa là tôi đang xử lý một chu kỳ giữ lại.
+
+Có một số biểu tượng hữu ích ở đây.
+
+Có vẻ như chu kỳ lưu giữ này có thể bao gồm kế hoạch bữa ăn và các đối tượng món trong thực đơn.
+
+Bởi vì ghi nhật ký ngăn xếp malloc được bật cho XCTests, đầu ra cũng bao gồm ngăn xếp cuộc gọi phân bổ cho mỗi lần rò rỉ.
+
+Điều này cực kỳ hữu ích cho việc tìm kiếm những đồ vật nào bị rò rỉ.
+
+Thông thường, bạn sẽ muốn tìm phần của ngăn xếp cuộc gọi với các ký hiệu từ mã của bạn.
+
+Đây là phần ngăn xếp cuộc gọi từ mã của tôi.
+
+Đối tượng kế hoạch bữa ăn bị rò rỉ được phân bổ trong hàm populateMealData.
+
+Tôi sẽ mở Xcode và xem liệu tôi có thể khắc phục sự cố hay không.
+
+Đây là hàm populateMealData mà tôi đã thấy trong rò rỉ.
+
+Ở đây tôi đang phân bổ một đối tượng kế hoạch bữa ăn và một đối tượng mục thực đơn, đó là hai đối tượng tôi đã thấy trong chu kỳ lưu giữ của mình.
+
+Hmm, chức năng addMealToMealPlan này có vẻ hơi đáng ngờ.
+
+Tôi sẽ xem qua.
+
+Hmm, có vẻ như tôi đang gọi addItem trong kế hoạch bữa ăn, nhưng tôi cũng đang gọi addPlan trên mục thực đơn.
+
+Đây là một tính năng cho phép chúng tôi xem tất cả các mục cho một kế hoạch nhưng cũng là kế hoạch nào mà một mục được liên kết.
+
+Ở đây trong kế hoạch bữa ăn, addItem thêm mục menu vào một mảng, lưu một tham chiếu đến nó.
+
+Và ở đây trong mục thực đơn, addPlan lưu một tham chiếu đến kế hoạch bữa ăn.
+
+Vì vậy, đây chắc chắn là một chu kỳ lưu giữ bởi vì cả hai đều có liên quan chặt chẽ đến nhau.
+
+Sau khi populateMealData thoát ra, cả kế hoạch bữa ăn và các đối tượng mục thực đơn sẽ nằm ngoài phạm vi, vì vậy sẽ không có tham chiếu bên ngoài nào đến chúng.
+
+Nhưng họ vẫn tham khảo lẫn nhau, gây ra rò rỉ.
+
+Có lẽ tôi nên cố gắng tìm ra giải pháp mà không có tham chiếu theo chu kỳ.
+
+Nhưng để khắc phục nhanh chóng bây giờ, tôi sẽ thay đổi mục thực đơn để sử dụng tham chiếu yếu cho đối tượng kế hoạch bữa ăn của nó.
+
+Điều này phá vỡ chu kỳ lưu giữ bởi vì chúng ta không còn hai tham chiếu mạnh theo chu kỳ nữa.
+
+Hãy chuyển số ngay bây giờ để tích hợp hồi quy phân bổ.
+
+Đống chỉ đơn giản là một phần trong không gian địa chỉ quy trình của bạn, nơi các đối tượng được phân bổ động được lưu trữ.
+
+Hồi quy phân bổ đống là sự gia tăng dấu chân bộ nhớ do quá trình phân bổ nhiều đối tượng trên đống hơn trước.
+
+Để giảm hồi quy đống, hãy tìm cách loại bỏ các phân bổ không sử dụng và thu nhỏ các phân bổ lớn không cần thiết.
+
+Bạn cũng nên chú ý đến lượng bộ nhớ bạn lưu giữ cùng một lúc.
+
+Phân bổ bộ nhớ bạn không còn sử dụng nữa và đợi để phân bổ bộ nhớ cho đến khi bạn cần nó.
+
+Điều này sẽ làm giảm dấu chân đỉnh của ứng dụng của bạn, khiến nó ít có khả năng bị chấm dứt hơn.
+
+Vì vậy, bây giờ chúng ta hãy quay lại XCTest thất bại từ ứng dụng MealPlanner và kiểm tra hồi quy đống.
+
+Để hiểu nơi tôi nên tìm, tôi sẽ chạy vmmap -summary trên cả memgraph trước và sau để có cái nhìn tổng quan tốt về nơi bộ nhớ đang được sử dụng.
+
+Dấu chân của tôi trong sơ đồ là khoảng 112 megabyte.
+
+Và trong biểu đồ bài đăng, dấu chân của tôi là 125 megabyte, vì vậy đó là khoảng sự khác biệt 13 megabyte.
+
+Xa hơn nữa, đầu ra cho thấy việc sử dụng bộ nhớ của quy trình của tôi được chia nhỏ theo khu vực.
+
+Bởi vì tôi nghi ngờ đây là vấn đề phân bổ đống, tôi muốn xem xét các khu vực bắt đầu bằng MALLOC_ bởi vì những khu vực đó chứa tất cả các đối tượng đống của tôi.
+
+Hãy nhớ phương trình của Tanuja: Dấu chân bộ nhớ = Bộ nhớ bẩn + Bộ nhớ nén.
+
+Trong công cụ này, thuật ngữ "swapped" có nghĩa là "nén".
+
+Vì vậy, trong số các cột này, tôi chỉ quan tâm đến "kích thước bẩn" và "kích thước hoán đổi".
+
+Và chắc chắn, đầu ra cho thấy vùng MALLOC_LARGE đang chứa khoảng 13 megabyte bộ nhớ bẩn.
+
+Điều đó gần tương đương với kích thước hồi quy của tôi, vì vậy tôi chắc chắn muốn xem xét điều đó.
+
+Bước tiếp theo là tìm ra loại đối tượng nào đang góp phần vào hồi quy 13 megabyte này.
+
+Để có được thông tin đó, tôi sẽ chạy heap -diffFrom trên memgraph bài đăng của mình.
+
+Tôi vượt qua trước của mình và đăng các memgraph dưới dạng lập luận.
+
+Điều này cho tôi thấy các đối tượng tồn tại trong đống memgraph bài đăng nhưng không phải trong đống memgraph trước.
+
+Gần đỉnh, đầu ra cho thấy tôi có khoảng 13 megabyte đối tượng mới trong biểu đồ bài đăng.
+
+Bên dưới, bộ nhớ đống được chia nhỏ theo lớp đối tượng.
+
+Đối với mỗi lớp đối tượng, đầu ra hiển thị số lượng đối tượng và tổng tính bằng byte của các đối tượng đó.
+
+Ngay lập tức, tôi nhận thấy rằng tôi có khoảng 13 megabyte giá trị của loại "không phải đối tượng" này.
+
+Trong Swift, điều này thường chỉ ra các byte malloced thô.
+
+Loại đối tượng này có thể hơi khó theo dõi, nhưng có một số công cụ tôi có thể sử dụng để lấy một số thông tin.
+
+Để bắt đầu, tôi muốn địa chỉ của những đối tượng không phải này.
+
+Tôi sẽ chạy đống địa chỉ để lấy chúng.
+
+Tôi sẽ chỉ rõ rằng tôi chỉ muốn những vật không phải vật có kích thước ít nhất là 500 kilobyte.
+
+Aha.
+
+Vật thể không phải này có kích hoạt khoảng 13 megabyte, vì vậy nó là nghi phạm chính trong cuộc điều tra này.
+
+Tôi sẽ lấy địa chỉ của nó và xem liệu tôi có thể tìm thấy một số manh mối về nó là gì không.
+
+Tôi có một vài lựa chọn vào thời điểm này.
+
+Mỗi cái đều có lợi ích của nó tùy thuộc vào tình huống, vì vậy tôi sẽ xem qua từng cái một cách ngắn gọn.
+
+Một lựa chọn tôi có là chạy rò rỉ --traceTree trên địa chỉ này.
+
+Điều này cho tôi một cây các đối tượng tham chiếu đến địa chỉ này.
+
+Điều này rất hữu ích nếu tôi có một đối tượng cụ thể mà tôi muốn biết thêm thông tin và memgraph của tôi không bật ghi nhật ký ngăn xếp malloc hoặc MSL.
+
+Hãy nhớ rằng các memgraph XCTest của chúng tôi tự động bật MSL, nhưng nếu bạn đang làm việc với một memgraph không có, hãy ghi nhớ công cụ này.
+
+Tôi đã đánh dấu đối tượng trong cây có vẻ có liên quan.
+
+Đối tượng không lớn của tôi có thể liên quan đến đối tượng dữ liệu bữa ăn này trong MKTCustomMeal PlannerCollectionViewCell.
+
+Tôi cũng có thể chạy rò rỉ --referenceTree.
+
+Điều này cung cấp cho tôi một cây tham chiếu từ trên xuống của tất cả bộ nhớ trong quá trình của tôi với dự đoán tốt nhất về đối tượng nào là gốc rễ.
+
+Với đầu ra này, tôi có thể hiểu được nơi bộ nhớ được tổng hợp trong ứng dụng của mình.
+
+Công cụ này cực kỳ hữu ích nếu tôi biết tôi có hồi quy lớn nhưng tôi không biết đối tượng cụ thể nào chịu trách nhiệm.
+
+Tôi có thể chuyển đối số --groupByType để nhóm các loại giống nhau lại với nhau, thu nhỏ đầu ra và giúp phân tích cú pháp dễ dàng hơn một chút.
+
+Thông thường, một phần lớn hồi quy sẽ được nhóm lại dưới một nút duy nhất trong cây này, giúp dễ dàng tìm thấy manh mối về bộ nhớ đó là gì.
+
+Một lần nữa, tôi đã đánh dấu phần hiển thị các đối tượng có liên quan.
+
+Đây là cùng một đối tượng dữ liệu bữa ăn mà tôi đã thấy trong đầu ra rò rỉ -traceTree.
+
+Đầu ra cho thấy có khoảng 13 megabyte bộ nhớ được phân bổ cho đối tượng dữ liệu bữa ăn này.
+
+Tôi rất muốn biết đối tượng này đang được phân bổ như thế nào.
+
+Bởi vì memgraph của tôi đã bật MSL, tôi có thể sử dụng malloc_history -fullStacks để tìm ra điều đó.
+
+Tôi đi qua địa chỉ của vật thể không lớn mà tôi đã lấy từ đống địa chỉ trước đó.
+
+Và tôi nhận được một ngăn xếp cuộc gọi phân bổ cho đối tượng tại địa chỉ đó.
+
+Điều này cực kỳ hữu ích khi tôi bật MSL và tôi có địa chỉ của đối tượng mà tôi quan tâm.
+
+Vì vậy, có vẻ như đối tượng dữ liệu bữa ăn của tôi đã được phân bổ trong hàm saveMeal, được hiển thị ở đây trên dòng 3.
+
+Tôi sẽ đến Xcode để xem chuyện gì đang xảy ra.
+
+Đây là chức năng saveMeal bên trong bộ điều khiển chế độ xem ô tùy chỉnh của tôi.
+
+Và đây là thủ phạm.
+
+Tôi đang phân bổ bộ đệm thô này ở đây và sau đó gói nó với đối tượng dữ liệu bữa ăn.
+
+Tôi chỉ phân bổ bộ đệm này để tôi có thể điền nó và lưu kết quả vào đĩa.
+
+Khi tôi lưu xong vào đĩa, tôi không thực sự cần bộ đệm này nữa.
+
+Vậy tại sao nó lại dính xung quanh?
+
+Chà, dữ liệu bữa ăn là một thành viên lớp, vì vậy miễn là trường hợp lớp này tồn tại, tài liệu tham khảo sẽ tồn tại.
+
+Điều này có nghĩa là khi tôi nhấn saveMeal trên bất kỳ ô nào, ô đó sẽ phân bổ và giữ một bộ đệm lớn sẽ tồn tại cho đến khi ô đó bị phá hủy.
+
+Ký ức đó thực sự có thể tăng lên nếu tôi tiết kiệm nhiều bữa ăn.
+
+Vậy làm thế nào tôi có thể khắc phục điều này?
+
+Một lựa chọn sẽ là chỉ xác định mealData trong hàm saveMeal, nhưng tôi biết nó được sử dụng ở những nơi khác trong lớp, vì vậy tôi không muốn làm điều đó.
+
+Một cách khác là đặt mealData thành nil sau khi tôi ghi xong vào đĩa.
+
+Đối tượng dữ liệu trong Swift đủ thông minh để tự động phân bổ bộ đệm khi tôi mất tham chiếu cuối cùng của mình với nó, vì vậy bộ đệm sẽ không tồn tại qua phần cuối của chức năng này.
+
+Cuối cùng, hãy nói về sự phân mảnh.
+
+Hãy nhanh chóng xem qua cách các trang hoạt động trong iOS.
+
+Một trang là một kích thước cố định, khối bộ nhớ không thể phân chia mà hệ thống cấp cho quy trình của bạn.
+
+Bởi vì các trang không thể phân chia, khi quy trình của bạn ghi vào bất kỳ phần nào của trang, toàn bộ trang được coi là bẩn và quy trình của bạn sẽ bị tính phí cho nó, ngay cả khi hầu hết nó không được sử dụng.
+
+Sự phân mảnh xảy ra khi một quy trình có các trang bẩn không được sử dụng 100%.
+
+Để hiểu điều này xảy ra như thế nào, hãy xem xét một ví dụ.
+
+Để bắt đầu, tôi có 3 trang sạch liền kề nhau.
+
+Khi quá trình diễn ra, việc phân bổ bắt đầu lấp đầy các trang này, làm bẩn chúng.
+
+Khi các đối tượng được phân bổ, chúng tạo ra các khe trống nơi chúng từng được đánh dấu "bộ nhớ trống" trong sơ đồ.
+
+Tuy nhiên, những trang này vẫn còn bẩn vì vẫn còn một số đối tượng được phân bổ trên đó.
+
+Hệ thống sẽ cố gắng lấp đầy những vị trí trống này với các phân bổ trong tương lai.
+
+Ở đây tôi có một phân bổ lớn đến được ghi chú bởi hộp bên phải.
+
+Thật không may, phân bổ đến này quá lớn để phù hợp với các khe cắm bộ nhớ miễn phí của tôi.
+
+Mặc dù kích thước kết hợp của các khe trống đủ lớn, nhưng chúng không liền kề nhau và chúng không thể được sử dụng cho một lần phân bổ duy nhất.
+
+Vì vậy, vì nó không thể phù hợp với bất kỳ vị trí miễn phí hiện có nào, hệ thống đã đặt phân bổ của tôi trên một trang bẩn mới ở phía bên phải của sơ đồ.
+
+Các khe cắm bộ nhớ trống vẫn chưa được lấp đầy và được coi là bộ nhớ bị phân mảnh.
+
+Cách tốt nhất để giảm sự phân mảnh là phân bổ các đối tượng có thời gian tồn tại tương tự gần nhau trong bộ nhớ.
+
+Điều này giúp đảm bảo rằng tất cả các đối tượng đó được giải phóng cùng nhau, tạo cho quá trình những khối lớn bộ nhớ liền kề để làm việc để phân bổ trong tương lai.
+
+Trong ví dụ này, tôi đã phân bổ thủ công tất cả các đối tượng được đánh dấu "đối tượng của tôi" và tôi dự định giải phóng chúng cùng một lúc.
+
+Nhưng tôi đã không cẩn thận trong mã của mình và cuối cùng hệ thống đã xen kẽ các đối tượng của tôi với các đối tượng khác.
+
+Bây giờ, khi tôi giải phóng tất cả các đối tượng của mình, tôi có bốn khe cắm bộ nhớ trống, không có khe nào liền kề nhau vì chúng bị phá vỡ bởi các đối tượng được phân bổ này.
+
+Điều này dẫn đến 50% sự phân mảnh và bốn trang bẩn.
+
+Không tuyệt vời.
+
+Điều gì sẽ xảy ra nếu thay vào đó tôi viết mã để phân bổ tất cả các đối tượng của mình lại với nhau?
+
+Bây giờ tất cả họ kết thúc cùng nhau trên hai trang.
+
+Và khi tôi giải phóng các đối tượng của mình, quá trình giải phóng hai trang sạch cho hệ thống, dẫn đến chỉ có 2 trang bẩn và 0% phân mảnh.
+
+Chú ý cách phân mảnh là hệ số nhân dấu chân.
+
+50% sự phân mảnh đã tăng gấp đôi dấu chân của tôi từ 2 lên 4 trang bẩn.
+
+Trong hầu hết các tình huống thực tế, một số phân mảnh là không thể tránh khỏi.
+
+Vì vậy, theo nguyên tắc chung, hãy nhắm đến khoảng 25% phân mảnh hoặc ít hơn.
+
+Một cách để giảm sự phân mảnh là sử dụng các nhóm tự động phát hành.
+
+Một nhóm tự động phát hành yêu cầu hệ thống giải phóng tất cả các đối tượng được phân bổ bên trong nó ngay khi nó đi ra khỏi phạm vi.
+
+Điều này giúp đảm bảo rằng tất cả các đối tượng được tạo trong nhóm tự động phát hành có thời gian tồn tại tương tự nhau.
+
+Mặc dù sự phân mảnh có thể là một vấn đề đối với tất cả các quy trình, các quy trình chạy lâu dài có thể đặc biệt dễ bị tổn hại, bởi vì có rất nhiều phân bổ và phân bổ thỏa thuận để có khả năng phân mảnh không gian địa chỉ.
+
+Ví dụ, nếu ứng dụng của bạn sử dụng các tiện ích mở rộng chạy lâu dài, hãy đảm bảo xem xét sự phân mảnh trong các quy trình đó.
+
+Để xem nhanh quá trình phân mảnh của tôi, tôi có thể chạy vmmap -summary và cuộn xuống cuối đầu ra.
+
+Phần này được chia thành các khu vực malloc.
+
+Mỗi khu vực chứa các loại phân bổ khác nhau.
+
+Thông thường tôi sẽ chỉ quan tâm đến DefaultMallocZone, bởi vì đó là nơi phân bổ đống của tôi kết thúc theo mặc định.
+
+Tuy nhiên, vì memgraph này đã bật MSL, tôi thực sự quan tâm đến MallocStackLoggingLiteZone.
+
+Miễn là MSL được bật, khu vực này là nơi tất cả các phân bổ đống kết thúc.
+
+Cột % FRAG cho tôi thấy bao nhiêu phần trăm bộ nhớ của tôi bị lãng phí do sự phân mảnh trong mỗi vùng malloc.
+
+Một số con số này khá lớn, nhưng tôi chỉ cần tập trung vào MallocStackLoggingLiteZone.
+
+Đó là bởi vì MallocStackLoggingLiteZone cho đến nay có phần bộ nhớ bẩn lớn nhất, với tổng số 4,3 megabyte trong tổng số 5 megabyte.
+
+Vì vậy, lần này tôi có thể bỏ qua các khu vực khác.
+
+Cột "bẩn+kích thước mảnh vụn hoán đổi" cho tôi biết chính xác dung lượng bộ nhớ bị lãng phí do sự phân mảnh trong mỗi vùng malloc.
+
+Trong trường hợp của tôi, tôi đang lãng phí khoảng 800K do sự phân mảnh.
+
+Điều này có vẻ như rất nhiều, nhưng như tôi đã đề cập trước đây, một số phân mảnh là không thể tránh khỏi.
+
+Vì vậy, miễn là tôi ngồi dưới 25% sự phân mảnh, tôi sẽ coi sự lãng phí này là chấp nhận được.
+
+Có vẻ như tôi đang ngồi ở khoảng 19% phân mảnh trong MallocStackLoggingLiteZone.
+
+Điều này thoải mái dưới quy tắc ngón tay cái 25%, vì vậy tôi không quan tâm.
+
+Nếu tôi gặp vấn đề về phân mảnh, tôi có thể sử dụng theo dõi Phân bổ trong công cụ Công cụ.
+
+Cụ thể, tôi muốn xem chế độ xem danh sách phân bổ và xem những đối tượng nào vẫn tồn tại và bị phá hủy trong khu vực tôi quan tâm.
+
+Trong bối cảnh phân mảnh, các đối tượng bị phá hủy tạo ra các khe cắm bộ nhớ trống, trong khi các đối tượng tồn tại là các đối tượng còn lại, chịu trách nhiệm giữ cho các trang bẩn.
+
+Cả hai đều đáng để điều tra khi bạn đang xem xét sự phân mảnh.
+
+Để biết thêm thông tin về cách sử dụng công cụ Dụng cụ, hãy xem bài nói chuyện Bắt đầu với Dụng cụ từ WWDC 2019.
+
+Bây giờ tôi đã giải quyết các rò rỉ và hồi quy đống và xác minh rằng sự phân mảnh không phải là vấn đề, tôi sẽ chạy lại XCTest đó.
+
+Tuyệt vời.
+
+XCTest bây giờ trôi qua và hồi quy đã được giải quyết.
+
+Bây giờ bạn đã học về cách phát hiện và chẩn đoán các vấn đề về bộ nhớ, hãy xem lại quy trình làm việc mà bạn có thể sử dụng cho ứng dụng của riêng mình.
+
+Bất cứ khi nào bạn thêm một tính năng mới, hãy viết XCTest hiệu suất để theo dõi bộ nhớ và/hoặc bất kỳ số liệu hệ thống nào khác được cung cấp.
+
+Đối với mỗi bài kiểm tra, hãy đặt một đường cơ sở.
+
+Sau đó sử dụng bài kiểm tra để bắt hồi quy và điều tra bằng cách sử dụng các tệp ktrace và memgraph được thu thập.
+
+Sử dụng memgraphs từ bất kỳ XCTests thất bại nào để giúp chẩn đoán sự cố bộ nhớ của bạn.
+
+Điều đầu tiên bạn nên làm là kiểm tra rò rỉ.
+
+Chạy công cụ rò rỉ và sử dụng dấu vết MSL để giúp tìm và sửa chữa bất kỳ rò rỉ nào.
+
+Nếu hồi quy không bao gồm rò rỉ, thì hãy kiểm tra đống.
+
+Bắt đầu với vmmap -summary để xác nhận rằng bộ nhớ đang ở trong đống.
+
+Nếu vậy, hãy chạy heap -diffFrom để xem loại đối tượng nào chịu trách nhiệm cho sự phát triển.
+
+Nếu thủ phạm có vẻ hiển nhiên, hãy sử dụng đống địa chỉ để lấy địa chỉ của họ.
+
+Nếu không, hãy xem rò rỉ -referenceTree để biết một số manh mối.
+
+Cuối cùng, điều tra các địa chỉ đối tượng thủ phạm có rò rỉ -traceTree và/hoặc malloc_history.
+
+Cuối cùng, hãy chắc chắn rằng bạn đang phát triển với những phương pháp hay nhất về trí nhớ này.
+
+Cố gắng không có rò rỉ trong ứng dụng của bạn.
+
+Nếu bạn đang làm việc với các loại không an toàn, hãy đảm bảo rằng bạn nhớ giải phóng mọi thứ bạn phân bổ.
+
+Và cũng đang tìm kiếm các chu kỳ lưu giữ trong mã của bạn.
+
+Tìm cách để giảm phân bổ đống của bạn, cho dù đó là thu nhỏ chúng, giữ chúng trong một khoảng thời gian ngắn hơn hay chỉ loại bỏ hoàn toàn các phân bổ không cần thiết.
+
+Đảm bảo ghi nhớ sự phân mảnh.
+
+Phân bổ các đối tượng có thời gian tồn tại tương tự cạnh nhau để tạo ra những khối bộ nhớ trống lớn, đẹp mắt sau này.
+
+Với những phương pháp hay nhất này và quy trình làm việc XCTest, bạn sẽ được trang bị để phát hiện, chẩn đoán và khắc phục sự cố bộ nhớ trong ứng dụng của mình.
+
+Thay mặt cho Tanuja và bản thân tôi, cảm ơn rất nhiều vì đã theo dõi.
+
+[Nhạc gõ].
